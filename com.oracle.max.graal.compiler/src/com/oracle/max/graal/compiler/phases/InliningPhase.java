@@ -113,7 +113,7 @@ public class InliningPhase extends Phase {
                     new DeadCodeEliminationPhase(context).apply(graph, true, false);
                     new ComputeProbabilityPhase(context).apply(graph, true, false);
                 }
-                new CanonicalizerPhase(context, target, assumptions).apply(graph, true, false);
+                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
 
                 if (GraalOptions.ParseBeforeInlining && !parsedMethods.containsKey(concrete)) {
                     parsedMethods.put(concrete, graphComplexity(graph));
@@ -219,7 +219,7 @@ public class InliningPhase extends Phase {
                 }
                 // get the new nodes here, the canonicalizer phase will reset the mark
                 newNodes = graph.getNewNodes();
-                new CanonicalizerPhase(context, target, true, assumptions).apply(graph);
+                new CanonicalizerPhase(context, target, runtime, true, assumptions).apply(graph);
                 new PhiSimplificationPhase(context).apply(graph);
                 if (GraalOptions.Intrinsify) {
                     new IntrinsificationPhase(context, runtime).apply(graph);
@@ -446,7 +446,7 @@ public class InliningPhase extends Phase {
             if (!parsedMethods.containsKey(method)) {
                 Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
                 new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                new CanonicalizerPhase(context, target, assumptions).apply(graph, true, false);
+                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
                 count = graphComplexity(graph);
                 parsedMethods.put(method, count);
             } else {

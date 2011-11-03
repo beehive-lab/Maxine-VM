@@ -35,19 +35,29 @@ import com.sun.cri.ri.*;
 public final class ConstantNode extends BooleanNode {
 
     @Data public final CiConstant value;
+    private RiRuntime runtime;
+
+    private ConstantNode(CiConstant value) {
+        this(value, null);
+    }
 
     /**
      * Constructs a new ConstantNode representing the specified constant.
      * @param value the constant
      */
-    public ConstantNode(CiConstant value) {
+    private ConstantNode(CiConstant value, RiRuntime runtime) {
         super(value.kind.stackKind());
         this.value = value;
+        this.runtime = runtime;
     }
 
     @Override
     public void accept(ValueVisitor v) {
         v.visitConstant(this);
+    }
+
+    public static ConstantNode forCiConstant(CiConstant constant, RiRuntime runtime, Graph<?> graph) {
+        return graph.unique(new ConstantNode(constant, runtime));
     }
 
     /**
@@ -146,8 +156,8 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node representing the object
      */
-    public static ConstantNode forObject(Object o, Graph<?> graph) {
-        return graph.unique(new ConstantNode(CiConstant.forObject(o)));
+    public static ConstantNode forObject(Object o, RiRuntime runtime, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forObject(o), runtime));
     }
 
     public static ConstantNode forIntegerKind(CiKind kind, long value, Graph graph) {
@@ -190,7 +200,7 @@ public final class ConstantNode extends BooleanNode {
             case Long:
                 return ConstantNode.forLong(0L, graph);
             case Object:
-                return ConstantNode.forObject(null, graph);
+                return ConstantNode.forObject(null, null, graph);
             default:
                 return null;
         }
@@ -216,9 +226,8 @@ public final class ConstantNode extends BooleanNode {
     }
 
     private RiResolvedType getType() {
-        RiRuntime runtime = graph().start().runtime();
         if (kind.isPrimitive()) {
-            return runtime.asRiType(kind);
+            return null;
         }
         return runtime.getTypeOf(asConstant());
     }

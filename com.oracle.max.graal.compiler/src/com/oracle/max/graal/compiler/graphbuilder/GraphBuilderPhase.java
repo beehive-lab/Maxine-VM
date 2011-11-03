@@ -431,10 +431,10 @@ public final class GraphBuilderPhase extends Phase {
             // this is a load of class constant which might be unresolved
             RiType riType = (RiType) con;
             if (riType instanceof RiResolvedType) {
-                frameState.push(CiKind.Object, append(graph.unique(new ConstantNode(((RiResolvedType) riType).getEncoding(Representation.JavaClass)))));
+                frameState.push(CiKind.Object, append(ConstantNode.forCiConstant(((RiResolvedType) riType).getEncoding(Representation.JavaClass), runtime, graph)));
             } else {
                 append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-                frameState.push(CiKind.Object, append(ConstantNode.forObject(null, graph)));
+                frameState.push(CiKind.Object, append(ConstantNode.forObject(null, runtime, graph)));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -735,7 +735,7 @@ public final class GraphBuilderPhase extends Phase {
             frameState.apush(checkCast);
         } else {
             ValueNode object = frameState.apop();
-            append(graph.add(new FixedGuardNode(graph.unique(new CompareNode(object, Condition.EQ, graph.unique(new ConstantNode(CiConstant.NULL_OBJECT)))))));
+            append(graph.add(new FixedGuardNode(graph.unique(new CompareNode(object, Condition.EQ, ConstantNode.forObject(null, runtime, graph))))));
             frameState.apush(appendConstant(CiConstant.NULL_OBJECT));
         }
     }
@@ -855,7 +855,7 @@ public final class GraphBuilderPhase extends Phase {
         lastInstr = trueSucc;
 
         if (GraalOptions.OmitHotExceptionStacktrace) {
-            ValueNode exception = ConstantNode.forObject(new NullPointerException(), graph);
+            ValueNode exception = ConstantNode.forObject(new NullPointerException(), runtime, graph);
             return new ExceptionInfo(falseSucc, exception);
         } else {
             RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.CreateNullPointerException));
@@ -874,7 +874,7 @@ public final class GraphBuilderPhase extends Phase {
         lastInstr = trueSucc;
 
         if (GraalOptions.OmitHotExceptionStacktrace) {
-            ValueNode exception = ConstantNode.forObject(new ArrayIndexOutOfBoundsException(), graph);
+            ValueNode exception = ConstantNode.forObject(new ArrayIndexOutOfBoundsException(), runtime, graph);
             return new ExceptionInfo(falseSucc, exception);
         } else {
             RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.CreateOutOfBoundsException, new ValueNode[] {index}));
@@ -1216,7 +1216,7 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private ConstantNode appendConstant(CiConstant constant) {
-        return graph.unique(new ConstantNode(constant));
+        return ConstantNode.forCiConstant(constant, runtime, graph);
     }
 
     private ValueNode append(FixedNode fixed) {
@@ -1300,8 +1300,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private ValueNode synchronizedObject(FrameStateAccess state, RiResolvedMethod target) {
         if (isStatic(target.accessFlags())) {
-            ConstantNode classConstant = graph.unique(new ConstantNode(target.holder().getEncoding(Representation.JavaClass)));
-            return append(classConstant);
+            return append(ConstantNode.forCiConstant(target.holder().getEncoding(Representation.JavaClass), runtime, graph));
         } else {
             return state.localAt(0);
         }

@@ -29,6 +29,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 public class CanonicalizerPhase extends Phase {
     private static final int MAX_ITERATION_PER_NODE = 10;
@@ -36,18 +37,20 @@ public class CanonicalizerPhase extends Phase {
     private boolean newNodes;
     private final CiTarget target;
     private final CiAssumptions assumptions;
+    private final RiRuntime runtime;
 
     private NodeWorkList nodeWorkList;
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, CiAssumptions assumptions) {
-        this(context, target, false, assumptions);
+    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, CiAssumptions assumptions) {
+        this(context, target, runtime, false, assumptions);
     }
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, boolean newNodes, CiAssumptions assumptions) {
+    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, boolean newNodes, CiAssumptions assumptions) {
         super(context);
         this.newNodes = newNodes;
         this.target = target;
         this.assumptions = assumptions;
+        this.runtime = runtime;
     }
 
     @Override
@@ -222,6 +225,11 @@ public class CanonicalizerPhase extends Phase {
         @Override
         public CiAssumptions assumptions() {
             return assumptions;
+        }
+
+        @Override
+        public RiRuntime runtime() {
+            return runtime;
         }
     }
 }

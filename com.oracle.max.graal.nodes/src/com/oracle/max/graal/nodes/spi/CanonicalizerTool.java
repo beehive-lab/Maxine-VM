@@ -24,10 +24,12 @@ package com.oracle.max.graal.nodes.spi;
 
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 
 public interface CanonicalizerTool {
     void deleteBranch(FixedNode branch);
     CiTarget target();
     CiAssumptions assumptions();
+    RiRuntime runtime();
 }
