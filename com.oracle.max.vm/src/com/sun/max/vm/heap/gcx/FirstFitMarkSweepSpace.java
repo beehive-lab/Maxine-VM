@@ -39,7 +39,7 @@ import com.sun.max.vm.runtime.*;
  * A region-based, flat, mark-sweep heap space, with bump pointer allocation only.
  * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
  */
-public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements HeapAccountOwner, HeapSpace {
+public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements HeapAccountOwner, HeapSpace {
     /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the HeapRegionManager's allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
@@ -47,8 +47,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     public static boolean DebugMSE = false;
     public static int DebuggedRegion = INVALID_REGION_ID;
     static {
-        VMOptions.addFieldOption("-XX:", "DebugMSE", FirstFitMarkSweepHeap.class, "Debug FirstFitMarkSweepHeap", Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "DebuggedRegion", FirstFitMarkSweepHeap.class, "Do specific debug for the specified region only", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DebugMSE", FirstFitMarkSweepSpace.class, "Debug FirstFitMarkSweepHeap", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DebuggedRegion", FirstFitMarkSweepSpace.class, "Do specific debug for the specified region only", Phase.PRISTINE);
     }
 
     static boolean inDebuggedRegion(Address address) {
@@ -57,7 +57,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     /**
      * Heap account tracking the pool of regions allocated to this heap.
      */
-    final HeapAccount<FirstFitMarkSweepHeap> heapAccount;
+    final HeapAccount<FirstFitMarkSweepSpace> heapAccount;
 
     /**
      * List of region with space available for allocation.
@@ -672,8 +672,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
     }
 
-    public FirstFitMarkSweepHeap() {
-        heapAccount = new HeapAccount<FirstFitMarkSweepHeap>(this);
+    public FirstFitMarkSweepSpace() {
+        heapAccount = new HeapAccount<FirstFitMarkSweepSpace>(this);
         currentOverflowAllocatingRegion = INVALID_REGION_ID;
         currentTLABAllocatingRegion = INVALID_REGION_ID;
         overflowAllocator = new BaseAtomicBumpPointerAllocator<Refiller>(new OverflowAllocatorRefiller());
@@ -684,7 +684,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         regionInfoIterable = new HeapRegionInfoIterable();
     }
 
-    public HeapAccount<FirstFitMarkSweepHeap> heapAccount() {
+    public HeapAccount<FirstFitMarkSweepSpace> heapAccount() {
         return heapAccount;
     }
 
