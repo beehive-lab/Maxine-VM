@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
@@ -37,6 +39,13 @@ public class BeginNode extends StateSplit implements LIRLowerable {
         BeginNode begin =  with.graph().add(new BeginNode());
         begin.setNext(with);
         return begin;
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("shortName", "B");
+        return debugProperties;
     }
 
     @Override
