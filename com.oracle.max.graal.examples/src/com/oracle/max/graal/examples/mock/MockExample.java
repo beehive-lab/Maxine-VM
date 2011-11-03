@@ -73,7 +73,7 @@ public class MockExample {
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
 
         // Create the compiler graph for the method.
-        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
         ReturnNode returnNode = graph.add(new ReturnNode(ConstantNode.forInt(42, graph)));
         graph.start().setNext(returnNode);
 

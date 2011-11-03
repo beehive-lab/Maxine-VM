@@ -53,13 +53,13 @@ public class AccessorIntrinsifier implements Intrinsifier {
                     // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
                     Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
-                        Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
+                        Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode());
                         Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
                         replacements.put(graph.start(), duplicate.start());
                         duplicate.addDuplicate(graph.getNodes(), replacements);
                         graph = duplicate;
                     } else {
-                        graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                        graph = new Graph<EntryPointNode>(new EntryPointNode());
                         new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
                         if (GraalOptions.ProbabilityAnalysis) {
                             new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);

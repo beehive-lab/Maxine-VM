@@ -107,7 +107,7 @@ public class InliningPhase extends Phase {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
-                graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                graph = new Graph<EntryPointNode>(new EntryPointNode());
                 new GraphBuilderPhase(context, runtime, concrete, null).apply(graph, true, false);
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase(context).apply(graph, true, false);
@@ -444,7 +444,7 @@ public class InliningPhase extends Phase {
         int count;
         if (GraalOptions.ParseBeforeInlining) {
             if (!parsedMethods.containsKey(method)) {
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                 new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
                 new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
                 count = graphComplexity(graph);

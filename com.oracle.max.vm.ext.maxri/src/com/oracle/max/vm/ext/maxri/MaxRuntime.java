@@ -424,7 +424,7 @@ public class MaxRuntime implements GraalRuntime {
         if (maxMethod.intrinsic() != null) {
             IntrinsicImpl impl = intrinsicRegistry.get(method);
             if (impl != null) {
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0));
