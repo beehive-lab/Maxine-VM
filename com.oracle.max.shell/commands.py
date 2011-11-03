@@ -66,7 +66,7 @@ def build(env, args):
             if len(choices) != 0:
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
-    allProjects = env.pdb().projects.keys()
+    allProjects = [p.name for p in env.pdb().sorted_deps()]
     if args.native:
         if env.os == 'windows':
             env.log('Skipping C compilation on Windows until it is supported')
@@ -197,7 +197,7 @@ def checkstyle(env, args):
 
 If no projects are given, then all Java projects are checked."""
     
-    allProjects = env.pdb().projects.keys()
+    allProjects = [p.name for p in env.pdb().sorted_deps()]
     if len(args) == 0:
         projects = allProjects
     else:
