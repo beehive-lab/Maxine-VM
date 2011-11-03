@@ -262,34 +262,37 @@ public class Graph<S extends Node> {
 
     private static class TypedNodeIterator<T extends IterableNodeType> implements Iterator<T> {
         private Node current;
-        private Node last;
+        private final Node start;
 
         public TypedNodeIterator(Node start) {
-            this.current = start;
-            this.last = null;
+            assert start == null || !start.isDeleted();
+            this.current = null;
+            this.start = start;
         }
 
         @Override
         public boolean hasNext() {
-            // this is where deleted nodes will be removed from the type cache. the first and the last node will never be removed,
-            // but we don't care, since this would introduce a special case that makes this very sensitive piece of code larger.
-            while (current != null && current.isDeleted()) {
-                current = current.typeCacheNext;
-                if (last != null && current != null) {
-                    last.typeCacheNext = current;
+            Node next = start;
+            if (current != null) {
+                next = current.typeCacheNext;
+                while (next != null && next.isDeleted()) {
+                    next = next.typeCacheNext;
+                    current.typeCacheNext = next;
                 }
             }
-            return current != null;
+            return next != null;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public T next() {
-            try {
-                return (T) current;
-            } finally {
-                last = current;
-                current = current.typeCacheNext;
+            if (current == null) {
+                current = start;
+                return (T) start;
+            } else {
+                Node result = current.typeCacheNext;
+                current = result;
+                return (T) result;
             }
         }
 
@@ -326,7 +329,10 @@ public class Graph<S extends Node> {
     private <T> Node getStartNode(final Class<T> type) {
         int nodeClassId = NodeClass.get(type).iterableId();
         assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
-        final Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        while (start != null && start.isDeleted()) {
+            start = start.typeCacheNext;
+        }
         return start;
     }
 
@@ -375,10 +381,9 @@ public class Graph<S extends Node> {
 
     void unregister(Node node) {
         nodes.set(node.id(), null);
+        deletedNodeCount++;
 
         // nodes aren't removed from the type cache here - they will be removed during iteration
-
-        deletedNodeCount++;
     }
 
     public boolean verify() {
