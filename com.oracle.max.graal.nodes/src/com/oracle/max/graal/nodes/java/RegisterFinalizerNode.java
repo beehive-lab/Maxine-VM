@@ -46,7 +46,7 @@ public final class RegisterFinalizerNode extends StateSplit implements Canonical
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitRegisterFinalizer(this);
+        gen.emitCallToRuntime(CiRuntimeCall.RegisterFinalizer, true, gen.operand(object()));
     }
 
     @Override

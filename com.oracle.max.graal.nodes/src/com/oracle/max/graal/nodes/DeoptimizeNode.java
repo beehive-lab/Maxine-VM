@@ -59,6 +59,6 @@ public class DeoptimizeNode extends FixedNode implements Node.IterableNodeType, 
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitDeoptimize(this);
+        gen.emitDeoptimizeOn(null, action, message);
     }
 }

@@ -63,6 +63,6 @@ public final class LookupSwitchNode extends SwitchNode implements LIRLowerable {
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitLookupSwitch(this);
+        gen.emitLookupSwitch(this);
     }
 }
