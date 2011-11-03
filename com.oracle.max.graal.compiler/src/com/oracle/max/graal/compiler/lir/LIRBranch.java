@@ -73,7 +73,7 @@ public class LIRBranch extends LIRInstruction {
 
     @Override
     public String operationString(Formatter operandFmt) {
-        StringBuilder buf = new StringBuilder(cond.operator).append(' ');
+        StringBuilder buf = new StringBuilder(cond != null ? cond.operator : "").append(' ');
         if (block() != null) {
             buf.append("[B").append(block.blockID()).append(']');
         } else if (label().isBound()) {

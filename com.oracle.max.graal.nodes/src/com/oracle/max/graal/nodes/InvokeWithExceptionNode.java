@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 
 public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke{
     private static final int NORMAL_EDGE = 0;
-    private static final int EXCEPTION_EDGE = 0;
+    private static final int EXCEPTION_EDGE = 1;
 
     @Input private MethodCallTargetNode callTarget;
     @Input private FrameState stateBefore;
