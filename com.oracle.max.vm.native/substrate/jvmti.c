@@ -24,13 +24,13 @@
 #include <stdlib.h>
 #include <jvmti.h>
 #include <jni.h>
-#include <classfile_constants.h>
 #include "mutex.h"
 #include "condition.h"
 
 // (cwi): Java 7 added a new JVMTI function, so it is necessary to distinguish between Java 6 and Java 7.
 // This is the only #define that I found in the header files that allows this distinction.
 #if JVM_CLASSFILE_MAJOR_VERSION >= 51
+#include <classfile_constants.h>
 #define JAVA_7
 #endif
 
