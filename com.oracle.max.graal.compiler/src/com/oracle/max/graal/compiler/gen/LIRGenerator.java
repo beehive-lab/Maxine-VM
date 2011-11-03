@@ -308,7 +308,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     private void setOperandsForParameters() {
         CiCallingConvention args = compilation.frameMap().incomingArguments();
-        for (LocalNode local : compilation.graph.start().locals()) {
+        for (LocalNode local : compilation.graph.getNodes(LocalNode.class)) {
             int i = local.index();
             CiValue src = args.locations[i];
             CiVariable dest = emitMove(src);

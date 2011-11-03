@@ -61,7 +61,7 @@ public class FrameStateBuilder implements FrameStateAccess {
         int index = 0;
         if (!isStatic(method.accessFlags())) {
             // add the receiver
-            LocalNode local = graph.unique(new LocalNode(method.holder().kind(false), javaIndex, graph.start(), false));
+            LocalNode local = graph.unique(new LocalNode(method.holder().kind(false), javaIndex, false));
             local.setDeclaredType(method.holder());
             storeLocal(javaIndex, local);
             javaIndex = 1;

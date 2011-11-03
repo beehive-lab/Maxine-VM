@@ -67,7 +67,7 @@ public class AccessorIntrinsifier implements Intrinsifier {
                         }
                     }
 
-                    for (LocalNode l : graph.start().locals()) {
+                    for (LocalNode l : graph.getNodes(LocalNode.class)) {
                         if (l.index() == 0) {
                             UnsafeCastNode cast = graph.add(new UnsafeCastNode(l, accessor));
                             l.replaceAtUsages(cast);
