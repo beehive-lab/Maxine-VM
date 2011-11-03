@@ -22,11 +22,11 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.sun.cri.ci.CiValue.Formatter;
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
@@ -34,7 +34,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
  * a {@linkplain RiMethod Java method}, a native function or a global stub.
  */
-public class LIRCall extends LIRInstruction {
+public abstract class LIRCall extends LIRInstruction {
 
     /**
      * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link CiValue}
@@ -51,26 +51,32 @@ public class LIRCall extends LIRInstruction {
     public final List<CiValue> pointerSlots;
 
 
-    private static CiValue[] toArray(List<CiValue> arguments) {
-        return arguments.toArray(new CiValue[arguments.size()]);
+    private static CiValue[] toArray(List<CiValue> arguments, CiValue targetAddress) {
+        CiValue[] result = new CiValue[arguments.size() + (targetAddress != null ? 1 : 0)];
+        arguments.toArray(result);
+        if (targetAddress != null) {
+            result[arguments.size()] = targetAddress;
+        }
+        return result;
     }
 
     public LIRCall(LIROpcode opcode,
                    Object target,
                    CiValue result,
                    List<CiValue> arguments,
+                   CiValue targetAddress,
                    LIRDebugInfo info,
                    Map<XirMark, Mark> marks,
-                   boolean calleeSaved,
                    List<CiValue> pointerSlots) {
-        super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
+        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
         this.marks = marks;
         this.pointerSlots = pointerSlots;
-        if (opcode == LegacyOpcode.DirectCall) {
+        if (targetAddress == null) {
             this.targetAddressIndex = -1;
         } else {
             // The last argument is the operand holding the address for the indirect call
-            this.targetAddressIndex = arguments.size() - 1;
+            assert inputs.length - 1 == arguments.size();
+            this.targetAddressIndex = arguments.size();
         }
         this.target = target;
     }
@@ -85,7 +91,7 @@ public class LIRCall extends LIRInstruction {
 
     public CiValue targetAddress() {
         if (targetAddressIndex >= 0) {
-            return operand(targetAddressIndex);
+            return input(targetAddressIndex);
         }
         return null;
     }
@@ -93,32 +99,25 @@ public class LIRCall extends LIRInstruction {
     @Override
     public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder();
-        if (result().isLegal()) {
-            buf.append(operandFmt.format(result())).append(" = ");
+        if (result.isLegal()) {
+            buf.append(operandFmt.format(result)).append(" = ");
         }
-        String targetAddress = null;
-        if (code == LegacyOpcode.RuntimeCall) {
-            buf.append(target);
-        } else if (code != LegacyOpcode.DirectCall) {
-            if (targetAddressIndex >= 0) {
-                targetAddress = operandFmt.format(targetAddress());
-                buf.append(targetAddress);
+        if (targetAddressIndex >= 0) {
+            buf.append(operandFmt.format(targetAddress()));
+        }
+        if (inputs.length > 1) {
+            buf.append("(");
+        }
+        String sep = "";
+        for (CiValue input : inputs) {
+            if (input != targetAddress()) {
+                buf.append(sep).append(operandFmt.format(input));
+                sep = ", ";
             }
         }
-        buf.append('(');
-        boolean first = true;
-        for (LIROperand operandSlot : operands) {
-            String operand = operandFmt.format(operandSlot.value(this));
-            if (!operand.isEmpty() && !operand.equals(targetAddress)) {
-                if (!first) {
-                    buf.append(", ");
-                } else {
-                    first = false;
-                }
-                buf.append(operand);
-            }
+        if (inputs.length > 1) {
+            buf.append(")");
         }
-        buf.append(')');
         return buf.toString();
     }
 }

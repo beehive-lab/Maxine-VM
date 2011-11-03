@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "/")
-public final class IntegerDivNode extends IntegerArithmeticNode implements Canonicalizable {
+public final class IntegerDivNode extends IntegerArithmeticNode implements Canonicalizable, LIRLowerable {
 
     public IntegerDivNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind, kind == CiKind.Int ? Bytecodes.IDIV : Bytecodes.LDIV, x, y);
+        super(kind, x, y);
     }
 
     @Override
@@ -55,5 +54,10 @@ public final class IntegerDivNode extends IntegerArithmeticNode implements Canon
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitDiv(gen.operand(x()), gen.operand(y())));
     }
 }

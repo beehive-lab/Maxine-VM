@@ -38,7 +38,7 @@ import com.oracle.max.graal.nodes.calc.ConditionalNode.ConditionalStructure;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MathIntrinsicNode.Operation;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -311,7 +311,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
                         ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
-                        value = graph.unique(new CheckCastNode(anchor, type, value));
+                        value = graph.unique(new CheckCastNode(anchor, type, elementType, value));
                     } else {
                         assert elementType.name().equals("Ljava/lang/Object;") : elementType.name();
                     }
@@ -321,9 +321,8 @@ public class HotSpotRuntime implements GraalRuntime {
                     arrayClass.setGuard(guard);
                     append.setNext(arrayClass);
                     append = arrayClass;
-                    ReadNode arrayElementKlass1 = graph.unique(new ReadNode(CiKind.Object, arrayClass, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.arrayClassElementOffset, graph)));
-                    ReadNode arrayElementKlass = arrayElementKlass1;
-                    value = graph.unique(new CheckCastNode(anchor, arrayElementKlass, value));
+                    ReadNode arrayElementKlass = graph.unique(new ReadNode(CiKind.Object, arrayClass, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.arrayClassElementOffset, graph)));
+                    value = graph.unique(new CheckCastNode(anchor, arrayElementKlass, null, value));
                 }
             }
             WriteNode memoryWrite = graph.add(new WriteNode(array, value, arrayLocation));
@@ -449,7 +448,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
                     // TODO(tw): Care about primitive classes!
-                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, argument)), graph);
+                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument)), graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);
@@ -540,7 +539,8 @@ public class HotSpotRuntime implements GraalRuntime {
                         IfNode elementClassIf = graph.add(new IfNode(graph.unique(new CompareNode(srcClass, Condition.EQ, destClass)), 0.5));
                         destClass.setNext(elementClassIf);
                         ifNode.setFalseSuccessor(BeginNode.begin(anchor));
-                        newInvoke = graph.add(new InvokeNode(bci, Bytecodes.INVOKESTATIC, CiKind.Void, new ValueNode[]{src, srcPos, dest, destPos, length}, method, method.signature().returnType(method.holder())));
+                        MethodCallTargetNode target = graph.unique(new MethodCallTargetNode(InvokeKind.Static, method, new ValueNode[]{src, srcPos, dest, destPos, length}, method.signature().returnType(holder)));
+                        newInvoke = graph.add(new InvokeNode(bci, target));
                         newInvoke.setCanInline(false);
                         newInvoke.setStateAfter(stateAfter);
                         elementClassIf.setFalseSuccessor(BeginNode.begin(newInvoke));
@@ -586,7 +586,7 @@ public class HotSpotRuntime implements GraalRuntime {
             } else if (holderName.equals("Ljava/lang/Float;")) {
                 if (fullName.equals("floatToRawIntBits(F)I")) {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new FPConversionNode(CiKind.Int, graph.unique(new LocalNode(CiKind.Float, 0, graph.start()))))));
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, graph.unique(new LocalNode(CiKind.Float, 0, graph.start()))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("floatToIntBits(F)I")) {
@@ -594,7 +594,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0, graph.start()));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
-                    FPConversionNode fpConv = graph.unique(new FPConversionNode(CiKind.Int, arg));
+                    ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forInt(FLOATNAN_RAW_INT_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
@@ -602,14 +602,14 @@ public class HotSpotRuntime implements GraalRuntime {
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("intBitsToFloat(I)F")) {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new FPConversionNode(CiKind.Float, graph.unique(new LocalNode(CiKind.Int, 0, graph.start()))))));
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_I2F, graph.unique(new LocalNode(CiKind.Int, 0, graph.start()))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Double;")) {
                 if (fullName.equals("doubleToRawLongBits(D)J")) {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new FPConversionNode(CiKind.Long, graph.unique(new LocalNode(CiKind.Double, 0, graph.start()))))));
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, graph.unique(new LocalNode(CiKind.Double, 0, graph.start()))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("doubleToLongBits(D)J")) {
@@ -617,7 +617,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0, graph.start()));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
-                    FPConversionNode fpConv = graph.unique(new FPConversionNode(CiKind.Long, arg));
+                    ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forLong(DOUBLENAN_RAW_LONG_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
@@ -625,7 +625,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("longBitsToDouble(J)D")) {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new FPConversionNode(CiKind.Double, graph.unique(new LocalNode(CiKind.Long, 0, graph.start()))))));
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_L2D, graph.unique(new LocalNode(CiKind.Long, 0, graph.start()))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }

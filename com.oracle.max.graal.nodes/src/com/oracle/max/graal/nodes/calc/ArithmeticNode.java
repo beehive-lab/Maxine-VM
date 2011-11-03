@@ -23,8 +23,6 @@
 package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -36,14 +34,13 @@ public abstract class ArithmeticNode extends BinaryNode {
 
     /**
      * Creates a new arithmetic operation.
-     * @param opcode the bytecode opcode
      * @param kind the result kind of the operation
      * @param x the first input instruction
      * @param y the second input instruction
      * @param isStrictFP indicates this operation has strict rounding semantics
      */
-    public ArithmeticNode(CiKind kind, int opcode, ValueNode x, ValueNode y, boolean isStrictFP) {
-        super(kind, opcode, x, y);
+    public ArithmeticNode(CiKind kind, ValueNode x, ValueNode y, boolean isStrictFP) {
+        super(kind, x, y);
         this.isStrictFP = isStrictFP;
     }
 
@@ -53,14 +50,5 @@ public abstract class ArithmeticNode extends BinaryNode {
      */
     public boolean isStrictFP() {
         return isStrictFP;
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitArithmetic(this);
-    }
-
-    public boolean isCommutative() {
-        return Bytecodes.isCommutative(opcode);
     }
 }

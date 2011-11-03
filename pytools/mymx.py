@@ -27,17 +27,34 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
+""" Execution of the example extended command:
+
+ >>> mymx.py help mycmd
+ mx mycmd [options]
+
+ an example extended command on linux
+
+    Prints a simple message and exits.
+ >>> mymx.py mycmd
+ hello from mycmd
+ args:  []
+
+"""
+
 import mx
 import commands
 
-def mycmd(env, args):
-    """an example extended command
+def _msgHelper(env):
+    return env.os
 
-    Prints a simple message and exits."""
+def mycmd(env, args):
+    """an example extended command on {0}
+
+    Prints a simple {1} and exits."""
 
     print 'hello from mycmd'
     print 'args: ', args
 
 if __name__ == '__main__':
-    commands.table['mycmd'] = (mycmd, '')
+    commands.table['mycmd'] = [mycmd, '[options]', _msgHelper, 'message']
     mx.main()

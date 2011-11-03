@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = ">>>")
-public final class UnsignedRightShiftNode extends ShiftNode implements Canonicalizable {
+public final class UnsignedRightShiftNode extends ShiftNode implements Canonicalizable, LIRLowerable {
 
     public UnsignedRightShiftNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind, kind == CiKind.Int ? Bytecodes.IUSHR : Bytecodes.LUSHR, x, y);
+        super(kind, x, y);
     }
 
     @Override
@@ -84,5 +83,10 @@ public final class UnsignedRightShiftNode extends ShiftNode implements Canonical
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitUShr(gen.operand(x()), gen.operand(y())));
     }
 }

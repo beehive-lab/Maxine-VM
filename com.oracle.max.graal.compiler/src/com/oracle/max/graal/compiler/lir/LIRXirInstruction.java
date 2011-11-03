@@ -29,68 +29,66 @@ import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
-public class LIRXirInstruction extends LIRInstruction {
+public abstract class LIRXirInstruction extends LIRInstruction {
 
     public final CiValue[] originalOperands;
     public final int outputOperandIndex;
-    public final int[] operandIndices;
+    public final int[] inputOperandIndices;
+    public final int[] tempOperandIndices;
     public final XirSnippet snippet;
     public final RiMethod method;
-    public final int inputTempCount;
-    public final int tempCount;
-    public final int inputCount;
     public final List<CiValue> pointerSlots;
     public final LIRDebugInfo infoAfter;
-    private LIRBlock trueSuccessor;
-    private LIRBlock falseSuccessor;
+    private LabelRef trueSuccessor;
+    private LabelRef falseSuccessor;
 
-    public LIRXirInstruction(XirSnippet snippet,
+    public LIRXirInstruction(LIROpcode opcode,
+                             XirSnippet snippet,
                              CiValue[] originalOperands,
                              CiValue outputOperand,
-                             int inputTempCount,
-                             int tempCount,
-                             CiValue[] operands,
-                             int[] operandIndices,
+                             CiValue[] inputs, CiValue[] temps,
+                             int[] inputOperandIndices, int[] tempOperandIndices,
                              int outputOperandIndex,
                              LIRDebugInfo info,
                              LIRDebugInfo infoAfter,
                              RiMethod method,
                              List<CiValue> pointerSlots) {
-        super(LegacyOpcode.Xir, outputOperand, info, false, inputTempCount, tempCount, operands);
+        super(opcode, outputOperand, info, inputs, temps);
         this.infoAfter = infoAfter;
         this.pointerSlots = pointerSlots;
         assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
         this.method = method;
         this.snippet = snippet;
-        this.operandIndices = operandIndices;
+        this.inputOperandIndices = inputOperandIndices;
+        this.tempOperandIndices = tempOperandIndices;
         this.outputOperandIndex = outputOperandIndex;
         this.originalOperands = originalOperands;
-        this.inputTempCount = inputTempCount;
-        this.tempCount = tempCount;
-        this.inputCount = operands.length - inputTempCount - tempCount;
     }
 
 
-    public void setFalseSuccessor(LIRBlock falseSuccessor) {
+    public void setFalseSuccessor(LabelRef falseSuccessor) {
         this.falseSuccessor = falseSuccessor;
     }
 
 
-    public void setTrueSuccessor(LIRBlock trueSuccessor) {
+    public void setTrueSuccessor(LabelRef trueSuccessor) {
         this.trueSuccessor = trueSuccessor;
     }
 
-    public LIRBlock falseSuccessor() {
+    public LabelRef falseSuccessor() {
         return falseSuccessor;
     }
 
-    public LIRBlock trueSuccessor() {
+    public LabelRef trueSuccessor() {
         return trueSuccessor;
     }
 
     public CiValue[] getOperands() {
-        for (int i = 0; i < operandIndices.length; i++) {
-            originalOperands[operandIndices[i]] = operand(i);
+        for (int i = 0; i < inputOperandIndices.length; i++) {
+            originalOperands[inputOperandIndices[i]] = input(i);
+        }
+        for (int i = 0; i < tempOperandIndices.length; i++) {
+            originalOperands[tempOperandIndices[i]] = temp(i);
         }
         if (outputOperandIndex != -1) {
             originalOperands[outputOperandIndex] = result();
@@ -167,16 +165,5 @@ public class LIRXirInstruction extends LIRInstruction {
         appendDebugInfo(sb, operandFmt, info);
 
         return sb.toString();
-    }
-
-
-    public void substitute(LIRBlock block, LIRBlock newTarget) {
-        if (trueSuccessor == block) {
-            trueSuccessor = newTarget;
-        }
-
-        if (falseSuccessor == block) {
-            falseSuccessor = newTarget;
-        }
     }
 }

@@ -42,25 +42,19 @@ public final class GraalOptions {
     public static boolean Intrinsify                         = true;
     public static boolean CacheGraphs                        = ____;
     public static boolean InlineWithTypeCheck                = ____;
-    public static int     MaximumInstructionCount            = 3000;
-    public static float   MaximumInlineRatio                 = 0.90f;
     public static int     MaximumInlineSize                  = 35;
-    public static int     MaximumInlineCompSize              = 350;
     public static int     MaximumFreqInlineSize              = 300;
-    public static int     MaximumFreqInlineCompSize          = 1500;
     public static int     FreqInlineRatio                    = 20;
     public static int     MaximumTrivialSize                 = 6;
-    public static int     MaximumTrivialCompSize             = 120;
-    public static int     MaximumInlineLevel                 = 9;
-    public static int     MaximumRecursiveInlineLevel        = 2;
+    public static int     MaximumInlineLevel                 = 30;
     public static int     MaximumDesiredSize                 = 8000;
-    public static int     MaximumShortLoopSize               = 5;
-    public static boolean UseNewInlining                     = ____;
-    public static boolean ParseBeforeInlining                = true;
+    public static boolean ParseBeforeInlining                = ____;
+    public static float   InliningSizePenaltyExp             = 20;
     public static float   MaximumInlineWeight                = 1.25f;
+    public static float   InliningSizePenalty                = 1;
 
     // escape analysis settings
-    public static boolean EscapeAnalysis                     = ____;
+    public static boolean EscapeAnalysis                     = true;
     public static int     ForcedInlineEscapeWeight           = 100;
     public static boolean PrintEscapeAnalysis                = ____;
 
@@ -71,7 +65,6 @@ public final class GraalOptions {
     public static float   MinimumUsageProbability            = 0.95f;
 
     // debugging settings
-    public static boolean VerifyPointerMaps                  = ____;
     public static int     MethodEndBreakpointGuards          = 0;
     public static boolean ZapStackOnMethodEntry              = ____;
     public static boolean StressLinearScan                   = ____;

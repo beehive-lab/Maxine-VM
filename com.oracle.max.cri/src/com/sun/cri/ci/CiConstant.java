@@ -214,6 +214,7 @@ public final class CiConstant extends CiValue {
     public long asLong() {
         // Checkstyle: stop
         switch (kind.stackKind()) {
+            case Jsr:
             case Int:
             case Long: return primitive;
             case Float: return (long) asFloat();

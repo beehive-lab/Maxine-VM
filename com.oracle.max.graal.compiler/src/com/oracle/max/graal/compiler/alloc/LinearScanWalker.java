@@ -233,7 +233,7 @@ final class LinearScanWalker extends IntervalWalker {
         // numbering of instructions is known.
         // When the block already contains spill moves, the index must be increased until the
         // correct index is reached.
-        List<LIRInstruction> list = opBlock.lir().instructionsList();
+        List<LIRInstruction> list = opBlock.lir();
         int index = (opId - list.get(0).id()) >> 1;
         assert list.get(index).id() <= opId : "error in calculation";
 
@@ -827,13 +827,12 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     boolean isMove(LIRInstruction op, Interval from, Interval to) {
-        if (op.code != LegacyOpcode.Move) {
+        if (op.code != StandardOpcode.MOVE) {
             return false;
         }
-        assert op instanceof LIRMove : "move must be LIROp1";
 
-        CiValue input = ((LIRMove) op).operand(0);
-        CiValue result = ((LIRMove) op).result();
+        CiValue input = op.input(0);
+        CiValue result = op.result();
         return input.isVariable() && result.isVariable() && input == from.operand && result == to.operand;
     }
 

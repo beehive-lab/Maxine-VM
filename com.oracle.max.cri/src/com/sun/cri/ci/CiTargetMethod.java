@@ -451,6 +451,7 @@ public class CiTargetMethod implements Serializable {
      * @param registerRestoreEpilogueOffset the offset in the machine code where the epilogue begins
      */
     public void setRegisterRestoreEpilogueOffset(int registerRestoreEpilogueOffset) {
+        assert this.registerRestoreEpilogueOffset == -1;
         this.registerRestoreEpilogueOffset = registerRestoreEpilogueOffset;
     }
 

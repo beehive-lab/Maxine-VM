@@ -26,12 +26,13 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import mx
 import os
 import shutil
 import fnmatch
-from os.path import join, exists, dirname
+import subprocess
+from os.path import join, exists, dirname, isdir, pathsep, isfile
 from argparse import ArgumentParser, REMAINDER
+from collections import Callable
 import xml.dom.minidom
 
 # Commands are in alphabetical order in this file.
@@ -56,7 +57,7 @@ def build(env, args):
     if args.jdt is not None:
         if args.jdt.endswith('.jar'):
             jdtJar=args.jdt
-        elif os.path.isdir(args.jdt):
+        elif isdir(args.jdt):
             plugins = join(args.jdt, 'plugins')
             choices = [f for f in os.listdir(plugins) if fnmatch.fnmatch(f, 'org.eclipse.jdt.core_*.jar')]
             if len(choices) != 0:
@@ -79,7 +80,7 @@ def build(env, args):
             parser.error('unknown projects: ' + ', '.join(unknown))
         
     for project in projects:
-        projectDir = join(env.maxine_dir, project)
+        projectDir = join(env.maxine_home, project)
         
         if project == 'com.oracle.max.vm.native':
             env.log('Compiling C sources in {0}...'.format(projectDir))
@@ -164,7 +165,7 @@ def canonicalizeprojects(env, args):
     """process all project.properties files to canonicalize the project dependencies
 
     The exit code of this command reflects how many files were updated."""
-    env.jmax(['canonicalizeprojects'])
+    env.run_jmax(['canonicalizeprojects'])
     
 def check(env, args):
     """run Checkstyle on the Maxine Java sources
@@ -184,7 +185,7 @@ If no projects are given, then all Java projects are checked."""
             env.error('unknown projects: ' + ', '.join(unknown))
         
     for project in projects:
-        projectDir = join(env.maxine_dir, project)
+        projectDir = join(env.maxine_home, project)
         sourceDirs = env.jmax(['source_dirs', project]).split()
         dotCheckstyle = join(projectDir, '.checkstyle')
         
@@ -203,7 +204,7 @@ If no projects are given, then all Java projects are checked."""
             localCheckConfig = dotCheckstyleXML.getElementsByTagName('local-check-config')[0]
             configLocation = localCheckConfig.getAttribute('location')
             if configLocation.startswith('/'):
-                config = join(env.maxine_dir, configLocation.lstrip('/'))
+                config = join(env.maxine_home, configLocation.lstrip('/'))
             else:
                 config = join(projectDir, configLocation)
                 
@@ -250,7 +251,7 @@ If no projects are given, then all Java projects are checked."""
                             warnings = [line.strip() for line in f if 'warning:' in line]
                             if len(warnings) != 0:
                                 map(env.log, warnings)
-                                mx.abort(1)
+                                env.abort(1)
             finally:
                 os.unlink(auditfileName)
 
@@ -261,7 +262,7 @@ def clean(env, args):
     generated images.
     """
     
-    env.run(['gmake', '-C', join(env.maxine_dir, 'com.oracle.max.vm.native'), 'clean'])
+    env.run(['gmake', '-C', join(env.maxine_home, 'com.oracle.max.vm.native'), 'clean'])
 
     projects = env.jmax(['projects']).split()
     for project in projects:
@@ -282,14 +283,19 @@ def _configs(env):
     env.run([env.java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
-def configs(env, arg):
+def _configs_msg(env):
     """prints the predefined image configurations"""
     c = _configs(env)
-    env.log('The available preconfigured option sets are:')
-    env.log()
-    env.log('    Configuration    Expansion')
+    msg = """The available preconfigured option sets are:
+    
+    Configuration    Expansion"""
     for k, v in sorted(c.iteritems()):
-        env.log('    @{0:<16} {1}'.format(k, v.replace(',', ' ')))
+        msg += '    @{0:<16} {1}\n'.format(k, v.replace(',', ' '))
+    return msg
+
+def configs(env, arg):
+    """prints the predefined image configurations"""
+    env.log(_configs_msg(env))
     
 def copycheck(env, args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
@@ -299,11 +305,66 @@ def eclipseprojects(env, args):
     """(re)generate Eclipse project configurations
 
     The exit code of this command reflects how many files were updated."""
-    env.jmax(['eclipse'] + args)
+    env.run_jmax(['eclipse'] + args)
+
+def gate(env, args):
+    """run the tests used to validate a push to the stable Maxine repository
+
+    If this commands exits with a 0 exit code, then the source code is in
+    a state that would be accepted for integration into the main repository."""
+    
+    env.log('Running copycheck')
+    hgNode = os.getenv('hg_node')
+    if hgNode is None:
+        copycheck(env, ['-modified', '-reporterrors=true', '-continueonerror'])
+    else:
+        revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
+        revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
+        changesetCount = revTip - revLast + 1
+        copycheck(env, ['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
+
+    env.log('Ensuring JavaTester harness is up to date')
+    try:
+        jttgen(env, [])
+    except SystemExit:
+        env.log('Updated JavaTesterRunScheme.java or JavaTesterTests.java in com.sun.max.vm.jtrun.all.')
+        env.log('To push your changes to the repository, these files need to be generated locally and checked in.')
+        env.log('The files can be generated by running: mx jttgen')
+        env.abort(1)
+
+    env.log('Ensuring Eclipse project files match auto-generated content')
+    try:
+        eclipseprojects(env, [])
+    except SystemExit:
+        env.log('One or more Eclipse project files differ from the content generated')
+        env.log('by running: mx eclipseprojects')
+        env.abort(1)
+
+    env.log('Ensuring projects.properties files are canonicalized')
+    try:
+        canonicalizeprojects(env, [])
+    except SystemExit:
+        env.log('Rerun "mx canonicalizeprojects" and check-in the modified projects.properties files.')
+        env.abort(1)
+
+    env.log('Running MaxineTester...')
+
+    test(env, ['-image-configs=java', '-fail-fast'] + args)
     
 def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
+
+def hcfdis(env, args):
+    """disassembles HexCodeFiles embedded in text files
+
+    Run a tool over the input files to convert all embedded HexCodeFiles
+    to a disassembled format."""
+    env.run_java(['-cp', env.classpath('com.oracle.max.hcfdis'), 'com.oracle.max.hcfdis.HexCodeFileDis'] + args)
+
+def helloworld(env, args):
+    """run the 'hello world' program on the Maxine VM"""
+    env.run([join(env.vmdir, 'maxvm'), '-cp', env.classpath('com.oracle.max.vm')] + args + ['test.output.HelloWorld'])
 
 def help_(env, args):
     """show help for a given command
@@ -324,7 +385,13 @@ Given a command name, print help for that command."""
     doc = func.__doc__
     if len(value) > 2:
         docArgs = value[2:]
-        doc = doc.format(*docArgs)
+        fmtArgs = []
+        for d in docArgs:
+            if isinstance(d, Callable):
+                fmtArgs += [d(env)]
+            else:
+                fmtArgs += [str(d)]
+        doc = doc.format(*fmtArgs)
     print 'mx {0} {1}\n\n{2}\n'.format(name, usage, doc)
 
 def image(env, args):
@@ -355,7 +422,7 @@ def image(env, args):
     command (e.g. '-os Darwin -bits 32').
 
     An option starting with '@' denotes one of the preconfigured set of
-    options described by running "mx options".
+    options. {0}
     
     An option starting with '--' is interpreted as a VM option of the same name
     after the leading '-' is removed. For example, to use the '-verbose:class'
@@ -375,7 +442,7 @@ def image(env, args):
             if not name in configs:
                 env.log('Invalid image configuration: ' + name)
                 help(env, ['image'])
-                mx.abort()
+                env.abort()
             values = configs[name].split(',')
             del args[i]
             args[i:i] = values
@@ -386,7 +453,7 @@ def image(env, args):
             if i == len(args):
                 env.log('Missing value for ' + arg)
                 help(env, ['image'])
-                mx.abort()
+                env.abort()
             value = args[i]
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
@@ -399,6 +466,83 @@ def image(env, args):
 
     env.run_java(systemProps + ['-cp', env.classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=' + str(env.java_trace), '-run=java'] + imageArgs)
 
+def inspect(env, args):
+    """launch a given program under the Inspector
+
+    Run Maxine under the Inspector. The arguments accepted by this command
+    are those accepted by the 'mx vm' command plus the Inspector specific
+    options. To debug a program in the Inspector, simply replace 'vm' on the
+    command line that launches the program with 'inspect'.
+
+    Use "mx inspect --help" to see what the Inspector options are. These options
+    must be specified with a '--' prefix so that they can be distinguished from
+    the VM options.
+
+    The inspect command also accepts the same system property related options
+    as the 'image' command except that a '--' prefix must be used (e.g.
+    '--os Darwin --bits 32'). Use "mx help image" for more detail.
+
+    Use "mx vm -help" to see what the VM options are."""
+
+    saveClassDir = join(env.vmdir, 'inspected_classes')
+    maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
+    vmArgs = ['-XX:SaveClassDir=' + saveClassDir, '-XX:+TrapOnError'] + maxvmOptions
+    insArgs = ['-vmdir=' + env.vmdir]
+    if not isdir(saveClassDir):
+        os.makedirs(saveClassDir)
+    sysProps = []
+    insCP = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg.startswith('-XX:LogFile='):
+            logFile = arg.split('=', 1)[1]
+            vmArgs += [arg]
+            os.environ['TELE_LOG_FILE'] = 'tele-' + logFile
+        elif arg in ['-cp', '-classpath']:
+            vmArgs += [arg, args[i + 1]]
+            insCP += [args[i + 1]]
+            i += 1
+        elif arg == '-jar':
+            vmArgs += ['-jar', args[i + 1]]
+            insCP += [args[i + 1]]
+            i += 1
+        elif arg in ['--platform', '--cpu', '--isa', '--os', '--endianness', '--bits', '--page', '--nsig']:
+            name = arg.lstrip('-')
+            i += 1
+            value = args[i]
+            sysProps += ['-Dmax.' + name + '=' + value]
+        elif arg.startswith('--cp='):
+            insCP += [arg[len('--cp='):]]
+        elif arg.startswith('--'):
+            # chomp leading '-'
+            insArgs += [arg[1:]]
+        elif arg.startswith('-XX:SaveClassDir='):
+            vmArgs += [arg]
+            saveClassDir = arg.split('=', 1)[1]
+            if not isdir(saveClassDir):
+                os.makedirs(saveClassDir)
+        elif arg.startswith('-'):
+            vmArgs += [arg]
+        else:
+            # This is the main class argument; copy it and any following
+            # arguments to the VM verbatim
+            vmArgs += args[i:]
+            break
+        i += 1
+    
+    insCP += [saveClassDir]
+    insCP = pathsep.join(insCP)
+    insArgs += ['-cp=' + insCP]
+    
+    cmd = env.format_java_cmd(sysProps + ['-cp', env.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+                              insArgs + ['-a=' + ' '.join(vmArgs)])
+    
+    if not env.remote and env.os == 'darwin':
+        # The -E option propagates the environment variables into the sudo process
+        env.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
+    else:
+        env.run(cmd)
 
 def jnigen(env, args):
     """(re)generate content in JniFunctions.java from JniFunctionsSource.java
@@ -416,10 +560,98 @@ def jttgen(env, args):
     Run the JavaTester to update the JavaTesterRunScheme.java and JavaTesterTests.java
     files in the com.sun.max.vm.jtrun.all package."""
 
-    testDir = join(env.maxine_dir, 'com.oracle.max.vm', 'test')
+    testDir = join(env.maxine_home, 'com.oracle.max.vm', 'test')
     tests = [join('jtt', name) for name in os.listdir(join(testDir, 'jtt')) if name != 'hotspot' and name != 'fail']
     return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
                          '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
+
+def makejdk(env, args):
+    """create a JDK directory based on the Maxine VM
+
+    Create a JDK directory by replicating the file structure of $JAVA_HOME
+    and replacing the 'java' executable with the Maxine VM
+    executable. This produces a Maxine VM based JDK for applications
+    (such as NetBeans) which expect a certain directory structure
+    and executable names in a JDK installation."""
+
+    if env.os == 'darwin':
+        env.log('mx makejdk is not supported on Darwin')
+        env.abort(1)
+
+    if len(args) == 0:
+        maxjdk = join(env.maxine_home, 'maxjdk')
+    else:
+        maxjdk = args[0]
+        if maxjdk[0] != '/':
+            maxjdk = join(os.getcwd, args[0])
+
+    if exists(maxjdk):
+        env.log('The destination directory already exists -- it will be deleted')
+        shutil.rmtree(maxjdk)
+
+    if not isdir(env.java_home):
+        env.log(env.java_home + " does not exist or is not a directory")
+        env.abort(1)
+        
+    env.log('Replicating ' + env.java_home + ' in ' + maxjdk + '...')
+    shutil.copytree(env.java_home, maxjdk)
+
+    for f in os.listdir(env.vmdir):
+        if isfile(f):
+            shutil.copy(join(env.vmdir, f), join(maxjdk, 'bin'))
+            shutil.copy(join(env.vmdir, f), join(maxjdk, 'jre', 'bin'))
+                
+    os.unlink(join(maxjdk, 'bin', 'java'))
+    os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
+    if (env.os == 'windows'):
+        shutil.copy(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
+        shutil.copy(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
+    else:
+        os.symlink(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
+        os.symlink(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
+
+    env.log('Created Maxine based JDK in ' + maxjdk)
+
+def methodtree(env, args):
+    """print the causality spanning-tree of the method graph in the boot image
+
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given method is (or isn't) in the image. This is useful when
+    trying to reduce the size of the image.
+
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+
+    Use "mx methodtree -help" to see what other options this command accepts."""
+
+    env.run_java(['-cp', env.classpath(), 'com.sun.max.vm.hosted.BootImageMethodTree', '-in=' + join(env.vmdir, 'maxine.method.tree')] + args)
+
+def nm(env, args):
+    """print the contents of a boot image
+
+    Print the contents of a boot image in a textual form.
+    If not specified, the following path will be used for the boot image file:
+
+        {0}
+
+    Use "mx nm -help" to see what other options this command accepts."""
+
+    env.run_java(['-cp', env.classpath(), 'com.sun.max.vm.hosted.BootImagePrinter'] + args + [join(env.vmdir, 'maxine.vm')])
+
+def objecttree(env, args):
+    """print the causality spanning-tree of the object graph in the boot image
+
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given object is in the image. This is useful when trying to reduce
+    the size of the image.
+
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+
+    Use "mx objecttree -help" to see what other options this command accepts."""
+
+    env.run_java(['-cp', env.classpath(), 'com.sun.max.vm.hosted.BootImageObjectTree', '-in=' + join(env.vmdir, 'maxine.object.tree')] + args)
+
 
 def olc(env, args):
     """offline compile a list of methods
@@ -437,6 +669,10 @@ def olc(env, args):
 
     env.run_java(['-cp', env.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
+def projects(env, args):
+    """show all project properties derived from the projects.properties files"""
+    env.log(env.run_jmax(['properties'] + args))
+
 def t1x(env, args):
     """alias for "mx olc -c=T1X ..." """
     olc(env, ['-c=T1X'] + args)
@@ -449,6 +685,37 @@ def t1xgen(env, args):
     The exit code is non-zero if the auto-generated part of T1XTemplateSource.java was modified."""
 
     return env.run_java(['-cp', env.classpath('com.oracle.max.vm.ext.t1x'), 'com.oracle.max.vm.ext.t1x.T1XTemplateGenerator'])
+
+def test(env, args):
+    """run some or all of the Maxine tests
+
+    The Maxine sources include a variety of tests that can be run by a
+    special launcher. These include JUnit tests, VM micro tests, certain
+    benchmark suites and output comparison tests, amongst others.
+
+    Use "mx test -help" to see what other options this command accepts."""
+    maxineTesterDir = join(env.maxine_home, 'maxine-tester')
+    if isdir(maxineTesterDir):
+        for root, _, files in os.walk(maxineTesterDir):
+            for name in files:
+                if name.rsplit(', ', 1) in ['stdout', 'stderr', 'passed', 'failed', 'command']:
+                    os.remove(join(root, name))
+    else:
+        os.mkdir(maxineTesterDir)
+    
+    class Tee:
+        def __init__(self, f):
+            self.f = f
+        def eat(self, line):
+            env.log(line.rstrip())
+            self.f.write(line)
+    
+    env.init_java()
+    console = join(maxineTesterDir, 'console')
+    with open(console, 'w', 0) as f:
+        tee = Tee(f)
+        env.run_java(['-cp', env.classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
+                      '-refvm=' + env.java, '-refvm-args=' + ' '.join(env.java_args)] + args, out=tee.eat, err=tee.eat)
 
 def verify(env, args):
     """verifies a set of methods using the Maxine bytecode verifier
@@ -465,6 +732,18 @@ def verify(env, args):
     {0}"""
 
     env.run_java(['-cp', env.classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
+            
+def vm(env, args):
+    """launch the Maxine VM
+
+    Run the Maxine VM with the given options and arguments.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line.
+
+    Use "mx vm -help" to see what other options this command accepts."""
+
+    maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
+    env.run([join(env.vmdir, 'maxvm')] + maxvmOptions + args)
             
 _patternHelp="""
     A pattern is a class name pattern followed by an optional method name
@@ -504,8 +783,13 @@ _patternHelp="""
     whose name contains an exclusion string (the exclusion specification minus the
     leading "!") is excluded."""
 
+def _vm_image(env):
+    return join(env.vmdir, 'maxine.vm')
+    
 # Table of commands in alphabetical order.
-# Keys are command names, value are lists: [<function>, <usage msg>, <args to function doc string>...]
+# Keys are command names, value are lists: [<function>, <usage msg>, <format args to doc string of function>...]
+# If any of the format args are instances of Callable, then they are called with an 'env' are before being
+# used in the call to str.format().  
 # Extensions should update this table directly
 table = {
     'build': [build, '[options] projects...'],
@@ -516,13 +800,24 @@ table = {
     'configs': [configs, ''],
     'copycheck': [copycheck, ''],
     'eclipseprojects': [eclipseprojects, ''],
+    'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
+    'hcfdis': [hcfdis, '[options] files...'],
+    'helloworld': [helloworld, '[VM options]'],
     'help': [help_, '[command]'],
-    'image': [image, '[options] classes|packages...'],
+    'image': [image, '[options] classes|packages...', _configs_msg],
+    'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
     'jnigen': [jnigen, ''],
     'jttgen': [jttgen, ''],
+    'makejdk': [makejdk, '[<destination directory>]'],
+    'methodtree': [methodtree, '[options]'],
+    'nm': [nm, '[options] [boot image file]', _vm_image],
+    'objecttree': [objecttree, '[options]'],
     'olc': [olc, '[options] patterns...', _patternHelp],
+    'projects': [projects, '', _patternHelp],
     't1x': [t1x, '[options] patterns...'],
     't1xgen': [t1xgen, ''],
-    'verify': [verify, '[options] patterns...', _patternHelp]
+    'test': [test, '[options]'],
+    'verify': [verify, '[options] patterns...', _patternHelp],
+    'vm': [vm, '[options] [class | -jar jarfile]  [args...]']
 }

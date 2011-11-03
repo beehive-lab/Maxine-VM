@@ -27,8 +27,8 @@ import com.sun.cri.ci.*;
 
 public abstract class FloatArithmeticNode extends ArithmeticNode {
 
-    public FloatArithmeticNode(CiKind kind, int opcode, ValueNode x, ValueNode y, boolean isStrictFP) {
-        super(kind, opcode, x, y, isStrictFP);
+    public FloatArithmeticNode(CiKind kind, ValueNode x, ValueNode y, boolean isStrictFP) {
+        super(kind, x, y, isStrictFP);
     }
 
 }

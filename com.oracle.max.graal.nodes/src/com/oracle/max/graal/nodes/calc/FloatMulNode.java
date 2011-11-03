@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "*")
-public final class FloatMulNode extends FloatArithmeticNode implements Canonicalizable {
+public final class FloatMulNode extends FloatArithmeticNode implements Canonicalizable, LIRLowerable {
 
     public FloatMulNode(CiKind kind, ValueNode x, ValueNode y, boolean isStrictFP) {
-        super(kind, kind == CiKind.Double ? Bytecodes.DMUL : Bytecodes.FMUL, x, y, isStrictFP);
+        super(kind, x, y, isStrictFP);
     }
 
     @Override
@@ -51,16 +50,23 @@ public final class FloatMulNode extends FloatArithmeticNode implements Canonical
             if (kind == CiKind.Float) {
                 float c = y().asConstant().asFloat();
                 if (c == 0.0f) {
+                    // TODO(cwi) I think -0.0f is handled wrongly here!
                     return ConstantNode.forFloat(0.0f, graph());
                 }
             } else {
                 assert kind == CiKind.Double;
                 double c = y().asConstant().asDouble();
                 if (c == 0.0) {
+                    // TODO(cwi) I think -0.0d is handled wrongly here!
                     return ConstantNode.forDouble(0.0, graph());
                 }
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitMul(gen.operand(x()), gen.operand(y())));
     }
 }

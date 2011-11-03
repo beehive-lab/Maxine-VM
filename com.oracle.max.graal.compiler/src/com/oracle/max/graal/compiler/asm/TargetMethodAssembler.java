@@ -33,16 +33,18 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class TargetMethodAssembler {
-    private final GraalContext context;
+    public final GraalCompilation compilation;
     public final AbstractAssembler asm;
     public final CiTargetMethod targetMethod;
+    public final CiTarget target;
     private List<ExceptionInfo> exceptionInfoList;
     private int lastSafepointPos;
 
-    public TargetMethodAssembler(GraalContext context, AbstractAssembler asm) {
-        this.context = context;
+    public TargetMethodAssembler(GraalCompilation compilation, AbstractAssembler asm) {
+        this.compilation = compilation;
         this.asm = asm;
         this.targetMethod = new CiTargetMethod();
+        this.target = compilation.compiler.target;
     }
 
     public void setFrameSize(int frameSize) {
@@ -57,25 +59,24 @@ public class TargetMethodAssembler {
         targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
     }
 
-    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {
+    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, boolean isStub) {
         // Install code, data and frame size
         targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
-        targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if they exist
         if (exceptionInfoList != null) {
             for (ExceptionInfo ei : exceptionInfoList) {
                 int codeOffset = ei.codeOffset;
-                targetMethod.recordExceptionHandler(codeOffset, -1, 0, ei.exceptionEdge.blockEntryPco, -1, null);
+                targetMethod.recordExceptionHandler(codeOffset, -1, 0, ei.exceptionEdge.label().position(), -1, null);
             }
         }
 
         if (GraalOptions.Meter) {
-            context.metrics.TargetMethods++;
-            context.metrics.CodeBytesEmitted += targetMethod.targetCodeSize();
-            context.metrics.SafepointsEmitted += targetMethod.safepoints.size();
-            context.metrics.DataPatches += targetMethod.dataReferences.size();
-            context.metrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
+            compilation.compiler.context.metrics.TargetMethods++;
+            compilation.compiler.context.metrics.CodeBytesEmitted += targetMethod.targetCodeSize();
+            compilation.compiler.context.metrics.SafepointsEmitted += targetMethod.safepoints.size();
+            compilation.compiler.context.metrics.DataPatches += targetMethod.dataReferences.size();
+            compilation.compiler.context.metrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
         if (GraalOptions.PrintAssembly && !TTY.isSuppressed() && !isStub) {
@@ -180,5 +181,72 @@ public class TargetMethodAssembler {
 
     public int lastSafepointPos() {
         return lastSafepointPos;
+    }
+
+
+    public CiRegister asIntReg(CiValue value) {
+        assert value.kind == CiKind.Int || value.kind == CiKind.Jsr;
+        return asRegister(value);
+    }
+
+    public CiRegister asLongReg(CiValue value) {
+        assert value.kind == CiKind.Long;
+        return asRegister(value);
+    }
+
+    public CiRegister asObjectReg(CiValue value) {
+        assert value.kind == CiKind.Object;
+        return asRegister(value);
+    }
+
+    public CiRegister asFloatReg(CiValue value) {
+        assert value.kind == CiKind.Float;
+        return asRegister(value);
+    }
+
+    public CiRegister asDoubleReg(CiValue value) {
+        assert value.kind == CiKind.Double;
+        return asRegister(value);
+    }
+
+    public CiRegister asRegister(CiValue value) {
+        assert value.isRegister();
+        return value.asRegister();
+    }
+
+    /**
+     * Returns the integer value of any constants that can be represented by a 32-bit integer value,
+     * including long constants that fit into the 32-bit range.
+     */
+    public int asIntConst(CiValue value) {
+        assert (value.kind.stackKind() == CiKind.Int || value.kind == CiKind.Jsr || value.kind == CiKind.Long) && value.isConstant();
+        long c = ((CiConstant) value).asLong();
+        if (!(NumUtil.isInt(c))) {
+            throw Util.shouldNotReachHere();
+        }
+        return (int) c;
+    }
+
+    /**
+     * Returns the address of a float constant that is embedded as a data references into the code.
+     */
+    public CiAddress asFloatConstRef(CiValue value) {
+        assert value.kind == CiKind.Float && value.isConstant();
+        return recordDataReferenceInCode((CiConstant) value);
+    }
+
+    /**
+     * Returns the address of a double constant that is embedded as a data references into the code.
+     */
+    public CiAddress asDoubleConstRef(CiValue value) {
+        assert value.kind == CiKind.Double && value.isConstant();
+        return recordDataReferenceInCode((CiConstant) value);
+    }
+
+    public CiAddress asAddress(CiValue value) {
+        if (value.isStackSlot()) {
+            return compilation.frameMap().toStackAddress((CiStackSlot) value);
+        }
+        return (CiAddress) value;
     }
 }

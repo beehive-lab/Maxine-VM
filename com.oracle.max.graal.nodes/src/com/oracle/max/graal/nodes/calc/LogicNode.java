@@ -23,7 +23,6 @@
 package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -33,16 +32,10 @@ public abstract class LogicNode extends BinaryNode {
 
     /**
      * Constructs a new logic operation node.
-     * @param opcode the opcode of the logic operation
      * @param x the first input into this node
      * @param y the second input into this node
      */
-    public LogicNode(CiKind kind, int opcode, ValueNode x, ValueNode y) {
-        super(kind, opcode, x, y);
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitLogic(this);
+    public LogicNode(CiKind kind, ValueNode x, ValueNode y) {
+        super(kind, x, y);
     }
 }

@@ -100,7 +100,7 @@ public abstract class ControlSplitNode extends FixedNode {
         Map<Object, Object> properties = super.getDebugProperties();
         StringBuilder str = new StringBuilder();
         for (int i = 0; i < branchProbability.length; i++) {
-            str.append(i == 0 ? "" : ", ").append(String.format("%7.5f", branchProbability[i]));
+            str.append(i == 0 ? "" : ", ").append(String.format(Locale.ENGLISH, "%7.5f", branchProbability[i]));
         }
         properties.put("branchProbability", str.toString());
         return properties;

@@ -38,7 +38,7 @@ import com.oracle.max.graal.nodes.java.*;
 public final class LIRBlock {
 
     public final Label label;
-    private LIRList lir;
+    private List<LIRInstruction> lir;
     private final int blockID;
     private FrameState lastState;
     private List<Node> instructions = new ArrayList<Node>(4);
@@ -78,7 +78,6 @@ public final class LIRBlock {
 
     private int firstLirInstructionID;
     private int lastLirInstructionID;
-    public int blockEntryPco;
 
     public LIRBlock(Label label, LIRDebugInfo debugInfo) {
         this.label = label;
@@ -130,16 +129,12 @@ public final class LIRBlock {
 
     public int loopDepth;
 
-    public LIRList lir() {
+    public List<LIRInstruction> lir() {
         return lir;
     }
 
-    public void setLir(LIRList lir) {
+    public void setLir(List<LIRInstruction> lir) {
         this.lir = lir;
-    }
-
-    public void setBlockEntryPco(int codePos) {
-        this.blockEntryPco = codePos;
     }
 
     public void printWithoutPhis(LogStream out) {
@@ -281,11 +276,10 @@ public final class LIRBlock {
     }
 
     public boolean endsWithJump() {
-        List<LIRInstruction> instructionsList = lir.instructionsList();
-        if (instructionsList.size() == 0) {
+        if (lir.size() == 0) {
             return false;
         }
-        LIRInstruction lirInstruction = instructionsList.get(instructionsList.size() - 1);
+        LIRInstruction lirInstruction = lir.get(lir.size() - 1);
         if (lirInstruction instanceof LIRXirInstruction) {
             LIRXirInstruction lirXirInstruction = (LIRXirInstruction) lirInstruction;
             return (lirXirInstruction.falseSuccessor() != null) && (lirXirInstruction.trueSuccessor() != null);

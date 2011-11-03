@@ -350,7 +350,7 @@ public final class LinearScan {
      */
     boolean hasCall(int opId) {
         assert isEven(opId) : "opId not even";
-        return instructionForId(opId).hasCall;
+        return instructionForId(opId).hasCall();
     }
 
     /**
@@ -368,7 +368,7 @@ public final class LinearScan {
 
             case NoSpillStore:
                 assert defPos <= interval.spillDefinitionPos() : "positions are processed in reverse order when intervals are created";
-                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == LegacyOpcode.Xir) {
+                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == StandardOpcode.XIR) {
                     // second definition found, so no spill optimization possible for this interval
                     interval.setSpillState(SpillState.NoOptimization);
                 } else {
@@ -454,9 +454,8 @@ public final class LinearScan {
         int numBlocks = blockCount();
         for (int i = 0; i < numBlocks; i++) {
             LIRBlock block = blockAt(i);
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
             int numInst = instructions.size();
-            boolean hasNew = false;
 
             // iterate all instructions of the block. skip the first because it is always a label
             for (int j = 1; j < numInst; j++) {
@@ -467,16 +466,15 @@ public final class LinearScan {
                     CiValue resultOperand = op.result();
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
-                    assert op.code == LegacyOpcode.Move : "only moves can have a opId of -1";
+                    assert op.code == StandardOpcode.MOVE : "only moves can have a opId of -1";
                     assert resultOperand.isVariable() : "LinearScan inserts only moves to variables";
 
-                    LIRMove op1 = (LIRMove) op;
                     Interval curInterval = intervalFor(resultOperand);
 
                     if (!curInterval.location().isRegister() && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("eliminating move from interval %d to %d", operandNumber(op1.operand(0)), operandNumber(op1.result()));
+                            TTY.println("eliminating move from interval %d to %d", operandNumber(op.input(0)), operandNumber(op.result()));
                         }
                         instructions.set(j, null); // null-instructions are deleted by assignRegNum
                     }
@@ -487,10 +485,9 @@ public final class LinearScan {
                     assert interval == Interval.EndMarker || (interval.isSplitParent() && interval.spillState() == SpillState.StoreAtDefinition) : "invalid interval";
 
                     while (interval != Interval.EndMarker && interval.spillDefinitionPos() == opId) {
-                        if (!hasNew) {
+                        if (!insertionBuffer.initialized()) {
                             // prepare insertion buffer (appended when all instructions of the block are processed)
                             insertionBuffer.init(block.lir());
-                            hasNew = true;
                         }
 
                         CiValue fromLocation = interval.location();
@@ -499,7 +496,7 @@ public final class LinearScan {
                         assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation + " toLocation=" + toLocation + " spillState=" + interval.spillState();
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
-                        insertionBuffer.move(j, fromLocation, toLocation, null);
+                        insertionBuffer.move(j, fromLocation, toLocation);
 
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
                             CiStackSlot slot = interval.spillSlot();
@@ -512,8 +509,8 @@ public final class LinearScan {
                 }
             } // end of instruction iteration
 
-            if (hasNew) {
-                block.lir().append(insertionBuffer);
+            if (insertionBuffer.initialized()) {
+                insertionBuffer.finish();
             }
         } // end of block iteration
 
@@ -551,7 +548,7 @@ public final class LinearScan {
         int numBlocks = blockCount();
         int numInstructions = 0;
         for (int i = 0; i < numBlocks; i++) {
-            numInstructions += blockAt(i).lir().instructionsList().size();
+            numInstructions += blockAt(i).lir().size();
         }
 
         // initialize with correct length
@@ -564,7 +561,7 @@ public final class LinearScan {
         for (int i = 0; i < numBlocks; i++) {
             LIRBlock block = blockAt(i);
             block.setFirstLirInstructionId(opId);
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
 
             int numInst = instructions.size();
             for (int j = 0; j < numInst; j++) {
@@ -599,7 +596,7 @@ public final class LinearScan {
             final BitMap liveGen = new BitMap(liveSize);
             final BitMap liveKill = new BitMap(liveSize);
 
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
             int numInst = instructions.size();
 
             // iterate all instructions of the block. skip the first because it is always a label
@@ -626,7 +623,6 @@ public final class LinearScan {
                     }
 
                     if (GraalOptions.DetailedAsserts) {
-                        assert operand.isVariableOrRegister() : "visitor should only return register operands";
                         verifyInput(block, liveKill, operand);
                     }
                 }
@@ -669,7 +665,6 @@ public final class LinearScan {
                     }
 
                     if (GraalOptions.DetailedAsserts) {
-                        assert operand.isVariableOrRegister() : "visitor should only return register operands";
                         verifyTemp(liveKill, operand);
                     }
                 }
@@ -688,7 +683,6 @@ public final class LinearScan {
                     }
 
                     if (GraalOptions.DetailedAsserts) {
-                        assert operand.isVariableOrRegister() : "visitor should only return register operands";
                         // fixed intervals are never live at block boundaries, so
                         // they need not be processed in live sets
                         // process them only in debug mode so that this can be checked
@@ -715,7 +709,7 @@ public final class LinearScan {
         // fixed intervals are never live at block boundaries, so
         // they need not be processed in live sets
         // process them only in debug mode so that this can be checked
-        if (!operand.isVariable()) {
+        if (operand.isRegister()) {
             if (isProcessed(operand)) {
                 liveKill.set(operandNumber(operand));
             }
@@ -728,7 +722,7 @@ public final class LinearScan {
         // this is checked by these assertions to be sure about it.
         // the entry block may have incoming
         // values in registers, which is ok.
-        if (!operand.isVariable() && block != ir.startBlock()) {
+        if (operand.isRegister() && block != ir.startBlock()) {
             if (isProcessed(operand)) {
                 assert liveKill.get(operandNumber(operand)) : "using fixed register that is not defined in this block";
             }
@@ -849,7 +843,7 @@ public final class LinearScan {
                     LIRBlock block = blockAt(j);
                     if (block.liveGen.get(operandNum)) {
                         TTY.println("  used in block B%d", block.blockID());
-                        for (LIRInstruction ins : block.lir().instructionsList()) {
+                        for (LIRInstruction ins : block.lir()) {
                             TTY.println(ins.id() + ": " + ins.result() + " " + ins.toString());
                             LIRDebugInfo info = ins.info;
                             if (info != null) {
@@ -865,7 +859,7 @@ public final class LinearScan {
                     }
                     if (block.liveKill.get(operandNum)) {
                         TTY.println("  defined in block B%d", block.blockID());
-                        for (LIRInstruction ins : block.lir().instructionsList()) {
+                        for (LIRInstruction ins : block.lir()) {
                             TTY.println(ins.id() + ": " + ins.result() + " " + ins.toString());
                         }
                     }
@@ -1004,9 +998,8 @@ public final class LinearScan {
      * Determines the register priority for an instruction's output/result operand.
      */
     RegisterPriority registerPriorityOfOutputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LegacyOpcode.Move) {
-            LIRMove move = (LIRMove) op;
-            CiValue res = move.result();
+        if (op.code == StandardOpcode.MOVE) {
+            CiValue res = op.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
             if (resultInMemory) {
@@ -1014,7 +1007,7 @@ public final class LinearScan {
                 // This interval will always get a stack slot first, so return noUse.
                 return RegisterPriority.None;
 
-            } else if (move.operand(0).isStackSlot()) {
+            } else if (op.input(0).isStackSlot()) {
                 // method argument (condition must be equal to handleMethodArguments)
                 return RegisterPriority.None;
 
@@ -1033,10 +1026,9 @@ public final class LinearScan {
     /**
      * Determines the priority which with an instruction's input operand will be allocated a register.
      */
-    RegisterPriority registerPriorityOfInputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LegacyOpcode.Move) {
-            LIRMove move = (LIRMove) op;
-            CiValue res = move.result();
+    RegisterPriority registerPriorityOfInputOperand(LIRInstruction op, int operandIndex, CiValue operand) {
+        if (op.code == StandardOpcode.MOVE) {
+            CiValue res = op.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
             if (resultInMemory) {
@@ -1044,21 +1036,16 @@ public final class LinearScan {
                 // To avoid moves from stack to stack (not allowed) force the input operand to a register
                 return RegisterPriority.MustHaveRegister;
 
-            } else if (move.operand(0).isVariableOrRegister() && move.result().isVariableOrRegister()) {
+            } else if (op.input(0).isVariableOrRegister() && op.result().isVariableOrRegister()) {
                 // The input operand is not forced to a register (moves from stack to register are allowed),
                 // but it is faster if the input operand is in a register
                 return RegisterPriority.ShouldHaveRegister;
             }
         }
 
-        // optimizations for input operands that are allowed to be on the stack in some cases
-        if (op.code instanceof LIROpcode.AllOperandsCanBeMemory) {
+        if (op.inputCanBeMemory(operandIndex)) {
             return RegisterPriority.ShouldHaveRegister;
         }
-        if (op.code instanceof LIROpcode.SecondOperandCanBeMemory && op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-            return RegisterPriority.ShouldHaveRegister;
-        }
-
         // all other operands require a register
         return RegisterPriority.MustHaveRegister;
     }
@@ -1070,9 +1057,9 @@ public final class LinearScan {
      * spill slot.
      */
     void handleMethodArguments(LIRInstruction op) {
-        if (op.code == LegacyOpcode.Move) {
-            if (op.operand(0).isStackSlot()) {
-                CiStackSlot slot = (CiStackSlot) op.operand(0);
+        if (op.code == StandardOpcode.MOVE) {
+            if (op.input(0).isStackSlot()) {
+                CiStackSlot slot = (CiStackSlot) op.input(0);
                 if (GraalOptions.DetailedAsserts) {
                     int argSlots = compilation.method.signature().argumentSlots(!isStatic(compilation.method.accessFlags()));
                     assert slot.index() >= 0 && slot.index() < argSlots;
@@ -1097,8 +1084,9 @@ public final class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
-        if (op.code instanceof LIROpcode.FirstOperandRegisterHint) {
-            CiValue moveFrom = op.operand(0);
+        int hintOperand = op.registerHint();
+        if (hintOperand != -1) {
+            CiValue moveFrom = op.input(hintOperand);
             CiValue moveTo = op.result();
 
             if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
@@ -1110,43 +1098,6 @@ public final class LinearScan {
                         TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
                     }
                 }
-            }
-        } else if (op.code instanceof LIROpcode.SecondOperandRegisterHint) {
-            CiValue moveFrom = op.operand(1);
-            CiValue moveTo = op.result();
-
-            if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
-                Interval from = intervalFor(moveFrom);
-                Interval to = intervalFor(moveTo);
-                if (from != null && to != null) {
-                    to.setLocationHint(from);
-                    if (GraalOptions.TraceLinearScanLevel >= 4) {
-                        TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
-                    }
-                }
-            }
-        }
-
-
-        if (!(op.code instanceof LegacyOpcode)) {
-            return;
-        }
-        switch ((LegacyOpcode) op.code) {
-            case Move: {
-                CiValue moveFrom = op.operand(0);
-                CiValue moveTo = op.result();
-
-                if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
-                    Interval from = intervalFor(moveFrom);
-                    Interval to = intervalFor(moveTo);
-                    if (from != null && to != null) {
-                        to.setLocationHint(from);
-                        if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
-                        }
-                    }
-                }
-                break;
             }
         }
     }
@@ -1162,7 +1113,7 @@ public final class LinearScan {
         // iterate all blocks in reverse order
         for (int i = blockCount() - 1; i >= 0; i--) {
             LIRBlock block = blockAt(i);
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
             final int blockFrom = block.firstLirInstructionId();
             int blockTo = block.lastLirInstructionId();
 
@@ -1198,7 +1149,7 @@ public final class LinearScan {
                 final int opId = op.id();
 
                 // add a temp range for each register if operation destroys caller-save registers
-                if (op.hasCall) {
+                if (op.hasCall()) {
                     for (CiRegister r : callerSaveRegs) {
                         if (attributes(r).isAllocatable) {
                             addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
@@ -1218,32 +1169,35 @@ public final class LinearScan {
                 n = op.operandCount(LIRInstruction.OperandMode.Output);
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Output, k);
-                    assert operand.isVariableOrRegister();
-                    addDef(operand, opId, registerPriorityOfOutputOperand(op, operand), operand.kind.stackKind());
+                    if (operand.isVariableOrRegister()) {
+                        addDef(operand, opId, registerPriorityOfOutputOperand(op, operand), operand.kind.stackKind());
+                    }
                 }
 
                 n = op.operandCount(LIRInstruction.OperandMode.Temp);
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, k);
-                    assert operand.isVariableOrRegister();
-                    if (GraalOptions.TraceLinearScanLevel >= 2) {
-                        TTY.println(" temp %s tempPos %d (%s)", operand, opId, RegisterPriority.MustHaveRegister.name());
+                    if (operand.isVariableOrRegister()) {
+                        if (GraalOptions.TraceLinearScanLevel >= 2) {
+                            TTY.println(" temp %s tempPos %d (%s)", operand, opId, RegisterPriority.MustHaveRegister.name());
+                        }
+                        addTemp(operand, opId, RegisterPriority.MustHaveRegister, operand.kind.stackKind());
                     }
-                    addTemp(operand, opId, RegisterPriority.MustHaveRegister, operand.kind.stackKind());
                 }
 
                 // visit uses (input operands)
                 n = op.operandCount(LIRInstruction.OperandMode.Input);
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
-                    assert operand.isVariableOrRegister();
-                    RegisterPriority p = registerPriorityOfInputOperand(op, operand);
-                    Interval interval = addUse(operand, blockFrom, opId, p, null);
-                    if (interval != null && op instanceof LIRXirInstruction) {
-                        Range range = interval.first();
-                        // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
-                        if (range.to == opId) {
-                            range.to++;
+                    if (operand.isVariableOrRegister()) {
+                        RegisterPriority p = registerPriorityOfInputOperand(op, k, operand);
+                        Interval interval = addUse(operand, blockFrom, opId, p, null);
+                        if (interval != null && op instanceof LIRXirInstruction) {
+                            Range range = interval.first();
+                            // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
+                            if (range.to == opId) {
+                                range.to++;
+                            }
                         }
                     }
                 }
@@ -1547,12 +1501,11 @@ public final class LinearScan {
                 TTY.println("inserting moves at end of fromBlock B%d", fromBlock.blockID());
             }
 
-            List<LIRInstruction> instructions = fromBlock.lir().instructionsList();
+            List<LIRInstruction> instructions = fromBlock.lir();
             LIRInstruction instr = instructions.get(instructions.size() - 1);
             if (instr instanceof LIRBranch) {
-                LIRBranch branch = (LIRBranch) instr;
                 // insert moves before branch
-                assert branch.cond == null : "block does not end with an unconditional jump";
+                assert instr.code == StandardOpcode.JUMP : "block does not end with an unconditional jump";
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 2);
             } else {
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 1);
@@ -1564,7 +1517,7 @@ public final class LinearScan {
             }
 
             if (GraalOptions.DetailedAsserts) {
-                assert fromBlock.lir().instructionsList().get(0) instanceof LIRLabel : "block does not start with a label";
+                assert fromBlock.lir().get(0).code == StandardOpcode.LABEL : "block does not start with a label";
 
                 // because the number of predecessor edges matches the number of
                 // successor edges, blocks which are reached by switch statements
@@ -1595,10 +1548,9 @@ public final class LinearScan {
 
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1) {
-                List<LIRInstruction> instructions = block.lir().instructionsList();
-                assert instructions.get(0) instanceof LIRLabel : "block must start with label";
-                assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
-                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block with successor must end with unconditional branch";
+                List<LIRInstruction> instructions = block.lir();
+                assert instructions.get(0).code == StandardOpcode.LABEL : "block must start with label";
+                assert instructions.get(instructions.size() - 1).code == StandardOpcode.JUMP : "block with successor must end with unconditional jump";
 
                 // check if block is empty (only label and branch)
                 if (instructions.size() == 2) {
@@ -1721,12 +1673,12 @@ public final class LinearScan {
                     // check if spill moves could have been appended at the end of this block, but
                     // before the branch instruction. So the split child information for this branch would
                     // be incorrect.
-                    LIRInstruction instr = block.lir().instructionsList().get(block.lir().instructionsList().size() - 1);
+                    LIRInstruction instr = block.lir().get(block.lir().size() - 1);
                     if (instr instanceof LIRBranch) {
                         LIRBranch branch = (LIRBranch) instr;
                         if (block.liveOut.get(operandNumber(operand))) {
-                            assert branch.cond == null : "block does not end with an unconditional jump";
-                            throw new CiBailout("can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)");
+                            assert branch.code == StandardOpcode.JUMP : "block does not end with an unconditional jump";
+                            assert false : "can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)";
                         }
                     }
                 }
@@ -1807,7 +1759,7 @@ public final class LinearScan {
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
         computeMonitorOopMap(frameRefMap, info.state);
-        computeOopMap(iw, op, info, op.hasCall, frameRefMap, regRefMap);
+        computeOopMap(iw, op, info, op.hasCall(), frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
@@ -1876,7 +1828,7 @@ public final class LinearScan {
                 VirtualObjectNode obj = (VirtualObjectNode) value;
                 CiVirtualObject ciObj = virtualObjects.get(value);
                 if (ciObj == null) {
-                    ciObj = CiVirtualObject.get(obj.type(), null, value.id());
+                    ciObj = CiVirtualObject.get(obj.type(), null, virtualObjects.size());
                     virtualObjects.put(obj, ciObj);
                 }
                 return ciObj;
@@ -1899,7 +1851,7 @@ public final class LinearScan {
                         // and so the wrong operand would be returned (spill moves at block boundaries are not
                         // considered in the live ranges of intervals)
                         // Solution: use the first opId of the branch target block instead.
-                        final LIRInstruction instr = block.lir().instructionsList().get(block.lir().instructionsList().size() - 1);
+                        final LIRInstruction instr = block.lir().get(block.lir().size() - 1);
                         if (instr instanceof LIRBranch) {
                             if (block.liveOut.get(operandNumber(operand))) {
                                 tempOpId = block.suxAt(0).firstLirInstructionId();
@@ -2033,7 +1985,7 @@ public final class LinearScan {
                 int frameSize = compilation.frameMap().frameSize();
                 int frameWords = frameSize / compilation.compiler.target.spillSlotSize;
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
-                CiBitMap regRefMap = !op.hasCall ? new CiBitMap(compilation.compiler.target.arch.registerReferenceMapBitCount) : null;
+                CiBitMap regRefMap = op.hasCall() ? null : new CiBitMap(compilation.compiler.target.arch.registerReferenceMapBitCount);
                 CiFrame frame = compilation.placeholderState != null ? null : computeFrame(info.state, op.id(), frameRefMap);
                 computeOopMap(iw, op, info, frameRefMap, regRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
@@ -2077,12 +2029,9 @@ public final class LinearScan {
                 computeDebugInfo(iw, op);
             }
 
-            // make sure we haven't made the op invalid.
-            assert op.verify();
-
             // remove useless moves
-            if (op.code == LegacyOpcode.Move) {
-                CiValue src = op.operand(0);
+            if (op.code == StandardOpcode.MOVE) {
+                CiValue src = op.input(0);
                 CiValue dst = op.result();
                 if (dst == src || src.equals(dst)) {
                     // TODO: what about o.f = o.f and exceptions?
@@ -2111,7 +2060,7 @@ public final class LinearScan {
     private void assignLocations() {
         IntervalWalker iw = initComputeOopMaps();
         for (LIRBlock block : sortedBlocks) {
-            assignLocations(block.lir().instructionsList(), iw);
+            assignLocations(block.lir(), iw);
         }
     }
 
@@ -2218,7 +2167,7 @@ public final class LinearScan {
         if (GraalOptions.TraceLinearScanLevel >= 1 && !TTY.isSuppressed()) {
             TTY.println();
             TTY.println(label);
-            LIRList.printLIR(ir.linearScanOrder());
+            LIR.printLIR(ir.linearScanOrder());
             TTY.println();
         }
 
@@ -2351,7 +2300,7 @@ public final class LinearScan {
         for (int i = 0; i < blockCount(); i++) {
             LIRBlock block = blockAt(i);
 
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
 
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
