@@ -64,7 +64,7 @@ public final class RegisterFinalizerNode extends StateSplit implements Canonical
         } else {
             // if either the declared type of receiver or the holder can be assumed to have no finalizers
             if (declaredType instanceof RiResolvedType && !((RiResolvedType) declaredType).hasFinalizableSubclass()) {
-                if (graph().start().assumptions().recordNoFinalizableSubclassAssumption((RiResolvedType) declaredType)) {
+                if (tool.assumptions() != null && tool.assumptions().recordNoFinalizableSubclassAssumption((RiResolvedType) declaredType)) {
                     needsCheck = false;
                 }
             }

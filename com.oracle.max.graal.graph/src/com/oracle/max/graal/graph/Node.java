@@ -104,7 +104,7 @@ public abstract class Node implements Cloneable {
         return id;
     }
 
-    public Graph<?> graph() {
+    public Graph graph() {
         return graph;
     }
 

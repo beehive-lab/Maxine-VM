@@ -125,7 +125,7 @@ public class C1XGraal implements RuntimeCompiler {
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
-            graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
+            graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, null);
 
             c1xCompiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
             c1xCompiler.addCompilationObserver(new WordTypeRewriterPhase());

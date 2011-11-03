@@ -91,12 +91,11 @@ public class GraphvizPrinterObserver implements CompilationObserver {
         }
     }
 
-    private static void printGraph(Graph<?> graph, String name, OutputStream buffer) {
+    private static void printGraph(Graph graph, String name, OutputStream buffer) {
         GraphvizPrinter printer = new GraphvizPrinter(buffer);
         if (GraalOptions.OmitDOTFrameStates) {
             printer.addOmittedClass(FrameState.class);
         }
-        printer.addClassColor(EntryPointNode.class, "snow3");
         printer.addClassColor(LoopBeginNode.class, "skyblue");
         printer.addClassColor(LoopEndNode.class, "skyblue3");
         printer.addClassColor(UnwindNode.class, "red");

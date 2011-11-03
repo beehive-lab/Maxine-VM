@@ -167,7 +167,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
             lazyStart = true;
         }
         if (printer != null && event.getGraph() != null && event.isHIRValid()) {
-            Graph<?> graph = event.getGraph();
+            Graph graph = event.getGraph();
             printer.print(graph, event.getLabel(), true, event.getDebugObjects());
         }
         if (lazyStart) {
@@ -203,7 +203,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    public void printSingleGraph(String title, Graph<?> graph) {
+    public void printSingleGraph(String title, Graph graph) {
         openPrinter(title);
         if (printer != null) {
             printer.print(graph, title, true);

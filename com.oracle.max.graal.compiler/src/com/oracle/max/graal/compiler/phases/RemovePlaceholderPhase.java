@@ -23,7 +23,6 @@
 package com.oracle.max.graal.compiler.phases;
 
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
 public class RemovePlaceholderPhase extends Phase {
@@ -33,7 +32,7 @@ public class RemovePlaceholderPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (PlaceholderNode n : graph.getNodes(PlaceholderNode.class)) {
             n.replaceAndDelete(n.next());
         }

@@ -129,7 +129,7 @@ public abstract class ValueNode extends Node {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Graph<EntryPointNode> graph() {
-        return (Graph<EntryPointNode>) super.graph();
+    public StructuredGraph graph() {
+        return (StructuredGraph) super.graph();
     }
 }

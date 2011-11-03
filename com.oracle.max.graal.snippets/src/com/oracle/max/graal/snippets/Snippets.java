@@ -58,7 +58,7 @@ public class Snippets {
                 }
                 RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
                 GraphBuilderPhase graphBuilder = new GraphBuilderPhase(context, runtime, snippetRiMethod, null, false, true);
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                StructuredGraph graph = new StructuredGraph();
                 graphBuilder.apply(graph);
 
                 if (plotGraphs) {
@@ -72,7 +72,7 @@ public class Snippets {
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
                     invokes.add(invoke);
                 }
-                new InliningPhase(context, runtime, target, invokes).apply(graph);
+                new InliningPhase(context, runtime, target, invokes, null).apply(graph);
 
                 new SnippetIntrinsificationPhase(context, runtime).apply(graph);
 

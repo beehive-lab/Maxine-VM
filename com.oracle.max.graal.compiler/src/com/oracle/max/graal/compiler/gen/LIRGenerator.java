@@ -272,14 +272,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             if (instr instanceof StateSplit) {
                 stateAfter = ((StateSplit) instr).stateAfter();
             }
-            if (instr != instr.graph().start()) {
-                doRoot((ValueNode) instr);
-            }
+            doRoot((ValueNode) instr);
             if (stateAfter != null) {
                 lastState = stateAfter;
-                if (instr == instr.graph().start()) {
-                    checkOperands(lastState);
-                }
+                assert checkStartOperands(instr, lastState);
                 if (GraalOptions.TraceLIRGeneratorLevel >= 2) {
                     TTY.println("STATE CHANGE");
                     if (GraalOptions.TraceLIRGeneratorLevel >= 3) {
@@ -332,7 +328,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     private void setOperandsForParameters() {
         CiCallingConvention args = compilation.frameMap().incomingArguments();
-        for (LocalNode local : compilation.graph.start().locals()) {
+        for (LocalNode local : compilation.graph.getNodes(LocalNode.class)) {
             int i = local.index();
             CiValue src = args.locations[i];
             CiVariable dest = emitMove(src);
@@ -342,15 +338,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    private boolean checkOperands(FrameState fs) {
-        CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
-        int slot = 0;
-        for (CiKind kind : arguments) {
-            LocalNode local = (LocalNode) fs.localAt(slot);
-            assert local != null && local.kind == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
-            slot++;
-            if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+    private boolean checkStartOperands(Node node, FrameState fs) {
+        if (node == ((StructuredGraph) node.graph()).start()) {
+            CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
+            int slot = 0;
+            for (CiKind kind : arguments) {
+                LocalNode local = (LocalNode) fs.localAt(slot);
+                assert local != null && local.kind == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
                 slot++;
+                if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+                    slot++;
+                }
             }
         }
         return true;

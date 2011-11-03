@@ -20,39 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.graph.test;
 
-import java.util.*;
+import com.oracle.max.graal.graph.*;
 
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
-public class EntryPointNode extends BeginNode {
-    private final RiRuntime runtime;
-    private final CiAssumptions assumptions = new CiAssumptions();
+public class TestNode extends Node implements Node.IterableNodeType {
+    @Data private String name;
 
-    public EntryPointNode() {
-        this(null);
+    public TestNode(String name) {
+        this.name = name;
     }
 
-    public EntryPointNode(RiRuntime runtime) {
-        this.runtime = runtime;
-    }
 
-    @Override
-    public void delete() {
-        throw new UnsupportedOperationException();
-    }
-
-    public Collection<LocalNode> locals() {
-        return ValueUtil.filter(this.usages(), LocalNode.class);
-    }
-
-    public RiRuntime runtime() {
-        return runtime;
-    }
-
-    public CiAssumptions assumptions() {
-        return assumptions;
+    public String getName() {
+        return name;
     }
 }
