@@ -163,7 +163,8 @@ public class IdentifyBlocksPhase extends Phase {
         assert nodeToBlock.get(n) == null;
         nodeToBlock.set(n, b);
 
-        if (n == n.graph().start()) {
+        if (n instanceof BeginNode && n.predecessor() == null) {
+            assert startBlock == null;
             startBlock = b;
         }
 
@@ -196,7 +197,7 @@ public class IdentifyBlocksPhase extends Phase {
     }
 
     public static boolean isFixed(Node n) {
-        return n != null && ((n instanceof FixedNode) || n == n.graph().start()) && !(n instanceof AccessNode && n.predecessor() == null);
+        return n != null && n instanceof FixedNode && !(n instanceof AccessNode && n.predecessor() == null);
     }
 
     public static boolean isBlockEnd(Node n) {
@@ -240,7 +241,7 @@ public class IdentifyBlocksPhase extends Phase {
                     }
                     if (currentNode.predecessor() == null) {
                         // At a merge node => stop iteration.
-                        assert currentNode instanceof MergeNode || currentNode == currentNode.graph().start() : currentNode;
+                        assert currentNode instanceof MergeNode || currentNode == ((StructuredGraph) currentNode.graph()).start() : currentNode;
                         break;
                     }
                     prev = currentNode;

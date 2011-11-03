@@ -43,5 +43,5 @@ public interface GraalIntrinsicImpl extends IntrinsicImpl {
      * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
      * @return The instruction that should be returned by the intrinsic, or null if no result should be returned.
      */
-    ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args);
+    ValueNode createHIR(RiRuntime runtime, Graph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args);
 }

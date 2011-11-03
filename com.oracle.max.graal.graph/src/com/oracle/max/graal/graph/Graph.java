@@ -30,7 +30,7 @@ import com.oracle.max.graal.graph.Node.*;
  * This class is a graph container, it contains the set of nodes that belong to this graph.
  * The graph contains at least one distinguished node : the {@link #start() start} node.
  */
-public class Graph<S extends Node> {
+public class Graph {
 
     private final String name;
 
@@ -40,7 +40,6 @@ public class Graph<S extends Node> {
     // they contain the first and last pointer to a linked list of all nodes with this type.
     private final ArrayList<Node> nodeCacheFirst;
     private final ArrayList<Node> nodeCacheLast;
-    private final S start;
     private int deletedNodeCount;
     private int mark;
 
@@ -79,8 +78,8 @@ public class Graph<S extends Node> {
      * Creates a new Graph containing only one node : the provided {@code start} node.
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(S start) {
-        this(null, start);
+    public Graph() {
+        this(null);
     }
 
     /**
@@ -88,21 +87,16 @@ public class Graph<S extends Node> {
      * @param name the name of the graph, used for debugging purposes
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(String name, S start) {
+    public Graph(String name) {
         nodes = new ArrayList<Node>(32);
         nodeCacheFirst = new ArrayList<Node>(NodeClass.cacheSize());
         nodeCacheLast = new ArrayList<Node>(NodeClass.cacheSize());
-        this.start = add(start);
         this.name = name;
     }
 
     @Override
     public String toString() {
         return name == null ? "Graph" : "Graph " + name;
-    }
-
-    public S start() {
-        return start;
     }
 
     /**

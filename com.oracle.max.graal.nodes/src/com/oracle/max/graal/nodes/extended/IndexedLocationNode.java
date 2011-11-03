@@ -54,7 +54,7 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
         this.indexScalingEnabled = enable;
     }
 
-    public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph<?> graph) {
+    public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph) {
         return graph.unique(new IndexedLocationNode(identity, kind, index, displacement));
     }
 

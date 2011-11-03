@@ -27,5 +27,5 @@ import com.sun.cri.ri.*;
 
 
 public interface Optimizer {
-    void optimize(RiRuntime runtime, Graph<?> graph);
+    void optimize(RiRuntime runtime, Graph graph);
 }

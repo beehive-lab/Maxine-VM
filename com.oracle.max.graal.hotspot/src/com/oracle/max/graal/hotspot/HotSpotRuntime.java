@@ -774,7 +774,7 @@ public class HotSpotRuntime implements GraalRuntime {
         return safeRead(graph, CiKind.Int, value, config.arrayLengthOffset);
     }
 
-    private SafeReadNode safeRead(Graph<?> graph, CiKind kind, ValueNode value, int offset) {
+    private SafeReadNode safeRead(Graph graph, CiKind kind, ValueNode value, int offset) {
         return graph.add(new SafeReadNode(kind, value, LocationNode.create(LocationNode.FINAL_LOCATION, kind, offset, graph)));
     }
 
