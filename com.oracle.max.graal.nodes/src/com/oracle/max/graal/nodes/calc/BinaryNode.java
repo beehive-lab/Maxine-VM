@@ -32,7 +32,6 @@ public abstract class BinaryNode extends FloatingNode {
 
     @Input private ValueNode x;
     @Input private ValueNode y;
-    @Data public final int opcode; // TODO(ls) this opcode field needs to go away, too Java-specific
 
     public ValueNode x() {
         return x;
@@ -45,13 +44,11 @@ public abstract class BinaryNode extends FloatingNode {
     /**
      * Creates a new BinaryNode instance.
      * @param kind the result type of this instruction
-     * @param opcode the bytecode opcode
      * @param x the first input instruction
      * @param y the second input instruction
      */
-    public BinaryNode(CiKind kind, int opcode, ValueNode x, ValueNode y) {
+    public BinaryNode(CiKind kind, ValueNode x, ValueNode y) {
         super(kind);
-        this.opcode = opcode;
         this.x = x;
         this.y = y;
     }

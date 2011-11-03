@@ -23,15 +23,18 @@
 package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 
 import com.oracle.max.cri.intrinsics.*;
-import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.maxri.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.platform.*;
@@ -39,26 +42,58 @@ import com.sun.max.platform.*;
 public class MaxineIntrinsicImplementations {
     public static class NotImplementedIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
 
 
-    public static class BitIntrinsic implements GraalIntrinsicImpl {
-        public final LegacyOpcode opcode;
+    public static class NormalizeCompareIntrinsic implements GraalIntrinsicImpl {
 
-        public BitIntrinsic(LegacyOpcode opcode) {
-            this.opcode = opcode;
+        @Override
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            assert args.length == 3 && args[0].isConstant() && args[0].kind == CiKind.Int;
+            int opcode = args[0].asConstant().asInt();
+            // TODO(cwi): Why the separation when both branches do the same?
+            if (args[1].kind == CiKind.Long || args[1].kind == CiKind.Double) {
+                assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
+            } else {
+                assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
+                assert args[1].kind == CiKind.Float;
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
+            }
+        }
+    }
+
+    public static class CompareIntrinsic implements GraalIntrinsicImpl {
+
+        private final Condition condition;
+
+        public CompareIntrinsic(Condition condition) {
+            this.condition = condition;
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            assert args.length == 1;
-//            return b.append(new SignificantBitOp(args[0], opcode));
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            assert args.length == 2;
+            assert args[0].kind == CiKind.Int || args[0].kind == CiKind.Long;
+            return graph.unique(new CompareNode(args[0], condition, args[1]));
+        }
+    }
 
-            // TODO Auto-generated method stub
+
+    public static class BitIntrinsic implements GraalIntrinsicImpl {
+        private final MaxineMathIntrinsicsNode.Op op;
+
+        public BitIntrinsic(MaxineMathIntrinsicsNode.Op op) {
+            this.op = op;
+        }
+
+        @Override
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            assert args.length == 1;
+            return graph.unique(new MaxineMathIntrinsicsNode(args[0], op));
         }
     }
 
@@ -69,10 +104,10 @@ public class MaxineIntrinsicImplementations {
 
     public static class UnsafeCastIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             RiSignature signature = target.signature();
             int argCount = signature.argumentCount(false);
-            RiType accessingClass = stateBefore.method().holder();
+            RiType accessingClass = caller.holder();
             RiType fromType;
             RiType toType = signature.returnType(accessingClass);
             assert args.length == 1 || (args.length == 2 && isTwoSlot(args[0].kind)) : "method with @UNSAFE_CAST must have exactly 1 argument";
@@ -96,7 +131,7 @@ public class MaxineIntrinsicImplementations {
 
     public static class PointerReadIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 2 || args.length == 3;
             ValueNode pointer = args[0];
             ValueNode displacement = args.length == 3 ? args[1] : null;
@@ -117,7 +152,7 @@ public class MaxineIntrinsicImplementations {
 
     public static class PointerWriteIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             // Last parameter can be a double word, in which case args ends with a null slot that must be ignored.
             int numArgs = args[args.length - 1] == null ? args.length - 1 : args.length;
 
@@ -142,7 +177,7 @@ public class MaxineIntrinsicImplementations {
 
     public static class PointerCompareAndSwapIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 4 || args.length == 6;
             ValueNode pointer = args[0];
             ValueNode offset = offsetOrIndex(graph, args[1]);
@@ -163,7 +198,7 @@ public class MaxineIntrinsicImplementations {
      */
     private static ValueNode offsetOrIndex(Graph<?> graph, ValueNode offsetOrIndex) {
         if (offsetOrIndex.kind == CiKind.Int && Platform.target().arch.is64bit()) {
-            return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex, CiKind.Long));
+            return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex));
         }
         return offsetOrIndex;
     }
@@ -171,7 +206,7 @@ public class MaxineIntrinsicImplementations {
 
     public static class ReadRegisterIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 1;
             int registerId = intConstant(args[0]);
 
@@ -190,7 +225,7 @@ public class MaxineIntrinsicImplementations {
 
     public static class WriteRegisterIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 2;
             int registerId = intConstant(args[0]);
             ValueNode value = args[1];
@@ -218,35 +253,22 @@ public class MaxineIntrinsicImplementations {
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            assert args.length == 0;
-//            return b.append(new SafepointNode(op));
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            assert args.length == 0;
+            return graph.add(new SafepointNode(op));
         }
     }
 
-
-    public static class PauseIntrinsic implements GraalIntrinsicImpl {
+    public static class UncommonTrapIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            b.append(new Pause());
-//            return null;
-        }
-    }
-
-    public static class BreakpointTrapIntrinsic implements GraalIntrinsicImpl {
-        @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            b.append(new BreakpointTrap());
-//            return null;
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            return graph.add(new DeoptimizeNode(DeoptAction.InvalidateReprofile));
         }
     }
 
     public static class StackHandleIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
 //            return b.append(new StackHandle(args[0], target.signature().returnType(null)));
         }
@@ -254,23 +276,27 @@ public class MaxineIntrinsicImplementations {
 
     public static class StackAllocateIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            return b.append(new StackAllocate(args[0], target.signature().returnType(null)));
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+            return graph.add(new StackAllocateNode(intConstant(args[0]), (RiResolvedType) target.signature().returnType(null)));
         }
     }
 
     public static class IfLatchBitReadIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore) {
+        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
 
     public static void initialize(IntrinsicImpl.Registry registry) {
-        // not implemented for now...
-//        registry.add(LSB, new BitIntrinsic(LegacyOpcode.Lsb));
-//        registry.add(MSB, new BitIntrinsic(LegacyOpcode.Msb));
+
+        registry.add(UCMP_AE, new CompareIntrinsic(Condition.AE));
+        registry.add(UCMP_AT, new CompareIntrinsic(Condition.AT));
+        registry.add(UCMP_BE, new CompareIntrinsic(Condition.BE));
+        registry.add(UCMP_BT, new CompareIntrinsic(Condition.BT));
+
+        registry.add(LSB, new BitIntrinsic(MaxineMathIntrinsicsNode.Op.LSB));
+        registry.add(MSB, new BitIntrinsic(MaxineMathIntrinsicsNode.Op.MSB));
 
         registry.add(UNSAFE_CAST, new UnsafeCastIntrinsic());
 
@@ -285,11 +311,13 @@ public class MaxineIntrinsicImplementations {
         registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(SafepointNode.Op.SAFEPOINT_POLL));
         registry.add(INFO, new SafepointIntrinsic(SafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(SafepointNode.Op.HERE));
-        registry.add(UNCOMMON_TRAP, new SafepointIntrinsic(SafepointNode.Op.UNCOMMON_TRAP));
+        registry.add(UNCOMMON_TRAP, new UncommonTrapIntrinsic());
 
-        registry.add(PAUSE, new PauseIntrinsic());
-        registry.add(BREAKPOINT_TRAP, new BreakpointTrapIntrinsic());
+        registry.add(PAUSE, new SafepointIntrinsic(SafepointNode.Op.PAUSE));
+        registry.add(BREAKPOINT_TRAP, new SafepointIntrinsic(SafepointNode.Op.BREAKPOINT));
         registry.add(STACKHANDLE, new StackHandleIntrinsic());
         registry.add(ALLOCA, new StackAllocateIntrinsic());
+
+        registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());
     }
 }

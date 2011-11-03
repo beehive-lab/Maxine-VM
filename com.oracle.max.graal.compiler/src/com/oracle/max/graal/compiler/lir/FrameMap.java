@@ -326,7 +326,7 @@ public final class FrameMap {
     private int offsetForStackBlock(StackBlock stackBlock) {
         assert stackBlock.offset >= 0 && stackBlock.offset + stackBlock.size <= stackBlocksSize : "invalid stack block";
         int offset = offsetToStackBlocks() + stackBlock.offset;
-        assert offset <= (frameSize() - stackBlock.size) : "spill outside of frame";
+        assert offset <= (frameSize() - stackBlock.size) : "stack block outside of frame";
         return offset;
     }
 

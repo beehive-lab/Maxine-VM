@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "+")
-public final class FloatAddNode extends FloatArithmeticNode implements Canonicalizable {
+public final class FloatAddNode extends FloatArithmeticNode implements Canonicalizable, LIRLowerable {
 
     public FloatAddNode(CiKind kind, ValueNode x, ValueNode y, boolean isStrictFP) {
-        super(kind, kind == CiKind.Double ? Bytecodes.DADD : Bytecodes.FADD, x, y, isStrictFP);
+        super(kind, x, y, isStrictFP);
     }
 
     @Override
@@ -62,5 +61,10 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitAdd(gen.operand(x()), gen.operand(y())));
     }
 }

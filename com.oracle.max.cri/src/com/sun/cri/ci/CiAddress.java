@@ -94,14 +94,21 @@ public final class CiAddress extends CiValue {
      */
     public CiAddress(CiKind kind, CiValue base, CiValue index, Scale scale, int displacement) {
         super(kind);
-        this.base = base;
 
         if (index.isConstant()) {
-            displacement += ((CiConstant) index).asInt() * scale.value;
+            long longIndex = ((CiConstant) index).asLong();
+            long longDisp = displacement + longIndex * scale.value;
+            if ((int) longIndex != longIndex || (int) longDisp != longDisp) {
+                throw new Error("integer overflow when computing constant displacement");
+            }
+            displacement = (int) longDisp;
             index = IllegalValue;
             scale = Scale.Times1;
         }
+        assert base.isIllegal() || base.isVariableOrRegister();
+        assert index.isIllegal() || index.isVariableOrRegister();
 
+        this.base = base;
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;

@@ -25,9 +25,10 @@ package com.oracle.max.graal.extensions;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
 public interface Intrinsifier {
-    Graph<?> intrinsicGraph(RiRuntime runtime, RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters);
+    Graph<?> intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List<? extends Node> parameters);
 }

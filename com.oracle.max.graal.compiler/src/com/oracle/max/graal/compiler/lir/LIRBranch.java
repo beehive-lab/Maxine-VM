@@ -22,78 +22,41 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiValue.Formatter;
 
-public class LIRBranch extends LIRInstruction {
+public abstract class LIRBranch extends LIRInstruction {
 
     /**
      * The condition when this branch is taken, or {@code null} if it is an unconditional branch.
      */
-    public final Condition cond;
+    protected Condition cond;
 
     /**
      * For floating point branches only. True when the branch should be taken when the comparison is unordered.
      */
-    public final boolean unorderedIsTrue;
-
-    private Label label;
+    protected boolean unorderedIsTrue;
 
     /**
-     * The target block of this branch.
+     * The target of this branch.
      */
-    private LIRBlock block;
+    protected LabelRef destination;
 
 
-
-    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
-        super(code, CiValue.IllegalValue, info);
+    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LabelRef destination, LIRDebugInfo info) {
+        super(code, CiValue.IllegalValue, info, LIRInstruction.NO_OPERANDS);
         this.cond = cond;
         this.unorderedIsTrue = unorderedIsTrue;
-        this.label = label;
+        this.destination = destination;
     }
 
-    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-        super(code, CiValue.IllegalValue, block.debugInfo());
-        this.cond = cond;
-        this.unorderedIsTrue = unorderedIsTrue;
-        this.label = block.label();
-        this.block = block;
+    public LabelRef destination() {
+        return destination;
     }
 
-    public Label label() {
-        return label;
-    }
-
-    public LIRBlock block() {
-        return block;
-    }
-
-    @Override
-    public String operationString(Formatter operandFmt) {
-        StringBuilder buf = new StringBuilder(cond.operator).append(' ');
-        if (block() != null) {
-            buf.append("[B").append(block.blockID()).append(']');
-        } else if (label().isBound()) {
-            buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
-        } else {
-            buf.append("[label:??]");
-        }
-        if (unorderedIsTrue) {
-            buf.append(" unorderedIsTrue");
-        }
-        return buf.toString();
-    }
-
-    public void substitute(LIRBlock oldBlock, LIRBlock newBlock) {
-        assert newBlock != null;
-        if (block == oldBlock) {
-            block = newBlock;
-            LIRInstruction instr = newBlock.lir().instructionsList().get(0);
-            assert instr instanceof LIRLabel : "first instruction of block must be label";
-            label = ((LIRLabel) instr).label;
-        }
+    public void negate(LabelRef newDestination) {
+        destination = newDestination;
+        cond = cond.negate();
+        unorderedIsTrue = !unorderedIsTrue;
     }
 }

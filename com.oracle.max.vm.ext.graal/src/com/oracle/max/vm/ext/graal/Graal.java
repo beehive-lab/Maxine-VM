@@ -28,6 +28,8 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
@@ -93,6 +95,9 @@ public class Graal implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
+        // TODO(ls) implementation of RiType.fields required to enable escape analysis
+        GraalOptions.EscapeAnalysis = false;
+
         if (isHosted() && !optionsRegistered) {
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);
@@ -102,6 +107,10 @@ public class Graal implements RuntimeCompiler {
         }
 
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+            Registry intrinsicRegistry = new IntrinsicImpl.Registry();
+            MaxineIntrinsicImplementations.initialize(intrinsicRegistry);
+            runtime.setIntrinsicRegistry(intrinsicRegistry);
+
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 

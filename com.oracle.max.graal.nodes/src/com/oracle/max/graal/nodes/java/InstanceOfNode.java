@@ -27,6 +27,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code InstanceOfNode} represents an instanceof test.
@@ -37,10 +38,11 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
      * Constructs a new InstanceOfNode.
      *
      * @param targetClassInstruction the instruction which produces the target class of the instanceof check
+     * @param targetClass the class which is the target of the instanceof check
      * @param object the instruction producing the object input to this instruction
      */
-    public InstanceOfNode(ValueNode targetClassInstruction, ValueNode object) {
-        super(targetClassInstruction, object, CiKind.Illegal);
+    public InstanceOfNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
+        super(targetClassInstruction, targetClass, object, CiKind.Illegal);
     }
 
     @Override

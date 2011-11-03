@@ -96,7 +96,11 @@ public final class LocalNode extends FloatingNode {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " (local " + index() + ")";
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + "(" + index + ")";
+        } else {
+            return super.toString(verbosity);
+        }
     }
 }

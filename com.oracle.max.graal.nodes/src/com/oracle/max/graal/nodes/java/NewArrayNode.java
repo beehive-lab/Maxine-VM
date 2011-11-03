@@ -80,13 +80,8 @@ public abstract class NewArrayNode extends FixedWithNextNode {
         return properties;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends Op> T lookup(Class<T> clazz) {
-        if (clazz == EscapeOp.class) {
-            return (T) ESCAPE;
-        }
-        return super.lookup(clazz);
+    public EscapeOp getEscapeOp() {
+        return ESCAPE;
     }
 
     private static final EscapeOp ESCAPE = new EscapeOp() {

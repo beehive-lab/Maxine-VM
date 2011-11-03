@@ -238,13 +238,14 @@ public class HotSpotXirGenerator implements RiXirGenerator {
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
             XirParameter addr = asm.createConstantInputParameter("addr", target.wordKind);
             XirOperand temp = asm.createRegisterTemp("temp", target.wordKind, AMD64.rax);
+            XirOperand tempO = asm.createRegisterTemp("tempO", CiKind.Object, AMD64.rax);
 
             if (is(NULL_CHECK, flags)) {
                 asm.mark(MARK_IMPLICIT_NULL);
                 asm.pload(target.wordKind, temp, receiver, true);
             }
             asm.mark(MARK_INVOKEINTERFACE);
-            asm.mov(temp, asm.createConstant(CiConstant.forObject(HotSpotProxy.DUMMY_CONSTANT_OBJ)));
+            asm.mov(tempO, asm.createConstant(CiConstant.forObject(HotSpotProxy.DUMMY_CONSTANT_OBJ)));
 
             return asm.finishTemplate(addr, "invokeinterface");
         }
@@ -258,13 +259,14 @@ public class HotSpotXirGenerator implements RiXirGenerator {
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
             XirParameter addr = asm.createConstantInputParameter("addr", target.wordKind);
             XirOperand temp = asm.createRegisterTemp("temp", target.wordKind, AMD64.rax);
+            XirOperand tempO = asm.createRegisterTemp("tempO", CiKind.Object, AMD64.rax);
 
             if (is(NULL_CHECK, flags)) {
                 asm.mark(MARK_IMPLICIT_NULL);
                 asm.pload(target.wordKind, temp, receiver, true);
             }
             asm.mark(MARK_INVOKEVIRTUAL);
-            asm.mov(temp, asm.createConstant(CiConstant.forObject(HotSpotProxy.DUMMY_CONSTANT_OBJ)));
+            asm.mov(tempO, asm.createConstant(CiConstant.forObject(HotSpotProxy.DUMMY_CONSTANT_OBJ)));
 
             return asm.finishTemplate(addr, "invokevirtual");
         }
@@ -448,6 +450,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
             XirOperand type = asm.createInputParameter("type", CiKind.Object);
 
             XirOperand temp1 = asm.createRegisterTemp("temp1", target.wordKind, AMD64.rcx);
+            XirOperand temp1o = asm.createRegisterTemp("temp1o", CiKind.Object, AMD64.rcx);
             XirOperand temp2 = asm.createRegisterTemp("temp2", target.wordKind, AMD64.rbx);
             XirOperand temp2i = asm.createRegisterTemp("temp2i", CiKind.Int, AMD64.rbx);
             useRegisters(asm, AMD64.rsi);
@@ -470,7 +473,8 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
             asm.pload(target.wordKind, temp1, type, asm.i(config.instanceHeaderPrototypeOffset), false);
             asm.pstore(target.wordKind, result, temp1, false);
-            asm.pstore(CiKind.Object, result, asm.i(config.hubOffset), type, false);
+            asm.mov(temp1o, type); // need a temporary register since Intel cannot store 64-bit constants to memory
+            asm.pstore(CiKind.Object, result, asm.i(config.hubOffset), temp1o, false);
 
             if (size > 2 * target.wordSize) {
                 asm.mov(temp1, wordConst(asm, 0));
@@ -531,6 +535,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
         // Registers rsi, rcx, rdi, and rax are needed by the runtime call.
         // Hub needs to be on rdx, length on rbx.
         XirOperand temp1 = asm.createRegisterTemp("temp1", target.wordKind, AMD64.rcx);
+        XirOperand temp1o = asm.createRegisterTemp("temp1o", CiKind.Object, AMD64.rcx);
         XirOperand temp2 = asm.createRegisterTemp("temp2", target.wordKind, AMD64.rax);
         XirOperand temp3 = asm.createRegisterTemp("temp3", target.wordKind, AMD64.rdi);
         XirOperand size = asm.createRegisterTemp("size", CiKind.Int, AMD64.rsi);
@@ -574,7 +579,8 @@ public class HotSpotXirGenerator implements RiXirGenerator {
             // Now the new object is in result, store mark word and klass
             asm.pload(target.wordKind, temp1, hub, asm.i(config.instanceHeaderPrototypeOffset), false);
             asm.pstore(target.wordKind, result, temp1, false);
-            asm.pstore(CiKind.Object, result, asm.i(config.hubOffset), hub, false);
+            asm.mov(temp1o, hub); // need a temporary register since Intel cannot store 64-bit constants to memory
+            asm.pstore(CiKind.Object, result, asm.i(config.hubOffset), temp1o, false);
 
             // Store array length
             asm.pstore(CiKind.Int, result, asm.i(arrayLengthOffset), length, false);

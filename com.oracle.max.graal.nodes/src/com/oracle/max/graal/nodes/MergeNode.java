@@ -69,29 +69,6 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType {
         return ends;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("merge #");
-        builder.append(id());
-        builder.append(" [");
-        boolean hasSucc = false;
-        for (Node s : this.successors()) {
-            if (hasSucc) {
-                builder.append(", ");
-            }
-            builder.append("#");
-            if (s != null) {
-                builder.append(s.id());
-            } else {
-                builder.append("null");
-            }
-            hasSucc = true;
-        }
-        builder.append("]");
-        return builder.toString();
-    }
-
     /**
      * Determines if a given node is a phi whose {@linkplain PhiNode#merge() merge} is this node.
      *

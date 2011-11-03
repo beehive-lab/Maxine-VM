@@ -41,5 +41,5 @@ all : $(LIBRARY)
 endif
 
 ptraceTest: ptraceTest.c
-	gcc -Wall -o ptraceTest -lc -lm -lpthread $<
+	gcc -Wall -o ptraceTest $< -lc -lm -lpthread
 

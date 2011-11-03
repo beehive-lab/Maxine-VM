@@ -181,7 +181,7 @@ public class PhiResolver {
     private void emitMove(CiValue src, CiValue dest) {
         assert src.isLegal();
         assert dest.isLegal();
-        gen.lir.move(src, dest);
+        gen.emitMove(src, dest);
     }
 
     // Traverse assignment graph in depth first order and generate moves in post order

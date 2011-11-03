@@ -36,7 +36,7 @@ public class LIRDebugInfo {
     }
 
     public final FrameState state;
-    private LIRBlock exceptionEdge;
+    private LabelRef exceptionEdge;
     public CiDebugInfo debugInfo;
 
     public LIRDebugInfo(FrameState state) {
@@ -44,11 +44,11 @@ public class LIRDebugInfo {
         this.state = state;
     }
 
-    public LIRBlock exceptionEdge() {
+    public LabelRef exceptionEdge() {
         return exceptionEdge;
     }
 
-    public void setExceptionEdge(LIRBlock exceptionEdge) {
+    public void setExceptionEdge(LabelRef exceptionEdge) {
         this.exceptionEdge = exceptionEdge;
     }
 

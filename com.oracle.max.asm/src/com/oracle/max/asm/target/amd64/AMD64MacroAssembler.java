@@ -300,6 +300,16 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         movsd(dst, src);
     }
 
+    /**
+     * Non-atomic write of a 64-bit constant to memory. Do not use
+     * if the address might be a volatile field!
+     */
+    public void movlong(CiAddress dst, long src) {
+        CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
+        movl(dst, (int) (src & 0xFFFFFFFF));
+        movl(high, (int) (src >> 32));
+    }
+
     public void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
     }

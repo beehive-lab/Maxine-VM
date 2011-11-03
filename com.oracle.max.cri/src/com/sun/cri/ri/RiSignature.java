@@ -62,7 +62,7 @@ public interface RiSignature {
 
     /**
      * Gets the return type of this signature. This method will return a
-     * {@linkplain RiType#isResolved() resolved} type if possible but without
+     * {@linkplain RiResolvedType resolved} type if possible but without
      * triggering any class loading or resolution.
      *
      * @param accessingClass the context of the type lookup. If accessing class is resolved, its class loader
