@@ -310,7 +310,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 if (array.exactType() != null) {
                     RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
-                        ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
+                        ConstantNode type = graph.unique(ConstantNode.forCiConstant(elementType.getEncoding(Representation.ObjectHub), this, graph));
                         value = graph.unique(new CheckCastNode(anchor, type, elementType, value));
                     } else {
                         assert elementType.name().equals("Ljava/lang/Object;") : elementType.name();
@@ -390,7 +390,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
                     }
-                    result = ConstantNode.forObject(obj.asConstant().asObject().getClass(), graph);
+                    result = ConstantNode.forObject(obj.asConstant().asObject().getClass(), this, graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     graph.start().setNext(ret);
                     return graph;
@@ -407,7 +407,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
                     }
-                    result = ConstantNode.forObject(NodeClass.get((Class< ? >) obj.asConstant().asObject()), graph);
+                    result = ConstantNode.forObject(NodeClass.get((Class< ? >) obj.asConstant().asObject()), this, graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     graph.start().setNext(ret);
                     return graph;

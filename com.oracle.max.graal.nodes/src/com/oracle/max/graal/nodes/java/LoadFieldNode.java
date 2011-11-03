@@ -99,7 +99,7 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
             constant = field().constantValue(object().asConstant());
         }
         if (constant != null) {
-            return graph().unique(new ConstantNode(constant));
+            return ConstantNode.forCiConstant(constant, tool.runtime(), graph());
         }
         return this;
     }

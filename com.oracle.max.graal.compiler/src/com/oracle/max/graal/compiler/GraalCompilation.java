@@ -182,7 +182,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.OptCanonicalizer) {
-                new CanonicalizerPhase(context(), compiler.target, assumptions).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target, compiler.runtime, assumptions).apply(graph);
             }
 
             if (GraalOptions.Extend) {
@@ -194,13 +194,13 @@ public final class GraalCompilation {
                 graph.mark();
                 new FindInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, compiler.runtime, true, assumptions).apply(graph);
                 }
             }
 
             if (GraalOptions.EscapeAnalysis) {
                 new EscapeAnalysisPhase(this).apply(graph);
-                new CanonicalizerPhase(context(), compiler.target, assumptions).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target, compiler.runtime, assumptions).apply(graph);
             }
 
             if (GraalOptions.OptGVN) {
@@ -209,13 +209,13 @@ public final class GraalCompilation {
 
             graph.mark();
             new LoweringPhase(context(), compiler.runtime).apply(graph);
-            new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
+            new CanonicalizerPhase(context(), compiler.target, compiler.runtime, true, assumptions).apply(graph);
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
                 new RemoveInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, compiler.runtime, true, assumptions).apply(graph);
                 }
             }
 
