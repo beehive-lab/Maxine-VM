@@ -974,7 +974,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         assert block.lir() == null : "LIR list already computed for this block";
         lir = new ArrayList<LIRInstruction>();
         block.setLir(lir);
-
         emitLabel(block.label(), block.align());
     }
 
