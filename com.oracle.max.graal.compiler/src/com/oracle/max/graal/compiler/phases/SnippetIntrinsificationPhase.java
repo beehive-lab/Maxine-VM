@@ -80,6 +80,10 @@ public class SnippetIntrinsificationPhase extends Phase {
                                         assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
                                         ConstantNode constantNode = (ConstantNode) n;
                                         currentValue = constantNode.asConstant().asObject();
+                                        if (currentValue instanceof Class<?>) {
+                                            currentValue = runtime.getType((Class< ? >) currentValue);
+                                            parameterTypes[z] = RiResolvedType.class;
+                                        }
                                         break;
                                     }
                                 }
