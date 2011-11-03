@@ -85,7 +85,7 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitInvoke(this);
+        gen.emitInvoke(this);
     }
 
     @Override

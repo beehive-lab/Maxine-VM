@@ -76,23 +76,19 @@ public abstract class LIRGeneratorTool {
     public abstract CiVariable emitUShr(CiValue a, CiValue b);
 
     public abstract CiVariable emitConvert(ConvertNode.Op opcode, CiValue inputVal);
+    public abstract void emitMembar(int barriers);
+    public abstract void emitDeoptimizeOn(Condition of, DeoptAction action, Object deoptInfo);
+    public abstract CiVariable emitCallToRuntime(CiRuntimeCall runtimeCall, boolean canTrap, CiValue... args);
 
-    public abstract void emitDeoptimizeOn(Condition of, DeoptAction action);
-
+    public abstract void emitIf(IfNode i);
+    public abstract void emitConditional(ConditionalNode i);
     public abstract void emitGuardCheck(BooleanNode comp);
 
+    public abstract void emitLookupSwitch(LookupSwitchNode i);
+    public abstract void emitTableSwitch(TableSwitchNode i);
 
-    // Method that will be worked on in the near future.
-    public abstract void visitFrameState(FrameState i);
-    public abstract void visitInvoke(InvokeNode i);
-    public abstract void visitConditional(ConditionalNode i);
-    public abstract void visitIf(IfNode i);
-    public abstract void visitLookupSwitch(LookupSwitchNode i);
-    public abstract void visitTableSwitch(TableSwitchNode i);
-    public abstract void visitRuntimeCall(RuntimeCallNode i);
-    public abstract void visitRegisterFinalizer(RegisterFinalizerNode i);
-    public abstract void visitDeoptimize(DeoptimizeNode i);
-    public abstract void visitUnwind(UnwindNode i);
+    public abstract void emitInvoke(InvokeNode i);
+    public abstract void emitRuntimeCall(RuntimeCallNode i);
 
     // Handling of block-end nodes still needs to be unified in the LIRGenerator.
     public abstract void visitMerge(MergeNode i);

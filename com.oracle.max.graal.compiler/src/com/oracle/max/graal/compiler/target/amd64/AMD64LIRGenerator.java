@@ -272,30 +272,22 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitRem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
                 append(IREM.create(RDX_I, state(), RAX_I, load(b)));
-                append(MOVE.create(result, RDX_I));
-                break;
+                return emitMove(RDX_I);
             case Long:
                 append(MOVE.create(RAX_L, load(a)));
                 append(LREM.create(RDX_L, state(), RAX_L, load(b)));
-                append(MOVE.create(result, RDX_L));
-                break;
+                return emitMove(RDX_L);
             case Float:
-                CiValue freg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, a, b);
-                append(MOVE.create(result, freg));
-                break;
+                return emitCallToRuntime(CiRuntimeCall.ArithmeticFrem, false, a, b);
             case Double:
-                CiValue dreg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, a, b);
-                append(MOVE.create(result, dreg));
-                break;
+                return emitCallToRuntime(CiRuntimeCall.ArithmeticDrem, false, a, b);
             default:
                 throw Util.shouldNotReachHere();
         }
-        return result;
     }
 
     @Override
@@ -453,15 +445,46 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
 
     @Override
-    public void emitDeoptimizeOn(Condition cond, DeoptAction action) {
+    public void emitDeoptimizeOn(Condition cond, DeoptAction action, Object deoptInfo) {
         LIRDebugInfo info = state();
-        Label stubEntry = createDeoptStub(action, info, cond);
-        append(BRANCH.create(cond, LabelRef.forLabel(stubEntry), info));
+        LabelRef stubEntry = createDeoptStub(action, info, deoptInfo);
+        if (cond != null) {
+            append(BRANCH.create(cond, stubEntry, info));
+        } else {
+            append(JUMP.create(stubEntry, info));
+        }
+    }
+
+    @Override
+    public void emitMembar(int barriers) {
+        int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
+        if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
+            append(MEMBAR.create(necessaryBarriers));
+        }
+    }
+
+    @Override
+    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
+        // Making a copy of the switch value is necessary because jump table destroys the input value
+        CiVariable tmp = emitMove(index);
+        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
+    }
+
+    @Override
+    protected LabelRef createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo) {
+        assert info.state != null : "deoptimize instruction always needs a state";
+        assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
+        AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
+        lir.deoptimizationStubs.add(stub);
+        return LabelRef.forLabel(stub.label);
     }
 
 
-// TODO Methods below here still need to be worked on.
 
+    // TODO The CompareAndSwapNode in its current form needs to be lowered to several Nodes before code generation to separate three parts:
+    // * The write barriers (and possibly read barriers) when accessing an object field
+    // * The distinction of returning a boolean value (semantic similar to a BooleanNode to be used as a condition?) or the old value being read
+    // * The actual compare-and-swap
     @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
         CiKind kind = node.newValue().kind;
@@ -498,6 +521,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
     }
 
+    // TODO HotSpot-specific
     @Override
     public CiValue createMonitorAddress(int monitorIndex) {
         CiVariable result = newVariable(target().wordKind);
@@ -505,30 +529,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         return result;
     }
 
-    @Override
-    public void emitMembar(int barriers) {
-        int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
-        if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
-            append(MEMBAR.create(necessaryBarriers));
-        }
-    }
-
-    @Override
-    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
-        // Making a copy of the switch value is necessary because jump table destroys the input value
-        CiVariable tmp = emitMove(index);
-        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
-    }
-
-    @Override
-    protected Label createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo) {
-        assert info.state != null : "deoptimize instruction always needs a state";
-        assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
-        AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
-        lir.deoptimizationStubs.add(stub);
-        return stub.label;
-    }
-
+    // TODO Maxine-specific
     @Override
     public void visitStackAllocate(StackAllocateNode x) {
         CiVariable result = newVariable(x.kind);
@@ -537,8 +538,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, result);
     }
 
-
-    // TODO This method will go away, and the logic directly merged into MathIntrinsicNode
+    // TODO This method should go away, and the logic directly merged into MathIntrinsicNode
     @Override
     public void visitMathIntrinsic(MathIntrinsicNode x) {
         CiVariable input = load(operand(x.x()));
