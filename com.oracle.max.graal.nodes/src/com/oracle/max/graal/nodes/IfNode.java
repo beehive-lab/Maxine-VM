@@ -88,7 +88,7 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitIf(this);
+        gen.emitIf(this);
     }
 
     @Override

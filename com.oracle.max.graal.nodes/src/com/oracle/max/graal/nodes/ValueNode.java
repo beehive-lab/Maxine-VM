@@ -104,13 +104,6 @@ public abstract class ValueNode extends Node {
     }
 
     /**
-     * Clears the LIR operand associated with this instruction.
-     */
-    public final void clearOperand() {
-        this.operand = CiValue.IllegalValue;
-    }
-
-    /**
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
