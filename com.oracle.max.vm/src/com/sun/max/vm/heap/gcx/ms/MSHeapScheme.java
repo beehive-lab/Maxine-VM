@@ -120,7 +120,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            AtomicBumpPointerAllocator.hostInitialize();
+            BaseAtomicBumpPointerAllocator.hostInitialize();
             if (MaxineVM.isDebug()) {
                 AtomicPinnedCounter.hostInitialize();
             }
