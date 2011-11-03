@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -42,10 +40,6 @@ public class EntryPointNode extends BeginNode {
     @Override
     public void delete() {
         throw new UnsupportedOperationException();
-    }
-
-    public Collection<LocalNode> locals() {
-        return ValueUtil.filter(this.usages(), LocalNode.class);
     }
 
     public RiRuntime runtime() {
