@@ -73,7 +73,7 @@ public class FrameStateBuilder implements FrameStateAccess {
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i, accessingClass);
             CiKind kind = type.kind(false).stackKind();
-            LocalNode local = graph.unique(new LocalNode(kind, index, graph.start()));
+            LocalNode local = graph.unique(new LocalNode(kind, index));
             if (type instanceof RiResolvedType) {
                 local.setDeclaredType((RiResolvedType) type);
             }

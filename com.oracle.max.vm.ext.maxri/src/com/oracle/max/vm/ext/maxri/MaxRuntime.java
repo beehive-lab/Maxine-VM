@@ -427,7 +427,7 @@ public class MaxRuntime implements GraalRuntime {
                 Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0, graph.start()));
+                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0));
                 }
                 ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
                 if (node instanceof FixedNode) {
