@@ -28,6 +28,7 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 
 
@@ -45,7 +46,15 @@ public class WordTypeRewriterPhase extends Phase {
     }
 
     public boolean isWord(ValueNode node) {
-        return node.kind() == CiKind.Object && isWord(node.declaredType());
+        if (node.kind() == CiKind.Object) {
+            if (node instanceof ConstantNode) {
+                ConstantNode c = (ConstantNode) node;
+                assert c.value.kind == CiKind.Object || c.value.kind == WordUtil.archKind();
+                return c.value.kind == WordUtil.archKind();
+            }
+            return isWord(node.declaredType());
+        }
+        return false;
     }
 
     public boolean isWord(RiType type) {
@@ -58,6 +67,17 @@ public class WordTypeRewriterPhase extends Phase {
     }
 
     private void changeToWord(ValueNode valueNode) {
+        if (valueNode.kind() != CiKind.Object) {
+            assert valueNode.kind() == CiKind.Long;
+            return;
+        }
         valueNode.setKind(CiKind.Long);
+
+        // Propagate word kind.
+        for (Node n : valueNode.usages()) {
+            if (n instanceof PhiNode || n instanceof ReturnNode) {
+                changeToWord((ValueNode) n);
+            }
+        }
     }
 }
