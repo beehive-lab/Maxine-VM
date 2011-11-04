@@ -43,6 +43,6 @@ public final class SafeAddNode extends FloatingNode implements LIRLowerable {
     @Override
     public void generate(LIRGeneratorTool gen) {
         gen.setResult(this, gen.emitAdd(gen.operand(x), gen.operand(y)));
-        gen.emitDeoptimizeOn(Condition.OF, DeoptAction.InvalidateReprofile);
+        gen.emitDeoptimizeOn(Condition.OF, DeoptAction.InvalidateReprofile, "SafeAdd");
     }
 }

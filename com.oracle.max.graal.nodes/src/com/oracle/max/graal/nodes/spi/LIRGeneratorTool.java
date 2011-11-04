@@ -76,31 +76,24 @@ public abstract class LIRGeneratorTool {
     public abstract CiVariable emitUShr(CiValue a, CiValue b);
 
     public abstract CiVariable emitConvert(ConvertNode.Op opcode, CiValue inputVal);
+    public abstract void emitMembar(int barriers);
+    public abstract void emitDeoptimizeOn(Condition of, DeoptAction action, Object deoptInfo);
+    public abstract CiVariable emitCallToRuntime(CiRuntimeCall runtimeCall, boolean canTrap, CiValue... args);
 
-    public abstract void emitDeoptimizeOn(Condition of, DeoptAction action);
-
+    public abstract void emitIf(IfNode i);
+    public abstract void emitConditional(ConditionalNode i);
     public abstract void emitGuardCheck(BooleanNode comp);
 
+    public abstract void emitLookupSwitch(LookupSwitchNode i);
+    public abstract void emitTableSwitch(TableSwitchNode i);
 
-    // Method that will be worked on in the near future.
-    public abstract void visitFrameState(FrameState i);
-    public abstract void visitInvoke(InvokeNode i);
-    public abstract void visitConditional(ConditionalNode i);
-    public abstract void visitIf(IfNode i);
-    public abstract void visitLookupSwitch(LookupSwitchNode i);
-    public abstract void visitTableSwitch(TableSwitchNode i);
-    public abstract void visitRuntimeCall(RuntimeCallNode i);
-    public abstract void visitRegisterFinalizer(RegisterFinalizerNode i);
-    public abstract void visitDeoptimize(DeoptimizeNode i);
-    public abstract void visitUnwind(UnwindNode i);
+    public abstract void emitInvoke(InvokeNode i);
+    public abstract void emitRuntimeCall(RuntimeCallNode i);
 
     // Handling of block-end nodes still needs to be unified in the LIRGenerator.
     public abstract void visitMerge(MergeNode i);
     public abstract void visitEndNode(EndNode i);
     public abstract void visitLoopEnd(LoopEndNode i);
-
-    // TODO This method is broken, volatile memory reads cannot be handled that way!
-    public abstract void visitVolatileMemoryRead(VolatileReadNode i);
 
     // The CompareAndSwapNode in its current form needs to be lowered to several Nodes before code generation to separate three parts:
     // * The write barriers (and possibly read barriers) when accessing an object field
@@ -110,12 +103,6 @@ public abstract class LIRGeneratorTool {
 
     // The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.
     public abstract void visitNormalizeCompare(NormalizeCompareNode i);
-
-    // To be moved to the snippets-project where the MathIntrinsics are actually defined.  This is an Intel-only class and not general functionality.
-    public abstract void visitMathIntrinsic(MathIntrinsicNode i);
-
-    // To be moved to a Maxine-specific project.
-    public abstract void visitStackAllocate(StackAllocateNode i);
 
     // Functionality that is currently implemented in XIR.
     // These methods will go away eventually when lowering is done via snippets in the front end.

@@ -37,8 +37,9 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.calc.ConditionalNode.ConditionalStructure;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.oracle.max.graal.nodes.java.MathIntrinsicNode.Operation;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
+import com.oracle.max.graal.snippets.nodes.*;
+import com.oracle.max.graal.snippets.nodes.MathIntrinsicNode.Operation;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -662,19 +663,21 @@ public class HotSpotRuntime implements GraalRuntime {
                     load.setNext(ret);
                     graph.start().setNext(load);
                     intrinsicGraphs.put(method, graph);
-                } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
-                    StructuredGraph graph = new StructuredGraph();
-                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
-                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
-                    IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, CiKind.Object, 0, offset, graph);
-                    location.setIndexScalingEnabled(false);
-                    SafeReadNode safeRead = graph.add(new SafeReadNode(CiKind.Object, object, location));
-                    VolatileReadNode volatileRead = graph.add(new VolatileReadNode(safeRead));
-                    ReturnNode ret = graph.add(new ReturnNode(volatileRead));
-                    graph.start().setNext(safeRead);
-                    safeRead.setNext(volatileRead);
-                    volatileRead.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+// TODO disabled for now.  The old VolatileReadNode was not safe and is deleted now.  We need a MemoryBarrierNode before and after the
+// actual read, and it must be guaranteed that the memory barriers stay next to the read during scheduling.
+//                } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
+//                    StructuredGraph graph = new StructuredGraph();
+//                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+//                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
+//                    IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, CiKind.Object, 0, offset, graph);
+//                    location.setIndexScalingEnabled(false);
+//                    SafeReadNode safeRead = graph.add(new SafeReadNode(CiKind.Object, object, location));
+//                    VolatileReadNode volatileRead = graph.add(new VolatileReadNode(safeRead));
+//                    ReturnNode ret = graph.add(new ReturnNode(volatileRead));
+//                    graph.start().setNext(safeRead);
+//                    safeRead.setNext(volatileRead);
+//                    volatileRead.setNext(ret);
+//                    intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("getInt(Ljava/lang/Object;J)I")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
