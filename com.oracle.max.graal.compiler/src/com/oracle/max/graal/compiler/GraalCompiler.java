@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.observer.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.target.*;
 import com.oracle.max.graal.cri.*;
@@ -37,6 +38,46 @@ import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
 public class GraalCompiler implements CiCompiler  {
+
+    /**
+     * The compilation is split into the following sections:
+     * ========================================================================
+     * Period 1: High-level nodes. (Graph building)
+     * ========================================================================
+     * Runtime-specific lowering.
+     * ========================================================================
+     * Period 2: Mid-level nodes. (Memory dependence graph)
+     * ========================================================================
+     * Target-specific lowering, de-SSA.
+     * ========================================================================
+     * Period 3: Low-level nodes. (Register allocation, code generation)
+     * ========================================================================
+     *
+     * A compiler extension phase can chose to run at the end of periods 1-3.
+     */
+    public static enum PhasePosition {
+        HIGH_LEVEL,
+        MID_LEVEL,
+        LOW_LEVEL
+    }
+
+    @SuppressWarnings("unchecked")
+    public final ArrayList<Phase>[] phases = new ArrayList[PhasePosition.values().length];
+
+    public void addPhase(PhasePosition pos, Phase phase) {
+        if (phases[pos.ordinal()] == null) {
+            phases[pos.ordinal()] = new ArrayList<Phase>();
+        }
+        phases[pos.ordinal()].add(phase);
+    }
+
+    void runPhases(PhasePosition pos, StructuredGraph graph) {
+        if (phases[pos.ordinal()] != null) {
+            for (Phase p : phases[pos.ordinal()]) {
+                p.apply(graph);
+            }
+        }
+    }
 
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
