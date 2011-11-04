@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.util;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -34,7 +35,7 @@ import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph, Queue<InvokeNode> newInvokes) {
+    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
         StructuredGraph graph = invoke.graph();
 
@@ -93,11 +94,7 @@ public class InliningUtil {
                     fixed.setProbability(fixed.probability() * invokeProbability);
                 }
             }
-            if (node instanceof InvokeNode && ((InvokeNode) node).canInline()) {
-                if (newInvokes != null) {
-                    newInvokes.add((InvokeNode) node);
-                }
-            } else if (node instanceof FrameState) {
+            if (node instanceof FrameState) {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
@@ -194,5 +191,12 @@ public class InliningUtil {
             parameters[0] = arguments.get(0);
         }
         return parameters;
+    }
+
+    public static void inline(RiRuntime runtime, InvokeNode invoke) {
+        RiResolvedMethod method = invoke.callTarget().targetMethod();
+        StructuredGraph graph = new StructuredGraph();
+        new GraphBuilderPhase(runtime, method).apply(graph);
+        inline(invoke, graph);
     }
 }

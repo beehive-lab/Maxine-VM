@@ -346,7 +346,7 @@ public class AMD64MoveOpcode {
                 case Float:  masm.movflt(storeAddr, tasm.asFloatReg(input)); break;
                 case Double: masm.movsd(storeAddr,  tasm.asDoubleReg(input)); break;
                 case Object: masm.movq(storeAddr,   tasm.asRegister(input)); break;
-                default:     throw Util.shouldNotReachHere();
+                default:     throw Util.shouldNotReachHere("kind=" + kind);
             }
         } else if (input.isConstant()) {
             CiConstant c = (CiConstant) input;
@@ -374,7 +374,7 @@ public class AMD64MoveOpcode {
                     }
                     break;
                 default:
-                    throw Util.shouldNotReachHere();
+                    throw Util.shouldNotReachHere("kind=" + kind);
             }
 
         } else {

@@ -116,6 +116,10 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         this.extendedBytecodeHandler = extendedBytecodeHandler;
     }
 
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
+        this(null, runtime, method);
+    }
+
     public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
         this(context, runtime, method, null);
     }
