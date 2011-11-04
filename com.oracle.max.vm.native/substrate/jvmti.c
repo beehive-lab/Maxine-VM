@@ -29,8 +29,11 @@
 
 // (cwi): Java 7 added a new JVMTI function, so it is necessary to distinguish between Java 6 and Java 7.
 // This is the only #define that I found in the header files that allows this distinction.
-#if JVM_CLASSFILE_MAJOR_VERSION >= 51
+#if os_LINUX || os_SOLARIS
 #include <classfile_constants.h>
+#endif
+
+#if JVM_CLASSFILE_MAJOR_VERSION >= 51
 #define JAVA_7
 #endif
 
