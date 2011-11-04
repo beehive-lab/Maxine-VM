@@ -475,7 +475,7 @@ def gate(env, args):
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
     
-    if checkstyle(env, args):
+    if checkstyle(env, []):
         env.abort('Checkstyle warnings were found')
     
     env.log('Running copycheck')
