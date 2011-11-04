@@ -46,7 +46,7 @@ public class Main {
     public static int testSafeAdd() {
         int sum = 0;
         for (int i = 0; i < N; ++i) {
-            sum = safeAdd(sum, i);
+            sum = safeAdd(sum, i) + safeAdd(sum, i);
         }
         return sum;
     }

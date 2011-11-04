@@ -34,11 +34,11 @@ public class NodeClassSnippets implements SnippetsInterface {
 
 
     private static Node getNode(Node node, long offset) {
-        return UnsafeLoadNode.load(node, offset, CiKind.Object);
+        return UnsafeCastNode.cast(UnsafeLoadNode.load(node, offset, CiKind.Object), Node.class);
     }
 
     private static NodeList<Node> getNodeList(Node node, long offset) {
-        return UnsafeLoadNode.load(node, offset, CiKind.Object);
+        return UnsafeCastNode.cast(UnsafeLoadNode.load(node, offset, CiKind.Object), NodeList.class);
     }
 
     private static void putNode(Node node, long offset, Node value) {

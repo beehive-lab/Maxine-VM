@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.graph.test;
 
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ri.*;
+import com.oracle.max.graal.graph.*;
 
-/**
- * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
- */
-public final class StackAllocateNode extends FixedWithNextNode {
 
-    @Data public final int size;
-    @Data public final RiResolvedType declaredType;
+public class TestNode extends Node implements Node.IterableNodeType {
+    @Data private String name;
 
-    /**
-     * Creates a new StackAllocate instance.
-     */
-    public StackAllocateNode(int size, RiResolvedType declaredType) {
-        super(declaredType.kind(false));
-        this.size = size;
-        this.declaredType = declaredType;
+    public TestNode(String name) {
+        this.name = name;
     }
 
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitStackAllocate(this);
-    }
 
-    @Override
-    public RiResolvedType declaredType() {
-        return declaredType;
+    public String getName() {
+        return name;
     }
 }

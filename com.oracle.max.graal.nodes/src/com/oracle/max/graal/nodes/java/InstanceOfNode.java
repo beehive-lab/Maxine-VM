@@ -32,7 +32,9 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InstanceOfNode} represents an instanceof test.
  */
-public final class InstanceOfNode extends TypeCheckNode implements Canonicalizable {
+public final class InstanceOfNode extends TypeCheckNode implements Canonicalizable, LIRLowerable {
+
+    @Data public final boolean negated;
 
     /**
      * Constructs a new InstanceOfNode.
@@ -41,21 +43,22 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
      * @param targetClass the class which is the target of the instanceof check
      * @param object the instruction producing the object input to this instruction
      */
-    public InstanceOfNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
+    public InstanceOfNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, boolean negated) {
         super(targetClassInstruction, targetClass, object, CiKind.Illegal);
+        this.negated = negated;
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
     }
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (object().exactType() != null) {
             boolean result = object().exactType().isSubtypeOf(targetClass());
-            if (result) {
+            if (result != negated) {
                 // The instanceof check reduces to a null check.
-                return graph().unique(new IsNonNullNode(object()));
+                return graph().unique(new NullCheckNode(object(), false));
             } else {
                 // The instanceof check can never succeed.
                 return ConstantNode.forBoolean(false, graph());
@@ -65,12 +68,17 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
         if (constant != null) {
             assert constant.kind == CiKind.Object;
             if (constant.isNull()) {
-                return ConstantNode.forBoolean(false, graph());
+                return ConstantNode.forBoolean(negated, graph());
             } else {
                 // this should never happen - non-null constants are always expected to provide an exactType
                 assert false;
             }
         }
         return this;
+    }
+
+    @Override
+    public BooleanNode negate() {
+        return graph().unique(new InstanceOfNode(targetClassInstruction(), targetClass(), object(), !negated));
     }
 }

@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code CheckCastNode} represents a {@link Bytecodes#CHECKCAST}.
  */
-public final class CheckCastNode extends TypeCheckNode implements Canonicalizable {
+public final class CheckCastNode extends TypeCheckNode implements Canonicalizable, LIRLowerable {
 
     @Input private final AnchorNode anchor;
 
@@ -69,8 +69,8 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitCheckCast(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitCheckCast(this);
     }
 
     @Override
@@ -88,5 +88,10 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
             }
         }
         return this;
+    }
+
+    @Override
+    public BooleanNode negate() {
+        throw new Error("A CheckCast does not produce a boolean value, so it should actually not be a subclass of BooleanNode");
     }
 }

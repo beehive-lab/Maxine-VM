@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public final class WriteNode extends AccessNode {
+public final class WriteNode extends AccessNode implements LIRLowerable {
     @Input private ValueNode value;
 
     public ValueNode value() {
@@ -40,7 +40,7 @@ public final class WriteNode extends AccessNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMemoryWrite(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitStore(location().createAddress(gen, object()), gen.operand(value()), location().getValueKind(), getNullCheck());
     }
 }

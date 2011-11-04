@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.calc;
+package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class NegateBooleanNode extends BooleanNode implements Canonicalizable {
+@NodeInfo(shortName = "(%)")
+public final class IntegerURemNode extends IntegerArithmeticNode implements LIRLowerable {
 
-    @Input private BooleanNode value;
-
-    public BooleanNode value() {
-        return value;
-    }
-
-    public NegateBooleanNode(BooleanNode value) {
-        super(CiKind.Int);
-        this.value = value;
+    public IntegerURemNode(CiKind kind, ValueNode x, ValueNode y) {
+        super(kind, x, y);
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-    }
-
-    @Override
-    public Node canonical(CanonicalizerTool tool) {
-        if (value() instanceof NegateBooleanNode) {
-            return ((NegateBooleanNode) value()).value();
-        } else if (value() instanceof ConstantNode) {
-            return ConstantNode.forBoolean(!value().asConstant().asBoolean(), graph());
-        }
-        return this;
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitURem(gen.operand(x()), gen.operand(y())));
     }
 }

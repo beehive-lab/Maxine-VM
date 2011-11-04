@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType {
+public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, LIRLowerable {
 
     @Successor private FixedNode exceptionEdge;
 
@@ -84,8 +84,8 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitInvoke(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitInvoke(this);
     }
 
     @Override

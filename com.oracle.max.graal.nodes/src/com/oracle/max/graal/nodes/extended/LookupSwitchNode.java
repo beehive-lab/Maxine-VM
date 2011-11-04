@@ -29,7 +29,7 @@ import com.oracle.max.graal.nodes.spi.*;
  * The {@code LookupSwitchNode} represents a lookup switch bytecode, which has a sorted
  * array of key values.
  */
-public final class LookupSwitchNode extends SwitchNode {
+public final class LookupSwitchNode extends SwitchNode implements LIRLowerable {
 
     @Data private final int[] keys;
 
@@ -62,7 +62,7 @@ public final class LookupSwitchNode extends SwitchNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitLookupSwitch(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitLookupSwitch(this);
     }
 }

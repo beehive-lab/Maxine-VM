@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.compiler.ext;
 
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.bytecode.*;
 
-
-public final class VolatileReadNode extends AbstractMemoryCheckpointNode {
-
-    // TODO Warning: This class does not work correctly. Since it is just a wrapper around a real read node,
-    // the appropriate barriers cannot be emitted.
-
-    @Input private ValueNode readNode;
-
-    public ValueNode getReadNode() {
-        return readNode;
-
-    }
-
-    public VolatileReadNode(ValueNode readNode) {
-        super(readNode.kind);
-        this.readNode = readNode;
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitVolatileMemoryRead(this);
-    }
+public interface ExtendedBytecodeHandler {
+    boolean handle(int opcode, BytecodeStream s, StructuredGraph graph, FrameStateBuilder frameStateBuilder, GraphBuilderTool tool);
 }

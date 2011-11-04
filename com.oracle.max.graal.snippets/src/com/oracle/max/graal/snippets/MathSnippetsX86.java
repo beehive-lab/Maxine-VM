@@ -23,8 +23,8 @@
 package com.oracle.max.graal.snippets;
 
 import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.graal.nodes.java.*;
-import com.oracle.max.graal.nodes.java.MathIntrinsicNode.Operation;
+import com.oracle.max.graal.snippets.nodes.*;
+import com.oracle.max.graal.snippets.nodes.MathIntrinsicNode.Operation;
 import com.sun.cri.ci.*;
 
 /**

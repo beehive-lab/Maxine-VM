@@ -28,14 +28,14 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public final class ReadNode extends AccessNode implements Node.ValueNumberable, Node.IterableNodeType {
+public final class ReadNode extends AccessNode implements Node.ValueNumberable, Node.IterableNodeType, LIRLowerable {
 
     public ReadNode(CiKind kind, ValueNode object, LocationNode location) {
         super(kind, object, location);
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMemoryRead(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitLoad(location().createAddress(gen, object()), location().getValueKind(), getNullCheck()));
     }
 }

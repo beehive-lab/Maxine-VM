@@ -214,7 +214,7 @@ public class FloatingReadPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
 
         // Add start node write checkpoint.
         addStartCheckpoint(graph);
@@ -280,8 +280,8 @@ public class FloatingReadPhase extends Phase {
         }
     }
 
-    private void addStartCheckpoint(Graph<EntryPointNode> graph) {
-        EntryPointNode entryPoint = graph.start();
+    private void addStartCheckpoint(StructuredGraph graph) {
+        BeginNode entryPoint = graph.start();
         WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
         FixedNode next = entryPoint.next();
         entryPoint.setNext(checkpoint);
@@ -364,7 +364,7 @@ public class FloatingReadPhase extends Phase {
         modifiedValues.get(loop).add(locationIdentity);
     }
 
-    private void print(Graph<EntryPointNode> graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
+    private void print(StructuredGraph graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
 
         TTY.println();
         TTY.println("Loops:");

@@ -20,39 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.compiler.target.amd64;
 
-import java.util.*;
+public interface AMD64LIRLowerable {
 
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-
-public class EntryPointNode extends BeginNode {
-    private final RiRuntime runtime;
-    private final CiAssumptions assumptions = new CiAssumptions();
-
-    public EntryPointNode() {
-        this(null);
-    }
-
-    public EntryPointNode(RiRuntime runtime) {
-        this.runtime = runtime;
-    }
-
-    @Override
-    public void delete() {
-        throw new UnsupportedOperationException();
-    }
-
-    public Collection<LocalNode> locals() {
-        return ValueUtil.filter(this.usages(), LocalNode.class);
-    }
-
-    public RiRuntime runtime() {
-        return runtime;
-    }
-
-    public CiAssumptions assumptions() {
-        return assumptions;
-    }
+    void generateAmd64(AMD64LIRGenerator generator);
 }

@@ -30,7 +30,6 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1Opcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOpcode.*;
@@ -40,14 +39,12 @@ import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
 
@@ -76,11 +73,20 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
-        ir.methodEndMarker = new AMD64MethodEndStub();
+        lir.methodEndMarker = new AMD64MethodEndStub();
     }
 
     @Override
-    protected boolean canStoreConstant(CiConstant c) {
+    protected void emitNode(ValueNode node) {
+        if (node instanceof AMD64LIRLowerable) {
+            ((AMD64LIRLowerable) node).generateAmd64(this);
+        } else {
+            super.emitNode(node);
+        }
+    }
+
+    @Override
+    public boolean canStoreConstant(CiConstant c) {
         // there is no immediate move of 64-bit constants on Intel
         switch (c.kind) {
             case Long:   return Util.isInt(c.asLong());
@@ -91,7 +97,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineConstant(CiConstant c) {
+    public boolean canInlineConstant(CiConstant c) {
         switch (c.kind) {
             case Long:   return NumUtil.isInt(c.asLong());
             case Object: return c.isNull();
@@ -120,7 +126,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, boolean canTrap) {
+    public void emitStore(CiAddress storeAddress, CiValue inputVal, CiKind kind, boolean canTrap) {
+        CiValue input = loadForStore(inputVal, kind);
         append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, canTrap ? state() : null));
     }
 
@@ -243,7 +250,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -271,35 +278,27 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitRem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
                 append(IREM.create(RDX_I, state(), RAX_I, load(b)));
-                append(MOVE.create(result, RDX_I));
-                break;
+                return emitMove(RDX_I);
             case Long:
                 append(MOVE.create(RAX_L, load(a)));
                 append(LREM.create(RDX_L, state(), RAX_L, load(b)));
-                append(MOVE.create(result, RDX_L));
-                break;
+                return emitMove(RDX_L);
             case Float:
-                CiValue freg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, a, b);
-                append(MOVE.create(result, freg));
-                break;
+                return emitCallToRuntime(CiRuntimeCall.ArithmeticFrem, false, a, b);
             case Double:
-                CiValue dreg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, a, b);
-                append(MOVE.create(result, dreg));
-                break;
+                return emitCallToRuntime(CiRuntimeCall.ArithmeticDrem, false, a, b);
             default:
                 throw Util.shouldNotReachHere();
         }
-        return result;
     }
 
     @Override
     public CiVariable emitUDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -319,7 +318,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitURem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -452,24 +451,46 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
 
     @Override
-    public void emitDeoptimizeOn(Condition cond, DeoptAction action) {
+    public void emitDeoptimizeOn(Condition cond, DeoptAction action, Object deoptInfo) {
         LIRDebugInfo info = state();
-        Label stubEntry = createDeoptStub(action, info, cond);
-        append(BRANCH.create(cond, LabelRef.forLabel(stubEntry), info));
-    }
-
-
-// TODO Methods below here still need to be worked on.
-
-    @Override
-    public void visitLoopBegin(LoopBeginNode x) {
+        LabelRef stubEntry = createDeoptStub(action, info, deoptInfo);
+        if (cond != null) {
+            append(BRANCH.create(cond, stubEntry, info));
+        } else {
+            append(JUMP.create(stubEntry, info));
+        }
     }
 
     @Override
-    public void visitValueAnchor(ValueAnchorNode valueAnchor) {
-        // nothing to do for ValueAnchors
+    public void emitMembar(int barriers) {
+        int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
+        if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
+            append(MEMBAR.create(necessaryBarriers));
+        }
     }
 
+    @Override
+    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
+        // Making a copy of the switch value is necessary because jump table destroys the input value
+        CiVariable tmp = emitMove(index);
+        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
+    }
+
+    @Override
+    protected LabelRef createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo) {
+        assert info.state != null : "deoptimize instruction always needs a state";
+        assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
+        AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
+        lir.deoptimizationStubs.add(stub);
+        return LabelRef.forLabel(stub.label);
+    }
+
+
+
+    // TODO The CompareAndSwapNode in its current form needs to be lowered to several Nodes before code generation to separate three parts:
+    // * The write barriers (and possibly read barriers) when accessing an object field
+    // * The distinction of returning a boolean value (semantic similar to a BooleanNode to be used as a condition?) or the old value being read
+    // * The actual compare-and-swap
     @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
         CiKind kind = node.newValue().kind;
@@ -506,6 +527,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
     }
 
+    // TODO HotSpot-specific
     @Override
     public CiValue createMonitorAddress(int monitorIndex) {
         CiVariable result = newVariable(target().wordKind);
@@ -513,61 +535,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         return result;
     }
 
-    @Override
-    public void emitMembar(int barriers) {
-        int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
-        if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
-            append(MEMBAR.create(necessaryBarriers));
-        }
-    }
-
-    @Override
-    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
-        // Making a copy of the switch value is necessary because jump table destroys the input value
-        CiVariable tmp = emitMove(index);
-        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
-    }
-
-    @Override
-    protected Label createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo) {
-        assert info.state != null : "deoptimize instruction always needs a state";
-        assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
-        AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
-        ir.deoptimizationStubs.add(stub);
-        return stub.label;
-    }
-
-    @Override
-    public void visitStackAllocate(StackAllocateNode x) {
-        CiVariable result = newVariable(x.kind);
-        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size);
-        append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
-        setResult(x, result);
-    }
-
-
-    // TODO This method will go away, and the logic directly merged into MathIntrinsicNode
-    @Override
-    public void visitMathIntrinsic(MathIntrinsicNode x) {
-        CiVariable input = load(operand(x.x()));
-        CiVariable result = newVariable(x.kind);
-        switch (x.operation()) {
-            case ABS:
-                append(MOVE.create(result, input));
-                append(DABS.create(result));
-                break;
-            case SQRT:  append(SQRT.create(result, input)); break;
-            case LOG:   append(LOG.create(result, input)); break;
-            case LOG10: append(LOG10.create(result, input)); break;
-            case SIN:   append(SIN.create(result, input)); break;
-            case COS:   append(COS.create(result, input)); break;
-            case TAN:   append(TAN.create(result, input)); break;
-            default:    throw Util.shouldNotReachHere();
-        }
-        setResult(x, result);
-    }
-
-    // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated here is long and uses branches anyway.
+    // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
         emitCompare(operand(x.x()), operand(x.y()));
