@@ -116,11 +116,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     }
 
     @INLINE
-    public final boolean isCFunctionNoLatch() {
-        return isCFunctionNoLatch(flags());
-    }
-
-    @INLINE
     public final boolean isVmEntryPoint() {
         return isVmEntryPoint(flags());
     }
