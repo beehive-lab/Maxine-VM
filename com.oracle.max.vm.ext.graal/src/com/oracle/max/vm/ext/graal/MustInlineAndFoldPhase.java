@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
@@ -44,7 +45,11 @@ public class MustInlineAndFoldPhase extends Phase {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             RiResolvedMethod method = invoke.callTarget().targetMethod();
             if (runtime.mustInline(method)) {
-                InliningUtil.inline(runtime, invoke);
+                RiResolvedMethod method1 = invoke.callTarget().targetMethod();
+                StructuredGraph inlineGraph = new StructuredGraph();
+                new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
+                new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
+                InliningUtil.inline(invoke, inlineGraph);
             } else if (runtime.isFoldable(method)) {
                 NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
                 CiConstant[] constantArgs = new CiConstant[arguments.size()];
@@ -57,5 +62,6 @@ public class MustInlineAndFoldPhase extends Phase {
                 InliningUtil.inline(invoke, foldGraph);
             }
         }
+        new CanonicalizerPhase(null, null, runtime, null).apply(graph);
     }
 }
