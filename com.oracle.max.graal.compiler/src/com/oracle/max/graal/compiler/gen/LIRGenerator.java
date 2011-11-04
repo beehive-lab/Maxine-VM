@@ -573,23 +573,27 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind());
     }
 
-    protected FrameState stateBeforeCallWithArguments(FrameState stateAfter, CallTargetNode call, int bci) {
-        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind(), toJVMArgumentStack(call.arguments()));
+    protected FrameState stateBeforeCallWithArguments(FrameState stateAfter, MethodCallTargetNode call, int bci) {
+        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind(), toJVMArgumentStack(call.targetMethod().signature(), call.isStatic(), call.arguments()));
     }
 
-    private static ValueNode[] toJVMArgumentStack(NodeInputList<ValueNode> arguments) {
-        int sz = 0;
-        for (ValueNode value : arguments) {
-            sz += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
-        }
-        ValueNode[] stack = new ValueNode[sz];
-        int i = 0;
-        for (ValueNode value : arguments) {
-            stack[i] = value;
-            i += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
+    private static ValueNode[] toJVMArgumentStack(RiSignature signature, boolean isStatic, NodeInputList<ValueNode> arguments) {
+        int slotCount = signature.argumentSlots(!isStatic);
+        ValueNode[] stack = new ValueNode[slotCount];
+        int stackIndex = 0;
+        int argumentIndex = 0;
+        for (ValueNode arg : arguments) {
+            stack[stackIndex] = arg;
+
+            if (stackIndex == 0 && !isStatic) {
+                // Current argument is receiver.
+                stackIndex += FrameStateBuilder.stackSlots(CiKind.Object);
+            } else {
+                stackIndex += FrameStateBuilder.stackSlots(signature.argumentKindAt(argumentIndex, false));
+                argumentIndex++;
+            }
         }
         return stack;
-
     }
 
     @Override

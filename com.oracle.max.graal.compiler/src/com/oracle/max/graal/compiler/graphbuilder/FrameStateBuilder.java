@@ -77,7 +77,7 @@ public class FrameStateBuilder implements FrameStateAccess {
                 local.setDeclaredType((RiResolvedType) type);
             }
             storeLocal(javaIndex, local);
-            javaIndex += isTwoSlot(kind) ? 2 : 1;
+            javaIndex += stackSlots(kind);
             index++;
         }
         this.locks = new ArrayList<ValueNode>();
@@ -283,7 +283,7 @@ public class FrameStateBuilder implements FrameStateAccess {
             ValueNode element = stack[base + stackindex];
             assert element != null;
             r[argIndex++] = element;
-            stackindex += isTwoSlot(element.kind) ? 2 : 1;
+            stackindex += stackSlots(element.kind);
         }
         stackIndex = base;
         return r;
@@ -527,6 +527,10 @@ public class FrameStateBuilder implements FrameStateAccess {
     @Override
     public void setRethrowException(boolean b) {
         rethrowException = b;
+    }
+
+    public static int stackSlots(CiKind kind) {
+        return isTwoSlot(kind) ? 2 : 1;
     }
 
     public static boolean isTwoSlot(CiKind kind) {
