@@ -68,7 +68,7 @@ public class WordTypeRewriterPhase extends Phase {
 
     private void changeToWord(ValueNode valueNode) {
         if (valueNode.kind() != CiKind.Object) {
-            assert valueNode.kind() == CiKind.Long;
+            assert valueNode.kind() == CiKind.Long : "node=" + valueNode + ", kind= " + valueNode.kind();
             return;
         }
         valueNode.setKind(CiKind.Long);

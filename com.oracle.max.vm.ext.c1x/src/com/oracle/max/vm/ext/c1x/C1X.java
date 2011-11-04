@@ -177,7 +177,7 @@ public class C1X implements RuntimeCompiler {
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
-            compiler.addCompilationObserver(new WordTypeRewriterPhase());
+            compiler.addCompilationObserver(new WordTypeRewriterObserver());
             MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
 
             // search for the runtime call and register critical methods
@@ -208,7 +208,7 @@ public class C1X implements RuntimeCompiler {
         }
     }
 
-    private static class WordTypeRewriterPhase implements CompilationObserver {
+    private static class WordTypeRewriterObserver implements CompilationObserver {
         @Override
         public void compilationEvent(CompilationEvent event) {
             if (event.getLabel() == CompilationEvent.AFTER_PARSING) {
