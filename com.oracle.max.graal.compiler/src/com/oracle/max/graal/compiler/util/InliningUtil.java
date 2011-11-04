@@ -53,7 +53,7 @@ public class InliningUtil {
         BeginNode entryPointNode = inlineGraph.start();
         FixedNode firstCFGNode = entryPointNode.next();
         for (Node node : inlineGraph.getNodes()) {
-            if (node == entryPointNode) {
+            if (node == entryPointNode || node == entryPointNode.stateAfter()) {
                 // Do nothing.
             } else if (node instanceof LocalNode) {
                 replacements.put(node, parameters[((LocalNode) node).index()]);
@@ -76,7 +76,8 @@ public class InliningUtil {
 
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
-        if (invoke.callTarget().isStatic()) {
+        MethodCallTargetNode callTarget = invoke.callTarget();
+        if (callTarget.isStatic()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
@@ -146,6 +147,9 @@ public class InliningUtil {
                 Node n = obj.next();
                 obj.setNext(null);
                 unwindDuplicate.replaceAndDelete(n);
+            } else {
+                invoke.setExceptionEdge(null);
+                GraphUtil.killCFG(exceptionEdge);
             }
         } else {
             if (unwindNode != null) {
@@ -156,6 +160,9 @@ public class InliningUtil {
 
         invoke.clearInputs();
         GraphUtil.killCFG(invoke);
+        if (callTarget.usages().size() == 0) {
+            callTarget.delete();
+        }
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
@@ -169,7 +176,7 @@ public class InliningUtil {
         }
 
         if (stateAfter.usages().isEmpty()) {
-            GraphUtil.killNonCFG(stateAfter, null);
+            stateAfter.delete();
         }
 
     }
