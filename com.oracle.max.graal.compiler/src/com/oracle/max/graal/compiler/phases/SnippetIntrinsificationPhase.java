@@ -143,7 +143,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 invoke.replaceAndDelete(newInstance);
 
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
-                                if (newInstance.kind != CiKind.Object) {
+                                if (newInstance.kind() != CiKind.Object) {
                                     for (Node usage : newInstance.usages().snapshot()) {
                                         if (usage instanceof CheckCastNode) {
                                             CheckCastNode checkCastNode = (CheckCastNode) usage;

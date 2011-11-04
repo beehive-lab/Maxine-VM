@@ -421,10 +421,10 @@ public class MaxRuntime implements GraalRuntime {
         if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
             StructuredGraph graph = load.graph();
-            assert load.kind != CiKind.Illegal;
+            assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
-            ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
             memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
             FixedNode next = load.next();
             load.setNext(null);
@@ -457,7 +457,7 @@ public class MaxRuntime implements GraalRuntime {
                 StructuredGraph graph = new StructuredGraph();
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, i));
+                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind(), i));
                 }
                 ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
                 if (node instanceof FixedNode) {

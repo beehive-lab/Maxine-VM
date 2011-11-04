@@ -39,7 +39,7 @@ public abstract class ValueNode extends Node {
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
-    @Data public final CiKind kind;
+    @Data protected CiKind kind;
 
     protected CiValue operand = CiValue.IllegalValue;
 
@@ -52,6 +52,14 @@ public abstract class ValueNode extends Node {
      */
     public ValueNode(CiKind kind) {
         assert kind != null && kind == kind.stackKind() : kind + " != " + kind.stackKind();
+        setKind(kind);
+    }
+
+    public CiKind kind() {
+        return kind;
+    }
+
+    public void setKind(CiKind kind) {
         this.kind = kind;
     }
 

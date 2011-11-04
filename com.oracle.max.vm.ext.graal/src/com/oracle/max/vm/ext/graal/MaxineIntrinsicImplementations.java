@@ -52,15 +52,15 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 3 && args[0].isConstant() && args[0].kind == CiKind.Int;
+            assert args.length == 3 && args[0].isConstant() && args[0].kind() == CiKind.Int;
             int opcode = args[0].asConstant().asInt();
             // TODO(cwi): Why the separation when both branches do the same?
-            if (args[1].kind == CiKind.Long || args[1].kind == CiKind.Double) {
+            if (args[1].kind() == CiKind.Long || args[1].kind() == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
                 return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
-                assert args[1].kind == CiKind.Float;
+                assert args[1].kind() == CiKind.Float;
                 return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
         }
@@ -76,11 +76,11 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 2 && args[0].kind == args[1].kind && (args[0].kind == CiKind.Int || args[0].kind == CiKind.Long);
+            assert args.length == 2 && args[0].kind() == args[1].kind() && (args[0].kind() == CiKind.Int || args[0].kind() == CiKind.Long);
             if (remainder) {
-                return graph.unique(new IntegerURemNode(args[0].kind, args[0], args[1]));
+                return graph.unique(new IntegerURemNode(args[0].kind(), args[0], args[1]));
             } else {
-                return graph.unique(new IntegerUDivNode(args[0].kind, args[0], args[1]));
+                return graph.unique(new IntegerUDivNode(args[0].kind(), args[0], args[1]));
             }
         }
     }
@@ -96,7 +96,7 @@ public class MaxineIntrinsicImplementations {
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 2;
-            assert args[0].kind == CiKind.Int || args[0].kind == CiKind.Long;
+            assert args[0].kind() == CiKind.Int || args[0].kind() == CiKind.Long;
             return graph.unique(new CompareNode(args[0], condition, args[1]));
         }
     }
@@ -129,7 +129,7 @@ public class MaxineIntrinsicImplementations {
             RiType accessingClass = caller.holder();
             RiType fromType;
             RiType toType = signature.returnType(accessingClass);
-            assert args.length == 1 || (args.length == 2 && isTwoSlot(args[0].kind)) : "method with @UNSAFE_CAST must have exactly 1 argument";
+            assert args.length == 1 || (args.length == 2 && isTwoSlot(args[0].kind())) : "method with @UNSAFE_CAST must have exactly 1 argument";
             if (argCount == 1) {
                 fromType = signature.argumentTypeAt(0, accessingClass);
             } else {
@@ -214,7 +214,7 @@ public class MaxineIntrinsicImplementations {
      * need to be correct.
      */
     private static ValueNode offsetOrIndex(Graph graph, ValueNode offsetOrIndex) {
-        if (offsetOrIndex.kind == CiKind.Int && Platform.target().arch.is64bit()) {
+        if (offsetOrIndex.kind() == CiKind.Int && Platform.target().arch.is64bit()) {
             return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex));
         }
         return offsetOrIndex;
@@ -252,7 +252,7 @@ public class MaxineIntrinsicImplementations {
     }
 
     private static int intConstant(ValueNode value) {
-        if (!value.isConstant() || value.kind != CiKind.Int) {
+        if (!value.isConstant() || value.kind() != CiKind.Int) {
             throw new CiBailout("instrinc parameter must be compile time integer constant");
         }
         return value.asConstant().asInt();

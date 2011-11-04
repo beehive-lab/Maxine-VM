@@ -39,7 +39,7 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
     }
 
     public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
-        super(value.kind);
+        super(value.kind());
         this.value = value;
         this.op = op;
     }
@@ -48,7 +48,7 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
     public void generate(LIRGeneratorTool tool) {
         // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
         LIRGenerator gen = (LIRGenerator) tool;
-        CiVariable result = gen.newVariable(kind);
+        CiVariable result = gen.newVariable(kind());
         CiVariable input = gen.load(gen.operand(value));
         switch (op) {
             case MSB:
