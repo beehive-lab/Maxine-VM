@@ -30,10 +30,10 @@ import java.lang.reflect.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.GraalCompiler.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.vm.ext.c1x.*;
-import com.oracle.max.vm.ext.c1x.MaxineIntrinsicImplementations;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
@@ -129,7 +129,8 @@ public class C1XGraal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, null);
-            graalCompiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime));
+            graalCompiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime));
+            graalCompiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(null, runtime));
             graalCompiler.addPhase(PhasePosition.MID_LEVEL, new WordTypeRewriterPhase());
 
             c1xCompiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);

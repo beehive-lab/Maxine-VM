@@ -24,23 +24,37 @@ package com.oracle.max.vm.ext.graal;
 
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 
-public class MustInlinePhase extends Phase {
+public class MustInlineAndFoldPhase extends Phase {
 
     private final MaxRuntime runtime;
 
-    public MustInlinePhase(MaxRuntime runtime) {
+    public MustInlineAndFoldPhase(MaxRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
     protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            if (runtime.mustInline(invoke.callTarget().targetMethod())) {
+            RiResolvedMethod method = invoke.callTarget().targetMethod();
+            if (runtime.mustInline(method)) {
                 InliningUtil.inline(runtime, invoke);
+            } else if (runtime.isFoldable(method)) {
+                NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
+                CiConstant[] constantArgs = new CiConstant[arguments.size()];
+                for (int i = 0; i < constantArgs.length; ++i) {
+                    constantArgs[i] = arguments.get(i).asConstant();
+                }
+                CiConstant foldResult = runtime.fold(method, constantArgs);
+                StructuredGraph foldGraph = new StructuredGraph();
+                foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
+                InliningUtil.inline(invoke, foldGraph);
             }
         }
     }

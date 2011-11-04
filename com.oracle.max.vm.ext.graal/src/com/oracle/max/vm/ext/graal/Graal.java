@@ -34,6 +34,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
@@ -128,7 +129,8 @@ public class Graal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(null, runtime));
             compiler.addPhase(PhasePosition.MID_LEVEL, new WordTypeRewriterPhase());
 
             // search for the runtime call and register critical methods
