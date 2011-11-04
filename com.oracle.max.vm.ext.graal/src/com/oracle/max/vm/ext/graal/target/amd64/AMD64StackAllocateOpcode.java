@@ -20,39 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.target.amd64;
+package com.oracle.max.vm.ext.graal.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.compiler.util.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.*;
+import com.oracle.max.graal.compiler.target.amd64.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64MathIntrinsicOpcode implements LIROpcode {
-    SQRT,
-    SIN, COS, TAN,
-    LOG, LOG10;
+public enum AMD64StackAllocateOpcode implements LIROpcode {
+    STACK_ALLOCATE;
 
-    public LIRInstruction create(CiVariable result, CiVariable input) {
-        CiValue[] inputs = new CiValue[] {input};
+    public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
+        CiValue[] inputs = LIRInstruction.NO_OPERANDS;
 
         return new AMD64LIRInstruction(this, result, null, inputs) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, tasm.asDoubleReg(result()), tasm.asDoubleReg(input(0)));
+                masm.leaq(tasm.asRegister(result()), tasm.compilation.frameMap().toStackAddress(stackBlock));
             }
         };
-    }
-
-    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiRegister result, CiRegister input) {
-        switch (this) {
-            case SQRT:  masm.sqrtsd(result, input); break;
-            case LOG:   masm.flog(result, input, false); break;
-            case LOG10: masm.flog(result, input, true); break;
-            case SIN:   masm.fsin(result, input); break;
-            case COS:   masm.fcos(result, input); break;
-            case TAN:   masm.ftan(result, input); break;
-            default:    throw Util.shouldNotReachHere();
-        }
     }
 }

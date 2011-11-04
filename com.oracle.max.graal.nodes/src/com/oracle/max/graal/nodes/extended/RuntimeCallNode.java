@@ -49,7 +49,7 @@ public final class RuntimeCallNode extends AbstractCallNode implements LIRLowera
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitRuntimeCall(this);
+        gen.emitRuntimeCall(this);
     }
 
     // specialized on return type (instead of public static <T> T performCall) until boxing/unboxing is sorted out in intrinsification

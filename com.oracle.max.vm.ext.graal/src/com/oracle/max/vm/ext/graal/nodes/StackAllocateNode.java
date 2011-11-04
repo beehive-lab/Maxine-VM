@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,42 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import static com.oracle.max.vm.ext.graal.target.amd64.AMD64StackAllocateOpcode.*;
+
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.vm.ext.graal.target.amd64.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
-public final class MaxineMathIntrinsicsNode extends FloatingNode implements AMD64LIRLowerable {
+/**
+ * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
+ */
+public final class StackAllocateNode extends FixedWithNextNode implements AMD64LIRLowerable {
 
-    @Input private ValueNode value;
-    @Data private final Op op;
+    @Data public final int size;
+    @Data public final RiResolvedType declaredType;
 
-    public static enum Op {
-        MSB, LSB
-    }
-
-    public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
-        super(value.kind());
-        this.value = value;
-        this.op = op;
+    /**
+     * Creates a new StackAllocate instance.
+     */
+    public StackAllocateNode(int size, RiResolvedType declaredType) {
+        super(declaredType.kind(false));
+        this.size = size;
+        this.declaredType = declaredType;
     }
 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
         CiVariable result = gen.newVariable(kind);
-        CiVariable input = gen.load(gen.operand(value));
-        switch (op) {
-            case MSB:
-                gen.append(AMD64SignificantBitOpcode.MSB.create(result, input));
-                break;
-            case LSB:
-                gen.append(AMD64SignificantBitOpcode.LSB.create(result, input));
-                break;
-            default:
-                throw new RuntimeException();
-        }
+        StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size);
+        gen.append(STACK_ALLOCATE.create(result, stackBlock));
         gen.setResult(this, result);
+    }
+
+    @Override
+    public RiResolvedType declaredType() {
+        return declaredType;
     }
 }

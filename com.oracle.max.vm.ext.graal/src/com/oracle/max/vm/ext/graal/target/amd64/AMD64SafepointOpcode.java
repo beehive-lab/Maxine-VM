@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.vm.ext.graal.target.amd64;
 
-import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
+import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.target.amd64.*;
 import com.sun.cri.ci.*;
 
-/**
- * Unwind takes an exception object, destroys the current stack frame and passes the exception object to the system's exception dispatch code.
- */
-public final class UnwindNode extends FixedNode implements LIRLowerable {
+public enum AMD64SafepointOpcode implements LIROpcode {
+    SAFEPOINT;
 
-    @Input private ValueNode exception;
+    public LIRInstruction create(LIRDebugInfo info) {
+        CiValue[] inputs = LIRInstruction.NO_OPERANDS;
 
-    public ValueNode exception() {
-        return exception;
-    }
-
-    public UnwindNode(ValueNode exception) {
-        super(CiKind.Object);
-        assert exception == null || exception.kind() == CiKind.Object;
-        this.exception = exception;
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.emitCallToRuntime(CiRuntimeCall.UnwindException, false, gen.operand(exception()));
+        return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                tasm.recordSafepoint(masm.codeBuffer.position(), info);
+                masm.nop();
+            }
+        };
     }
 }

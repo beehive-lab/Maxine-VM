@@ -65,6 +65,6 @@ public final class TableSwitchNode extends SwitchNode implements LIRLowerable {
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitTableSwitch(this);
+        gen.emitTableSwitch(this);
     }
 }
