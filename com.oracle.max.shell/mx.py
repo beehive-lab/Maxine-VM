@@ -243,7 +243,7 @@ class Env(ArgumentParser):
                 self.abort(e.returncode)
 
         output = output.split()
-        assert output[0] == 'java'
+        assert output[0] == 'java' or output[0] == 'openjdk'
         assert output[1] == 'version'
         version = output[2]
         if not version.startswith('"1.6') and not version.startswith('"1.7'):

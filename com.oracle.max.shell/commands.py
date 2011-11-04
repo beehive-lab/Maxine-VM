@@ -292,7 +292,7 @@ def clean(env, args):
     projects = env.pdb().projects.keys()
     for project in projects:
         outputDir = env.pdb().project(project).output_dir()
-        if outputDir != '':
+        if outputDir != '' and exists(outputDir):
             env.log('Removing {0}...'.format(outputDir))
             shutil.rmtree(outputDir)
 
