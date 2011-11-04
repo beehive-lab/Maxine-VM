@@ -90,7 +90,6 @@ public abstract class Actor {
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
-    public static final int C_FUNCTION_NOLATCH =   0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
@@ -342,11 +341,6 @@ public abstract class Actor {
     @INLINE
     public static boolean isCFunction(int flags) {
         return (flags & C_FUNCTION) != 0;
-    }
-
-    @INLINE
-    public static boolean isCFunctionNoLatch(int flags) {
-        return (flags & C_FUNCTION) != 0 && (flags & C_FUNCTION_NOLATCH) != 0;
     }
 
     @INLINE
