@@ -20,31 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.compiler.target.amd64;
 
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
+public interface AMD64LIRLowerable {
 
-
-public final class VolatileReadNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
-
-    // TODO Warning: This class does not work correctly. Since it is just a wrapper around a real read node,
-    // the appropriate barriers cannot be emitted.
-
-    @Input private ValueNode readNode;
-
-    public ValueNode getReadNode() {
-        return readNode;
-
-    }
-
-    public VolatileReadNode(ValueNode readNode) {
-        super(readNode.kind);
-        this.readNode = readNode;
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.visitVolatileMemoryRead(this);
-    }
+    void generateAmd64(AMD64LIRGenerator generator);
 }
