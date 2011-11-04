@@ -111,7 +111,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public CiValue setResult(ValueNode x, CiValue operand) {
-        assert (operand.isVariable() && x.kind == operand.kind) || (operand.isConstant() && x.kind == operand.kind.stackKind());
+        assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind());
 
         x.setOperand(operand);
         if (GraalOptions.DetailedAsserts) {
@@ -298,7 +298,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             CiValue src = args.locations[i];
             CiVariable dest = emitMove(src);
             assert src.isLegal() : "check";
-            assert src.kind.stackKind() == local.kind.stackKind() : "local type check failed";
+            assert src.kind.stackKind() == local.kind().stackKind() : "local type check failed";
             setResult(local, dest);
         }
     }
@@ -309,7 +309,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             int slot = 0;
             for (CiKind kind : arguments) {
                 LocalNode local = (LocalNode) fs.localAt(slot);
-                assert local != null && local.kind == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
+                assert local != null && local.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
                 slot++;
                 if (slot < fs.localsSize() && fs.localAt(slot) == null) {
                     slot++;
@@ -439,8 +439,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitReturn(ReturnNode x) {
         CiValue operand = CiValue.IllegalValue;
-        if (!x.kind.isVoid()) {
-            operand = resultOperandFor(x.kind);
+        if (!x.kind().isVoid()) {
+            operand = resultOperandFor(x.kind());
             emitMove(operand(x.result()), operand);
         }
         XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
@@ -626,7 +626,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 break;
         }
 
-        CiValue resultOperand = resultOperandFor(x.kind);
+        CiValue resultOperand = resultOperandFor(x.kind());
 
         CiKind[] signature = CiUtil.signatureToKinds(callTarget.targetMethod().signature(), callTarget.isStatic() ? null : callTarget.targetMethod().holder().kind(true));
         CiCallingConvention cc = compilation.registerConfig.getCallingConvention(JavaCall, signature, target(), false);
@@ -793,7 +793,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
                 if (setInstructionResult) {
-                    outputOperand = newVariable(instruction.kind.stackKind());
+                    outputOperand = newVariable(instruction.kind().stackKind());
                 } else {
                     outputOperand = newVariable(resultOperand.kind.stackKind());
                 }
@@ -1143,7 +1143,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         assert phi.type() == PhiType.Value : "wrong phi type: " + phi;
         if (phi.operand().isIllegal()) {
             // allocate a variable for this phi
-            CiVariable operand = newVariable(phi.kind);
+            CiVariable operand = newVariable(phi.kind());
             setResult(phi, operand);
         }
         return phi.operand();
@@ -1189,7 +1189,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                     CiValue param = loadForStore(operand(arg), operand.kind);
                     emitMove(param, operand);
 
-                    if (arg.kind == CiKind.Object && pointerSlots != null) {
+                    if (arg.kind() == CiKind.Object && pointerSlots != null) {
                         // This slot must be marked explicitly in the pointer map.
                         pointerSlots.add(operand);
                     }
@@ -1312,10 +1312,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         FrameState stateAfter = x.stateAfter();
         if (stateAfter != null) {
             // TODO change back to stateBeforeReturn() when RuntimeCallNode uses a CallTargetNode
-            FrameState stateBeforeReturn = stateAfter.duplicateModified(stateAfter.bci, stateAfter.rethrowException(), x.kind);
+            FrameState stateBeforeReturn = stateAfter.duplicateModified(stateAfter.bci, stateAfter.rethrowException(), x.kind());
             info = stateFor(stateBeforeReturn);
         }
-        CiValue resultOperand = resultOperandFor(x.kind);
+        CiValue resultOperand = resultOperandFor(x.kind());
         CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, x.call().arguments, target(), false);
         compilation.frameMap().adjustOutgoingStackSize(cc, RuntimeCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);

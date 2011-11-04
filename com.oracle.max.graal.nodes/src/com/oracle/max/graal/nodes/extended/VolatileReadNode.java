@@ -39,7 +39,7 @@ public final class VolatileReadNode extends AbstractMemoryCheckpointNode impleme
     }
 
     public VolatileReadNode(ValueNode readNode) {
-        super(readNode.kind);
+        super(readNode.kind());
         this.readNode = readNode;
     }
 

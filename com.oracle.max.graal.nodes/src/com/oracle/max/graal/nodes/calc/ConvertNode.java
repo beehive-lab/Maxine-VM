@@ -81,7 +81,7 @@ public final class ConvertNode extends FloatingNode implements Canonicalizable, 
      */
     public ConvertNode(Op opcode, ValueNode value) {
         super(opcode.to.stackKind());
-        assert value.kind == opcode.from;
+        assert value.kind() == opcode.from;
         this.opcode = opcode;
         this.value = value;
     }

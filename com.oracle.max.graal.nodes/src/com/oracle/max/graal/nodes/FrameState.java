@@ -707,7 +707,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     @Override
     public boolean verify() {
         for (ValueNode value : values) {
-            assert assertTrue(value == null || (value.kind != CiKind.Void && value.kind != CiKind.Illegal), "unexpected value: %s", value);
+            assert assertTrue(value == null || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
         }
         return super.verify();
     }

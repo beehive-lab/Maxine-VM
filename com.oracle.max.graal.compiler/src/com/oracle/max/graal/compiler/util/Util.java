@@ -350,7 +350,7 @@ public class Util {
      * level in the context of the {@linkplain GraalCompilation#compilation()} compilation.
      */
     public static boolean archKindsEqual(ValueNode i, ValueNode other) {
-        return archKindsEqual(i.kind, other.kind);
+        return archKindsEqual(i.kind(), other.kind());
     }
 
     /**

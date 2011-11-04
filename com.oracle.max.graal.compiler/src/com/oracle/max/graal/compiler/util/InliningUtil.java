@@ -101,7 +101,7 @@ public class InliningUtil {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.kind, parameters);
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.kind(), parameters);
                     }
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
@@ -162,7 +162,7 @@ public class InliningUtil {
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
-            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.kind);
+            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.kind());
             for (Node node : frameStates) {
                 FrameState frameState = (FrameState) duplicates.get(node);
                 if (!frameState.isDeleted()) {

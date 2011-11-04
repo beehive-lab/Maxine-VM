@@ -464,8 +464,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
-        CiKind kind = node.newValue().kind;
-        assert kind == node.expected().kind;
+        CiKind kind = node.newValue().kind();
+        assert kind == node.expected().kind();
 
         CiValue expected = loadNonConst(operand(node.expected()));
         CiVariable newValue = load(operand(node.newValue()));
@@ -485,7 +485,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         append(MOVE.create(rax, expected));
         append(CAS.create(rax, addrBase, addrIndex, CiAddress.Scale.Times1, 0, rax, newValue));
 
-        CiVariable result = newVariable(node.kind);
+        CiVariable result = newVariable(node.kind());
         if (node.directResult()) {
             append(MOVE.create(result, rax));
         } else {
@@ -531,7 +531,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStackAllocate(StackAllocateNode x) {
-        CiVariable result = newVariable(x.kind);
+        CiVariable result = newVariable(x.kind());
         StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size);
         append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
         setResult(x, result);
@@ -542,7 +542,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitMathIntrinsic(MathIntrinsicNode x) {
         CiVariable input = load(operand(x.x()));
-        CiVariable result = newVariable(x.kind);
+        CiVariable result = newVariable(x.kind());
         switch (x.operation()) {
             case ABS:
                 append(MOVE.create(result, input));
@@ -563,8 +563,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
         emitCompare(operand(x.x()), operand(x.y()));
-        CiVariable result = newVariable(x.kind);
-        switch (x.x().kind){
+        CiVariable result = newVariable(x.kind());
+        switch (x.x().kind()){
             case Float:
             case Double:
                 if (x.isUnorderedLess) {

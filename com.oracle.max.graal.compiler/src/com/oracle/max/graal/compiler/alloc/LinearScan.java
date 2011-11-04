@@ -163,7 +163,7 @@ public final class LinearScan {
     static final IntervalPredicate IS_OOP_INTERVAL = new IntervalPredicate() {
         @Override
         public boolean apply(Interval i) {
-            return !i.operand.isRegister() && i.kind() == CiKind.Object;
+            return !i.operand.isRegister() && i.kind()  == CiKind.Object;
         }
     };
 
@@ -2227,7 +2227,7 @@ public final class LinearScan {
                 throw new CiBailout("");
             }
 
-            if (i1.operand.isVariable() && i1.kind() == CiKind.Illegal) {
+            if (i1.operand.isVariable() && i1.kind()  == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.operandNumber);
                 TTY.println(i1.logString(this));
                 throw new CiBailout("");

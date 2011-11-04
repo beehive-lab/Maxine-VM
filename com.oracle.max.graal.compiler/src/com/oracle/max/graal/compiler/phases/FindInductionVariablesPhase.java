@@ -91,7 +91,7 @@ public class FindInductionVariablesPhase extends Phase {
                     if (backEdge instanceof IntegerSubNode) {
                         stride = graph.unique(new NegateNode(stride));
                     }
-                    CiKind kind = phi.kind;
+                    CiKind kind = phi.kind();
                     LoopCounterNode counter = loopBegin.loopCounter(kind);
                     BasicInductionVariableNode biv1 = null;
                     BasicInductionVariableNode biv2 = null;

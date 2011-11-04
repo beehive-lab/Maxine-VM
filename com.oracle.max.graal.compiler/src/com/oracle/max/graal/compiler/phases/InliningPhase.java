@@ -511,7 +511,7 @@ public class InliningPhase extends Phase {
         }
 //        ReturnNode ret = graph.getReturn();
 //        if (ret != null && ret.result() != null) {
-//            if (ret.result().kind == CiKind.Object && ret.result().exactType() != null) {
+//            if (ret.result().kind() == CiKind.Object && ret.result().exactType() != null) {
 //                result -= 5;
 //            }
 //        }

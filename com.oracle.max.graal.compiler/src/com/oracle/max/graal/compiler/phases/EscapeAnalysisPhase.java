@@ -86,7 +86,7 @@ public class EscapeAnalysisPhase extends Phase {
                 }
                 for (int i2 = 0; i2 < fieldState.length; i2++) {
                     if (fieldState[i2] != other.fieldState[i2] && valuePhis[i2] == null) {
-                        valuePhis[i2] = graph.add(new PhiNode(fieldState[i2].kind, merge, PhiType.Value));
+                        valuePhis[i2] = graph.add(new PhiNode(fieldState[i2].kind(), merge, PhiType.Value));
                         valuePhis[i2].addInput(fieldState[i2]);
                         fieldState[i2] = valuePhis[i2];
                     }
@@ -122,7 +122,7 @@ public class EscapeAnalysisPhase extends Phase {
             vobjPhi.addInput(virtualObjectField);
             virtualObjectField = vobjPhi;
             for (int i2 = 0; i2 < fieldState.length; i2++) {
-                PhiNode valuePhi = graph.add(new PhiNode(fieldState[i2].kind, loopBegin, PhiType.Value));
+                PhiNode valuePhi = graph.add(new PhiNode(fieldState[i2].kind(), loopBegin, PhiType.Value));
                 valuePhi.addInput(fieldState[i2]);
                 fieldState[i2] = valuePhi;
                 updateField(i2);
