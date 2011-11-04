@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
+import com.oracle.max.graal.compiler.GraalCompiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
@@ -187,6 +188,8 @@ public final class GraalCompilation {
                 new CanonicalizerPhase(context(), compiler.target, compiler.runtime, assumptions).apply(graph);
             }
 
+            compiler.runPhases(PhasePosition.HIGH_LEVEL, graph);
+
             if (GraalOptions.Extend) {
                 extensionOptimizations(graph);
                 new DeadCodeEliminationPhase(context()).apply(graph);
@@ -229,6 +232,11 @@ public final class GraalCompilation {
             }
             new RemovePlaceholderPhase(context()).apply(graph);
             new DeadCodeEliminationPhase(context()).apply(graph);
+
+            compiler.runPhases(PhasePosition.MID_LEVEL, graph);
+
+            compiler.runPhases(PhasePosition.LOW_LEVEL, graph);
+
             IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(context(), true);
             schedule.apply(graph);
             if (stats != null) {
