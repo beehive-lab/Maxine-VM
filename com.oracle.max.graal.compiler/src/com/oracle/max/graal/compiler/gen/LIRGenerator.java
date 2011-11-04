@@ -61,8 +61,8 @@ import com.sun.cri.xir.*;
  * This class traverses the HIR instructions and generates LIR instructions from them.
  */
 public abstract class LIRGenerator extends LIRGeneratorTool {
-    protected final GraalContext context;
-    protected final GraalCompilation compilation;
+    public final GraalContext context;
+    public final GraalCompilation compilation;
     protected final LIR lir;
     protected final XirSupport xirSupport;
     protected final RiXirGenerator xir;
@@ -303,7 +303,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    void doRoot(ValueNode instr) {
+    private void doRoot(ValueNode instr) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 2) {
             TTY.println("Emitting LIR for instruction " + instr);
         }
@@ -313,13 +313,16 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             TTY.println("Visiting    " + instr);
         }
 
-        ((LIRLowerable) instr).generate(this);
+        emitNode(instr);
 
         if (GraalOptions.TraceLIRVisit) {
             TTY.println("Operand for " + instr + " = " + instr.operand());
         }
     }
 
+    protected void emitNode(ValueNode node) {
+        ((LIRLowerable) node).generate(this);
+    }
 
     private boolean canBeNullCheck(LocationNode location) {
         // TODO: Make this part of CiTarget
@@ -487,6 +490,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
+    protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
+        XirSnippet writeBarrier = xir.genWriteBarrier(toXirArgument(addr));
+        if (writeBarrier != null) {
+            emitXir(writeBarrier, null, null, null, false);
+        }
+    }
+
+    protected void preGCWriteBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {
+    }
+
+
 
     @Override
     public void visitMerge(MergeNode x) {
@@ -506,8 +520,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
         if (GraalOptions.GenLoopSafepoints) {
-            XirSnippet snippet = xir.genSafepointPoll(site(x));
-            emitXir(snippet, x, state(), null, false);
+            emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
@@ -983,26 +996,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             setResult(phi, operand);
         }
         return phi.operand();
-    }
-
-    protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
-       XirSnippet writeBarrier = xir.genWriteBarrier(toXirArgument(addr));
-       if (writeBarrier != null) {
-           emitXir(writeBarrier, null, null, null, false);
-       }
-    }
-
-    protected void preGCWriteBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {
-    }
-
-    @Override
-    public void visitVolatileMemoryRead(VolatileReadNode memRead) {
-        // TODO Warning: the preVolatileRead is missing here, and cannot be inserted: since
-        // the actual read node was already emitted earlier (much earlier?), the "load" here only
-        // queries the already generated result variable.
-        CiValue readValue = operand(memRead.getReadNode());
-        emitMembar(JMM_POST_VOLATILE_READ);
-        setResult(memRead, emitMove(readValue));
     }
 
 

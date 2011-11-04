@@ -30,7 +30,6 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1Opcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOpcode.*;
@@ -40,14 +39,12 @@ import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
 
@@ -77,6 +74,15 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
         lir.methodEndMarker = new AMD64MethodEndStub();
+    }
+
+    @Override
+    protected void emitNode(ValueNode node) {
+        if (node instanceof AMD64LIRLowerable) {
+            ((AMD64LIRLowerable) node).generateAmd64(this);
+        } else {
+            super.emitNode(node);
+        }
     }
 
     @Override
@@ -527,36 +533,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = newVariable(target().wordKind);
         append(AMD64HotSpotOpcode.MonitorAddressOpcode.MONITOR_ADDRESS.create(result, monitorIndex));
         return result;
-    }
-
-    // TODO Maxine-specific
-    @Override
-    public void visitStackAllocate(StackAllocateNode x) {
-        CiVariable result = newVariable(x.kind);
-        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size);
-        append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
-        setResult(x, result);
-    }
-
-    // TODO This method should go away, and the logic directly merged into MathIntrinsicNode
-    @Override
-    public void visitMathIntrinsic(MathIntrinsicNode x) {
-        CiVariable input = load(operand(x.x()));
-        CiVariable result = newVariable(x.kind);
-        switch (x.operation()) {
-            case ABS:
-                append(MOVE.create(result, input));
-                append(DABS.create(result));
-                break;
-            case SQRT:  append(SQRT.create(result, input)); break;
-            case LOG:   append(LOG.create(result, input)); break;
-            case LOG10: append(LOG10.create(result, input)); break;
-            case SIN:   append(SIN.create(result, input)); break;
-            case COS:   append(COS.create(result, input)); break;
-            case TAN:   append(TAN.create(result, input)); break;
-            default:    throw Util.shouldNotReachHere();
-        }
-        setResult(x, result);
     }
 
     // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.

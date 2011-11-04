@@ -95,9 +95,6 @@ public abstract class LIRGeneratorTool {
     public abstract void visitEndNode(EndNode i);
     public abstract void visitLoopEnd(LoopEndNode i);
 
-    // TODO This method is broken, volatile memory reads cannot be handled that way!
-    public abstract void visitVolatileMemoryRead(VolatileReadNode i);
-
     // The CompareAndSwapNode in its current form needs to be lowered to several Nodes before code generation to separate three parts:
     // * The write barriers (and possibly read barriers) when accessing an object field
     // * The distinction of returning a boolean value (semantic similar to a BooleanNode to be used as a condition?) or the old value being read
@@ -106,12 +103,6 @@ public abstract class LIRGeneratorTool {
 
     // The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.
     public abstract void visitNormalizeCompare(NormalizeCompareNode i);
-
-    // To be moved to the snippets-project where the MathIntrinsics are actually defined.  This is an Intel-only class and not general functionality.
-    public abstract void visitMathIntrinsic(MathIntrinsicNode i);
-
-    // To be moved to a Maxine-specific project.
-    public abstract void visitStackAllocate(StackAllocateNode i);
 
     // Functionality that is currently implemented in XIR.
     // These methods will go away eventually when lowering is done via snippets in the front end.

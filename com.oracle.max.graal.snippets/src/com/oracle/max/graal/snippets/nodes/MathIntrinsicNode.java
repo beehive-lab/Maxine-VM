@@ -20,15 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.java;
+package com.oracle.max.graal.snippets.nodes;
 
+import com.oracle.max.graal.compiler.target.amd64.*;
+import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.snippets.target.amd64.*;
 import com.sun.cri.ci.*;
 
-public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, LIRLowerable {
+public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, AMD64LIRLowerable {
 
     @Input private ValueNode x;
     @Data private final Operation operation;
@@ -53,8 +56,23 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, 
     }
 
     @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.visitMathIntrinsic(this);
+    public void generateAmd64(AMD64LIRGenerator gen) {
+        CiVariable input = gen.load(gen.operand(x()));
+        CiVariable result = gen.newVariable(kind);
+        switch (operation()) {
+            case ABS:
+                gen.emitMove(input, result);
+                gen.append(AMD64Op1Opcode.DABS.create(result));
+                break;
+            case SQRT:  gen.append(AMD64MathIntrinsicOpcode.SQRT.create(result, input)); break;
+            case LOG:   gen.append(AMD64MathIntrinsicOpcode.LOG.create(result, input)); break;
+            case LOG10: gen.append(AMD64MathIntrinsicOpcode.LOG10.create(result, input)); break;
+            case SIN:   gen.append(AMD64MathIntrinsicOpcode.SIN.create(result, input)); break;
+            case COS:   gen.append(AMD64MathIntrinsicOpcode.COS.create(result, input)); break;
+            case TAN:   gen.append(AMD64MathIntrinsicOpcode.TAN.create(result, input)); break;
+            default:    throw Util.shouldNotReachHere();
+        }
+        gen.setResult(this, result);
     }
 
     @Override
@@ -62,20 +80,13 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, 
         if (x().isConstant()) {
             double value = x().asConstant().asDouble();
             switch (operation()) {
-                case ABS:
-                    return ConstantNode.forDouble(Math.abs(value), graph());
-                case SQRT:
-                    return ConstantNode.forDouble(Math.sqrt(value), graph());
-                case LOG:
-                    return ConstantNode.forDouble(Math.log(value), graph());
-                case LOG10:
-                    return ConstantNode.forDouble(Math.log10(value), graph());
-                case SIN:
-                    return ConstantNode.forDouble(Math.sin(value), graph());
-                case COS:
-                    return ConstantNode.forDouble(Math.cos(value), graph());
-                case TAN:
-                    return ConstantNode.forDouble(Math.tan(value), graph());
+                case ABS:   return ConstantNode.forDouble(Math.abs(value), graph());
+                case SQRT:  return ConstantNode.forDouble(Math.sqrt(value), graph());
+                case LOG:   return ConstantNode.forDouble(Math.log(value), graph());
+                case LOG10: return ConstantNode.forDouble(Math.log10(value), graph());
+                case SIN:   return ConstantNode.forDouble(Math.sin(value), graph());
+                case COS:   return ConstantNode.forDouble(Math.cos(value), graph());
+                case TAN:   return ConstantNode.forDouble(Math.tan(value), graph());
             }
         }
         return this;
