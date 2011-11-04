@@ -129,6 +129,7 @@ public class C1XGraal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, null);
+            graalCompiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime));
             graalCompiler.addPhase(PhasePosition.MID_LEVEL, new WordTypeRewriterPhase());
 
             c1xCompiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);

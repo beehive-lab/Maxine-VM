@@ -98,7 +98,7 @@ public class InliningPhase extends Phase {
 
         @Override
         public void inline(StructuredGraph compilerGraph) {
-            InliningUtil.inline(invoke, intrinsicGraph, null);
+            InliningUtil.inline(invoke, intrinsicGraph);
         }
 
         @Override
@@ -127,7 +127,7 @@ public class InliningPhase extends Phase {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
                 graph = new StructuredGraph();
-                new GraphBuilderPhase(context, runtime, concrete, null).apply(graph, true, false);
+                new GraphBuilderPhase(context, runtime, concrete).apply(graph, true, false);
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase(context).apply(graph, true, false);
                     new ComputeProbabilityPhase(context).apply(graph, true, false);
@@ -139,7 +139,7 @@ public class InliningPhase extends Phase {
                 }
             }
 
-            InliningUtil.inline(invoke, graph, null);
+            InliningUtil.inline(invoke, graph);
         }
 
         @Override

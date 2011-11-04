@@ -72,8 +72,9 @@ public abstract class Phase {
 
         int startDeletedNodeCount = graph.getDeletedNodeCount();
         int startNodeCount = graph.getNodeCount();
-        boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
-        context.timers.startScope(getName());
+        if (context != null) {
+            context.timers.startScope(getName());
+        }
         try {
             try {
                 run(graph);
@@ -84,22 +85,27 @@ public abstract class Phase {
             } catch (RuntimeException e) {
                 throw new VerificationError(e);
             } finally {
-                context.timers.endScope();
+                if (context != null) {
+                    context.timers.endScope();
+                }
             }
         } catch (VerificationError e) {
             throw e.addContext(graph).addContext("phase", getDetailedName());
         }
 
-        if (GraalOptions.Meter) {
-            int deletedNodeCount = graph.getDeletedNodeCount() - startDeletedNodeCount;
-            int createdNodeCount = graph.getNodeCount() - startNodeCount + deletedNodeCount;
-            context.metrics.get(getName().concat(".executed")).increment();
-            context.metrics.get(getName().concat(".deletedNodes")).increment(deletedNodeCount);
-            context.metrics.get(getName().concat(".createdNodes")).increment(createdNodeCount);
-        }
+        if (context != null) {
+            if (GraalOptions.Meter) {
+                int deletedNodeCount = graph.getDeletedNodeCount() - startDeletedNodeCount;
+                int createdNodeCount = graph.getNodeCount() - startNodeCount + deletedNodeCount;
+                context.metrics.get(getName().concat(".executed")).increment();
+                context.metrics.get(getName().concat(".deletedNodes")).increment(deletedNodeCount);
+                context.metrics.get(getName().concat(".createdNodes")).increment(createdNodeCount);
+            }
 
-        if (shouldFireCompilationEvents && context.timers.currentLevel() < GraalOptions.PlotLevel) {
-            context.observable.fireCompilationEvent(new CompilationEvent(null, "After " + getDetailedName(), graph, true, false));
+            boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
+            if (shouldFireCompilationEvents && context.timers.currentLevel() < GraalOptions.PlotLevel) {
+                context.observable.fireCompilationEvent(new CompilationEvent(null, "After " + getDetailedName(), graph, true, false));
+            }
         }
 
         try {

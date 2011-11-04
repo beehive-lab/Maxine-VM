@@ -39,7 +39,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.platform.*;
 
-public class MaxineIntrinsicImplementations {
+public class GraalMaxineIntrinsicImplementations {
     private static class NotImplementedIntrinsic implements GraalIntrinsicImpl {
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
@@ -52,7 +52,7 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 3 && args[0].isConstant() && args[0].kind() == CiKind.Int;
+            assert args.length == 3 && args[0].isConstant() && args[0].kind() == CiKind.Int : target;
             int opcode = args[0].asConstant().asInt();
             // TODO(cwi): Why the separation when both branches do the same?
             if (args[1].kind() == CiKind.Long || args[1].kind() == CiKind.Double) {

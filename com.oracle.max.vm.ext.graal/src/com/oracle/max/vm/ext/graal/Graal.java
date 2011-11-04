@@ -123,11 +123,12 @@ public class Graal implements RuntimeCompiler {
 
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             Registry intrinsicRegistry = new IntrinsicImpl.Registry();
-            MaxineIntrinsicImplementations.initialize(intrinsicRegistry);
+            GraalMaxineIntrinsicImplementations.initialize(intrinsicRegistry);
             runtime.setIntrinsicRegistry(intrinsicRegistry);
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime));
             compiler.addPhase(PhasePosition.MID_LEVEL, new WordTypeRewriterPhase());
 
             // search for the runtime call and register critical methods
