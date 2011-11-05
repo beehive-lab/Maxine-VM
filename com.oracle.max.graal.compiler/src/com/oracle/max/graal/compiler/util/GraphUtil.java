@@ -63,20 +63,27 @@ public class GraphUtil {
                 }
             }
         }
-        killNonCFG(node, null);
+        propagateKill(node, null);
     }
 
-    public static void killNonCFG(Node node, Node input) {
+    private static void propagateKill(Node node, Node input) {
         if (node instanceof PhiNode) {
             node.replaceFirstInput(input, null);
         } else {
             for (Node usage : node.usages().snapshot()) {
                 if (usage instanceof FloatingNode && !usage.isDeleted()) {
-                    killNonCFG(usage, node);
+                    propagateKill(usage, node);
                 }
             }
             // null out remaining usages
             node.replaceAtUsages(null);
+            node.delete();
+        }
+    }
+
+    public static void killFloating(FloatingNode node) {
+        if (node.usages().size() == 0) {
+            node.clearAndKillInputs();
             node.delete();
         }
     }

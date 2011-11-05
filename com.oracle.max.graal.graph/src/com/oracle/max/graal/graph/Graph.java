@@ -42,6 +42,7 @@ public class Graph {
     private int deletedNodeCount;
     private int mark;
 
+    ArrayList<Node> usagesDropped = new ArrayList<Node>();
     private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
 
     private static final class CacheEntry {
@@ -122,6 +123,12 @@ public class Graph {
     public <T extends Node> T add(T node) {
         node.initialize(this);
         return node;
+    }
+
+    public List<Node> getAndCleanUsagesDroppedNodes() {
+        ArrayList<Node> result = usagesDropped;
+        usagesDropped = new ArrayList<Node>();
+        return result;
     }
 
     /**

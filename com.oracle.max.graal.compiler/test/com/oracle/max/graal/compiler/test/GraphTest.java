@@ -60,6 +60,13 @@ public abstract class GraphTest {
         System.out.println("initialized");
     }
 
+    protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {
+        if (expected.getNodeCount() != graph.getNodeCount()) {
+            print("Node count not matching", expected, graph);
+            Assert.fail("Graphs do not have the same number of nodes");
+        }
+    }
+
     protected RiRuntime runtime() {
         return graalCompiler.runtime;
     }
@@ -81,6 +88,11 @@ public abstract class GraphTest {
         StructuredGraph graph = new StructuredGraph();
         new GraphBuilderPhase(runtime, riMethod).apply(graph);
         return graph;
+    }
+
+    protected void print(String title, StructuredGraph... graphs) {
+        IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+        observer.printGraphs(getClass().getSimpleName() + ": " + title, graphs);
     }
 
     protected void print(StructuredGraph graph) {

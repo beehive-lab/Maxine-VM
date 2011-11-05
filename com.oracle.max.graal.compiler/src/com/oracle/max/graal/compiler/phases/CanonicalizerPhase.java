@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.phases;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
@@ -120,6 +121,12 @@ public class CanonicalizerPhase extends Phase {
                         nodeWorkList.replaced(canonical, node, false, EdgeType.USAGES);
                     }
                 }
+            }
+        }
+
+        for (Node n : graph.getAndCleanUsagesDroppedNodes()) {
+            if (!n.isDeleted() && n.usages().size() == 0 && n instanceof FloatingNode) {
+                GraphUtil.killFloating((FloatingNode) n);
             }
         }
     }
