@@ -124,9 +124,11 @@ public class CanonicalizerPhase extends Phase {
             }
         }
 
-        for (Node n : graph.getAndCleanUsagesDroppedNodes()) {
-            if (!n.isDeleted() && n.usages().size() == 0 && n instanceof FloatingNode) {
-                GraphUtil.killFloating((FloatingNode) n);
+        while (graph.getUsagesDroppedNodesCount() > 0) {
+            for (Node n : graph.getAndCleanUsagesDroppedNodes()) {
+                if (!n.isDeleted() && n.usages().size() == 0 && n instanceof FloatingNode) {
+                    GraphUtil.killFloating((FloatingNode) n);
+                }
             }
         }
     }

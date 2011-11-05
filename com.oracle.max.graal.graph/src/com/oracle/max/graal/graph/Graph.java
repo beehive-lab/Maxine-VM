@@ -125,6 +125,10 @@ public class Graph {
         return node;
     }
 
+    public int getUsagesDroppedNodesCount() {
+        return usagesDropped.size();
+    }
+
     public List<Node> getAndCleanUsagesDroppedNodes() {
         ArrayList<Node> result = usagesDropped;
         usagesDropped = new ArrayList<Node>();

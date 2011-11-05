@@ -106,9 +106,6 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                         if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
                                                             currentValue = callTarget.arguments().get(0);
                                                             invokeNode.replaceAndDelete(invokeNode.next());
-                                                            if (callTarget.usages().size() == 0) {
-                                                                callTarget.delete();
-                                                            }
                                                         }
                                                     }
                                                 }
@@ -135,7 +132,6 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 invoke.setStateAfter(null);
                                 invoke.setExceptionEdge(null);
                                 invoke.setNext(null);
-                                CallTargetNode callTarget = invoke.callTarget();
 
                                 if (newInstance instanceof FixedWithNextNode) {
                                     FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) newInstance;
@@ -146,10 +142,6 @@ public class SnippetIntrinsificationPhase extends Phase {
 
                                 // Replace invoke with new node.
                                 invoke.replaceAndDelete(newInstance);
-
-                                if (callTarget.usages().size() == 0) {
-                                    callTarget.delete();
-                                }
 
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
                                 if (newInstance.kind() != CiKind.Object) {

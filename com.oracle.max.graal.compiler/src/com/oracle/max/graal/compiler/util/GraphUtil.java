@@ -83,7 +83,7 @@ public class GraphUtil {
 
     public static void killFloating(FloatingNode node) {
         if (node.usages().size() == 0) {
-            node.clearAndKillInputs();
+            node.clearInputs();
             node.delete();
         }
     }

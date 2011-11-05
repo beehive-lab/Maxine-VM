@@ -28,34 +28,120 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
+/**
+ * In the following tests, the usages of local variable "a" are replaced with the integer constant 0.
+ * Then canonicalization is applied and it is verified that the resulting graph is equal to the
+ * graph of the method that just has a "return 1" statement in it.
+ */
 public class IfCanonicalizerTest extends GraphTest {
 
+    private static final String REFERENCE_SNIPPET = "referenceSnippet";
+
+    public static int referenceSnippet(int a) {
+        return 1;
+    }
+
     @Test
-    public void test() {
-        StructuredGraph graph = parse("testSnippet");
+    public void test1() {
+        test("test1Snippet");
+    }
+
+    public static int test1Snippet(int a) {
+        if (a == 0) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
+    @Test
+    public void test2() {
+        test("test2Snippet");
+    }
+
+    public static int test2Snippet(int a) {
+        if (a == 0) {
+            if (a == 0) {
+                if (a == 0) {
+                    return 1;
+                }
+            }
+        } else {
+            return 2;
+        }
+        return 3;
+    }
+
+    @Test
+    public void test3() {
+        test("test3Snippet");
+    }
+
+    public static int test3Snippet(int a) {
+        if (a == 0) {
+            if (a != 1) {
+                if (a == 1) {
+                    return 3;
+                } else {
+                    if (a >= 0) {
+                        if (a <= 0) {
+                            if (a > -1) {
+                                if (a < 1) {
+                                    return 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            return 2;
+        }
+        return 3;
+    }
+
+    @Test
+    public void test4() {
+        test("test4Snippet");
+    }
+
+    public static int test4Snippet(int a) {
+        if (a == 0) {
+            return 1;
+        }
+        return 1;
+    }
+
+    @Test
+    public void test5() {
+        test("test5Snippet");
+    }
+
+    public static int test5Snippet(int a) {
+        int val = 2;
+        if (a == 0) {
+            val = 1;
+        }
+        if (a * (3 + val) == 0) {
+            return 1;
+        }
+        return 1;
+    }
+
+    private void test(String snippet) {
+        StructuredGraph graph = parse(snippet);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
         ConstantNode constant = ConstantNode.forInt(0, graph);
-        for (Node n : local.usages()) {
+        for (Node n : local.usages().snapshot()) {
             if (n instanceof FrameState) {
                 // Do not replace.
             } else {
                 n.replaceFirstInput(local, constant);
             }
         }
+        print(graph);
         new CanonicalizerPhase(null, null, runtime(), null).apply(graph);
-        StructuredGraph referenceGraph = parse("referenceSnippet");
+        StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
-    }
-
-    public static int referenceSnippet(int a) {
-        return 1;
-    }
-
-    public static int testSnippet(int a) {
-        if (a == 0) {
-            return 1;
-        } else {
-            return 2;
-        }
     }
 }

@@ -257,19 +257,6 @@ public abstract class Node implements Cloneable {
         getNodeClass().clearInputs(this);
     }
 
-    public void clearAndKillInputs() {
-        assert assertFalse(isDeleted(), "cannot clear inputs of deleted node");
-
-        for (Node input : inputs()) {
-            input.usages.remove(this);
-            if (input.usages.size() == 0) {
-                input.clearAndKillInputs();
-                input.delete();
-            }
-        }
-        getNodeClass().clearInputs(this);
-    }
-
     private boolean removeThisFromUsages(Node n) {
         if (n.usages.remove(this)) {
             if (n.usages.size() == 0) {
@@ -299,7 +286,6 @@ public abstract class Node implements Cloneable {
 
     public void delete() {
         assert checkDeletion();
-
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
