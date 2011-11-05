@@ -71,7 +71,8 @@ public class BeginNode extends StateSplit implements LIRLowerable, Canonicalizab
 
     @Override
     public boolean verify() {
-        return predecessor() != null || this == graph().start();
+        assertTrue(predecessor() != null || this == graph().start() || this instanceof MergeNode, "begin nodes must be connected");
+        return super.verify();
     }
 
     @Override

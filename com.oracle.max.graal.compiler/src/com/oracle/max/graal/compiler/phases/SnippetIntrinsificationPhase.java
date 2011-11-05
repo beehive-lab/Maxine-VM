@@ -102,9 +102,13 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 if (node.usages().size() == 2) {
                                                     if (node instanceof InvokeNode) {
                                                         InvokeNode invokeNode = (InvokeNode) node;
-                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.callTarget().targetMethod())) {
-                                                            currentValue = invokeNode.callTarget().arguments().get(0);
+                                                        MethodCallTargetNode callTarget = invokeNode.callTarget();
+                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
+                                                            currentValue = callTarget.arguments().get(0);
                                                             invokeNode.replaceAndDelete(invokeNode.next());
+                                                            if (callTarget.usages().size() == 0) {
+                                                                callTarget.delete();
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -131,6 +135,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 invoke.setStateAfter(null);
                                 invoke.setExceptionEdge(null);
                                 invoke.setNext(null);
+                                CallTargetNode callTarget = invoke.callTarget();
 
                                 if (newInstance instanceof FixedWithNextNode) {
                                     FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) newInstance;
@@ -142,6 +147,10 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 // Replace invoke with new node.
                                 invoke.replaceAndDelete(newInstance);
 
+                                if (callTarget.usages().size() == 0) {
+                                    callTarget.delete();
+                                }
+
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
                                 if (newInstance.kind() != CiKind.Object) {
                                     for (Node usage : newInstance.usages().snapshot()) {
@@ -152,13 +161,13 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                     ValueAnchorNode valueAnchorNode = (ValueAnchorNode) checkCastUsage;
                                                     valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
-                                                    MethodCallTargetNode callTarget = (MethodCallTargetNode) checkCastUsage;
-                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, callTarget.targetMethod());
-                                                    for (InvokeNode invokeNode : callTarget.invokes()) {
+                                                    MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
+                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
+                                                    for (InvokeNode invokeNode : checkCastCallTarget.invokes()) {
                                                         invokeNode.replaceAtUsages(newInstance);
                                                         invokeNode.replaceAndDelete(invokeNode.next());
                                                     }
-                                                    callTarget.delete();
+                                                    checkCastCallTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
                                                     checkCastUsage.replaceFirstInput(checkCastNode, null);
                                                 } else {
