@@ -57,7 +57,6 @@ public abstract class GraphTest {
 
     public GraphTest() {
         this.graalCompiler = getGraalCompiler();
-        System.out.println("initialized");
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {

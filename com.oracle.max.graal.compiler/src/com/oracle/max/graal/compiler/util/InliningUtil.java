@@ -161,9 +161,6 @@ public class InliningUtil {
 
         invoke.clearInputs();
         GraphUtil.killCFG(invoke);
-        if (callTarget.usages().size() == 0) {
-            callTarget.delete();
-        }
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
