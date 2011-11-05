@@ -39,8 +39,7 @@ public class SnippetIntrinsificationPhase extends Phase {
 
     private final RiRuntime runtime;
 
-    public SnippetIntrinsificationPhase(GraalContext context, RiRuntime runtime) {
-        super(context);
+    public SnippetIntrinsificationPhase(RiRuntime runtime) {
         this.runtime = runtime;
     }
 

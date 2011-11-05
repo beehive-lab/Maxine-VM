@@ -33,26 +33,20 @@ public abstract class Phase {
 
     private final String name;
     private final boolean shouldVerify;
-    protected final GraalContext context;
+    protected GraalContext context;
 
     protected Phase() {
-        this(GraalContext.EMPTY_CONTEXT);
-    }
-
-    protected Phase(GraalContext context) {
-        this.context = context;
         this.name = this.getClass().getSimpleName();
         this.shouldVerify = GraalOptions.VerifyPhases;
     }
 
-    protected Phase(GraalContext context, String name) {
-        this(context, name, GraalOptions.VerifyPhases);
+    protected Phase(String name) {
+        this(name, GraalOptions.VerifyPhases);
     }
 
-    protected Phase(GraalContext context, String name, boolean shouldVerify) {
+    protected Phase(String name, boolean shouldVerify) {
         this.name = name;
         this.shouldVerify = shouldVerify;
-        this.context = context;
     }
 
     protected String getDetailedName() {
@@ -60,10 +54,20 @@ public abstract class Phase {
     }
 
     public final void apply(StructuredGraph graph) {
-        apply(graph, true, true);
+        apply(graph, GraalContext.EMPTY_CONTEXT);
+    }
+
+    public final void apply(StructuredGraph graph, GraalContext context) {
+        apply(graph, context, true, true);
     }
 
     public final void apply(StructuredGraph graph, boolean plotOnError, boolean plot) {
+        apply(graph,  GraalContext.EMPTY_CONTEXT, true, true);
+    }
+
+    public final void apply(StructuredGraph graph, GraalContext context, boolean plotOnError, boolean plot) {
+
+        this.context = context;
         try {
             assert graph != null && !shouldVerify || graph.verify();
         } catch (VerificationError e) {

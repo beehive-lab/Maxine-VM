@@ -62,6 +62,6 @@ public class MustInlineAndFoldPhase extends Phase {
                 InliningUtil.inline(invoke, foldGraph);
             }
         }
-        new CanonicalizerPhase(null, null, runtime, null).apply(graph);
+        new CanonicalizerPhase(null, runtime, null).apply(graph);
     }
 }

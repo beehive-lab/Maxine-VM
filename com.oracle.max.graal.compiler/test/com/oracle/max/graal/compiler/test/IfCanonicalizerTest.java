@@ -140,7 +140,7 @@ public class IfCanonicalizerTest extends GraphTest {
             }
         }
         print(graph);
-        new CanonicalizerPhase(null, null, runtime(), null).apply(graph);
+        new CanonicalizerPhase(null, runtime(), null).apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }

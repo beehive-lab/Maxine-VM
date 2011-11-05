@@ -216,7 +216,6 @@ public class EscapeAnalysisPhase extends Phase {
     private final GraalCompilation compilation;
 
     public EscapeAnalysisPhase(GraalCompilation compilation) {
-        super(compilation.compiler.context);
         this.compilation = compilation;
     }
 
@@ -377,7 +376,7 @@ public class EscapeAnalysisPhase extends Phase {
                 if (context.isObserved()) {
                     context.observable.fireCompilationEvent(new CompilationEvent(compilation, "After escape", graph, true, false));
                 }
-                new PhiSimplificationPhase(context).apply(graph);
+                new PhiSimplificationPhase().apply(graph, context);
 
                 break;
             }
@@ -393,8 +392,8 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions).apply(graph);
-            new DeadCodeEliminationPhase(context).apply(graph);
+            new InliningPhase(compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions).apply(graph, context);
+            new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                     TTY.println("%n!!!!!!!! object died while performing escape analysis: %s (%s) in %s", node, node.exactType(), compilation.method);

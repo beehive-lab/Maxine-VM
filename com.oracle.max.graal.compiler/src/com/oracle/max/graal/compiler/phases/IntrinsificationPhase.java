@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -33,8 +32,7 @@ public class IntrinsificationPhase extends Phase {
 
     private final GraalRuntime runtime;
 
-    public IntrinsificationPhase(GraalContext context, GraalRuntime runtime) {
-        super(context);
+    public IntrinsificationPhase(GraalRuntime runtime) {
         this.runtime = runtime;
     }
 

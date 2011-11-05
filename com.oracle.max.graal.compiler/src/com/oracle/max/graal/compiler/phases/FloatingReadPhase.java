@@ -35,10 +35,6 @@ import com.sun.cri.ci.*;
 
 public class FloatingReadPhase extends Phase {
 
-    public FloatingReadPhase(GraalContext context) {
-        super(context);
-    }
-
     private static class MemoryMap {
         private Block block;
         private IdentityHashMap<Object, Node> map;
@@ -269,8 +265,8 @@ public class FloatingReadPhase extends Phase {
         }
 
         // Identify blocks.
-        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(context, false);
-        s.apply(graph);
+        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(false);
+        s.apply(graph, context);
         List<Block> blocks = s.getBlocks();
 
         // Process blocks (predecessors first).

@@ -57,30 +57,30 @@ public class Snippets {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
                 RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
-                GraphBuilderPhase graphBuilder = new GraphBuilderPhase(context, runtime, snippetRiMethod, null, false, true);
+                GraphBuilderPhase graphBuilder = new GraphBuilderPhase(runtime, snippetRiMethod, null, false, true);
                 StructuredGraph graph = new StructuredGraph();
-                graphBuilder.apply(graph);
+                graphBuilder.apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
                     observer.printSingleGraph(method.getName(), graph);
                 }
 
-                new SnippetIntrinsificationPhase(context, runtime).apply(graph);
+                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
                 Collection<InvokeNode> invokes = new ArrayList<InvokeNode>();
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
                     invokes.add(invoke);
                 }
-                new InliningPhase(context, runtime, target, invokes, null).apply(graph);
+                new InliningPhase(runtime, target, invokes, null).apply(graph, context);
 
-                new SnippetIntrinsificationPhase(context, runtime).apply(graph);
+                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
                     observer.printSingleGraph(method.getName(), graph);
                 }
-                new DeadCodeEliminationPhase(context).apply(graph);
+                new DeadCodeEliminationPhase().apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);

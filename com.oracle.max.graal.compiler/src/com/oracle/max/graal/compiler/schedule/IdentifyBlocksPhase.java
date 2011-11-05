@@ -45,8 +45,8 @@ public class IdentifyBlocksPhase extends Phase {
     private boolean scheduleAllNodes;
     private int loopCount;
 
-    public IdentifyBlocksPhase(GraalContext context, boolean scheduleAllNodes) {
-        super(context, scheduleAllNodes ? "FullSchedule" : "PartSchedule", false);
+    public IdentifyBlocksPhase(boolean scheduleAllNodes) {
+        super(scheduleAllNodes ? "FullSchedule" : "PartSchedule", false);
         this.scheduleAllNodes = scheduleAllNodes;
     }
 

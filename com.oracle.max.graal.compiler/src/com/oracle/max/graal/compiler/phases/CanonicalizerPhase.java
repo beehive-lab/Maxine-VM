@@ -40,12 +40,11 @@ public class CanonicalizerPhase extends Phase {
     private final CiAssumptions assumptions;
     private final RiRuntime runtime;
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, CiAssumptions assumptions) {
-        this(context, target, runtime, false, assumptions);
+    public CanonicalizerPhase(CiTarget target, RiRuntime runtime, CiAssumptions assumptions) {
+        this(target, runtime, false, assumptions);
     }
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, boolean newNodes, CiAssumptions assumptions) {
-        super(context);
+    public CanonicalizerPhase(CiTarget target, RiRuntime runtime, boolean newNodes, CiAssumptions assumptions) {
         this.newNodes = newNodes;
         this.target = target;
         this.assumptions = assumptions;

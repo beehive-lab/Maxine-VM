@@ -117,20 +117,14 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
-        this(null, runtime, method);
+        this(runtime, method, null);
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
-        this(context, runtime, method, null);
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
+        this(runtime, method, stats, GraalOptions.UseBranchPrediction, false);
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
-        this(context, runtime, method, stats, GraalOptions.UseBranchPrediction, false);
-    }
-
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
-        super(context);
-
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
         this.useBranchPrediction = useBranchPrediction;
         this.eagerResolving = eagerResolving;
         this.runtime = runtime;

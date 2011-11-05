@@ -229,7 +229,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case Long:   append(LSUB.create(result, loadNonConst(b))); break;
             case Float:  append(FSUB.create(result, loadNonConst(b))); break;
             case Double: append(DSUB.create(result, loadNonConst(b))); break;
-            default:     throw Util.shouldNotReachHere();
+            default:     throw Util.shouldNotReachHere("kind=" + a.kind);
         }
         return result;
     }
