@@ -25,10 +25,11 @@ package com.oracle.max.graal.nodes.java;
 import java.util.*;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public class MethodCallTargetNode extends CallTargetNode {
+public class MethodCallTargetNode extends CallTargetNode implements Node.IterableNodeType {
     public enum InvokeKind {
         Interface,
         Special,
@@ -91,6 +92,12 @@ public class MethodCallTargetNode extends CallTargetNode {
 
     public Collection<InvokeNode> invokes() {
         return ValueUtil.filter(this.usages(), InvokeNode.class);
+    }
+
+    @Override
+    public boolean verify() {
+        assertTrue(usages().size() > 0, "call target must be used at least once");
+        return super.verify();
     }
 
     @Override
