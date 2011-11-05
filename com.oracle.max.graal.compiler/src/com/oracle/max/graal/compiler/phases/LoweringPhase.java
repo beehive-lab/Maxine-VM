@@ -33,15 +33,14 @@ public class LoweringPhase extends Phase {
 
     private final GraalRuntime runtime;
 
-    public LoweringPhase(GraalContext context, GraalRuntime runtime) {
-        super(context);
+    public LoweringPhase(GraalRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
     protected void run(final StructuredGraph graph) {
-        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(context, false);
-        s.apply(graph);
+        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(false);
+        s.apply(graph, context);
         s.calculateAlwaysReachedBlock();
 
         NodeBitMap processed = graph.createNodeBitMap();

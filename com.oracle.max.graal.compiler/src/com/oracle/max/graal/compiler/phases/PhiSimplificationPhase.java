@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
@@ -30,11 +29,6 @@ import com.oracle.max.graal.nodes.*;
  * Phase that reduces phi instructions.
  */
 public final class PhiSimplificationPhase extends Phase {
-
-    public PhiSimplificationPhase(GraalContext context) {
-        super(context);
-    }
-
     private NodeBitMap visited;
     private NodeBitMap cannotSimplify;
 

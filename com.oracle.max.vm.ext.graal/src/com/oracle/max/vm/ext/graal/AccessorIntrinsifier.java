@@ -60,10 +60,10 @@ public class AccessorIntrinsifier implements Intrinsifier {
                         graph = duplicate;
                     } else {
                         graph = new StructuredGraph();
-                        new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
+                        new GraphBuilderPhase(runtime, accessorMethod, null).apply(graph, true, false);
                         if (GraalOptions.ProbabilityAnalysis) {
-                            new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
-                            new ComputeProbabilityPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
+                            new DeadCodeEliminationPhase().apply(graph, true, false);
+                            new ComputeProbabilityPhase().apply(graph, true, false);
                         }
                     }
 

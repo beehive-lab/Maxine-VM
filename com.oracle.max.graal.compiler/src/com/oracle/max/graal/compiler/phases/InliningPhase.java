@@ -61,8 +61,7 @@ public class InliningPhase extends Phase {
     private StructuredGraph graph;
     private CiAssumptions assumptions;
 
-    public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints, CiAssumptions assumptions) {
-        super(context);
+    public InliningPhase(GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints, CiAssumptions assumptions) {
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
@@ -127,12 +126,12 @@ public class InliningPhase extends Phase {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
                 graph = new StructuredGraph();
-                new GraphBuilderPhase(context, runtime, concrete).apply(graph, true, false);
+                new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
                 if (GraalOptions.ProbabilityAnalysis) {
-                    new DeadCodeEliminationPhase(context).apply(graph, true, false);
-                    new ComputeProbabilityPhase(context).apply(graph, true, false);
+                    new DeadCodeEliminationPhase().apply(graph, context, true, false);
+                    new ComputeProbabilityPhase().apply(graph, context, true, false);
                 }
-                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
 
                 if (GraalOptions.ParseBeforeInlining && !parsedMethods.containsKey(concrete)) {
                     parsedMethods.put(concrete, graphComplexity(graph));
@@ -238,10 +237,10 @@ public class InliningPhase extends Phase {
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
-                new CanonicalizerPhase(context, target, runtime, true, assumptions).apply(graph);
-                    new PhiSimplificationPhase(context).apply(graph);
+                new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    new PhiSimplificationPhase().apply(graph, context);
                     if (GraalOptions.Intrinsify) {
-                        new IntrinsificationPhase(context, runtime).apply(graph);
+                        new IntrinsificationPhase(runtime).apply(graph, context);
                     }
                     if (GraalOptions.Meter) {
                         context.metrics.InlinePerformed++;
@@ -480,8 +479,8 @@ public class InliningPhase extends Phase {
         if (GraalOptions.ParseBeforeInlining) {
             if (!parsedMethods.containsKey(method)) {
                 StructuredGraph graph = new StructuredGraph();
-                new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
+                new GraphBuilderPhase(runtime, method, null).apply(graph, context, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
                 count = graphComplexity(graph);
                 parsedMethods.put(method, count);
             } else {

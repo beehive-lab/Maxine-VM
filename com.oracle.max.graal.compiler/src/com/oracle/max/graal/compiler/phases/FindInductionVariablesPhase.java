@@ -24,7 +24,6 @@ package com.oracle.max.graal.compiler.phases;
 
 import java.util.*;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
 import com.oracle.max.graal.graph.*;
@@ -45,10 +44,6 @@ import com.sun.cri.ci.*;
  * This phase works in collaboration with {@link RemoveInductionVariablesPhase} which will convert the {@link InductionVariableNode}s back to phis and arithmetic nodes.
  */
 public class FindInductionVariablesPhase extends Phase {
-
-    public FindInductionVariablesPhase(GraalContext context) {
-        super(context);
-    }
 
     @Override
     protected void run(StructuredGraph graph) {
