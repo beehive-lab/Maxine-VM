@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.test;
 import org.junit.*;
 
 import com.oracle.max.graal.compiler.phases.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
 public class IfCanonicalizerTest extends GraphTest {
@@ -32,15 +33,18 @@ public class IfCanonicalizerTest extends GraphTest {
     @Test
     public void test() {
         StructuredGraph graph = parse("testSnippet");
-        print(graph);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
-        local.replaceAtUsages(ConstantNode.forInt(0, graph));
-        print(graph);
+        ConstantNode constant = ConstantNode.forInt(0, graph);
+        for (Node n : local.usages()) {
+            if (n instanceof FrameState) {
+                // Do not replace.
+            } else {
+                n.replaceFirstInput(local, constant);
+            }
+        }
         new CanonicalizerPhase(null, null, runtime(), null).apply(graph);
-        print(graph);
-
         StructuredGraph referenceGraph = parse("referenceSnippet");
-        print(referenceGraph);
+        assertEquals(referenceGraph, graph);
     }
 
     public static int referenceSnippet(int a) {
