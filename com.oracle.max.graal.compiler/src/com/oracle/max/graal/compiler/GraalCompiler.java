@@ -74,7 +74,7 @@ public class GraalCompiler implements CiCompiler  {
     void runPhases(PhasePosition pos, StructuredGraph graph) {
         if (phases[pos.ordinal()] != null) {
             for (Phase p : phases[pos.ordinal()]) {
-                p.apply(graph);
+                p.apply(graph, context);
             }
         }
     }
