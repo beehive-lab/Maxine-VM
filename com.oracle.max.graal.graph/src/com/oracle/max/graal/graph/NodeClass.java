@@ -195,7 +195,7 @@ public class NodeClass {
         return canGVN;
     }
 
-    public static final NodeClass get(Class< ? > c) {
+    public static final synchronized NodeClass get(Class< ? > c) {
         NodeClass clazz = nodeClasses.get(c);
         if (clazz == null) {
             clazz = new NodeClass(c);
