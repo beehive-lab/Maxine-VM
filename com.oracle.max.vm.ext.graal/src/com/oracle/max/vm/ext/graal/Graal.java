@@ -39,7 +39,6 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
@@ -53,9 +52,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
@@ -101,7 +98,7 @@ public class Graal implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    protected Graal(RiXirGenerator xirGenerator, CiTarget target) {
+    public Graal(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
     }
@@ -111,6 +108,8 @@ public class Graal implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
+        runtime.initialize();
+
         // TODO(ls) implementation of RiType.fields required to enable escape analysis
         GraalOptions.EscapeAnalysis = false;
 
@@ -132,19 +131,6 @@ public class Graal implements RuntimeCompiler {
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
             compiler.addPhase(PhasePosition.MID_LEVEL, new WordTypeRewriterPhase());
-
-            // search for the runtime call and register critical methods
-            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
-                int flags = m.getModifiers();
-                if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
-                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
-                }
-            }
-
-            // The direct call made from compiled code for the UNCOMMON_TRAP intrinisic
-            // must go through a stub that saves the register state before calling the deopt routine.
-            CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
-            uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {

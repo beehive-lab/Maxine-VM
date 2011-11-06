@@ -39,6 +39,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -80,6 +81,29 @@ public class MaxRuntime implements GraalRuntime {
 
     public void setIntrinsicRegistry(IntrinsicImpl.Registry registry) {
         intrinsicRegistry = registry;
+    }
+
+    @HOSTED_ONLY
+    private boolean initialized;
+
+    @HOSTED_ONLY
+    public void initialize() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        // search for the runtime call and register critical methods
+        for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            int flags = m.getModifiers();
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+                new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
+            }
+        }
+
+        // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
+        // must go through a stub that saves the register state before calling the deopt routine.
+        CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
+        uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
     }
 
     /**

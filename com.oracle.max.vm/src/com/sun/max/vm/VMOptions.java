@@ -435,6 +435,9 @@ public final class VMOptions {
         return Utils.cast(type, option);
     }
 
+    @HOSTED_ONLY
+    private static final Set<Class> fieldOptionsAdded = new HashSet<Class>();
+
     /**
      * Creates and registers "-XX" VM options for each non-{@code final} {@code static} field
      * in a given class.
@@ -445,6 +448,10 @@ public final class VMOptions {
      */
     @HOSTED_ONLY
     public static void addFieldOptions(String prefix, Class<?> javaClass, Map<String, String> helpMap) {
+        if (fieldOptionsAdded.contains(javaClass)) {
+            return;
+        }
+        fieldOptionsAdded.add(javaClass);
         for (final Field field : javaClass.getDeclaredFields()) {
             int modifiers = field.getModifiers();
             if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
