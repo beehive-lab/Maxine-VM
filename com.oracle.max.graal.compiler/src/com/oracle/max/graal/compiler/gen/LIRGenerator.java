@@ -95,7 +95,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      */
     @Override
     public CiValue operand(ValueNode node) {
-        assert node.operand().isVariable() || node.operand().isConstant();
+        assert node.operand().isVariable() || node.operand().isConstant() : "wrong operand " + node.operand() + " at node " + node;
         return node.operand();
     }
 
