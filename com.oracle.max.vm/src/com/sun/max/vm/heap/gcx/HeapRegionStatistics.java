@@ -128,7 +128,7 @@ public final class HeapRegionStatistics {
     }
 
     public void doStats(HeapAccount<? extends HeapAccountOwner>heapAccount) {
-        doStats(heapAccount.allocatedRegions().regionList);
+        doStats(heapAccount.committedRegions());
     }
 
     public void doFullStats(HeapRegionList regionList) {
@@ -140,7 +140,7 @@ public final class HeapRegionStatistics {
     }
 
     public void doFullStats(HeapAccount<? extends HeapAccountOwner>heapAccount) {
-        doFullStats(heapAccount.allocatedRegions().regionList);
+        doFullStats(heapAccount.committedRegions());
     }
 
     public void dump() {

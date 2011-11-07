@@ -289,7 +289,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
             }
 
             // Now fix up the boot heap account to records the regions used up to now.
-            managerHeapAccount.recordAllocated(0, initialNumRegions, null, false);
+            // They are recorded committed
+            HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions);
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
         }
