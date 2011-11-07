@@ -157,12 +157,12 @@ public class GraalMaxineIntrinsicImplementations {
             ValueNode offsetOrIndex = offsetOrIndex(graph, args.length == 3 ? args[2] : args[1]);
 
             if (displacement == null) {
-                return graph.add(new UnsafeLoadNode(pointer, offsetOrIndex, target.signature().returnKind(false)));
+                return graph.add(new UnsafeLoadNode(pointer, offsetOrIndex, target.signature().returnKind(true)));
             } else {
                 if (displacement.isConstant()) {
-                    return graph.add(new UnsafeLoadNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, target.signature().returnKind(false)));
+                    return graph.add(new UnsafeLoadNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, target.signature().returnKind(true)));
                 } else {
-                    return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(false)));
+                    return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
                 }
             }
         }
@@ -180,13 +180,15 @@ public class GraalMaxineIntrinsicImplementations {
             ValueNode offsetOrIndex = offsetOrIndex(graph, numArgs == 4 ? args[2] : args[1]);
             ValueNode value = args[numArgs - 1];
 
+            RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
+            CiKind kind = dataType.kind(true);
             if (displacement == null) {
-                return graph.add(new UnsafeStoreNode(pointer, offsetOrIndex, value, target.signature().returnKind(false)));
+                return graph.add(new UnsafeStoreNode(pointer, offsetOrIndex, value, kind));
             } else {
                 if (displacement.isConstant()) {
-                    return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, value, target.signature().returnKind(false)));
+                    return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, value, kind));
                 } else {
-                    return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, target.signature().returnKind(false)));
+                    return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
                 }
             }
         }
