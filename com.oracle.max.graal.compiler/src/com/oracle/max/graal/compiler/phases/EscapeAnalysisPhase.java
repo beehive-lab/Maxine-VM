@@ -53,7 +53,7 @@ public class EscapeAnalysisPhase extends Phase {
             this.virtualObjectField = null;
             this.graph = virtualObject.graph();
             for (int i = 0; i < fields.length; i++) {
-                fieldState[i] = ConstantNode.defaultForKind(fields[i].type().kind(true), virtualObject.graph());
+                fieldState[i] = ConstantNode.defaultForKind(fields[i].type().kind(false), virtualObject.graph());
                 virtualObjectField = graph.add(new VirtualObjectFieldNode(virtualObject, virtualObjectField, fieldState[i], i));
             }
         }
@@ -337,7 +337,7 @@ public class EscapeAnalysisPhase extends Phase {
 
     private void performAnalysis(StructuredGraph graph, FixedWithNextNode node, EscapeOp op) {
         Set<Node> exits = new HashSet<Node>();
-        Set<InvokeNode> invokes = new HashSet<InvokeNode>();
+        Set<CallTargetNode> invokes = new HashSet<CallTargetNode>();
         int iterations = 0;
 
         int minimumWeight = GraalOptions.ForcedInlineEscapeWeight;
@@ -392,7 +392,14 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions).apply(graph, context);
+            Set<InvokeNode> invokeNodes = new HashSet<InvokeNode>();
+            for (CallTargetNode target : invokes) {
+                for (Node invoke : target.usages()) {
+                    assert invoke instanceof InvokeNode;
+                    invokeNodes.add((InvokeNode) invoke);
+                }
+            }
+            new InliningPhase(compilation.compiler.runtime, compilation.compiler.target, invokeNodes, compilation.assumptions).apply(graph, context);
             new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
@@ -405,15 +412,15 @@ public class EscapeAnalysisPhase extends Phase {
         } while (iterations++ < 3);
     }
 
-    private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<InvokeNode> invokes) {
+    private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<CallTargetNode> invokes) {
         double weight = 0;
         for (Node usage : node.usages()) {
             boolean escapes = op.escape(node, usage);
             if (escapes) {
                 if (usage instanceof FrameState) {
                     // nothing to do...
-                } else if (usage instanceof InvokeNode) {
-                    invokes.add((InvokeNode) usage);
+                } else if (usage instanceof CallTargetNode) {
+                    invokes.add((CallTargetNode) usage);
                 } else {
                     exits.add(usage);
                     if (!GraalOptions.TraceEscapeAnalysis) {
