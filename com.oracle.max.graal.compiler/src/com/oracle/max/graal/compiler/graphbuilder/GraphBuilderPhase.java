@@ -1089,7 +1089,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
                 frameState.pushReturn(resultType, result);
                 Block nextBlock = currentBlock.successors.get(0);
                 invoke.setNext(createTarget(nextBlock, frameState));
-                invoke.next().setStateAfter(frameState.create(nextBlock.startBci));
+                invoke.setStateAfter(frameState.create(nextBlock.startBci));
             } else {
                 result = appendWithBCI(graph.add(new InvokeNode(callTarget, bci())));
                 frameState.pushReturn(resultType, result);

@@ -28,7 +28,8 @@ import java.lang.reflect.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.graph.Node.ConstantNodeParameter;
+import com.oracle.max.graal.graph.Node.NodeIntrinsic;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
@@ -107,6 +108,11 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                         MethodCallTargetNode callTarget = invokeNode.callTarget();
                                                         if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
                                                             currentValue = callTarget.arguments().get(0);
+                                                            if (invokeNode instanceof InvokeWithExceptionNode) {
+                                                                // Destroy exception edge & clear stateAfter.
+                                                                InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                                                invokeWithExceptionNode.killExceptionEdge();
+                                                            }
                                                             invokeNode.node().replaceAndDelete(invokeNode.next());
                                                         }
                                                     }
@@ -132,10 +138,7 @@ public class SnippetIntrinsificationPhase extends Phase {
 
                                 if (invoke instanceof InvokeWithExceptionNode) {
                                     // Destroy exception edge.
-                                    InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invoke;
-                                    BeginNode exceptionEdge = invokeWithExceptionNode.exceptionEdge();
-                                    invokeWithExceptionNode.setExceptionEdge(null);
-                                    GraphUtil.killCFG(exceptionEdge);
+                                    ((InvokeWithExceptionNode) invoke).killExceptionEdge();
                                 }
                                 invoke.setNext(null);
 
@@ -162,6 +165,11 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                     MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
                                                     assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
                                                     for (Invoke invokeNode : checkCastCallTarget.invokes()) {
+                                                        if (invokeNode instanceof InvokeWithExceptionNode) {
+                                                            // Destroy exception edge & clear stateAfter.
+                                                            InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                                            invokeWithExceptionNode.killExceptionEdge();
+                                                        }
                                                         invokeNode.node().replaceAtUsages(newInstance);
                                                         invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     }
