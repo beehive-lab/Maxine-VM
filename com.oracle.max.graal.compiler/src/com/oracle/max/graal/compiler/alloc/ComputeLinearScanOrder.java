@@ -261,22 +261,26 @@ public final class ComputeLinearScanOrder {
         cur.setLinearScanNumber(linearScanOrder.size());
         linearScanOrder.add(cur);
 
-        if (!cur.isLinearScanLoopHeader() || !GraalOptions.OptReorderLoops) {
+        if (cur.isLinearScanLoopEnd() && cur.isLinearScanLoopHeader()) {
             codeEmittingOrder.add(cur);
+        } else {
+            if (!cur.isLinearScanLoopHeader() || !GraalOptions.OptReorderLoops) {
+                codeEmittingOrder.add(cur);
 
-            if (cur.isLinearScanLoopEnd() && GraalOptions.OptReorderLoops) {
-                LIRBlock loopHeader = loopHeaders[cur.loopIndex()];
-                assert loopHeader != null;
-                codeEmittingOrder.add(loopHeader);
+                if (cur.isLinearScanLoopEnd() && GraalOptions.OptReorderLoops) {
+                    LIRBlock loopHeader = loopHeaders[cur.loopIndex()];
+                    assert loopHeader != null;
+                    codeEmittingOrder.add(loopHeader);
 
-                for (LIRBlock succ : loopHeader.blockSuccessors()) {
-                    if (succ.loopDepth() == loopHeader.loopDepth()) {
-                        succ.setAlign(true);
+                    for (LIRBlock succ : loopHeader.blockSuccessors()) {
+                        if (succ.loopDepth() == loopHeader.loopDepth()) {
+                            succ.setAlign(true);
+                        }
                     }
                 }
+            } else {
+                loopHeaders[cur.loopIndex()] = cur;
             }
-        } else {
-            loopHeaders[cur.loopIndex()] = cur;
         }
     }
 
