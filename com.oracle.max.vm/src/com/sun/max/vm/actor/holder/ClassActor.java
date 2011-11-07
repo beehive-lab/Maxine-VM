@@ -1781,6 +1781,25 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     public RiField[] declaredFields() {
-        return null;
+        FieldActor[] fields = this.localInstanceFieldActors;
+        boolean unsorted = false;
+        for (int i = 0; i < fields.length - 1; ++i) {
+            FieldActor curField = fields[i];
+            FieldActor nextField = fields[i + 1];
+            if (curField.offset() > nextField.offset()) {
+                unsorted = true;
+                break;
+            }
+        }
+        if (unsorted) {
+            SortedSet<FieldActor> sortedFields = new TreeSet<FieldActor>(new Comparator<FieldActor>() {
+                @Override
+                public int compare(FieldActor o1, FieldActor o2) {
+                    return o1.offset() - o2.offset();
+                }
+            });
+            return sortedFields.toArray(new RiField[0]);
+        }
+        return fields;
     }
 }

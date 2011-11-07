@@ -45,7 +45,7 @@ public class EscapeAnalysisPhase extends Phase {
         public final ValueNode[] fieldState;
         public final VirtualObjectNode virtualObject;
         public ValueNode virtualObjectField;
-        public final Graph<EntryPointNode> graph;
+        public final StructuredGraph graph;
 
         public BlockExitState(EscapeField[] fields, VirtualObjectNode virtualObject) {
             this.fieldState = new ValueNode[fields.length];
@@ -156,11 +156,11 @@ public class EscapeAnalysisPhase extends Phase {
         private final Map<Block, BlockExitState> exitStates = new IdentityHashMap<Block, BlockExitState>();
 
         private final EscapeOp op;
-        private final Graph<EntryPointNode> graph;
+        private final StructuredGraph graph;
         private final FixedWithNextNode node;
         private EscapeField[] escapeFields;
 
-        public EscapementFixup(EscapeOp op, Graph<EntryPointNode> graph, FixedWithNextNode node) {
+        public EscapementFixup(EscapeOp op, StructuredGraph graph, FixedWithNextNode node) {
             this.op = op;
             this.graph = graph;
             this.node = node;
@@ -249,8 +249,8 @@ public class EscapeAnalysisPhase extends Phase {
             if (usage instanceof FixedNode) {
                 record.localWeight += ((FixedNode) usage).probability();
             }
-            if (usage instanceof IsNonNullNode) {
-                assert ((IsNonNullNode) usage).object() == node;
+            if (usage instanceof NullCheckNode) {
+                assert ((NullCheckNode) usage).object() == node;
                 return null;
             } else if (usage instanceof IsTypeNode) {
                 assert ((IsTypeNode) usage).object() == node;
@@ -296,7 +296,7 @@ public class EscapeAnalysisPhase extends Phase {
         }
     }
 
-    private void completeAnalysis(Graph<EntryPointNode> graph) {
+    private void completeAnalysis(StructuredGraph graph) {
         // TODO(ls) debugging code
 
         TTY.println("================================================================");
@@ -320,7 +320,7 @@ public class EscapeAnalysisPhase extends Phase {
 
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (Node node : graph.getNodes()) {
             if (node != null && node instanceof FixedWithNextNode && node instanceof EscapeAnalyzable) {
                 FixedWithNextNode fixedNode = (FixedWithNextNode) node;
@@ -336,7 +336,7 @@ public class EscapeAnalysisPhase extends Phase {
         }
     }
 
-    private void performAnalysis(Graph<EntryPointNode> graph, FixedWithNextNode node, EscapeOp op) {
+    private void performAnalysis(StructuredGraph graph, FixedWithNextNode node, EscapeOp op) {
         Set<Node> exits = new HashSet<Node>();
         Set<InvokeNode> invokes = new HashSet<InvokeNode>();
         int iterations = 0;
@@ -393,7 +393,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
+            new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions).apply(graph);
             new DeadCodeEliminationPhase(context).apply(graph);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {

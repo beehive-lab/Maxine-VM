@@ -22,10 +22,12 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public class BeginNode extends StateSplit {
+public class BeginNode extends StateSplit implements LIRLowerable {
     public BeginNode() {
         super(CiKind.Illegal);
     }
@@ -40,7 +42,14 @@ public class BeginNode extends StateSplit {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("shortName", "B");
+        return debugProperties;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
         // nop
     }
 }

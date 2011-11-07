@@ -27,7 +27,6 @@ import static java.lang.reflect.Modifier.*;
 
 import java.util.*;
 
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.spi.*;
@@ -37,7 +36,7 @@ import com.sun.cri.ri.*;
 
 public class FrameStateBuilder implements FrameStateAccess {
 
-    private final Graph<EntryPointNode> graph;
+    private final StructuredGraph graph;
 
     private final ValueNode[] locals;
     private final ValueNode[] stack;
@@ -48,7 +47,7 @@ public class FrameStateBuilder implements FrameStateAccess {
 
     private final RiResolvedMethod method;
 
-    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, Graph<EntryPointNode> graph) {
+    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, StructuredGraph graph) {
         assert graph != null;
         this.method = method;
         this.graph = graph;
@@ -61,7 +60,7 @@ public class FrameStateBuilder implements FrameStateAccess {
         int index = 0;
         if (!isStatic(method.accessFlags())) {
             // add the receiver
-            LocalNode local = graph.unique(new LocalNode(method.holder().kind(false), javaIndex, graph.start(), false));
+            LocalNode local = graph.unique(new LocalNode(method.holder().kind(false), javaIndex, false));
             local.setDeclaredType(method.holder());
             storeLocal(javaIndex, local);
             javaIndex = 1;
@@ -73,7 +72,7 @@ public class FrameStateBuilder implements FrameStateAccess {
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i, accessingClass);
             CiKind kind = type.kind(false).stackKind();
-            LocalNode local = graph.unique(new LocalNode(kind, index, graph.start()));
+            LocalNode local = graph.unique(new LocalNode(kind, index));
             if (type instanceof RiResolvedType) {
                 local.setDeclaredType((RiResolvedType) type);
             }

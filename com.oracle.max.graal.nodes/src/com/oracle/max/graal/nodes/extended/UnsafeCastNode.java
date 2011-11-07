@@ -48,11 +48,6 @@ public final class UnsafeCastNode extends FloatingNode implements Canonicalizabl
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        throw new RuntimeException();
-    }
-
-    @Override
     public RiResolvedType declaredType() {
         return toType;
     }

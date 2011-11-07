@@ -66,7 +66,7 @@ def build(env, args):
             if len(choices) != 0:
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
-    allProjects = env.pdb().projects.keys()
+    allProjects = [p.name for p in env.pdb().sorted_deps()]
     if args.native:
         if env.os == 'windows':
             env.log('Skipping C compilation on Windows until it is supported')
@@ -197,7 +197,7 @@ def checkstyle(env, args):
 
 If no projects are given, then all Java projects are checked."""
     
-    allProjects = env.pdb().projects.keys()
+    allProjects = [p.name for p in env.pdb().sorted_deps()]
     if len(args) == 0:
         projects = allProjects
     else:
@@ -292,7 +292,7 @@ def clean(env, args):
     projects = env.pdb().projects.keys()
     for project in projects:
         outputDir = env.pdb().project(project).output_dir()
-        if outputDir != '':
+        if outputDir != '' and exists(outputDir):
             env.log('Removing {0}...'.format(outputDir))
             shutil.rmtree(outputDir)
 
@@ -475,7 +475,7 @@ def gate(env, args):
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
     
-    if checkstyle(env, args):
+    if checkstyle(env, []):
         env.abort('Checkstyle warnings were found')
     
     env.log('Running copycheck')

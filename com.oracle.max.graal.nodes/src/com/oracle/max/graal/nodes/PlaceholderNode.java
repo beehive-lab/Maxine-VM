@@ -27,14 +27,14 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public class PlaceholderNode extends StateSplit implements Node.IterableNodeType {
+public class PlaceholderNode extends StateSplit implements Node.IterableNodeType, LIRLowerable {
 
     public PlaceholderNode() {
         super(CiKind.Void);
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // nothing to do
     }
 }

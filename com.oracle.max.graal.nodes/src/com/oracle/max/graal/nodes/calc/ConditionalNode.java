@@ -41,7 +41,6 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public ConditionalNode(BooleanNode condition, ValueNode trueValue, ValueNode falseValue) {
-        // TODO: return the appropriate bytecode IF_ICMPEQ, etc or remove the need for bytecodes in BinaryNode
         super(trueValue.kind, trueValue, falseValue);
         assert trueValue.kind == falseValue.kind;
         this.condition = condition;
@@ -73,7 +72,7 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public static ConditionalStructure createConditionalStructure(BooleanNode condition, ValueNode trueValue, ValueNode falseValue, double trueProbability) {
-        Graph<?> graph = condition.graph();
+        Graph graph = condition.graph();
         assert trueValue.kind == falseValue.kind;
         CiKind kind = trueValue.kind;
         IfNode ifNode = graph.add(new IfNode(condition, trueProbability));
@@ -104,16 +103,11 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
             return trueValue();
         }
 
-        if (condition instanceof NegateBooleanNode) {
-            NegateBooleanNode negateBooleanNode = (NegateBooleanNode) condition;
-            return graph().unique(new ConditionalNode(negateBooleanNode.value(), falseValue(), trueValue()));
-        }
-
         return this;
     }
 
     @Override
     public void generate(LIRGeneratorTool generator) {
-        generator.visitConditional(this);
+        generator.emitConditional(this);
     }
 }

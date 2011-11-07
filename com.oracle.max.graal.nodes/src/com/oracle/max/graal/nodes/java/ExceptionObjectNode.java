@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code ExceptionObject} instruction represents the incoming exception object to an exception handler.
  */
-public final class ExceptionObjectNode extends StateSplit {
+public final class ExceptionObjectNode extends StateSplit implements LIRLowerable {
 
     /**
      * Constructs a new ExceptionObject instruction.
@@ -39,7 +39,7 @@ public final class ExceptionObjectNode extends StateSplit {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitExceptionObject(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitExceptionObject(this);
     }
 }

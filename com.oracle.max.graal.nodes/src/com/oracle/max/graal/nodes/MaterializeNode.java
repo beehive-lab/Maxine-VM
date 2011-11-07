@@ -31,13 +31,13 @@ public final class MaterializeNode extends ConditionalNode {
         super(condition, trueValue, falseValue);
     }
 
-    public static MaterializeNode create(BooleanNode condition, Graph<?> graph, ConstantNode trueValue, ConstantNode falseValue) {
+    public static MaterializeNode create(BooleanNode condition, Graph graph, ConstantNode trueValue, ConstantNode falseValue) {
         MaterializeNode result = new MaterializeNode(condition, trueValue, falseValue);
         return graph.unique(result);
 
     }
 
-    public static MaterializeNode create(BooleanNode condition, Graph<?> graph) {
+    public static MaterializeNode create(BooleanNode condition, Graph graph) {
         return create(condition, graph, ConstantNode.forInt(1, graph), ConstantNode.forInt(0, graph));
     }
 

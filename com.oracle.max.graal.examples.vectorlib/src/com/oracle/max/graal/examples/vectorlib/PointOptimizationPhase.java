@@ -23,14 +23,13 @@
 package com.oracle.max.graal.examples.vectorlib;
 
 import com.oracle.max.graal.compiler.phases.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
 
 
 public class PointOptimizationPhase extends Phase {
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             MethodCallTargetNode callTarget = invoke.callTarget();
             System.out.println("Invoke: " + callTarget.targetMethod().name());

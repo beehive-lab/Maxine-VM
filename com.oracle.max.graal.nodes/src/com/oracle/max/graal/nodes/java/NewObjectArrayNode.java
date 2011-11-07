@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewObjectArrayNode} represents an allocation of an object array.
  */
-public final class NewObjectArrayNode extends NewArrayNode {
+public final class NewObjectArrayNode extends NewArrayNode implements LIRLowerable {
 
     private final RiResolvedType elementClass;
 
@@ -60,7 +60,7 @@ public final class NewObjectArrayNode extends NewArrayNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewObjectArray(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitNewObjectArray(this);
     }
 }

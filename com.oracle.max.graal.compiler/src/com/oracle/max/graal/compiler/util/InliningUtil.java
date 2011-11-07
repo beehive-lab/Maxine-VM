@@ -34,9 +34,9 @@ import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, Graph<EntryPointNode> inlineGraph, Queue<InvokeNode> newInvokes) {
+    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph, Queue<InvokeNode> newInvokes) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
-        Graph<EntryPointNode> graph = invoke.graph();
+        StructuredGraph graph = invoke.graph();
 
         FrameState stateAfter = invoke.stateAfter();
         FixedNode exceptionEdge = invoke.exceptionEdge();
@@ -49,11 +49,11 @@ public class InliningUtil {
         ArrayList<Node> frameStates = new ArrayList<Node>();
         ReturnNode returnNode = null;
         UnwindNode unwindNode = null;
-        EntryPointNode entryPointNode = inlineGraph.start();
+        BeginNode entryPointNode = inlineGraph.start();
         FixedNode firstCFGNode = entryPointNode.next();
         for (Node node : inlineGraph.getNodes()) {
-            if (node instanceof EntryPointNode) {
-                assert entryPointNode == node;
+            if (node == entryPointNode) {
+                // Do nothing.
             } else if (node instanceof LocalNode) {
                 replacements.put(node, parameters[((LocalNode) node).index()]);
             } else {
@@ -78,7 +78,7 @@ public class InliningUtil {
         if (invoke.callTarget().isStatic()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
-            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(parameters[0]))));
+            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
             guard.setNext(firstCFGNodeDuplicate);
             invokeReplacement = guard;
         }
