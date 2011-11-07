@@ -34,8 +34,8 @@ import com.sun.cri.ri.*;
 public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, Invoke, LIRLowerable  {
 
     @Input private MethodCallTargetNode callTarget;
-    @Input private FrameState stateBefore;
     private boolean canInline = true;
+    private final int bci;
 
     /**
      * Constructs a new Invoke instruction.
@@ -45,10 +45,11 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
      * @param target the target method being called
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
-    public InvokeNode(MethodCallTargetNode callTarget, FrameState stateBefore) {
+    public InvokeNode(MethodCallTargetNode callTarget, int bci) {
         super(callTarget.returnKind().stackKind());
-        assert stateBefore != null && callTarget != null;
+        assert callTarget != null;
         this.callTarget = callTarget;
+        this.bci = bci;
     }
 
     public boolean canInline() {
@@ -84,16 +85,12 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     }
 
     public int bci() {
-        return stateBefore().bci;
+        return bci;
     }
 
     @Override
     public FixedNode node() {
         return this;
-    }
-
-    public FrameState stateBefore() {
-        return stateBefore;
     }
 
     @Override

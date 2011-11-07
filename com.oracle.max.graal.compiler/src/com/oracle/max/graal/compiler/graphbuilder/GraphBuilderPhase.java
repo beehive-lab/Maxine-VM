@@ -1084,14 +1084,14 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             BeginNode exceptionEdge = handleException(null, bci());
             ValueNode result;
             if (exceptionEdge != null) {
-                InvokeWithExceptionNode invoke = graph.add(new InvokeWithExceptionNode(callTarget, exceptionEdge, stateBefore));
+                InvokeWithExceptionNode invoke = graph.add(new InvokeWithExceptionNode(callTarget, exceptionEdge, bci()));
                 result = append(invoke);
                 frameState.pushReturn(resultType, result);
                 Block nextBlock = currentBlock.successors.get(0);
                 invoke.setNext(createTarget(nextBlock, frameState));
                 invoke.next().setStateAfter(frameState.create(nextBlock.startBci));
             } else {
-                result = appendWithBCI(graph.add(new InvokeNode(callTarget, stateBefore)));
+                result = appendWithBCI(graph.add(new InvokeNode(callTarget, bci())));
                 frameState.pushReturn(resultType, result);
             }
         }

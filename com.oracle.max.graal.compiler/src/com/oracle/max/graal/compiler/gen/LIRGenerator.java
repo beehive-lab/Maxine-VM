@@ -667,10 +667,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public abstract void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info);
     public abstract CiVariable emitCMove(CiValue leftVal, CiValue right, Condition cond, boolean unorderedIsTrue, CiValue trueValue, CiValue falseValue);
 
-    protected FrameState stateBeforeCallReturn(FrameState stateAfter, CallTargetNode call, int bci) {
-        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind());
-    }
-
     protected FrameState stateBeforeCallWithArguments(FrameState stateAfter, MethodCallTargetNode call, int bci) {
         return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind(), toJVMArgumentStack(call.targetMethod().signature(), call.isStatic(), call.arguments()));
     }
@@ -698,7 +694,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public void emitInvoke(Invoke x) {
         MethodCallTargetNode callTarget = x.callTarget();
         RiMethod target = callTarget.targetMethod();
-        LIRDebugInfo info = stateFor(x.stateBefore());
+        LIRDebugInfo info = stateFor(stateBeforeCallWithArguments(x.stateAfter(), callTarget, x.bci()));
         LIRDebugInfo info2 = stateFor(x.stateDuring());
         if (x instanceof InvokeWithExceptionNode) {
             info2.setExceptionEdge(getLIRBlock(((InvokeWithExceptionNode) x).exceptionEdge()));

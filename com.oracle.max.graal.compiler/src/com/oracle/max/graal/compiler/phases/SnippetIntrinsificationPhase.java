@@ -102,12 +102,12 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 // Unbound generic => try boxing elimination
                                                 ValueNode node = arguments[z];
                                                 if (node.usages().size() == 2) {
-                                                    if (node instanceof InvokeNode) {
-                                                        InvokeNode invokeNode = (InvokeNode) node;
+                                                    if (node instanceof Invoke) {
+                                                        Invoke invokeNode = (Invoke) node;
                                                         MethodCallTargetNode callTarget = invokeNode.callTarget();
                                                         if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
                                                             currentValue = callTarget.arguments().get(0);
-                                                            invokeNode.replaceAndDelete(invokeNode.next());
+                                                            invokeNode.node().replaceAndDelete(invokeNode.next());
                                                         }
                                                     }
                                                 }
