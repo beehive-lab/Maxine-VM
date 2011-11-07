@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.util;
+package com.oracle.max.graal.nodes.util;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;

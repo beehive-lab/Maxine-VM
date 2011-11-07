@@ -28,6 +28,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ri.*;
 
 public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint, LIRLowerable {
@@ -35,6 +36,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     private static final int EXCEPTION_EDGE = 1;
 
     @Input private MethodCallTargetNode callTarget;
+    @Input private FrameState stateAfter;
     @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
     private boolean canInline = true;
     private final int bci;
@@ -118,7 +120,12 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     }
 
     public FrameState stateAfter() {
-        return next().stateAfter();
+        return stateAfter;
+    }
+
+    public void setStateAfter(FrameState stateAfter) {
+        updateUsages(this.stateAfter, stateAfter);
+        this.stateAfter = stateAfter;
     }
 
     public FrameState stateDuring() {
@@ -136,5 +143,20 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     @Override
     public NodeInputList<Node> mergedNodes() {
         return mergedNodes;
+    }
+
+    public void killExceptionEdge() {
+        BeginNode exceptionEdge = exceptionEdge();
+        setExceptionEdge(null);
+        GraphUtil.killCFG(exceptionEdge);
+    }
+
+    @Override
+    public void delete() {
+        FrameState stateAfter = stateAfter();
+        super.delete();
+        if (stateAfter.usages().isEmpty()) {
+            stateAfter.delete();
+        }
     }
 }
