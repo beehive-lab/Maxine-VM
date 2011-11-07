@@ -52,7 +52,7 @@ public class IntrinsificationPhase extends Phase {
             intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method(), invoke.bci(), target, invoke.callTarget().arguments());
         }
         if (intrinsicGraph != null) {
-            InliningUtil.inline(invoke, intrinsicGraph);
+            InliningUtil.inline(invoke, intrinsicGraph, true);
         }
     }
 }

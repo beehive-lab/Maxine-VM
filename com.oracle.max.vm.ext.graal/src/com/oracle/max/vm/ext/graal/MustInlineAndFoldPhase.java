@@ -54,7 +54,7 @@ public class MustInlineAndFoldPhase extends Phase {
                 CiConstant foldResult = runtime.fold(method, constantArgs);
                 StructuredGraph foldGraph = new StructuredGraph();
                 foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-                InliningUtil.inline(invoke, foldGraph);
+                InliningUtil.inline(invoke, foldGraph, false);
             }
         }
 
@@ -69,7 +69,7 @@ public class MustInlineAndFoldPhase extends Phase {
                 StructuredGraph inlineGraph = new StructuredGraph();
                 new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
                 new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
-                InliningUtil.inline(invoke, inlineGraph);
+                InliningUtil.inline(invoke, inlineGraph, false);
             }
         }
 

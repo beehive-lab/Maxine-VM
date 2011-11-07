@@ -25,18 +25,16 @@ package com.oracle.max.graal.compiler.util;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph) {
+    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
         StructuredGraph graph = invoke.graph();
 
@@ -78,7 +76,7 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || parameters[0].kind() != CiKind.Object) {
+        if (callTarget.isStatic() || !receiverNullCheck) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
@@ -197,12 +195,5 @@ public class InliningUtil {
             parameters[0] = arguments.get(0);
         }
         return parameters;
-    }
-
-    public static void inline(RiRuntime runtime, InvokeNode invoke) {
-        RiResolvedMethod method = invoke.callTarget().targetMethod();
-        StructuredGraph graph = new StructuredGraph();
-        new GraphBuilderPhase(runtime, method).apply(graph);
-        inline(invoke, graph);
     }
 }
