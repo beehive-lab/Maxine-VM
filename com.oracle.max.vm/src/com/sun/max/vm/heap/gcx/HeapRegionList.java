@@ -36,18 +36,22 @@ import com.sun.max.vm.type.*;
 
 /**
  * A doubly linked list of regions implemented as an array of int region identifiers.
- * Used for region ownership list, wherein a list can only belong to one owner at a time.
- * This allows to share the backing storage for all the list.
+ * Used for region ownership list, wherein a region can only belong to one list at a time.
+ * This allows to share the backing storage for all the list, i.e., all lists of regions for a particular use are threaded over the same array.
  */
-public final class HeapRegionList {
+public class HeapRegionList {
 
+    /**
+     * Region List Uses. There's as many list backing storage as there are uses.
+     * A region can only belong to one region list at a time for a given use.
+     */
     public enum RegionListUse {
         /***
          * List used by HeapAccount users.
          */
         OWNERSHIP,
         /**
-         * List used by HeapAccount.
+         * List used by HeapAccount to keep track of region allocated to the heap account.
          */
         ACCOUNTING;
 
@@ -71,9 +75,9 @@ public final class HeapRegionList {
     private static final int nullElement = INVALID_REGION_ID;
 
      /**
-      * Pointer to raw storage of the list.
+      * Pointer to shared raw storage of the list.
       */
-    final Pointer listStorage;
+    private final Pointer listStorage;
 
     static final int fieldNumberOfBytes = KindEnum.INT.asKind().width.numberOfBytes;
     static final int log2FieldNumberOfBytes = KindEnum.INT.asKind().width.log2numberOfBytes;
@@ -117,11 +121,11 @@ public final class HeapRegionList {
         return nextFieldPointer(elem).plus(fieldNumberOfBytes);
     }
 
-    int next(int elem) {
+    final int next(int elem) {
         return listStorage.getInt(nextFieldIndex(elem));
     }
 
-    int prev(int elem) {
+    final int prev(int elem) {
         return listStorage.getInt(prevFieldIndex(elem));
     }
 
@@ -144,15 +148,13 @@ public final class HeapRegionList {
         init(elem, nullElement, nullElement);
     }
 
-    void clear() {
-        size = 0;
-        tail = nullElement;
-        head = nullElement;
-    }
-
     private HeapRegionList(Pointer backingStorage) {
         listStorage = backingStorage;
         clear();
+    }
+
+    protected HeapRegionList(HeapRegionList list) {
+        listStorage = list.listStorage;
     }
 
     public int size() {
@@ -180,6 +182,12 @@ public final class HeapRegionList {
             cursor = next(cursor);
         }
         return false;
+    }
+
+    void clear() {
+        size = 0;
+        tail = nullElement;
+        head = nullElement;
     }
 
     /**
@@ -245,6 +253,20 @@ public final class HeapRegionList {
         return elem;
     }
 
+    int removeTail() {
+        if (isEmpty()) {
+            return nullElement;
+        }
+        int elem = tail;
+        tail = prev(elem);
+        setPrev(elem, nullElement);
+        if (tail == nullElement) {
+            head = nullElement;
+        }
+        size--;
+        return elem;
+    }
+
     /**
      * Remove element from the list.
      * @param elem
@@ -285,24 +307,128 @@ public final class HeapRegionList {
 
     void append(HeapRegionList list) {
         FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
-        if (isEmpty()) {
-            head = list.head;
-        } else {
-            setNext(tail, list.head);
-            setPrev(list.head, tail);
-        }
-        tail = list.tail;
+        appendRange(list.head, list.tail);
     }
 
     void prepend(HeapRegionList list) {
         FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
-        if (isEmpty()) {
-            tail = list.tail;
-        } else {
-            setPrev(head, list.tail);
-            setNext(list.tail, head);
+        prependRange(list.head, list.tail);
+    }
+
+    void linkRange(int rangeHead, int rangeTail) {
+        int r = rangeHead;
+        setPrev(r, nullElement);
+        while (r < rangeTail) {
+            int n = r + 1;
+            setNext(r, n);
+            setPrev(n, r);
+            r = n;
         }
-        head = list.head;
+        setNext(rangeTail, nullElement);
+    }
+
+    void prependRange(int rangeHead, int rangeTail) {
+        if (isEmpty()) {
+            tail = rangeTail;
+        } else {
+            setPrev(head, rangeTail);
+            setNext(rangeTail, head);
+        }
+        head = rangeHead;
+        size += rangeTail - rangeHead + 1;
+    }
+
+    void appendRange(int rangeHead, int rangeTail) {
+        if (isEmpty()) {
+            head = rangeHead;
+        } else {
+            setNext(tail, rangeHead);
+            setPrev(rangeHead, tail);
+        }
+        tail = rangeTail;
+        size += rangeTail - rangeHead + 1;
+    }
+
+    void insertRangeAfter(int elem, int rangeHead, int rangeTail) {
+        if (elem == tail) {
+            appendRange(rangeHead, rangeTail);
+        } else {
+            int nextElem = next(elem);
+            setNext(elem, rangeHead);
+            setPrev(nextElem, rangeTail);
+            size += rangeTail - rangeHead + 1;
+        }
+    }
+
+    /**
+     * Remove a contiguous range of regions from the list.
+     * @param elem
+     */
+    void removeRange(int rangeHead, int rangeTail) {
+        FatalError.check(rangeHead != nullElement, "Must be a valid list element");
+        if (MaxineVM.isDebug() && !containsRange(rangeHead, rangeTail)) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Range [");
+            Log.print(rangeHead);
+            Log.print(", ");
+            Log.print(rangeTail);
+            Log.println("] must be a valid regions range in the list");
+            Log.unlock(lockDisabledSafepoints);
+            FatalError.unexpected("Invalid argument to list removal");
+        }
+        int nextElem = next(rangeTail);
+        int prevElem = prev(rangeHead);
+        if (nextElem == nullElement) {
+            FatalError.check(rangeTail == tail, "Only the tail can have null next element");
+            if (prevElem == nullElement) {
+                FatalError.check(size ==  rangeTail - rangeHead + 1, "the list must be equal to the range");
+                head = nullElement;
+                tail = nullElement;
+            } else {
+                tail = prevElem;
+                setNext(tail, nullElement);
+            }
+        } else if (prevElem == nullElement) {
+            FatalError.check(rangeHead == head, "Only the head can have null prev element");
+            head = nextElem;
+            setPrev(head, nullElement);
+        } else {
+            setNext(prevElem, nextElem);
+            setPrev(nextElem, prevElem);
+        }
+        size -= rangeTail - rangeHead + 1;
+    }
+
+    /**
+     * Returns a boolean indicating whether the specified range is a valid range within the shared linked list storage.
+     * A valid range is one in which all the elements are contiguous and linked in increasing region order in the list storage.
+     * @param rangeHead first region in the range
+     * @param rangeTail last region in the range
+     * @return true if the range is valid
+     */
+    private boolean isValidRange(int rangeHead, int rangeTail) {
+        int cursor = rangeHead;
+        while (cursor != nullElement) {
+            if (cursor == rangeTail) {
+                return true;
+            }
+            int n = next(cursor);
+            if (n != ++cursor) {
+                break;
+            }
+        }
+        return false;
+    }
+
+    boolean containsRange(int rangeHead, int rangeTail) {
+        int cursor = head;
+        while (cursor != nullElement) {
+            if (cursor == rangeHead) {
+                return isValidRange(rangeHead, rangeTail);
+            }
+            cursor = next(cursor);
+        }
+        return false;
     }
 
     void checkIsAddressOrdered() {

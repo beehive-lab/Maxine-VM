@@ -60,13 +60,14 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     final HeapAccount<T> heapAccount;
 
     /**
-     * List of region with space available for allocation.
+     * List of regions with space available for allocation.
      * Initialized with all regions. Then reset by the sweeper at every collection.
      * Used to refill the TLAB allocator and the overflow allocator.
      */
     private HeapRegionList allocationRegions;
+
     /**
-     * List of region with space available for TLAB allocation only.
+     * List of regions with space available for TLAB allocation only.
      */
     private HeapRegionList tlabAllocationRegions;
 
@@ -692,7 +693,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         int initialNumberOfRegions = numberOfRegions(minSize);
-        int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false);
+        int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false, true);
         if (result != initialNumberOfRegions) {
             FatalError.unexpected("Failed to create application heap");
         }
@@ -702,12 +703,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         minOverflowRefillSize = regionSize.dividedBy(4);
         tlabAllocator.refillManager.setRefillPolicy(minReclaimableSpace);
 
-        // Set the iterable to the allocating regions. This is the default. Any exception to this should
-        // reset to the allocating region list when done.
-        regionsRangeIterable.initialize(allocationRegions);
+        // Set the iterable to the list of committed regions. This is the default. Any exception to this should
+        // reset to the committed region list when done.
+        regionsRangeIterable.initialize(heapAccount.committedRegions());
+        regionsRangeIterable.reset();
 
         // Initialize the tlab allocator with the first contiguous range.
-        regionsRangeIterable.reset();
         ((ChunkListRefillManager) tlabAllocator.refillManager).setMinChunkSize(minReclaimableSpace);
 
         // Initialize TLAB allocator with first region.
@@ -754,10 +755,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     public Size totalSpace() {
+        // FIXME: can't do this if the mark sweep space share it's heap account with other space (e.g., generational heap)
         return Size.fromInt(heapAccount.used()).shiftedLeft(log2RegionSizeInBytes);
     }
 
     public Size capacity() {
+        // FIXME: can't do this if the mark  sweep space share it's heap account with other space (e.g., generational heap)
         return Size.fromInt(heapAccount.reserve()).shiftedLeft(log2RegionSizeInBytes);
     }
 
@@ -778,24 +781,22 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
-        HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
-        allRegions.reset();
-        heapMarker.markAll(allRegions);
+        regionsRangeIterable.reset();
+        heapMarker.markAll(regionsRangeIterable);
     }
 
     @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         tlabAllocationRegions.checkIsAddressOrdered();
         allocationRegions.checkIsAddressOrdered();
-        HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
-        allRegions.resetToFirstIterable();
-        while (allRegions.hasNext()) {
-            HeapRegionInfo.walk(allRegions.nextIterableRange(), verifier);
+        regionsRangeIterable.resetToFirstIterable();
+        while (regionsRangeIterable.hasNext()) {
+            HeapRegionInfo.walk(regionsRangeIterable.nextIterableRange(), verifier);
         }
     }
 
     public void sweep(TricolorHeapMarker heapMarker) {
-        HeapRegionList allRegions = heapAccount.allocatedRegions().regionList;
+        HeapRegionList allRegions = heapAccount.committedRegions();
         if (MaxineVM.isDebug()) {
             allRegions.checkIsAddressOrdered();
         }
@@ -976,7 +977,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         if (numRegions == 0) {
             numRegions = 1;
         }
-        int allocated = heapAccount.allocate(numRegions, allocationRegions, false, true);
+        int allocated = heapAccount.allocate(numRegions, allocationRegions, false, true, true);
         return Size.fromInt(allocated).shiftedLeft(log2RegionSizeInBytes);
     }
 
