@@ -22,48 +22,43 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.vm.ext.graal.target.amd64.*;
 import com.sun.cri.ci.*;
 
 /**
  * Adds a Safepoint to the generated code and possibly create a safepoint.
  */
-public final class SafepointNode extends StateSplit implements LIRLowerable {
+public final class SafepointNode extends StateSplit implements AMD64LIRLowerable {
 
     public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP, BREAKPOINT, PAUSE
+        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
     }
 
     @Data private final Op op;
 
     public SafepointNode(Op op) {
-        super(CiKind.Illegal);
+        super(op == Op.HERE ? CiKind.Long : CiKind.Illegal);
         this.op = op;
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        // nothing to do
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool tool) {
-        // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
-        LIRGenerator gen = (LIRGenerator) tool;
+    public void generateAmd64(AMD64LIRGenerator gen) {
         switch (op) {
             case SAFEPOINT_POLL:
+                // TODO Maxine-specific, but currently implemented as XIR.
+                gen.emitSafepointPoll(this);
                 break;
             case HERE:
+                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue())));
+                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case INFO:
-                break;
-            case UNCOMMON_TRAP:
+                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case BREAKPOINT:
-                gen.append(AMD64MaxineOp.BREAKPOINT.create());
+                gen.append(AMD64BreakpointOpcode.BREAKPOINT.create());
                 break;
             case PAUSE:
                 break;

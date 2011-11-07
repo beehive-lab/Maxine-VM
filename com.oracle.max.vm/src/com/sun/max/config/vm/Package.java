@@ -53,6 +53,7 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.instrument.*",
             "com.sun.max.vm.jdk.**",
             "com.sun.max.vm.jni.*",
+            "com.sun.max.vm.jvmti.*",
             "com.sun.max.vm.layout.**",
             "com.sun.max.vm.management.*",
             "com.sun.max.vm.monitor.**",

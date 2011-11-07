@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -40,7 +39,7 @@ public abstract class ValueNode extends Node {
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
-    @Data public final CiKind kind;
+    @Data protected CiKind kind;
 
     protected CiValue operand = CiValue.IllegalValue;
 
@@ -53,6 +52,14 @@ public abstract class ValueNode extends Node {
      */
     public ValueNode(CiKind kind) {
         assert kind != null && kind == kind.stackKind() : kind + " != " + kind.stackKind();
+        setKind(kind);
+    }
+
+    public CiKind kind() {
+        return kind;
+    }
+
+    public void setKind(CiKind kind) {
         this.kind = kind;
     }
 
@@ -105,13 +112,6 @@ public abstract class ValueNode extends Node {
     }
 
     /**
-     * Clears the LIR operand associated with this instruction.
-     */
-    public final void clearOperand() {
-        this.operand = CiValue.IllegalValue;
-    }
-
-    /**
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
@@ -127,16 +127,6 @@ public abstract class ValueNode extends Node {
         return null; // default: unknown declared type
     }
 
-    /**
-     * This method supports the visitor pattern by accepting a visitor and calling the
-     * appropriate {@code visit()} method.
-     *
-     * @param v the visitor to accept
-     */
-    public void accept(ValueVisitor v) {
-        throw new IllegalStateException("No visit method for this node (" + this + ")");
-    }
-
     @Override
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> properties = super.getDebugProperties();
@@ -146,7 +136,7 @@ public abstract class ValueNode extends Node {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Graph<EntryPointNode> graph() {
-        return (Graph<EntryPointNode>) super.graph();
+    public StructuredGraph graph() {
+        return (StructuredGraph) super.graph();
     }
 }

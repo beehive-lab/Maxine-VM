@@ -102,12 +102,10 @@ public class HotSpotSignature extends CompilerObject implements RiSignature {
 
     @Override
     public int argumentSlots(boolean withReceiver) {
-
         int argSlots = 0;
         for (int i = 0; i < argumentCount(false); i++) {
-            argSlots += FrameStateBuilder.isTwoSlot(argumentKindAt(i, false)) ? 2 : 1;
+            argSlots += FrameStateBuilder.stackSlots(argumentKindAt(i, false));
         }
-
         return argSlots + (withReceiver ? 1 : 0);
     }
 

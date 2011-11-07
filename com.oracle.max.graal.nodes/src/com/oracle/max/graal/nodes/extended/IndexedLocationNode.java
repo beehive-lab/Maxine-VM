@@ -54,7 +54,7 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
         this.indexScalingEnabled = enable;
     }
 
-    public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph<?> graph) {
+    public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph) {
         return graph.unique(new IndexedLocationNode(identity, kind, index, displacement));
     }
 
@@ -64,14 +64,19 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
     }
 
     @Override
-    public CiAddress createAddress(LIRGeneratorTool lirGenerator, ValueNode object) {
-        CiValue indexValue = CiValue.IllegalValue;
-        Scale indexScale = Scale.Times1;
-        indexValue = lirGenerator.load(this.index());
-        if (indexScalingEnabled) {
-            indexScale = Scale.fromInt(lirGenerator.target().sizeInBytes(getValueKind()));
+    public CiAddress createAddress(LIRGeneratorTool gen, ValueNode object) {
+        CiValue base = gen.operand(object);
+        if (base.isConstant() && ((CiConstant) base).isNull()) {
+            base = CiValue.IllegalValue;
         }
-        return new CiAddress(getValueKind(), lirGenerator.load(object), indexValue, indexScale, displacement());
+
+        CiValue indexValue = gen.operand(index());
+        Scale indexScale = Scale.Times1;
+        if (indexScalingEnabled) {
+            indexScale = Scale.fromInt(gen.target().sizeInBytes(getValueKind()));
+        }
+
+        return new CiAddress(getValueKind(), base, indexValue, indexScale, displacement());
     }
 
     @Override
@@ -79,7 +84,7 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
         CiConstant constantIndex = index.asConstant();
         if (constantIndex != null && constantIndex.kind.stackKind().isInt()) {
             long constantIndexLong = constantIndex.asInt();
-            if (indexScalingEnabled) {
+            if (indexScalingEnabled && tool.target() != null) {
                 constantIndexLong *= tool.target().sizeInBytes(getValueKind());
             }
             constantIndexLong += displacement();

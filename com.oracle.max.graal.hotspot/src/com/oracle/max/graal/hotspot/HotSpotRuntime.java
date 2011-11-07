@@ -37,8 +37,9 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.calc.ConditionalNode.ConditionalStructure;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.oracle.max.graal.nodes.java.MathIntrinsicNode.Operation;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
+import com.oracle.max.graal.snippets.nodes.*;
+import com.oracle.max.graal.snippets.nodes.MathIntrinsicNode.Operation;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -59,7 +60,7 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig regConfig;
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
-    private IdentityHashMap<RiMethod, Graph<EntryPointNode>> intrinsicGraphs = new IdentityHashMap<RiMethod, Graph<EntryPointNode>>();
+    private IdentityHashMap<RiMethod, StructuredGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, StructuredGraph>();
 
     public HotSpotRuntime(GraalContext context, HotSpotVMConfig config, Compiler compiler) {
         this.context = context;
@@ -251,11 +252,11 @@ public class HotSpotRuntime implements GraalRuntime {
             if (field.isVolatile()) {
                 return;
             }
-            Graph<EntryPointNode> graph = field.graph();
+            StructuredGraph graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
-            assert field.kind != CiKind.Illegal;
+            assert field.kind() != CiKind.Illegal;
             ReadNode memoryRead = graph.unique(new ReadNode(field.field().kind(true).stackKind(), field.object(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(field.object()))));
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
             FixedNode next = field.next();
             field.setNext(null);
             memoryRead.setNext(next);
@@ -265,10 +266,10 @@ public class HotSpotRuntime implements GraalRuntime {
             if (field.isVolatile()) {
                 return;
             }
-            Graph<EntryPointNode> graph = field.graph();
+            StructuredGraph graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
             WriteNode memoryWrite = graph.add(new WriteNode(field.object(), field.value(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
-            memoryWrite.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(field.object()))));
+            memoryWrite.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
             memoryWrite.setStateAfter(field.stateAfter());
             FixedNode next = field.next();
             field.setNext(null);
@@ -282,7 +283,7 @@ public class HotSpotRuntime implements GraalRuntime {
             field.replaceAndDelete(memoryWrite);
         } else if (n instanceof LoadIndexedNode) {
             LoadIndexedNode loadIndexed = (LoadIndexedNode) n;
-            Graph<EntryPointNode> graph = loadIndexed.graph();
+            StructuredGraph graph = loadIndexed.graph();
             GuardNode boundsCheck = createBoundsCheck(loadIndexed, tool);
 
             CiKind elementKind = loadIndexed.elementKind();
@@ -295,7 +296,7 @@ public class HotSpotRuntime implements GraalRuntime {
             loadIndexed.replaceAndDelete(memoryRead);
         } else if (n instanceof StoreIndexedNode) {
             StoreIndexedNode storeIndexed = (StoreIndexedNode) n;
-            Graph<EntryPointNode> graph = storeIndexed.graph();
+            StructuredGraph graph = storeIndexed.graph();
             AnchorNode anchor = graph.add(new AnchorNode());
             GuardNode boundsCheck = createBoundsCheck(storeIndexed, tool);
 
@@ -310,13 +311,13 @@ public class HotSpotRuntime implements GraalRuntime {
                 if (array.exactType() != null) {
                     RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
-                        ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
+                        ConstantNode type = graph.unique(ConstantNode.forCiConstant(elementType.getEncoding(Representation.ObjectHub), this, graph));
                         value = graph.unique(new CheckCastNode(anchor, type, elementType, value));
                     } else {
                         assert elementType.name().equals("Ljava/lang/Object;") : elementType.name();
                     }
                 } else {
-                    GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(array)));
+                    GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new NullCheckNode(array, false)));
                     ReadNode arrayClass = graph.unique(new ReadNode(CiKind.Object, array, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.hubOffset, graph)));
                     arrayClass.setGuard(guard);
                     append.setNext(arrayClass);
@@ -342,19 +343,19 @@ public class HotSpotRuntime implements GraalRuntime {
             storeIndexed.delete();
         } else if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
-            Graph<EntryPointNode> graph = load.graph();
-            assert load.kind != CiKind.Illegal;
+            StructuredGraph graph = load.graph();
+            assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
-            ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(load.object()))));
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
             FixedNode next = load.next();
             load.setNext(null);
             memoryRead.setNext(next);
             load.replaceAndDelete(memoryRead);
         } else if (n instanceof UnsafeStoreNode) {
             UnsafeStoreNode store = (UnsafeStoreNode) n;
-            Graph<EntryPointNode> graph = store.graph();
+            StructuredGraph graph = store.graph();
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
@@ -378,19 +379,19 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
+    public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
 
         if (method.holder().name().equals("Ljava/lang/Object;")) {
             String fullName = method.name() + method.signature().asString();
             if (fullName.equals("getClass()Ljava/lang/Class;")) {
                 ValueNode obj = (ValueNode) parameters.get(0);
                 if (obj.isConstant() && obj.asConstant().isNonNull()) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    StructuredGraph graph = new StructuredGraph();
                     ValueNode result;
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
                     }
-                    result = ConstantNode.forObject(obj.asConstant().asObject().getClass(), graph);
+                    result = ConstantNode.forObject(obj.asConstant().asObject().getClass(), this, graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     graph.start().setNext(ret);
                     return graph;
@@ -402,12 +403,12 @@ public class HotSpotRuntime implements GraalRuntime {
                 ValueNode obj = (ValueNode) parameters.get(0);
                 if (obj.isConstant()) {
                     assert obj.asConstant().asObject() instanceof Class;
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    StructuredGraph graph = new StructuredGraph();
                     ValueNode result;
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
                     }
-                    result = ConstantNode.forObject(NodeClass.get((Class< ? >) obj.asConstant().asObject()), graph);
+                    result = ConstantNode.forObject(NodeClass.get((Class< ? >) obj.asConstant().asObject()), this, graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     graph.start().setNext(ret);
                     return graph;
@@ -420,8 +421,8 @@ public class HotSpotRuntime implements GraalRuntime {
             String holderName = holder.name();
             if (holderName.equals("Ljava/lang/Object;")) {
                 if (fullName.equals("getClass()Ljava/lang/Class;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
                     SafeReadNode klassOop = safeReadHub(graph, receiver);
                     SafeReadNode result = graph.add(new SafeReadNode(CiKind.Object, klassOop, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.classMirrorOffset, graph)));
                     ReturnNode ret = graph.add(new ReturnNode(result));
@@ -432,8 +433,8 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             } else if (method.holder().name().equals("Ljava/lang/Class;")) {
                 if (fullName.equals("getModifiers()I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
                     // TODO(tw): Care about primitive classes!
@@ -442,25 +443,25 @@ public class HotSpotRuntime implements GraalRuntime {
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("isInstance(Ljava/lang/Object;)Z")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0, graph.start()));
-                    LocalNode argument = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
+                    LocalNode argument = graph.unique(new LocalNode(CiKind.Object, 1));
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
                     // TODO(tw): Care about primitive classes!
-                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument)), graph);
+                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument, false)), graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/System;")) {
                 if (fullName.equals("arraycopy(Ljava/lang/Object;ILjava/lang/Object;II)V")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode src = graph.unique(new LocalNode(CiKind.Object, 0, graph.start()));
-                    LocalNode srcPos = graph.unique(new LocalNode(CiKind.Int, 1, graph.start()));
-                    LocalNode dest = graph.unique(new LocalNode(CiKind.Object, 2, graph.start()));
-                    LocalNode destPos = graph.unique(new LocalNode(CiKind.Int, 3, graph.start()));
-                    ValueNode length = graph.unique(new LocalNode(CiKind.Int, 4, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode src = graph.unique(new LocalNode(CiKind.Object, 0));
+                    LocalNode srcPos = graph.unique(new LocalNode(CiKind.Int, 1));
+                    LocalNode dest = graph.unique(new LocalNode(CiKind.Object, 2));
+                    LocalNode destPos = graph.unique(new LocalNode(CiKind.Int, 3));
+                    ValueNode length = graph.unique(new LocalNode(CiKind.Int, 4));
                     src.setDeclaredType(((ValueNode) parameters.get(0)).declaredType());
                     dest.setDeclaredType(((ValueNode) parameters.get(2)).declaredType());
 
@@ -569,14 +570,14 @@ public class HotSpotRuntime implements GraalRuntime {
                     merge2.setNext(ret);
                     return graph;
                 } else if (fullName.equals("currentTimeMillis()J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    StructuredGraph graph = new StructuredGraph();
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeMillis));
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
                     graph.start().setNext(call);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("nanoTime()J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    StructuredGraph graph = new StructuredGraph();
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeNanos));
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
@@ -585,47 +586,47 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             } else if (holderName.equals("Ljava/lang/Float;")) {
                 if (fullName.equals("floatToRawIntBits(F)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(CiKind.Int, ConvertNode.Op.MOV_F2I, graph.unique(new LocalNode(CiKind.Float, 0, graph.start()))))));
+                    StructuredGraph graph = new StructuredGraph();
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, graph.unique(new LocalNode(CiKind.Float, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("floatToIntBits(F)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
-                    ConvertNode fpConv = graph.unique(new ConvertNode(CiKind.Int, ConvertNode.Op.MOV_F2I, arg));
+                    ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forInt(FLOATNAN_RAW_INT_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
                     conditionalStructure.merge.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("intBitsToFloat(I)F")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(CiKind.Float, ConvertNode.Op.MOV_I2F, graph.unique(new LocalNode(CiKind.Int, 0, graph.start()))))));
+                    StructuredGraph graph = new StructuredGraph();
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_I2F, graph.unique(new LocalNode(CiKind.Int, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Double;")) {
                 if (fullName.equals("doubleToRawLongBits(D)J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(CiKind.Long, ConvertNode.Op.MOV_D2L, graph.unique(new LocalNode(CiKind.Double, 0, graph.start()))))));
+                    StructuredGraph graph = new StructuredGraph();
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, graph.unique(new LocalNode(CiKind.Double, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("doubleToLongBits(D)J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
-                    ConvertNode fpConv = graph.unique(new ConvertNode(CiKind.Long, ConvertNode.Op.MOV_D2L, arg));
+                    ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forLong(DOUBLENAN_RAW_LONG_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
                     conditionalStructure.merge.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("longBitsToDouble(J)D")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(CiKind.Double, ConvertNode.Op.MOV_L2D, graph.unique(new LocalNode(CiKind.Long, 0, graph.start()))))));
+                    StructuredGraph graph = new StructuredGraph();
+                    ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_L2D, graph.unique(new LocalNode(CiKind.Long, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }
@@ -640,11 +641,11 @@ public class HotSpotRuntime implements GraalRuntime {
                         kind = CiKind.Long;
                     }
                     if (kind != null) {
-                        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                        LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
-                        LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
-                        LocalNode expected = graph.unique(new LocalNode(kind, 3, graph.start()));
-                        LocalNode value = graph.unique(new LocalNode(kind, 4, graph.start()));
+                        StructuredGraph graph = new StructuredGraph();
+                        LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+                        LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
+                        LocalNode expected = graph.unique(new LocalNode(kind, 3));
+                        LocalNode value = graph.unique(new LocalNode(kind, 4));
                         CompareAndSwapNode cas = graph.add(new CompareAndSwapNode(object, offset, expected, value, false));
                         FrameState frameState = graph.add(new FrameState(method, FrameState.AFTER_BCI, 0, 0, 0, false));
                         cas.setStateAfter(frameState);
@@ -654,47 +655,49 @@ public class HotSpotRuntime implements GraalRuntime {
                         intrinsicGraphs.put(method, graph);
                     }
                 } else if (fullName.equals("getObject(Ljava/lang/Object;J)Ljava/lang/Object;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
-                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Object));
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
                     graph.start().setNext(load);
                     intrinsicGraphs.put(method, graph);
-                } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
-                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
-                    IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, CiKind.Object, 0, offset, graph);
-                    location.setIndexScalingEnabled(false);
-                    SafeReadNode safeRead = graph.add(new SafeReadNode(CiKind.Object, object, location));
-                    VolatileReadNode volatileRead = graph.add(new VolatileReadNode(safeRead));
-                    ReturnNode ret = graph.add(new ReturnNode(volatileRead));
-                    graph.start().setNext(safeRead);
-                    safeRead.setNext(volatileRead);
-                    volatileRead.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+// TODO disabled for now.  The old VolatileReadNode was not safe and is deleted now.  We need a MemoryBarrierNode before and after the
+// actual read, and it must be guaranteed that the memory barriers stay next to the read during scheduling.
+//                } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
+//                    StructuredGraph graph = new StructuredGraph();
+//                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+//                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
+//                    IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, CiKind.Object, 0, offset, graph);
+//                    location.setIndexScalingEnabled(false);
+//                    SafeReadNode safeRead = graph.add(new SafeReadNode(CiKind.Object, object, location));
+//                    VolatileReadNode volatileRead = graph.add(new VolatileReadNode(safeRead));
+//                    ReturnNode ret = graph.add(new ReturnNode(volatileRead));
+//                    graph.start().setNext(safeRead);
+//                    safeRead.setNext(volatileRead);
+//                    volatileRead.setNext(ret);
+//                    intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("getInt(Ljava/lang/Object;J)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
-                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Int));
+                    graph.start().setNext(load);
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
-                    graph.start().setNext(load);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("putObject(Ljava/lang/Object;JLjava/lang/Object;)V")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
-                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
-                    LocalNode value = graph.unique(new LocalNode(CiKind.Object, 3, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
+                    LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
+                    LocalNode value = graph.unique(new LocalNode(CiKind.Object, 3));
                     UnsafeStoreNode store = graph.add(new UnsafeStoreNode(object, offset, value, CiKind.Object));
                     FrameState frameState = graph.add(new FrameState(method, FrameState.AFTER_BCI, 0, 0, 0, false));
+                    graph.start().setNext(store);
                     store.setStateAfter(frameState);
                     ReturnNode ret = graph.add(new ReturnNode(null));
                     store.setNext(ret);
-                    graph.start().setNext(store);
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Math;") && compiler.getCompiler().target.arch.isX86()) {
@@ -715,8 +718,8 @@ public class HotSpotRuntime implements GraalRuntime {
                     op = Operation.TAN;
                 }
                 if (op != null) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
-                    LocalNode value = graph.unique(new LocalNode(CiKind.Double, 0, graph.start()));
+                    StructuredGraph graph = new StructuredGraph();
+                    LocalNode value = graph.unique(new LocalNode(CiKind.Double, 0));
                     if (op == Operation.SIN || op == Operation.COS || op == Operation.TAN) {
                         // Math.sin(), .cos() and .tan() guarantee a value within 1 ULP of the
                         // exact result, but x87 trigonometric FPU instructions are only that
@@ -739,6 +742,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         EndNode slowend = graph.add(new EndNode());
                         slow.setNext(slowend);
                         IfNode branch = graph.add(new IfNode(cmp, fastend, slow, 0.5));
+                        graph.start().setNext(branch);
                         MergeNode merge = graph.add(new MergeNode());
                         merge.addEnd(fastend);
                         merge.addEnd(slowend);
@@ -749,7 +753,6 @@ public class HotSpotRuntime implements GraalRuntime {
                         phi.addInput(slow);
                         ReturnNode ret = graph.add(new ReturnNode(phi));
                         merge.setNext(ret);
-                        graph.start().setNext(branch);
                     } else {
                         MathIntrinsicNode result = graph.unique(new MathIntrinsicNode(value, op));
                         ReturnNode ret = graph.add(new ReturnNode(result));
@@ -774,7 +777,7 @@ public class HotSpotRuntime implements GraalRuntime {
         return safeRead(graph, CiKind.Int, value, config.arrayLengthOffset);
     }
 
-    private SafeReadNode safeRead(Graph<?> graph, CiKind kind, ValueNode value, int offset) {
+    private SafeReadNode safeRead(Graph graph, CiKind kind, ValueNode value, int offset) {
         return graph.add(new SafeReadNode(kind, value, LocationNode.create(LocationNode.FINAL_LOCATION, kind, offset, graph)));
     }
 

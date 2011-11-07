@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
+import com.oracle.max.graal.compiler.GraalCompiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
@@ -54,7 +55,8 @@ public final class GraalCompilation {
     public final CiStatistics stats;
     public final FrameState placeholderState;
 
-    public final Graph<EntryPointNode> graph;
+    public final StructuredGraph graph;
+    public final CiAssumptions assumptions = new CiAssumptions();
 
     private FrameMap frameMap;
 
@@ -72,7 +74,7 @@ public final class GraalCompilation {
      * @param stats externally supplied statistics object to be used if not {@code null}
      * @param debugInfoLevel TODO
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, Graph<EntryPointNode> graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, StructuredGraph graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
@@ -89,12 +91,12 @@ public final class GraalCompilation {
     }
 
     public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
-        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode(compiler.runtime)), osrBCI, stats, debugInfoLevel);
+        this(context, compiler, method, new StructuredGraph(), osrBCI, stats, debugInfoLevel);
     }
 
 
     public void close() {
-        //
+        // TODO(tw): Check if we can delete this method.
     }
 
     public LIR lir() {
@@ -120,7 +122,7 @@ public final class GraalCompilation {
 
     private TargetMethodAssembler createAssembler() {
         AbstractAssembler masm = compiler.backend.newAssembler(registerConfig);
-        TargetMethodAssembler tasm = new TargetMethodAssembler<AbstractAssembler>(this, masm);
+        TargetMethodAssembler tasm = new TargetMethodAssembler(this, masm);
         tasm.setFrameSize(frameMap.frameSize());
         tasm.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return tasm;
@@ -163,71 +165,80 @@ public final class GraalCompilation {
             context().timers.startScope("HIR");
 
             if (graph.start().next() == null) {
-                new GraphBuilderPhase(context(), compiler.runtime, method, stats).apply(graph);
-                new DeadCodeEliminationPhase(context()).apply(graph);
+                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(compiler.runtime, method, stats);
+                graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
+                graphBuilderPhase.apply(graph, context());
+                new DeadCodeEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.ProbabilityAnalysis) {
-                new ComputeProbabilityPhase(context()).apply(graph);
+                new ComputeProbabilityPhase().apply(graph, context());
             }
 
             if (GraalOptions.Intrinsify) {
-                new IntrinsificationPhase(context(), compiler.runtime).apply(graph);
+                new IntrinsificationPhase(compiler.runtime).apply(graph, context());
             }
 
             if (GraalOptions.Inline) {
-                new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
-                new DeadCodeEliminationPhase(context()).apply(graph);
+                new InliningPhase(compiler.runtime, compiler.target, null, assumptions).apply(graph, context());
+                new DeadCodeEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.OptCanonicalizer) {
-                new CanonicalizerPhase(context(), compiler.target).apply(graph);
+                new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
+
+            compiler.runPhases(PhasePosition.HIGH_LEVEL, graph);
 
             if (GraalOptions.Extend) {
                 extensionOptimizations(graph);
-                new DeadCodeEliminationPhase(context()).apply(graph);
+                new DeadCodeEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
-                new FindInductionVariablesPhase(context()).apply(graph);
+                new FindInductionVariablesPhase().apply(graph, context());
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
                 }
             }
 
             if (GraalOptions.EscapeAnalysis) {
                 new EscapeAnalysisPhase(this).apply(graph);
-                new CanonicalizerPhase(context(), compiler.target).apply(graph);
+                new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
             if (GraalOptions.OptGVN) {
-                new GlobalValueNumberingPhase(context()).apply(graph);
+                new GlobalValueNumberingPhase().apply(graph, context());
             }
 
             graph.mark();
-            new LoweringPhase(context(), compiler.runtime).apply(graph);
-            new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+            new LoweringPhase(compiler.runtime).apply(graph, context());
+            new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
-                new RemoveInductionVariablesPhase(context()).apply(graph);
+                new RemoveInductionVariablesPhase().apply(graph, context());
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
                 }
             }
 
             if (GraalOptions.Lower) {
-                new FloatingReadPhase(context()).apply(graph);
+                new FloatingReadPhase().apply(graph, context());
                 if (GraalOptions.OptReadElimination) {
-                    new ReadEliminationPhase(context()).apply(graph);
+                    new ReadEliminationPhase().apply(graph, context());
                 }
             }
-            new RemovePlaceholderPhase(context()).apply(graph);
-            new DeadCodeEliminationPhase(context()).apply(graph);
-            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(context(), true);
-            schedule.apply(graph);
+            new RemovePlaceholderPhase().apply(graph, context());
+            new DeadCodeEliminationPhase().apply(graph, context());
+
+            compiler.runPhases(PhasePosition.MID_LEVEL, graph);
+
+            compiler.runPhases(PhasePosition.LOW_LEVEL, graph);
+
+            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true);
+            schedule.apply(graph, context());
             if (stats != null) {
                 stats.loopCount = schedule.loopCount();
             }
@@ -313,7 +324,7 @@ public final class GraalCompilation {
         }
     }
 
-    private void extensionOptimizations(Graph<EntryPointNode> graph) {
+    private void extensionOptimizations(StructuredGraph graph) {
         Class< ? > c = method.holder().toJava();
         if (c != null && !Modifier.isPrivate(method.accessFlags())) {
             Class< ? >[] parameterTypes = SnippetIntrinsificationPhase.toClassArray(method.signature(), method.holder());
@@ -341,7 +352,7 @@ public final class GraalCompilation {
             }
         }
 
-        new SnippetIntrinsificationPhase(context(), compiler.runtime).apply(graph);
+        new SnippetIntrinsificationPhase(compiler.runtime).apply(graph, context());
 
         ServiceLoader<Optimizer> serviceLoader = optimizerLoader.get();
         if (serviceLoader == null) {
@@ -405,8 +416,8 @@ public final class GraalCompilation {
                 lir.emitCode(tasm);
 
                 CiTargetMethod targetMethod = tasm.finishTargetMethod(method, compiler.runtime, false);
-                if (!graph.start().assumptions().isEmpty()) {
-                    targetMethod.setAssumptions(graph.start().assumptions());
+                if (!assumptions.isEmpty()) {
+                    targetMethod.setAssumptions(assumptions);
                 }
 
                 if (context().isObserved()) {

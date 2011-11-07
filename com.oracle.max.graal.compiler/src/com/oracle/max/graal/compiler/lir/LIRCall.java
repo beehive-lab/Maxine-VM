@@ -22,11 +22,11 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.sun.cri.ci.CiValue.Formatter;
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
@@ -34,7 +34,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
  * a {@linkplain RiMethod Java method}, a native function or a global stub.
  */
-public class LIRCall extends LIRInstruction {
+public abstract class LIRCall extends LIRInstruction {
 
     /**
      * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link CiValue}
@@ -67,9 +67,8 @@ public class LIRCall extends LIRInstruction {
                    CiValue targetAddress,
                    LIRDebugInfo info,
                    Map<XirMark, Mark> marks,
-                   boolean calleeSaved,
                    List<CiValue> pointerSlots) {
-        super(opcode, result, info, !calleeSaved, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
+        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
         this.marks = marks;
         this.pointerSlots = pointerSlots;
         if (targetAddress == null) {

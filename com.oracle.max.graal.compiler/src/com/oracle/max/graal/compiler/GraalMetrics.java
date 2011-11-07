@@ -66,7 +66,6 @@ public final class GraalMetrics {
     public int UniqueValueIdsAssigned;
     public int FrameStatesCreated;
     public int FrameStateValuesCreated;
-    public int NodesCanonicalized;
     public int LoopsPeeled;
     public int LoopsInverted;
     public int PartialUsageProbability;

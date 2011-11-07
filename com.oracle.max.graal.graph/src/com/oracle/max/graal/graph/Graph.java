@@ -28,9 +28,8 @@ import com.oracle.max.graal.graph.Node.*;
 
 /**
  * This class is a graph container, it contains the set of nodes that belong to this graph.
- * The graph contains at least one distinguished node : the {@link #start() start} node.
  */
-public class Graph<S extends Node> {
+public class Graph {
 
     private final String name;
 
@@ -40,10 +39,10 @@ public class Graph<S extends Node> {
     // they contain the first and last pointer to a linked list of all nodes with this type.
     private final ArrayList<Node> nodeCacheFirst;
     private final ArrayList<Node> nodeCacheLast;
-    private final S start;
     private int deletedNodeCount;
     private int mark;
 
+    ArrayList<Node> usagesDropped = new ArrayList<Node>();
     private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
 
     private static final class CacheEntry {
@@ -79,8 +78,8 @@ public class Graph<S extends Node> {
      * Creates a new Graph containing only one node : the provided {@code start} node.
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(S start) {
-        this(null, start);
+    public Graph() {
+        this(null);
     }
 
     /**
@@ -88,21 +87,16 @@ public class Graph<S extends Node> {
      * @param name the name of the graph, used for debugging purposes
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(String name, S start) {
+    public Graph(String name) {
         nodes = new ArrayList<Node>(32);
         nodeCacheFirst = new ArrayList<Node>(NodeClass.cacheSize());
         nodeCacheLast = new ArrayList<Node>(NodeClass.cacheSize());
-        this.start = add(start);
         this.name = name;
     }
 
     @Override
     public String toString() {
         return name == null ? "Graph" : "Graph " + name;
-    }
-
-    public S start() {
-        return start;
     }
 
     /**
@@ -129,6 +123,16 @@ public class Graph<S extends Node> {
     public <T extends Node> T add(T node) {
         node.initialize(this);
         return node;
+    }
+
+    public int getUsagesDroppedNodesCount() {
+        return usagesDropped.size();
+    }
+
+    public List<Node> getAndCleanUsagesDroppedNodes() {
+        ArrayList<Node> result = usagesDropped;
+        usagesDropped = new ArrayList<Node>();
+        return result;
     }
 
     /**
@@ -262,34 +266,48 @@ public class Graph<S extends Node> {
 
     private static class TypedNodeIterator<T extends IterableNodeType> implements Iterator<T> {
         private Node current;
-        private Node last;
+        private final Node start;
 
         public TypedNodeIterator(Node start) {
-            this.current = start;
-            this.last = null;
+            if (start != null && start.isDeleted()) {
+                this.current = start;
+            } else {
+                this.current = null;
+            }
+            this.start = start;
         }
 
         @Override
         public boolean hasNext() {
-            // this is where deleted nodes will be removed from the type cache. the first and the last node will never be removed,
-            // but we don't care, since this would introduce a special case that makes this very sensitive piece of code larger.
-            while (current != null && current.isDeleted()) {
-                current = current.typeCacheNext;
-                if (last != null && current != null) {
-                    last.typeCacheNext = current;
+            if (current != null) {
+                Node next = current.typeCacheNext;
+                if (next != null) {
+                    while (next.isDeleted()) {
+                        next = next.typeCacheNext;
+                        if (next == null) {
+                            return false;
+                        }
+                        current.typeCacheNext = next;
+                    }
+                    return true;
                 }
+                return false;
+            } else {
+                return start != null;
             }
-            return current != null;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public T next() {
-            try {
-                return (T) current;
-            } finally {
-                last = current;
-                current = current.typeCacheNext;
+            if (current == null) {
+                Node result = start;
+                current = result;
+                return (T) result;
+            } else {
+                Node result = current.typeCacheNext;
+                current = result;
+                return (T) result;
             }
         }
 
@@ -305,15 +323,29 @@ public class Graph<S extends Node> {
      * @return an {@link Iterable} providing all the matching nodes.
      */
     public <T extends Node & IterableNodeType> Iterable<T> getNodes(final Class<T> type) {
-        int nodeClassId = NodeClass.get(type).iterableId();
-        assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
-        final Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        final Node start = getStartNode(type);
         return new Iterable<T>() {
             @Override
             public Iterator<T> iterator() {
                 return new TypedNodeIterator<T>(start);
             }
         };
+    }
+
+    /**
+     * Returns whether the graph contains at least one node of the given type.
+     * @param type the type of node that is checked for occurrence
+     * @return whether there is at least one such node
+     */
+    public <T extends Node & IterableNodeType> boolean hasNode(final Class<T> type) {
+        return getNodes(type).iterator().hasNext();
+    }
+
+    private <T> Node getStartNode(final Class<T> type) {
+        int nodeClassId = NodeClass.get(type).iterableId();
+        assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
+        Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        return start;
     }
 
     public NodeBitMap createNodeBitMap() {
@@ -361,10 +393,9 @@ public class Graph<S extends Node> {
 
     void unregister(Node node) {
         nodes.set(node.id(), null);
+        deletedNodeCount++;
 
         // nodes aren't removed from the type cache here - they will be removed during iteration
-
-        deletedNodeCount++;
     }
 
     public boolean verify() {

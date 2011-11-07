@@ -24,6 +24,7 @@ package com.oracle.max.graal.examples.safeadd;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -40,8 +41,8 @@ public final class SafeAddNode extends FloatingNode implements LIRLowerable {
     }
 
     @Override
-    public void generate(LIRGeneratorTool generator) {
-        generator.integerAdd(this, x, y);
-        generator.deoptimizeOn(Condition.OF);
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitAdd(gen.operand(x), gen.operand(y)));
+        gen.emitDeoptimizeOn(Condition.OF, DeoptAction.InvalidateReprofile, "SafeAdd");
     }
 }

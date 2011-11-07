@@ -135,11 +135,14 @@ public class MaxXirGenerator implements RiXirGenerator {
     private NewInstanceTemplates newInstanceTemplate;
     private NewInstanceTemplates tlabNewInstanceTemplate;
     private XirPair checkcastForLeafTemplate;
-    private XirPair checkcastForClassTemplate;
-    private XirPair checkcastForInterfaceTemplate;
+    private XirPair checkcastForNonLeafTemplate;
     private XirPair instanceofForLeafTemplate;
-    private XirPair instanceofForClassTemplate;
-    private XirPair instanceofForInterfaceTemplate;
+    private XirPair instanceofForNonLeafTemplate;
+    private XirTemplate materializedInstanceofForLeafTemplate;
+    private XirTemplate materializedInstanceofForLeafAndNonNullTemplate;
+    private XirTemplate materializedInstanceofForNonLeafTemplate;
+
+    private XirTemplate typeAssertTemplate;
 
     private XirTemplate exceptionObjectTemplate;
 
@@ -271,12 +274,16 @@ public class MaxXirGenerator implements RiXirGenerator {
         tlabNewInstanceTemplate = buildTLABNewInstance();
 
         checkcastForLeafTemplate = buildCheckcastForLeaf(false);
-        checkcastForClassTemplate = buildCheckcastForInterface(false); // XXX: more efficient template for class checks
-        checkcastForInterfaceTemplate = buildCheckcastForInterface(false);
+        checkcastForNonLeafTemplate = buildCheckcastForNonLeaf(false);
 
         instanceofForLeafTemplate = buildInstanceofForLeaf(false);
-        instanceofForClassTemplate = buildInstanceofForInterface(false); // XXX: more efficient template for class checks
-        instanceofForInterfaceTemplate = buildInstanceofForInterface(false);
+        instanceofForNonLeafTemplate = buildInstanceofForNonLeaf(false);
+
+        materializedInstanceofForLeafTemplate = buildMaterializeInstanceOf(false, true);
+        materializedInstanceofForLeafAndNonNullTemplate = buildMaterializeInstanceOf(true, true);
+        materializedInstanceofForNonLeafTemplate = buildMaterializeInstanceOf(false, false);
+
+        typeAssertTemplate = buildTypeAssert();
 
         exceptionObjectTemplate = buildExceptionObject();
 
@@ -519,26 +526,21 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (type instanceof RiResolvedType) {
             RiResolvedType resolvedType = (RiResolvedType) type;
             XirTemplate template;
-            if (resolvedType.isInterface()) {
-                // have to use the interface template
-                template = checkcastForInterfaceTemplate.resolved;
-                ClassActor classActor = (ClassActor) type;
-                int interfaceID = classActor.id;
-                return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
-            } else if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
+            if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
+                assert !resolvedType.isInterface();
                 // can use the leaf class test
                 template = checkcastForLeafTemplate.resolved;
             } else {
                 // can use the class test
-                template = checkcastForClassTemplate.resolved;
+                template = checkcastForNonLeafTemplate.resolved;
                 ClassActor classActor = (ClassActor) resolvedType;
-                int interfaceID = classActor.id;
-                return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
+                int typeID = classActor.id;
+                return new XirSnippet(template, object, XirArgument.forInt(typeID), hub);
             }
             return new XirSnippet(template, object, hub);
         }
         XirArgument guard = guardFor(type);
-        return new XirSnippet(checkcastForInterfaceTemplate.unresolved, object, guard);
+        return new XirSnippet(checkcastForNonLeafTemplate.unresolved, object, guard);
     }
 
     @Override
@@ -546,25 +548,48 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (type instanceof RiResolvedType) {
             RiResolvedType resolvedType = (RiResolvedType) type;
             XirTemplate template;
-            if (resolvedType.isInterface()) {
-                template = instanceofForInterfaceTemplate.resolved;
-                ClassActor classActor = (ClassActor) type;
-                int interfaceID = classActor.id;
-                return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
-            }
-
             if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
+                assert !resolvedType.isInterface();
                 template = instanceofForLeafTemplate.resolved;
+                return new XirSnippet(template, object, hub);
             } else {
-                template = instanceofForClassTemplate.resolved;
+                template = instanceofForNonLeafTemplate.resolved;
                 ClassActor classActor = (ClassActor) type;
-                int interfaceID = classActor.id;
-                return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
+                int typeID = classActor.id;
+                return new XirSnippet(template, object, XirArgument.forInt(typeID), hub);
             }
-            return new XirSnippet(template, object, hub);
         }
         XirArgument guard = guardFor(type);
-        return new XirSnippet(instanceofForInterfaceTemplate.unresolved, object, guard);
+        return new XirSnippet(instanceofForNonLeafTemplate.unresolved, object, guard);
+    }
+
+
+    @Override
+    public XirSnippet genMaterializeInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, XirArgument trueValue, XirArgument falseValue, RiType type) {
+        assert type instanceof RiResolvedType;
+        RiResolvedType resolvedType = (RiResolvedType) type;
+        XirTemplate template;
+        if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
+            assert !resolvedType.isInterface();
+            if (site.isNonNull(receiver)) {
+                template = materializedInstanceofForLeafAndNonNullTemplate;
+            } else {
+                template = materializedInstanceofForLeafTemplate;
+            }
+            return new XirSnippet(template, receiver, hub, trueValue, falseValue);
+        } else {
+            template = materializedInstanceofForNonLeafTemplate;
+            ClassActor classActor = (ClassActor) type;
+            int typeID = classActor.id;
+            return new XirSnippet(template, receiver, hub, trueValue, falseValue, XirArgument.forInt(typeID));
+        }
+    }
+
+    @Override
+    public XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type) {
+        assert type instanceof RiResolvedType;
+        assert site.isNonNull(object);
+        return new XirSnippet(typeAssertTemplate, object, hub);
     }
 
     @Override
@@ -932,7 +957,9 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         asm.bindInline(ok);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
-
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, arraySize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -985,6 +1012,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.add(newMark, cell, arraySize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, arraySize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1122,6 +1152,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.jmp(done);
         asm.bindInline(ok);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, tupleSize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1129,6 +1162,32 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
         }
         asm.mov(result, cell);
+    }
+
+    private void buildTLABLogging(XirOperand etla, XirOperand cellSize, XirOperand cell) {
+        XirLabel flushLog = asm.createOutOfLineLabel("flushLog");
+        XirLabel recordInLog = asm.createInlineLabel("recordInLog");
+        XirLabel done = asm.createInlineLabel("done");
+        XirOperand logTail = asm.createTemp("logTail",  WordUtil.archKind());
+        XirOperand logEndMark = asm.createTemp("logEndMark",  WordUtil.archKind());
+        XirOperand allocationSite = asm.createTemp("allocationSite",  WordUtil.archKind());
+        XirConstant offsetToTLABLogTail = asm.i(TLABLog.TLAB_LOG_TAIL.offset);
+
+        asm.pload(WordUtil.archKind(), logTail, etla, offsetToTLABLogTail, false);
+        asm.jeq(done, logTail, asm.i(0));
+        asm.pload(WordUtil.archKind(), logEndMark, logTail, false);
+        asm.jeq(flushLog, logEndMark, logTail);
+        asm.bindInline(recordInLog);
+        asm.here(allocationSite);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(0), allocationSite, false);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(Word.size()), cell, false);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(2 * Word.size()), cellSize, false);
+        asm.add(logTail, logTail, asm.i(3 * Word.size()));
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABLogTail, logTail, false);
+        asm.bindInline(done);
+        asm.bindOutOfLine(flushLog);
+        callRuntimeThroughStub(asm, "flushLog", logTail, logTail);
+        asm.jmp(recordInLog);
     }
 
     @HOSTED_ONLY
@@ -1149,6 +1208,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, tupleSize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1352,7 +1414,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirPair buildCheckcastForInterface(boolean nonnull) {
+    private XirPair buildCheckcastForNonLeaf(boolean nonnull) {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -1437,14 +1499,80 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirPair buildInstanceofForInterface(boolean nonnull) {
+    private XirTemplate buildMaterializeInstanceOf(boolean nonnull, boolean leaf) {
+        XirOperand result = asm.restart(CiKind.Int);
+        XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        final XirOperand hub;
+        hub = asm.createConstantInputParameter("hub", CiKind.Object);
+        XirOperand trueValue = asm.createConstantInputParameter("trueValue", CiKind.Int);
+        XirOperand falseValue = asm.createConstantInputParameter("falseValue", CiKind.Int);
+        XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
+        XirLabel trueSucc = asm.createInlineLabel("ok");
+        XirLabel falseSucc = asm.createInlineLabel("notOk");
+        XirLabel end = asm.createInlineLabel("end");
+
+        if (!nonnull) {
+            // null isn't "instanceof" anything
+            asm.jeq(falseSucc, object, asm.o(null));
+        }
+
+        asm.pload(CiKind.Object, objHub, object, asm.i(hubOffset()), false);
+        // if we get an exact match: succeed immediately
+        if (!leaf) {
+            XirOperand mtableTemp = asm.createTemp("mtableTemp", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
+            XirParameter typeID = asm.createConstantInputParameter("typeID", CiKind.Int);
+            asm.jeq(trueSucc, objHub, hub);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableLength()), false);
+            asm.mod(a, typeID, mtableTemp);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableStartIndex()), false);
+            asm.add(a, a, mtableTemp);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
+            asm.jneq(falseSucc, a, typeID);
+        } else {
+            asm.jneq(falseSucc, objHub, hub);
+        }
+        asm.bindInline(trueSucc);
+        asm.mov(result, trueValue);
+        asm.jmp(end);
+        asm.bindInline(falseSucc);
+        asm.mov(result, falseValue);
+        asm.bindInline(end);
+
+        return asm.finishTemplate("materializeInstanceOf");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildTypeAssert() {
+        asm.restart();
+        XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirOperand hub = asm.createConstantInputParameter("hub", CiKind.Object);
+
+        XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
+        XirLabel slowPath = asm.createOutOfLineLabel("deopt");
+
+        asm.pload(CiKind.Object, objHub, object, asm.i(hubOffset()), false);
+        // if we get an exact match: continue
+        asm.jneq(slowPath, objHub, hub);
+
+        // -- out of line -------------------------------------------------------
+        asm.bindOutOfLine(slowPath);
+        asm.callRuntime(CiRuntimeCall.Deoptimize, null);
+        asm.shouldNotReachHere();
+
+        return asm.finishTemplate(object, "typeCheck");
+    }
+
+    @HOSTED_ONLY
+    private XirPair buildInstanceofForNonLeaf(boolean nonnull) {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
-            // resolved instanceof for interface
+            // resolved instanceof for an interface or non-leaf class type
             XirOperand result = asm.restart(CiKind.Boolean);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
+            XirParameter typeID = asm.createConstantInputParameter("typeID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
             XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
@@ -1462,11 +1590,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.jeq(pass, hub, checkedHub);
             asm.pload(CiKind.Int, mtableLength, hub, asm.i(offsetOfMTableLength()), false);
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(offsetOfMTableStartIndex()), false);
-            asm.mod(a, interfaceID, mtableLength);
+            asm.mod(a, typeID, mtableLength);
             asm.add(a, a, mtableStartIndex);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
-            asm.jneq(fail, a, interfaceID);
+            asm.jneq(fail, a, typeID);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));
             asm.bindInline(fail);
@@ -1619,6 +1747,36 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.callRuntime(rtMethod, result, args);
     }
 
+    @Override
+    public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method) {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genWriteBarrier(XirArgument object) {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsDifferent, boolean inputsSame) {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genCurrentThread(XirSite site) {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genGetClass(XirSite site, XirArgument xirArgument) {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray) {
+        return null;
+    }
+
     public static class RuntimeCalls {
         public static ClassActor resolveClassActor(ResolutionGuard guard) {
             return Snippets.resolveClass(guard);
@@ -1724,6 +1882,10 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(VMConfiguration.vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
             return ((HeapSchemeWithTLAB) VMConfiguration.vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+        }
+
+        public static Pointer flushLog(Pointer logTail) {
+            return TLABLog.flushAndGetStart(logTail);
         }
 
         public static int[] allocateIntArray(int length) {
@@ -1858,45 +2020,5 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Throwable loadException() {
             return VmThread.current().loadExceptionForHandler();
         }
-    }
-
-    @Override
-    public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genWriteBarrier(XirArgument object) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsDifferent, boolean inputsSame) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genCurrentThread(XirSite site) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genGetClass(XirSite site, XirArgument xirArgument) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray) {
-        return null;
-    }
-
-    @Override
-    public XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type) {
-        throw new InternalError("unimplemented");
-    }
-
-    @Override
-    public XirSnippet genMaterializeInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, XirArgument trueValue, XirArgument falseValue, RiType type) {
-        throw new InternalError("unimplemented");
     }
 }

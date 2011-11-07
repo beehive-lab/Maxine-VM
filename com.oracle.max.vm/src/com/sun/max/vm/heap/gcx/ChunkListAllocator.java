@@ -93,6 +93,9 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
                 }
             }
         } while (thisAddress.compareAndSwapWord(TOP_OFFSET, cell, newTop) != cell);
+        if (MaxineVM.isDebug() && debugTrace) {
+            Log.print("allocateTLAB() = "); Log.print(cell); Log.println(tlabSize);
+        }
         // Format as a chunk.
         HeapFreeChunk.format(cell, tlabSize);
         return cell;

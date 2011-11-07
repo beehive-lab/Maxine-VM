@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.util;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -34,9 +35,9 @@ import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(Invoke invoke, Graph<EntryPointNode> inlineGraph, Queue<Invoke> newInvokes) {
+    public static void inline(Invoke invoke, StructuredGraph inlineGraph) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
-        Graph<EntryPointNode> graph = invoke.node().graph();
+        StructuredGraph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
 
@@ -45,11 +46,11 @@ public class InliningUtil {
         ArrayList<Node> frameStates = new ArrayList<Node>();
         ReturnNode returnNode = null;
         UnwindNode unwindNode = null;
-        EntryPointNode entryPointNode = inlineGraph.start();
+        BeginNode entryPointNode = inlineGraph.start();
         FixedNode firstCFGNode = entryPointNode.next();
         for (Node node : inlineGraph.getNodes()) {
-            if (node instanceof EntryPointNode) {
-                assert entryPointNode == node;
+            if (node == entryPointNode || node == entryPointNode.stateAfter()) {
+                // Do nothing.
             } else if (node instanceof LocalNode) {
                 replacements.put(node, parameters[((LocalNode) node).index()]);
             } else {
@@ -71,10 +72,11 @@ public class InliningUtil {
 
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
-        if (invoke.callTarget().isStatic()) {
+        MethodCallTargetNode callTarget = invoke.callTarget();
+        if (callTarget.isStatic()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
-            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(parameters[0]))));
+            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
             guard.setNext(firstCFGNodeDuplicate);
             invokeReplacement = guard;
         }
@@ -89,15 +91,11 @@ public class InliningUtil {
                     fixed.setProbability(fixed.probability() * invokeProbability);
                 }
             }
-            if (node instanceof InvokeNode && ((InvokeNode) node).canInline()) {
-                if (newInvokes != null) {
-                    newInvokes.add((InvokeNode) node);
-                }
-            } else if (node instanceof FrameState) {
+            if (node instanceof FrameState) {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind, parameters);
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters);
                     }
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
@@ -132,11 +130,11 @@ public class InliningUtil {
         }
 
         if (invoke instanceof InvokeWithExceptionNode) {
+            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
             if (unwindNode != null) {
-                FixedNode  exceptionEdge = ((InvokeWithExceptionNode) invoke).exceptionEdge().next();
                 assert unwindNode.predecessor() != null;
-                assert exceptionEdge.successors().explicitCount() == 1;
-                ExceptionObjectNode obj = (ExceptionObjectNode) exceptionEdge;
+                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
+                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
 
                 UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
                 for (Node usage : obj.usages().snapshot()) {
@@ -146,6 +144,10 @@ public class InliningUtil {
                 Node n = obj.next();
                 obj.setNext(null);
                 unwindDuplicate.replaceAndDelete(n);
+            } else {
+                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
+                invokeWithException.setExceptionEdge(null);
+                GraphUtil.killCFG(nodeToDelete);
             }
         } else {
             if (unwindNode != null) {
@@ -169,7 +171,7 @@ public class InliningUtil {
         }
 
         if (stateAfter.usages().isEmpty()) {
-            GraphUtil.killNonCFG(stateAfter, null);
+            stateAfter.delete();
         }
 
     }
@@ -191,5 +193,12 @@ public class InliningUtil {
             parameters[0] = arguments.get(0);
         }
         return parameters;
+    }
+
+    public static void inline(RiRuntime runtime, Invoke invoke) {
+        RiResolvedMethod method = invoke.callTarget().targetMethod();
+        StructuredGraph graph = new StructuredGraph();
+        new GraphBuilderPhase(runtime, method).apply(graph);
+        inline(invoke, graph);
     }
 }

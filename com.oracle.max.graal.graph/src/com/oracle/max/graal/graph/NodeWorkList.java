@@ -36,11 +36,11 @@ public class NodeWorkList implements Iterable<Node> {
     private Node lastPull;
     private Node lastChain;
 
-    public NodeWorkList(Graph<?> graph) {
+    public NodeWorkList(Graph graph) {
         this(graph, false, -1);
     }
 
-    public NodeWorkList(Graph<?> graph, boolean fill, int iterationLimitPerNode) {
+    public NodeWorkList(Graph graph, boolean fill, int iterationLimitPerNode) {
         visited = graph.createNodeBitMap();
         inQueue = graph.createNodeBitMap();
         if (fill) {
@@ -97,6 +97,10 @@ public class NodeWorkList implements Iterable<Node> {
             inQueue.mark(node);
             worklist.add(node);
         }
+    }
+
+    public void clearVisited() {
+        visited.clearAll();
     }
 
     public void replaced(Node newNode, Node oldNode, EdgeType... edges) {

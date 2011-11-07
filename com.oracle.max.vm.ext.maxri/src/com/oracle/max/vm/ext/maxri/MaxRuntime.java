@@ -37,6 +37,9 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -78,6 +81,29 @@ public class MaxRuntime implements GraalRuntime {
 
     public void setIntrinsicRegistry(IntrinsicImpl.Registry registry) {
         intrinsicRegistry = registry;
+    }
+
+    @HOSTED_ONLY
+    private boolean initialized;
+
+    @HOSTED_ONLY
+    public void initialize() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        // search for the runtime call and register critical methods
+        for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            int flags = m.getModifiers();
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+                new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
+            }
+        }
+
+        // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
+        // must go through a stub that saves the register state before calling the deopt routine.
+        CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
+        uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
     }
 
     /**
@@ -416,18 +442,46 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public void lower(Node n, CiLoweringTool tool) {
-        // TODO(tw): Implement lowering phase for Maxine.
+        if (n instanceof UnsafeLoadNode) {
+            UnsafeLoadNode load = (UnsafeLoadNode) n;
+            StructuredGraph graph = load.graph();
+            assert load.kind() != CiKind.Illegal;
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
+            location.setIndexScalingEnabled(false);
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
+            FixedNode next = load.next();
+            load.setNext(null);
+            memoryRead.setNext(next);
+            load.replaceAndDelete(memoryRead);
+        } else if (n instanceof UnsafeStoreNode) {
+            UnsafeStoreNode store = (UnsafeStoreNode) n;
+            StructuredGraph graph = store.graph();
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
+            location.setIndexScalingEnabled(false);
+            WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
+            FixedNode next = store.next();
+            store.setNext(null);
+            // TODO: add Maxine-specific write barrier
+//            FieldWriteBarrier barrier = graph.add(new FieldWriteBarrier(store.object()));
+//            barrier.setNext(next);
+//            write.setNext(barrier);
+            write.setNext(next);
+            write.setStateAfter(store.stateAfter());
+            store.replaceAtPredecessors(write);
+            store.delete();
+        }
     }
 
-    public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
+    public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         MethodActor maxMethod = (MethodActor) method;
         if (maxMethod.intrinsic() != null) {
             IntrinsicImpl impl = intrinsicRegistry.get(method);
             if (impl != null) {
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                StructuredGraph graph = new StructuredGraph();
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0, graph.start()));
+                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind(), i));
                 }
                 ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
                 if (node instanceof FixedNode) {
@@ -442,7 +496,10 @@ public class MaxRuntime implements GraalRuntime {
                 }
                 return graph;
             } else {
-                throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
+                // TODO(ls) ignore these intrinsics for now...
+                if (!IntrinsicIDs.MEMBAR.equals(method.intrinsic())) {
+                    throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
+                }
             }
         }
         return null;

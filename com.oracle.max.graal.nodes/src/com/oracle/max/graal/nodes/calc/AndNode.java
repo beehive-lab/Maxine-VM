@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "&")
-public final class AndNode extends LogicNode implements Canonicalizable {
+public final class AndNode extends LogicNode implements Canonicalizable, LIRLowerable {
 
     public AndNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind, kind == CiKind.Int ? Bytecodes.IAND : Bytecodes.LAND, x, y);
+        super(kind, x, y);
     }
 
     @Override
@@ -71,5 +70,10 @@ public final class AndNode extends LogicNode implements Canonicalizable {
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitAnd(gen.operand(x()), gen.operand(y())));
     }
 }

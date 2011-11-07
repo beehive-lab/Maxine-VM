@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "+")
-public final class IntegerAddNode extends IntegerArithmeticNode implements Canonicalizable {
+public final class IntegerAddNode extends IntegerArithmeticNode implements Canonicalizable, LIRLowerable {
 
     public IntegerAddNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind, kind == CiKind.Int ? Bytecodes.IADD : Bytecodes.LADD, x, y);
+        super(kind, x, y);
     }
 
     @Override
@@ -65,8 +64,8 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
     }
 
     public static boolean isIntegerAddition(ValueNode result, ValueNode a, ValueNode b) {
-        CiKind kind = result.kind;
-        if (kind != a.kind || kind != b.kind || !(kind.isInt() || kind.isLong())) {
+        CiKind kind = result.kind();
+        if (kind != a.kind() || kind != b.kind() || !(kind.isInt() || kind.isLong())) {
             return false;
         }
         if (result.isConstant() && a.isConstant() && b.isConstant()) {
@@ -80,5 +79,10 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
             return (add.x() == a && add.y() == b) || (add.y() == a && add.x() == b);
         }
         return false;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitAdd(gen.operand(x()), gen.operand(y())));
     }
 }

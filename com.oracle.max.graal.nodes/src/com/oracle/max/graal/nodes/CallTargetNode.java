@@ -29,7 +29,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public abstract class CallTargetNode extends FloatingNode implements ValueNumberable{
+public abstract class CallTargetNode extends FloatingNode implements ValueNumberable, LIRLowerable {
     @Input protected final NodeInputList<ValueNode> arguments;
 
     public CallTargetNode(ValueNode[] arguments) {
@@ -46,7 +46,7 @@ public abstract class CallTargetNode extends FloatingNode implements ValueNumber
     public abstract CiKind returnKind();
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         //nop
     }
 }

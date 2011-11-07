@@ -30,12 +30,8 @@ import com.oracle.max.graal.nodes.extended.*;
 
 public class ReadEliminationPhase extends Phase {
 
-    public ReadEliminationPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (ReadNode n : graph.getNodes(ReadNode.class)) {
             if (n.dependencies().size() > 0) {
                 Node memoryInput = n.dependencies().get(0);

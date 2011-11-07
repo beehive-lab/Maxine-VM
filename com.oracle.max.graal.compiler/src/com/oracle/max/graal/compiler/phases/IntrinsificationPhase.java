@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -33,13 +32,12 @@ public class IntrinsificationPhase extends Phase {
 
     private final GraalRuntime runtime;
 
-    public IntrinsificationPhase(GraalContext context, GraalRuntime runtime) {
-        super(context);
+    public IntrinsificationPhase(GraalRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }
@@ -48,13 +46,13 @@ public class IntrinsificationPhase extends Phase {
     @SuppressWarnings("unchecked")
     private void tryIntrinsify(InvokeNode invoke) {
         RiResolvedMethod target = invoke.callTarget().targetMethod();
-        Graph<EntryPointNode> intrinsicGraph = (Graph<EntryPointNode>) target.compilerStorage().get(Graph.class);
+        StructuredGraph intrinsicGraph = (StructuredGraph) target.compilerStorage().get(Graph.class);
         if (intrinsicGraph == null) {
             // TODO (ph) remove once all intrinsics are available via RiMethod
             intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method(), invoke.bci(), target, invoke.callTarget().arguments());
         }
         if (intrinsicGraph != null) {
-            InliningUtil.inline(invoke, intrinsicGraph, null);
+            InliningUtil.inline(invoke, intrinsicGraph);
         }
     }
 }

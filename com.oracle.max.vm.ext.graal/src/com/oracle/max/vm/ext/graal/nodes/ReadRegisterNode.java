@@ -39,13 +39,7 @@ public final class ReadRegisterNode extends StateSplit implements LIRLowerable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        // nothing to do
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool generator) {
-        CiVariable result = generator.createResultVariable(this);
-        generator.emitMove(register.asValue(kind), result);
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitMove(register.asValue(kind())));
     }
 }

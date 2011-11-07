@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
 public class ValueUtil {
 
     public static ValueNode assertKind(CiKind kind, ValueNode x) {
-        assert x != null && ((x.kind == kind) || (x.kind == CiKind.Jsr && kind == CiKind.Object)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+        assert x != null && ((x.kind() == kind) || (x.kind() == CiKind.Jsr && kind == CiKind.Object)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
@@ -45,32 +45,32 @@ public class ValueUtil {
     }
 
     public static ValueNode assertLong(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Long);
+        assert x != null && (x.kind() == CiKind.Long);
         return x;
     }
 
     public static ValueNode assertJsr(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Jsr);
+        assert x != null && (x.kind() == CiKind.Jsr);
         return x;
     }
 
     public static ValueNode assertInt(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Int);
+        assert x != null && (x.kind() == CiKind.Int);
         return x;
     }
 
     public static ValueNode assertFloat(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Float);
+        assert x != null && (x.kind() == CiKind.Float);
         return x;
     }
 
     public static ValueNode assertObject(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Object);
+        assert x != null && (x.kind() == CiKind.Object);
         return x;
     }
 
     public static ValueNode assertDouble(ValueNode x) {
-        assert x != null && (x.kind == CiKind.Double);
+        assert x != null && (x.kind() == CiKind.Double);
         return x;
     }
 
@@ -79,7 +79,7 @@ public class ValueUtil {
     }
 
     public static boolean typeMismatch(ValueNode x, ValueNode y) {
-        return y == null || x.kind != y.kind;
+        return y == null || x.kind() != y.kind;
     }
 
 

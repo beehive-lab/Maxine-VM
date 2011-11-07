@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
@@ -29,7 +30,7 @@ import com.sun.cri.ci.CiValue.Formatter;
 /**
  * The {@code LIRInstruction} class definition.
  */
-public class LIRInstruction {
+public abstract class LIRInstruction {
 
     public static final CiValue[] NO_OPERANDS = {};
 
@@ -41,18 +42,17 @@ public class LIRInstruction {
      */
     public enum OperandMode {
         /**
-         * An operand that is defined by a LIR instruction and is live after the code emitted for a LIR instruction.
+         * An operand that is defined by this LIR instruction and is live after the code emitted for a LIR instruction.
          */
         Output,
 
         /**
-         * An operand that is used by a LIR instruction and is live before the code emitted for a LIR instruction.
-         * Unless such an operand is also an output or temp operand, it must not be modified by a LIR instruction.
+         * An operand that is used by this LIR instruction and is live before the code emitted for this LIR instruction.
          */
         Input,
 
         /**
-         * An operand that is both modified and used by a LIR instruction.
+         * An operand that is used internally by this LIR instruction, i.e., it must get different register than any output operand.
          */
         Temp
     }
@@ -63,12 +63,18 @@ public class LIRInstruction {
     public final LIROpcode code;
 
     /**
-     * The result operand for this instruction.
+     * The result operand for this instruction (modified by the register allocator).
      */
     protected CiValue result;
 
+    /**
+     * The input operands for this instruction (modified by the register allocator).
+     */
     protected final CiValue[] inputs;
 
+    /**
+     * The temp operands for this instruction (modified by the register allocator).
+     */
     protected final CiValue[] temps;
 
     /**
@@ -77,54 +83,38 @@ public class LIRInstruction {
     public final LIRDebugInfo info;
 
     /**
-     * Value id for register allocation.
+     * Instruction id for register allocation.
      */
     private int id;
 
     /**
-     * Determines if all caller-saved registers are destroyed by this instruction.
+     * Constructs a new LIR instruction that has input operands, but no temp operands.
      */
-    public final boolean hasCall;
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs) {
+        this (opcode, result, info, inputs, NO_OPERANDS);
+    }
 
     /**
-     * Constructs a new LIR instruction that has no input or temp operands.
+     * Constructs a new LIR instruction that has input and temp operands.
      *
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
      * @param info the {@link LIRDebugInfo} info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
+     * @param inputs the input operands for the instruction.
+     * @param temps the temp operands for the instruction.
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info) {
-        this(opcode, result, info, false, NO_OPERANDS, NO_OPERANDS);
-    }
-
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue... operands) {
-        this (opcode, result, info, false, operands, NO_OPERANDS);
-    }
-
-    /**
-     * Constructs a new LIR instruction.
-     *
-     * @param opcode the opcode of the new instruction
-     * @param result the operand that holds the operation result of this instruction. This will be
-     *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
-     * @param info the {@link LIRDebugInfo} that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
-     * @param inputs the input operands for the instruction
-     * @param temps the temp operands for the instruction
-     */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, CiValue[] inputs, CiValue[] temps) {
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs, CiValue[] temps) {
         this.code = opcode;
-        this.info = info;
-        this.hasCall = hasCall;
-
         this.result = result;
         this.inputs = inputs;
         this.temps = temps;
-
+        this.info = info;
         this.id = -1;
     }
+
+    public abstract void emitCode(TargetMethodAssembler tasm);
+
 
     public final int id() {
         return id;
@@ -165,12 +155,84 @@ public class LIRInstruction {
 
     /**
      * Gets the instruction name.
-     *
-     * @return the name of the enum constant that represents the instruction opcode, exactly as declared in the enum
-     *         LIROpcode declaration.
      */
     public String name() {
-        return code.getClass().getSimpleName();
+        return code.toString();
+    }
+
+    public boolean hasOperands() {
+        return inputs.length > 0 || temps.length > 0 || info != null || hasCall();
+    }
+
+    public final int operandCount(OperandMode mode) {
+        switch (mode) {
+            case Output: return result.isLegal() ? 1 : 0;
+            case Input:  return inputs.length;
+            case Temp:   return temps.length;
+            default:     throw Util.shouldNotReachHere();
+        }
+    }
+
+    public final CiValue operandAt(OperandMode mode, int index) {
+        assert index < operandCount(mode);
+        switch (mode) {
+            case Output: return result;
+            case Input:  return inputs[index];
+            case Temp:   return temps[index];
+            default:     throw Util.shouldNotReachHere();
+        }
+    }
+
+    public final void setOperandAt(OperandMode mode, int index, CiValue location) {
+        assert index < operandCount(mode);
+        assert location.kind != CiKind.Illegal;
+        assert operandAt(mode, index).isVariable();
+        switch (mode) {
+            case Output: result = location; break;
+            case Input:  inputs[index] = location; break;
+            case Temp:   temps[index] = location; break;
+            default:     throw Util.shouldNotReachHere();
+        }
+    }
+
+    /**
+     * Returns true when this instruction is a call instruction that destroys all caller-saved registers.
+     */
+    public boolean hasCall() {
+        return false;
+    }
+
+    /**
+     * Used by the register allocator.  The result operand of this instruction should get
+     * the same register assigned as the input operand with returned number.
+     * @return The number of the input operand that is used as a register hint for the output operand,
+     *         or -1 if no register hint should be defined.
+     */
+    public int registerHint() {
+        return -1;
+    }
+
+    /**
+     * Used by the register allocator to decide whether an input operand can be assigned a stack slot.
+     * Subclasses should override this method when an input can be memory.
+     * @param index The index of the operand in {@link #inputs}.
+     * @return true if the input operand with the given index can be assigned a stack slot.
+     */
+    public boolean inputCanBeMemory(int index) {
+        return false;
+    }
+
+
+    @Override
+    public String toString() {
+        return toString(Formatter.DEFAULT);
+    }
+
+    public final String toStringWithIdPrefix() {
+        if (id != -1) {
+            return String.format("%4d %s", id, toString());
+        }
+        return "     " + toString();
     }
 
     /**
@@ -205,60 +267,6 @@ public class LIRInstruction {
             buf.append("}");
         }
         return buf.toString();
-    }
-
-    public boolean hasOperands() {
-        if (info != null || hasCall) {
-            return true;
-        }
-        return inputs.length > 0 || temps.length > 0;
-    }
-
-    public final int operandCount(OperandMode mode) {
-        switch (mode) {
-            case Output: return result.isLegal() ? 1 : 0;
-            case Input:  return inputs.length;
-            case Temp:   return temps.length;
-            default:     throw Util.shouldNotReachHere();
-        }
-    }
-
-    public final CiValue operandAt(OperandMode mode, int index) {
-        assert index < operandCount(mode);
-        switch (mode) {
-            case Output: return result;
-            case Input:  return inputs[index];
-            case Temp:   return temps[index];
-            default:     throw Util.shouldNotReachHere();
-        }
-    }
-
-    public final void setOperandAt(OperandMode mode, int index, CiValue location) {
-        assert index < operandCount(mode);
-        assert location.kind != CiKind.Illegal;
-        assert operandAt(mode, index).isVariable();
-        switch (mode) {
-            case Output: result = location; break;
-            case Input:  inputs[index] = location; break;
-            case Temp:   temps[index] = location; break;
-            default:     throw Util.shouldNotReachHere();
-        }
-    }
-
-    public final LIRBlock exceptionEdge() {
-        return (info == null) ? null : info.exceptionEdge();
-    }
-
-    @Override
-    public String toString() {
-        return toString(Formatter.DEFAULT);
-    }
-
-    public final String toStringWithIdPrefix() {
-        if (id != -1) {
-            return String.format("%4d %s", id, toString());
-        }
-        return "     " + toString();
     }
 
     protected static String refMapToString(CiDebugInfo debugInfo, Formatter operandFmt) {

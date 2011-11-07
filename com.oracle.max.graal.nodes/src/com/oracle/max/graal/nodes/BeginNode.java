@@ -22,10 +22,13 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public class BeginNode extends StateSplit {
+public class BeginNode extends StateSplit implements LIRLowerable, Canonicalizable {
     public BeginNode() {
         super(CiKind.Illegal);
     }
@@ -40,7 +43,40 @@ public class BeginNode extends StateSplit {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("shortName", "B");
+        return debugProperties;
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        FixedNode prev = (FixedNode) this.predecessor();
+        if (prev == null) {
+            // This is the start node.
+            return this;
+        } else if (prev instanceof ControlSplitNode) {
+            // This begin node is necessary.
+            return this;
+        } else {
+            // This begin node can be removed and all guards moved up to the preceding begin node.
+            Node prevBegin = prev;
+            while (!(prevBegin instanceof BeginNode)) {
+                prevBegin = prevBegin.predecessor();
+            }
+            this.replaceAtUsages(prevBegin);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean verify() {
+        assertTrue(predecessor() != null || this == graph().start() || this instanceof MergeNode, "begin nodes must be connected");
+        return super.verify();
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
         // nop
     }
 }

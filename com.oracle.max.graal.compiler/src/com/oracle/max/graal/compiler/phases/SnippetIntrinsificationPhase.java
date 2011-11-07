@@ -39,13 +39,12 @@ public class SnippetIntrinsificationPhase extends Phase {
 
     private final RiRuntime runtime;
 
-    public SnippetIntrinsificationPhase(GraalContext context, RiRuntime runtime) {
-        super(context);
+    public SnippetIntrinsificationPhase(RiRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }
@@ -83,6 +82,10 @@ public class SnippetIntrinsificationPhase extends Phase {
                                         assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
                                         ConstantNode constantNode = (ConstantNode) n;
                                         currentValue = constantNode.asConstant().asObject();
+                                        if (currentValue instanceof Class<?>) {
+                                            currentValue = runtime.getType((Class< ? >) currentValue);
+                                            parameterTypes[z] = RiResolvedType.class;
+                                        }
                                         break;
                                     }
                                 }
@@ -101,8 +104,9 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 if (node.usages().size() == 2) {
                                                     if (node instanceof InvokeNode) {
                                                         InvokeNode invokeNode = (InvokeNode) node;
-                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.callTarget().targetMethod())) {
-                                                            currentValue = invokeNode.callTarget().arguments().get(0);
+                                                        MethodCallTargetNode callTarget = invokeNode.callTarget();
+                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
+                                                            currentValue = callTarget.arguments().get(0);
                                                             invokeNode.replaceAndDelete(invokeNode.next());
                                                         }
                                                     }
@@ -143,7 +147,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 invoke.node().replaceAndDelete(newInstance);
 
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
-                                if (newInstance.kind != CiKind.Object) {
+                                if (newInstance.kind() != CiKind.Object) {
                                     for (Node usage : newInstance.usages().snapshot()) {
                                         if (usage instanceof CheckCastNode) {
                                             CheckCastNode checkCastNode = (CheckCastNode) usage;
@@ -152,13 +156,13 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                     ValueAnchorNode valueAnchorNode = (ValueAnchorNode) checkCastUsage;
                                                     valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
-                                                    MethodCallTargetNode callTarget = (MethodCallTargetNode) checkCastUsage;
-                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, callTarget.targetMethod());
-                                                    for (Invoke invokeNode : callTarget.invokes()) {
+                                                    MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
+                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
+                                                    for (Invoke invokeNode : checkCastCallTarget.invokes()) {
                                                         invokeNode.node().replaceAtUsages(newInstance);
                                                         invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     }
-                                                    callTarget.delete();
+                                                    checkCastCallTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
                                                     checkCastUsage.replaceFirstInput(checkCastNode, null);
                                                 } else {

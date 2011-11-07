@@ -58,13 +58,14 @@ public class InliningPhase extends Phase {
     private final PriorityQueue<InlineInfo> inlineCandidates = new PriorityQueue<InlineInfo>();
     private NodeMap<InlineInfo> inlineInfos;
 
-    private Graph<EntryPointNode> graph;
+    private StructuredGraph graph;
+    private CiAssumptions assumptions;
 
-    public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints) {
-        super(context);
+    public InliningPhase(GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints, CiAssumptions assumptions) {
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
+        this.assumptions = assumptions;
     }
 
     private abstract static class InlineInfo implements Comparable<InlineInfo> {
@@ -83,7 +84,26 @@ public class InliningPhase extends Phase {
             return (weight < o.weight) ? -1 : (weight > o.weight) ? 1 : 0;
         }
 
-        public abstract void inline(Graph<EntryPointNode> graph);
+        public abstract void inline(StructuredGraph graph);
+    }
+
+    private class IntrinsicInlineInfo extends InlineInfo {
+        public final StructuredGraph intrinsicGraph;
+
+        public IntrinsicInlineInfo(InvokeNode invoke, StructuredGraph intrinsicGraph) {
+            super(invoke, 0, 0);
+            this.intrinsicGraph = graph;
+        }
+
+        @Override
+        public void inline(StructuredGraph compilerGraph) {
+            InliningUtil.inline(invoke, intrinsicGraph);
+        }
+
+        @Override
+        public String toString() {
+            return "intrinsic inlining " + CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
+        }
     }
 
     private class StaticInlineInfo extends InlineInfo {
@@ -95,8 +115,8 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(Graph<EntryPointNode> compilerGraph) {
-            Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(concrete);
+        public void inline(StructuredGraph compilerGraph) {
+            StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(concrete);
             if (graph != null) {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("Reusing graph for %s", methodName(concrete, invoke));
@@ -105,20 +125,20 @@ public class InliningPhase extends Phase {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
-                graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
-                new GraphBuilderPhase(context, runtime, concrete, null).apply(graph, true, false);
+                graph = new StructuredGraph();
+                new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
                 if (GraalOptions.ProbabilityAnalysis) {
-                    new DeadCodeEliminationPhase(context).apply(graph, true, false);
-                    new ComputeProbabilityPhase(context).apply(graph, true, false);
+                    new DeadCodeEliminationPhase().apply(graph, context, true, false);
+                    new ComputeProbabilityPhase().apply(graph, context, true, false);
                 }
-                new CanonicalizerPhase(context, target).apply(graph, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
 
                 if (GraalOptions.ParseBeforeInlining && !parsedMethods.containsKey(concrete)) {
                     parsedMethods.put(concrete, graphComplexity(graph));
                 }
             }
 
-            InliningUtil.inline(invoke, graph, null);
+            InliningUtil.inline(invoke, graph);
         }
 
         @Override
@@ -139,7 +159,7 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(Graph<EntryPointNode> graph) {
+        public void inline(StructuredGraph graph) {
             IsTypeNode isType = graph.unique(new IsTypeNode(invoke.callTarget().receiver(), type));
             FixedGuardNode guard = graph.add(new FixedGuardNode(isType));
             assert invoke.predecessor() != null;
@@ -165,13 +185,13 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(Graph<EntryPointNode> graph) {
+        public void inline(StructuredGraph graph) {
             if (GraalOptions.TraceInlining) {
                 String targetName = CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
                 TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
             }
-            graph.start().assumptions().recordConcreteMethod(invoke.callTarget().targetMethod(), concrete);
+            assumptions.recordConcreteMethod(invoke.callTarget().targetMethod(), concrete);
             super.inline(graph);
         }
 
@@ -182,7 +202,7 @@ public class InliningPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         this.graph = graph;
         inlineInfos = graph.createNodeMap();
 
@@ -207,23 +227,33 @@ public class InliningPhase extends Phase {
             }
             Iterable<Node> newNodes = null;
             if (info.invoke.isAlive()) {
-                info.inline(this.graph);
-                if (GraalOptions.TraceInlining) {
-                    TTY.println("inlining %f: %s", info.weight, info);
-                }
-                if (GraalOptions.TraceInlining) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
-                    //printGraph("After " + info, this.graph);
-                }
-                // get the new nodes here, the canonicalizer phase will reset the mark
-                newNodes = graph.getNewNodes();
-                new CanonicalizerPhase(context, target, true).apply(graph);
-                new PhiSimplificationPhase(context).apply(graph);
-                if (GraalOptions.Intrinsify) {
-                    new IntrinsificationPhase(context, runtime).apply(graph);
-                }
-                if (GraalOptions.Meter) {
-                    context.metrics.InlinePerformed++;
+                try {
+                    info.inline(this.graph);
+                    if (GraalOptions.TraceInlining) {
+                        TTY.println("inlining %f: %s", info.weight, info);
+                    }
+                    if (GraalOptions.TraceInlining) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
+                    }
+                    // get the new nodes here, the canonicalizer phase will reset the mark
+                    newNodes = graph.getNewNodes();
+                new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    new PhiSimplificationPhase().apply(graph, context);
+                    if (GraalOptions.Intrinsify) {
+                        new IntrinsificationPhase(runtime).apply(graph, context);
+                    }
+                    if (GraalOptions.Meter) {
+                        context.metrics.InlinePerformed++;
+                    }
+                } catch (CiBailout bailout) {
+                    // TODO determine if we should really bail out of the whole compilation.
+                    throw bailout;
+                } catch (AssertionError e) {
+                    throw new VerificationError(e).addContext(info.toString());
+                } catch (RuntimeException e) {
+                    throw new VerificationError(e).addContext(info.toString());
+                } catch (VerificationError e) {
+                    throw e.addContext(info.toString());
                 }
             }
             if (newNodes != null && info.level <= GraalOptions.MaximumInlineLevel) {
@@ -267,6 +297,12 @@ public class InliningPhase extends Phase {
         }
         RiResolvedMethod parent = invoke.stateAfter().method();
         MethodCallTargetNode callTarget = invoke.callTarget();
+        Graph intrinsicGraph = runtime.intrinsicGraph(parent, invoke.bci(), callTarget.targetMethod(), callTarget.arguments());
+        if (intrinsicGraph != null) {
+            System.out.println("!!! intrinsic inlining " + invoke.callTarget().targetMethod());
+            return new IntrinsicInlineInfo(invoke, graph);
+        }
+
         if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
             if (checkTargetConditions(callTarget.targetMethod())) {
                 double weight = inliningWeight(parent, callTarget.targetMethod(), invoke);
@@ -296,7 +332,7 @@ public class InliningPhase extends Phase {
         }
 
         RiResolvedMethod concrete = holder.uniqueConcreteMethod(callTarget.targetMethod());
-        if (concrete != null) {
+        if (concrete != null && assumptions != null) {
             if (checkTargetConditions(concrete)) {
                 double weight = inliningWeight(parent, concrete, invoke);
                 return new AssumptionInlineInfo(invoke, weight, level, concrete);
@@ -442,9 +478,9 @@ public class InliningPhase extends Phase {
         int count;
         if (GraalOptions.ParseBeforeInlining) {
             if (!parsedMethods.containsKey(method)) {
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
-                new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                new CanonicalizerPhase(context, target).apply(graph, true, false);
+                StructuredGraph graph = new StructuredGraph();
+                new GraphBuilderPhase(runtime, method, null).apply(graph, context, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
                 count = graphComplexity(graph);
                 parsedMethods.put(method, count);
             } else {
@@ -457,10 +493,10 @@ public class InliningPhase extends Phase {
         return count / normalSize;
     }
 
-    public static int graphComplexity(Graph<EntryPointNode> graph) {
+    public static int graphComplexity(StructuredGraph graph) {
         int result = 0;
         for (Node node : graph.getNodes()) {
-            if (node instanceof ConstantNode || node instanceof LocalNode || node instanceof EntryPointNode || node instanceof ReturnNode || node instanceof UnwindNode) {
+            if (node instanceof ConstantNode || node instanceof LocalNode || node instanceof BeginNode || node instanceof ReturnNode || node instanceof UnwindNode) {
                 result += 0;
             } else if (node instanceof PhiNode) {
                 result += 5;
@@ -474,7 +510,7 @@ public class InliningPhase extends Phase {
         }
 //        ReturnNode ret = graph.getReturn();
 //        if (ret != null && ret.result() != null) {
-//            if (ret.result().kind == CiKind.Object && ret.result().exactType() != null) {
+//            if (ret.result().kind() == CiKind.Object && ret.result().exactType() != null) {
 //                result -= 5;
 //            }
 //        }

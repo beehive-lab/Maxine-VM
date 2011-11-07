@@ -30,7 +30,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
+public class LoopBeginNode extends MergeNode implements Node.IterableNodeType, LIRLowerable {
 
     private double loopFrequency;
 
@@ -59,8 +59,8 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoopBegin(this);
+    public void generate(LIRGeneratorTool gen) {
+        // Nothing to emit, since this is node is used for structural purposes only.
     }
 
     @Override
@@ -118,7 +118,7 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
 
     public LoopCounterNode loopCounter(CiKind kind) {
         for (Node usage : usages()) {
-            if (usage instanceof LoopCounterNode && ((LoopCounterNode) usage).kind == kind) {
+            if (usage instanceof LoopCounterNode && ((LoopCounterNode) usage).kind() == kind) {
                 return (LoopCounterNode) usage;
             }
         }

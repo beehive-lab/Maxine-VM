@@ -30,7 +30,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public final class IsTypeNode extends BooleanNode implements Canonicalizable {
+public final class IsTypeNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode object;
 
@@ -48,7 +48,7 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
      */
     public IsTypeNode(ValueNode object, RiResolvedType type) {
         super(CiKind.Object);
-        assert object == null || object.kind == CiKind.Object;
+        assert object == null || object.kind() == CiKind.Object;
         this.type = type;
         this.object = object;
     }
@@ -58,7 +58,7 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // nothing to do
     }
 
@@ -87,5 +87,10 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
         }
         // constants return the correct exactType, so they are handled by the code above
         return this;
+    }
+
+    @Override
+    public BooleanNode negate() {
+        throw new Error("unimplemented");
     }
 }

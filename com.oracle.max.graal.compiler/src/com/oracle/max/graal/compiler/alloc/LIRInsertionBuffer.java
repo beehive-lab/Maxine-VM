@@ -67,7 +67,7 @@ public final class LIRInsertionBuffer {
     }
 
     public void move(int index, CiValue src, CiValue dst) {
-        append(index, StandardOp.MOVE.create(dst, src));
+        append(index, StandardOpcode.MOVE.create(dst, src));
     }
 
     public void finish() {

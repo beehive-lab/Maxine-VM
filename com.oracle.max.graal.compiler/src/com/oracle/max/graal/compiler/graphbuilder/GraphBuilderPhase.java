@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
@@ -54,7 +55,7 @@ import com.sun.cri.ri.RiType.Representation;
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  */
-public final class GraphBuilderPhase extends Phase {
+public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     /**
      * The minimum value to which {@link GraalOptions#TraceBytecodeParserLevel} must be set to trace
@@ -68,7 +69,7 @@ public final class GraphBuilderPhase extends Phase {
      */
     public static final int TRACELEVEL_STATE = 2;
 
-    private Graph<EntryPointNode> graph;
+    private StructuredGraph graph;
 
     private final CiStatistics stats;
     private final RiRuntime runtime;
@@ -90,8 +91,6 @@ public final class GraphBuilderPhase extends Phase {
     private ExceptionBlock unwindBlock;
     private Block returnBlock;
 
-    private boolean storeResultGraph;
-
     private final boolean useBranchPrediction;
     private final boolean eagerResolving;
 
@@ -109,20 +108,23 @@ public final class GraphBuilderPhase extends Phase {
 
     private BitSet canTrap;
 
-    public static final Map<RiMethod, Graph<EntryPointNode>> cachedGraphs = new WeakHashMap<RiMethod, Graph<EntryPointNode>>();
+    public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
+    private ExtendedBytecodeHandler extendedBytecodeHandler;
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
-        this(context, runtime, method, null);
+    public void setExtendedBytecodeHandler(ExtendedBytecodeHandler extendedBytecodeHandler) {
+        this.extendedBytecodeHandler = extendedBytecodeHandler;
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
-        this(context, runtime, method, stats, GraalOptions.UseBranchPrediction, false);
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
+        this(runtime, method, null);
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
-        super(context);
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
+        this(runtime, method, stats, GraalOptions.UseBranchPrediction, false);
+    }
 
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
         this.useBranchPrediction = useBranchPrediction;
         this.eagerResolving = eagerResolving;
         this.runtime = runtime;
@@ -132,11 +134,10 @@ public final class GraphBuilderPhase extends Phase {
         this.stream = new BytecodeStream(method.code());
 
         this.constantPool = runtime.getConstantPool(method);
-        this.storeResultGraph = GraalOptions.CacheGraphs;
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         assert graph != null;
         this.graph = graph;
         this.frameState = new FrameStateBuilder(method, method.maxLocals(), method.maxStackSize(), graph);
@@ -215,9 +216,9 @@ public final class GraphBuilderPhase extends Phase {
             }
         }
 
-        if (storeResultGraph) {
+        if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             // Create duplicate graph.
-            Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
+            StructuredGraph duplicate = new StructuredGraph();
             Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
             replacements.put(graph.start(), duplicate.start());
             duplicate.addDuplicate(graph.getNodes(), replacements);
@@ -426,11 +427,10 @@ public final class GraphBuilderPhase extends Phase {
             // this is a load of class constant which might be unresolved
             RiType riType = (RiType) con;
             if (riType instanceof RiResolvedType) {
-                frameState.push(CiKind.Object, append(graph.unique(new ConstantNode(((RiResolvedType) riType).getEncoding(Representation.JavaClass)))));
+                frameState.push(CiKind.Object, append(ConstantNode.forCiConstant(((RiResolvedType) riType).getEncoding(Representation.JavaClass), runtime, graph)));
             } else {
-                storeResultGraph = false;
                 append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-                frameState.push(CiKind.Object, append(ConstantNode.forObject(null, graph)));
+                frameState.push(CiKind.Object, append(ConstantNode.forObject(null, runtime, graph)));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -616,18 +616,15 @@ public final class GraphBuilderPhase extends Phase {
         frameState.push(kind, append(graph.unique(v)));
     }
 
-    private void genCompareOp(CiKind kind, int opcode, CiKind resultKind) {
+    private void genCompareOp(CiKind kind, boolean isUnorderedLess) {
         ValueNode y = frameState.pop(kind);
         ValueNode x = frameState.pop(kind);
-        ValueNode value = append(graph.unique(new NormalizeCompareNode(opcode, resultKind, x, y)));
-        if (!resultKind.isVoid()) {
-            frameState.ipush(value);
-        }
+        frameState.ipush(append(graph.unique(new NormalizeCompareNode(x, y, isUnorderedLess))));
     }
 
-    private void genConvert(ConvertNode.Op opcode, CiKind from, CiKind to) {
-        CiKind tt = to.stackKind();
-        frameState.push(tt, append(graph.unique(new ConvertNode(tt, opcode, frameState.pop(from.stackKind())))));
+    private void genConvert(ConvertNode.Op opcode) {
+        ValueNode input = frameState.pop(opcode.from.stackKind());
+        frameState.push(opcode.to.stackKind(), append(graph.unique(new ConvertNode(opcode, input))));
     }
 
     private void genIncrement() {
@@ -682,7 +679,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genThrow(int bci) {
         ValueNode exception = frameState.apop();
-        FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(exception))));
+        FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(exception, false))));
         append(node);
 
         FixedNode entry = handleException(exception, bci);
@@ -734,7 +731,7 @@ public final class GraphBuilderPhase extends Phase {
             frameState.apush(checkCast);
         } else {
             ValueNode object = frameState.apop();
-            append(graph.add(new FixedGuardNode(graph.unique(new CompareNode(object, Condition.EQ, graph.unique(new ConstantNode(CiConstant.NULL_OBJECT)))))));
+            append(graph.add(new FixedGuardNode(graph.unique(new CompareNode(object, Condition.EQ, ConstantNode.forObject(null, runtime, graph))))));
             frameState.apush(appendConstant(CiConstant.NULL_OBJECT));
         }
     }
@@ -745,7 +742,7 @@ public final class GraphBuilderPhase extends Phase {
         ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, type, type instanceof RiResolvedType);
         ValueNode object = frameState.apop();
         if (typeInstruction != null) {
-            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) type, object)), graph)));
+            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) type, object, false)), graph)));
         } else {
             frameState.ipush(appendConstant(CiConstant.INT_0));
         }
@@ -757,7 +754,6 @@ public final class GraphBuilderPhase extends Phase {
             NewInstanceNode n = graph.add(new NewInstanceNode((RiResolvedType) type));
             frameState.apush(append(n));
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
             frameState.apush(appendConstant(CiConstant.NULL_OBJECT));
         }
@@ -799,7 +795,6 @@ public final class GraphBuilderPhase extends Phase {
             NewArrayNode n = graph.add(new NewObjectArrayNode((RiResolvedType) type, length));
             frameState.apush(append(n));
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
             frameState.apush(appendConstant(CiConstant.NULL_OBJECT));
         }
@@ -817,7 +812,6 @@ public final class GraphBuilderPhase extends Phase {
             NewArrayNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims, cpi, constantPool));
             frameState.apush(append(n));
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
             frameState.apush(appendConstant(CiConstant.NULL_OBJECT));
         }
@@ -832,7 +826,6 @@ public final class GraphBuilderPhase extends Phase {
             LoadFieldNode load = graph.add(new LoadFieldNode(receiver, (RiResolvedField) field));
             appendOptimizedLoadField(kind, load);
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
             frameState.push(kind.stackKind(), append(ConstantNode.defaultForKind(kind, graph)));
         }
@@ -852,13 +845,13 @@ public final class GraphBuilderPhase extends Phase {
     private ExceptionInfo emitNullCheck(ValueNode receiver) {
         PlaceholderNode trueSucc = graph.add(new PlaceholderNode());
         PlaceholderNode falseSucc = graph.add(new PlaceholderNode());
-        IfNode ifNode = graph.add(new IfNode(graph.unique(new IsNonNullNode(receiver)), trueSucc, falseSucc, 1));
+        IfNode ifNode = graph.add(new IfNode(graph.unique(new NullCheckNode(receiver, false)), trueSucc, falseSucc, 1));
 
         append(ifNode);
         lastInstr = trueSucc;
 
         if (GraalOptions.OmitHotExceptionStacktrace) {
-            ValueNode exception = ConstantNode.forObject(new NullPointerException(), graph);
+            ValueNode exception = ConstantNode.forObject(new NullPointerException(), runtime, graph);
             return new ExceptionInfo(falseSucc, exception);
         } else {
             RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.CreateNullPointerException));
@@ -877,7 +870,7 @@ public final class GraphBuilderPhase extends Phase {
         lastInstr = trueSucc;
 
         if (GraalOptions.OmitHotExceptionStacktrace) {
-            ValueNode exception = ConstantNode.forObject(new ArrayIndexOutOfBoundsException(), graph);
+            ValueNode exception = ConstantNode.forObject(new ArrayIndexOutOfBoundsException(), runtime, graph);
             return new ExceptionInfo(falseSucc, exception);
         } else {
             RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.CreateOutOfBoundsException, new ValueNode[] {index}));
@@ -936,7 +929,6 @@ public final class GraphBuilderPhase extends Phase {
             StoreFieldNode store = graph.add(new StoreFieldNode(receiver, (RiResolvedField) field, value));
             appendOptimizedStoreField(store);
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
         }
     }
@@ -979,7 +971,6 @@ public final class GraphBuilderPhase extends Phase {
         if (initialized) {
             return appendConstant(((RiResolvedType) holder).getEncoding(representation));
         } else {
-            storeResultGraph = false;
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
             return null;
         }
@@ -1047,7 +1038,6 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private void genInvokeDeopt(RiMethod unresolvedTarget, boolean withReceiver) {
-        storeResultGraph = false;
         append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
         frameState.popArguments(unresolvedTarget.signature().argumentSlots(withReceiver), unresolvedTarget.signature().argumentCount(withReceiver));
         CiKind kind = unresolvedTarget.signature().returnKind(false);
@@ -1085,7 +1075,6 @@ public final class GraphBuilderPhase extends Phase {
     private void appendInvoke(InvokeKind invokeKind, RiResolvedMethod targetMethod, ValueNode[] args, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = targetMethod.signature().returnKind(false);
         if (GraalOptions.DeoptALot) {
-            storeResultGraph = false;
             DeoptimizeNode deoptimize = graph.add(new DeoptimizeNode(DeoptAction.None));
             deoptimize.setMessage("invoke " + targetMethod.name());
             append(deoptimize);
@@ -1135,7 +1124,7 @@ public final class GraphBuilderPhase extends Phase {
     private void genReturn(ValueNode x) {
         frameState.clearStack();
         if (x != null) {
-            frameState.push(x.kind, x);
+            frameState.push(x.kind(), x);
         }
         appendGoto(createTarget(returnBlock(bci()), frameState));
     }
@@ -1236,7 +1225,7 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private ConstantNode appendConstant(CiConstant constant) {
-        return graph.unique(new ConstantNode(constant));
+        return ConstantNode.forCiConstant(constant, runtime, graph);
     }
 
     private ValueNode append(FixedNode fixed) {
@@ -1251,6 +1240,15 @@ public final class GraphBuilderPhase extends Phase {
 
     private ValueNode append(ValueNode v) {
         return v;
+    }
+
+    @Override
+    public void append(Node node) {
+        if (node instanceof FixedNode) {
+            append((FixedNode) node);
+        } else {
+            append((ValueNode) node);
+        }
     }
 
     private ValueNode appendWithBCI(FixedWithNextNode x) {
@@ -1320,8 +1318,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private ValueNode synchronizedObject(FrameStateAccess state, RiResolvedMethod target) {
         if (isStatic(target.accessFlags())) {
-            ConstantNode classConstant = graph.unique(new ConstantNode(target.holder().getEncoding(Representation.JavaClass)));
-            return append(classConstant);
+            return append(ConstantNode.forCiConstant(target.holder().getEncoding(Representation.JavaClass), runtime, graph));
         } else {
             return state.localAt(0);
         }
@@ -1404,7 +1401,6 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private void createDeoptBlock(DeoptBlock block) {
-        storeResultGraph = false;
         append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateReprofile)));
     }
 
@@ -1446,7 +1442,7 @@ public final class GraphBuilderPhase extends Phase {
                 FixedNode catchSuccessor = createTarget(block.successors.get(0), frameState);
                 FixedNode nextDispatch = createTarget(nextBlock, frameState);
                 ValueNode exception = frameState.stackAt(0);
-                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) catchType, exception)), catchSuccessor, nextDispatch, 0.5));
+                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) catchType, exception, false)), catchSuccessor, nextDispatch, 0.5));
                 append(ifNode);
             }
         }
@@ -1503,15 +1499,15 @@ public final class GraphBuilderPhase extends Phase {
             log.println(String.format("|   state [nr locals = %d, stack depth = %d, method = %s]", frameState.localsSize(), frameState.stackSize(), method));
             for (int i = 0; i < frameState.localsSize(); ++i) {
                 ValueNode value = frameState.localAt(i);
-                log.println(String.format("|   local[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+                log.println(String.format("|   local[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < frameState.stackSize(); ++i) {
                 ValueNode value = frameState.stackAt(i);
-                log.println(String.format("|   stack[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+                log.println(String.format("|   stack[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < frameState.locksSize(); ++i) {
                 ValueNode value = frameState.lockAt(i);
-                log.println(String.format("|   lock[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+                log.println(String.format("|   lock[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind().javaName, value));
             }
         }
     }
@@ -1654,26 +1650,26 @@ public final class GraphBuilderPhase extends Phase {
             case LOR            : // fall through
             case LXOR           : genLogicOp(CiKind.Long, opcode); break;
             case IINC           : genIncrement(); break;
-            case I2L            : genConvert(ConvertNode.Op.I2L, CiKind.Int   , CiKind.Long  ); break;
-            case I2F            : genConvert(ConvertNode.Op.I2F, CiKind.Int   , CiKind.Float ); break;
-            case I2D            : genConvert(ConvertNode.Op.I2D, CiKind.Int   , CiKind.Double); break;
-            case L2I            : genConvert(ConvertNode.Op.L2I, CiKind.Long  , CiKind.Int   ); break;
-            case L2F            : genConvert(ConvertNode.Op.L2F, CiKind.Long  , CiKind.Float ); break;
-            case L2D            : genConvert(ConvertNode.Op.L2D, CiKind.Long  , CiKind.Double); break;
-            case F2I            : genConvert(ConvertNode.Op.F2I, CiKind.Float , CiKind.Int   ); break;
-            case F2L            : genConvert(ConvertNode.Op.F2L, CiKind.Float , CiKind.Long  ); break;
-            case F2D            : genConvert(ConvertNode.Op.F2D, CiKind.Float , CiKind.Double); break;
-            case D2I            : genConvert(ConvertNode.Op.D2I, CiKind.Double, CiKind.Int   ); break;
-            case D2L            : genConvert(ConvertNode.Op.D2L, CiKind.Double, CiKind.Long  ); break;
-            case D2F            : genConvert(ConvertNode.Op.D2F, CiKind.Double, CiKind.Float ); break;
-            case I2B            : genConvert(ConvertNode.Op.I2B, CiKind.Int   , CiKind.Byte  ); break;
-            case I2C            : genConvert(ConvertNode.Op.I2C, CiKind.Int   , CiKind.Char  ); break;
-            case I2S            : genConvert(ConvertNode.Op.I2S, CiKind.Int   , CiKind.Short ); break;
-            case LCMP           : genCompareOp(CiKind.Long, opcode, CiKind.Int); break;
-            case FCMPL          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
-            case FCMPG          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
-            case DCMPL          : genCompareOp(CiKind.Double, opcode, CiKind.Int); break;
-            case DCMPG          : genCompareOp(CiKind.Double, opcode, CiKind.Int); break;
+            case I2L            : genConvert(ConvertNode.Op.I2L); break;
+            case I2F            : genConvert(ConvertNode.Op.I2F); break;
+            case I2D            : genConvert(ConvertNode.Op.I2D); break;
+            case L2I            : genConvert(ConvertNode.Op.L2I); break;
+            case L2F            : genConvert(ConvertNode.Op.L2F); break;
+            case L2D            : genConvert(ConvertNode.Op.L2D); break;
+            case F2I            : genConvert(ConvertNode.Op.F2I); break;
+            case F2L            : genConvert(ConvertNode.Op.F2L); break;
+            case F2D            : genConvert(ConvertNode.Op.F2D); break;
+            case D2I            : genConvert(ConvertNode.Op.D2I); break;
+            case D2L            : genConvert(ConvertNode.Op.D2L); break;
+            case D2F            : genConvert(ConvertNode.Op.D2F); break;
+            case I2B            : genConvert(ConvertNode.Op.I2B); break;
+            case I2C            : genConvert(ConvertNode.Op.I2C); break;
+            case I2S            : genConvert(ConvertNode.Op.I2S); break;
+            case LCMP           : genCompareOp(CiKind.Long, false); break;
+            case FCMPL          : genCompareOp(CiKind.Float, true); break;
+            case FCMPG          : genCompareOp(CiKind.Float, false); break;
+            case DCMPL          : genCompareOp(CiKind.Double, true); break;
+            case DCMPG          : genCompareOp(CiKind.Double, false); break;
             case IFEQ           : genIfZero(Condition.EQ); break;
             case IFNE           : genIfZero(Condition.NE); break;
             case IFLT           : genIfZero(Condition.LT); break;
@@ -1724,7 +1720,9 @@ public final class GraphBuilderPhase extends Phase {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                if (extendedBytecodeHandler == null || !extendedBytecodeHandler.handle(opcode, stream, graph, frameState, this)) {
+                    throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                }
         }
         // Checkstyle: resume
     }

@@ -42,7 +42,7 @@ import com.sun.max.unsafe.*;
 public class AccessorIntrinsifier implements Intrinsifier {
 
     @Override
-    public Graph<?> intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List< ? extends Node> parameters) {
+    public Graph intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List< ? extends Node> parameters) {
         if (method.holder().equals(runtime.getType(Accessor.class))) {
             CiCodePos pos = callerPos;
             while (pos != null) {
@@ -51,23 +51,23 @@ public class AccessorIntrinsifier implements Intrinsifier {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
 
                     // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
-                    Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
+                    StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
-                        Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
+                        StructuredGraph duplicate = new StructuredGraph();
                         Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
                         replacements.put(graph.start(), duplicate.start());
                         duplicate.addDuplicate(graph.getNodes(), replacements);
                         graph = duplicate;
                     } else {
-                        graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
-                        new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
+                        graph = new StructuredGraph();
+                        new GraphBuilderPhase(runtime, accessorMethod, null).apply(graph, true, false);
                         if (GraalOptions.ProbabilityAnalysis) {
-                            new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
-                            new ComputeProbabilityPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
+                            new DeadCodeEliminationPhase().apply(graph, true, false);
+                            new ComputeProbabilityPhase().apply(graph, true, false);
                         }
                     }
 
-                    for (LocalNode l : graph.start().locals()) {
+                    for (LocalNode l : graph.getNodes(LocalNode.class)) {
                         if (l.index() == 0) {
                             UnsafeCastNode cast = graph.add(new UnsafeCastNode(l, accessor));
                             l.replaceAtUsages(cast);

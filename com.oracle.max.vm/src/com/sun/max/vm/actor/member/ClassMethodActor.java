@@ -48,12 +48,6 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class ClassMethodActor extends MethodActor {
 
-    @RESET
-    public static boolean TraceJNI;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
-    }
-
     @INSPECTED
     private CodeAttribute codeAttribute;
 
@@ -120,7 +114,8 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @Override
     public final int codeSize() {
-        return code().length;
+        byte[] code = code();
+        return code == null ? 0 : code.length;
     }
 
     private CiBitMap[] livenessMap;

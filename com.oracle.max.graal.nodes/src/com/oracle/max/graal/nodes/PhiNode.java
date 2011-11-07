@@ -95,11 +95,6 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitPhi(this);
-    }
-
-    @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Name) {
             StringBuilder str = new StringBuilder();
@@ -149,12 +144,12 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         boolean inverted = ifNode.trueSuccessor() == end1;
         ValueNode trueValue = valueAt(inverted ? 1 : 0);
         ValueNode falseValue = valueAt(inverted ? 0 : 1);
-        if (trueValue.kind != falseValue.kind) {
+        if (trueValue.kind() != falseValue.kind) {
             return this;
         }
 
         // Only allow int constants.
-        if (trueValue.kind != CiKind.Int || !trueValue.isConstant() || !falseValue.isConstant()) {
+        if (trueValue.kind() != CiKind.Int || !trueValue.isConstant() || !falseValue.isConstant()) {
             return this;
         }
 

@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.nodes.calc;
 
+import static com.sun.cri.ci.CiKind.*;
+
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -30,10 +32,36 @@ import com.sun.cri.ci.*;
 /**
  * The {@code ConvertNode} class represents a conversion between primitive types.
  */
-public final class ConvertNode extends FloatingNode implements Canonicalizable {
+public final class ConvertNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
     public enum Op {
-        I2L, L2I, I2B, I2C, I2S, F2D, D2F, I2F, I2D, F2I, D2I, L2F, L2D, F2L, D2L, MOV_I2F, MOV_L2D, MOV_F2I, MOV_D2L
+        I2L(Int, Long),
+        L2I(Long, Int),
+        I2B(Int, Byte),
+        I2C(Int, Char),
+        I2S(Int, Short),
+        F2D(Float, Double),
+        D2F(Double, Float),
+        I2F(Int, Float),
+        I2D(Int, Double),
+        F2I(Float, Int),
+        D2I(Double, Int),
+        L2F(Long, Float),
+        L2D(Long, Double),
+        F2L(Float, Long),
+        D2L(Double, Long),
+        MOV_I2F(Int, Float),
+        MOV_L2D(Long, Double),
+        MOV_F2I(Float, Int),
+        MOV_D2L(Double, Long);
+
+        public final CiKind from;
+        public final CiKind to;
+
+        private Op(CiKind from, CiKind to) {
+            this.from = from;
+            this.to = to;
+        }
     }
 
     @Input private ValueNode value;
@@ -51,15 +79,11 @@ public final class ConvertNode extends FloatingNode implements Canonicalizable {
      * @param value the instruction producing the input value
      * @param graph
      */
-    public ConvertNode(CiKind kind, Op opcode, ValueNode value) {
-        super(kind);
+    public ConvertNode(Op opcode, ValueNode value) {
+        super(opcode.to.stackKind());
+        assert value.kind() == opcode.from;
         this.opcode = opcode;
         this.value = value;
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitConvert(this);
     }
 
     @Override
@@ -82,17 +106,22 @@ public final class ConvertNode extends FloatingNode implements Canonicalizable {
                 case L2D: return ConstantNode.forDouble(c.asLong(), graph());
                 case F2L: return ConstantNode.forLong((long) c.asFloat(), graph());
                 case D2L: return ConstantNode.forLong((long) c.asDouble(), graph());
-                case MOV_I2F: return ConstantNode.forFloat(Float.intBitsToFloat(c.asInt()), graph());
-                case MOV_L2D: return ConstantNode.forDouble(Double.longBitsToDouble(c.asLong()), graph());
-                case MOV_F2I: return ConstantNode.forInt(Float.floatToRawIntBits(c.asFloat()), graph());
-                case MOV_D2L: return ConstantNode.forLong(Double.doubleToRawLongBits(c.asDouble()), graph());
+                case MOV_I2F: return ConstantNode.forFloat(java.lang.Float.intBitsToFloat(c.asInt()), graph());
+                case MOV_L2D: return ConstantNode.forDouble(java.lang.Double.longBitsToDouble(c.asLong()), graph());
+                case MOV_F2I: return ConstantNode.forInt(java.lang.Float.floatToRawIntBits(c.asFloat()), graph());
+                case MOV_D2L: return ConstantNode.forLong(java.lang.Double.doubleToRawLongBits(c.asDouble()), graph());
             }
         }
         return this;
     }
 
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitConvert(opcode, gen.operand(value())));
+    }
+
     @NodeIntrinsic
-    public static <S, T> S convert(@ConstantNodeParameter CiKind kind, @ConstantNodeParameter Op op, T value) {
+    public static <S, T> S convert(@ConstantNodeParameter Op op, T value) {
         throw new UnsupportedOperationException();
     }
 }

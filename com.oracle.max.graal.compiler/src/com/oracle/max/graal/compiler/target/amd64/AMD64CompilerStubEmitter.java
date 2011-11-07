@@ -77,7 +77,7 @@ public class AMD64CompilerStubEmitter {
 
     private final GraalContext context;
 
-    private final TargetMethodAssembler<AMD64MacroAssembler> tasm;
+    private final TargetMethodAssembler tasm;
     private final AMD64MacroAssembler asm;
 
     public AMD64CompilerStubEmitter(GraalContext context, GraalCompilation compilation, CiKind[] argTypes, CiKind resultKind) {
@@ -86,7 +86,7 @@ public class AMD64CompilerStubEmitter {
         this.context = context;
         final RiRegisterConfig registerConfig = compilation.compiler.compilerStubRegisterConfig;
         this.asm = new AMD64MacroAssembler(compilation.compiler.target, registerConfig);
-        this.tasm = new TargetMethodAssembler<AMD64MacroAssembler>(compilation, asm);
+        this.tasm = new TargetMethodAssembler(compilation, asm);
 
         inArgs = new CiStackSlot[argTypes.length];
         if (argTypes.length != 0) {
@@ -187,7 +187,7 @@ public class AMD64CompilerStubEmitter {
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
                 CiValue newOp = newRegister(op.kind, allocatableRegisters);
-                AMD64MoveOp.move(tasm, newOp, op);
+                AMD64MoveOpcode.move(tasm, asm, newOp, op);
                 operands[param.index] = newOp;
             } else {
                 operands[param.index] = op;
@@ -215,7 +215,7 @@ public class AMD64CompilerStubEmitter {
         }
 
         assert template.marks.length == 0 : "marks not supported in compiler stubs";
-        AMD64XirOp.emitXirInstructions(tasm, null, template.fastPath, labels, operands, null);
+        AMD64XirOpcode.emitXirInstructions(tasm, asm, null, template.fastPath, labels, operands, null);
         epilogue();
         String stubName = "graal-" + template.name;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.compiler.runtime, true);

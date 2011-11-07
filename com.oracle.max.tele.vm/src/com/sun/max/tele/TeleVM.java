@@ -232,6 +232,11 @@ public abstract class TeleVM implements MaxVM {
     private TelePlatform telePlatform;
 
     /**
+     * If {@code true}, always prompt for native code frame view when entering native code.
+     */
+    public static boolean promptForNativeCodeView;
+
+    /**
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
@@ -258,6 +263,8 @@ public abstract class TeleVM implements MaxVM {
             "Level to set for java.util.logging root logger.");
         public final Option<Boolean> usePrecompilationBreakpoints = newBooleanOption("precomp-bp", false,
             "Method entry bytecode breakpoints also stop VM prior to compilation of matching methods.");
+        public final Option<Boolean> nativePrompt = newBooleanOption("ncv", false,
+            "Prompt for native code view when entering native code");
 
         /**
          * This field is {@code null} if {@link #readOnly} is {@code false}.
@@ -357,6 +364,8 @@ public abstract class TeleVM implements MaxVM {
         if (options.usePrecompilationBreakpoints.getValue()) {
             BytecodeBreakpointManager.usePrecompilationBreakpoints = true;
         }
+
+        promptForNativeCodeView = options.nativePrompt.getValue();
 
         final String logLevel = options.logLevelOption.getValue();
         try {

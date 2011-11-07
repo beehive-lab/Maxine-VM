@@ -26,7 +26,6 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -42,9 +41,8 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public ConditionalNode(BooleanNode condition, ValueNode trueValue, ValueNode falseValue) {
-        // TODO: return the appropriate bytecode IF_ICMPEQ, etc or remove the need for bytecodes in BinaryNode
-        super(trueValue.kind, Bytecodes.ILLEGAL, trueValue, falseValue);
-        assert trueValue.kind == falseValue.kind;
+        super(trueValue.kind(), trueValue, falseValue);
+        assert trueValue.kind() == falseValue.kind();
         this.condition = condition;
     }
 
@@ -74,9 +72,9 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public static ConditionalStructure createConditionalStructure(BooleanNode condition, ValueNode trueValue, ValueNode falseValue, double trueProbability) {
-        Graph<?> graph = condition.graph();
-        assert trueValue.kind == falseValue.kind;
-        CiKind kind = trueValue.kind;
+        Graph graph = condition.graph();
+        assert trueValue.kind() == falseValue.kind();
+        CiKind kind = trueValue.kind();
         IfNode ifNode = graph.add(new IfNode(condition, trueProbability));
         EndNode trueEnd = graph.add(new EndNode());
         EndNode falseEnd = graph.add(new EndNode());
@@ -105,16 +103,11 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
             return trueValue();
         }
 
-        if (condition instanceof NegateBooleanNode) {
-            NegateBooleanNode negateBooleanNode = (NegateBooleanNode) condition;
-            return graph().unique(new ConditionalNode(negateBooleanNode.value(), falseValue(), trueValue()));
-        }
-
         return this;
     }
 
     @Override
     public void generate(LIRGeneratorTool generator) {
-        generator.visitConditional(this);
+        generator.emitConditional(this);
     }
 }

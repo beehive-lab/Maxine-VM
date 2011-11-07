@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "Deopt")
-public class DeoptimizeNode extends FixedNode {
+public class DeoptimizeNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
     public static enum DeoptAction {
         None,                           // just interpret, do not invalidate nmethod
@@ -58,7 +58,7 @@ public class DeoptimizeNode extends FixedNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitDeoptimize(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitDeoptimizeOn(null, action, message);
     }
 }

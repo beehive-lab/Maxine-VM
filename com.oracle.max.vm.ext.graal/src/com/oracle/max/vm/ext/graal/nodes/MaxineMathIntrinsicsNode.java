@@ -22,14 +22,13 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.vm.ext.graal.target.amd64.*;
 import com.sun.cri.ci.*;
 
-public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRLowerable {
+public final class MaxineMathIntrinsicsNode extends FloatingNode implements AMD64LIRLowerable {
 
     @Input private ValueNode value;
     @Data private final Op op;
@@ -39,31 +38,25 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
     }
 
     public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
-        super(value.kind);
+        super(value.kind());
         this.value = value;
         this.op = op;
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        // nothing to do
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool tool) {
-        // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
-        LIRGenerator gen = (LIRGenerator) tool;
-        CiVariable result = gen.createResultVariable(this);
-        CiVariable input = gen.load(value);
+    public void generateAmd64(AMD64LIRGenerator gen) {
+        CiVariable result = gen.newVariable(kind);
+        CiVariable input = gen.load(gen.operand(value));
         switch (op) {
             case MSB:
-                gen.append(AMD64MaxineOp.MSB.create(result, input));
+                gen.append(AMD64SignificantBitOpcode.MSB.create(result, input));
                 break;
             case LSB:
-                gen.append(AMD64MaxineOp.LSB.create(result, input));
+                gen.append(AMD64SignificantBitOpcode.LSB.create(result, input));
                 break;
             default:
                 throw new RuntimeException();
         }
+        gen.setResult(this, result);
     }
 }

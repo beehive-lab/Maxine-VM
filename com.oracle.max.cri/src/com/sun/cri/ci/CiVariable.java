@@ -72,7 +72,7 @@ public final class CiVariable extends CiValue {
      * @return the corresponding {@code CiVariable}
      */
     public static CiVariable get(CiKind kind, int index) {
-        assert kind == kind.stackKind() : "Variables can be only created for stack kinds";
+        //assert kind == kind.stackKind() : "Variables can be only created for stack kinds";
         assert index >= 0;
         CiVariable[] cachedVars = cache[kind.ordinal()];
         if (index < cachedVars.length) {

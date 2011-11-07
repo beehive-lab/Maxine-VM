@@ -32,14 +32,10 @@ import com.oracle.max.graal.nodes.extended.*;
 public class DeadCodeEliminationPhase extends Phase {
 
     private NodeFlood flood;
-    private Graph<EntryPointNode> graph;
-
-    public DeadCodeEliminationPhase(GraalContext context) {
-        super(context);
-    }
+    private StructuredGraph graph;
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         this.graph = graph;
         this.flood = graph.createNodeFlood();
 
@@ -60,7 +56,7 @@ public class DeadCodeEliminationPhase extends Phase {
             }
         }
 
-        new PhiSimplificationPhase(context).apply(graph);
+        new PhiSimplificationPhase().apply(graph, context);
     }
 
     private void iterateSuccessors() {

@@ -48,12 +48,8 @@ public class ComputeProbabilityPhase extends Phase {
      *   TODO: add exception probability information to Invokes
      */
 
-    public ComputeProbabilityPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         new PropagateProbability(graph.start().next()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));

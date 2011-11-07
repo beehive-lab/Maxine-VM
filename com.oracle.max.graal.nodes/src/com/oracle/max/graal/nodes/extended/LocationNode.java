@@ -52,12 +52,13 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
         return displacement;
     }
 
-    public static LocationNode create(Object identity, CiKind kind, int displacement, Graph<?> graph) {
+    public static LocationNode create(Object identity, CiKind kind, int displacement, Graph graph) {
         return graph.unique(new LocationNode(identity, kind, displacement));
     }
 
     protected LocationNode(Object identity, CiKind kind, int displacement) {
         super(CiKind.Illegal);
+        assert kind != CiKind.Illegal && kind != CiKind.Void;
         this.displacement = displacement;
         this.valueKind = kind;
         this.locationIdentity = identity;
@@ -67,10 +68,12 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
         return valueKind;
     }
 
-    public CiAddress createAddress(LIRGeneratorTool lirGenerator, ValueNode object) {
-        CiValue indexValue = CiValue.IllegalValue;
-        Scale indexScale = Scale.Times1;
-        return new CiAddress(valueKind, lirGenerator.load(object), indexValue, indexScale, displacement);
+    public CiAddress createAddress(LIRGeneratorTool gen, ValueNode object) {
+        CiValue base = gen.operand(object);
+        if (base.isConstant() && ((CiConstant) base).isNull()) {
+            base = CiValue.IllegalValue;
+        }
+        return new CiAddress(valueKind, base, CiValue.IllegalValue, Scale.Times1, displacement());
     }
 
     public Object locationIdentity() {

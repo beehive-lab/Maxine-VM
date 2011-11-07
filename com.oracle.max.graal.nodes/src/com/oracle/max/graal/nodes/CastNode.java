@@ -41,11 +41,7 @@ public final class CastNode extends FloatingNode implements LIRLowerable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool generator) {
-        setOperand(generator.load(value()));
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.operand(value()));
     }
 }

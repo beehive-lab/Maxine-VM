@@ -24,21 +24,21 @@ package com.oracle.max.graal.examples.intrinsics;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "[+]")
 public final class SafeAddNode extends IntegerArithmeticNode implements LIRLowerable, Node.IterableNodeType {
 
     public SafeAddNode(ValueNode x, ValueNode y) {
-        super(CiKind.Int, Bytecodes.IADD, x, y);
+        super(CiKind.Int, x, y);
     }
 
     @Override
-    public void generate(LIRGeneratorTool generator) {
-        generator.integerAdd(this, x(), y());
-        generator.deoptimizeOn(Condition.OF);
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitAdd(gen.operand(x()), gen.operand(y())));
+        gen.emitDeoptimizeOn(Condition.OF, DeoptAction.InvalidateReprofile, "SafeAdd");
     }
 }
