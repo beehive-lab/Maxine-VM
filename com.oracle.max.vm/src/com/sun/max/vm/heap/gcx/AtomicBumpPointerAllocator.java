@@ -48,8 +48,8 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
         super(refillManager);
     }
 
-    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom) {
-        super.initialize(initialChunk, initialChunkSize, headroom);
+    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit) {
+        super.initialize(initialChunk, initialChunkSize);
         this.sizeLimit = sizeLimit;
     }
 
@@ -60,7 +60,7 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
     }
 
     @Override
-    Pointer refillOrAllocate(Size size) {
+    protected Pointer refillOrAllocate(Size size) {
         synchronized (refillLock()) {
             // We're the only thread that can refill the allocator now.
             // We're still racing with other threads that might try to allocate

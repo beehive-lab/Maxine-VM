@@ -728,7 +728,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator
         // with overflow allocator on the side.
         smallObjectAllocator.refillManager.setPolicy(minLargeObjectSize, allocatorRefillThreshold, minReclaimableSpace);
-        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize);
         useTLABBin = false;
     }
 
