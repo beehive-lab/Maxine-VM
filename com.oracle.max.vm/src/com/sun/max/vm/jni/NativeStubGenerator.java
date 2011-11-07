@@ -123,9 +123,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
-        if (holder.name().contains("JVMTI")) {
-            System.console();
-        }
         final TypeDescriptor resultDescriptor = signatureDescriptor.resultDescriptor();
         final Kind resultKind = resultDescriptor.toKind();
         final StringBuilder nativeFunctionDescriptor = new StringBuilder("(");
