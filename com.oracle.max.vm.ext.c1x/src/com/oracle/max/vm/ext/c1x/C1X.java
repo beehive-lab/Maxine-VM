@@ -155,8 +155,9 @@ public class C1X implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
-        runtime.initialize();
         if (isHosted() && !optionsRegistered) {
+            runtime.initialize();
+
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
             C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
             C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
