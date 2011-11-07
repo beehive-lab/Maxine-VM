@@ -122,6 +122,9 @@ public class MaxRuntime implements GraalRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiResolvedMethod method) {
+        if (!(method instanceof ClassMethodActor)) {
+            return false;
+        }
         ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
         if (methodActor.isInline()) {
             return true;
