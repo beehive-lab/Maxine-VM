@@ -35,19 +35,19 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     private static final int EXCEPTION_EDGE = 1;
 
     @Input private MethodCallTargetNode callTarget;
-    @Input private FrameState stateBefore;
     @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
     private boolean canInline = true;
+    private final int bci;
 
     /**
      * @param kind
      * @param blockSuccessors
      * @param branchProbability
      */
-    public InvokeWithExceptionNode(MethodCallTargetNode callTarget, BeginNode exceptionEdge, FrameState stateBefore) {
+    public InvokeWithExceptionNode(MethodCallTargetNode callTarget, BeginNode exceptionEdge, int bci) {
         super(callTarget.returnKind().stackKind(), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
-        assert stateBefore != null && callTarget != null;
-        this.stateBefore = stateBefore;
+        assert callTarget != null;
+        this.bci = bci;
         this.callTarget = callTarget;
     }
 
@@ -95,7 +95,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     }
 
     public int bci() {
-        return stateBefore().bci;
+        return bci;
     }
 
     @Override
@@ -123,11 +123,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
 
     public FrameState stateDuring() {
         FrameState stateAfter = stateAfter();
-        return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.kind);
-    }
-
-    public FrameState stateBefore() {
-        return stateBefore;
+        return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.kind());
     }
 
     @Override

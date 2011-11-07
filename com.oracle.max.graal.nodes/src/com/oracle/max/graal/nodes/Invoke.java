@@ -40,8 +40,6 @@ public interface Invoke {
 
     FixedNode node();
 
-    FrameState stateBefore();
-
     FrameState stateDuring();
 
     FrameState stateAfter();
