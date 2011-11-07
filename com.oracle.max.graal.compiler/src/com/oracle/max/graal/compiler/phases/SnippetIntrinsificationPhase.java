@@ -48,9 +48,12 @@ public class SnippetIntrinsificationPhase extends Phase {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            tryIntrinsify(invoke);
+        }
     }
 
-    private void tryIntrinsify(InvokeNode invoke) {
+    private void tryIntrinsify(Invoke invoke) {
         if (invoke == null) {
             return;
         }
@@ -118,7 +121,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                             Constructor<?> constructor = c.getConstructor(parameterTypes);
                             try {
                                 ValueNode newInstance = (ValueNode) constructor.newInstance(initArgs);
-                                invoke.graph().add(newInstance);
+                                invoke.node().graph().add(newInstance);
 
                                 if (newInstance instanceof StateSplit) {
                                     StateSplit stateSplit = (StateSplit) newInstance;
@@ -127,20 +130,21 @@ public class SnippetIntrinsificationPhase extends Phase {
 
                                 FixedNode next = invoke.next();
 
-                                // Disconnect state and exception edge.
-                                invoke.setStateAfter(null);
-                                invoke.setExceptionEdge(null);
+                                if (invoke instanceof InvokeWithExceptionNode) {
+                                    // Disconnect exception edge.
+                                    ((InvokeWithExceptionNode) invoke).setExceptionEdge(null);
+                                }
                                 invoke.setNext(null);
 
                                 if (newInstance instanceof FixedWithNextNode) {
                                     FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) newInstance;
                                     fixedWithNextNode.setNext(next);
                                 } else {
-                                    invoke.replaceAtPredecessors(next);
+                                    invoke.node().replaceAtPredecessors(next);
                                 }
 
                                 // Replace invoke with new node.
-                                invoke.replaceAndDelete(newInstance);
+                                invoke.node().replaceAndDelete(newInstance);
 
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
                                 if (newInstance.kind() != CiKind.Object) {
@@ -154,9 +158,9 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
                                                     MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
                                                     assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
-                                                    for (InvokeNode invokeNode : checkCastCallTarget.invokes()) {
-                                                        invokeNode.replaceAtUsages(newInstance);
-                                                        invokeNode.replaceAndDelete(invokeNode.next());
+                                                    for (Invoke invokeNode : checkCastCallTarget.invokes()) {
+                                                        invokeNode.node().replaceAtUsages(newInstance);
+                                                        invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     }
                                                     checkCastCallTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {

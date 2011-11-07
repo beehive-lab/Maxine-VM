@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
@@ -90,8 +91,14 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         return targetMethod().signature().returnKind(false);
     }
 
-    public Collection<InvokeNode> invokes() {
-        return ValueUtil.filter(this.usages(), InvokeNode.class);
+    public Collection<Invoke> invokes() {
+        ArrayList<Invoke> invokes = new ArrayList<Invoke>();
+        for (Node node : usages()) {
+            if (node instanceof Invoke) {
+                invokes.add((Invoke) node);
+            }
+        }
+        return invokes;
     }
 
     @Override

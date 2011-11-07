@@ -20,40 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.nodes;
 
-import java.util.*;
+import com.oracle.max.graal.nodes.java.*;
 
-import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
+public interface Invoke {
 
-public abstract class AbstractMemoryCheckpointNode extends StateSplit implements MemoryCheckpoint {
+    FixedNode next();
 
-    @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
+    void setNext(FixedNode x);
 
-    public AbstractMemoryCheckpointNode() {
-        this(CiKind.Illegal);
-    }
+    void setCanInline(boolean b);
 
-    public AbstractMemoryCheckpointNode(CiKind result) {
-        super(result);
-    }
+    boolean canInline();
 
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> debugProperties = super.getDebugProperties();
-        debugProperties.put("memoryCheckpoint", "true");
-        return debugProperties;
-    }
+    MethodCallTargetNode callTarget();
 
-    @Override
-    public NodeInputList<Node> mergedNodes() {
-        return mergedNodes;
-    }
+    int bci();
 
-    @Override
-    public Node node() {
-        return this;
-    }
+    FixedNode node();
+
+    FrameState stateBefore();
+
+    FrameState stateDuring();
+
+    FrameState stateAfter();
 }

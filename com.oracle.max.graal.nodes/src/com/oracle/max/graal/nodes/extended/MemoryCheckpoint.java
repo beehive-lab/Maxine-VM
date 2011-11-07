@@ -22,38 +22,11 @@
  */
 package com.oracle.max.graal.nodes.extended;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
 
-public abstract class AbstractMemoryCheckpointNode extends StateSplit implements MemoryCheckpoint {
+public interface MemoryCheckpoint {
 
-    @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
+    NodeInputList<Node> mergedNodes();
 
-    public AbstractMemoryCheckpointNode() {
-        this(CiKind.Illegal);
-    }
-
-    public AbstractMemoryCheckpointNode(CiKind result) {
-        super(result);
-    }
-
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> debugProperties = super.getDebugProperties();
-        debugProperties.put("memoryCheckpoint", "true");
-        return debugProperties;
-    }
-
-    @Override
-    public NodeInputList<Node> mergedNodes() {
-        return mergedNodes;
-    }
-
-    @Override
-    public Node node() {
-        return this;
-    }
+    Node node();
 }
