@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -104,7 +103,7 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
     @Override
     public boolean verify() {
         for (Node n : usages()) {
-            assertTrue(n instanceof InvokeNode, "call target can only be used from an invoke");
+            assertTrue(n instanceof Invoke, "call target can only be used from an invoke (%s)", n);
         }
         return super.verify();
     }

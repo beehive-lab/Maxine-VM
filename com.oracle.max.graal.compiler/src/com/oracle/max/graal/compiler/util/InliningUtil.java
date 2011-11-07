@@ -161,7 +161,7 @@ public class InliningUtil {
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
-            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.node().kind);
+            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.node().kind());
             for (Node node : frameStates) {
                 FrameState frameState = (FrameState) duplicates.get(node);
                 if (!frameState.isDeleted()) {

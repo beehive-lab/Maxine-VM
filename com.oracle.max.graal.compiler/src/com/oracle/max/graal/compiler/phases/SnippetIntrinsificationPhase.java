@@ -131,8 +131,11 @@ public class SnippetIntrinsificationPhase extends Phase {
                                 FixedNode next = invoke.next();
 
                                 if (invoke instanceof InvokeWithExceptionNode) {
-                                    // Disconnect exception edge.
-                                    ((InvokeWithExceptionNode) invoke).setExceptionEdge(null);
+                                    // Destroy exception edge.
+                                    InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invoke;
+                                    BeginNode exceptionEdge = invokeWithExceptionNode.exceptionEdge();
+                                    invokeWithExceptionNode.setExceptionEdge(null);
+                                    GraphUtil.killCFG(exceptionEdge);
                                 }
                                 invoke.setNext(null);
 

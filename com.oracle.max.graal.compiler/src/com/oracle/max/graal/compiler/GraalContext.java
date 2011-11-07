@@ -32,7 +32,7 @@ import com.oracle.max.graal.compiler.observer.*;
  */
 public class GraalContext {
 
-    public static final GraalContext EMPTY_CONTEXT = new GraalContext(true, "silent context");
+    public static final GraalContext EMPTY_CONTEXT = new GraalContext(false, "silent context");
 
     public final ObservableContext observable = new ObservableContext();
     public final GraalTimers timers = new GraalTimers();
