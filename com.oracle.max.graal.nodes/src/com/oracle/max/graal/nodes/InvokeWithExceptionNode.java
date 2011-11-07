@@ -30,7 +30,7 @@ import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ri.*;
 
-public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint {
+public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint, LIRLowerable {
     private static final int NORMAL_EDGE = 0;
     private static final int EXCEPTION_EDGE = 1;
 
@@ -86,11 +86,6 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitInvoke(this);
-    }
-
-    @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Long) {
             return super.toString(Verbosity.Short) + "(bci=" + bci() + ")";
@@ -115,6 +110,11 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
         } else {
             this.setNext(null);
         }
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitInvoke(this);
     }
 
     public FrameState stateAfter() {

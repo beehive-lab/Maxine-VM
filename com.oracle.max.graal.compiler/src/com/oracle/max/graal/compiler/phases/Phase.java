@@ -62,7 +62,7 @@ public abstract class Phase {
     }
 
     public final void apply(StructuredGraph graph, boolean plotOnError, boolean plot) {
-        apply(graph,  GraalContext.EMPTY_CONTEXT, true, true);
+        apply(graph,  GraalContext.EMPTY_CONTEXT, true, plot);
     }
 
     public final void apply(StructuredGraph graph, GraalContext context, boolean plotOnError, boolean plot) {
