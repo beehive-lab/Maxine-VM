@@ -97,7 +97,7 @@ public class GraalMaxineIntrinsicImplementations {
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 2;
             assert args[0].kind() == CiKind.Int || args[0].kind() == CiKind.Long;
-            return graph.unique(new CompareNode(args[0], condition, args[1]));
+            return MaterializeNode.create(graph.unique(new CompareNode(args[0], condition, args[1])), graph);
         }
     }
 
