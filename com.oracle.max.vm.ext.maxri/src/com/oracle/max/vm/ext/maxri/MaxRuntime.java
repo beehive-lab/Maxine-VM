@@ -484,7 +484,12 @@ public class MaxRuntime implements GraalRuntime {
                 StructuredGraph graph = new StructuredGraph();
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind(), i));
+                    ValueNode valueNode = (ValueNode) parameters.get(i);
+                    if (valueNode.isConstant()) {
+                        args[i] = ConstantNode.forCiConstant(valueNode.asConstant(), this, graph);
+                    } else {
+                        args[i] = graph.unique(new LocalNode(valueNode.kind(), i));
+                    }
                 }
                 ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
                 if (node instanceof FixedNode) {
