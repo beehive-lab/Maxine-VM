@@ -44,6 +44,7 @@ public class UnsafeStoreNode extends StateSplit implements Lowerable {
 
     public UnsafeStoreNode(ValueNode object, int displacement, ValueNode offset, ValueNode value, CiKind kind) {
         super(CiKind.Void);
+        assert kind != CiKind.Void && kind != CiKind.Illegal;
         this.object = object;
         this.displacement = displacement;
         this.offset = offset;
