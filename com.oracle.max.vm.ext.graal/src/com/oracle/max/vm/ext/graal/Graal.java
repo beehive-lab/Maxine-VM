@@ -128,7 +128,7 @@ public class Graal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime, null));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
         }

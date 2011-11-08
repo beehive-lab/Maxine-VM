@@ -39,13 +39,17 @@ public class IntrinsificationPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            tryIntrinsify(invoke);
+            tryIntrinsify(invoke, runtime);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void tryIntrinsify(InvokeNode invoke) {
+    public static void tryIntrinsify(InvokeNode invoke, GraalRuntime runtime) {
         RiResolvedMethod target = invoke.callTarget().targetMethod();
+        tryIntrinsify(invoke, target, runtime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void tryIntrinsify(InvokeNode invoke, RiResolvedMethod target, GraalRuntime runtime) {
         StructuredGraph intrinsicGraph = (StructuredGraph) target.compilerStorage().get(Graph.class);
         if (intrinsicGraph == null) {
             // TODO (ph) remove once all intrinsics are available via RiMethod

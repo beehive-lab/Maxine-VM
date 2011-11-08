@@ -30,14 +30,18 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 
 
 public class MustInlineAndFoldPhase extends Phase {
 
     private final MaxRuntime runtime;
+    private final RiResolvedType accessor;
 
-    public MustInlineAndFoldPhase(MaxRuntime runtime) {
+    public MustInlineAndFoldPhase(MaxRuntime runtime, RiResolvedType accessor) {
         this.runtime = runtime;
+        this.accessor = accessor;
     }
 
     @Override
@@ -66,16 +70,42 @@ public class MustInlineAndFoldPhase extends Phase {
         // Inline all necessary methods.
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             RiResolvedMethod method = invoke.callTarget().targetMethod();
-            if (runtime.mustInline(method)) {
-                RiResolvedMethod method1 = invoke.callTarget().targetMethod();
+            boolean mustInline = runtime.mustInline(method);
+            if (method.holder().equals(runtime.getType(Accessor.class))) {
+                RiResolvedType curAccessor = getAccessor(invoke, accessor);
+                assert curAccessor != null;
+                method = curAccessor.resolveMethodImpl(method);
+                mustInline = true;
+            }
+            MethodActor methodActor = (MethodActor) method;
+            if (methodActor.intrinsic() != null) {
+                IntrinsificationPhase.tryIntrinsify(invoke, method, runtime);
+            } else if (mustInline) {
                 StructuredGraph inlineGraph = new StructuredGraph();
-                new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
-                new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
+                new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                RiResolvedType curAccessor = getAccessor(invoke, accessor);
+                new MustInlineAndFoldPhase(runtime, curAccessor).apply(inlineGraph);
                 InliningUtil.inline(invoke, inlineGraph, false);
             }
         }
 
+        // Intrinsification.
+        new IntrinsificationPhase(runtime).apply(graph);
+
         // Canonicalize.
         new CanonicalizerPhase(null, runtime, null).apply(graph);
+    }
+
+    private RiResolvedType getAccessor(InvokeNode invoke, RiResolvedType accessor) {
+        CiCodePos pos = invoke.stateAfter().toCodePos();
+        while (pos != null) {
+            RiResolvedType result = pos.method.accessor();
+            if (result != null) {
+                // Found accessor.
+                return result;
+            }
+            pos = pos.caller;
+        }
+        return accessor;
     }
 }
