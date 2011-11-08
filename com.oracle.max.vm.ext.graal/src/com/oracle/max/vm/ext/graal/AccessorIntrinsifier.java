@@ -30,7 +30,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
@@ -69,7 +69,7 @@ public class AccessorIntrinsifier implements Intrinsifier {
 
                     for (LocalNode l : graph.getNodes(LocalNode.class)) {
                         if (l.index() == 0) {
-                            UnsafeCastNode cast = graph.add(new UnsafeCastNode(l, accessor));
+                            MaxineUnsafeCastNode cast = graph.add(new MaxineUnsafeCastNode(l, accessor));
                             l.replaceAtUsages(cast);
                             break;
                         }

@@ -144,7 +144,7 @@ public class GraalMaxineIntrinsicImplementations {
             if (Platform.target().sizeInBytes(from) != Platform.target().sizeInBytes(from) || from == CiKind.Float || from == CiKind.Double || to == CiKind.Float || to == CiKind.Double) {
                 throw new CiBailout("Unsupported unsafe cast from " + fromType + " to " + toType);
             }
-            return graph.unique(new UnsafeCastNode(args[0], (RiResolvedType) toType));
+            return graph.unique(new MaxineUnsafeCastNode(args[0], (RiResolvedType) toType));
         }
     }
 
