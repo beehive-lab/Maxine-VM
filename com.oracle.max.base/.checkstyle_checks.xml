@@ -128,9 +128,10 @@
       <property name="format" value="^[a-zA-Z0-9][a-zA-Z0-9_]*$"/>
     </module>
     <module name="RegexpSinglelineJava">
-      <metadata name="net.sf.eclipsecs.core.comment" value="temporary breakpoint hook should be removed"/>
+      <metadata name="net.sf.eclipsecs.core.comment" value="temporary breakpoint hook should be removed or commented out"/>
       <property name="format" value="System\.console\(\)"/>
-      <property name="message" value="temporary breakpoint hook should be removed"/>
+      <property name="message" value="temporary breakpoint hook should be removed or commented out"/>
+      <property name="ignoreComments" value="true"/>
     </module>
   </module>
   <module name="RegexpHeader">
