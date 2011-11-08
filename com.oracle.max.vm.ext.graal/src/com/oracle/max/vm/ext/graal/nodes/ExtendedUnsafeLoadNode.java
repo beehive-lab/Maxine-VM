@@ -69,7 +69,9 @@ public class ExtendedUnsafeLoadNode extends StateSplit implements Lowerable, Nod
         assert kind() != CiKind.Illegal;
         LocationNode location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), displacement(), offset(), graph());
         ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
-        memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
+        if (object().kind() == CiKind.Object) {
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
+        }
         FixedNode next = next();
         setNext(null);
         memoryRead.setNext(next);

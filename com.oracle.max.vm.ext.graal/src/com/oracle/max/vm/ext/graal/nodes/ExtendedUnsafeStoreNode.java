@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -74,6 +75,9 @@ public class ExtendedUnsafeStoreNode extends StateSplit implements Lowerable {
         WriteNode write = graph().add(new WriteNode(object(), value(), location));
         FixedNode next = next();
         setNext(null);
+        if (object().kind() == CiKind.Object) {
+            write.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
+        }
         // TODO: add Maxine-specific write barrier
 //        FieldWriteBarrier barrier = graph.add(new FieldWriteBarrier(store.object()));
 //        barrier.setNext(next);

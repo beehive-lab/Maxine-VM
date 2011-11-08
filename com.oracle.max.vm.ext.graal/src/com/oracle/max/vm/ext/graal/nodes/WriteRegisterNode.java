@@ -42,6 +42,6 @@ public final class WriteRegisterNode extends StateSplit implements LIRLowerable 
 
     @Override
     public void generate(LIRGeneratorTool generator) {
-        generator.emitMove(generator.operand(value), register.asValue(kind()));
+        generator.emitMove(generator.operand(value), register.asValue(value.kind()));
     }
 }

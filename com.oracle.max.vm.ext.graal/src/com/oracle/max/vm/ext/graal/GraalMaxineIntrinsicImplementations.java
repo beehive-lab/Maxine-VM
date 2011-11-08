@@ -233,7 +233,7 @@ public class GraalMaxineIntrinsicImplementations {
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            ReadRegisterNode load = graph.add(new ReadRegisterNode(register, target.signature().returnKind(false)));
+            ReadRegisterNode load = graph.add(new ReadRegisterNode(register, target.signature().returnKind(true)));
             return load;
         }
     }

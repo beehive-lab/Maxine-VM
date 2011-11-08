@@ -192,7 +192,7 @@ public class TargetMethodAssembler {
     }
 
     public CiRegister asLongReg(CiValue value) {
-        assert value.kind == CiKind.Long;
+        assert value.kind == CiKind.Long : value.kind;
         return asRegister(value);
     }
 

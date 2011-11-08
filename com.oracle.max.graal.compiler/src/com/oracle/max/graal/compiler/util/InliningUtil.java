@@ -30,6 +30,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class InliningUtil {
@@ -76,7 +77,7 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || !receiverNullCheck) {
+        if (callTarget.isStatic() || !receiverNullCheck || parameters[0].kind() != CiKind.Object) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
