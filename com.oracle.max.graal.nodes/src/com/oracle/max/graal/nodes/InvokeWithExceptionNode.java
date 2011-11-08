@@ -155,7 +155,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     public void delete() {
         FrameState stateAfter = stateAfter();
         super.delete();
-        if (stateAfter.usages().isEmpty()) {
+        if (stateAfter != null && stateAfter.usages().isEmpty()) {
             stateAfter.delete();
         }
     }
