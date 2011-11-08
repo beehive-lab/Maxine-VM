@@ -27,6 +27,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -47,19 +48,22 @@ public class MustInlineAndFoldPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         // Apply folding.
-        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            RiResolvedMethod method = invoke.callTarget().targetMethod();
-            if (runtime.isFoldable(method)) {
-                NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
-                CiConstant[] constantArgs = new CiConstant[arguments.size()];
-                for (int i = 0; i < constantArgs.length; ++i) {
-                    constantArgs[i] = arguments.get(i).asConstant();
-                }
-                CiConstant foldResult = runtime.fold(method, constantArgs);
-                if (foldResult != null) {
-                    StructuredGraph foldGraph = new StructuredGraph();
-                    foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-                    InliningUtil.inline(invoke, foldGraph, false);
+        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
+            RiResolvedMethod method = callTarget.targetMethod();
+            Invoke invoke = callTarget.invoke();
+            if (invoke != null) {
+                if (runtime.isFoldable(method)) {
+                    NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
+                    CiConstant[] constantArgs = new CiConstant[arguments.size()];
+                    for (int i = 0; i < constantArgs.length; ++i) {
+                        constantArgs[i] = arguments.get(i).asConstant();
+                    }
+                    CiConstant foldResult = runtime.fold(method, constantArgs);
+                    if (foldResult != null) {
+                        StructuredGraph foldGraph = new StructuredGraph();
+                        foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
+                        InliningUtil.inline(invoke, foldGraph, false);
+                    }
                 }
             }
         }
@@ -68,24 +72,27 @@ public class MustInlineAndFoldPhase extends Phase {
         new CanonicalizerPhase(null, runtime, null).apply(graph);
 
         // Inline all necessary methods.
-        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            RiResolvedMethod method = invoke.callTarget().targetMethod();
-            boolean mustInline = runtime.mustInline(method);
-            if (method.holder().equals(runtime.getType(Accessor.class))) {
-                RiResolvedType curAccessor = getAccessor(invoke, accessor);
-                assert curAccessor != null;
-                method = curAccessor.resolveMethodImpl(method);
-                mustInline = true;
-            }
-            MethodActor methodActor = (MethodActor) method;
-            if (methodActor.intrinsic() != null) {
-                IntrinsificationPhase.tryIntrinsify(invoke, method, runtime);
-            } else if (mustInline) {
-                StructuredGraph inlineGraph = new StructuredGraph();
-                new GraphBuilderPhase(runtime, method).apply(inlineGraph);
-                RiResolvedType curAccessor = getAccessor(invoke, accessor);
-                new MustInlineAndFoldPhase(runtime, curAccessor).apply(inlineGraph);
-                InliningUtil.inline(invoke, inlineGraph, false);
+        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
+            Invoke invoke = callTarget.invoke();
+            RiResolvedMethod method = callTarget.targetMethod();
+            if (invoke != null) {
+                boolean mustInline = runtime.mustInline(method);
+                if (method.holder().equals(runtime.getType(Accessor.class))) {
+                    RiResolvedType curAccessor = getAccessor(invoke, accessor);
+                    assert curAccessor != null;
+                    method = curAccessor.resolveMethodImpl(method);
+                    mustInline = true;
+                }
+                MethodActor methodActor = (MethodActor) method;
+                if (methodActor.intrinsic() != null) {
+                    IntrinsificationPhase.tryIntrinsify(invoke, method, runtime);
+                } else if (mustInline) {
+                    StructuredGraph inlineGraph = new StructuredGraph();
+                    new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                    RiResolvedType curAccessor = getAccessor(invoke, accessor);
+                    new MustInlineAndFoldPhase(runtime, curAccessor).apply(inlineGraph);
+                    InliningUtil.inline(invoke, inlineGraph, false);
+                }
             }
         }
 
@@ -96,7 +103,7 @@ public class MustInlineAndFoldPhase extends Phase {
         new CanonicalizerPhase(null, runtime, null).apply(graph);
     }
 
-    private RiResolvedType getAccessor(InvokeNode invoke, RiResolvedType accessor) {
+    private RiResolvedType getAccessor(Invoke invoke, RiResolvedType accessor) {
         CiCodePos pos = invoke.stateAfter().toCodePos();
         while (pos != null) {
             RiResolvedType result = pos.method.accessor();
