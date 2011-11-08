@@ -69,8 +69,11 @@ public class Snippets {
 
                 new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
-                Collection<InvokeNode> invokes = new ArrayList<InvokeNode>();
+                Collection<Invoke> invokes = new ArrayList<Invoke>();
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
+                    invokes.add(invoke);
+                }
+                for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
                     invokes.add(invoke);
                 }
                 new InliningPhase(runtime, target, invokes, null).apply(graph, context);

@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.nodes;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.java.*;
 
 public interface Invoke extends StateSplit {
@@ -43,4 +44,6 @@ public interface Invoke extends StateSplit {
     FrameState stateDuring();
 
     FrameState stateAfter();
+
+    Node predecessor();
 }
