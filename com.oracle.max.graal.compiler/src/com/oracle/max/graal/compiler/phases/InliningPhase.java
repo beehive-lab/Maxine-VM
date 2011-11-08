@@ -138,7 +138,7 @@ public class InliningPhase extends Phase {
                 }
             }
 
-            InliningUtil.inline(invoke, graph, false);
+            InliningUtil.inline(invoke, graph, true);
         }
 
         @Override
