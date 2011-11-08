@@ -230,10 +230,6 @@ public class IdentifyBlocksPhase extends Phase {
                 Node currentNode = n;
                 Node prev = null;
                 while (nodeToBlock.get(currentNode) == null) {
-                    if (block != null && (currentNode instanceof ControlSplitNode || trueSuccessorCount(currentNode) > 1)) {
-                        // We are at a split node => start a new block.
-                        block = null;
-                    }
                     block = assignBlockNew(currentNode, block);
                     if (currentNode instanceof FixedNode) {
                         block.setProbability(((FixedNode) currentNode).probability());
@@ -242,6 +238,10 @@ public class IdentifyBlocksPhase extends Phase {
                         // At a merge node => stop iteration.
                         assert currentNode instanceof MergeNode || currentNode == ((StructuredGraph) currentNode.graph()).start() : currentNode;
                         break;
+                    }
+                    if (block != null && currentNode instanceof BeginNode) {
+                        // We are at a split node => start a new block.
+                        block = null;
                     }
                     prev = currentNode;
                     currentNode = currentNode.predecessor();

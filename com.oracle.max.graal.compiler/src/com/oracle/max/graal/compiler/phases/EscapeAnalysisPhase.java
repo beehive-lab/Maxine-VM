@@ -223,7 +223,7 @@ public class EscapeAnalysisPhase extends Phase {
 
         public final Node node;
         public final ArrayList<Node> escapesThrough = new ArrayList<Node>();
-        public final ArrayList<InvokeNode> invokes = new ArrayList<InvokeNode>();
+        public final ArrayList<Invoke> invokes = new ArrayList<Invoke>();
         public double localWeight;
 
         public EscapeRecord(Node node) {
@@ -337,7 +337,7 @@ public class EscapeAnalysisPhase extends Phase {
 
     private void performAnalysis(StructuredGraph graph, FixedWithNextNode node, EscapeOp op) {
         Set<Node> exits = new HashSet<Node>();
-        Set<InvokeNode> invokes = new HashSet<InvokeNode>();
+        Set<Invoke> invokes = new HashSet<Invoke>();
         int iterations = 0;
 
         int minimumWeight = GraalOptions.ForcedInlineEscapeWeight;
@@ -351,7 +351,7 @@ public class EscapeAnalysisPhase extends Phase {
                         for (Node n : exits) {
                             TTY.print("%s, ", n);
                         }
-                        for (Node n : invokes) {
+                        for (Invoke n : invokes) {
                             TTY.print("%s, ", n);
                         }
                         TTY.println();
@@ -405,15 +405,15 @@ public class EscapeAnalysisPhase extends Phase {
         } while (iterations++ < 3);
     }
 
-    private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<InvokeNode> invokes) {
+    private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<Invoke> invokes) {
         double weight = 0;
         for (Node usage : node.usages()) {
             boolean escapes = op.escape(node, usage);
             if (escapes) {
                 if (usage instanceof FrameState) {
                     // nothing to do...
-                } else if (usage instanceof InvokeNode) {
-                    invokes.add((InvokeNode) usage);
+                } else if (usage instanceof Invoke) {
+                    invokes.add((Invoke) usage);
                 } else {
                     exits.add(usage);
                     if (!GraalOptions.TraceEscapeAnalysis) {

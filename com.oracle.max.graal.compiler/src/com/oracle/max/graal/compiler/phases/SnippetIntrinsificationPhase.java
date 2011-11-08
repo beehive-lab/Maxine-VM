@@ -28,7 +28,8 @@ import java.lang.reflect.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.graph.Node.ConstantNodeParameter;
+import com.oracle.max.graal.graph.Node.NodeIntrinsic;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
@@ -48,9 +49,12 @@ public class SnippetIntrinsificationPhase extends Phase {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            tryIntrinsify(invoke);
+        }
     }
 
-    private void tryIntrinsify(InvokeNode invoke) {
+    private void tryIntrinsify(Invoke invoke) {
         if (invoke == null) {
             return;
         }
@@ -99,12 +103,17 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 // Unbound generic => try boxing elimination
                                                 ValueNode node = arguments[z];
                                                 if (node.usages().size() == 2) {
-                                                    if (node instanceof InvokeNode) {
-                                                        InvokeNode invokeNode = (InvokeNode) node;
+                                                    if (node instanceof Invoke) {
+                                                        Invoke invokeNode = (Invoke) node;
                                                         MethodCallTargetNode callTarget = invokeNode.callTarget();
                                                         if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
                                                             currentValue = callTarget.arguments().get(0);
-                                                            invokeNode.replaceAndDelete(invokeNode.next());
+                                                            if (invokeNode instanceof InvokeWithExceptionNode) {
+                                                                // Destroy exception edge & clear stateAfter.
+                                                                InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                                                invokeWithExceptionNode.killExceptionEdge();
+                                                            }
+                                                            invokeNode.node().replaceAndDelete(invokeNode.next());
                                                         }
                                                     }
                                                 }
@@ -118,7 +127,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                             Constructor<?> constructor = c.getConstructor(parameterTypes);
                             try {
                                 ValueNode newInstance = (ValueNode) constructor.newInstance(initArgs);
-                                invoke.graph().add(newInstance);
+                                invoke.node().graph().add(newInstance);
 
                                 if (newInstance instanceof StateSplit) {
                                     StateSplit stateSplit = (StateSplit) newInstance;
@@ -127,20 +136,21 @@ public class SnippetIntrinsificationPhase extends Phase {
 
                                 FixedNode next = invoke.next();
 
-                                // Disconnect state and exception edge.
-                                invoke.setStateAfter(null);
-                                invoke.setExceptionEdge(null);
+                                if (invoke instanceof InvokeWithExceptionNode) {
+                                    // Destroy exception edge.
+                                    ((InvokeWithExceptionNode) invoke).killExceptionEdge();
+                                }
                                 invoke.setNext(null);
 
                                 if (newInstance instanceof FixedWithNextNode) {
                                     FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) newInstance;
                                     fixedWithNextNode.setNext(next);
                                 } else {
-                                    invoke.replaceAtPredecessors(next);
+                                    invoke.node().replaceAtPredecessors(next);
                                 }
 
                                 // Replace invoke with new node.
-                                invoke.replaceAndDelete(newInstance);
+                                invoke.node().replaceAndDelete(newInstance);
 
                                 // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
                                 if (newInstance.kind() != CiKind.Object) {
@@ -154,9 +164,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
                                                     MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
                                                     assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
-                                                    for (InvokeNode invokeNode : checkCastCallTarget.invokes()) {
-                                                        invokeNode.replaceAtUsages(newInstance);
-                                                        invokeNode.replaceAndDelete(invokeNode.next());
+                                                    for (Invoke invokeNode : checkCastCallTarget.invokes()) {
+                                                        if (invokeNode instanceof InvokeWithExceptionNode) {
+                                                            // Destroy exception edge & clear stateAfter.
+                                                            InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                                            invokeWithExceptionNode.killExceptionEdge();
+                                                        }
+                                                        invokeNode.node().replaceAtUsages(newInstance);
+                                                        invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     }
                                                     checkCastCallTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
