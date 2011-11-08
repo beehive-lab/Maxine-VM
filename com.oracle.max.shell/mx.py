@@ -57,14 +57,17 @@ DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 
 class Env(ArgumentParser):
 
-    # Override parent to append the list of available commands
-    def format_help(self):
-        msg = ArgumentParser.format_help(self) + '\navailable commands:\n\n'
+    def format_commands(self):
+        msg = '\navailable commands:\n\n'
         for cmd in sorted(commands.table.iterkeys()):
             c, _ = commands.table[cmd][:2]
             doc = c.__doc__
             msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
         return msg + '\n'
+    
+    # Override parent to append the list of available commands
+    def format_help(self):
+        return ArgumentParser.format_help(self) + self.format_commands()
     
     def __init__(self):
         self.java_initialized = False
@@ -368,7 +371,7 @@ def main(env):
     env.command_args = env.commandAndArgs[1:]
     
     if not commands.table.has_key(env.command):
-        env.error('unknown command "' + env.command + '"')
+        env.abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(env.command, env.format_commands()))
         
     c, _ = commands.table[env.command][:2]
     try:

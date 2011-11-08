@@ -116,6 +116,7 @@ final class ControlFlowOptimizer {
         int newPos = 0;
         int numBlocks = code.size();
 
+        assert verify(code);
         while (oldPos < numBlocks) {
             LIRBlock block = code.get(oldPos);
 

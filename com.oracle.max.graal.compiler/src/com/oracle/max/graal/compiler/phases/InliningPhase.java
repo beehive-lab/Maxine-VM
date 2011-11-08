@@ -97,7 +97,7 @@ public class InliningPhase extends Phase {
 
         @Override
         public void inline(StructuredGraph compilerGraph) {
-            InliningUtil.inline(invoke, intrinsicGraph);
+            InliningUtil.inline(invoke, intrinsicGraph, true);
         }
 
         @Override
@@ -138,7 +138,7 @@ public class InliningPhase extends Phase {
                 }
             }
 
-            InliningUtil.inline(invoke, graph);
+            InliningUtil.inline(invoke, graph, true);
         }
 
         @Override

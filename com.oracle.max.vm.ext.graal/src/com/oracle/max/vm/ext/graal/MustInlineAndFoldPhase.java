@@ -42,24 +42,43 @@ public class MustInlineAndFoldPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
+        // Apply folding.
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            process(invoke);
+            fold(invoke);
         }
         for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
-            process(invoke);
+            fold(invoke);
         }
+
+        // Canonicalize.
+        new CanonicalizerPhase(null, runtime, null).apply(graph);
+
+        // Inline all necessary methods.
+        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
+            inline(invoke);
+        }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            inline(invoke);
+        }
+
+        // Canonicalize.
         new CanonicalizerPhase(null, runtime, null).apply(graph);
     }
 
-    private void process(Invoke invoke) {
+    private void inline(Invoke invoke) {
         RiResolvedMethod method = invoke.callTarget().targetMethod();
         if (runtime.mustInline(method)) {
             RiResolvedMethod method1 = invoke.callTarget().targetMethod();
             StructuredGraph inlineGraph = new StructuredGraph();
             new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
             new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
-            InliningUtil.inline(invoke, inlineGraph);
-        } else if (runtime.isFoldable(method)) {
+            InliningUtil.inline(invoke, inlineGraph, false);
+        }
+    }
+
+    private void fold(Invoke invoke) {
+        RiResolvedMethod method = invoke.callTarget().targetMethod();
+        if (runtime.isFoldable(method)) {
             NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
             CiConstant[] constantArgs = new CiConstant[arguments.size()];
             for (int i = 0; i < constantArgs.length; ++i) {
@@ -68,7 +87,7 @@ public class MustInlineAndFoldPhase extends Phase {
             CiConstant foldResult = runtime.fold(method, constantArgs);
             StructuredGraph foldGraph = new StructuredGraph();
             foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-            InliningUtil.inline(invoke, foldGraph);
+            InliningUtil.inline(invoke, foldGraph, false);
         }
     }
 }
