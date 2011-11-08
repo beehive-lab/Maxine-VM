@@ -111,7 +111,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public CiValue setResult(ValueNode x, CiValue operand) {
-        assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind());
+        assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind()) : operand.kind;
 
         x.setOperand(operand);
         if (GraalOptions.DetailedAsserts) {
@@ -368,8 +368,13 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitCheckCast(CheckCastNode x) {
-        XirArgument obj = toXirArgument(x.object());
-        XirSnippet snippet = xir.genCheckCast(site(x), obj, toXirArgument(x.targetClassInstruction()), x.targetClass());
+        CiValue objValue = loadNonConst(operand(x.object()));
+        if (objValue.kind == CiKind.Long) {
+            CiValue newObjValue = newVariable(CiKind.Object);
+            emitMove(objValue, newObjValue);
+            objValue = newObjValue;
+        }
+        XirSnippet snippet = xir.genCheckCast(site(x), toXirArgument(objValue), toXirArgument(x.targetClassInstruction()), x.targetClass());
         emitXir(snippet, x, state(), null, true);
     }
 
