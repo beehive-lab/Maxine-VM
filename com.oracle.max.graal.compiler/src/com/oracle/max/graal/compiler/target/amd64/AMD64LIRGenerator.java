@@ -109,7 +109,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitMove(CiValue input) {
         CiVariable result = newVariable(input.kind.stackKind());
-        assert result.kind != CiKind.Illegal;
         append(MOVE.create(result, input));
         return result;
     }
