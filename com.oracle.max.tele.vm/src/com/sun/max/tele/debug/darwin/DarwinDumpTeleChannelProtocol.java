@@ -43,8 +43,7 @@ import com.sun.max.vm.hosted.*;
 public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor implements DarwinTeleChannelProtocol {
     protected int tlaSize;
     public boolean bigEndian;
-    protected RandomAccessFile dumpRaf;
-    protected DarwinMachO.Header header;
+    protected DarwinMachO machO;
     protected TeleVM teleVM;
     protected static final String HEAP_SYMBOL_NAME = "theHeap";  // defined in image.c, holds the base address of the boot heap
     private final List<Segment64LoadCommand> segmentList = new ArrayList<Segment64LoadCommand>();
@@ -57,17 +56,16 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
             // We need the tele library because we use it to access the OS-specific structs
             // that are embedded in the LC_THREAD segments of the dump file.
             Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
-            dumpRaf = new RandomAccessFile(dump, "r");
-            this.header = DarwinMachO.Header.read(dumpRaf);
-            processLoadCommands();
+            machO = new DarwinMachO(dump.getAbsolutePath());
+            processLoadCommands(machO.getLoadCommands());
         } catch (Exception ex) {
             TeleError.unexpected("failed to open dump file: " + dump, ex);
         }
     }
 
-    private void processLoadCommands() throws IOException {
-        for (int i = 0; i < header.ncmds; i++) {
-            LoadCommand lc = LoadCommand.read(dumpRaf);
+    private void processLoadCommands(LoadCommand[] loadCommands) throws IOException {
+        for (int i = 0; i < loadCommands.length; i++) {
+            LoadCommand lc = loadCommands[i];
             switch (lc.cmd) {
                 case LoadCommand.LC_SEGMENT_64:
                     segmentList.add((Segment64LoadCommand) lc);
@@ -142,8 +140,8 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
             return 0;
         }
         try {
-            dumpRaf.seek(slc.fileoff + (src - slc.vmaddr));
-            return dumpRaf.read(dst, dstOffset, length);
+            machO.raf.seek(slc.fileoff + (src - slc.vmaddr));
+            return machO.raf.read(dst, dstOffset, length);
         } catch (IOException ex) {
             return 0;
         }
