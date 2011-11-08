@@ -90,6 +90,15 @@ public interface MaxPlatform {
             }
         }
 
+        public String libjvmName() {
+            String base = "libjvm";
+            if (this == DARWIN) {
+                return base + "linkage";
+            } else  {
+                return base;
+            }
+        }
+
         @Override
         public final String toString() {
             return name;

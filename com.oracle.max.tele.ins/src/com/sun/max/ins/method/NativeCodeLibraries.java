@@ -29,6 +29,9 @@ import com.oracle.max.elf.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxPlatform.OS;
+import com.sun.max.tele.debug.darwin.*;
+import com.sun.max.tele.debug.darwin.DarwinMachO.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -63,7 +66,8 @@ public class NativeCodeLibraries {
                     libPath = stringFromCString(vm, pathAsCString);
                 } else {
                     // this is mainHandle
-                    libPath = new File(vm.bootImageFile().getParent(), "libjvm." + vm.platform().getOS().libSuffix()).getAbsolutePath();
+                    OS os = vm.platform().getOS();
+                    libPath = new File(vm.bootImageFile().getParent(), os.libjvmName() + "." + os.libSuffix()).getAbsolutePath();
                 }
                 libInfo = new LibInfo(libPath, handle, sentinel, sentinelAddress);
             }
@@ -153,6 +157,7 @@ public class NativeCodeLibraries {
         try {
             updateLibInfo(vm);
         } catch (Exception ex) {
+            System.out.println(ex);
             debug(ex);
         }
         return libs;
@@ -173,7 +178,7 @@ public class NativeCodeLibraries {
                 Reference libInfoReference = vm.getElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
                 TeleLibInfo teleLibInfo = new TeleLibInfo(vm, libInfoReference);
                 LibInfo libInfo = teleLibInfo.libInfo();
-                read(libInfo);
+                processLibrary(teleLibInfo);
                 if (index >= libs.size()) {
                     libs.add(libInfo);
                 }
@@ -183,11 +188,11 @@ public class NativeCodeLibraries {
     }
 
     public static SymbolInfo find(Address address) {
-        Trace.line(1, "NativeCodeMaps.find" + address.to0xHexString());
+        Trace.line(1, "NativeCodeLibraries.find: " + address.to0xHexString());
         for (LibInfo libInfo : libs) {
             for (SymbolInfo info : libInfo.symbols) {
                 if (address.greaterEqual(info.base) && address.lessThan(info.base.plus(info.length))) {
-                    Trace.line(1, "NativeCodeMaps.find: found" + info.name + " base " + info.base.to0xHexString());
+                    Trace.line(1, "NativeCodeLibraries.find: found " + info.name + " base=" + info.base.to0xHexString());
                     return info;
                 }
             }
@@ -202,26 +207,25 @@ public class NativeCodeLibraries {
      * @param libInfo
      * @throws Exception
      */
-    private static void read(LibInfo libInfo) throws Exception {
-        ArrayList<SymbolInfo> values = new ArrayList<SymbolInfo>();
+    private static void processLibrary(TeleLibInfo teleLibInfo) throws Exception {
+        LibInfo libInfo = teleLibInfo.libInfo;
+        Trace.line(1, "NativeCodeLibraries.processLibrary: " + libInfo.path + ", sentinel: " + libInfo.sentinel);
+        ArrayList<SymbolInfo> symbolList = new ArrayList<SymbolInfo>();
         long sentinelOffset = 0;
-        ELFSymbolLookup elfSym = new ELFSymbolLookup(new File(libInfo.path));
-        for (Map.Entry<String, List<ELFSymbolTable.Entry>> mapEntry : elfSym.symbolMap.entrySet()) {
-            List<ELFSymbolTable.Entry> entryList = mapEntry.getValue();
-            for (ELFSymbolTable.Entry entry : entryList) {
-                ELFSymbolTable.Entry64 entry64 = (ELFSymbolTable.Entry64) entry;
-                if (entry64.isFunction() && entry64.st_value != 0) {
-                    values.add(new SymbolInfo(entry64.getName(), libInfo, entry64.st_value));
-                    if (libInfo.sentinel != null && entry64.getName().equals(libInfo.sentinel)) {
-                        sentinelOffset = entry64.st_value;
-                    }
-                }
-            }
+        switch (teleLibInfo.vm.platform().getOS()) {
+            case DARWIN:
+                sentinelOffset = readMachOSymbols(libInfo, symbolList);
+                break;
+            case LINUX:
+            case SOLARIS:
+                sentinelOffset = readElfSymbols(libInfo, symbolList);
+                break;
+            case WINDOWS:
+            case MAXVE:
         }
-
         Address libBase = sentinelOffset == 0 ? Address.zero() : libInfo.sentinelAddress.minus(sentinelOffset);
-        SymbolInfo[] symbolArray = new SymbolInfo[values.size()];
-        values.toArray(symbolArray);
+        SymbolInfo[] symbolArray = new SymbolInfo[symbolList.size()];
+        symbolList.toArray(symbolArray);
         Arrays.sort(symbolArray);
         for (int i = 0; i < symbolArray.length; i++) {
             symbolArray[i].base = symbolArray[i].base.plus(libBase);
@@ -231,6 +235,51 @@ public class NativeCodeLibraries {
         }
         symbolArray[symbolArray.length - 1].length = 100; // TODO do better
         libInfo.symbols = symbolArray;
+    }
+
+    private static long readElfSymbols(LibInfo libInfo, ArrayList<SymbolInfo> symbolList) throws Exception {
+        long sentinelOffset = 0;
+        ELFSymbolLookup elfSym = new ELFSymbolLookup(new File(libInfo.path));
+        for (Map.Entry<String, List<ELFSymbolTable.Entry>> mapEntry : elfSym.symbolMap.entrySet()) {
+            List<ELFSymbolTable.Entry> entryList = mapEntry.getValue();
+            for (ELFSymbolTable.Entry entry : entryList) {
+                ELFSymbolTable.Entry64 entry64 = (ELFSymbolTable.Entry64) entry;
+                if (entry64.isFunction() && entry64.st_value != 0) {
+                    symbolList.add(new SymbolInfo(entry64.getName(), libInfo, entry64.st_value));
+                    if (libInfo.sentinel != null && entry64.getName().equals(libInfo.sentinel)) {
+                        sentinelOffset = entry64.st_value;
+                    }
+                }
+            }
+        }
+        return sentinelOffset;
+    }
+
+    private static long readMachOSymbols(LibInfo libInfo, ArrayList<SymbolInfo> symbolList) throws Exception {
+        long sentinelOffset = 0;
+        DarwinMachO machO = new DarwinMachO(libInfo.path);
+        LoadCommand[] loadCommands = machO.getLoadCommands();
+        for (int i = 0; i < loadCommands.length; i++) {
+            if (loadCommands[i].cmd == LoadCommand.LC_SYMTAB) {
+                SymTabLoadCommand slc = (SymTabLoadCommand) loadCommands[i];
+                NList64[] symbolTable = slc.getSymbolTable();
+                for (NList64 nlist64 : symbolTable) {
+                    if ((nlist64.type & NList64.STAB) != 0) {
+                        continue;
+                    } else if ((nlist64.type & NList64.TYPE) == NList64.SECT) {
+                        Section64 s64 = DarwinMachO.getSection(loadCommands, nlist64.sect);
+                        if (s64.isText()) {
+                            String name = slc.getSymbolName(nlist64);
+                            symbolList.add(new SymbolInfo(name, libInfo, nlist64.value));
+                            if (libInfo.sentinel != null && name.equals(libInfo.sentinel)) {
+                                sentinelOffset = nlist64.value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sentinelOffset;
     }
 
 }
