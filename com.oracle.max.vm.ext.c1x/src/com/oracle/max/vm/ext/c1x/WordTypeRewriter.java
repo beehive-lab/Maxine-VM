@@ -65,6 +65,11 @@ public class WordTypeRewriter implements BlockClosure {
     private void rewriteWord(Value value) {
         if (value.kind == CiKind.Object && isWord(value)) {
             value.kind = WordUtil.archKind();
+            if (value instanceof Constant) {
+                Constant constant = (Constant) value;
+                CiConstant oldConstant = constant.value;
+                constant.setValue(CiConstant.forLong(((WrappedWord) oldConstant.asObject()).value()));
+            }
         }
     }
 
@@ -75,8 +80,8 @@ public class WordTypeRewriter implements BlockClosure {
 
         } else if (value instanceof Constant) {
             Constant c = (Constant) value;
-            assert c.value.kind == CiKind.Object || c.value.kind == WordUtil.archKind();
-            return c.value.kind == WordUtil.archKind();
+            assert c.value.kind == CiKind.Object;
+            return c.value.asObject() instanceof WrappedWord;
 
         } else if (value instanceof Return) {
             Return r = (Return) value;
