@@ -368,13 +368,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitCheckCast(CheckCastNode x) {
-        CiValue objValue = loadNonConst(operand(x.object()));
-        if (objValue.kind == CiKind.Long) {
-            CiValue newObjValue = newVariable(CiKind.Object);
-            emitMove(objValue, newObjValue);
-            objValue = newObjValue;
-        }
-        XirSnippet snippet = xir.genCheckCast(site(x), toXirArgument(objValue), toXirArgument(x.targetClassInstruction()), x.targetClass());
+        XirSnippet snippet = xir.genCheckCast(site(x), toXirArgument(x.object()), toXirArgument(x.targetClassInstruction()), x.targetClass());
         emitXir(snippet, x, state(), null, true);
     }
 

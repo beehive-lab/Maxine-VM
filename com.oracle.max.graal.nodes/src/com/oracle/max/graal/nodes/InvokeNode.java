@@ -96,6 +96,6 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     @Override
     public FrameState stateDuring() {
         FrameState stateAfter = stateAfter();
-        return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.kind);
+        return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.callTarget.targetMethod().signature().returnKind(false));
     }
 }
