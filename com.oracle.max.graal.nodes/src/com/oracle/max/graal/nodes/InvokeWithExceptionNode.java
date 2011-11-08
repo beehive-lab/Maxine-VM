@@ -159,4 +159,9 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
             stateAfter.delete();
         }
     }
+
+    @Override
+    public boolean needsStateAfter() {
+        return true;
+    }
 }

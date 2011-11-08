@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
 /**
  * Load of a value from a location specified as an offset relative to an object.
  */
-public class ExtendedUnsafeLoadNode extends StateSplit implements Lowerable, Node.ValueNumberable {
+public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowerable, Node.ValueNumberable {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;

@@ -28,7 +28,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
-public abstract class AbstractMemoryCheckpointNode extends StateSplit implements MemoryCheckpoint {
+public abstract class AbstractMemoryCheckpointNode extends AbstractStateSplit implements MemoryCheckpoint {
 
     @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
 

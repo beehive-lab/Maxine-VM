@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
 /**
  * Adds a Safepoint to the generated code and possibly create a safepoint.
  */
-public final class SafepointNode extends StateSplit implements AMD64LIRLowerable {
+public final class SafepointNode extends AbstractStateSplit implements AMD64LIRLowerable {
 
     public static enum Op {
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE

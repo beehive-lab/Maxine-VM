@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
 /**
  * This node is used to perform the finalizer registration at the end of the java.lang.Object constructor.
  */
-public final class RegisterFinalizerNode extends StateSplit implements Canonicalizable, LIRLowerable {
+public final class RegisterFinalizerNode extends AbstractStateSplit implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode object;
 

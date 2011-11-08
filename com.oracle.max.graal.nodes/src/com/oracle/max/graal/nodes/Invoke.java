@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.nodes.java.*;
 
-public interface Invoke {
+public interface Invoke extends StateSplit {
 
     FixedNode next();
 
