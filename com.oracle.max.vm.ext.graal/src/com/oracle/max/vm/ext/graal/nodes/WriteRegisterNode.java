@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * Writes a value into the given register.
  */
-public final class WriteRegisterNode extends StateSplit implements LIRLowerable {
+public final class WriteRegisterNode extends AbstractStateSplit implements LIRLowerable {
 
     @Input private ValueNode value;
     @Data private final CiRegister register;

@@ -20,30 +20,50 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.java;
+package com.oracle.max.graal.nodes;
 
-import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
 /**
- * This the base class of all array operations.
+ * The {@code AbstractStateSplit} class is the abstract base class of all instructions
+ * that store an immutable copy of the frame state.
  */
-public abstract class AccessArrayNode extends AbstractStateSplit {
+public abstract class AbstractStateSplit extends FixedWithNextNode implements StateSplit {
 
-    @Input private ValueNode array;
+    @Input private FrameState stateAfter;
 
-    public ValueNode array() {
-        return array;
+    @Override
+    public FrameState stateAfter() {
+        return stateAfter;
+    }
+
+    @Override
+    public void setStateAfter(FrameState x) {
+        updateUsages(stateAfter, x);
+        stateAfter = x;
     }
 
     /**
-     * Creates a new AccessArrayNode.
-     * @param kind the type of the result of this instruction
-     * @param array the instruction that produces the array object value
+     * Creates a new state split with the specified value type.
+     * @param kind the type of the value that this instruction produces
      */
-    public AccessArrayNode(CiKind kind, ValueNode array) {
+    public AbstractStateSplit(CiKind kind) {
         super(kind);
-        this.array = array;
     }
 
+    @Override
+    public boolean needsStateAfter() {
+        return true;
+    }
+
+    @Override
+    public void delete() {
+        FrameState stateAfter = stateAfter();
+        super.delete();
+        if (stateAfter != null) {
+            if (stateAfter.usages().isEmpty()) {
+                stateAfter.delete();
+            }
+        }
+    }
 }

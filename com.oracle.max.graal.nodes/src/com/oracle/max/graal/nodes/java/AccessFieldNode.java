@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The base class of all instructions that access fields.
  */
-public abstract class AccessFieldNode extends StateSplit implements Lowerable {
+public abstract class AccessFieldNode extends AbstractStateSplit implements Lowerable {
 
     @Input private ValueNode object;
 

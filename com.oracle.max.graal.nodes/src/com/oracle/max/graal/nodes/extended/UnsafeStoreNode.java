@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
 /**
  * Store of a value at a location specified as an offset relative to an object.
  */
-public class UnsafeStoreNode extends StateSplit implements Lowerable {
+public class UnsafeStoreNode extends AbstractStateSplit implements Lowerable {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;

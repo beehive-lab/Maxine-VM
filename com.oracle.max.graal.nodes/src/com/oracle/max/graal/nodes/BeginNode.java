@@ -28,7 +28,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public class BeginNode extends StateSplit implements LIRLowerable, Canonicalizable {
+public class BeginNode extends AbstractStateSplit implements LIRLowerable, Canonicalizable {
     public BeginNode() {
         super(CiKind.Illegal);
     }

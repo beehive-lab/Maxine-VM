@@ -282,10 +282,10 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     public void mergeOrClone(Block target, FrameStateAccess newState) {
-        StateSplit first = (StateSplit) target.firstInstruction;
+        AbstractStateSplit first = (AbstractStateSplit) target.firstInstruction;
 
         if (target.isLoopHeader && isVisited(target)) {
-            first = (StateSplit) loopBegin(target).loopEnd().predecessor();
+            first = (AbstractStateSplit) loopBegin(target).loopEnd().predecessor();
         }
 
         int bci = target.startBci;
@@ -1289,7 +1289,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
         FixedNode result = null;
         if (block.isLoopHeader && isVisited(block)) {
-            result = (StateSplit) loopBegin(block).loopEnd().predecessor();
+            result = (FixedNode) loopBegin(block).loopEnd().predecessor();
         } else {
             result = block.firstInstruction;
         }
@@ -1368,7 +1368,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             if (b.isLoopHeader) {
                 LoopBeginNode begin = loopBegin(b);
                 LoopEndNode loopEnd = begin.loopEnd();
-                StateSplit loopEndPred = (StateSplit) loopEnd.predecessor();
+                AbstractStateSplit loopEndPred = (AbstractStateSplit) loopEnd.predecessor();
 
 //              This can happen with degenerated loops like this one:
 //                for (;;) {
