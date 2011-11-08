@@ -27,7 +27,9 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
+import static com.sun.max.vm.jni.NativeStubGenerator.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
+import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.util.*;
 
@@ -52,6 +54,7 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -408,6 +411,19 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             preparer.setReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
+        }
+
+        // prepare map for handlized object arguments in a native method stub
+        if (!USE_STACK_HANDLE_INTRINSIC && classMethodActor != null && classMethodActor.compilee().isNative()) {
+            Pointer objectHandlesBase = current.sp().readWord(OBJECT_HANDLES_BASE_OFFSET).asPointer();
+            if (!objectHandlesBase.isZero()) {
+                int handles = NativeStubGenerator.objectHandlesSize(classMethodActor.descriptor()) / STACK_SLOT_SIZE;
+                slotPointer = objectHandlesBase;
+                for (int i = 0; i < handles; i++) {
+                    preparer.setReferenceMapBits(current, slotPointer, 1, 1);
+                    slotPointer = slotPointer.plus(STACK_SLOT_SIZE);
+                }
+            }
         }
     }
 
