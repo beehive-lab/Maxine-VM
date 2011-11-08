@@ -108,32 +108,8 @@ public class Block {
         }
     }
 
-    public FixedNode createAnchor() {
-        if (anchor == null) {
-            if (firstNode instanceof AnchorNode || firstNode instanceof BeginNode) {
-                this.anchor = (FixedNode) firstNode;
-            } else if (firstNode instanceof ExceptionObjectNode) {
-                FixedWithNextNode fixedNode = (FixedWithNextNode) firstNode;
-                if (fixedNode.next() instanceof AnchorNode) {
-                    this.anchor = fixedNode.next();
-                } else {
-                    AnchorNode a = firstNode.graph().add(new AnchorNode());
-                    FixedNode next = fixedNode.next();
-                    fixedNode.setNext(a);
-                    a.setNext(next);
-                    this.anchor = a;
-                }
-            } else {
-                assert !(firstNode instanceof AnchorNode);
-                AnchorNode a = firstNode.graph().add(new AnchorNode());
-                assert firstNode.predecessor() != null : firstNode;
-                Node pred = firstNode.predecessor();
-                pred.replaceFirstSuccessor(firstNode, a);
-                a.setNext((FixedNode) firstNode);
-                this.anchor = a;
-            }
-        }
-        return anchor;
+    public BeginNode createAnchor() {
+        return (BeginNode) firstNode;
     }
 
     public void setLastNode(Node node) {

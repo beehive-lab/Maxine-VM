@@ -131,7 +131,6 @@ public interface RiResolvedMethod extends RiMethod {
 
     /**
      * Gets the list of exception handlers for this method.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the list of exception handlers
      */
     RiExceptionHandler[] exceptionHandlers();

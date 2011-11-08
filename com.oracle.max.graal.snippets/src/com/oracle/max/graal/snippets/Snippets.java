@@ -28,6 +28,7 @@ import java.util.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -68,8 +69,11 @@ public class Snippets {
 
                 new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
-                Collection<InvokeNode> invokes = new ArrayList<InvokeNode>();
+                Collection<Invoke> invokes = new ArrayList<Invoke>();
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
+                    invokes.add(invoke);
+                }
+                for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
                     invokes.add(invoke);
                 }
                 new InliningPhase(runtime, target, invokes, null).apply(graph, context);
@@ -91,6 +95,15 @@ public class Snippets {
                 targetRiMethod.compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("Could not resolve method to substitute with: " + snippet.getName(), e);
+            } catch (VerificationError error) {
+                if (context.isObserved()) {
+                    if (error.node() != null) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    } else if (error.graph() != null) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    }
+                }
+                throw error;
             }
         }
     }

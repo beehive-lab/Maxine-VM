@@ -41,6 +41,9 @@ public class IntrinsificationPhase extends Phase {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke, runtime);
         }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            tryIntrinsify(invoke);
+        }
     }
 
     public static void tryIntrinsify(InvokeNode invoke, GraalRuntime runtime) {

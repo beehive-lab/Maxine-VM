@@ -20,14 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.nodes.extended;
 
-public interface StateSplit {
+import com.oracle.max.graal.graph.*;
 
-    FrameState stateAfter();
+public interface MemoryCheckpoint {
 
-    void setStateAfter(FrameState x);
+    NodeInputList<Node> mergedNodes();
 
-    boolean needsStateAfter();
-
+    Node node();
 }

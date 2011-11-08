@@ -672,10 +672,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public abstract void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info);
     public abstract CiVariable emitCMove(CiValue leftVal, CiValue right, Condition cond, boolean unorderedIsTrue, CiValue trueValue, CiValue falseValue);
 
-    protected FrameState stateBeforeCallReturn(FrameState stateAfter, CallTargetNode call, int bci) {
-        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind());
-    }
-
     protected FrameState stateBeforeCallWithArguments(FrameState stateAfter, MethodCallTargetNode call, int bci) {
         return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind(), toJVMArgumentStack(call.targetMethod().signature(), call.isStatic(), call.arguments()));
     }
@@ -700,39 +696,39 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     @Override
-    public void emitInvoke(InvokeNode x) {
+    public void emitInvoke(Invoke x) {
         MethodCallTargetNode callTarget = x.callTarget();
         RiMethod target = callTarget.targetMethod();
-        LIRDebugInfo info = stateFor(stateBeforeCallWithArguments(x.stateAfter(), x.callTarget(), x.bci()));
-        LIRDebugInfo info2 = stateFor(stateBeforeCallReturn(x.stateAfter(), x.callTarget(), x.bci()));
-        if (x.exceptionEdge() != null) {
-            info2.setExceptionEdge(getLIRBlock(x.exceptionEdge()));
+        LIRDebugInfo info = stateFor(stateBeforeCallWithArguments(x.stateAfter(), callTarget, x.bci()));
+        LIRDebugInfo info2 = stateFor(x.stateDuring());
+        if (x instanceof InvokeWithExceptionNode) {
+            info2.setExceptionEdge(getLIRBlock(((InvokeWithExceptionNode) x).exceptionEdge()));
         }
 
         XirSnippet snippet = null;
         XirArgument receiver;
         switch (callTarget.invokeKind()) {
             case Static:
-                snippet = xir.genInvokeStatic(site(x), target);
+                snippet = xir.genInvokeStatic(site(x.node()), target);
                 break;
             case Special:
                 assert callTarget.receiver().kind() == CiKind.Object : callTarget;
                 receiver = toXirArgument(callTarget.receiver());
-                snippet = xir.genInvokeSpecial(site(x), receiver, target);
+                snippet = xir.genInvokeSpecial(site(x.node()), receiver, target);
                 break;
             case Virtual:
                 assert callTarget.receiver().kind() == CiKind.Object : callTarget;
                 receiver = toXirArgument(callTarget.receiver());
-                snippet = xir.genInvokeVirtual(site(x), receiver, target);
+                snippet = xir.genInvokeVirtual(site(x.node()), receiver, target);
                 break;
             case Interface:
                 assert callTarget.receiver().kind() == CiKind.Object : callTarget;
                 receiver = toXirArgument(callTarget.receiver());
-                snippet = xir.genInvokeInterface(site(x), receiver, target);
+                snippet = xir.genInvokeInterface(site(x.node()), receiver, target);
                 break;
         }
 
-        CiValue resultOperand = resultOperandFor(x.kind());
+        CiValue resultOperand = resultOperandFor(x.node().kind());
 
         CiKind[] signature = CiUtil.signatureToKinds(callTarget.targetMethod().signature(), callTarget.isStatic() ? null : callTarget.targetMethod().holder().kind(true));
         CiCallingConvention cc = compilation.registerConfig.getCallingConvention(JavaCall, signature, target(), false);
@@ -742,7 +738,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
         // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
         // implicit calling convention between the XirSnippet and the call.
-        CiValue destinationAddress = emitXir(snippet, x, info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        CiValue destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -755,7 +751,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         if (resultOperand.isLegal()) {
-            setResult(x, emitMove(resultOperand));
+            setResult(x.node(), emitMove(resultOperand));
         }
     }
 
@@ -865,8 +861,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         compilation.frameMap().usesStub(stub);
         return stub;
     }
-
-
 
     @Override
     public void emitLookupSwitch(LookupSwitchNode x) {

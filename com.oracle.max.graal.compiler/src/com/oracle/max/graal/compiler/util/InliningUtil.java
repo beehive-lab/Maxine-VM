@@ -31,19 +31,16 @@ import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
+    public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
-        StructuredGraph graph = invoke.graph();
+        StructuredGraph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
-        FixedNode exceptionEdge = invoke.exceptionEdge();
-        if (exceptionEdge instanceof PlaceholderNode) {
-            exceptionEdge = ((PlaceholderNode) exceptionEdge).next();
-        }
 
         IdentityHashMap<Node, Node> replacements = new IdentityHashMap<Node, Node>();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -69,8 +66,8 @@ public class InliningUtil {
             }
         }
 
-        assert invoke.successors().first() != null : invoke;
-        assert invoke.predecessor() != null;
+        assert invoke.node().successors().first() != null : invoke;
+        assert invoke.node().predecessor() != null;
 
         Map<Node, Node> duplicates = graph.addDuplicate(nodes, replacements);
 
@@ -84,10 +81,10 @@ public class InliningUtil {
             guard.setNext(firstCFGNodeDuplicate);
             invokeReplacement = guard;
         }
-        invoke.replaceAtPredecessors(invokeReplacement);
+        invoke.node().replaceAtPredecessors(invokeReplacement);
 
         FrameState stateBefore = null;
-        double invokeProbability = invoke.probability();
+        double invokeProbability = invoke.node().probability();
         for (Node node : duplicates.values()) {
             if (GraalOptions.ProbabilityAnalysis) {
                 if (node instanceof FixedNode) {
@@ -99,7 +96,7 @@ public class InliningUtil {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.kind(), parameters);
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters);
                     }
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
@@ -119,11 +116,11 @@ public class InliningUtil {
         }
 
         if (returnNode != null) {
-            for (Node usage : invoke.usages().snapshot()) {
+            for (Node usage : invoke.node().usages().snapshot()) {
                 if (returnNode.result() instanceof LocalNode) {
-                    usage.replaceFirstInput(invoke, replacements.get(returnNode.result()));
+                    usage.replaceFirstInput(invoke.node(), replacements.get(returnNode.result()));
                 } else {
-                    usage.replaceFirstInput(invoke, duplicates.get(returnNode.result()));
+                    usage.replaceFirstInput(invoke.node(), duplicates.get(returnNode.result()));
                 }
             }
             Node returnDuplicate = duplicates.get(returnNode);
@@ -133,11 +130,12 @@ public class InliningUtil {
             returnDuplicate.replaceAndDelete(n);
         }
 
-        if (exceptionEdge != null) {
+        if (invoke instanceof InvokeWithExceptionNode) {
+            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
             if (unwindNode != null) {
                 assert unwindNode.predecessor() != null;
-                assert exceptionEdge.successors().explicitCount() == 1;
-                ExceptionObjectNode obj = (ExceptionObjectNode) exceptionEdge;
+                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
+                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
 
                 UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
                 for (Node usage : obj.usages().snapshot()) {
@@ -148,8 +146,8 @@ public class InliningUtil {
                 obj.setNext(null);
                 unwindDuplicate.replaceAndDelete(n);
             } else {
-                FixedNode nodeToDelete = invoke.exceptionEdge();
-                invoke.setExceptionEdge(null);
+                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
+                invokeWithException.setExceptionEdge(null);
                 GraphUtil.killCFG(nodeToDelete);
             }
         } else {
@@ -159,12 +157,12 @@ public class InliningUtil {
             }
         }
 
-        invoke.clearInputs();
-        GraphUtil.killCFG(invoke);
+        invoke.node().clearInputs();
+        GraphUtil.killCFG(invoke.node());
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
-            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.kind());
+            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.node().kind());
             for (Node node : frameStates) {
                 FrameState frameState = (FrameState) duplicates.get(node);
                 if (!frameState.isDeleted()) {
@@ -179,7 +177,7 @@ public class InliningUtil {
 
     }
 
-    public static ValueNode[] simplifyParameters(InvokeNode invoke) {
+    public static ValueNode[] simplifyParameters(Invoke invoke) {
         MethodCallTargetNode target = invoke.callTarget();
         RiMethod method = target.targetMethod();
         NodeInputList<ValueNode> arguments = target.arguments();
