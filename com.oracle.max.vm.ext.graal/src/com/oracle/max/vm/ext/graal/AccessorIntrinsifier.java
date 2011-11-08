@@ -50,7 +50,7 @@ public class AccessorIntrinsifier implements Intrinsifier {
                 if (accessor != null) {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
 
-                    // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
+                    // TODO (gd) move this to a graph buidling utility when GraphBuilderPhase is moved to its own project
                     StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
                         StructuredGraph duplicate = new StructuredGraph();
