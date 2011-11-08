@@ -101,10 +101,17 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         return invokes;
     }
 
+    public Invoke invoke() {
+        if (this.usages().size() == 0) {
+            return null;
+        }
+        return (Invoke) this.usages().iterator().next();
+    }
 
 
     @Override
     public boolean verify() {
+        assert usages().size() <= 1 : "call target may only be used by a single invoke";
         for (Node n : usages()) {
             assertTrue(n instanceof Invoke, "call target can only be used from an invoke (%s)", n);
         }
@@ -124,7 +131,7 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
     public Node canonical(CanonicalizerTool tool) {
         if (!isStatic()) {
             ValueNode receiver = receiver();
-            if (receiver.exactType() != null && invokeKind == InvokeKind.Interface) {
+            if (receiver != null && receiver.exactType() != null && invokeKind == InvokeKind.Interface) {
                 invokeKind = InvokeKind.Virtual;
                 targetMethod = receiver.exactType().resolveMethodImpl(targetMethod);
             }

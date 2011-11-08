@@ -1081,7 +1081,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             append(deoptimize);
             frameState.pushReturn(resultType, ConstantNode.defaultForKind(resultType, graph));
         } else {
-            MethodCallTargetNode callTarget = graph.unique(new MethodCallTargetNode(invokeKind, targetMethod, args, targetMethod.signature().returnType(method.holder())));
+            MethodCallTargetNode callTarget = graph.add(new MethodCallTargetNode(invokeKind, targetMethod, args, targetMethod.signature().returnType(method.holder())));
             BeginNode exceptionEdge = handleException(null, bci());
             ValueNode result;
             if (exceptionEdge != null) {
