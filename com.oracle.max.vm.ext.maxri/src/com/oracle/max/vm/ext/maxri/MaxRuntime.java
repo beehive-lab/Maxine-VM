@@ -452,7 +452,9 @@ public class MaxRuntime implements GraalRuntime {
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
             ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
+            if (load.object().kind() == CiKind.Object) {
+                memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
+            }
             FixedNode next = load.next();
             load.setNext(null);
             memoryRead.setNext(next);
@@ -463,6 +465,9 @@ public class MaxRuntime implements GraalRuntime {
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
+            if (store.object().kind() == CiKind.Object) {
+                write.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(store.object(), false))));
+            }
             FixedNode next = store.next();
             store.setNext(null);
             // TODO: add Maxine-specific write barrier
