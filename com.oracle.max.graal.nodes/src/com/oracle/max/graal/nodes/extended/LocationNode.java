@@ -52,12 +52,13 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
         return displacement;
     }
 
-    public static LocationNode create(Object identity, CiKind kind, int displacement, Graph<?> graph) {
+    public static LocationNode create(Object identity, CiKind kind, int displacement, Graph graph) {
         return graph.unique(new LocationNode(identity, kind, displacement));
     }
 
     protected LocationNode(Object identity, CiKind kind, int displacement) {
         super(CiKind.Illegal);
+        assert kind != CiKind.Illegal && kind != CiKind.Void;
         this.displacement = displacement;
         this.valueKind = kind;
         this.locationIdentity = identity;

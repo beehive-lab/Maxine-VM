@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /* TODO(tw/gd) For high-level optimization purpose the compare node should be a boolean *value* (it is currently only a helper node)
  * But in the back-end the comparison should not always be materialized (for example in x86 the comparison result will not be in a register but in a flag)
@@ -33,7 +34,7 @@ import com.sun.cri.ci.*;
  * Compare should probably be made a value (so that it can be canonicalized for example) and in later stages some Compare usage should be transformed
  * into variants that do not materialize the value (CompareIf, CompareGuard...)
  */
-public final class CompareNode extends BooleanNode implements Canonicalizable {
+public final class CompareNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode x;
     @Input private ValueNode y;
@@ -71,7 +72,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
      */
     public CompareNode(ValueNode x, Condition condition, boolean unorderedIsTrue, ValueNode y) {
         super(CiKind.Illegal);
-        assert (x == null && y == null) || x.kind == y.kind;
+        assert (x == null && y == null) || x.kind() == y.kind();
         this.condition = condition;
         this.unorderedIsTrue = unorderedIsTrue;
         this.x = x;
@@ -116,7 +117,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
     }
 
     @Override
@@ -128,13 +129,13 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         }
     }
 
-    private Node optimizeMaterialize(CiConstant constant, MaterializeNode materializeNode) {
+    private Node optimizeMaterialize(CiConstant constant, MaterializeNode materializeNode, RiRuntime runtime) {
         CiConstant trueConstant = materializeNode.trueValue().asConstant();
         CiConstant falseConstant = materializeNode.falseValue().asConstant();
 
         if (falseConstant != null && trueConstant != null) {
-            Boolean trueResult = condition().foldCondition(trueConstant, constant, graph().start().runtime(), unorderedIsTrue());
-            Boolean falseResult = condition().foldCondition(falseConstant, constant, graph().start().runtime(), unorderedIsTrue());
+            Boolean trueResult = condition().foldCondition(trueConstant, constant, runtime, unorderedIsTrue());
+            Boolean falseResult = condition().foldCondition(falseConstant, constant, runtime, unorderedIsTrue());
 
             if (trueResult != null && falseResult != null) {
                 boolean trueUnboxedResult = trueResult;
@@ -157,7 +158,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
     }
 
     private Node optimizeNormalizeCmp(CiConstant constant, NormalizeCompareNode normalizeNode) {
-        if (normalizeNode.x().kind.isFloatOrDouble()) {
+        if (normalizeNode.x().kind().isFloatOrDouble()) {
             // NaN values lead to unexpected comparison results...
             return this;
         }
@@ -181,7 +182,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         } else if (x().isConstant() && y().isConstant()) {
             CiConstant constX = x().asConstant();
             CiConstant constY = y().asConstant();
-            Boolean result = condition().foldCondition(constX, constY, graph().start().runtime(), unorderedIsTrue());
+            Boolean result = condition().foldCondition(constX, constY, tool.runtime(), unorderedIsTrue());
             if (result != null) {
                 return ConstantNode.forBoolean(result, graph());
             }
@@ -189,16 +190,16 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
 
         if (y().isConstant()) {
             if (x() instanceof MaterializeNode) {
-                return optimizeMaterialize(y().asConstant(), (MaterializeNode) x());
+                return optimizeMaterialize(y().asConstant(), (MaterializeNode) x(), tool.runtime());
             } else if (x() instanceof NormalizeCompareNode) {
                 return optimizeNormalizeCmp(y().asConstant(), (NormalizeCompareNode) x());
             }
         }
 
-        if (x() == y() && x().kind != CiKind.Float && x().kind != CiKind.Double) {
+        if (x() == y() && x().kind() != CiKind.Float && x().kind() != CiKind.Double) {
             return ConstantNode.forBoolean(condition().check(1, 1), graph());
         }
-        if ((condition == Condition.NE || condition == Condition.EQ) && x().kind == CiKind.Object) {
+        if ((condition == Condition.NE || condition == Condition.EQ) && x().kind() == CiKind.Object) {
             ValueNode object = null;
             if (x().isNullConstant()) {
                 object = y();

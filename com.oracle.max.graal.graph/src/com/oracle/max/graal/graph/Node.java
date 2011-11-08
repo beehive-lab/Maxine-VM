@@ -104,7 +104,7 @@ public abstract class Node implements Cloneable {
         return id;
     }
 
-    public Graph<?> graph() {
+    public Graph graph() {
         return graph;
     }
 
@@ -156,7 +156,7 @@ public abstract class Node implements Cloneable {
         assert assertTrue(usages != null, "usages == null while adding %s to %s", newInput, this);
         if (oldInput != newInput) {
             if (oldInput != null) {
-                boolean result = oldInput.usages.remove(this);
+                boolean result = removeThisFromUsages(oldInput);
                 assert assertTrue(result, "not found in usages, old input: %s", oldInput);
             }
             if (newInput != null) {
@@ -252,9 +252,20 @@ public abstract class Node implements Cloneable {
         assert assertFalse(isDeleted(), "cannot clear inputs of deleted node");
 
         for (Node input : inputs()) {
-            input.usages.remove(this);
+            removeThisFromUsages(input);
         }
         getNodeClass().clearInputs(this);
+    }
+
+    private boolean removeThisFromUsages(Node n) {
+        if (n.usages.remove(this)) {
+            if (n.usages.size() == 0) {
+                graph.usagesDropped.add(n);
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void clearSuccessors() {
@@ -275,7 +286,6 @@ public abstract class Node implements Cloneable {
 
     public void delete() {
         assert checkDeletion();
-
         clearInputs();
         clearSuccessors();
         graph.unregister(this);

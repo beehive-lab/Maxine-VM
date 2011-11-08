@@ -44,14 +44,14 @@ public final class NegateNode extends FloatingNode implements Canonicalizable, L
      * @param x the instruction producing the value that is input to this instruction
      */
     public NegateNode(ValueNode x) {
-        super(x.kind);
+        super(x.kind());
         this.x = x;
     }
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant()) {
-            switch (x().kind) {
+            switch (x().kind()) {
                 case Int:
                     return ConstantNode.forInt(-x().asConstant().asInt(), graph());
                 case Long:

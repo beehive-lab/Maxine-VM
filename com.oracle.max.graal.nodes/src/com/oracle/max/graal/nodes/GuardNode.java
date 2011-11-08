@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class GuardNode extends FloatingNode implements Canonicalizable {
+public final class GuardNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
     @Input private BooleanNode condition;
     @Input private FixedNode anchor;
@@ -55,8 +55,8 @@ public final class GuardNode extends FloatingNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitGuardNode(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitGuardCheck(condition());
     }
 
     @Override

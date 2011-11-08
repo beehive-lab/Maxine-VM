@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -33,27 +34,20 @@ import com.sun.cri.ri.*;
  * to a function call.
  */
 
-public final class LocalNode extends FloatingNode {
-
-    @Input private EntryPointNode entryPoint;
-
-    public EntryPointNode entryPoint() {
-        return entryPoint;
-    }
-
+public final class LocalNode extends FloatingNode implements Node.IterableNodeType {
     @Data private final int index;
+
+    // TODO(tw): Create a class representing information about a value.
     @Data private RiResolvedType declaredType;
     @Data private boolean canBeNull;
 
-
-    public LocalNode(CiKind kind, int javaIndex, EntryPointNode entryPoint) {
-        this(kind, javaIndex, entryPoint, true);
+    public LocalNode(CiKind kind, int javaIndex) {
+        this(kind, javaIndex, true);
     }
 
-    public LocalNode(CiKind kind, int javaIndex, EntryPointNode entryPoint, boolean canBeNull) {
+    public LocalNode(CiKind kind, int javaIndex, boolean canBeNull) {
         super(kind);
         this.index = javaIndex;
-        this.entryPoint = entryPoint;
         this.canBeNull = canBeNull;
     }
 

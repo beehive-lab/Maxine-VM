@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public class LoopEndNode extends FixedNode implements Node.IterableNodeType {
+public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
     @Input private LoopBeginNode loopBegin;
 
@@ -45,7 +45,7 @@ public class LoopEndNode extends FixedNode implements Node.IterableNodeType {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoopEnd(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitLoopEnd(this);
     }
 }

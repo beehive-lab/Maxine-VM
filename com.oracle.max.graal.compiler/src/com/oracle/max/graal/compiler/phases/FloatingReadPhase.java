@@ -35,10 +35,6 @@ import com.sun.cri.ci.*;
 
 public class FloatingReadPhase extends Phase {
 
-    public FloatingReadPhase(GraalContext context) {
-        super(context);
-    }
-
     private static class MemoryMap {
         private Block block;
         private IdentityHashMap<Object, Node> map;
@@ -146,9 +142,9 @@ public class FloatingReadPhase extends Phase {
             }
         }
 
-        public void processCheckpoint(AbstractMemoryCheckpointNode checkpoint) {
+        public void processCheckpoint(MemoryCheckpoint checkpoint) {
             map.clear();
-            map.put(LocationNode.ANY_LOCATION, checkpoint);
+            map.put(LocationNode.ANY_LOCATION, checkpoint.node());
         }
 
         public void processWrite(WriteNode writeNode) {
@@ -214,7 +210,7 @@ public class FloatingReadPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
 
         // Add start node write checkpoint.
         addStartCheckpoint(graph);
@@ -252,9 +248,8 @@ public class FloatingReadPhase extends Phase {
                 if (n instanceof WriteNode) {
                     WriteNode writeNode = (WriteNode) n;
                     traceWrite(loop, writeNode.location().locationIdentity(), modifiedValues);
-                } else if (n instanceof AbstractMemoryCheckpointNode) {
+                } else if (n instanceof MemoryCheckpoint) {
                     traceMemoryCheckpoint(loop, modifiedValues);
-
                 }
             }
         }
@@ -269,8 +264,8 @@ public class FloatingReadPhase extends Phase {
         }
 
         // Identify blocks.
-        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(context, false);
-        s.apply(graph);
+        final IdentifyBlocksPhase s = new IdentifyBlocksPhase(false);
+        s.apply(graph, context);
         List<Block> blocks = s.getBlocks();
 
         // Process blocks (predecessors first).
@@ -280,8 +275,8 @@ public class FloatingReadPhase extends Phase {
         }
     }
 
-    private void addStartCheckpoint(Graph<EntryPointNode> graph) {
-        EntryPointNode entryPoint = graph.start();
+    private void addStartCheckpoint(StructuredGraph graph) {
+        BeginNode entryPoint = graph.start();
         WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
         FixedNode next = entryPoint.next();
         entryPoint.setNext(checkpoint);
@@ -329,8 +324,8 @@ public class FloatingReadPhase extends Phase {
             } else if (n instanceof WriteNode) {
                 WriteNode writeNode = (WriteNode) n;
                 map.processWrite(writeNode);
-            } else if (n instanceof AbstractMemoryCheckpointNode) {
-                AbstractMemoryCheckpointNode checkpoint = (AbstractMemoryCheckpointNode) n;
+            } else if (n instanceof MemoryCheckpoint) {
+                MemoryCheckpoint checkpoint = (MemoryCheckpoint) n;
                 map.processCheckpoint(checkpoint);
             }
         }
@@ -364,7 +359,7 @@ public class FloatingReadPhase extends Phase {
         modifiedValues.get(loop).add(locationIdentity);
     }
 
-    private void print(Graph<EntryPointNode> graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
+    private void print(StructuredGraph graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
 
         TTY.println();
         TTY.println("Loops:");

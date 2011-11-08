@@ -131,7 +131,7 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    public void print(Graph<?> graph, String title, boolean shortNames) {
+    public void print(Graph graph, String title, boolean shortNames) {
         print(graph, title, shortNames, Collections.<String, Object>emptyMap());
     }
 
@@ -139,7 +139,7 @@ public class IdealGraphPrinter {
      * Prints an entire {@link Graph} with the specified title, optionally using short names for nodes.
      */
     @SuppressWarnings("unchecked")
-    public void print(Graph<?> graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
+    public void print(Graph graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
         stream.printf(" <graph name='%s'>%n", escape(title));
         noBlockNodes.clear();
         IdentifyBlocksPhase schedule = null;
@@ -152,15 +152,15 @@ public class IdealGraphPrinter {
         }
         if (schedule == null) {
             try {
-                schedule = new IdentifyBlocksPhase(GraalContext.EMPTY_CONTEXT, true);
-                schedule.apply((Graph<EntryPointNode>) graph, false, false);
+                schedule = new IdentifyBlocksPhase(true);
+                schedule.apply((StructuredGraph) graph, false, false);
             } catch (Throwable t) {
                 // nothing to do here...
             }
         }
         List<Loop> loops = null;
         try {
-            loops = LoopUtil.computeLoops((Graph<EntryPointNode>) graph);
+            loops = LoopUtil.computeLoops((StructuredGraph) graph);
             // loop.nodes() does some more calculations which may fail, so execute this here as well (result is cached)
             if (loops != null) {
                 for (Loop loop : loops) {
@@ -195,7 +195,7 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    private List<Edge> printNodes(Graph<?> graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
+    private List<Edge> printNodes(Graph graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         NodeBitMap loopExits = graph.createNodeBitMap();
         if (loops != null) {
@@ -360,7 +360,7 @@ public class IdealGraphPrinter {
         stream.printf("   <edge from='%s' fromIndex='%d' to='%s' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
     }
 
-    private void printBlock(Graph<?> graph, Block block, NodeMap<Block> nodeToBlock) {
+    private void printBlock(Graph graph, Block block, NodeMap<Block> nodeToBlock) {
         stream.printf("   <block name='%d'>%n", block.blockID());
         stream.println("    <successors>");
         for (Block sux : block.getSuccessors()) {
@@ -384,7 +384,7 @@ public class IdealGraphPrinter {
 
         if (nodes.size() > 0) {
             // if this is the first block: add all locals to this block
-            if (block.getInstructions().size() > 0  && block.getInstructions().get(0) == graph.start()) {
+            if (block.getInstructions().size() > 0 && block.getInstructions().get(0) == ((StructuredGraph) graph).start()) {
                 for (Node node : graph.getNodes()) {
                     if (node instanceof LocalNode) {
                         nodes.add(node);

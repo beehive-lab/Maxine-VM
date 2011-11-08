@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.spi.*;
 /**
  * The {@code TableSwitchNode} represents a table switch.
  */
-public final class TableSwitchNode extends SwitchNode {
+public final class TableSwitchNode extends SwitchNode implements LIRLowerable {
 
     @Data private final int lowKey;
 
@@ -64,7 +64,7 @@ public final class TableSwitchNode extends SwitchNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitTableSwitch(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitTableSwitch(this);
     }
 }

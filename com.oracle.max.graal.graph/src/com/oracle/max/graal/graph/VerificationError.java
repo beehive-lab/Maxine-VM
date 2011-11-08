@@ -77,9 +77,13 @@ public class VerificationError extends Error {
         return String.format(Locale.ENGLISH, msg, args);
     }
 
-    public VerificationError addContext(String name, Object obj) {
-        context.add(format("%s: %s", name, obj));
+    public VerificationError addContext(String context) {
+        this.context.add(context);
         return this;
+    }
+
+    public VerificationError addContext(String name, Object obj) {
+        return addContext(format("%s: %s", name, obj));
     }
 
     /**

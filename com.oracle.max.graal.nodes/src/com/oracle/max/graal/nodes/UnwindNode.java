@@ -28,7 +28,7 @@ import com.sun.cri.ci.*;
 /**
  * Unwind takes an exception object, destroys the current stack frame and passes the exception object to the system's exception dispatch code.
  */
-public final class UnwindNode extends FixedNode {
+public final class UnwindNode extends FixedNode implements LIRLowerable {
 
     @Input private ValueNode exception;
 
@@ -38,12 +38,12 @@ public final class UnwindNode extends FixedNode {
 
     public UnwindNode(ValueNode exception) {
         super(CiKind.Object);
-        assert exception == null || exception.kind == CiKind.Object;
+        assert exception == null || exception.kind() == CiKind.Object;
         this.exception = exception;
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitUnwind(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.emitCallToRuntime(CiRuntimeCall.UnwindException, false, gen.operand(exception()));
     }
 }

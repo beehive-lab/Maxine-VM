@@ -26,13 +26,11 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
@@ -54,7 +52,6 @@ import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Integration of the C1X compiler into Maxine's compilation framework.
@@ -151,19 +148,20 @@ public class C1X implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    protected C1X(RiXirGenerator xirGenerator, CiTarget target) {
+    public C1X(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
     }
 
     @Override
     public void initialize(Phase phase) {
+        runtime.initialize();
         if (isHosted() && !optionsRegistered) {
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
             C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
             C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
-            VMOptions.addFieldOptions("-ASM:", AsmOptions.class, getHelpMap());
+            VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
 
             // Boot image code may not be safely deoptimizable due to metacircular issues
             // so only enable speculative optimizations at runtime
@@ -177,23 +175,10 @@ public class C1X implements RuntimeCompiler {
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
-            compiler.addCompilationObserver(new WordTypeRewriterPhase());
+            compiler.addCompilationObserver(new WordTypeRewriterObserver());
             MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
-
-            // search for the runtime call and register critical methods
-            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
-                int flags = m.getModifiers();
-                if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
-                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
-                }
-            }
-
-            // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
-            // must go through a stub that saves the register state before calling the deopt routine.
-            CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
-            uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
-
         }
+
         if (phase == Phase.STARTING) {
             // Now it is safe to use speculative opts
             C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
@@ -208,7 +193,7 @@ public class C1X implements RuntimeCompiler {
         }
     }
 
-    private static class WordTypeRewriterPhase implements CompilationObserver {
+    private static class WordTypeRewriterObserver implements CompilationObserver {
         @Override
         public void compilationEvent(CompilationEvent event) {
             if (event.getLabel() == CompilationEvent.AFTER_PARSING) {

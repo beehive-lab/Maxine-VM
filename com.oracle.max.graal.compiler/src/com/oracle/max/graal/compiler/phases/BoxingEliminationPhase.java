@@ -24,8 +24,6 @@ package com.oracle.max.graal.compiler.phases;
 
 import java.util.*;
 
-import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
 
@@ -35,13 +33,12 @@ public class BoxingEliminationPhase extends Phase {
     private static final HashMap<RiRuntime, Set<RiMethod>> unboxingMethodsMap = new HashMap<RiRuntime, Set<RiMethod>>();
     private final RiRuntime runtime;
 
-    public BoxingEliminationPhase(GraalContext context, RiRuntime runtime) {
-        super(context);
+    public BoxingEliminationPhase(RiRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         // TODO: Implement
     }
 
