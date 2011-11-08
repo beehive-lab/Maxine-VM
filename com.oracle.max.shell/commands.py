@@ -89,9 +89,9 @@ def build(env, args):
             env.log('Compiling C sources in {0}...'.format(projectDir))
 
             if args.clean:
-                env.run(['gmake', 'clean'], cwd=projectDir)
+                env.run([env.gmake_cmd(), 'clean'], cwd=projectDir)
                 
-            env.run(['gmake'], cwd=projectDir)
+            env.run([env.gmake_cmd()], cwd=projectDir)
             continue
         
         outputDir = env.pdb().project(project).output_dir()
@@ -287,7 +287,7 @@ def clean(env, args):
     generated images.
     """
     
-    env.run(['gmake', '-C', join(env.maxine_home, 'com.oracle.max.vm.native'), 'clean'])
+    env.run([env.gmake_cmd(), '-C', join(env.maxine_home, 'com.oracle.max.vm.native'), 'clean'])
 
     projects = env.pdb().projects.keys()
     for project in projects:
