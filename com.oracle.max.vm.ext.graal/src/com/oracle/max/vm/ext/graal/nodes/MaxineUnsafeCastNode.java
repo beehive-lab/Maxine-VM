@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -31,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code UnsafeCastNode} produces the same value as its input, but with a different type.
  */
-public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLowerable {
+public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLowerable, Canonicalizable {
 
     @Input private ValueNode x;
     @Data private RiResolvedType toType;
@@ -57,9 +58,17 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     }
 
     @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (x != null && x.declaredType() != null && x.declaredType().isSubtypeOf(toType)) {
+            return x;
+        }
+        return this;
+    }
+
+    @Override
     public void generate(LIRGeneratorTool gen) {
         CiValue operand = gen.operand(x);
-        if (this.kind != operand.kind) {
+        if (this.kind != operand.kind || x instanceof ConstantNode) {
             CiValue dest = gen.newVariable(this.kind);
             gen.emitMove(operand, dest);
             gen.setResult(this, dest);
