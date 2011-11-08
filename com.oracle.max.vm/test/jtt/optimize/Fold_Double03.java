@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package jtt.optimize;
 
-public interface StateSplit {
-
-    FrameState stateAfter();
-
-    void setStateAfter(FrameState x);
-
-    boolean needsStateAfter();
-
+/*
+ * @Harness: java
+ * @Runs: (0, 5.0) = `java.lang.Double.POSITIVE_INFINITY; (1, 5.0) = `java.lang.Double.NEGATIVE_INFINITY;
+ * @Runs: (0, -5.0) = `java.lang.Double.NEGATIVE_INFINITY; (1, -5.0) = `java.lang.Double.POSITIVE_INFINITY;
+ */
+public class Fold_Double03 {
+    private final static double MINUS_ZERO = 1/Double.NEGATIVE_INFINITY;
+    public static double test(int t, double a) {
+        double v;
+        if (t == 0) {
+            v = a * 0.0;
+        } else {
+            v = a * MINUS_ZERO;
+        }
+        return 1/v;
+    }
 }

@@ -130,7 +130,6 @@ public abstract class ValueNode extends Node {
     @Override
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("kind", kind.toString());
         properties.put("operand", operand == null ? "null" : operand.toString());
         return properties;
     }

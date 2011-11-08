@@ -41,10 +41,13 @@ public class IntrinsificationPhase extends Phase {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            tryIntrinsify(invoke);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void tryIntrinsify(InvokeNode invoke) {
+    private void tryIntrinsify(Invoke invoke) {
         RiResolvedMethod target = invoke.callTarget().targetMethod();
         StructuredGraph intrinsicGraph = (StructuredGraph) target.compilerStorage().get(Graph.class);
         if (intrinsicGraph == null) {

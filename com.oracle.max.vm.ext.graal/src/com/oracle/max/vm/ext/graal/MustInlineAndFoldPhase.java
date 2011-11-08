@@ -44,18 +44,10 @@ public class MustInlineAndFoldPhase extends Phase {
     protected void run(StructuredGraph graph) {
         // Apply folding.
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            RiResolvedMethod method = invoke.callTarget().targetMethod();
-            if (runtime.isFoldable(method)) {
-                NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
-                CiConstant[] constantArgs = new CiConstant[arguments.size()];
-                for (int i = 0; i < constantArgs.length; ++i) {
-                    constantArgs[i] = arguments.get(i).asConstant();
-                }
-                CiConstant foldResult = runtime.fold(method, constantArgs);
-                StructuredGraph foldGraph = new StructuredGraph();
-                foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-                InliningUtil.inline(invoke, foldGraph, false);
-            }
+            fold(invoke);
+        }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            fold(invoke);
         }
 
         // Canonicalize.
@@ -63,17 +55,39 @@ public class MustInlineAndFoldPhase extends Phase {
 
         // Inline all necessary methods.
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            RiResolvedMethod method = invoke.callTarget().targetMethod();
-            if (runtime.mustInline(method)) {
-                RiResolvedMethod method1 = invoke.callTarget().targetMethod();
-                StructuredGraph inlineGraph = new StructuredGraph();
-                new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
-                new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
-                InliningUtil.inline(invoke, inlineGraph, false);
-            }
+            inline(invoke);
+        }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            inline(invoke);
         }
 
         // Canonicalize.
         new CanonicalizerPhase(null, runtime, null).apply(graph);
+    }
+
+    private void inline(Invoke invoke) {
+        RiResolvedMethod method = invoke.callTarget().targetMethod();
+        if (runtime.mustInline(method)) {
+            RiResolvedMethod method1 = invoke.callTarget().targetMethod();
+            StructuredGraph inlineGraph = new StructuredGraph();
+            new GraphBuilderPhase(runtime, method1).apply(inlineGraph);
+            new MustInlineAndFoldPhase(runtime).apply(inlineGraph);
+            InliningUtil.inline(invoke, inlineGraph, false);
+        }
+    }
+
+    private void fold(Invoke invoke) {
+        RiResolvedMethod method = invoke.callTarget().targetMethod();
+        if (runtime.isFoldable(method)) {
+            NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
+            CiConstant[] constantArgs = new CiConstant[arguments.size()];
+            for (int i = 0; i < constantArgs.length; ++i) {
+                constantArgs[i] = arguments.get(i).asConstant();
+            }
+            CiConstant foldResult = runtime.fold(method, constantArgs);
+            StructuredGraph foldGraph = new StructuredGraph();
+            foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
+            InliningUtil.inline(invoke, foldGraph, false);
+        }
     }
 }

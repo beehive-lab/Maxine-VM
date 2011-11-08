@@ -198,7 +198,7 @@ public final class OperandPool {
             assert number < firstVariableNumber;
             return number;
         }
-        assert operand.isVariable();
+        assert operand.isVariable() : operand;
         return firstVariableNumber + ((CiVariable) operand).index;
     }
 

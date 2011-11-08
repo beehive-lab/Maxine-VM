@@ -31,13 +31,29 @@ public class PointOptimizationPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            MethodCallTargetNode callTarget = invoke.callTarget();
-            System.out.println("Invoke: " + callTarget.targetMethod().name());
-            if (callTarget.targetMethod().name().equals("same")) {
-                ValueNode arg0 = callTarget.arguments().get(0);
-                ValueNode arg1 = callTarget.arguments().get(1);
-                if (arg0 == arg1) {
-                    invoke.replaceWithFloating(ConstantNode.forBoolean(true, graph));
+            optimize(graph, invoke);
+        }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            optimize(graph, invoke);
+        }
+    }
+
+    private void optimize(StructuredGraph graph, Invoke invoke) {
+        MethodCallTargetNode callTarget = invoke.callTarget();
+        System.out.println("Invoke: " + callTarget.targetMethod().name());
+        if (callTarget.targetMethod().name().equals("same")) {
+            ValueNode arg0 = callTarget.arguments().get(0);
+            ValueNode arg1 = callTarget.arguments().get(1);
+            if (arg0 == arg1) {
+                if (invoke instanceof FixedWithNextNode) {
+                    ((FixedWithNextNode) invoke).replaceWithFloating(ConstantNode.forBoolean(true, graph));
+                } else if (invoke instanceof InvokeWithExceptionNode) {
+                    InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invoke;
+                    invokeWithExceptionNode.killExceptionEdge();
+                    invokeWithExceptionNode.replaceAtUsages(ConstantNode.forBoolean(true, graph));
+                    FixedNode next = invokeWithExceptionNode.next();
+                    invokeWithExceptionNode.setNext(null);
+                    invokeWithExceptionNode.replaceAtPredecessors(next);
                 }
             }
         }

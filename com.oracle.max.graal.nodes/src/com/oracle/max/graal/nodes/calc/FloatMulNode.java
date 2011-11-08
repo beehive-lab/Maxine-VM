@@ -46,21 +46,6 @@ public final class FloatMulNode extends FloatArithmeticNode implements Canonical
                 assert kind == CiKind.Double;
                 return ConstantNode.forDouble(x().asConstant().asDouble() * y().asConstant().asDouble(), graph());
             }
-        } else if (y().isConstant()) {
-            if (kind == CiKind.Float) {
-                float c = y().asConstant().asFloat();
-                if (c == 0.0f) {
-                    // TODO(cwi) I think -0.0f is handled wrongly here!
-                    return ConstantNode.forFloat(0.0f, graph());
-                }
-            } else {
-                assert kind == CiKind.Double;
-                double c = y().asConstant().asDouble();
-                if (c == 0.0) {
-                    // TODO(cwi) I think -0.0d is handled wrongly here!
-                    return ConstantNode.forDouble(0.0, graph());
-                }
-            }
         }
         return this;
     }
