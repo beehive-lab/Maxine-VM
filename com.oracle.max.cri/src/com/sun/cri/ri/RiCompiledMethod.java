@@ -20,44 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package com.oracle.max.graal.hotspot;
-
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+package com.sun.cri.ri;
 
 /**
- * Exits from the HotSpot VM into Java code.
+ * Represents a compiled instance of a method. It may have been invalidated or removed in the meantime.
  */
-public interface VMExits {
+public interface RiCompiledMethod {
 
-    void compileMethod(HotSpotMethodResolved method, int entryBCI) throws Throwable;
-
-    RiMethod createRiMethodUnresolved(String name, String signature, RiType holder);
-
-    RiSignature createRiSignature(String signature);
-
-    RiField createRiField(RiType holder, String name, RiType type, int offset, int flags);
-
-    RiType createRiType(long vmId, String name);
-
-    RiType createRiTypePrimitive(int basicType);
-
-    RiType createRiTypeUnresolved(String name);
-
-    RiConstantPool createRiConstantPool(long vmId);
-
-    CiConstant createCiConstant(CiKind kind, long value);
-
-    CiConstant createCiConstantFloat(float value);
-
-    CiConstant createCiConstantDouble(double value);
-
-    CiConstant createCiConstantObject(Object object);
-
-    void shutdownCompiler() throws Throwable;
-
-    void startCompiler();
-
-    void pollJavaQueue();
+    /**
+     * Returns the method to which the compiled code belongs.
+     * @return the method to which the compiled code belongs.
+     */
+    RiResolvedMethod method();
 }

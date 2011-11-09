@@ -123,7 +123,7 @@ public class VMExitsNative implements VMExits, Remote {
             }
             compiler.getVMEntries().recordBailout(s);
         } else {
-            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod());
+            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
         }
     }
 
@@ -219,5 +219,10 @@ public class VMExitsNative implements VMExits, Remote {
     @Override
     public CiConstant createCiConstantObject(Object object) {
         return CiConstant.forObject(object);
+    }
+
+    @Override
+    public void pollJavaQueue() {
+        ((HotSpotRuntime) compiler.getRuntime()).pollJavaQueue();
     }
 }

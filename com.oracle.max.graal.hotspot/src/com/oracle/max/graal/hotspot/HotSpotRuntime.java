@@ -25,6 +25,7 @@ package com.oracle.max.graal.hotspot;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -61,6 +62,8 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
     private IdentityHashMap<RiMethod, StructuredGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, StructuredGraph>();
+
+    private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
 
     public HotSpotRuntime(GraalContext context, HotSpotVMConfig config, Compiler compiler) {
         this.context = context;
@@ -797,8 +800,34 @@ public class HotSpotRuntime implements GraalRuntime {
         return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
-    public void installMethod(RiMethod method, CiTargetMethod code) {
+    public HotSpotCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
         Compiler compilerInstance = CompilerImpl.getInstance();
-        HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code);
+        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, true);
+        return new HotSpotCompiledMethod(compilerInstance, (HotSpotMethodResolved) method, nmethod);
+    }
+
+    @Override
+    public void executeOnCompilerThread(Runnable r) {
+        tasks.add(r);
+        compiler.getVMEntries().notifyJavaQueue();
+    }
+
+    public void pollJavaQueue() {
+        Runnable r = tasks.poll();
+        while (r != null) {
+            try {
+                r.run();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            r = tasks.poll();
+        }
+    }
+
+    @Override
+    public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
+        Compiler compilerInstance = CompilerImpl.getInstance();
+        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
+        return new HotSpotCompiledMethod(compilerInstance, method, nmethod);
     }
 }
