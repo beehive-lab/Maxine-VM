@@ -53,7 +53,7 @@ public class EscapeAnalysisPhase extends Phase {
             this.virtualObjectField = null;
             this.graph = virtualObject.graph();
             for (int i = 0; i < fields.length; i++) {
-                fieldState[i] = ConstantNode.defaultForKind(fields[i].type().kind(false), virtualObject.graph());
+                fieldState[i] = ConstantNode.defaultForKind(fields[i].type().kind(true), virtualObject.graph());
                 virtualObjectField = graph.add(new VirtualObjectFieldNode(virtualObject, virtualObjectField, fieldState[i], i));
             }
         }
