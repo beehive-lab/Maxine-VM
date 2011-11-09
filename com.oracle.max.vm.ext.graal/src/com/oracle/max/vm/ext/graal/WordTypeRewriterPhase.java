@@ -25,6 +25,8 @@ package com.oracle.max.vm.ext.graal;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
@@ -41,6 +43,11 @@ public class WordTypeRewriterPhase extends Phase {
                 if (isWord(valueNode)) {
                     changeToWord(valueNode);
                 }
+            }
+        }
+        for (MethodCallTargetNode callTargetNode : graph.getNodes(MethodCallTargetNode.class)) {
+            if (callTargetNode.invokeKind() == InvokeKind.Virtual && callTargetNode.arguments().get(0) != null && callTargetNode.arguments().get(0).kind() != CiKind.Object) {
+                callTargetNode.setInvokeKind(InvokeKind.Special);
             }
         }
     }

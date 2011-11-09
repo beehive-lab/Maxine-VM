@@ -68,6 +68,10 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         return invokeKind;
     }
 
+    public void setInvokeKind(InvokeKind kind) {
+        this.invokeKind = kind;
+    }
+
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
      * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
