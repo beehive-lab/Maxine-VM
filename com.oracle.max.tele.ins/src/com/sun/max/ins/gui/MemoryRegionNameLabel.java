@@ -45,7 +45,7 @@ public final class MemoryRegionNameLabel extends AbstractMemoryRegionLabel imple
     }
 
     public void redisplay() {
-        setFont(style().javaNameFont());
+        setFont(preference().style().javaNameFont());
     }
 
     public void refresh(boolean force) {

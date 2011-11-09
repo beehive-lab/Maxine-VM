@@ -771,6 +771,13 @@ public class CompiledPrototype extends Prototype {
         return false;
     }
 
+    /**
+     * Add all methods in {@link java.lang.Object} to the boot image.
+     */
+    public void addJavaLangObject() {
+        addStaticAndVirtualMethods(ClassActor.fromJava(Object.class));
+    }
+
     public void addEntrypoints() {
         // 1. create bootcode region.
         final CodeRegion region = Code.bootCodeRegion();
@@ -820,7 +827,7 @@ public class CompiledPrototype extends Prototype {
             final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
             final TargetMethod targetMethod = virtualMethodActor.currentTargetMethod();
             if (targetMethod != null) {
-                words[vTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                words[vTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod).toAddress();
             }
         }
     }
@@ -862,7 +869,7 @@ public class CompiledPrototype extends Prototype {
                 final TargetMethod targetMethod = virtualMethodActor.currentTargetMethod();
                 assert virtualMethodActor.name == interfaceMethodActor.name;
                 if (targetMethod != null) {
-                    words[iTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                    words[iTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod).toAddress();
                 }
             }
         }

@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
  * Inspector's surrogate for the heap region table used by region based GC (currently, MSE heap scheme).
  * @see RegionTable
  */
-public class TeleRegionTable extends AbstractTeleVMHolder {
+public class TeleRegionTable extends AbstractVmHolder {
     static TeleRegionTable theTeleRegionTable;
 
     public static synchronized TeleRegionTable makeTheTeleRegionTable(TeleVM vm) {
@@ -72,20 +72,20 @@ public class TeleRegionTable extends AbstractTeleVMHolder {
             return;
         }
         initializing = true;
-        Reference theRegionTableReference =  vm().teleFields().RegionTable_theRegionTable.readReference(vm());
+        Reference theRegionTableReference =  vm().fields().RegionTable_theRegionTable.readReference(vm());
         if (theRegionTableReference.isZero()) {
             return;
         }
-        int numRegions = vm().teleFields().RegionTable_length.readInt(theRegionTableReference);
+        int numRegions = vm().fields().RegionTable_length.readInt(theRegionTableReference);
         if (numRegions == 0) {
             return;
         }
         // The VM's region table is initialized. We build a local instance of RegionTable based on the values of the VM's instance.
         // The local copy will be identical, except for its address. This allows to use many function of RegionTable directly.
-        HeapRegionConstants.initializeWithConstants(vm().teleFields().HeapRegionConstants_regionSizeInBytes.readInt(vm()));
-        Address start = vm().teleFields().RegionTable_regionPoolStart.readWord(theRegionTableReference).asAddress();
-        Address end = vm().teleFields().RegionTable_regionPoolEnd.readWord(theRegionTableReference).asAddress();
-        int infoSize = vm().teleFields().RegionTable_regionInfoSize.readInt(theRegionTableReference);
+        HeapRegionConstants.initializeWithConstants(vm().fields().HeapRegionConstants_regionSizeInBytes.readInt(vm()));
+        Address start = vm().fields().RegionTable_regionPoolStart.readWord(theRegionTableReference).asAddress();
+        Address end = vm().fields().RegionTable_regionPoolEnd.readWord(theRegionTableReference).asAddress();
+        int infoSize = vm().fields().RegionTable_regionInfoSize.readInt(theRegionTableReference);
         regionTable = new RegionTable(start, end, numRegions, infoSize);
         regionTableAddress = theRegionTableReference.toOrigin();
         initializing = false;

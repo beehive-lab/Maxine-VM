@@ -323,13 +323,17 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
         Address startOfReservedVirtualSpaceSize = Heap.bootHeapRegion.start();
         Address endOfReservedVirtualSpaceSize = startOfReservedVirtualSpaceSize.plus(reservedVirtualSpaceSize);
-        MemoryRegion runtimeCodeRegion = Code.getCodeManager().getRuntimeCodeRegion();
-        FatalError.check(startOfReservedVirtualSpaceSize.lessThan(runtimeCodeRegion.start()) && runtimeCodeRegion.end().lessEqual(endOfReservedVirtualSpaceSize),
-                        "Runtime code region should be in virtual space reserved by boot loader");
-        Address startOfUnusedVirtualSpace = runtimeCodeRegion.end().alignUp(Platform.platform().pageSize);
+        checkRuntimeCodeRegion(startOfReservedVirtualSpaceSize, endOfReservedVirtualSpaceSize, Code.getCodeManager().getRuntimeBaselineCodeRegion());
+        checkRuntimeCodeRegion(startOfReservedVirtualSpaceSize, endOfReservedVirtualSpaceSize, Code.getCodeManager().getRuntimeOptCodeRegion());
+        Address startOfUnusedVirtualSpace = Code.getCodeManager().getRuntimeOptCodeRegion().end().alignUp(Platform.platform().pageSize);
         Size unusedVirtualSpaceSize = endOfReservedVirtualSpaceSize.minus(startOfUnusedVirtualSpace).asSize();
         if (!unusedVirtualSpaceSize.isZero()) {
             VirtualMemory.deallocate(startOfUnusedVirtualSpace, unusedVirtualSpaceSize, VirtualMemory.Type.DATA);
         }
+    }
+
+    private void checkRuntimeCodeRegion(Address startOfReservedVirtualSpaceSize, Address endOfReservedVirtualSpaceSize, MemoryRegion codeRegion) {
+        FatalError.check(startOfReservedVirtualSpaceSize.lessThan(codeRegion.start()) && codeRegion.end().lessEqual(endOfReservedVirtualSpaceSize),
+                        "Runtime code region should be in virtual space reserved by boot loader");
     }
 }

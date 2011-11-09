@@ -42,8 +42,8 @@ public abstract class TeleDescriptor extends TeleTupleObject {
      */
     public Descriptor descriptor() {
         if (descriptor == null) {
-            final Reference stringReference = vm().teleFields().Descriptor_string.readReference(reference());
-            final TeleString teleString = (TeleString) heap().makeTeleObject(stringReference);
+            final Reference stringReference = fields().Descriptor_string.readReference(reference());
+            final TeleString teleString = (TeleString) objects().makeTeleObject(stringReference);
             String string = teleString.getString();
             if (string != null) {
                 if (this instanceof TeleTypeDescriptor) {

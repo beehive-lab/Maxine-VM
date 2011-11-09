@@ -92,7 +92,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         final MachineCodeTableColumnModel tableColumnModel = new MachineCodeTableColumnModel(instanceViewPreferences);
         this.table = new MachineCodeTable(inspection, tableModel, tableColumnModel);
         defaultBackgroundColor = this.table.getBackground();
-        safepointBackgroundColor = style().darken2(defaultBackgroundColor);
+        safepointBackgroundColor = preference().style().darken2(defaultBackgroundColor);
         createView();
     }
 
@@ -104,43 +104,44 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         JButton button = new InspectorButton(inspection, actions().toggleMachineCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugToggleBreakpointbuttonIcon());
+        final InspectorStyle style = preference().style();
+        button.setIcon(style.debugToggleBreakpointbuttonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepOverButtonIcon());
+        button.setIcon(style.debugStepOverButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepInButtonIcon());
+        button.setIcon(style.debugStepInButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepOutButtonIcon());
+        button.setIcon(style.debugStepOutButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugRunToCursorButtonIcon());
+        button.setIcon(style.debugRunToCursorButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugContinueButtonIcon());
+        button.setIcon(style.debugContinueButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugPauseButtonIcon());
+        button.setIcon(style.debugPauseButtonIcon());
         toolBar().add(button);
 
         toolBar().add(Box.createHorizontalGlue());
@@ -161,7 +162,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         });
         viewOptionsButton.setToolTipText("Machine code view options");
         viewOptionsButton.setText(null);
-        viewOptionsButton.setIcon(style().generalPreferencesIcon());
+        viewOptionsButton.setIcon(style.generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());
@@ -216,7 +217,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         super.redisplay();
         table.redisplay();
         // TODO (mlvdv)  code view hack for style changes
-        table.setRowHeight(style().codeTableRowHeight());
+        table.setRowHeight(preference().style().codeTableRowHeight());
         invalidate();
         repaint();
     }
@@ -235,10 +236,11 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         MachineCodeTable(Inspection inspection, MachineCodeTableModel tableModel, MachineCodeTableColumnModel tableColumnModel) {
             super(inspection, tableModel, tableColumnModel);
             setFillsViewportHeight(true);
-            setShowHorizontalLines(style().codeTableShowHorizontalLines());
-            setShowVerticalLines(style().codeTableShowVerticalLines());
-            setIntercellSpacing(style().codeTableIntercellSpacing());
-            setRowHeight(style().codeTableRowHeight());
+            final InspectorStyle style = preference().style();
+            setShowHorizontalLines(style.codeTableShowHorizontalLines());
+            setShowVerticalLines(style.codeTableShowVerticalLines());
+            setIntercellSpacing(style.codeTableIntercellSpacing());
+            setRowHeight(style.codeTableRowHeight());
             setRowSelectionAllowed(true);
             setColumnSelectionAllowed(true);
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -441,12 +443,13 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
      * @return the color to be used
      */
     public Color cellForegroundColor(int row, int col) {
-        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
+        final InspectorStyle style = preference().style();
+        return isInstructionPointer(row) ? style.debugIPTextColor() : (isCallReturn(row) ? style.debugCallReturnTextColor() : null);
     }
 
     private void setBorderForRow(JComponent component, int row) {
         if (instructionMap().isBytecodeBoundary(row)) {
-            component.setBorder(style().defaultPaneTopBorder());
+            component.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             component.setBorder(null);
         }
@@ -461,7 +464,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
-            component.setBackground(style().searchMatchedBackground());
+            component.setBackground(preference().style().searchMatchedBackground());
         } else if (instructionMap().isSafepoint(row)) {
             component.setOpaque(true);
             component.setBackground(safepointBackgroundColor);
@@ -481,6 +484,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             setToolTipPrefix(tableModel.getRowDescription(row));
             final StringBuilder toolTipSB = new StringBuilder(100);
             final MaxStackFrame stackFrame = stackFrame(row);
+            final InspectorStyle style = preference().style();
             if (stackFrame != null) {
                 if (stackFrame.position() == 0) {
                     toolTipSB.append("<br>IP (stack frame 0) in thread ");
@@ -492,11 +496,11 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 toolTipSB.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
                 toolTipSB.append(" points here");
                 if (stackFrame.isTop()) {
-                    setIcon(style().debugIPTagIcon());
-                    setForeground(style().debugIPTagColor());
+                    setIcon(style.debugIPTagIcon());
+                    setForeground(style.debugIPTagColor());
                 } else {
-                    setIcon(style().debugCallReturnTagIcon());
-                    setForeground(style().debugCallReturnTagColor());
+                    setIcon(style.debugCallReturnTagIcon());
+                    setForeground(style.debugCallReturnTagColor());
                 }
             } else {
                 setIcon(null);
@@ -509,12 +513,12 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 toolTipSB.append(machineCodeBreakpoint.codeLocation().address().to0xHexString());
                 toolTipSB.append(machineCodeBreakpoint.isEnabled() ? ", enabled" : ", disabled");
                 if (machineCodeBreakpoint.isEnabled()) {
-                    setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
+                    setBorder(style.debugEnabledMachineCodeBreakpointTagBorder());
                 } else {
-                    setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
+                    setBorder(style.debugDisabledMachineCodeBreakpointTagBorder());
                 }
             } else if (instructionMap().isBytecodeBoundary(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(style.defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }
@@ -611,14 +615,15 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final Integer position = (Integer) tableModel.getValueAt(row, MachineCodeColumnKind.POSITION.ordinal());
             setLocation(label, position);
             setWrappedToolTipHtmlText(tableModel.getRowDescription(row));
-            setFont(style().defaultFont());
+            final InspectorStyle style = preference().style();
+            setFont(style.defaultFont());
             setBackgroundForRow(this, row);
             //setForeground(getRowTextColor(row));
 
             if (isInstructionPointer(row)) {
-                setForeground(style().debugIPTextColor());
+                setForeground(style.debugIPTextColor());
             } else if (isCallReturn(row)) {
-                setForeground(style().debugCallReturnTextColor());
+                setForeground(style.debugCallReturnTextColor());
             } else {
                 setForeground(null);
             }
@@ -656,12 +661,12 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return vm().readWordValue(literalAddress);
+                    return vm().memory().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")).trim());
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
-            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
+            wordValueLabel.setWordDataFont(inspection.preference().style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -672,12 +677,12 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return vm().readWordValue(literalAddress);
+                    return vm().memory().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
-            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
+            wordValueLabel.setWordDataFont(inspection.preference().style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -800,7 +805,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 if (machineCodeInstruction.targetAddress != null && !machineCode().contains(machineCodeInstruction.targetAddress)) {
                     final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
                     wordValueLabel.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
-                    wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
+                    wordValueLabel.setWordDataFont(inspection.preference().style().defaultBoldFont());
                     renderer = wordValueLabel;
                     inspectorLabels[row] = renderer;
                 } else if (machineCodeInstruction.literalSourceAddress != null) {

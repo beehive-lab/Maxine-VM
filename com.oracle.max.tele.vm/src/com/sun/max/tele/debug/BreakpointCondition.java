@@ -34,7 +34,7 @@ import com.sun.max.unsafe.*;
 /**
  * Simple conditional breakpoints.
  */
-public class BreakpointCondition extends AbstractTeleVMHolder implements VMTriggerEventHandler {
+public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEventHandler {
 
     private String condition;
     private StreamTokenizer streamTokenizer;
@@ -42,8 +42,8 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
     private static Map<String, CiRegister> integerRegisterSymbols;
     private Expression expression;
 
-    public BreakpointCondition(TeleVM teleVM, String condition) throws ExpressionException {
-        super(teleVM);
+    public BreakpointCondition(TeleVM vm, String condition) throws ExpressionException {
+        super(vm);
         this.condition = condition;
         if (integerRegisterSymbols == null) {
             integerRegisterSymbols = new HashMap<String, CiRegister>();
@@ -501,7 +501,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(vm().dataAccess().readLong(address));
+            return new NumberExpression(memory().readLong(address));
         }
     }
 

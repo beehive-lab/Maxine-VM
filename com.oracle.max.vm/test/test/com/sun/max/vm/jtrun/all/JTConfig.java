@@ -534,6 +534,8 @@ public class JTConfig {
         jtt.loop.LoopNewInstance.class,
         jtt.loop.LoopPhi.class,
         jtt.loop.LoopSwitch01.class,
+        jtt.max.CodePointer01.class,
+        jtt.max.CodePointer02.class,
         jtt.max.Fold01.class,
         jtt.max.Fold02.class,
         jtt.max.Fold03.class,

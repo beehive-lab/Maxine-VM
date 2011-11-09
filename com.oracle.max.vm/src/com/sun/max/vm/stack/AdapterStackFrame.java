@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -30,6 +31,7 @@ import com.sun.max.vm.compiler.target.*;
  * takes care of setting up a caller activation frame as expected by the callee. A {@code AdapterStackFrame} object
  * abstracts the activation frame of such adapters.
  */
+@HOSTED_ONLY
 public class AdapterStackFrame extends VMStackFrame {
 
     public AdapterStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {

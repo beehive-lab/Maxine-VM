@@ -156,7 +156,7 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-        inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        inspection.gui().setLocationRelativeToMouse(this, inspection.preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         Trace.end(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
@@ -228,7 +228,7 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
-            vm().readBytes(address, bytes);
+            vm().memory().readBytes(address, bytes);
             memoryLabels[i].setText(byteGroupToString(bytes));
             memoryLabels[i].setToolTipText(address.toHexString());
             switch (numberOfBytesPerGroup) {

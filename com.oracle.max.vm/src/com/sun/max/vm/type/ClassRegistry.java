@@ -240,6 +240,7 @@ public final class ClassRegistry {
             if (classActor.isArrayClass()) {
                 // The IDs of array classes are maintained by ClassActor.arrayClassIDs, they don't need to be released.
                 assert classActor.id == existingClassActor.id;
+                existingClassActor.copyHubs(classActor);
             } else {
                 // Lost the race to define the class; release id(s) associated with 'classActor'.
                 ClassID.remove(classActor);

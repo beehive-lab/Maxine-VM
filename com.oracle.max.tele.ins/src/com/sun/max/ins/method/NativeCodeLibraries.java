@@ -56,12 +56,12 @@ public class NativeCodeLibraries {
 
         LibInfo libInfo() {
             if (libInfo == null) {
-                final Word handle = vm.teleFields().DynamicLinker$LibInfo_handle.readWord(reference);
-                final Pointer sentinelAsCString = vm.teleFields().DynamicLinker$LibInfo_sentinelAsCString.readWord(reference).asPointer();
+                final Word handle = vm.fields().DynamicLinker$LibInfo_handle.readWord(reference);
+                final Pointer sentinelAsCString = vm.fields().DynamicLinker$LibInfo_sentinelAsCString.readWord(reference).asPointer();
                 String sentinel = sentinelAsCString.isZero() ? null : stringFromCString(vm, sentinelAsCString);
-                final Address sentinelAddress = vm.teleFields().DynamicLinker$LibInfo_sentinelAddress.readWord(reference).asAddress();
+                final Address sentinelAddress = vm.fields().DynamicLinker$LibInfo_sentinelAddress.readWord(reference).asAddress();
                 String libPath;
-                final Pointer pathAsCString = vm.teleFields().DynamicLinker$LibInfo_pathAsCString.readWord(reference).asPointer();
+                final Pointer pathAsCString = vm.fields().DynamicLinker$LibInfo_pathAsCString.readWord(reference).asPointer();
                 if (pathAsCString.isNotZero()) {
                     libPath = stringFromCString(vm, pathAsCString);
                 } else {
@@ -78,7 +78,7 @@ public class NativeCodeLibraries {
             byte[] bytes = new byte[1024];
             int index = 0;
             while (true) {
-                byte b = vm.readValue(Kind.BYTE, cString, index).asByte();
+                byte b = vm.memory().readByte(cString, index);
                 if (b == 0) {
                     break;
                 }
@@ -171,11 +171,11 @@ public class NativeCodeLibraries {
      * @param vm
      */
     private static void updateLibInfo(TeleVM vm) throws Exception {
-        int length = vm.teleFields().DynamicLinker_libInfoIndex.readInt(vm);
-        Reference libInfoArrayReference = vm.teleFields().DynamicLinker_libInfoArray.readReference(vm);
+        int length = vm.fields().DynamicLinker_libInfoIndex.readInt(vm);
+        Reference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readReference(vm);
         for (int index = 0; index < length; index++) {
             if (index >= libs.size() || libs.get(index).sentinel == null) {
-                Reference libInfoReference = vm.getElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
+                Reference libInfoReference = vm.memory().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
                 TeleLibInfo teleLibInfo = new TeleLibInfo(vm, libInfoReference);
                 LibInfo libInfo = teleLibInfo.libInfo();
                 processLibrary(teleLibInfo);

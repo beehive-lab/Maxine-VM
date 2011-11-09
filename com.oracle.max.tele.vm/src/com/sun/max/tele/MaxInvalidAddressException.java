@@ -32,12 +32,18 @@ public final class MaxInvalidAddressException extends MaxException {
 
     private final Address address;
 
-    public MaxInvalidAddressException(Address address) {
-        super();
+    public MaxInvalidAddressException(Address address, String message) {
+        super(message);
         this.address = address;
+
+    }
+
+    public MaxInvalidAddressException(Address address) {
+        this(address, null);
     }
 
     public Address getAddress() {
         return address;
     }
+
 }

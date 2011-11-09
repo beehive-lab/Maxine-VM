@@ -50,6 +50,7 @@ public final class TeleVMState implements MaxVMState {
     private final List<MaxBreakpointEvent> breakpointEvents;
     private final MaxWatchpointEvent maxWatchpointEvent;
     private final boolean isInGC;
+    private final boolean isInEviction;
     private final TeleVMState previous;
 
     /**
@@ -62,8 +63,9 @@ public final class TeleVMState implements MaxVMState {
      * @param threadsStarted threads created since the previous state
      * @param threadsDied threads died since the previous state
      * @param breakpointEvents information about threads currently at breakpoints, empty if none
-     * @param teleWatchpointEvent information about a thread currently at a watchpoint, null if none
+     * @param watchpointEvent information about a thread currently at a watchpoint, null if none
      * @param isInGC is the VM, when paused, in a GC
+     * @param isInEviction is the VM, when paused, in a code eviction
      * @param previous previous state
      */
     public TeleVMState(
@@ -76,7 +78,10 @@ public final class TeleVMState implements MaxVMState {
                     List<TeleNativeThread> threadsStarted,
                     List<TeleNativeThread> threadsDied,
                     List<TeleBreakpointEvent> breakpointEvents,
-                    TeleWatchpointEvent teleWatchpointEvent, boolean isInGC, TeleVMState previous) {
+                    VmWatchpointEvent watchpointEvent,
+                    boolean isInGC,
+                    boolean isInEviction,
+                    TeleVMState previous) {
         this.inspectionMode = inspectionMode;
         switch(processState) {
             case RUNNING:
@@ -121,8 +126,9 @@ public final class TeleVMState implements MaxVMState {
             this.breakpointEvents = Collections.unmodifiableList(new ArrayList<MaxBreakpointEvent>(breakpointEvents));
         }
 
-        this.maxWatchpointEvent = teleWatchpointEvent;
+        this.maxWatchpointEvent = watchpointEvent;
         this.isInGC = isInGC;
+        this.isInEviction = isInEviction;
         this.previous = previous;
 
         // Compute the current active thread list.
@@ -182,6 +188,10 @@ public final class TeleVMState implements MaxVMState {
         return isInGC;
     }
 
+    public boolean isInEviction() {
+        return isInEviction;
+    }
+
     public MaxVMState previous() {
         return previous;
     }
@@ -215,6 +225,7 @@ public final class TeleVMState implements MaxVMState {
             sb.append(Long.toString(state.serialID())).append(":  ");
             sb.append("proc=(").append(state.processState().label()).append(", epoch=").append(Long.toString(state.epoch())).append(") ");
             sb.append("gc=").append(state.isInGC()).append(" ");
+            sb.append("eviction=").append(state.isInEviction()).append(" ");
             printStream.println(sb.toString());
             if (state.singleStepThread() != null) {
                 printStream.println("\tsingle-stepped=" + state.singleStepThread().toShortString());
@@ -281,7 +292,7 @@ public final class TeleVMState implements MaxVMState {
                        EMPTY_THREAD_LIST,
                        EMPTY_THREAD_LIST,
                        EMPTY_BREAKPOINTEVENT_LIST,
-                       (TeleWatchpointEvent) null, false, (TeleVMState) null);
+                       (VmWatchpointEvent) null, false, false, (TeleVMState) null);
     }
 
 }

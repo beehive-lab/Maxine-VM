@@ -281,6 +281,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     final SaveSettingsListener saveSettingsListener;
+    final InspectorAction resetViewsToDefaultAction;
     final InspectorAction deactivateAllAction;
 
     public InspectionViews(Inspection inspection) {
@@ -298,6 +299,27 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         };
         inspection.settings().addSaveSettingsListener(saveSettingsListener);
+        resetViewsToDefaultAction = new InspectorAction(inspection, "Reset to standard view set") {
+
+            @Override
+            protected void procedure() {
+                // The standard view set has no multi view instances; dispose all
+                for (AbstractView view : activeViews()) {
+                    final ViewKind kind = view.viewManager().viewKind();
+                    if (!kind.isSingleton) {
+                        view.dispose();
+                    }
+                }
+                for (ViewKind kind : ViewKind.singletonViewKinds) {
+                    final SingletonViewManager viewManager = (SingletonViewManager) kind.viewManager();
+                    if (kind.activeByDefault) {
+                        gui().restoreDefaultGeometry(viewManager.activateView());
+                    } else if (viewManager.isActive()) {
+                        viewManager.deactivateView();
+                    }
+                }
+            }
+        };
         deactivateAllAction = new InspectorAction(inspection, "Close all views") {
 
             @Override
@@ -404,6 +426,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         }
         return null;
+    }
+
+    public Object resetViewsToDefaultAction() {
+        return resetViewsToDefaultAction;
     }
 
     /**

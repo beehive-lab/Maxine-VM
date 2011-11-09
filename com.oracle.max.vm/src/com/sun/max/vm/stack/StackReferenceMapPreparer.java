@@ -40,7 +40,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -69,7 +68,7 @@ import com.sun.max.vm.thread.*;
  * which fills in stack reference maps for target methods compiled by the baseline compiler as needed
  * was carefully crafted to comply with this requirement.
  */
-public final class StackReferenceMapPreparer {
+public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
 
     /**
      * Flag controlling tracing of stack root scanning (SRS).
@@ -221,10 +220,13 @@ public final class StackReferenceMapPreparer {
                     int stackWordIndex = baseIndex + bitIndex;
                     if (traceStackRootScanning()) {
                         Log.print("    Slot: ");
-                        printSlot(stackWordIndex, tla, Pointer.zero());
+                        printSlot(stackWordIndex, tla, Pointer.zero(), true);
                         Log.println();
                     }
-                    wordPointerIndexVisitor.visit(lowestStackSlot, stackWordIndex);
+                    if (!Reference.fromOrigin(slotAddress(stackWordIndex, tla).readWord(0).asPointer()).isTagged()) {
+                        // only visit non-tagged references
+                        wordPointerIndexVisitor.visit(lowestStackSlot, stackWordIndex);
+                    }
                 }
             }
         }
@@ -271,8 +273,10 @@ public final class StackReferenceMapPreparer {
      * @param slotIndex the index of the slot to be printed
      * @param tla a pointer to the VM thread locals corresponding to the stack containing the slot
      * @param framePointer the address of the frame pointer if known, zero otherwise
+     * @param checkTagging if this is {@code true}, all encountered reference values will be checked whether they
+     * are tagged pointers, and according information is printed
      */
-    private static void printSlot(int slotIndex, Pointer tla, Pointer framePointer) {
+    private static void printSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
         Pointer slotAddress = slotAddress(slotIndex, tla);
         Pointer referenceMap = STACK_REFERENCE_MAP.load(tla);
         Log.print("index=");
@@ -289,7 +293,11 @@ public final class StackReferenceMapPreparer {
         Log.print(", address=");
         Log.print(slotAddress);
         Log.print(", value=");
-        Log.print(slotAddress.readWord(0));
+        final Word value = slotAddress.readWord(0);
+        Log.print(value);
+        if (checkTagging && Reference.fromOrigin(value.asPointer()).isTagged()) {
+            Log.print(" (tagged)");
+        }
         if (slotAddress.lessThan(referenceMap)) {
             Pointer etla = ETLA.load(tla);
             Pointer dtla = DTLA.load(tla);
@@ -336,7 +344,7 @@ public final class StackReferenceMapPreparer {
      * @param ignoreTopFrame specifies if the top frame is to be ignored
      * @return the amount of time (in the resolution specified by {@link HeapScheme#GC_TIMING_CLOCK}) taken to prepare the reference map
      */
-    public long prepareStackReferenceMap(Pointer tla, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
+    public long prepareStackReferenceMap(Pointer tla, CodePointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
         initRefMapFields(tla);
@@ -357,7 +365,7 @@ public final class StackReferenceMapPreparer {
 
         // walk the stack and prepare references for each stack frame
         StackFrameWalker sfw = vmThread.referenceMapPreparingStackFrameWalker();
-        sfw.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+        sfw.prepareReferenceMap(instructionPointer.toPointer(), stackPointer, framePointer, this);
 
         traceStackRootScanEnd(lockDisabledSafepoints);
 
@@ -428,7 +436,7 @@ public final class StackReferenceMapPreparer {
         FatalError.check(!ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
         Pointer etla = ETLA.load(tla);
         Pointer anchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        CodePointer instructionPointer = CodePointer.from(JavaFrameAnchor.PC.get(anchor));
         Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
         Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
         if (instructionPointer.isZero()) {
@@ -475,7 +483,7 @@ public final class StackReferenceMapPreparer {
         // walk the stack and prepare references for each stack frame
         StackFrameWalker sfw = vmThread.referenceMapPreparingStackFrameWalker();
         completingReferenceMapLimit = highestSlot;
-        sfw.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+        sfw.prepareReferenceMap(instructionPointer.toPointer(), stackPointer, framePointer, this);
         completingReferenceMapLimit = Pointer.zero();
 
         traceStackRootScanEnd(lockDisabledSafepoints);
@@ -496,7 +504,7 @@ public final class StackReferenceMapPreparer {
     }
 
     private void printSlot(int slotIndex, Pointer framePointer) {
-        printSlot(slotIndex, ttla, framePointer);
+        printSlot(slotIndex, ttla, framePointer, false);
     }
 
     /**
@@ -519,7 +527,7 @@ public final class StackReferenceMapPreparer {
             }
             return;
         }
-        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        CodePointer instructionPointer = CodePointer.from(JavaFrameAnchor.PC.get(anchor));
         Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
         Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
         if (instructionPointer.isZero()) {
@@ -541,18 +549,7 @@ public final class StackReferenceMapPreparer {
         final Pointer instructionPointer = tfa.getPC(trapFrame);
         final Pointer stackPointer = tfa.getSP(trapFrame);
         final Pointer framePointer = tfa.getFP(trapFrame);
-        prepareStackReferenceMap(tla, instructionPointer, stackPointer, framePointer, false);
-    }
-
-
-    /**
-     * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).
-     *
-     * @param slotAddress an address within the range of stack addresses covered by the reference map
-     * @return the index of the bit for {@code slotAddress} in the reference map
-     */
-    public int referenceMapBitIndex(Address slotAddress) {
-        return referenceMapBitIndex(lowestStackSlot, slotAddress.asPointer());
+        prepareStackReferenceMap(tla, CodePointer.from(instructionPointer), stackPointer, framePointer, false);
     }
 
     /**
@@ -565,7 +562,7 @@ public final class StackReferenceMapPreparer {
         return lowestStackSlot.plusWords(slotIndex);
     }
 
-
+    @Override
     public void tracePrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
         if (traceStackRootScanning()) {
             Log.print(prepare ? "  Preparing" : "  Verifying");
@@ -593,6 +590,7 @@ public final class StackReferenceMapPreparer {
      * @param referenceMapByte the value of the reference map byte
      * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
      */
+    @Override
     public void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
         if (traceStackRootScanning()) {
             Log.print("    ");
@@ -615,6 +613,7 @@ public final class StackReferenceMapPreparer {
      * @param baseSlotIndex the index of the slot corresponding to bit 0 of {@code referenceMapByte}
      * @param referenceMapByte a the reference map byte
      */
+    @Override
     public void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
         if (traceStackRootScanning()) {
             for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
@@ -637,8 +636,14 @@ public final class StackReferenceMapPreparer {
         return false;
     }
 
+    @Override
     public void setBits(int baseSlotIndex, byte referenceMapByte) {
         referenceMap.setBits(baseSlotIndex, referenceMapByte);
+    }
+
+    @Override
+    public int referenceMapBitIndex(Address slotAddress) {
+        return referenceMapBitIndex(lowestStackSlot, slotAddress.asPointer());
     }
 
     /**
@@ -649,7 +654,8 @@ public final class StackReferenceMapPreparer {
      * @param refMap an integer containing up to 32 reference map bits for up to 32 successive slots in the frame
      * @param numBits the number of bits in the reference map
      */
-    public void setReferenceMapBits(Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
+    @Override
+    public void visitReferenceMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
         if (traceStackRootScanning()) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("    setReferenceMapBits: sp = ");
@@ -716,23 +722,27 @@ public final class StackReferenceMapPreparer {
 
     }
 
-    private void printRef(Reference ref, Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
+    private void printRef(Reference ref, StackFrameCursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
         Log.print("    ref @ ");
         Log.print(slotPointer.plusWords(slotIndex));
         Log.print(" [sp + ");
         Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
         Log.print("] = ");
         Log.print(ref.toOrigin());
+        if (ref.isTagged()) {
+            Log.print(" tagged");
+        }
         Log.print(valid ? " ok\n" : " (invalid)\n");
     }
 
     @NEVER_INLINE
-    private void invalidRef(Reference ref, Cursor cursor, Pointer slotPointer, int slotIndex) {
+    private void invalidRef(Reference ref, StackFrameCursor cursor, Pointer slotPointer, int slotIndex) {
         printRef(ref, cursor, slotPointer, slotIndex, false);
         Log.print("invalid ref ### [SRSCount: ");
         Log.print(SRSCount.get());
         Log.print("] ");
-        Throw.logFrame(null, cursor.targetMethod(), cursor.ip());
+        final Pointer ip = cursor.ipAsPointer();
+        Throw.logFrame(null, cursor.targetMethod(), ip);
         throw FatalError.unexpected("invalid ref");
     }
 
@@ -748,7 +758,7 @@ public final class StackReferenceMapPreparer {
      */
     public static void verifyReferenceMapsForThisThread() {
         VmThread current = VmThread.current();
-        current.stackReferenceMapVerifier().verifyReferenceMaps0(current, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
+        current.stackReferenceMapVerifier().verifyReferenceMaps0(current, CodePointer.from(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
     /**
@@ -756,15 +766,15 @@ public final class StackReferenceMapPreparer {
      * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
      * heuristic.
      */
-    public static void verifyReferenceMaps(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
+    public static void verifyReferenceMaps(VmThread thread, CodePointer ip, Pointer sp, Pointer fp) {
         thread.stackReferenceMapVerifier().verifyReferenceMaps0(thread, ip, sp, fp);
     }
 
-    private void verifyReferenceMaps0(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
+    private void verifyReferenceMaps0(VmThread thread, CodePointer ip, Pointer sp, Pointer fp) {
         Pointer tla = thread.tla();
         initRefMapFields(tla);
         boolean lockDisabledSafepoints = traceStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), thread);
-        thread.stackDumpStackFrameWalker().verifyReferenceMap(ip, sp, fp, this);
+        thread.stackDumpStackFrameWalker().verifyReferenceMap(ip.toPointer(), sp, fp, this);
         traceStackRootScanEnd(lockDisabledSafepoints);
     }
 }

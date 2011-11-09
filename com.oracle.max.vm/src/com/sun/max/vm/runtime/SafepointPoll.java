@@ -144,6 +144,9 @@ public abstract class SafepointPoll {
      */
     @INLINE
     public static boolean disable() {
+        if (isHosted()) {
+            return true;
+        }
         final boolean wasDisabled = getLatchRegister().equals(DTLA.load(currentTLA()));
         setLatchRegister(DTLA.load(currentTLA()));
         return wasDisabled;
@@ -156,6 +159,9 @@ public abstract class SafepointPoll {
      */
     @INLINE
     public static void enable() {
+        if (isHosted()) {
+            return;
+        }
         setLatchRegister(ETLA.load(currentTLA()));
     }
 
@@ -170,7 +176,7 @@ public abstract class SafepointPoll {
     @HOSTED_ONLY
     protected abstract byte[] createCode();
 
-    public boolean isAt(Pointer instructionPointer) {
-        return Memory.equals(instructionPointer, code);
+    public boolean isAt(CodePointer instructionPointer) {
+        return Memory.equals(instructionPointer.toPointer(), code);
     }
 }

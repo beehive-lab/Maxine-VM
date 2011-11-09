@@ -27,7 +27,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a {@link StaticMethodActor} in the tele VM.
+ * Canonical surrogate for a {@link StaticMethodActor} in the VM.
  */
 public final class TeleStaticMethodActor extends TeleClassMethodActor {
 
@@ -35,8 +35,8 @@ public final class TeleStaticMethodActor extends TeleClassMethodActor {
      * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
-    TeleStaticMethodActor(TeleVM teleVM, Reference staticMethodActorReference) {
-        super(teleVM, staticMethodActorReference);
+    TeleStaticMethodActor(TeleVM vm, Reference staticMethodActorReference) {
+        super(vm, staticMethodActorReference);
     }
 
     @Override

@@ -251,6 +251,8 @@ public final class ClassfileReader {
             // interface fields must be public static final (i.e. constants), but may have ACC_SYNTHETIC set
             valid = (flags & ~ACC_SYNTHETIC) == (ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
         }
+        // fields referencing tagged values are currently disallowed
+        valid = valid && ((flags & TAGGED_FIELD) != TAGGED_FIELD);
         if (!valid) {
             throw classFormatError(name + ": invalid field flags 0x" + Integer.toHexString(flags));
         }
@@ -385,6 +387,9 @@ public final class ClassfileReader {
                 });
                 final int descriptorIndex = classfileStream.readUnsigned2();
                 final TypeDescriptor descriptor = parseTypeDescriptor(constantPool.utf8At(descriptorIndex, "field descriptor").toString());
+                if (descriptor.equals(CODE_POINTER)) {
+                    flags |= TAGGED_FIELD;
+                }
                 verifyFieldFlags(name.toString(), flags, isInterface);
 
                 char constantValueIndex = 0;

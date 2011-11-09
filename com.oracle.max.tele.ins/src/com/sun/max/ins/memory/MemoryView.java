@@ -79,7 +79,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 new AddressInputDialog(inspection(), Address.zero(), "View RegionInfo for address...", "View") {
                     @Override
                     public void entered(Address address) {
-                        MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);
+                        MaxMemoryManagementInfo info = vm().getMemoryManagementInfo(address);
                         // TODO: revisit this.
                         if (info.status().equals(MaxMemoryStatus.LIVE)) {
                             final TeleObject teleObject = info.tele();
@@ -122,12 +122,18 @@ public final class MemoryView extends AbstractView<MemoryView> {
         }
 
         public MemoryView makeView(TeleObject teleObject) {
-            final MemoryView memoryView = new MemoryView(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
+            final MemoryView memoryView = new MemoryView(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.memoryStatus().isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
             notifyAddingView(memoryView);
             return memoryView;
         }
 
         public MemoryView makeView(Address address) {
+            final MemoryView memoryView = new MemoryView(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord()), null, address, ViewMode.WORD, null);
+            notifyAddingView(memoryView);
+            return memoryView;
+        }
+
+        public MemoryView makePageView(Address address) {
             final MemoryView memoryView = new MemoryView(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInPage()), null, address, ViewMode.PAGE, null);
             notifyAddingView(memoryView);
             return memoryView;
@@ -402,14 +408,15 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 moveBack();
             }
         });
-        previousButton.setIcon(style().navigationBackIcon());
+        final InspectorStyle style = preference().style();
+        previousButton.setIcon(style.navigationBackIcon());
 
         nextButton = new InspectorButton(inspection(), new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 moveForward();
             }
         });
-        nextButton.setIcon(style().navigationForwardIcon());
+        nextButton.setIcon(style.navigationForwardIcon());
 
         prefsButton = new InspectorButton(inspection(), new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -418,14 +425,14 @@ public final class MemoryView extends AbstractView<MemoryView> {
         });
         prefsButton.setText(null);
         prefsButton.setToolTipText("Column view options");
-        prefsButton.setIcon(style().generalPreferencesIcon());
+        prefsButton.setIcon(style.generalPreferencesIcon());
 
         findButton = new InspectorButton(inspection(), new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 gui().informationMessage("memory \"Find\" is unimplemented");
             }
         });
-        findButton.setIcon(style().generalFindIcon());
+        findButton.setIcon(style.generalFindIcon());
         findButton.setToolTipText("Find (UNIMPLEMENTED)");
         findButton.setEnabled(false);
 
@@ -434,13 +441,13 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 resetToOriginal();
             }
         });
-        homeButton.setIcon(style().navigationHomeIcon());
+        homeButton.setIcon(style.navigationHomeIcon());
         homeButton.setToolTipText("Return displayed region to original");
 
         cloneButton = new InspectorButton(inspection(), cloneAction);
         cloneButton.setText(null);
         cloneButton.setToolTipText("Create a cloned copy of this memory view");
-        cloneButton.setIcon(style().generalCopyIcon());
+        cloneButton.setIcon(style.generalCopyIcon());
 
         final InspectorFrame frame = createFrame(true);
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
@@ -457,7 +464,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-        gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        gui().setLocationRelativeToMouse(this, inspection.preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
@@ -473,7 +480,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 
         toolBar = new InspectorToolBar(inspection());
-        toolBar.setBorder(style().defaultPaneBorder());
+        toolBar.setBorder(preference().style().defaultPaneBorder());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBar.add(new JLabel("Origin:"));
@@ -531,7 +538,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
             this.inspectorTable = inspectorTable;
             // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
             // this is empirical, based only the fuzziest notion of how these dimensions work
-            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 2;
+            final int displayRows = Math.min(preference().style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 2;
             final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
                                                           inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
             final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
@@ -553,7 +560,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     private int preferredTableHeight() {
         // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
         // this is empirical, based only the fuzziest notion of how these dimensions work
-        final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), table.getRowCount());
+        final int displayRows = Math.min(preference().style().memoryTableMaxDisplayRows(), table.getRowCount());
         final int rowHeight = table.getRowHeight();
         final int rowMargin = table.getRowMargin();
         final int headerHeight = table.getTableHeader().getHeight();
@@ -627,11 +634,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         switch(viewMode()) {
             case OBJECT:
                 TeleObject teleObject = null;
-                try {
-                    teleObject = vm().heap().findTeleObject(vm().originToReference(origin.asPointer()));
-                } catch (MaxVMBusyException e) {
-                    // Can't learn anything about the object right now.
-                }
+                teleObject = vm().objects().findObjectAt(origin);
                 if (teleObject == null) {
                     titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
                 } else {
@@ -768,7 +771,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToCurrentObject() {
-        TeleObject teleObject = vm().heap().findObjectAt(origin);
+        TeleObject teleObject = null;
+        teleObject = vm().objects().findObjectAt(origin);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
@@ -784,7 +788,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToPreviousObject() {
-        final TeleObject teleObject = vm().heap().findObjectPreceding(origin, 1000000);
+        final TeleObject teleObject = vm().objects().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
@@ -798,7 +802,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToNextObject() {
-        final TeleObject teleObject = vm().heap().findObjectFollowing(origin, 1000000);
+        final TeleObject teleObject = vm().objects().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
             final MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             // Start stays the same

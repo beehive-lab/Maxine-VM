@@ -49,7 +49,7 @@ public abstract class AddressInputField extends JTextField {
         super(ADDRESSINPUTFIELDSIZE);
         this.radix = radix;
         this.value = initialValue;
-        setFont(inspection.style().defaultWordDataFont());
+        setFont(inspection.preference().style().defaultWordDataFont());
         updateView();
         addKeyListener(new KeyTypedListener() {
             @Override

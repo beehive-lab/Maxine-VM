@@ -262,6 +262,12 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-msec1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests");
 
         maxvmConfig("std", "-Xms2g", "-Xmx2g");
+        maxvmConfig("eviction1000", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=1000");
+        maxvmConfig("eviction100", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=100");
+        maxvmConfig("eviction10", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=10");
+        maxvmConfig("cc1m", "-Xms2g", "-Xmx2g", "-XX:ReservedBaselineCodeCacheSize=1m");
+        maxvmConfig("cc500k", "-Xms2g", "-Xmx2g", "-XX:ReservedBaselineCodeCacheSize=500k");
+        maxvmConfig("cc250k", "-Xms2g", "-Xmx2g", "-XX:ReservedBaselineCodeCacheSize=250k");
         maxvmConfig("baseline", "-Xms2g", "-Xmx2g", "-Xbaseline");
         maxvmConfig("opt", "-Xms2g", "-Xmx2g", "-Xopt");
         maxvmConfig("mx256m", "-Xmx256m");

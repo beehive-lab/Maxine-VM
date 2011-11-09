@@ -28,14 +28,14 @@ import com.sun.max.unsafe.*;
 /**
  * Representation of a span of memory in the VM where the description is immutable.
  */
-public class TeleFixedMemoryRegion extends TeleMemoryRegion {
+public class TeleFixedMemoryRegion extends VmMemoryRegion {
 
     private final String regionName;
     private final Address start;
     private final long nBytes;
 
-    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, long nBytes) {
-        super(teleVM);
+    public TeleFixedMemoryRegion(MaxVM vm, String regionName, Address start, long nBytes) {
+        super(vm);
         this.start = start;
         this.nBytes = nBytes;
         this.regionName = regionName;

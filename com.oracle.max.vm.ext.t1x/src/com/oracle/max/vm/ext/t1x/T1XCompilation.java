@@ -199,6 +199,11 @@ public abstract class T1XCompilation {
     protected CodeAttribute codeAttribute;
 
     /**
+     * Index for the method protection sentinel (for code eviction) in the reference literals array.
+     */
+    protected int protectionLiteralIndex;
+
+    /**
      * The last bytecode compiled.
      */
     int prevOpcode;
@@ -304,6 +309,8 @@ public abstract class T1XCompilation {
         cp = codeAttribute.cp;
         byte[] code = codeAttribute.code();
         stream = new BytecodeStream(code);
+
+        protectionLiteralIndex = -1;
 
         bciToPos = new int[code.length + 1];
         blockBCIs = new boolean[code.length];
@@ -444,6 +451,8 @@ public abstract class T1XCompilation {
     void compile2(ClassMethodActor method) throws InternalError {
         adapter = emitPrologue();
 
+        emitUnprotectMethod();
+
         do_profileMethodEntry();
 
         do_methodTraceEntry();
@@ -467,6 +476,8 @@ public abstract class T1XCompilation {
             bciToPos[endBCI] = epiloguePos;
         }
     }
+
+    protected abstract void emitUnprotectMethod();
 
     protected void startBlock(int bci) {
         if (!blockBCIs[bci]) {
@@ -1288,7 +1299,7 @@ public abstract class T1XCompilation {
     protected void do_methodTraceEntry() {
         if (T1XOptions.TraceMethods) {
             start(TRACE_METHOD_ENTRY);
-            assignObject(0, "method", method.toString());
+            assignObject(0, "method", "{" + method.toString());
             finish();
         }
     }
@@ -1471,6 +1482,11 @@ public abstract class T1XCompilation {
     }
 
     protected void do_return(T1XTemplateTag tag, T1XTemplateTag tagUnlock) {
+        if (T1XOptions.TraceMethods) {
+            start(TRACE_METHOD_EXIT);
+            assignObject(0, "method", method.toString() + "}");
+            finish();
+        }
         if (method.holder() == ClassRegistry.OBJECT) {
             start(RETURN$registerFinalizer);
             loadObject(0, "object", 0);

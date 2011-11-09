@@ -47,8 +47,8 @@ public class TeleHeapRegionInfo extends TeleTupleObject {
     }
 
     public Address firstFreeChunk() {
-        if (vm().teleFields().HeapRegionInfo_numFreeChunks.readInt(getReference()) > 0) {
-            int offsetToFirstFreeChunk = vm().teleFields().HeapRegionInfo_firstFreeChunkOffset.readInt(getReference());
+        if (vm().fields().HeapRegionInfo_numFreeChunks.readInt(getReference()) > 0) {
+            int offsetToFirstFreeChunk = vm().fields().HeapRegionInfo_firstFreeChunkOffset.readInt(getReference());
             return regionStart().plus(offsetToFirstFreeChunk);
         }
         return Address.zero();
@@ -56,7 +56,7 @@ public class TeleHeapRegionInfo extends TeleTupleObject {
 
     public int flags() {
         if (regionID  >= 0) {
-            return vm().teleFields().HeapRegionInfo_flags.readInt(getReference());
+            return vm().fields().HeapRegionInfo_flags.readInt(getReference());
         }
         return 0;
     }

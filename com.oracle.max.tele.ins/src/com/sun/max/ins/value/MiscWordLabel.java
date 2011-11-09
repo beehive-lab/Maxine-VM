@@ -35,8 +35,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
-import com.sun.max.vm.monitor.modal.schemes.ModalMonitorScheme.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.monitor.modal.schemes.ModalMonitorScheme.ModalLockwordDecoder;
 import com.sun.max.vm.value.*;
 
 /**
@@ -85,7 +84,7 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     public void redisplay() {
-        setFont(style().hexDataFont());
+        setFont(preference().style().hexDataFont());
         updateText();
     }
 
@@ -130,21 +129,12 @@ public final class MiscWordLabel extends ValueLabel {
                 final boolean isBound = inflatedLockword.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    final Reference javaMonitorReference = vm().wordToReference(inflatedLockword.getBoundMonitorReferenceAsWord());
-                    if (javaMonitorReference.isZero()) {
-                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=null");
+                    teleJavaMonitor = vm().objects().findObjectAt(inflatedLockword.getBoundMonitorReferenceAsWord().asAddress());
+                    if (teleJavaMonitor == null) {
+                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
                     } else {
-                        try {
-                            teleJavaMonitor = vm().heap().findTeleObject(javaMonitorReference);
-                        } catch (MaxVMBusyException e) {
-                           // can't learn anything about the monitor right now
-                        }
-                        if (teleJavaMonitor == null) {
-                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
-                        } else {
-                            final String name = teleJavaMonitor.classActorForObjectType().qualifiedName();
-                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
-                        }
+                        final String name = teleJavaMonitor.classActorForObjectType().qualifiedName();
+                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
                     }
                 } else {
                     // Field access

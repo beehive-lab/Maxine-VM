@@ -139,14 +139,14 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     }
 
     @Override
-    protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return protocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().nBytes(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+    protected boolean activateWatchpoint(VmWatchpoint watchpoint) {
+        final WatchpointSettings settings = watchpoint.getSettings();
+        return protocol.activateWatchpoint(watchpoint.memoryRegion().start().toLong(), watchpoint.memoryRegion().nBytes(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     @Override
-    protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return protocol.deactivateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().nBytes());
+    protected boolean deactivateWatchpoint(VmWatchpoint watchpoint) {
+        return protocol.deactivateWatchpoint(watchpoint.memoryRegion().start().toLong(), watchpoint.memoryRegion().nBytes());
     }
 
     /**

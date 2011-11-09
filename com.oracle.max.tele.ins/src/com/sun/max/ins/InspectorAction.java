@@ -64,7 +64,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public InspectorAction(Inspection inspection, String title) {
         super(title);
         this.inspection = inspection;
-        inspection.registerAction(this);
+        inspection.preference().registerAction(this);
     }
 
     /**

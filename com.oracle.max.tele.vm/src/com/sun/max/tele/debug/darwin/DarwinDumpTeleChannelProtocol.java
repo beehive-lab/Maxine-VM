@@ -44,13 +44,13 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     protected int tlaSize;
     public boolean bigEndian;
     protected DarwinMachO machO;
-    protected TeleVM teleVM;
+    protected MaxVM teleVM;
     protected static final String HEAP_SYMBOL_NAME = "theHeap";  // defined in image.c, holds the base address of the boot heap
     private final List<Segment64LoadCommand> segmentList = new ArrayList<Segment64LoadCommand>();
     private final List<ThreadLoadCommand> threadDataList = new ArrayList<ThreadLoadCommand>();
     private DarwinDumpThreadAccess darwinDumpThreadAccess;
 
-    public DarwinDumpTeleChannelProtocol(TeleVM teleVM, File vm, File dump) {
+    public DarwinDumpTeleChannelProtocol(MaxVM teleVM, File vm, File dump) {
         this.teleVM = teleVM;
         try {
             // We need the tele library because we use it to access the OS-specific structs

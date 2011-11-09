@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.tele;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -127,19 +129,19 @@ public final class InspectableHeapInfo {
      */
     public static void init(boolean useImmortalMemory, MemoryRegion... memoryRegions) {
         if (Inspectable.isVmInspected()) {
-            InspectableHeapInfo.dynamicHeapMemoryRegions = memoryRegions;
-
             // Create the roots region, but allocate the descriptor object
             // in non-collected memory so that we don't lose track of it
             // during GC.
             if (useImmortalMemory) {
                 try {
                     Heap.enableImmortalMemoryAllocation();
+                    dynamicHeapMemoryRegions = Arrays.copyOf(memoryRegions, memoryRegions.length);
                     rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
                 } finally {
                     Heap.disableImmortalMemoryAllocation();
                 }
             } else {
+                dynamicHeapMemoryRegions = memoryRegions;
                 rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
             }
 

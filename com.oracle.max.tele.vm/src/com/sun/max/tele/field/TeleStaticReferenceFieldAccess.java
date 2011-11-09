@@ -38,23 +38,23 @@ public class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess {
         TeleError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader)), "field has wrong type: " + name + " in class: " + holder);
     }
 
-    public Reference readReference(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readReference(fieldActor().offset());
+    public Reference readReference(MaxVM vm) {
+        return staticTupleReference(vm).readReference(fieldActor().offset());
     }
 
     /**
-     * Read a reference as a Word from the field in the tele VM.
+     * Read a reference as a Word from the field in the VM.
      * ATTENTION: an implicit type cast happens via remote access.
      */
-    public Word readWord(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readWord(fieldActor().offset());
+    public Word readWord(MaxVM vm) {
+        return staticTupleReference(vm).readWord(fieldActor().offset());
     }
 
     /**
-     * Write a word as a reference into the field in the tele VM.
+     * Write a word as a reference into the field in the VM.
      * ATTENTION: an implicit type cast happens via remote access.
      */
-    public void writeWord(TeleVM teleVM, Word value) {
-        staticTupleReference(teleVM).writeWord(fieldActor().offset(), value);
+    public void writeWord(MaxVM vm, Word value) {
+        staticTupleReference(vm).writeWord(fieldActor().offset(), value);
     }
 }

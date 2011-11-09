@@ -73,8 +73,8 @@ public final class TeleStateRegisters extends TeleRegisters {
         throw TeleError.unimplemented();
     }
 
-    public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, createStateRegisters());
+    public TeleStateRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet) {
+        super(vm, teleRegisterSet, createStateRegisters());
         if (platform().isa == ISA.AMD64) {
             instructionPointerRegister = AMD64.RIP;
             flagsRegister = AMD64.FLAGS;
@@ -112,7 +112,7 @@ public final class TeleStateRegisters extends TeleRegisters {
         return register == flagsRegister;
     }
 
-    public static String flagsToString(TeleVM teleVM, long flags) {
+    public static String flagsToString(MaxVM vm, long flags) {
         if (platform().isa == ISA.AMD64) {
             return AMD64.flagsToString(flags);
         }

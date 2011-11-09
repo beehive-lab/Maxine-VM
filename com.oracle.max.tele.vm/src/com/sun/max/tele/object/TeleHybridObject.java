@@ -47,8 +47,8 @@ import com.sun.max.vm.value.*;
   */
 public abstract class TeleHybridObject extends TeleObject {
 
-    protected TeleHybridObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference, Layout.hybridLayout());
+    protected TeleHybridObject(TeleVM vm, Reference reference) {
+        super(vm, reference, Layout.hybridLayout());
     }
 
     @Override
@@ -81,7 +81,7 @@ public abstract class TeleHybridObject extends TeleObject {
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind.isReference) {
-            return TeleReferenceValue.from(vm(), vm().wordToReference(reference().readWord(fieldActor.offset())));
+            return TeleReferenceValue.from(vm(), referenceManager().makeReference(reference().readWord(fieldActor.offset()).asAddress()));
         }
         return fieldActor.readValue(reference());
     }

@@ -88,6 +88,10 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
         throw FatalError.unimplemented();
     }
 
+    public boolean isTagged(Reference ref) {
+        throw FatalError.unimplemented();
+    }
+
     public Reference marked(Reference ref) {
         throw FatalError.unimplemented();
     }
