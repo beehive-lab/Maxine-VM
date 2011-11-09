@@ -122,8 +122,6 @@ public final class CodePointer {
 
     @INLINE
     public static CodePointer from(long value) {
-        // reject high addresses (information loss due to tagging)
-        assert (value & 0x8000000000000000L) == 0L : "cannot create code pointers for high addresses";
         if (isHosted()) {
             return new CodePointer(tag(value));
         }
