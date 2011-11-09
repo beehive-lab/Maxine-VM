@@ -709,6 +709,19 @@ def inspect(env, args):
     else:
         env.run(cmd)
 
+def javap(env, args):
+    """launch javap with a -classpath option denoting all the Maxine classes
+
+    Run the JDK javap class file disassembler with the following prepended options:
+
+        -private -verbose -classpath <path to Maxine classes>"""
+        
+    javap = join(env.java_home, 'bin', 'javap')
+    if not exists(javap):
+        env.abort('The javap executable does not exists: ' + javap)
+    else:
+        env.run([javap, '-private', '-verbose', '-classpath', env.pdb().classpath()] + args)
+
 def jnigen(env, args):
     """(re)generate content in JniFunctions.java from JniFunctionsSource.java
 
@@ -906,6 +919,15 @@ def verify(env, args):
 
     env.run_java(['-cp', env.pdb().classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
             
+def view(env, args):
+    """browse the boot image under the Inspector
+
+    Browse a Maxine boot image under the Inspector.
+
+    Use "mx view -help" to see what the Inspector options are."""
+
+    env.run_java(['-cp', env.pdb().classpath(), 'com.sun.max.ins.MaxineInspector', '-vmdir=' + env.vmdir, '-mode=image'] + args)
+            
 def vm(env, args):
     """launch the Maxine VM
 
@@ -980,6 +1002,7 @@ table = {
     'help': [help_, '[command]'],
     'image': [image, '[options] classes|packages...'],
     'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
+    'javap': [javap, ''],
     'jnigen': [jnigen, ''],
     'jttgen': [jttgen, ''],
     'makejdk': [makejdk, '[<destination directory>]'],
@@ -992,5 +1015,6 @@ table = {
     't1xgen': [t1xgen, ''],
     'test': [test, '[options]'],
     'verify': [verify, '[options] patterns...', _patternHelp],
+    'view': [view, '[options]'],
     'vm': [vm, '[options] [class | -jar jarfile]  [args...]']
 }
