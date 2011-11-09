@@ -22,16 +22,12 @@
  */
 package com.oracle.max.vm.ext.c1xgraal;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.graal.*;
-import com.oracle.max.vm.ext.maxri.*;
-import com.sun.c1x.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
@@ -42,31 +38,20 @@ import com.sun.max.vm.compiler.target.*;
  * Integration of the C1X + Graal compiler into Maxine's compilation framework.
  */
 public class C1XGraal implements RuntimeCompiler {
-
-    public final MaxRuntime runtime = MaxRuntime.getInstance();
-    public final CiTarget target;
-    public final RiXirGenerator xirGenerator;
     private Graal graal;
     private C1X c1x;
 
     @HOSTED_ONLY
     public C1XGraal() {
-        this(new MaxXirGenerator(GraalOptions.PrintXirTemplates || C1XOptions.PrintXirTemplates), platform().target);
-    }
-
-    @HOSTED_ONLY
-    protected C1XGraal(RiXirGenerator xirGenerator, CiTarget target) {
-        this.xirGenerator = xirGenerator;
-        this.target = target;
-
-        this.c1x = new C1X(xirGenerator, target);
-        this.graal = new Graal(xirGenerator, target);
+        this.c1x = new C1X();
+        this.graal = new Graal();
     }
 
     @Override
     public void initialize(Phase phase) {
         c1x.initialize(phase);
         graal.initialize(phase);
+        GraalOptions.PrintCompilation = true;
     }
 
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {

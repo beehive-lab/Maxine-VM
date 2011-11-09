@@ -50,7 +50,7 @@ public class ComputeProbabilityPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        new PropagateProbability(graph.start().next()).apply();
+        new PropagateProbability(graph.start()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));
         }
@@ -58,7 +58,7 @@ public class ComputeProbabilityPhase extends Phase {
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After computeLoopFactors", graph, true, false));
         }
-        new PropagateLoopFrequency(graph.start().next()).apply();
+        new PropagateLoopFrequency(graph.start()).apply();
     }
 
     private void computeLoopFactors() {

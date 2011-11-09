@@ -189,7 +189,7 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
                 }
 
                 case PointerStore: {
-                    CiValue value = operands[inst.y().index];
+                    CiValue value = assureNot64BitConstant(tasm, masm, operands[inst.y().index]);
                     CiValue pointer = operands[inst.x().index];
                     assert pointer.isVariableOrRegister();
 
@@ -248,7 +248,7 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
 
-                    CiValue value = operands[inst.z().index];
+                    CiValue value = assureNot64BitConstant(tasm, masm, operands[inst.z().index]);
                     CiValue pointer = operands[inst.x().index];
                     CiValue index = operands[inst.y().index];
 
@@ -569,6 +569,15 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
      */
     private static void bangStackWithOffset(TargetMethodAssembler tasm, AMD64MacroAssembler masm, int offset) {
         masm.movq(new CiAddress(tasm.target.wordKind, AMD64.RSP, -offset), AMD64.rax);
+    }
+
+    private static CiValue assureNot64BitConstant(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue value) {
+        if (value.isConstant() && (value.kind == CiKind.Long || value.kind == CiKind.Object)) {
+            CiRegisterValue register = tasm.compilation.registerConfig.getScratchRegister().asValue(value.kind);
+            AMD64MoveOpcode.move(tasm, masm, register, value);
+            return register;
+        }
+        return value;
     }
 
     private static CiRegisterValue assureInRegister(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue pointer) {
