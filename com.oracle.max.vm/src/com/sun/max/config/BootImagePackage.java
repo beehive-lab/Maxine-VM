@@ -311,13 +311,14 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         final BootImagePackage root;
         final Set<String> pkgNames = new TreeSet<String>();
 
-        RootPackageInfo(Classpath classpath, final BootImagePackage root) {
+        RootPackageInfo(Classpath classpath, BootImagePackage root) {
             this.root = root;
             //long start = System.currentTimeMillis();
+            final String classNamePrefix = root.name() + ".";
             new ClassSearch() {
                 @Override
                 protected boolean visitClass(String className) {
-                    if (className.startsWith(root.name())) {
+                    if (className.startsWith(classNamePrefix)) {
                         pkgNames.add(Classes.getPackageName(className));
                     }
                     return true;
