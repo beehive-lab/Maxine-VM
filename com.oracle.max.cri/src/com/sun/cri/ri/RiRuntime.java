@@ -226,6 +226,20 @@ public interface RiRuntime {
      *
      * @param method a method whose executable code is being modified
      * @param code the code to be executed when {@code method} is called
+     * @return a reference to the compiled and ready-to-run code
      */
-    void installMethod(RiMethod method, CiTargetMethod code);
+    RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code);
+
+    /**
+     * Adds the given machine code as an implementation of the given method without making it the default implementation.
+     * @param method a method to which the executable code is begin added
+     * @param code the code to be added
+     * @return a reference to the compiled and ready-to-run code
+     */
+    RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code);
+
+    /**
+     * Executes the given runnable on a compiler thread, which means that it can access constant pools, etc.
+     */
+    void executeOnCompilerThread(Runnable r);
 }
