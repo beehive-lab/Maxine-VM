@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public class PlaceholderNode extends StateSplit implements Node.IterableNodeType, LIRLowerable {
+public class PlaceholderNode extends AbstractStateSplit implements Node.IterableNodeType, LIRLowerable {
 
     public PlaceholderNode() {
         super(CiKind.Void);

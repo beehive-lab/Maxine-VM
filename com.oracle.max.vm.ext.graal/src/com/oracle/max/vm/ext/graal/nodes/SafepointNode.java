@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.target.amd64.*;
@@ -30,7 +31,7 @@ import com.sun.cri.ci.*;
 /**
  * Adds a Safepoint to the generated code and possibly create a safepoint.
  */
-public final class SafepointNode extends StateSplit implements AMD64LIRLowerable {
+public final class SafepointNode extends AbstractStateSplit implements AMD64LIRLowerable {
 
     public static enum Op {
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
@@ -51,7 +52,7 @@ public final class SafepointNode extends StateSplit implements AMD64LIRLowerable
                 gen.emitSafepointPoll(this);
                 break;
             case HERE:
-                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue())));
+                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case INFO:

@@ -23,13 +23,11 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.graph.Node.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public abstract class CallTargetNode extends FloatingNode implements ValueNumberable, LIRLowerable {
+public abstract class CallTargetNode extends ValueNode implements LIRLowerable {
     @Input protected final NodeInputList<ValueNode> arguments;
 
     public CallTargetNode(ValueNode[] arguments) {

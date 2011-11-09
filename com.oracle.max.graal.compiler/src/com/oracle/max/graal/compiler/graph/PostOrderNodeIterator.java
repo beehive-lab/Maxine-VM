@@ -48,8 +48,8 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
         FixedNode current = start;
 
         do {
-            if (current instanceof InvokeNode) {
-                invoke((InvokeNode) current);
+            if (current instanceof Invoke) {
+                invoke((Invoke) current);
                 queueSuccessors(current);
                 current = nextQueuedNode();
             } else if (current instanceof LoopBeginNode) {
@@ -184,8 +184,8 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
         node(returnNode);
     }
 
-    protected void invoke(InvokeNode invoke) {
-        node(invoke);
+    protected void invoke(Invoke invoke) {
+        node(invoke.node());
     }
 
     protected void unwind(UnwindNode unwind) {

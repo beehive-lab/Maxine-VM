@@ -34,25 +34,19 @@ import com.sun.cri.ri.*;
  */
 public final class Constant extends Instruction {
 
-    public final CiConstant value;
+    public CiConstant value;
 
     /**
      * Constructs a new instruction representing the specified constant.
-     * @param value the constant
      */
     public Constant(CiConstant value) {
-        this(value.kind, value);
-    }
-
-    /**
-     * Constructs a new instruction representing the specified kind and constant.
-     * Note that the specified kind and the kind of the constant value do not have to match.
-     * For example, a long constant denoting a raw pointer has the kind Object at first.
-     */
-    public Constant(CiKind kind, CiConstant value) {
-        super(kind.stackKind());
+        super(value.kind.stackKind());
         this.value = value;
         initFlag(Value.Flag.NonNull, value.isNonNull());
+    }
+
+    public void setValue(CiConstant value) {
+        this.value = value;
     }
 
     @Override

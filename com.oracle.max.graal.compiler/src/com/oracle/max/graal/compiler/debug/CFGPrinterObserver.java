@@ -42,9 +42,9 @@ public class CFGPrinterObserver implements CompilationObserver {
     static class Observation {
         final CFGPrinter cfgPrinter;
         final ByteArrayOutputStream buffer;
-        public Observation(CiTarget target) {
+        public Observation(CiTarget target, RiRuntime runtime) {
             buffer = new ByteArrayOutputStream();
-            cfgPrinter = new CFGPrinter(buffer, target);
+            cfgPrinter = new CFGPrinter(buffer, target, runtime);
         }
     }
 
@@ -73,7 +73,7 @@ public class CFGPrinterObserver implements CompilationObserver {
         if (TTY.isSuppressed()) {
             return;
         }
-        Observation o = new Observation(event.getCompilation().compiler.target);
+        Observation o = new Observation(event.getCompilation().compiler.target, event.getCompilation().compiler.runtime);
         o.cfgPrinter.printCompilation(event.getCompilation().method);
         observations.get().push(o);
     }
@@ -86,14 +86,19 @@ public class CFGPrinterObserver implements CompilationObserver {
         Observation o = observations.get().peek();
         String label = event.getLabel();
 
+        boolean cfgprinted = false;
+        RiRuntime runtime = o.cfgPrinter.runtime;
+
         if (event.getAllocator() != null && event.getIntervals() != null) {
             o.cfgPrinter.printIntervals(event.getAllocator(), event.getIntervals(), label);
-        }
 
-        boolean cfgprinted = false;
+        } else if (event.getBlockMap() != null) {
+            o.cfgPrinter.printCFG(event.getBlockMap(), label);
+            o.cfgPrinter.printBytecodes(runtime.disassemble(event.getBlockMap().method));
+            cfgprinted = true;
 
-        if (event.getBlockMap() != null && event.getCodeSize() >= 0) {
-            o.cfgPrinter.printCFG(event.getMethod(), event.getBlockMap(), event.getCodeSize(), label, event.isHIRValid(), event.isLIRValid());
+        } else if (event.getCompilation() != null && event.getCompilation().lir() != null) {
+            o.cfgPrinter.printCFG(event.getMethod(), label, event.getCompilation().lir(), event.isHIRValid(), event.isLIRValid());
             cfgprinted = true;
         }
 
@@ -102,8 +107,6 @@ public class CFGPrinterObserver implements CompilationObserver {
                 // Avoid duplicate "cfg" section
                 label = null;
             }
-
-            RiRuntime runtime = event.getCompilation().compiler.runtime;
             o.cfgPrinter.printMachineCode(runtime.disassemble(event.getTargetMethod()), label);
         }
     }

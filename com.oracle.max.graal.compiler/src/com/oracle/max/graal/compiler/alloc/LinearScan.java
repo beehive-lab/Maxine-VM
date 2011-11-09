@@ -1870,7 +1870,7 @@ public final class LinearScan {
                     assert false : "must not reach here";
                     return operand;
                 } else {
-                    assert value instanceof ConstantNode;
+                    assert value instanceof ConstantNode : "value=" + value + ", operand=" + operand;
                     assert operand.isConstant() : "operand must be constant";
                     return operand;
                 }

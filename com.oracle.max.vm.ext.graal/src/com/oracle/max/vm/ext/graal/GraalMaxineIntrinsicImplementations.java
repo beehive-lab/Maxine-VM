@@ -144,7 +144,7 @@ public class GraalMaxineIntrinsicImplementations {
             if (Platform.target().sizeInBytes(from) != Platform.target().sizeInBytes(from) || from == CiKind.Float || from == CiKind.Double || to == CiKind.Float || to == CiKind.Double) {
                 throw new CiBailout("Unsupported unsafe cast from " + fromType + " to " + toType);
             }
-            return graph.unique(new UnsafeCastNode(args[0], (RiResolvedType) toType));
+            return graph.unique(new MaxineUnsafeCastNode(args[0], (RiResolvedType) toType));
         }
     }
 
@@ -227,13 +227,13 @@ public class GraalMaxineIntrinsicImplementations {
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 1;
-            int registerId = intConstant(args[0]);
+            int registerId = intConstant(args[0], target);
 
             CiRegister register = runtime.getRegisterConfig(target).getRegisterForRole(registerId);
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            ReadRegisterNode load = graph.add(new ReadRegisterNode(register, target.signature().returnKind(false)));
+            ReadRegisterNode load = graph.add(new ReadRegisterNode(register, target.signature().returnKind(true)));
             return load;
         }
     }
@@ -242,7 +242,7 @@ public class GraalMaxineIntrinsicImplementations {
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 2;
-            int registerId = intConstant(args[0]);
+            int registerId = intConstant(args[0], target);
             ValueNode value = args[1];
 
             CiRegister register = runtime.getRegisterConfig(target).getRegisterForRole(registerId);
@@ -253,9 +253,9 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    private static int intConstant(ValueNode value) {
+    private static int intConstant(ValueNode value, RiResolvedMethod target) {
         if (!value.isConstant() || value.kind() != CiKind.Int) {
-            throw new CiBailout("instrinc parameter must be compile time integer constant");
+            throw new CiBailout("instrinc parameter must be compile time integer constant for invoke " + target);
         }
         return value.asConstant().asInt();
     }
@@ -292,7 +292,7 @@ public class GraalMaxineIntrinsicImplementations {
     private static class StackAllocateIntrinsic implements GraalIntrinsicImpl {
         @Override
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new StackAllocateNode(intConstant(args[0]), (RiResolvedType) target.signature().returnType(null)));
+            return graph.add(new StackAllocateNode(intConstant(args[0], target), (RiResolvedType) target.signature().returnType(null)));
         }
     }
 

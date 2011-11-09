@@ -42,6 +42,7 @@ import com.sun.cri.ri.*;
 public class CFGPrinter extends CompilationPrinter {
 
     private final CiTarget target;
+    public final RiRuntime runtime;
 
     /**
      * Creates a control flow graph printer.
@@ -49,9 +50,10 @@ public class CFGPrinter extends CompilationPrinter {
      * @param os where the output generated via this printer shown be written
      * @param target the target architecture description
      */
-    public CFGPrinter(OutputStream os, CiTarget target) {
+    public CFGPrinter(OutputStream os, CiTarget target, RiRuntime runtime) {
         super(os);
         this.target = target;
+        this.runtime = runtime;
     }
 
     /**
@@ -102,6 +104,45 @@ public class CFGPrinter extends CompilationPrinter {
         //if (printLIR) {
         //    printLIR(block.lirBlock());
         //}
+
+        end("block");
+    }
+
+    private void printBlock(LIRBlock block, RiResolvedMethod method, boolean printHIR, boolean printLIR) {
+        begin("block");
+
+        out.print("name \"B").print(block.blockID()).println('"');
+        out.println("from_bci -1");
+        out.println("to_bci -1");
+
+        out.print("predecessors ");
+        for (LIRBlock pred : block.blockPredecessors()) {
+            out.print("\"B").print(pred.blockID()).print("\" ");
+        }
+        out.println();
+
+        out.print("successors ");
+        for (LIRBlock succ : block.blockSuccessors()) {
+            out.print("\"B").print(succ.blockID()).print("\" ");
+        }
+        out.println();
+
+        out.print("xhandlers");
+        out.println();
+
+        out.print("flags ");
+        out.println();
+
+        out.print("loop_index ").println(block.loopIndex());
+        out.print("loop_depth ").println(block.loopDepth());
+
+        if (printHIR) {
+            printHIR(block.schedulerBlock(), method);
+        }
+
+        if (printLIR) {
+            printLIR(block, method);
+        }
 
         end("block");
     }
@@ -335,10 +376,8 @@ public class CFGPrinter extends CompilationPrinter {
      * @param blockMap a data structure describing the blocks in a method and how they are connected
      * @param codeSize the bytecode size of the method from which {@code blockMap} was produced
      * @param label a label describing the compilation phase that produced the control flow graph
-     * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
-     * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(RiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+    public void printCFG(BlockMap blockMap, String label) {
         begin("cfg");
         out.print("name \"").print(label).println('"');
         for (BlockMap.Block block : blockMap.blocks) {
@@ -349,6 +388,14 @@ public class CFGPrinter extends CompilationPrinter {
         end("cfg");
     }
 
+    public void printCFG(RiResolvedMethod method, String label, LIR lir, boolean printHIR, boolean printLIR) {
+        begin("cfg");
+        out.print("name \"").print(label).println('"');
+        for (LIRBlock block : lir.linearScanOrder()) {
+            printBlock(block, method, printHIR, printLIR);
+        }
+        end("cfg");
+    }
     /**
      * Prints the control flow graph rooted at a given block.
      *

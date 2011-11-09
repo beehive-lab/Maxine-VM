@@ -22,8 +22,6 @@
  */
 package com.sun.cri.ci;
 
-import static com.sun.cri.ci.CiRegister.*;
-
 /**
  * Represents an address in target machine memory, specified via some combination of a base register, an index register,
  * a displacement and a scale. Note that the base and index registers may be {@link CiVariable variable}, that is as yet
@@ -202,7 +200,7 @@ public final class CiAddress extends CiValue {
                 return Format.BASE_INDEX;
             }
         } else {
-            if (displacement != 0 || base == InstructionRelative.asValue()) {
+            if (displacement != 0) {
                 return Format.BASE_DISP;
             } else {
                 return Format.BASE;

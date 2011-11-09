@@ -87,7 +87,7 @@ public abstract class LIRGeneratorTool {
     public abstract void emitLookupSwitch(LookupSwitchNode i);
     public abstract void emitTableSwitch(TableSwitchNode i);
 
-    public abstract void emitInvoke(InvokeNode i);
+    public abstract void emitInvoke(Invoke i);
     public abstract void emitRuntimeCall(RuntimeCallNode i);
 
     // Handling of block-end nodes still needs to be unified in the LIRGenerator.

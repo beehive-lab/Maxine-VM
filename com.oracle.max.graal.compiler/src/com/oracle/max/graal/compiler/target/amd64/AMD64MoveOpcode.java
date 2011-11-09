@@ -39,7 +39,7 @@ public class AMD64MoveOpcode {
         @Override
         public LIRInstruction create(CiValue result, final CiValue input) {
             assert !result.isAddress() && !input.isAddress();
-            assert result.kind == result.kind.stackKind();
+            assert result.kind == result.kind.stackKind() && result.kind != CiKind.Illegal;
             CiValue[] inputs = new CiValue[] {input};
 
             return new AMD64LIRInstruction(this, result, null, inputs) {
@@ -196,7 +196,7 @@ public class AMD64MoveOpcode {
             case Float:  masm.movflt(tasm.asFloatReg(result),  tasm.asFloatReg(input)); break;
             case Double: masm.movdbl(tasm.asDoubleReg(result), tasm.asDoubleReg(input)); break;
             case Object: masm.movq(tasm.asRegister(result),    tasm.asRegister(input)); break;
-            default:     throw Util.shouldNotReachHere();
+            default:     throw Util.shouldNotReachHere("kind=" + result.kind);
         }
     }
 

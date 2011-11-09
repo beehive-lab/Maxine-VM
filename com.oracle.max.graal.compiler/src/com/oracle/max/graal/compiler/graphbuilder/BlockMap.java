@@ -150,13 +150,12 @@ public final class BlockMap {
         }
     }
 
-    public static class ExceptionBlock  extends Block {
+    public static class ExceptionBlock extends Block {
         public RiExceptionHandler handler;
-        public Block next;
         public int deoptBci;
     }
 
-    public static class DeoptBlock  extends Block {
+    public static class DeoptBlock extends Block {
         public DeoptBlock(int startBci) {
             this.startBci = startBci;
         }
@@ -167,13 +166,7 @@ public final class BlockMap {
      */
     public final List<Block> blocks;
 
-    /**
-     * A bit map covering the locals with a bit set for each local that might be stored to within a
-     * loop. If the bit is cleared, it is guaranteed that the local is never stored in a loop.
-     */
-    public final BitSet storesInLoops;
-
-    private final RiResolvedMethod method;
+    public final RiResolvedMethod method;
 
     private final RiExceptionHandler[] exceptionHandlers;
 
@@ -197,7 +190,6 @@ public final class BlockMap {
         this.blockMap = new Block[method.codeSize()];
         this.canTrap = new BitSet(blockMap.length);
         this.blocks = new ArrayList<Block>();
-        this.storesInLoops = new BitSet(method.maxLocals());
         this.useBranchPrediction = useBranchPrediction;
     }
 
@@ -348,6 +340,17 @@ public final class BlockMap {
                             break;
                         }
                     }
+                    break;
+                }
+                case INVOKEINTERFACE:
+                case INVOKESPECIAL:
+                case INVOKESTATIC:
+                case INVOKEVIRTUAL: {
+                    current = null;
+                    int target = bci + lengthOf(code, bci);
+                    Block b1 = makeBlock(target);
+                    setSuccessors(bci, b1);
+                    canTrap.set(bci);
                     break;
                 }
                 default: {
@@ -518,8 +521,7 @@ public final class BlockMap {
             block.handler = handler;
             block.successors.add(blockMap[handler.handlerBCI()]);
             if (index < handlers.size() - 1) {
-                block.next = makeExceptionDispatch(handlers, index + 1, bci);
-                block.successors.add(block.next);
+                block.successors.add(makeExceptionDispatch(handlers, index + 1, bci));
             }
             exceptionDispatch.put(handler, block);
         }
@@ -618,9 +620,6 @@ public final class BlockMap {
             loops |= computeBlockOrder(successor);
         }
 
-        if (loops != 0) {
-            processLoopBlock(block);
-        }
         if (block.isLoopHeader) {
             assert Long.bitCount(block.loops) == 1;
             loops &= ~block.loops;
@@ -632,91 +631,6 @@ public final class BlockMap {
 
         return loops;
     }
-
-    private void processLoopBlock(Block block) {
-        // process all the stores in this block
-        byte[] code = method.code();
-        int bci = block.startBci;
-        if (bci >= 0) {
-            while (bci <= block.endBci) {
-                int opcode = Bytes.beU1(code, bci);
-                if (isStore(opcode)) {
-                    processStore(opcode, Bytes.beU1(code, bci + 1));
-
-                } else if (opcode == WIDE) {
-                    opcode = Bytes.beU1(code, bci + 1);
-                    if (isStore(opcode)) {
-                        processStore(opcode, Bytes.beU2(code, bci + 2));
-                    }
-                }
-                bci += lengthOf(code, bci);
-            }
-        }
-    }
-
-    private void processStore(int opcode, int local) {
-        switch (opcode) {
-            case IINC:
-            case ISTORE:
-            case FSTORE:
-            case ASTORE:
-                storesInLoops.set(local);
-                break;
-
-            case LSTORE:
-            case DSTORE:
-                storesInLoops.set(local);
-                storesInLoops.set(local + 1);
-                break;
-
-            case ISTORE_0:
-            case FSTORE_0:
-            case ASTORE_0:
-                storesInLoops.set(0);
-                break;
-            case ISTORE_1:
-            case FSTORE_1:
-            case ASTORE_1:
-                storesInLoops.set(1);
-                break;
-            case ISTORE_2:
-            case FSTORE_2:
-            case ASTORE_2:
-                storesInLoops.set(2);
-                break;
-            case ISTORE_3:
-            case FSTORE_3:
-            case ASTORE_3:
-                storesInLoops.set(3);
-                break;
-
-            case LSTORE_0:
-            case DSTORE_0:
-                storesInLoops.set(0);
-                storesInLoops.set(1);
-                break;
-            case LSTORE_1:
-            case DSTORE_1:
-                storesInLoops.set(1);
-                storesInLoops.set(2);
-                break;
-            case LSTORE_2:
-            case DSTORE_2:
-                storesInLoops.set(2);
-                storesInLoops.set(3);
-                break;
-            case LSTORE_3:
-            case DSTORE_3:
-                storesInLoops.set(3);
-                storesInLoops.set(4);
-                break;
-
-            default:
-                throw new InternalError("undefined store bytecode");
-        }
-    }
-
-
 
     /**
      * Print block information in the format required by {@linkplain CFGPrinter}. The method must

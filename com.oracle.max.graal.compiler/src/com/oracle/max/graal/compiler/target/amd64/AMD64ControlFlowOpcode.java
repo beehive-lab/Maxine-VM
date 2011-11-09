@@ -22,11 +22,9 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
-import static com.sun.cri.ci.CiRegister.*;
-
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -237,7 +235,7 @@ public class AMD64ControlFlowOpcode {
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
-        masm.leaq(scratch, new CiAddress(tasm.target.wordKind, InstructionRelative.asValue(), 0));
+        masm.leaq(scratch, new CiAddress(tasm.target.wordKind, AMD64.rip.asValue(), 0));
         int afterLea = buf.position();
 
         // Load jump table entry into scratch and jump to it
@@ -253,7 +251,7 @@ public class AMD64ControlFlowOpcode {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        masm.leaq(scratch, new CiAddress(tasm.target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
+        masm.leaq(scratch, new CiAddress(tasm.target.wordKind, AMD64.rip.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
