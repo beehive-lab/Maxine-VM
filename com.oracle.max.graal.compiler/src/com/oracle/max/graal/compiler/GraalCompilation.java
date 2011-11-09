@@ -253,23 +253,8 @@ public final class GraalCompilation {
             List<LIRBlock> lirBlocks = new ArrayList<LIRBlock>();
             Map<Block, LIRBlock> map = new HashMap<Block, LIRBlock>();
             for (Block b : blocks) {
-                LIRBlock block = new LIRBlock(b.blockID());
+                LIRBlock block = new LIRBlock(b);
                 map.put(b, block);
-                block.setInstructions(b.getInstructions());
-                block.setLinearScanNumber(b.blockID());
-                block.setLoopDepth(b.loopDepth());
-                block.setLoopIndex(b.loopIndex());
-
-                if (b.isLoopEnd()) {
-                    block.setLinearScanLoopEnd();
-                }
-
-                if (b.isLoopHeader()) {
-                    block.setLinearScanLoopHeader();
-                }
-
-                block.setFirstInstruction(b.firstNode());
-                block.setLastInstruction(b.lastNode());
                 lirBlocks.add(block);
             }
 

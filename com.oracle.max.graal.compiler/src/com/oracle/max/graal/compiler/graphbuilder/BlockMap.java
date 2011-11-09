@@ -166,7 +166,7 @@ public final class BlockMap {
      */
     public final List<Block> blocks;
 
-    private final RiResolvedMethod method;
+    public final RiResolvedMethod method;
 
     private final RiExceptionHandler[] exceptionHandlers;
 

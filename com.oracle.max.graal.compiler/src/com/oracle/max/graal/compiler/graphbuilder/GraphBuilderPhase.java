@@ -34,6 +34,7 @@ import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
+import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -155,6 +156,11 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         map.build();
         if (stats != null) {
             stats.bytecodeCount += method.code().length;
+        }
+
+        if (context.isObserved()) {
+            String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method);
+            context.observable.fireCompilationEvent(new CompilationEvent(null, label, map, method.code().length));
         }
         return map;
     }
