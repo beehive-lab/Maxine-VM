@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.target.amd64.*;
@@ -51,7 +52,7 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
                 gen.emitSafepointPoll(this);
                 break;
             case HERE:
-                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue())));
+                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case INFO:

@@ -82,11 +82,24 @@ public class AMD64 extends CiArchitecture {
         xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     };
 
-    public static final CiRegister[] allRegisters = {
+    public static final CiRegister[] cpuxmmRegisters = {
         rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
         r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
         xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
         xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+    };
+
+    /**
+     * Register used to construct an instruction-relative address.
+     */
+    public static final CiRegister rip = new CiRegister(32, -1, 0, "rip");
+
+    public static final CiRegister[] allRegisters = {
+        rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
+        r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
+        xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
+        xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15,
+        rip
     };
 
     public static final CiRegisterValue RSP = rsp.asValue(Long);

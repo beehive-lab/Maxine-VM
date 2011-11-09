@@ -184,13 +184,21 @@ public class AMD64Assembler extends AbstractAssembler {
         // Encode the registers as needed in the fields they are used in
 
         assert reg != CiRegister.None;
-
         int regenc = encode(reg) << 3;
-        int indexenc = index.isValid() ? encode(index) << 3 : 0;
-        int baseenc = base.isValid() ? encode(base) : 0;
 
-        if (base.isValid()) {
+        if (base == AMD64.rip) {
+            // [00 000 101] disp32
+            emitByte(0x05 | regenc);
+            emitInt(disp);
+        } else if (addr == CiAddress.Placeholder) {
+            // [00 000 101] disp32
+            emitByte(0x05 | regenc);
+            emitInt(0);
+
+        } else if (base.isValid()) {
+            int baseenc = base.isValid() ? encode(base) : 0;
             if (index.isValid()) {
+                int indexenc = encode(index) << 3;
                 // [base + indexscale + disp]
                 if (disp == 0 && base != rbp && (base != r13)) {
                     // [base + indexscale]
@@ -254,20 +262,13 @@ public class AMD64Assembler extends AbstractAssembler {
             }
         } else {
             if (index.isValid()) {
+                int indexenc = encode(index) << 3;
                 // [indexscale + disp]
                 // [00 reg 100][ss index 101] disp32
                 assert index != rsp : "illegal addressing mode";
                 emitByte(0x04 | regenc);
                 emitByte(scale.log2 << 6 | indexenc | 0x05);
                 emitInt(disp);
-            } else if (base == CiRegister.InstructionRelative) {
-                // [00 000 101] disp32
-                emitByte(0x05 | regenc);
-                emitInt(disp);
-            } else if (addr == CiAddress.Placeholder) {
-                // [00 000 101] disp32
-                emitByte(0x05 | regenc);
-                emitInt(0);
             } else {
                 // [disp] ABSOLUTE
                 // [00 reg 100][00 100 101] disp32
