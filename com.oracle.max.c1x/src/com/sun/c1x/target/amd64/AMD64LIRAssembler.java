@@ -23,7 +23,6 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -33,9 +32,9 @@ import java.util.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.oracle.max.criutils.*;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
@@ -103,10 +102,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
                 int beforeLea = masm.codeBuffer.position();
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, InstructionRelative.asValue(), 0));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, AMD64.rip.asValue(), 0));
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, InstructionRelative.asValue(), beforeLea - afterLea));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, AMD64.rip.asValue(), beforeLea - afterLea));
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -535,7 +534,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        masm.leaq(rscratch1, new CiAddress(target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
+        masm.leaq(rscratch1, new CiAddress(target.wordKind, AMD64.rip.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -1782,10 +1781,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     CiRegister dst = result.asRegister();
                     int beforeLea = masm.codeBuffer.position();
-                    masm.leaq(dst, new CiAddress(target.wordKind, InstructionRelative.asValue(), 0));
+                    masm.leaq(dst, new CiAddress(target.wordKind, AMD64.rip.asValue(), 0));
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, InstructionRelative.asValue(), beforeLea - afterLea));
+                    masm.leaq(dst, new CiAddress(target.wordKind, AMD64.rip.asValue(), beforeLea - afterLea));
                     break;
                 }
 

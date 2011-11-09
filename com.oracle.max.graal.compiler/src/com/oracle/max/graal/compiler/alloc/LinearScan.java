@@ -937,7 +937,7 @@ public final class LinearScan {
     }
 
     boolean isProcessed(CiValue operand) {
-        return !operand.isRegister() || (operand.asRegister() != CiRegister.InstructionRelative && attributes(operand.asRegister()).isAllocatable);
+        return !operand.isRegister() || attributes(operand.asRegister()).isAllocatable;
     }
 
     void addDef(CiValue operand, int defPos, RegisterPriority registerPriority, CiKind kind) {
