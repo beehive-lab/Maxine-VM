@@ -68,12 +68,18 @@ public class WordTypeRewriter implements BlockClosure {
             if (value instanceof Constant) {
                 Constant constant = (Constant) value;
                 CiConstant oldConstant = constant.value;
-                constant.setValue(CiConstant.forLong(((WrappedWord) oldConstant.asObject()).value()));
+                constant.setValue(((WordUtil.WrappedWord) oldConstant.asObject()).archConstant());
             }
         }
     }
 
     private boolean isWord(Value value) {
+        if (value.kind == WordUtil.archKind()) {
+            // Instruction has already been rewritten, and is not accessed when, e.g., processing the operands of a phi function.
+            return true;
+        }
+        assert value.kind == CiKind.Object;
+
         if (value instanceof Phi) {
             phiVisited.clear();
             return isPhiWord((Phi) value);
@@ -81,7 +87,7 @@ public class WordTypeRewriter implements BlockClosure {
         } else if (value instanceof Constant) {
             Constant c = (Constant) value;
             assert c.value.kind == CiKind.Object;
-            return c.value.asObject() instanceof WrappedWord;
+            return c.value.asObject() instanceof WordUtil.WrappedWord;
 
         } else if (value instanceof Return) {
             Return r = (Return) value;
