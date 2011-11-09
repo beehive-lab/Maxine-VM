@@ -269,6 +269,8 @@ public enum CiKind {
                     }
                 } else if (value instanceof RiType) {
                     return "class " + CiUtil.toJavaName((RiType) value);
+                } else if (value instanceof Class< ? >) {
+                    return ((Class< ? >) value).getName() + ".class";
                 } else {
                     return CiUtil.getSimpleName(value.getClass(), true) + "@" + System.identityHashCode(value);
                 }
