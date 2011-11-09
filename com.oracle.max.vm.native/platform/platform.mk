@@ -208,7 +208,8 @@ ifeq ($(OS),linux)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
     LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
-    LINK_LIB = $(CC) -g -shared -lc -lm
+    LINK_LIB = $(CC) -g -shared
+    LINK_LIB_POSTFIX = -lc -lm -lpthread 
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
 endif
