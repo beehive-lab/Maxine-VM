@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 
@@ -35,6 +36,7 @@ import com.sun.max.vm.jni.*;
  * through a {@linkplain NativeStubGenerator native stub} which records the current
  * {@link JavaFrameAnchor}.
  */
+@HOSTED_ONLY
 public final class NativeStackFrame extends StackFrame {
 
     public NativeStackFrame(StackFrame callee, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {

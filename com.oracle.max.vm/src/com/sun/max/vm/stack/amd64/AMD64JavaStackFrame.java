@@ -22,10 +22,12 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
+@HOSTED_ONLY
 public class AMD64JavaStackFrame extends VMStackFrame {
 
     public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {

@@ -33,11 +33,24 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Specialization of a StackFrameWalker for use with a {@link TeleVM}.
+ * A specialization of the VM's stack walker for remote use.
+ *
+ * @see StackFrameWalker
  */
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
-    private final TeleVM teleVM;
+    /**
+     * A specialized implementation of the stack walker's cursor that
+     * can access information about the code cache remotely.
+     */
+    private static final class TeleStackFrameCursor extends StackFrameCursor {
+
+        protected TeleStackFrameCursor(StackFrameWalker walker, TeleVM vm) {
+            super(walker, new TeleNativeOrVmIP(vm));
+        }
+    }
+
+    private final TeleVM vm;
     private final TeleThreadLocalsArea teleEnabledVmThreadLocalValues;
     private final TeleNativeThread teleNativeThread;
 
@@ -45,9 +58,12 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     private final Pointer cpuStackPointer;
     private final Pointer cpuFramePointer;
 
-    public TeleStackFrameWalker(TeleVM teleVM, TeleNativeThread teleNativeThread) {
+    public TeleStackFrameWalker(TeleVM vm, TeleNativeThread teleNativeThread) {
         super();
-        this.teleVM = teleVM;
+        // Replace the two cursors use by the walker with inspector-specific ones
+        this.current = new TeleStackFrameCursor(this, vm);
+        this.callee = new TeleStackFrameCursor(this, vm);
+        this.vm = vm;
         this.teleNativeThread = teleNativeThread;
         this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
         final TeleRegisterSet registers = teleNativeThread.registers();
@@ -139,7 +155,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
                 class Counter extends RawStackFrameVisitor {
                     int count;
                     @Override
-                    public boolean visitFrame(Cursor current, Cursor callee) {
+                    public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
                         count++;
                         return true;
                     }
@@ -161,7 +177,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleCompilation compiledCode = teleVM.codeCache().findCompiledCode(instructionPointer);
+        final TeleCompilation compiledCode = vm.codeCache().findCompiledCode(instructionPointer);
         if (compiledCode != null) {
             return compiledCode.teleTargetMethod().targetMethod();
         }
@@ -170,17 +186,17 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public byte readByte(Address address, int offset) {
-        return teleVM.dataAccess().readByte(address, offset);
+        return vm.memory().readByte(address, offset);
     }
 
     @Override
     public Word readWord(Address address, int offset) {
-        return teleVM.dataAccess().readWord(address, offset);
+        return vm.memory().readWord(address, offset);
     }
 
     @Override
     public int readInt(Address address, int offset) {
-        return teleVM.dataAccess().readInt(address, offset);
+        return vm.memory().readInt(address, offset);
     }
 
     @Override

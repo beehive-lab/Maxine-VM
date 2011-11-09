@@ -241,6 +241,11 @@ public class C1X implements RuntimeCompiler {
                     C1XTimers.INSTALL.start();
                 }
                 MaxTargetMethod maxTargetMethod = new MaxTargetMethod(method, compiledMethod, install);
+                final MaxRuntime.CompilationInfo ci = MaxRuntime.compilationInfo.get();
+                if (ci.usesTagging || method.isUsingTaggedLocals()) {
+                    maxTargetMethod.setUsingTaggedLocals();
+                    ci.reset();
+                }
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.stop();
                 }
@@ -250,7 +255,6 @@ public class C1X implements RuntimeCompiler {
                         Log.println("DEPS: " + deps.toString(true));
                     }
                 }
-
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {
                     printMachineCode(compiledMethod, maxTargetMethod, false);

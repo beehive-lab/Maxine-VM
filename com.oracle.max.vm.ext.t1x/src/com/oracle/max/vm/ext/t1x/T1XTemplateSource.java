@@ -87,6 +87,11 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordBackwardBranch(mpo);
     }
 
+    @T1X_TEMPLATE(TRACE_METHOD_EXIT)
+    public static void traceMethodExit(String msg) {
+        Log.println(msg);
+    }
+
     @INTRINSIC(UNSAFE_CAST)
     public static native Word toWord(Object object);
 

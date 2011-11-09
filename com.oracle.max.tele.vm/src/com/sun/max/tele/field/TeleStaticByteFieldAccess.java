@@ -33,7 +33,7 @@ public class TeleStaticByteFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.BYTE);
     }
 
-    public byte readByte(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readByte(fieldActor().offset());
+    public byte readByte(MaxVM vm) {
+        return staticTupleReference(vm).readByte(fieldActor().offset());
     }
 }

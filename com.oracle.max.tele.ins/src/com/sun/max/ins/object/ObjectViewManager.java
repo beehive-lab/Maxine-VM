@@ -32,11 +32,9 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Creates and manages canonical instances of {@link ObjectView} for
@@ -50,7 +48,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
     private static final String SHORT_NAME = "Object";
-    private static final String LONG_NAME = "Object Inspector";
+    private static final String LONG_NAME = "Object View";
 
     /**
      * Map:   {@link TeleObject} -- > the {@link ObjectView}, if it exists, for the corresponding
@@ -72,12 +70,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
      */
     private final Map<Class, Constructor> arrayComponentClassToObjectViewConstructor = new HashMap<Class, Constructor>();
 
-    private final Constructor defaultArrayInspectorConstructor;
-    private final Constructor defaultTupleInspectorConstructor;
+    private final Constructor defaultArrayViewConstructor;
+    private final Constructor defaultTupleViewConstructor;
 
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
-
 
     private final List<InspectorAction> makeViewActions;
 
@@ -86,12 +83,12 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         Trace.begin(1, tracePrefix() + "initializing");
 
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
-        defaultArrayInspectorConstructor = getConstructor(ArrayView.class);
+        defaultArrayViewConstructor = getConstructor(ArrayView.class);
         // Array views for specific subclasses of component type
         arrayComponentClassToObjectViewConstructor.put(Character.class, getConstructor(CharacterArrayView.class));
 
         // Use this if there is no object type subclass matched
-        defaultTupleInspectorConstructor = getConstructor(TupleView.class);
+        defaultTupleViewConstructor = getConstructor(TupleView.class);
         // Tuple views for specific subclasses
         teleTupleObjectClassToObjectViewConstructor.put(TeleDescriptor.class, getConstructor(DescriptorView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleEnum.class, getConstructor(EnumView.class));
@@ -104,7 +101,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
             @Override
             public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
                 if (teleObject != null) {
-                    ObjectViewManager.this.makeObjectInspector(inspection, teleObject);
+                    ObjectViewManager.this.makeObjectView(inspection, teleObject);
                 }
             }
         });
@@ -116,12 +113,12 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
 
-
         Trace.end(1, tracePrefix() + "initializing");
     }
 
     public ObjectView makeView(TeleObject teleObject) {
-        return makeObjectInspector(inspection(), teleObject);
+        focus().setHeapObject(teleObject);
+        return teleObjectToView.get(teleObject);
     }
 
     public InspectorAction makeViewByAddressAction() {
@@ -148,7 +145,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return makeViewActions;
     }
 
-    private ObjectView makeObjectInspector(Inspection inspection, TeleObject teleObject) {
+    private ObjectView makeObjectView(Inspection inspection, TeleObject teleObject) {
         ObjectView objectView =  teleObjectToView.get(teleObject);
         if (objectView == null) {
             switch (teleObject.kind()) {
@@ -157,9 +154,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                     break;
                 }
                 case TUPLE: {
-                    Constructor constructor = lookupInspectorConstructor(teleTupleObjectClassToObjectViewConstructor, teleObject.getClass());
+                    Constructor constructor = lookupViewConstructor(teleTupleObjectClassToObjectViewConstructor, teleObject.getClass());
                     if (constructor == null) {
-                        constructor = defaultTupleInspectorConstructor;
+                        constructor = defaultTupleViewConstructor;
                     }
                     try {
                         objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
@@ -178,9 +175,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                         final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
                         componentClassActor = primitiveClassActor.toWrapperClassActor();
                     }
-                    Constructor constructor = lookupInspectorConstructor(arrayComponentClassToObjectViewConstructor, componentClassActor.toJava());
+                    Constructor constructor = lookupViewConstructor(arrayComponentClassToObjectViewConstructor, componentClassActor.toJava());
                     if (constructor == null) {
-                        constructor = defaultArrayInspectorConstructor;
+                        constructor = defaultArrayViewConstructor;
                     }
                     try {
                         objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
@@ -219,7 +216,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return Classes.getDeclaredConstructor(clazz, Inspection.class, TeleObject.class);
     }
 
-    private Constructor lookupInspectorConstructor(Map<Class, Constructor> map, Class clazz) {
+    private Constructor lookupViewConstructor(Map<Class, Constructor> map, Class clazz) {
         Class javaClass = clazz;
         while (javaClass != null) {
             final Constructor constructor = map.get(javaClass);
@@ -231,7 +228,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return null;
     }
 
-    public boolean isObjectInspectorObservingObject(long oid) {
+    public boolean isObjectViewObservingObject(long oid) {
         for (TeleObject teleObject : teleObjectToView.keySet()) {
             if (teleObject.reference().makeOID() == oid) {
                 return true;
@@ -240,9 +237,9 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return false;
     }
 
-    public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectView objectInspector) {
+    public void resetObjectToViewMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectView objectView) {
         teleObjectToView.remove(oldTeleObject);
-        teleObjectToView.put(newTeleObject, objectInspector);
+        teleObjectToView.put(newTeleObject, objectView);
     }
 
     /**
@@ -264,17 +261,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
                 @Override
                 public void entered(Address address) {
-                    try {
-                        final Pointer pointer = address.asPointer();
-                        if (vm().isValidOrigin(pointer)) {
-                            final Reference objectReference = vm().originToReference(pointer);
-                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
-                            focus().setHeapObject(teleObject);
-                        } else {
-                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
-                        }
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        inspection().announceVMBusyFailure(name());
+                    final TeleObject teleObject = vm().objects().findObjectAt(address);
+                    if (teleObject != null) {
+                        focus().setHeapObject(teleObject);
+                    } else {
+                        gui().errorMessage("object not found at "  + address.to0xHexString());
                     }
                 }
             };
@@ -296,7 +287,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
             }
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
+                final TeleObject teleObject = vm().objects().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {

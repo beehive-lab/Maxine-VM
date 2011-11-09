@@ -77,9 +77,9 @@ import com.sun.max.vm.value.*;
  * involves {@link TeleClassMethodActor}s and {@link TeleTargetMethod}s.
  *
  * @see TeleObjectFactory
- * @see TeleHeap
+ * @see VmObjectAccess
  */
-public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMCache, ObjectProvider, TeleObjectMemory {
+public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache, ObjectProvider {
 
     /**
      * Identification for the three low-level Maxine heap objects implementations upon which all objects are
@@ -262,26 +262,18 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         return true;
     }
 
-    public final TeleObjectMemory.State getTeleObjectMemoryState() {
-        return reference.getTeleObjectMemoryState();
-    }
-
     public final boolean isLive() {
         return reference.isLive();
     }
 
-    public final boolean isObsolete() {
-        return reference.isObsolete();
-    }
-
-    public final boolean isDead() {
-        return reference.isDead();
+    public final ObjectMemoryStatus memoryStatus() {
+        return reference.memoryStatus();
     }
 
     public final TeleObject getForwardedTeleObject() {
-        if (isObsolete()) {
+        if (memoryStatus().isObsolete()) {
             TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
-            TeleObject teleObject = heap().findObjectByOID(forwardedTeleRef.makeOID());
+            TeleObject teleObject = objects().findObjectByOID(forwardedTeleRef.makeOID());
             if (teleObject == null) {
                 reference = forwardedTeleRef;
                 return this;
@@ -369,7 +361,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      *
      */
     public Pointer origin() {
-        if (isObsolete() || isDead()) {
+        if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
             return lastValidPointer;
         }
         Pointer pointer = reference.toOrigin();
@@ -388,7 +380,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (isObsolete() || isDead()) {
+        if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
             // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
         }
@@ -396,7 +388,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public final MaxMemoryRegion getForwardedMemoryRegion() {
-        if (isObsolete()) {
+        if (memoryStatus().isObsolete()) {
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardedTeleRef().toOrigin()), objectSize());
         }
         return null;
@@ -478,8 +470,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(reference));
-            teleHub = (TeleHub) heap().makeTeleObject(hubReference);
+            final Reference hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
+            teleHub = (TeleHub) objects().makeTeleObject(hubReference);
         }
         return teleHub;
     }
@@ -553,7 +545,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     public abstract Value readFieldValue(FieldActor fieldActor);
 
     /**
-     * @return a shallow copy of the object in the teleVM, with any references in it nulled out
+     * @return a shallow copy of the object in the vm, with any references in it nulled out
      */
     public abstract Object shallowCopy();
 
@@ -662,7 +654,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                         if (a != null && !a.deepCopied()) {
                             return;
                         }
-                        final TeleObject teleFieldReferenceObject = teleObject.heap().makeTeleObject(value.asReference());
+                        final TeleObject teleFieldReferenceObject = teleObject.objects().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
@@ -745,9 +737,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * Updates the static fields of a specified local class from the VM.
      */
-    public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
+    public static void copyStaticFields(MaxVM vm, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.classRegistry().findTeleClassActor(javaClass);
+        final TeleClassActor teleClassActor = vm.classes().findTeleClassActor(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         final String classMessage = "Copying static fields of " + javaClass + " from VM";
@@ -775,6 +767,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return vm().classRegistry().findTeleClassActor(classActorForObjectType().typeDescriptor);
+        return classes().findTeleClassActor(classActorForObjectType().typeDescriptor);
     }
 }

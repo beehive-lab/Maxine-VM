@@ -72,7 +72,7 @@ public class TableRowFilterToolBar extends InspectorToolBar {
         super(inspection);
         this.parent = parent;
         tableRowMatcher = new TableRowTextMatcher(inspection, jTable);
-        setBorder(style().defaultPaneBorder());
+        setBorder(inspection.preference().style().defaultPaneBorder());
         setFloatable(false);
         setRollover(true);
         add(new TextLabel(inspection, "Filter pattern: "));
@@ -105,7 +105,7 @@ public class TableRowFilterToolBar extends InspectorToolBar {
                 TableRowFilterToolBar.this.parent.closeRequested();
             }
         });
-        closeButton.setIcon(style().codeViewCloseIcon());
+        closeButton.setIcon(inspection.preference().style().codeViewCloseIcon());
         closeButton.setToolTipText("Close Filter");
         add(closeButton);
     }
@@ -139,7 +139,7 @@ public class TableRowFilterToolBar extends InspectorToolBar {
                     pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE + Pattern.LITERAL);
                 }
             } catch (PatternSyntaxException patternSyntaxException) {
-                textField.setBackground(style().searchFailedBackground());
+                textField.setBackground(preference().style().searchFailedBackground());
                 statusLabel.setText("regexp error");
                 matchingRows = null;
                 parent.setSearchResult(matchingRows);
@@ -149,9 +149,9 @@ public class TableRowFilterToolBar extends InspectorToolBar {
             final int matchCount = matchingRows.length;
             statusLabel.setText(Integer.toString(matchCount) + "/" + tableRowMatcher.rowCount() + " rows");
             if (matchCount > 0) {
-                textField.setBackground(style().searchMatchedBackground());
+                textField.setBackground(preference().style().searchMatchedBackground());
             } else {
-                textField.setBackground(style().searchFailedBackground());
+                textField.setBackground(preference().style().searchFailedBackground());
             }
             parent.setSearchResult(matchingRows);
         }

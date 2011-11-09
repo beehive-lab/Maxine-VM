@@ -33,11 +33,11 @@ public class TeleStaticIntFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.INT);
     }
 
-    public int readInt(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readInt(fieldActor().offset());
+    public int readInt(MaxVM vm) {
+        return staticTupleReference(vm).readInt(fieldActor().offset());
     }
 
-    public void writeInt(TeleVM teleVM, int value) {
-        staticTupleReference(teleVM).writeInt(fieldActor().offset(), value);
+    public void writeInt(MaxVM vm, int value) {
+        staticTupleReference(vm).writeInt(fieldActor().offset(), value);
     }
 }

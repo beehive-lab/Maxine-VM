@@ -149,11 +149,22 @@ public class MethodProfile {
 
     /**
      * Provides access to the raw data of this method profile.
+     *
      * @return the int array that stores the data of this profile
      */
     @INLINE
     public final int[] rawData() {
         return data;
+    }
+
+    /**
+     * Provides access to the raw type info of this method profile.
+     *
+     * @return the int array that stores the type info of this method profile
+     */
+    @INLINE
+    public final int[] rawInfo() {
+        return info;
     }
 
     private Integer[] extractPairs(int bci, byte type) {
@@ -250,6 +261,10 @@ public class MethodProfile {
 
     private int bciAt(int index) {
         return infoAt(index) >>> 16;
+    }
+
+    public boolean protectedEntryCount() {
+        return entryCount <= MethodInstrumentation.protectionThreshold;
     }
 
     /**

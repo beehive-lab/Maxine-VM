@@ -27,22 +27,22 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link ClassConstant} in the tele VM.
+ * Inspector's canonical surrogate for an object of type {@link ClassConstant} in the VM.
  */
 public abstract class TeleClassConstant extends TelePoolConstant {
 
-    protected TeleClassConstant(TeleVM teleVM, Reference classConstantReference) {
-        super(teleVM, classConstantReference);
+    protected TeleClassConstant(TeleVM vm, Reference classConstantReference) {
+        super(vm, classConstantReference);
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link ClassConstant.Unresolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link ClassConstant.Unresolved} in the VM.
      *
      */
     public static final class Unresolved extends TelePoolConstant {
 
-        public Unresolved(TeleVM teleVM, Reference unresolvedClassConstantReference) {
-            super(teleVM, unresolvedClassConstantReference);
+        public Unresolved(TeleVM vm, Reference unresolvedClassConstantReference) {
+            super(vm, unresolvedClassConstantReference);
         }
 
         @Override
@@ -53,7 +53,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link ClassConstant.Resolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link ClassConstant.Resolved} in the VM.
      *
      */
     public static final class Resolved extends TeleClassConstant{
@@ -69,12 +69,12 @@ public abstract class TeleClassConstant extends TelePoolConstant {
             return true;
         }
         /**
-         * @return surrogate for the {@ClassActor} in the teleVM to which the constant was resolved
+         * @return surrogate for the {@ClassActor} in the VM to which the constant was resolved
          */
         public TeleClassActor getTeleClassActor() {
             if (teleClassActor == null) {
-                final Reference classActorReference = vm().teleFields().ClassConstant$Resolved_classActor.readReference(reference());
-                teleClassActor = (TeleClassActor) heap().makeTeleObject(classActorReference);
+                final Reference classActorReference = fields().ClassConstant$Resolved_classActor.readReference(reference());
+                teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
             }
             return teleClassActor;
         }

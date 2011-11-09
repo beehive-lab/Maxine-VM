@@ -47,7 +47,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -72,13 +71,13 @@ import com.sun.max.vm.thread.*;
  * </ul>
  * </li>
  * </ol>
- * All but step 1 above are performed in a {@linkplain #doIt() VM operation} (i.e. all threads have been stopped as a safepoint).
+ * All but step 1 above are performed in a {@linkplain #doIt() VM operation} (i.e. all threads have been stopped at a safepoint).
  * <p>
  * One optimization applied is for each thread to perform step 5 on itself just
  * {@linkplain VmOperation#doAtSafepointBeforeBlocking before} suspending. This is
  * analogous to each thread preparing its own reference map when being stopped
  * for a garbage collection.
-
+ *
  * <li><b>Convert the frame of an optimized method into one or more deoptimized frames.</b>
  * <p>
  * This occurs when one of the deoptimization stubs is executed. A deoptimization stub is executed either as the result of the
@@ -179,7 +178,8 @@ public class Deoptimization extends VmOperation {
             VirtualMethodActor virtualMethod = (VirtualMethodActor) method;
             final int vtableIndex = virtualMethod.vTableIndex();
             if (vtableIndex >= 0) {
-                final Address trampoline = vm().stubs.virtualTrampoline(vtableIndex);
+                // must cast this from CodePointer to Address because the closure will create a field, which is not allowed
+                final Address trampoline = vm().stubs.virtualTrampoline(vtableIndex).toAddress();
                 ClassActor.Closure c = new ClassActor.Closure() {
                     @Override
                     public boolean doClass(ClassActor classActor) {
@@ -192,7 +192,7 @@ public class Deoptimization extends VmOperation {
                         for (int i = hub.iTableStartIndex; i < lastITableIndex; i++) {
                             if (hub.getWord(i).equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))) {
                                 int iIndex = i - hub.iTableStartIndex;
-                                hub.setWord(i, vm().stubs.interfaceTrampoline(iIndex));
+                                hub.setWord(i, vm().stubs.interfaceTrampoline(iIndex).toAddress());
                                 logPatchITable(classActor, iIndex);
                             }
                         }
@@ -255,7 +255,7 @@ public class Deoptimization extends VmOperation {
             TargetMethod tm = Code.codePointerToTargetMethod(ip);
             assert tm != null : "cannot deoptimize frame of a VM entry method";
             Log.print("DEOPT: continuation: ");
-            Log.printLocation(tm, ip, true);
+            Log.printLocation(tm, CodePointer.from(ip), true);
         }
     }
 
@@ -302,7 +302,7 @@ public class Deoptimization extends VmOperation {
     static class TopFrameContinuation extends Continuation {
         int fp;
         int sp;
-        Pointer ip;
+        NativeOrVmIP ip = new NativeOrVmIP();
 
         @Override
         public void setFP(Info info, CiConstant fp) {
@@ -316,7 +316,7 @@ public class Deoptimization extends VmOperation {
 
         @Override
         public void setIP(Info info, Pointer ip) {
-            this.ip = ip;
+            this.ip.derive(ip);
             traceContinuation(ip);
         }
     }
@@ -352,21 +352,21 @@ public class Deoptimization extends VmOperation {
             // Re-enable safepoints
             SafepointPoll.enable();
 
-            Stubs.unwind(info.ip, info.sp, info.fp);
+            Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
             if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
-                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip, info.sp, info.fp);
+                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip.vmIP(), info.sp, info.fp);
             }
 
             // Re-enable safepoints
             SafepointPoll.enable();
 
             switch (info.returnValue.kind.stackKind()) {
-                case Int:     Stubs.unwindInt(info.ip, info.sp, info.fp, info.returnValue.asInt());
-                case Float:   Stubs.unwindFloat(info.ip, info.sp, info.fp, info.returnValue.asFloat());
-                case Long:    Stubs.unwindLong(info.ip, info.sp, info.fp, info.returnValue.asLong());
-                case Double:  Stubs.unwindDouble(info.ip, info.sp, info.fp, info.returnValue.asDouble());
-                case Object:  Stubs.unwindObject(info.ip, info.sp, info.fp, info.returnValue.asObject());
+                case Int:     Stubs.unwindInt(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asInt());
+                case Float:   Stubs.unwindFloat(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asFloat());
+                case Long:    Stubs.unwindLong(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asLong());
+                case Double:  Stubs.unwindDouble(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asDouble());
+                case Object:  Stubs.unwindObject(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asObject());
                 default:      FatalError.unexpected("unexpected return kind: " + info.returnValue.kind.stackKind());
             }
         }
@@ -410,7 +410,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeInt(Pointer ip, Pointer sp, Pointer fp, Pointer csa, int returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forInt(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forInt(returnValue));
     }
 
     /**
@@ -418,7 +418,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeFloat(Pointer ip, Pointer sp, Pointer fp, Pointer csa, float returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forFloat(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forFloat(returnValue));
     }
 
     /**
@@ -426,7 +426,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeLong(Pointer ip, Pointer sp, Pointer fp, Pointer csa, long returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forLong(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forLong(returnValue));
     }
 
     /**
@@ -434,7 +434,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeDouble(Pointer ip, Pointer sp, Pointer fp, Pointer csa, double returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forDouble(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
     }
 
     /**
@@ -442,7 +442,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, WordUtil.constant(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.constant(returnValue));
     }
 
     /**
@@ -450,7 +450,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeObject(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Object returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forObject(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forObject(returnValue));
     }
 
     /**
@@ -458,7 +458,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeVoid(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
-        deoptimizeOnReturn(ip, sp, fp, csa, null);
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, null);
     }
 
     static boolean stackIsWalkable(StackFrameWalker sfw, Pointer ip, Pointer sp, Pointer fp) {
@@ -495,7 +495,7 @@ public class Deoptimization extends VmOperation {
         }
 
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
             TargetMethod tm = current.targetMethod();
             TargetMethod calleeTM = callee.targetMethod();
             boolean deopt = methods.contains(tm);
@@ -503,14 +503,14 @@ public class Deoptimization extends VmOperation {
                 // Patches the return address in the trap frame to trigger deoptimization
                 // of the top frame when the trap stub returns.
                 Stub stub = vm().stubs.deoptStubForSafepointPoll();
-                Pointer to = stub.codeStart().asPointer();
+                CodePointer to = stub.codeStart();
                 Pointer save = current.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
                 Pointer patch = tm.returnAddressPointer(callee);
-                Address from = patch.readWord(0).asAddress();
-                assert to != from;
+                CodePointer from = CodePointer.from(patch.readWord(0));
+                assert !to.equals(from);
                 logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
-                patch.writeWord(0, to);
-                save.writeWord(0, from);
+                patch.writeWord(0, to.toAddress());
+                save.writeWord(0, from.toAddress());
             } else {
                 if (calleeTM != null && calleeTM.classMethodActor != null) {
                     lastCalleeMethod = calleeTM.classMethodActor;
@@ -536,7 +536,7 @@ public class Deoptimization extends VmOperation {
         // The following are initially the details of the frame being deoptimized.
         // Just before unrolling, they are then modified to reflect the top
         // deoptimized frame.
-        Pointer ip;
+        NativeOrVmIP ip = new NativeOrVmIP();
         Pointer sp;
         Pointer fp;
 
@@ -549,20 +549,15 @@ public class Deoptimization extends VmOperation {
         // The following are the details of the caller of the frame being deoptimized.
 
         /**
-         * The caller of the frame being deoptimized.
-         */
-        TargetMethod callerTM;
-
-        /**
          * The actual return address in frame being deoptimized. This will differ from
          * {@link #callerIP} when the caller is (also) marked for deoptimization.
          */
-        Pointer returnIP;
+        NativeOrVmIP returnIP = new NativeOrVmIP();
 
         /**
          * The instruction pointer in the caller of the frame being deoptimized.
          */
-        Pointer callerIP;
+        NativeOrVmIP callerIP = new NativeOrVmIP();
 
         /**
          * The stack pointer in the caller (frame) of the frame being deoptimized.
@@ -598,8 +593,8 @@ public class Deoptimization extends VmOperation {
          * @param fp the frame pointer of the frame
          */
         public Info(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
-            this.tm = Code.codePointerToTargetMethod(ip);
-            this.ip = ip;
+            this.ip.derive(ip);
+            this.tm = this.ip.targetMethod();
             this.sp = sp;
             this.fp = fp;
 
@@ -610,12 +605,12 @@ public class Deoptimization extends VmOperation {
         }
 
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
 
             if (current.isTopFrame()) {
                 // Ensure that the top frame of the walk is the method being deoptimized
                 assert tm == current.targetMethod();
-                assert ip == current.ip();
+                assert ip.asPointer() == current.ipAsPointer();
                 assert sp == current.sp();
                 assert fp == current.fp();
                 return true;
@@ -624,12 +619,10 @@ public class Deoptimization extends VmOperation {
             assert callee.isTopFrame();
             TargetMethod calleeTM = callee.targetMethod();
             assert calleeTM == tm;
-            TargetMethod tm = current.targetMethod();
 
-            callerTM = tm;
             callerSP = current.sp();
             callerFP = current.fp();
-            callerIP = current.ip();
+            callerIP.derive(current.ipAsPointer());
 
             // The caller may (also) be marked for deoptimization. If so, then the callee's
             // return address slot may denote a deopt stub address. However,
@@ -637,8 +630,12 @@ public class Deoptimization extends VmOperation {
             // reflected in current.ip(). We must use the actual return address after
             // deoptimizing the callee and so the code below by-passes any
             // stack frame walker "recovery".
-            returnIP = calleeTM.returnAddressPointer(callee).readWord(0).asPointer();
+            returnIP.derive(calleeTM.returnAddressPointer(callee).readWord(0).asPointer());
             return false;
+        }
+
+        public TargetMethod callerTM() {
+            return callerIP.targetMethod();
         }
 
         public void addSlot(CiConstant slot, String name) {
@@ -665,23 +662,23 @@ public class Deoptimization extends VmOperation {
      * @param calleeMethod the class method actor that is being called. This is required in addition to {@code callee}
      *            in the case where {@code callee} is an adapter frame
      */
-    static void patchReturnAddress(Cursor caller, Cursor callee, ClassMethodActor calleeMethod) {
+    static void patchReturnAddress(StackFrameCursor caller, StackFrameCursor callee, ClassMethodActor calleeMethod) {
         assert calleeMethod != null;
         TargetMethod tm = caller.targetMethod();
         Stub stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), callee.targetMethod().is(CompilerStub));
-        Pointer to = stub.codeStart().asPointer();
+        CodePointer to = stub.codeStart();
         Pointer save = caller.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
         Pointer patch = callee.targetMethod().returnAddressPointer(callee);
-        Address from = patch.readWord(0).asAddress();
-        assert to != from;
+        CodePointer from = CodePointer.from(patch.readWord(0));
+        assert !to.equals(from);
         logPatchReturnAddress(tm, callee.targetMethod(), stub, to, save, patch, from);
-        patch.writeWord(0, to);
-        save.writeWord(0, from);
+        patch.writeWord(0, to.toAddress());
+        save.writeWord(0, from.toAddress());
     }
 
     /**
      * The fixed offset in a method's frame where the original return address is saved when the callee's
-     * return address slot is {@linkplain #patchReturnAddress(Cursor, Cursor) patched} with the address
+     * return address slot is {@linkplain #patchReturnAddress(StackFrameCursor, StackFrameCursor) patched} with the address
      * of a {@linkplain Stubs#deoptStub(CiKind, boolean) deoptimization stub}.
      */
     public static final int DEOPT_RETURN_ADDRESS_OFFSET = 0;
@@ -695,7 +692,7 @@ public class Deoptimization extends VmOperation {
      * @param csa the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
      * @param returnValue the value being returned (will be {@code null} if returning from a void method)
      */
-    public static void deoptimizeOnReturn(Pointer ip, Pointer sp, Pointer fp, Pointer csa, CiConstant returnValue) {
+    public static void deoptimizeOnReturn(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiConstant returnValue) {
         deoptimize(ip, sp, fp, csa, csa.isZero() ? null : vm().registerConfigs.compilerStub.csl, returnValue);
     }
 
@@ -711,9 +708,9 @@ public class Deoptimization extends VmOperation {
      * @param csl the layout of the callee save area pointed to by {@code csa}
      * @param returnValue the value being returned (will be {@code null} if returning from a void method or not deoptimizing upon return)
      */
-    public static void deoptimize(Pointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
+    public static void deoptimize(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
         SafepointPoll.disable();
-        Info info = new Info(VmThread.current(), ip, sp, fp);
+        Info info = new Info(VmThread.current(), ip.toPointer(), sp, fp);
 
         if (TraceDeopt) {
             Log.println("DEOPT: Deoptimizing " + info.tm);
@@ -777,8 +774,8 @@ public class Deoptimization extends VmOperation {
         assert platform().isa == ISA.AMD64;
 
         // Fix up the caller details for the bottom most deoptimized frame
-        cont.tm = info.callerTM;
-        cont.setIP(info, info.returnIP);
+        cont.tm = info.callerTM();
+        cont.setIP(info, info.returnIP.asPointer());
         cont.setSP(info, WordUtil.constant(info.callerSP));
         cont.setFP(info, WordUtil.constant(info.callerFP));
 
@@ -802,7 +799,7 @@ public class Deoptimization extends VmOperation {
         fp = slotsAddrs.plus(topCont.fp * STACK_SLOT_SIZE);
 
         // Set the deopt continuation to the top most deoptimized frame
-        info.ip = topCont.ip;
+        info.ip.copyFrom(topCont.ip);
         info.sp = sp;
         info.fp = fp;
         info.returnValue = returnValue;
@@ -854,7 +851,7 @@ public class Deoptimization extends VmOperation {
      * @param fp the trap frame pointer
      * @param csa the callee save area
      */
-    public static void deoptimizeAtSafepoint(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
+    public static void deoptimizeAtSafepoint(CodePointer ip, Pointer sp, Pointer fp, Pointer csa) {
         FatalError.check(!csa.isZero(), "callee save area expected for deopt at safepoint");
         deoptimize(ip, sp, fp, csa, vm().registerConfigs.trapStub.csl, null);
     }
@@ -868,7 +865,7 @@ public class Deoptimization extends VmOperation {
      */
     public static void uncommonTrap(Pointer csa, Pointer ip, Pointer sp, Pointer fp) {
         FatalError.check(!csa.isZero(), "callee save area expected for uncommon trap");
-        deoptimize(ip, sp, fp, csa, vm().registerConfigs.uncommonTrapStub.getCalleeSaveLayout(), null);
+        deoptimize(CodePointer.from(ip), sp, fp, csa, vm().registerConfigs.uncommonTrapStub.getCalleeSaveLayout(), null);
     }
 
     @NEVER_INLINE // makes inspecting easier
@@ -886,7 +883,7 @@ public class Deoptimization extends VmOperation {
     }
 
     @NEVER_INLINE // makes inspecting easier
-    static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
+    static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
         if (TraceDeopt) {
             Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +

@@ -445,7 +445,7 @@ public class Snippets {
      */
     @INLINE
     public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
-        return classMethodActor.makeTargetMethod().getEntryPoint(cep).asAddress();
+        return classMethodActor.makeTargetMethod().getEntryPoint(cep).toAddress();
     }
 
     static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
@@ -489,7 +489,7 @@ public class Snippets {
     public static void nativeCallPrologue(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
+        CodePointer ip = nf.nativeCallSafepointAddress();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         nativeCallPrologue0(etla, anchor);
     }
@@ -606,7 +606,7 @@ public class Snippets {
     public static void nativeCallPrologueForC(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
+        CodePointer ip = nf.nativeCallSafepointAddress();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
     }

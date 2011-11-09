@@ -149,10 +149,6 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -163,6 +159,10 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     /**

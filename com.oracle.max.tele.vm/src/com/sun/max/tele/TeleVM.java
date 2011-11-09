@@ -46,7 +46,7 @@ import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.BytecodeBreakpointManager;
+import com.sun.max.tele.debug.VmBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -54,9 +54,11 @@ import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
+import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.reference.direct.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
@@ -64,12 +66,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -229,7 +229,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * An abstraction description of the VM's platform, suitable for export.
      */
-    private TelePlatform telePlatform;
+    private VmPlatform platform;
 
     /**
      * If {@code true}, always prompt for native code frame view when entering native code.
@@ -237,12 +237,12 @@ public abstract class TeleVM implements MaxVM {
     public static boolean promptForNativeCodeView;
 
     /**
-     * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
+     * The options controlling how a VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
 
         /**
-         * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} Tele VM.
+         * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} VM.
          */
         public final Option<String> modeOption = newStringOption("mode", "create",
             "Mode of operation: create | attach | attachwaiting | image");
@@ -404,7 +404,7 @@ public abstract class TeleVM implements MaxVM {
         String heap = options.heapOption.getValue();
 
         if (heap != null) {
-            System.setProperty(TeleHeap.HEAP_ADDRESS_PROPERTY, heap);
+            System.setProperty(VmObjectAccess.HEAP_ADDRESS_PROPERTY, heap);
         }
 
         switch (mode) {
@@ -433,7 +433,7 @@ public abstract class TeleVM implements MaxVM {
                  * This means that boot heap relocation has (almost certainly) been performed
                  * AND the boot heap will contain references to the dynamic heap.
                  * So the delicate dance that us normally performed when setting up the
-                 * TeleClassRegistry is neither entirely necessary nor sufficient.
+                 * {@link VmClassRegistry} is neither entirely necessary nor sufficient.
                  * This is handled by doing two passes over the class registry and
                  * deferring resolution of those references that are outside the boot heap
                  * until the second pass, after the TeleHeap is fully initialized.
@@ -503,17 +503,17 @@ public abstract class TeleVM implements MaxVM {
         final BootImage bootImage = new BootImage(bootImageFile);
         initializeVM(bootImage.vmConfiguration);
 
-        TeleVM teleVM = null;
+        TeleVM vm = null;
         final OS os = Platform.platform().os;
         final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
             final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {BootImage.class, Classpath.class, String[].class});
-            teleVM = (TeleVM) cons.newInstance(new Object[] {bootImage, sourcepath, commandlineArguments});
+            vm = (TeleVM) cons.newInstance(new Object[] {bootImage, sourcepath, commandlineArguments});
         } catch (Exception ex) {
             TeleError.unexpected("failed to instantiate " + className, ex);
         }
-        return teleVM;
+        return vm;
     }
 
     private static void checkClasspath(Classpath classpath) {
@@ -525,7 +525,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Creates a tele VM instance that is read-only and is only useful for inspecting a boot image.
+     * Creates a VM instance that is read-only and is only useful for inspecting a boot image.
      *
      * @param bootImageFile the file containing the boot image
      * @param sourcepath the source code path to search for class or interface definitions
@@ -581,22 +581,31 @@ public abstract class TeleVM implements MaxVM {
 
     final File programFile;
 
-    private final TeleHeap heap;
+    private final VmMemoryAccess memoryAccess;
 
-    private TeleCodeCache teleCodeCache = null;
+    private final VmObjectAccess objectAccess;
 
-    private final CodeManager codeManager;
+    private final VmReferenceManager referenceManager;
+
+    private final VmHeapAccess heapAccess;
+
+    private VmCodeCacheAccess codeCacheAccess = null;
+
+    // TODO (mlvdv) to be replaced
+    private final CodeLocationFactory codeLocationFactory;
+
+    private final VmCodeLocationManager codeLocationManager;
 
     /**
      * Breakpoint manager, for both target and bytecode breakpoints.
      */
-    private final TeleBreakpointManager teleBreakpointManager;
+    private final VmBreakpointManager breakpointManager;
 
-    private final TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
+    private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
 
-    private final TeleWatchpoint.WatchpointManager watchpointManager;
+    private final VmWatchpoint.WatchpointManager watchpointManager;
 
-    private final TeleThreadManager threadManager;
+    private final VmThreadAccess threadAccess;
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -646,16 +655,16 @@ public abstract class TeleVM implements MaxVM {
         return bootImageStart;
     }
 
-    private final TeleFields teleFields;
+    private final VmFieldAccess fieldAccess;
 
-    public final TeleFields teleFields() {
-        return teleFields;
+    public final VmFieldAccess fields() {
+        return fieldAccess;
     }
 
-    private final TeleMethods teleMethods;
+    private final VmMethodAccess methodAccess;
 
-    public final TeleMethods teleMethods() {
-        return teleMethods;
+    public final VmMethodAccess methods() {
+        return methodAccess;
     }
 
     private final VMConfiguration vmConfiguration;
@@ -664,7 +673,7 @@ public abstract class TeleVM implements MaxVM {
 
     private int interpreterUseLevel = 0;
 
-    private TeleClassRegistry teleClassRegistry;
+    private VmClassAccess classAccess;
 
     private final TimedTrace updateTracer;
 
@@ -685,7 +694,7 @@ public abstract class TeleVM implements MaxVM {
     private static TeleChannelProtocol teleChannelProtocol;
 
     /**
-     * Creates a tele VM instance by creating or attaching to a Maxine VM process.
+     * Creates a VM instance by creating or attaching to a Maxine VM process.
      *
      * @param bootImageFile path to the boot image file loaded by the VM
      * @param bootImage the metadata describing the contents in the boot image
@@ -707,7 +716,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImage = bootImage;
 
         this.sourcepath = sourcepath;
-        this.telePlatform = new TelePlatform(Platform.platform());
+        this.platform = new VmPlatform(Platform.platform());
         setTeleChannelProtocol(Platform.platform().os);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
@@ -724,52 +733,55 @@ public abstract class TeleVM implements MaxVM {
         }
         this.bootImageStart = loadBootImage();
         this.vmConfiguration = VMConfiguration.vmConfig();
-        final TeleReferenceScheme teleReferenceScheme = (TeleReferenceScheme) this.vmConfiguration.referenceScheme();
-        teleReferenceScheme.setTeleVM(this);
+        this.memoryAccess = VmMemoryAccess.make(this, this.teleProcess);
+        this.referenceManager = VmReferenceManager.make(this, (RemoteReferenceScheme) this.vmConfiguration.referenceScheme());
+
+        this.threadAccess = VmThreadAccess.make(this);
+        this.codeLocationFactory = CodeLocationFactory.make(this);
+        this.codeLocationManager = VmCodeLocationManager.make(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");
         }
-        this.teleFields = new TeleFields(this);
-        this.teleMethods = new TeleMethods(this);
-        this.heap = TeleHeap.make(this);
+        this.fieldAccess = VmFieldAccess.make(this);
+        this.methodAccess = VmMethodAccess.make(this, codeLocationFactory);
+        this.objectAccess = VmObjectAccess.make(this);
+        this.heapAccess = VmHeapAccess.make(this);
         unlock();
 
-        // Provide access to JDWP server
+        // Provide access to JDWP server - DISABLED - not being used now.
         this.jdwpAccess = new VMAccessImpl();
-        addVMStateListener(jdwpStateModel);
+        // addVMStateListener(jdwpStateModel);
         this.javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
-        this.threadManager = new TeleThreadManager(this);
-        this.codeManager = new CodeManager(this);
-        this.bytecodeBreakpointManager = new TeleBytecodeBreakpoint.BytecodeBreakpointManager(this);
-        this.teleBreakpointManager = new TeleBreakpointManager(this, this.bytecodeBreakpointManager);
+        this.bytecodeBreakpointManager = new VmBytecodeBreakpoint.BytecodeBreakpointManager(this);
+        this.breakpointManager = new VmBreakpointManager(this, this.bytecodeBreakpointManager);
         this.watchpointManager = teleProcess.getWatchpointManager();
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
-        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(teleMethods.gcStarted(), "before gc begins") {
+        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStarted(), "before gc begins") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
                 listener.gcStarted();
             }
         };
 
-        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(teleMethods.gcCompleted(), "after gc completion") {
+        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompleted(), "after gc completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
                 listener.gcCompleted();
             }
         };
 
-        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(teleMethods.vmThreadRun(), "at VmThread entry") {
+        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(methodAccess.vmThreadRun(), "at VmThread entry") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadEntryListener listener) {
                 listener.entered(thread);
             }
         };
 
-        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(teleMethods.vmThreadDetached(), "after VmThread detach") {
+        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(methodAccess.vmThreadDetached(), "after VmThread detach") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadDetachedListener listener) {
                 listener.detached(thread);
@@ -797,33 +809,42 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             updateTracer.begin("epoch=" + epoch);
-            if (teleClassRegistry == null) {
+            if (classAccess == null) {
                 /*
-                 * Must delay creation/initialization of the {@link TeleClassRegistry} until after
+                 * Must delay creation/initialization of the {@link VmClassAccess} until after
                  * we hit the first execution breakpoint; otherwise addresses won't have been relocated.
-                 * This depends on the {@link TeleHeap} already existing.
+                 * This depends on the {@link VmHeap} already existing.
                  */
-                teleClassRegistry = new TeleClassRegistry(this, epoch);
+                classAccess = VmClassAccess.make(this, epoch);
                 /*
-                 *  Can only fully initialize the {@link TeleHeap} once
-                 *  the {@TeleClassRegistry} is fully created, otherwise there's a cycle.
+                 *  Can only fully initialize the {@link VmHeap} once
+                 *  the {@link VmClassRegistry} is fully created, otherwise there's a cycle.
                  */
-                heap.initialize(epoch);
+                heapAccess.initialize(epoch);
 
                 // Now set up the map of the compiled code cache
-                teleCodeCache = new TeleCodeCache(this);
-                teleCodeCache.initialize(epoch);
+                codeCacheAccess = new VmCodeCacheAccess(this);
+                codeCacheAccess.initialize(epoch);
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
-                    TeleError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
-                    teleClassRegistry.processAttachFixupList();
+                    TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
+                    classAccess.processAttachFixupList();
                 }
             }
-            heap.updateCache(epoch);
-            teleClassRegistry.updateCache(epoch);
-            heap.updateObjectCache(epoch);
-            teleCodeCache.updateCache(epoch);
+            // The standard update cycle follow; it is very sensitive to ordering.
+            // Update description of the regions that can contain objects, including GC status
+            heapAccess.updateCache(epoch);
+            // Update description of the regions that can contain method compilations (and objects), including eviction status
+            codeCacheAccess.updateStatus(epoch);
+            // Update registry of loaded classes, so we can understand object types
+            classAccess.updateCache(epoch);
+            // Update every local surrogate for a VM object
+            objectAccess.updateCache(epoch);
+            // Update every local surrogate for a VM compilation
+            codeCacheAccess.updateCache(epoch);
+
             updateTracer.end("epoch=" + epoch);
+
         } finally {
             unlock();
         }
@@ -863,8 +884,8 @@ public abstract class TeleVM implements MaxVM {
         return MaxineVM.description();
     }
 
-    public final TelePlatform platform() {
-        return telePlatform;
+    public final VmPlatform platform() {
+        return platform;
     }
 
     public final File vmDirectory() {
@@ -887,32 +908,44 @@ public abstract class TeleVM implements MaxVM {
         return mode;
     }
 
-    public final TeleClassRegistry classRegistry() {
-        return teleClassRegistry;
+    public final VmClassAccess classes() {
+        return classAccess;
     }
 
-    public final TeleHeap heap() {
-        return heap;
+    public final VmMemoryAccess memory() {
+        return memoryAccess;
     }
 
-    public final TeleCodeCache codeCache() {
-        return teleCodeCache;
+    public final VmObjectAccess objects() {
+        return objectAccess;
     }
 
-    public final CodeManager codeManager() {
-        return codeManager;
+    public final VmReferenceManager referenceManager() {
+        return referenceManager;
     }
 
-    public final TeleBreakpointManager breakpointManager() {
-        return teleBreakpointManager;
+    public final VmHeapAccess heap() {
+        return heapAccess;
     }
 
-    public final TeleWatchpoint.WatchpointManager watchpointManager() {
+    public final VmCodeCacheAccess codeCache() {
+        return codeCacheAccess;
+    }
+
+    public final CodeLocationFactory codeLocationFactory() {
+        return codeLocationFactory;
+    }
+
+    public final VmBreakpointManager breakpointManager() {
+        return breakpointManager;
+    }
+
+    public final VmWatchpoint.WatchpointManager watchpointManager() {
         return watchpointManager;
     }
 
-    public final TeleThreadManager threadManager() {
-        return threadManager;
+    public final VmThreadAccess threadManager() {
+        return threadAccess;
     }
 
     /**
@@ -921,6 +954,7 @@ public abstract class TeleVM implements MaxVM {
      * halt, so it should be considered out of date until the refresh
      * cycle is complete.  This is especially important when making
      * decisions concerning the process epoch.
+     * <p>
      * Use {@link TeleProcess#epoch()} directly during the refresh
      * cycle, which is updated at the beginning of the refresh cycle.
      *
@@ -970,7 +1004,15 @@ public abstract class TeleVM implements MaxVM {
         gcCompletedListeners.remove(listener);
     }
 
+    // TODO (mlvdv) use a current cache of memory regions, not the recorded state
+    // Perhaps eliminate this from the exported interface, require external clients to just go through the list
+    // or put a method on the state?
     public final MaxMemoryRegion findMemoryRegion(Address address) {
+        // Check the boot heap region specially because the general list
+        // of allocations doesn't exist yet during the startup phase.
+        if (heap().bootHeapRegion().contains(address)) {
+            return heap().bootHeapRegion().memoryRegion();
+        }
         for (MaxMemoryRegion memoryRegion : state().memoryAllocations()) {
             if (memoryRegion != null && memoryRegion.contains(address)) {
                 return memoryRegion;
@@ -980,7 +1022,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
-        return heap.getMemoryManagementInfo(address);
+        return heapAccess.getMemoryManagementInfo(address);
     }
 
     /**
@@ -1065,13 +1107,13 @@ public abstract class TeleVM implements MaxVM {
      */
     public final void modifyInspectableFlags(int flags, boolean set) {
         assert lockHeldByCurrentThread();
-        int newFlags = teleFields.Inspectable_flags.readInt(this);
+        int newFlags = fieldAccess.Inspectable_flags.readInt(this);
         if (set) {
             newFlags |= flags;
         } else {
             newFlags &= ~flags;
         }
-        teleFields.Inspectable_flags.writeInt(this, newFlags);
+        fieldAccess.Inspectable_flags.writeInt(this, newFlags);
     }
 
     /**
@@ -1085,6 +1127,8 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Gets any memory regions of potential interest that are specific to a particular VM platform.
+     * This gets called during the VM refresh cycle and the results are cached along with all other
+     * known allocations.
      *
      * @return a list of platform-specific memory regions, empty if none.
      */
@@ -1125,6 +1169,9 @@ public abstract class TeleVM implements MaxVM {
      * Notifies all registered listeners that the state of the process has changed,
      * for example started, stopped, or terminated.  Gathers up summary information
      * and creates a (top-level) immutable record of the state to accompany the notification.
+     * <p>
+     * <strong>Notes:</strong> This data gets posted only at the very end of the VM update
+     * cycle, and so should not be relied upon during the update.
      *
      * @param processState the new process state
      * @param epoch
@@ -1133,7 +1180,7 @@ public abstract class TeleVM implements MaxVM {
      * @param threadsStarted threads newly created since last notification
      * @param threadsDied threads newly died since last notification
      * @param breakpointEvents breakpoint events, if any, that caused this state change
-     * @param teleWatchpointEvent watchpoint, if any, that caused this state change
+     * @param watchpointEvent watchpoint, if any, that caused this state change
      * @see ProcessState
      */
     public final void notifyStateChange(
@@ -1144,21 +1191,21 @@ public abstract class TeleVM implements MaxVM {
                     List<TeleNativeThread> threadsStarted,
                     List<TeleNativeThread> threadsDied,
                     List<TeleBreakpointEvent> breakpointEvents,
-                    TeleWatchpointEvent teleWatchpointEvent) {
+                    VmWatchpointEvent watchpointEvent) {
 
         // Rebuild list of all allocated memory regions
         final ArrayList<MaxMemoryRegion> memoryAllocations = new ArrayList<MaxMemoryRegion>(teleVMState.memoryAllocations().size());
-        for (MaxHeapRegion heapRegion : heap.heapRegions()) {
+        for (MaxHeapRegion heapRegion : heapAccess.heapRegions()) {
             addNonNull(memoryAllocations, heapRegion.memoryRegion());
         }
-        if (heap.rootsMemoryRegion() != null) {
-            addNonNull(memoryAllocations, heap.rootsMemoryRegion());
+        if (heapAccess.rootsMemoryRegion() != null) {
+            addNonNull(memoryAllocations, heapAccess.rootsMemoryRegion());
         }
         for (MaxThread thread : threads) {
             addNonNull(memoryAllocations, thread.stack().memoryRegion());
             addNonNull(memoryAllocations, thread.localsBlock().memoryRegion());
         }
-        for (MaxCompiledCodeRegion compiledCodeRegion : teleCodeCache.compiledCodeRegions()) {
+        for (MaxCodeCacheRegion compiledCodeRegion : codeCacheAccess.compiledCodeRegions()) {
             addNonNull(memoryAllocations, compiledCodeRegion.memoryRegion());
         }
         for (MaxMemoryRegion memoryRegion : platformMemoryRegions()) {
@@ -1175,8 +1222,8 @@ public abstract class TeleVM implements MaxVM {
             threadsStarted,
             threadsDied,
             breakpointEvents,
-            teleWatchpointEvent,
-            heap.isInGC(), teleVMState);
+            watchpointEvent,
+            heapAccess.isInGC(), codeCacheAccess.isInEviction(), teleVMState);
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }
@@ -1191,230 +1238,56 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final int getVMTraceLevel() {
-        return teleFields().Trace_level.readInt(this);
+        return fields().Trace_level.readInt(this);
     }
 
     public final void setVMTraceLevel(int newLevel) {
-        teleFields().Trace_level.writeInt(this, newLevel);
+        fields().Trace_level.writeInt(this, newLevel);
     }
 
     public final long getVMTraceThreshold() {
-        return teleFields().Trace_threshold.readLong(this);
+        return fields().Trace_threshold.readLong(this);
     }
 
     public final void setVMTraceThreshold(long newThreshold) {
-        teleFields().Trace_threshold.writeLong(this, newThreshold);
-    }
-
-    public final TeleReferenceScheme referenceScheme() {
-        return (TeleReferenceScheme) vmConfiguration.referenceScheme();
+        fields().Trace_threshold.writeLong(this, newThreshold);
     }
 
     public final HeapScheme heapScheme() {
         return vmConfiguration.heapScheme();
     }
 
-    /**
-     * @return access to low-level reading and writing of memory in the VM.
-     */
-    public final DataAccess dataAccess() {
-        return teleProcess.dataAccess();
-    }
-
-    public final Value readWordValue(Address address) {
-        return WordValue.from(dataAccess().readWord(address));
-    }
-
-    public final void readBytes(Address address, byte[] bytes) {
-        dataAccess().readFully(address, bytes);
-    }
-
-    private RemoteTeleReference createTemporaryRemoteTeleReference(Word rawReference) {
-        return referenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
-    }
-
-    private RemoteTeleReference temporaryRemoteTeleReferenceFromOrigin(Word origin) {
-        return referenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
-    }
-
-    public final Reference originToReference(final Pointer origin) {
-        return vmConfiguration.referenceScheme().fromOrigin(origin);
+    public final Reference makeReference(Address origin) {
+        return referenceManager.makeReference(origin);
     }
 
     public final Reference bootClassRegistryReference() {
-        return originToReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
+        return makeReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
     }
 
-    public final boolean isValidOrigin(Pointer origin) {
-        if (origin.isZero()) {
-            return false;
-        }
-
-        try {
-            if (!heap().contains(origin) && (codeCache() == null || !codeCache().contains(origin))) {
-                return false;
-            }
-            if (false && heap.isInGC() && heap().containsInDynamicHeap(origin)) {
-                //  Assume that any reference to the dynamic heap is invalid during GC.
-                return false;
-            }
-            if (false && bootImage.vmConfiguration.debugging()) {
-                final Pointer cell = Layout.originToCell(origin);
-                // Checking is easy in a debugging build; there's a special word preceding each object
-                final Word tag = dataAccess().getWord(cell, 0, -1);
-                return DebugHeap.isValidCellTag(tag);
-            }
-
-            // Check the hard way, using none of the higher level services in the Inspector,
-            // since this predicate is necessary to build those services.
-            //
-            // Keep following hub pointers until the same hub is traversed twice or
-            // an address outside of heap or code region(s) is encountered.
-            //
-            // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
-            // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
-            // class {@link DynamicHub}.
-            //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
-            Word hubWord = Layout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
-            for (int i = 0; i < 3; i++) {
-                final RemoteTeleReference hubRef = createTemporaryRemoteTeleReference(hubWord);
-                final Pointer hubOrigin = hubRef.toOrigin();
-                if (!heap().contains(hubOrigin) && !codeCache().contains(hubOrigin)) {
-                    return false;
-                }
-                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
-                if (nextHubWord.equals(hubWord)) {
-                    // We arrived at a DynamicHub for the class DynamicHub
-                    if (i < 2) {
-                        // All ordinary cases will have stopped by now
-                        return true;
-                    }
-                    // This longer chain can only happen when we started with a {@link StaticTuple}.
-                    // Perform a more precise test to check for this.
-                    return isStaticTuple(origin);
-                }
-                hubWord = nextHubWord;
-            }
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
-            return false;
-        } catch (DataIOError dataAccessError) {
-            return false;
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            return false;
-        }
-        return false;
-    }
-
-    /**
-     * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
-     * using only the most primitive operations, since it is needed for building all the higher-level
-     * services in the Inspector.
-     * <p>
-     * Note that this predicate is not precise; it may very rarely return a false positive.
-     * <p>
-     * The predicate depends on the following chain in the VM heap layout:
-     * <ol>
-     *  <li>The hub of a {@link StaticTuple} points at a {@link StaticHub}</li>
-     *  <li>A field in a {@link StaticHub} points at the {@link ClassActor} for the class being implemented.</li>
-     *  <li>A field in a {@link ClassActor} points at the {@link StaticTuple} for the class being implemented,
-     *  which will point back at the original location if it is in fact a {@link StaticTuple}.</li>
-     *  </ol>
-     *  No type checks are performed, however, since this predicate must not depend on such higher-level information.
-     *
-     * @param origin a memory location in the VM
-     * @return whether the object (probably)  points at an instance of {@link StaticTuple}
-     * @see #isValidOrigin(Pointer)
-     */
-    private boolean isStaticTuple(Pointer origin) {
-        // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = Layout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
-        final RemoteTeleReference staticHubRef = createTemporaryRemoteTeleReference(staticHubWord);
-        final Pointer staticHubOrigin = staticHubRef.toOrigin();
-        if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
-            return false;
-        }
-        // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
-        final int hubClassActorOffset = teleFields().Hub_classActor.fieldActor().offset();
-        final Word classActorWord = dataAccess().readWord(staticHubOrigin, hubClassActorOffset);
-        final RemoteTeleReference classActorRef = createTemporaryRemoteTeleReference(classActorWord);
-        final Pointer classActorOrigin = classActorRef.toOrigin();
-        if (!heap().contains(classActorOrigin) && !codeCache().contains(classActorOrigin)) {
-            return false;
-        }
-        // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
-        final int classActorStaticTupleOffset = teleFields().ClassActor_staticTuple.fieldActor().offset();
-        final Word staticTupleWord = dataAccess().readWord(classActorOrigin, classActorStaticTupleOffset);
-        final RemoteTeleReference staticTupleRef = createTemporaryRemoteTeleReference(staticTupleWord);
-        final Pointer staticTupleOrigin = staticTupleRef.toOrigin();
-        // If we really started with a {@link StaticTuple}, then this field will point at it
-        return staticTupleOrigin.equals(origin);
-    }
-
-    /**
-     * Checks that a {@link Reference} points to a heap object in the VM;
-     * throws an unchecked exception if not.  This is a low-level method
-     * that uses a debugging tag or (if no tags in image) a heuristic; it does
-     * not require access to the {@link TeleClassRegistry}.
-     *
-     * @param reference memory location in the VM
-     * @throws InvalidReferenceException when the location does <strong>not</strong> point
-     * at a valid heap object.
-     */
-    public final void checkReference(Reference reference) throws InvalidReferenceException {
-        if (!isValidOrigin(reference.toOrigin())) {
-            throw new InvalidReferenceException(reference);
-        }
-    }
-
-    public final Reference wordToReference(Word word) {
-        return referenceScheme().fromOrigin(word.asPointer());
-    }
-
-    /**
-     * Creates a temporary reference for access to VM memory without invoking the
-     * canonicalization machinery.
-     *
-     * @return a reference to a location in VM memory that is not safe across GC
-     */
-    public final Reference wordToTemporaryReference(Address address) {
-        return referenceScheme().createTemporaryRemoteTeleReference(address);
-    }
-
-    /**
-     * Reads an element from an array of {@linkplain Reference references} in the
-     * VM. Gets the address from the reference and create an Inspector reference
-     * pointing at that object.
-     *
-     * @param reference an array of references in the VM
-     * @param index offset into an array of references
-     * @return the contents of the array at the index, interpreted as an address and wrapped in a Reference.
-     * @throws InvalidReferenceException (unchecked)
-     */
-    public final Reference readReference(Reference reference, int index) throws InvalidReferenceException {
-        checkReference(reference);
-        // Read as an array of words
-        return wordToReference(Layout.getWord(reference, index));
+    public final ReferenceValue createReferenceValue(Reference reference) {
+        return referenceManager.createReferenceValue(reference);
     }
 
     /**
      * Returns a local copy of a {@link String} object in the VM's heap.
      *
-     * @param stringReference A {@link String} object in the VM.
+     * @param stringRef A {@link String} object in the VM.
      * @return A local {@link String} duplicating the object's contents.
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
-    public final String getString(Reference stringReference)  throws InvalidReferenceException {
-        checkReference(stringReference);
-        final Reference charArrayReference = teleFields().String_value.readReference(stringReference);
-        if (charArrayReference.isZero()) {
+    public final String getString(Reference stringRef) throws InvalidReferenceException {
+        referenceManager.checkReference(stringRef);
+        final Reference charArrayRef = fields().String_value.readReference(stringRef);
+        if (charArrayRef.isZero()) {
             return null;
         }
-        checkReference(charArrayReference);
-        int offset = teleFields().String_offset.readInt(stringReference);
-        final int count = teleFields().String_count.readInt(stringReference);
-        final char[] chars = new char[count];
-        for (int i = 0; i < count; i++) {
-            chars[i] = Layout.getChar(charArrayReference, offset);
+        referenceManager.checkReference(charArrayRef);
+        int offset = fields().String_offset.readInt(stringRef);
+        final int charArrayCount = fields().String_count.readInt(stringRef);
+        final char[] chars = new char[charArrayCount];
+        for (int i = 0; i < charArrayCount; i++) {
+            chars[i] = Layout.getChar(charArrayRef, offset);
             offset++;
         }
         return new String(chars);
@@ -1428,22 +1301,25 @@ public abstract class TeleVM implements MaxVM {
      * The intention is to provide a fast, low-level mechanism for reading strings that
      * can be used outside of the AWT event thread without danger of deadlock,
      * for example on the canonical reference machinery.
+     * <p>
+     * <strong>Unsafe:</strong> this method depends on knowledge of the implementation of
+     * class {@link String}.
      *
-     * @param stringReference a {@link String} object in the VM
+     * @param origin a {@link String} object in the VM
      * @return A local {@link String} duplicating the remote object's contents, null if it can't be read.
      */
-    public final String getStringUnsafe(Reference stringReference) {
+    public final String getStringUnsafe(Address origin) {
         // Work only with temporary references that are unsafe across GC
         // Do no testing to determine if the reference points to a valid String object in live memory.
         try {
-            final RemoteTeleReference stringRef = temporaryRemoteTeleReferenceFromOrigin(stringReference.toOrigin());
-            final Word valueWord = stringRef.readWord(teleFields().String_value.fieldActor().offset());
-            final RemoteTeleReference valueRef = createTemporaryRemoteTeleReference(valueWord);
-            int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
-            final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
-            final char[] chars = new char[count];
-            for (int i = 0; i < count; i++) {
-                chars[i] = Layout.getChar(valueRef, offset);
+            final RemoteTeleReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
+            final Address charArrayAddress = stringRef.readWord(fields().String_value.fieldActor().offset()).asAddress();
+            final RemoteTeleReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
+            int offset = stringRef.readInt(fieldAccess.String_offset.fieldActor().offset());
+            final int charArrayCount = stringRef.readInt(fieldAccess.String_count.fieldActor().offset());
+            final char[] chars = new char[charArrayCount];
+            for (int i = 0; i < charArrayCount; i++) {
+                chars[i] = Layout.getChar(charArrayRef, offset);
                 offset++;
             }
             return new String(chars);
@@ -1454,121 +1330,14 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    /**
-     * Returns a local copy of the contents of the inspectable list of dynamic
-     * heap regions in the VM, using low level mechanisms and performing no checking that
-     * the location or objects are valid.
-     * <p>
-     * The intention is to provide a way to read this data without needing any of the
-     * usual type-based mechanisms for reading data, all of which rely on a populated
-     * {@link TeleClassRegistry}.  This is needed when attaching to a process or reading
-     * a dump, where a description of the dynamic heap must be determined before the
-     * {@link TeleClassRegistry} can be built.
-     *
-     * @return a list of objects, each of which describes a dynamically allocated heap region
-     * in the VM, empty array if no such heap regions
-     */
-    public final List<MaxMemoryRegion> getDynamicHeapRegionsUnsafe() {
-        // Work only with temporary references that are unsafe across GC
-        // Do no testing to determine if the reference points to a valid object in live memory of the correct types.
-
-        final List<MaxMemoryRegion> regions = new ArrayList<MaxMemoryRegion>();
-
-        // Location of the inspectable field that might point to an array of dynamically allocated heap regions
-        final Pointer dynamicHeapRegionsArrayFieldPointer = bootImageStart.plus(bootImage.header.dynamicHeapRegionsArrayFieldOffset);
-
-        // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
-        final Word fieldValue = dataAccess().readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
-
-        if (!fieldValue.isZero()) {
-            // Assert that this points to an array of references, read as words
-            final RemoteTeleReference wordArrayReference = createTemporaryRemoteTeleReference(fieldValue);
-            final int length = Layout.readArrayLength(wordArrayReference);
-
-            // Read the references as words to avoid using too much machinery
-            for (int index = 0; index < length; index++) {
-                // Read an entry from the array
-                final Word regionReferenceWord = Layout.getWord(wordArrayReference, index);
-                // Assert that this points to an object of type {@link MemoryRegion} in the VM
-                RemoteTeleReference regionReference = createTemporaryRemoteTeleReference(regionReferenceWord);
-                final Address address = regionReference.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
-                final int size = regionReference.readInt(teleFields.MemoryRegion_size.fieldActor().offset());
-                regions.add(new TeleFixedMemoryRegion(vm(), "Fake", address, size));
-            }
-        }
-        return regions;
-    }
-
-    public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
-        switch (kind.asEnum) {
-            case BYTE:
-                return ByteValue.from(Layout.getByte(reference, index));
-            case BOOLEAN:
-                return BooleanValue.from(Layout.getBoolean(reference, index));
-            case SHORT:
-                return ShortValue.from(Layout.getShort(reference, index));
-            case CHAR:
-                return CharValue.from(Layout.getChar(reference, index));
-            case INT:
-                return IntValue.from(Layout.getInt(reference, index));
-            case FLOAT:
-                return FloatValue.from(Layout.getFloat(reference, index));
-            case LONG:
-                return LongValue.from(Layout.getLong(reference, index));
-            case DOUBLE:
-                return DoubleValue.from(Layout.getDouble(reference, index));
-            case WORD:
-                return new WordValue(Layout.getWord(reference, index));
-            case REFERENCE:
-                checkReference(reference);
-                return TeleReferenceValue.from(this, wordToReference(Layout.getWord(reference, index)));
-            default:
-                throw TeleError.unknownCase("unknown array kind");
-        }
-    }
-
-    public final void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
-        switch (kind.asEnum) {
-            case BYTE:
-                Layout.byteArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case BOOLEAN:
-                Layout.booleanArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case SHORT:
-                Layout.shortArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case CHAR:
-                Layout.charArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case INT:
-                Layout.intArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case FLOAT:
-                Layout.floatArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case LONG:
-                Layout.longArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case DOUBLE:
-                Layout.doubleArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case WORD:
-                Layout.wordArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            default:
-                throw TeleError.unknownCase("unknown array kind");
-        }
-    }
-
     public final List<MaxCodeLocation> inspectableMethods() {
-        final List<MaxCodeLocation> methods = new ArrayList<MaxCodeLocation>(teleMethods.clientInspectableMethods());
-        methods.addAll(heap.inspectableMethods());
-        return methods;
+        final List<MaxCodeLocation> inspectableMethods = new ArrayList<MaxCodeLocation>(methods().clientInspectableMethods());
+        inspectableMethods.addAll(heapAccess.inspectableMethods());
+        return inspectableMethods;
     }
 
     public final <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor) {
-        final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActor(methodActor.holder().typeDescriptor);
+        final TeleClassActor teleClassActor = classAccess.findTeleClassActor(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                 if (teleMethodActor.methodActor().equals(methodActor)) {
@@ -1589,7 +1358,7 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
-        final MachineCodeLocation entryLocation = codeManager().createMachineCodeLocation(startEntryAddress, "vm start address");
+        final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
 
         try {
             runToInstruction(entryLocation, true, false);
@@ -1650,15 +1419,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void terminateVM() throws Exception {
         teleProcess.terminateProcess();
-    }
-
-    public final ReferenceValue createReferenceValue(Reference reference) {
-        if (reference instanceof TeleReference) {
-            return TeleReferenceValue.from(this, reference);
-        } else if (reference instanceof HostedReference) {
-            return TeleReferenceValue.from(this, Reference.fromJava(reference.toJava()));
-        }
-        throw TeleError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
     }
 
     public final File findJavaSourceFile(ClassActor classActor) {
@@ -1791,40 +1551,6 @@ public abstract class TeleVM implements MaxVM {
     };
 
     /**
-     * Reads a value of a certain kind from the Maxine VM process.
-     *
-     * @param kind the type of the value that should be read
-     * @param pointer pointer to the memory location where the value should be read
-     * @param offset offset that should be added to the pointer before reading the value
-     * @return the value read from the Maxine VM process
-     */
-    public final Value readValue(Kind kind, Pointer pointer, int offset) {
-
-        final Reference reference = originToReference(pointer);
-
-        if (kind.isReference) {
-            final Word word = dataAccess().readWord(pointer, offset);
-            return TeleReferenceValue.from(this, wordToReference(word));
-        }
-
-        final Value result = kind.readValue(reference, offset);
-
-        if (result.kind().isWord) {
-            LOGGER.info("Creating WORD reference! " + result.asWord());
-            return LongValue.from(result.asWord().asAddress().toLong());
-        }
-
-        if (result.kind().isReference
-                && !isValidOrigin(result.asReference().toOrigin())) {
-            LOGGER.severe("Wrong reference encountered ("
-                    + result.asReference() + "), returning null reference!");
-            return ReferenceValue.fromReference(Reference.fromOrigin(Pointer.zero()));
-        }
-
-        return result;
-    }
-
-    /**
      * Tries to find a JDWP ObjectProvider that represents the object that is
      * referenced by the parameter.
      *
@@ -1835,10 +1561,7 @@ public abstract class TeleVM implements MaxVM {
      *         the address specified by the reference
      */
     private ObjectProvider findObject(Reference reference) {
-        if (isValidOrigin(reference.toOrigin())) {
-            return heap().makeTeleObject(reference);
-        }
-        return null;
+        return objects().makeTeleObject(reference);
     }
 
     private final ThreadGroupProvider javaThreadGroupProvider;
@@ -2155,7 +1878,7 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final BytecodeLocation methodCodeLocation = codeManager().createBytecodeLocation(teleClassMethodActor, 0, "");
+            final BytecodeLocation methodCodeLocation = codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
                 TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -2166,7 +1889,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             if (codeLocation.isMachineCode()) {
-                final MachineCodeLocation location = codeManager().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                final MachineCodeLocation location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
                 final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
                 if (breakpoint != null) {
                     try {
@@ -2183,7 +1906,7 @@ public abstract class TeleVM implements MaxVM {
 
         public byte[] accessMemory(long start, int length) {
             final byte[] bytes = new byte[length];
-            TeleVM.this.dataAccess().readFully(Address.fromLong(start), bytes);
+            TeleVM.this.memory().readBytes(Address.fromLong(start), bytes);
             return bytes;
         }
 
@@ -2247,7 +1970,7 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public ReferenceTypeProvider[] getAllReferenceTypes() {
-            return teleClassRegistry.teleClassActors();
+            return classAccess.teleClassActors();
         }
 
         public ThreadProvider[] getAllThreads() {
@@ -2277,7 +2000,7 @@ public abstract class TeleVM implements MaxVM {
             // Always fake the Object class, otherwise try to find a class in the
             // Maxine VM that matches the signature.
             if (!klass.equals(Object.class)) {
-                referenceTypeProvider = TeleVM.this.classRegistry().findTeleClassActor(klass);
+                referenceTypeProvider = TeleVM.this.classes().findTeleClassActor(klass);
             }
 
             // If no class was found within the Maxine VM, create a faked reference
@@ -2302,9 +2025,9 @@ public abstract class TeleVM implements MaxVM {
             // Try to find a matching class actor that lives within the VM based on
             // the signature.
             final List<ReferenceTypeProvider> result = new LinkedList<ReferenceTypeProvider>();
-            for (TypeDescriptor typeDescriptor : TeleVM.this.classRegistry().typeDescriptors()) {
+            for (TypeDescriptor typeDescriptor : TeleVM.this.classes().typeDescriptors()) {
                 if (typeDescriptor.toString().equals(signature)) {
-                    final TeleClassActor teleClassActor = TeleVM.this.classRegistry().findTeleClassActor(typeDescriptor);
+                    final TeleClassActor teleClassActor = TeleVM.this.classes().findTeleClassActor(typeDescriptor);
 
                     // Do not include array types, there should always be faked in
                     // order to be able to call newInstance on them. Arrays that are

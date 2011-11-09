@@ -45,7 +45,7 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryView>{
      * @param memoryRegion description of VM memory to be viewed
      * @param regionName optional name for region, defaults to region's own name
      * @return a memory view
-     *      */
+     */
     MemoryView makeView(MaxMemoryRegion memoryRegion, String regionName);
 
     /**
@@ -58,12 +58,20 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryView>{
     MemoryView makeView(TeleObject teleObject);
 
     /**
-     * Creates a view on a page of memory, with the view mode set to {@link ViewMode#PAGE}.
+     * Creates a view on memory, with the view mode set to {@link ViewMode#WORD}.
      *
      * @param address starting location of VM memory to be displayed
      * @return a memory view
      */
     MemoryView makeView(Address address);
+
+    /**
+     * Creates a view on a page of memory, with the view mode set to {@link ViewMode#PAGE}.
+     *
+     * @param address location of VM memory in page to be displayed
+     * @return a memory view
+     */
+    MemoryView makePageView(Address address);
 
     /**
      * Gets an interactive action that makes a view on a page of memory, starting

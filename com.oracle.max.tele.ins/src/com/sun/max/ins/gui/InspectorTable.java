@@ -172,7 +172,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         this.showSelectionWithBox = true;
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-        getTableHeader().setFont(style().defaultFont());
+        getTableHeader().setFont(inspection.preference().style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
         setDragEnabled(true);
         setTransferHandler(new InspectorTableTransferHandler());
@@ -184,7 +184,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-        getTableHeader().setFont(style().defaultFont());
+        getTableHeader().setFont(preference().style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
         setDragEnabled(true);
         setTransferHandler(new InspectorTableTransferHandler());
@@ -202,10 +202,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -218,6 +214,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.actions();
     }
 
+    public final InspectionPreferences preference() {
+        return inspection.preference();
+    }
+
     @Override
     public final void paintChildren(Graphics g) {
         super.paintChildren(g);
@@ -225,7 +225,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             // Draw a box around the selected row in the table
             final int row = getSelectedRow();
             if (row >= 0) {
-                g.setColor(style().memorySelectedAddressBorderColor());
+                g.setColor(preference().style().memorySelectedAddressBorderColor());
                 g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
             }
         }
@@ -337,10 +337,11 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected final void configureDefaultTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
         setModel(inspectorTableModel);
         setColumnModel(inspectorTableColumnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
+        final InspectorStyle style = preference().style();
+        setShowHorizontalLines(style.defaultTableShowHorizontalLines());
+        setShowVerticalLines(style.defaultTableShowVerticalLines());
+        setIntercellSpacing(style.defaultTableIntercellSpacing());
+        setRowHeight(style.defaultTableRowHeight());
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -357,10 +358,11 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         setModel(inspectorTableModel);
         setColumnModel(inspectorTableColumnModel);
         setFillsViewportHeight(true);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
+        final InspectorStyle style = preference().style();
+        setShowHorizontalLines(style.memoryTableShowHorizontalLines());
+        setShowVerticalLines(style.memoryTableShowVerticalLines());
+        setIntercellSpacing(style.memoryTableIntercellSpacing());
+        setRowHeight(style.memoryTableRowHeight());
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

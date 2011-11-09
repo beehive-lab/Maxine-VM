@@ -27,12 +27,12 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a  {@link TypeDescriptor} in the Target VM.
+ * Canonical surrogate for a  {@link TypeDescriptor} in the VM.
  *
  */
 public final class TeleSignatureDescriptor extends TeleDescriptor {
 
-    protected TeleSignatureDescriptor(TeleVM teleVM, Reference signatureDescriptorReference) {
-        super(teleVM, signatureDescriptorReference);
+    protected TeleSignatureDescriptor(TeleVM vm, Reference signatureDescriptorReference) {
+        super(vm, signatureDescriptorReference);
     }
 }

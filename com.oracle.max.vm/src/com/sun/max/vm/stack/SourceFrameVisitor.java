@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -74,13 +73,13 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
      * A way for {@link #visitSourceFrame}to access the frame state.
      * Perhaps it should be passed as an argument.
      */
-    protected Cursor currentCursor;
+    protected StackFrameCursor currentCursor;
 
     @Override
-    public boolean visitFrame(Cursor current, Cursor callee) {
-        final TargetMethod targetMethod = current.tm;
+    public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+        final TargetMethod targetMethod = current.targetMethod();
         if (targetMethod == null) {
-            visitNativeFrame(current.ip.toLong());
+            visitNativeFrame(current.nativeIP().toLong());
             return true;
         }
         if (targetMethod.classMethodActor == null) {
@@ -89,10 +88,10 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
         }
 
         this.currentCursor = current;
-        frameId = current.sp.toLong() << 16;
-        trapped = callee.tm != null && callee.tm.is(TrapStub);
+        frameId = current.sp().toLong() << 16;
+        trapped = callee.targetMethod() != null && callee.targetMethod().is(TrapStub);
         stopped = false;
-        int count = targetMethod.forEachCodePos(this, current.ip);
+        int count = targetMethod.forEachCodePos(this, current.vmIP());
         if (count == 0 && !stopped) {
             return visitSourceFrame(targetMethod.classMethodActor, -1, trapped, frameId);
         }

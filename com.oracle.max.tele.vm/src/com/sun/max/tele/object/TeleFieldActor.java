@@ -25,26 +25,25 @@ package com.sun.max.tele.object;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.Type;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- *Canonical surrogate for an object of type {@link FieldActor} in the tele VM.
+ *Canonical surrogate for an object of type {@link FieldActor} in the VM.
  */
 public final class TeleFieldActor extends TeleMemberActor implements FieldProvider {
 
     private FieldActor fieldActor;
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleFieldActor(TeleVM teleVM, Reference fieldActorReference) {
-        super(teleVM, fieldActorReference);
+    protected TeleFieldActor(TeleVM vm, Reference fieldActorReference) {
+        super(vm, fieldActorReference);
     }
 
     /**
-     * @return local {@link FieldActor} corresponding the the target VM's {@link FieldActor} for this field.
+     * @return local {@link FieldActor} corresponding the the VM's {@link FieldActor} for this field.
      */
     public FieldActor fieldActor() {
         if (fieldActor == null && actorName() != null) {
@@ -69,15 +68,13 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     }
 
     public VMValue getStaticValue() {
-        final Pointer pointer = this.getTeleHolder().getTeleStaticTuple().getReference().toOrigin();
-        final int offset = fieldActor().offset();
-        final Kind kind = fieldActor().kind;
-        return vm().maxineValueToJDWPValue(vm().readValue(kind, pointer, offset));
+        final TeleStaticTuple teleStaticTuple = this.getTeleHolder().getTeleStaticTuple();
+        return vm().maxineValueToJDWPValue(teleStaticTuple.readFieldValue(fieldActor));
     }
 
     public VMValue getValue(ObjectProvider object) {
-        final Reference reference = ((TeleObject) object).getReference();
-        return vm().maxineValueToJDWPValue(vm().readValue(fieldActor().kind, reference.toOrigin(), fieldActor().offset()));
+        final TeleObject teleObject = (TeleObject) object;
+        return vm().maxineValueToJDWPValue(teleObject.readFieldValue(fieldActor));
     }
 
     public void setStaticValue(VMValue value) {

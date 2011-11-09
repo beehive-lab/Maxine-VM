@@ -24,25 +24,36 @@ package com.sun.max.tele.reference;
 
 import java.util.concurrent.atomic.*;
 
+import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 /**
+ * Special implementations of VM {@link Reference}s to objects that permit reuse of many
+ * VM classes and schemas in the context of non-local inspection.
+ *
+ * @see VmReferenceManager
  */
-public abstract class TeleReference extends Reference implements TeleObjectMemory {
+public abstract class TeleReference extends Reference {
+
+    private final TeleVM vm;
 
     private long refOID = 0;
+
+    private static final AtomicLong nextOID = new AtomicLong(1);
 
     protected TeleReference forwardedTeleRef = null;
 
     protected boolean collectedByGC = false;
 
-    private TeleObjectMemory.State state = TeleObjectMemory.State.LIVE;
-
-    protected TeleReference() {
+    protected TeleReference(TeleVM vm) {
+        this.vm = vm;
     }
 
+    public TeleVM vm() {
+        return vm;
+    }
     /**
-     * @return a non-zero integer uniquely identifying the referred-to object in the tele VM, assigned lazily
+     * @return a non-zero integer uniquely identifying the referred-to object in the VM, assigned lazily
      */
     public synchronized long makeOID() {
         if (refOID == 0) {
@@ -51,16 +62,34 @@ public abstract class TeleReference extends Reference implements TeleObjectMemor
         return refOID;
     }
 
-    private static final AtomicLong nextOID = new AtomicLong(1);
-
+    /**
+     * @return whether this instance is actually a local value dressed up to look like a remote reference
+     */
     public boolean isLocal() {
         return false;
     }
 
+    // TODO (mlvdv)  Is this necessary?  Convert to using memoryStatus()
+    public boolean isLive() {
+        // dangerous
+        return true;
+    }
+
+    /**
+     * Records that this instance refers to an object that has been copied elsewhere, and all
+     * references should subsequently be forwarded.
+     *
+     * @param forwardedMutableTeleRef reference to another VM object that has superseded the one
+     * to which this instance refers.
+     */
     public final void setForwardedTeleReference(TeleReference forwardedMutableTeleRef) {
         this.forwardedTeleRef = forwardedMutableTeleRef;
     }
 
+    /**
+     * @return reference to the VM object to which this instance refers, possibly following
+     * a forwarding reference if set.
+     */
     public final TeleReference getForwardedTeleRef() {
         if (forwardedTeleRef != null) {
             return forwardedTeleRef.getForwardedTeleRef();
@@ -68,40 +97,9 @@ public abstract class TeleReference extends Reference implements TeleObjectMemor
         return this;
     }
 
-    public abstract TeleObjectMemory.State getTeleObjectMemoryState();
+    /**
+     * @return the status of the memory to which this instance refers
+     */
+    public abstract ObjectMemoryStatus memoryStatus();
 
-    public boolean isLive() {
-        return getTeleObjectMemoryState() == TeleObjectMemory.State.LIVE;
-    }
-
-    public boolean isObsolete() {
-        return getTeleObjectMemoryState() == TeleObjectMemory.State.OBSOLETE;
-    }
-
-    public boolean isDead() {
-        return getTeleObjectMemoryState() == TeleObjectMemory.State.DEAD;
-    }
-
-    public static final TeleReference ZERO = new TeleReference() {
-
-        @Override
-        public TeleObjectMemory.State getTeleObjectMemoryState() {
-            return TeleObjectMemory.State.DEAD;
-        }
-
-        @Override
-        public String toString() {
-            return "null";
-        }
-
-        @Override
-        public boolean equals(Reference other) {
-            return this == other;
-        }
-
-        @Override
-        public int hashCode() {
-            return 0;
-        }
-    };
 }

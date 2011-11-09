@@ -43,7 +43,7 @@ public final class MemoryAllocationsSizeLabel extends AbstractMemoryRegionLabel 
     }
 
     public void redisplay() {
-        setFont(style().hexDataFont());
+        setFont(preference().style().hexDataFont());
         refresh(true);
     }
 

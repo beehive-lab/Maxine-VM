@@ -44,17 +44,16 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * Represents machine code produced and managed by the VM. The machine code
@@ -105,16 +104,47 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     protected Object[] directCallees = NO_DIRECT_CALLEES;
 
+    /**
+     * @see #scalarLiterals()
+     */
+    @INSPECTED
     protected byte[] scalarLiterals;
 
+    /**
+     * @see #referenceLiterals()
+     */
     @INSPECTED(deepCopied = false)
     protected Object[] referenceLiterals;
 
+    /**
+     * Pointer to a byte array, stored in the code cache allocation, that contains
+     * the target code for the compilation.  When the code has been evicted (i.e.
+     * not survived a code cache eviction cycle), this value is set to the sentinel
+     * value {@link #WIPED_CODE}.
+     * <p>
+     * <strong>Note:</strong> The Inspector compares this field to the (fixed) sentinel
+     * pointer for its test that determines whether the code has been evicted.
+     * @see #code()
+     */
     @INSPECTED
-    protected byte[] code;
+    private byte[] code;
 
+    /**
+     * @see #codeStart()
+     */
     @INSPECTED
-    protected Pointer codeStart = Pointer.zero();
+    private Pointer codeStart = Pointer.zero();
+
+    /**
+     * This field is used to implement {@linkplain CodeEviction code eviction}. It serves the following roles
+     * during different phase of code eviction:
+     * <ul>
+     * <li>As a mark field during code eviction, to identify survivors. The mark is set iff the value of this field is {@link Address#allOnes()}.</li>
+     * <li>To record the old value of {@link #start()} prior the target method being relocated.</li>
+     * </ul>
+     */
+    @INSPECTED
+    protected Address oldStart = Address.zero();
 
     /**
      * If non-null, then this method has been invalidated.
@@ -166,6 +196,33 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Notify this method that it survived an {@linkplain CodeEviction eviction cycle}.
+     * This is overridden in {@link T1XTargetMethod}.
+     */
+    public void survivedEviction() {
+        // empty
+    }
+
+    /**
+     * This is overridden in {@link T1XTargetMethod}.
+     *
+     * @return true if this method has been {@linkplain CodeEviction evicted} (i.e., its
+     * machine code is no longer present in the code cache).
+     */
+    public boolean wasEvicted() {
+        return false;
+    }
+
+    /**
+     * This is overridden in {@link T1XTargetMethod}.
+     *
+     * @return the number of survived {@linkplain CodeEviction eviction cycles}.
+     */
+    public int timesRelocated() {
+        return 0;
+    }
+
+    /**
      * Atomically marks this method as invalidated.
      *
      * @return true if this was the first attempt to invalidate the method. If not, then the invalidation marker for
@@ -200,7 +257,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return the number of bytecode locations iterated over (i.e. the number of times
      *         {@link CodePosClosure#doCodePos(ClassMethodActor, int)} was called
      */
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
+    public int forEachCodePos(CodePosClosure cpc, CodePointer ip) {
         return 0;
     }
 
@@ -281,10 +338,20 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Helper method to turn an entry from a directCallees array into a {@link TargetMethod}.
+     */
+    public static TargetMethod directCalleeFrom(Object callee) {
+        if (callee == null) {
+            return null;
+        }
+        return callee instanceof TargetMethod ? (TargetMethod) callee : ((ClassMethodActor) callee).currentTargetMethod();
+    }
+
+    /**
      * Gets the call entry point to be used for a direct call from this target method. By default, the
      * {@linkplain #callEntryPoint call entry point} of this target method will be used.
      *
-     * @param safepointIndex the index of the call in {@link #safepoints() stops}
+     * @param safepointIndex the index of the call in {@link #safepoints() safepoints}
      */
     protected CallEntryPoint callEntryPointForDirectCall(int safepointIndex) {
         return callEntryPoint;
@@ -314,7 +381,13 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Gets the byte array containing the target-specific machine code of this target method.
+     *
+     * Note: if this array is assigned to a variable outside of its target method, care should be taken that no
+     * safepoints occur between the assignment and uses of the variable. At safepoints, code eviction (see {@link CodeEviction}) might
+     * take place, potentially invalidating the address of the array, so that client code accessing the variable
+     * would end up working on invalid addresses.
      */
+    @INLINE
     public final byte[] code() {
         return code;
     }
@@ -324,12 +397,33 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the address of the first instruction in this target method's {@linkplain #code() compiled code array}.
-     * <p>
-     * Needs {@linkplain DataPrototype#assignRelocationFlags() relocation}.
+     * Gets the address of the first instruction in this target method's {@linkplain #code() compiled code array}
+     * in the form of an eviction-safe {@link CodePointer}.
      */
-    public final Pointer codeStart() {
-        return codeStart;
+    @INLINE
+    public final CodePointer codeStart() {
+        return CodePointer.from(codeStart);
+    }
+
+    /**
+     * Gets the address of a particular instruction in this target method's {@linkplain #code() compiled code array}
+     * in the form of an eviction-safe {@link CodePointer}.
+     *
+     * @param pos the code position. A value of 0 implies the first instruction. This must be a value in the range {@code [0 .. codeLength())}.
+     */
+    @INLINE
+    public final CodePointer codeAt(int pos) {
+        assert pos >= 0 && pos < codeLength() : "pos=" + pos + ", length=" + codeLength() + ", tm=" + toString();
+        return CodePointer.from(codeStart.plus(pos));
+    }
+
+    @INLINE
+    public final Address oldStart() {
+        return oldStart;
+    }
+
+    public final void setOldStart(Address ocs) {
+        oldStart = ocs;
     }
 
     @HOSTED_ONLY
@@ -385,6 +479,14 @@ public abstract class TargetMethod extends MemoryRegion {
         this.frameSize = frameSize;
     }
 
+    /**
+     * Gets this method's life span, i.e., a value indicating how long the machine code is expected to live.
+     * For baseline methods, this is short - they might be evicted once the code cache meets contention.
+     * Class initialisers are run only once, they have a one-shot life span.
+     * Optimised methods, adapters, and stubs are expected to live for a long time.
+     */
+    public abstract Lifespan lifespan();
+
     protected void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -403,6 +505,7 @@ public abstract class TargetMethod extends MemoryRegion {
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
+        assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
         patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
     }
 
@@ -617,7 +720,7 @@ public abstract class TargetMethod extends MemoryRegion {
         System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
     }
 
-    public final ClassMethodActor callSiteToCallee(Address callSite) {
+    public final ClassMethodActor callSiteToCallee(CodePointer callSite) {
         int callPos = callSite.minus(codeStart).toInt();
         int dcIndex = 0;
         for (int i = 0; i < safepoints.size(); i++) {
@@ -631,7 +734,18 @@ public abstract class TargetMethod extends MemoryRegion {
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public Word getEntryPoint(CallEntryPoint callEntryPoint) {
+    /**
+     * Returns an absolute address in the machine code of this method, corresponding to the kind of entry point
+     * passed as parameter.
+     *
+     * Note that this method returns an absolute code address. Its usage should occur soon after the invocation of
+     * this method, without any safepoints in between. At safepoints, code eviction (see {@link CodeEviction}) might
+     * take place, potentially invalidating absolute code addresses.
+     *
+     * @param callEntryPoint the kind of {@link CallEntryPoint} for which the address is to be returned
+     * @return the entry address ({@link CodePointer}) in this method according to the {@code callEntryPoint}
+     */
+    public CodePointer getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
     }
 
@@ -648,7 +762,7 @@ public abstract class TargetMethod extends MemoryRegion {
         assert !(callee instanceof Adapter);
         final int offset = getCallEntryOffset(callee, safepointIndex);
         final int callPos = safepoints.causePosAt(safepointIndex);
-        Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
+        CodePointer trampoline = vm().stubs.staticTrampoline().codeAt(offset);
         return !patchCallSite(callPos, trampoline).equals(trampoline);
     }
 
@@ -693,16 +807,16 @@ public abstract class TargetMethod extends MemoryRegion {
                         } else {
                             linkedAll = false;
                             final int callPos = safepoints.causePosAt(safepointIndex);
-                            final Address callSite = codeStart.plus(callPos);
+                            final CodePointer callSite = codeAt(callPos);
                             if (!isPatchableCallSite(callSite)) {
                                 FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
                                                 " [0x" + codeStart.toHexString() + "+" + callPos + "]");
                             }
-                            fixupCallSite(callPos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                            fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
                         }
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
-                        fixupCallSite(callPos, callee.codeStart().plus(offset));
+                        fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }
                 dcIndex++;
@@ -759,8 +873,8 @@ public abstract class TargetMethod extends MemoryRegion {
      *         -1 if {@code ip} denotes an instruction that does not correlate to any bytecode. This will
      *         be the case when {@code ip} is in the adapter frame stub code, prologue or epilogue.
      */
-    public final int posFor(Address ip) {
-        final int pos = ip.minus(codeStart).toInt();
+    public int posFor(CodePointer ip) {
+        final int pos = (int) (ip.toLong() - codeStart.toLong());
         if (pos >= 0 && pos <= code.length) {
             return pos;
         }
@@ -782,7 +896,7 @@ public abstract class TargetMethod extends MemoryRegion {
         return null;
     }
 
-    public int findSafepointIndex(Pointer ip) {
+    public int findSafepointIndex(CodePointer ip) {
         final int pos = posFor(ip);
         if (safepoints == null || pos < 0 || pos > code.length) {
             return -1;
@@ -815,7 +929,7 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
-    public abstract Address throwAddressToCatchAddress(Address throwAddress, Throwable exception);
+    public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception);
 
     /**
      * Modifies the call site at the specified offset to use the new specified entry point.
@@ -825,7 +939,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param callEntryPoint entry point the call site should call after patching
      * @return the entry point of the call prior to patching
      */
-    public abstract Address patchCallSite(int callOffset, Address callEntryPoint);
+    public abstract CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint);
 
     /**
      * Fixup a call site in the method. This differs from the above in that the call site is updated before
@@ -836,14 +950,14 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param callEntryPoint entry point the call site should call after fixup
      * @return the entry point of the call prior to patching
      */
-    public abstract Address fixupCallSite(int callOffset, Address callEntryPoint);
+    public abstract CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint);
 
     /**
      * Indicates whether a call site can be patched safely when multiple threads may execute this target method concurrently.
      * @param callSite offset to a call site relative to the start of the code of this target method.
      * @return true if mt-safe patching is possible on the specified call site.
      */
-    public abstract boolean isPatchableCallSite(Address callSite);
+    public abstract boolean isPatchableCallSite(CodePointer callSite);
 
     /**
      * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).
@@ -852,7 +966,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param preparer the reference map preparer which receives the reference map
      */
-    public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
+    public abstract void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer);
 
     /**
      * Attempts to catch an exception thrown by this method or a callee method. If a handler exists,
@@ -870,28 +984,31 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
      */
-    public abstract void catchException(Cursor current, Cursor callee, Throwable throwable);
+    public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable);
 
     /**
-     * Accepts a visitor for this stack frame.
+     * Accepts a visitor for this stack frame. As this only ever happens in Inspector contexts, this method is
+     * annotated with {@link HOSTED_ONLY}.
+     *
      * @param current the current stack frame
      * @param visitor the visitor which will visit the frame
      * @return {@code true} if the visitor indicates the stack walk should continue
      */
-    public abstract boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor);
+    @HOSTED_ONLY
+    public abstract boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor);
 
     /**
      * Advances the stack frame cursor from this frame to the next frame.
      * @param current the current stack frame cursor
      */
-    public abstract void advance(Cursor current);
+    public abstract void advance(StackFrameCursor current);
 
     /**
      * Gets a pointer to the memory word holding the return address in a frame of this target method.
      *
      * @param frame an activation frame for this target method
      */
-    public abstract Pointer returnAddressPointer(Cursor frame);
+    public abstract Pointer returnAddressPointer(StackFrameCursor frame);
 
     /**
      * Determines if this a {@link Nature#BASELINE} target method.
@@ -933,6 +1050,23 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Determines whether this method has a type profile.
+     *
+     * @return {@code true} if there is a type profile associated with this method.
+     */
+    public boolean hasTypeProfile() {
+        return profile() != null && profile().rawInfo() != null;
+    }
+
+    /**
+     * Determines whether the entry count of this method is within the threshold
+     * denoted by {@link MethodInstrumentation#PROTECTION_THRESHOLD}.
+     */
+    public boolean withinInvocationThreshold() {
+        return profile() != null && profile().protectedEntryCount();
+    }
+
+    /**
      * Gets the stub type of this target method.
      *
      * @return {@code null} if this is not {@linkplain Stub stub}
@@ -942,10 +1076,85 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Invalidate this method's machine code and literals by letting them reference "wiped" sentinels.
+     */
+    public void wipe() {
+        code = WIPED_CODE;
+        scalarLiterals = WIPED_SCALAR_LITERALS;
+        referenceLiterals = WIPED_REFERENCE_LITERALS;
+    }
+
+    public boolean isWiped() {
+        return code == WIPED_CODE;
+    }
+
+    /**
+     * @return {@code true} if the machine code of this method is using tagged pointers.
+     * The default implementation pessimistically assumes this is the case.
+     */
+    public boolean isUsingTaggedLocals() {
+        return true;
+    }
+
+    /**
      * Determines if this is a stub of a give type.
      */
     public final boolean is(Stub.Type type) {
         return stubType() == type;
+    }
+
+    /**
+     * Sentinel value for the {@link #code} field denoting that it is no longer valid.
+     * <p>
+     * <strong>Note:</strong> The Inspector compares the value in the code field against this
+     * sentinel's fixed location to determine whether the method's code has been evicted.
+     * That requires that the sentinel's value not change, so it should always be in an
+     * unmanaged heap (presumed to be in the boot heap automatically).
+     */
+    @INSPECTED
+    private static final byte[] WIPED_CODE = {};
+
+    /**
+     * Sentinel value for the {@link #scalarLiterals} field denoting that it is no longer valid.
+     */
+    private static final byte[] WIPED_SCALAR_LITERALS = {};
+
+    /**
+     * Sentinel value for the {@link #referenceLiterals} field denoting that it is no longer valid.
+     */
+    private static final Object[] WIPED_REFERENCE_LITERALS = {};
+
+    /**
+     * Marks this target method for preservation during {@linkplain CodeEviction code eviction}.
+     */
+    public final void mark() {
+        oldStart = Address.allOnes().asAddress();
+    }
+
+    public final void unmark() {
+        oldStart = Address.zero();
+    }
+
+    /**
+     * Determines if this method was marked to survive {@linkplain CodeEviction code eviction}.
+     */
+    public final boolean isMarked() {
+        return oldStart == Address.allOnes().asAddress();
+    }
+
+    /**
+     * Determines if this method is protected from eviction.
+     */
+    public boolean isProtected() {
+        return false;
+    }
+
+    /**
+     * Protect this method from eviction.
+     * This is not supported for all kinds of target methods.
+     */
+    public void protect() {
+        // intentionally empty
     }
 
     /**

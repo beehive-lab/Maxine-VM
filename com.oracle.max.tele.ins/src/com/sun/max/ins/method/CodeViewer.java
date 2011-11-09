@@ -36,7 +36,7 @@ import com.sun.max.tele.*;
 
 /**
  * Base class for panels that show a row-oriented view of a method in a MethodInspector framework.
- * Not intended for use outside a MethodInspector, so not undockable;
+ * Not intended for use outside a {@link JavaMethodView}, so not undockable;
  * Includes machinery for some common operations, based on abstract "rows"
  * - maintaining a cache that maps row->stackFrame for the thread of current focus
  * - tracking which rows are "active", i.e. have some frame at that location for the thread of current focus
@@ -86,10 +86,11 @@ public abstract class CodeViewer extends InspectorPanel {
             }
         });
         searchButton.setText(null);
-        searchButton.setIcon(style().generalFindIcon());
+        final InspectorStyle style = preference().style();
+        searchButton.setIcon(style.generalFindIcon());
         searchButton.setToolTipText("Open toolbar for searching");
 
-        activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().navigationForwardIcon()) {
+        activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style.navigationForwardIcon()) {
             public void actionPerformed(ActionEvent actionEvent) {
                 int nextActiveRow = nextActiveRow();
                 if (nextActiveRow >= 0) {
@@ -102,7 +103,7 @@ public abstract class CodeViewer extends InspectorPanel {
             }
         });
         activeRowsButton.setText(null);
-        activeRowsButton.setForeground(style().debugIPTagColor());
+        activeRowsButton.setForeground(style.debugIPTagColor());
         activeRowsButton.setToolTipText("Scroll to next line with IP or Call Return");
         activeRowsButton.setEnabled(false);
 
@@ -113,13 +114,13 @@ public abstract class CodeViewer extends InspectorPanel {
                 parent().closeCodeViewer(CodeViewer.this);
             }
         });
-        viewCloseButton.setIcon(style().codeViewCloseIcon());
+        viewCloseButton.setIcon(style.codeViewCloseIcon());
     }
 
     protected void createView() {
         toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
         toolBar = new InspectorToolBar(inspection());
-        toolBar.setBorder(style().defaultPaneBorder());
+        toolBar.setBorder(preference().style().defaultPaneBorder());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBarPanel.add(toolBar);

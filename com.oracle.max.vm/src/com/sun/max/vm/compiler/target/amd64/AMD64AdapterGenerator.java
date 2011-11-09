@@ -48,7 +48,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Adapter.Type;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.type.*;
 
 /**
@@ -72,12 +71,18 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     }
 
     @Override
-    public boolean advanceIfInPrologue(Cursor current) {
-        if (inPrologue(current.ip(), current.targetMethod())) {
+    public boolean advanceIfInPrologue(StackFrameCursor current) {
+        if (inPrologue(current.vmIP(), current.targetMethod())) {
             StackFrameWalker sfw = current.stackFrameWalker();
-            final Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
+            Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
             Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
+
+            boolean wasDisabled = SafepointPoll.disable();
             sfw.advance(callerIP, callerSP, current.fp());
+            if (!wasDisabled) {
+                SafepointPoll.enable();
+            }
+
             return true;
         }
         return false;
@@ -121,19 +126,19 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
              *         {@code current.fp()}.
              */
             @HOSTED_ONLY
-            private int computeFrameState(Cursor cursor) {
+            private int computeFrameState(StackFrameCursor cursor) {
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = false;
                 StackFrameWalker sfw = cursor.stackFrameWalker();
-                int position = cursor.ip().minus(codeStart).toInt();
+                int position = cursor.vmIP().minus(codeStart()).toInt();
 
-                byte b = sfw.readByte(cursor.ip(), 0);
+                byte b = sfw.readByte(cursor.vmIP().toAddress(), 0);
                 if (position == 0 || b == ENTER) {
                     ripAdjustment = Word.size();
                 } else if (b == RET2) {
                     ripAdjustment = 0;
                 } else if (b == REXW) {
-                    b = sfw.readByte(cursor.ip(), 1);
+                    b = sfw.readByte(cursor.vmIP().toAddress(), 1);
                     if (b == ADDQ_SUBQ_imm8) {
                         ripAdjustment = Word.size();
                     } else if (b == ADDQ_SUBQ_imm32) {
@@ -148,7 +153,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public Pointer returnAddressPointer(Cursor frame) {
+            public Pointer returnAddressPointer(StackFrameCursor frame) {
                 int ripAdjustment = frameSize();
                 if (MaxineVM.isHosted()) {
                     // Inspector context only
@@ -160,7 +165,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public void advance(Cursor current) {
+            public void advance(StackFrameCursor current) {
                 StackFrameWalker sfw = current.stackFrameWalker();
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = true;
@@ -175,15 +180,21 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
+
+                boolean wasDisabled = SafepointPoll.disable();
                 sfw.advance(callerIP, callerSP, callerFP);
+                if (!wasDisabled) {
+                    SafepointPoll.enable();
+                }
             }
 
             @Override
-            public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeFrameState(current) & ~1 : frameSize();
+            @HOSTED_ONLY
+            public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
+                int ripAdjustment = computeFrameState(current) & ~1;
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.ip(), fp, current.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), fp, current.sp()));
             }
 
             @Override
@@ -205,7 +216,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+            public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
                 preparer.tracePrepareReferenceMap(this, 0, current.sp(), "frame");
                 int frameSlotIndex = preparer.referenceMapBitIndex(current.sp());
                 int byteIndex = 0;
@@ -235,7 +246,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+            public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
                 preparer.tracePrepareReferenceMap(this, 0, current.sp(), "frame");
                 int frameSlotIndex = preparer.referenceMapBitIndex(current.sp());
                 int byteIndex = 0;
@@ -517,7 +528,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             /**
-             * Computes the amount by which the stack pointer in a given {@linkplain Cursor cursor}
+             * Computes the amount by which the stack pointer in a given {@linkplain StackFrameCursor cursor}
              * should be adjusted to obtain the location on the stack holding the RIP to which
              * the adapter will return.
              *
@@ -528,10 +539,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
              * @param cursor a stack frame walker cursor denoting an execution point in this adapter
              */
             @HOSTED_ONLY
-            private int computeRipAdjustment(Cursor cursor) {
+            private int computeRipAdjustment(StackFrameCursor cursor) {
                 int ripAdjustment = frameSize();
                 StackFrameWalker sfw = cursor.stackFrameWalker();
-                int position = cursor.ip().minus(codeStart).toInt();
+                int position = cursor.vmIP().minus(codeStart()).toInt();
                 if (!cursor.isTopFrame()) {
                     // Inside call to baseline body. The value of RSP in cursor is now the value
                     // that the baseline caller will leave it in after popping the arguments from the stack
@@ -539,9 +550,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 } else if (position == 0) {
                     ripAdjustment = Word.size();
                 } else {
-                    switch (sfw.readByte(cursor.ip(), 0)) {
+                    switch (sfw.readByte(cursor.vmIP().toAddress(), 0)) {
                         case REXW:
-                            byte b = sfw.readByte(cursor.ip(), 1);
+                            byte b = sfw.readByte(cursor.vmIP().toAddress(), 1);
                             if (b == ADDQ_SUBQ_imm8) {
                                 ripAdjustment = Word.size();
                             } else if (b == ADDQ_SUBQ_imm32) {
@@ -556,13 +567,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public Pointer returnAddressPointer(Cursor frame) {
+            public Pointer returnAddressPointer(StackFrameCursor frame) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : Word.size();
                 return frame.sp().plus(ripAdjustment);
             }
 
             @Override
-            public void advance(Cursor cursor) {
+            public void advance(StackFrameCursor cursor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
@@ -571,16 +582,21 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = cursor.fp();
 
+                boolean wasDisabled = SafepointPoll.disable();
                 sfw.advance(callerIP, callerSP, callerFP);
+                if (!wasDisabled) {
+                    SafepointPoll.enable();
+                }
             }
 
             @Override
-            public boolean acceptStackFrameVisitor(Cursor cursor, StackFrameVisitor visitor) {
+            @HOSTED_ONLY
+            public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.ip(), fp, cursor.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.vmIP().toPointer(), fp, cursor.sp()));
             }
 
             @Override

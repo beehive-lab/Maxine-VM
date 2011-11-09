@@ -48,6 +48,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -55,7 +56,6 @@ import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -83,6 +83,11 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Debug info.
      */
     private DebugInfo debugInfo;
+
+    /**
+     * Flag to mark whether this method - probably by means of any inlined method - is using tagged pointers.
+     */
+    private boolean isUsingTaggedLocals;
 
     private final CodeAnnotation[] annotations;
 
@@ -129,6 +134,24 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public Lifespan lifespan() {
+        return Lifespan.LONG;
+    }
+
+    /**
+     * @return {@code true} if this method (maybe due to inlining) uses tagged locals. This is controlled by the inlining logic in the
+     * optimising JIT compiler. See {@link RiRuntime#notifyInline()}.
+     */
+    @Override
+    public boolean isUsingTaggedLocals() {
+        return isUsingTaggedLocals;
+    }
+
+    public void setUsingTaggedLocals() {
+        isUsingTaggedLocals = true;
     }
 
     @Override
@@ -195,7 +218,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public boolean isPatchableCallSite(Address callSite) {
+    public boolean isPatchableCallSite(CodePointer callSite) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
@@ -204,7 +227,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
@@ -213,9 +236,9 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
-            return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+            return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
@@ -234,8 +257,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
-        final int exceptionPos = throwAddress.minus(codeStart).toInt();
+    public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+        final int exceptionPos = throwAddress.minus(codeStart()).toInt();
         int count = getExceptionHandlerCount();
         for (int i = 0; i < count; i++) {
             int codePos = getExceptionPosAt(i);
@@ -243,10 +266,10 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             ClassActor catchType = getCatchTypeAt(i);
 
             if (codePos == exceptionPos && checkType(exception, catchType)) {
-                return codeStart.plus(catchPos);
+                return codeAt(catchPos);
             }
         }
-        return Address.zero();
+        return CodePointer.zero();
     }
 
     private boolean checkType(Throwable exception, ClassActor catchType) {
@@ -351,7 +374,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @param preparer the reference map preparer
      */
     @Override
-    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
         CiCalleeSaveLayout csl = callee.csl();
         Pointer csa = callee.csa();
         TargetMethod calleeTM = callee.targetMethod();
@@ -366,7 +389,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             }
         }
 
-        int safepointIndex = findSafepointIndex(current.ip());
+        int safepointIndex = findSafepointIndex(current.vmIP());
         if (safepointIndex < 0) {
             // this is very bad.
             throw FatalError.unexpected("could not find safepoint index");
@@ -391,7 +414,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                             Log.print("    register: ");
                             Log.println(csl.registers[reg].name);
                         }
-                        preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                        preparer.visitReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
                     reg++;
                     b = b >>> 1;
@@ -405,7 +428,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
         int byteIndex = debugInfo.frameRefMapStart(safepointIndex);
         for (int i = 0; i < frameRefMapSize; i++) {
-            preparer.setReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);
+            preparer.visitReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
         }
@@ -422,7 +445,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @param callee
      * @param preparer
      */
-    public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    public static void prepareTrampolineRefMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
         RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
         TargetMethod trampoline = callee.targetMethod();
         ClassMethodActor calledMethod = null;
@@ -437,7 +460,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (trampoline.is(StaticTrampoline)) {
             int dcIndex = 0;
             Safepoints safepoints = targetMethod.safepoints();
-            int safepointPos = targetMethod.posFor(current.ip());
+            int safepointPos = targetMethod.posFor(current.vmIP());
             for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
                 if (safepoints.posAt(safepointIndex) == safepointPos) {
                     calledMethod = (ClassMethodActor) targetMethod.directCallees()[dcIndex];
@@ -469,7 +492,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!calledMethod.isStatic()) {
             // set a bit for the receiver object
             int offset = csl.offsetOf(regs[regIndex++]);
-            preparer.setReferenceMapBits(current, csa.plus(offset), 1, 1);
+            preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
         }
 
         SignatureDescriptor sig = calledMethod.descriptor();
@@ -480,7 +503,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (kind.isReference) {
                 // set a bit for this parameter
                 int offset = csl.offsetOf(reg);
-                preparer.setReferenceMapBits(current, csa.plus(offset), 1, 1);
+                preparer.visitReferenceMapBits(current, csa.plus(offset), 1, 1);
             }
             if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
                 // Only iterating over the integral arg registers
@@ -496,11 +519,11 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @param throwable the exception being thrown
      */
     @Override
-    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
-        Pointer ip = current.ip();
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+        CodePointer ip = current.vmIP();
         Pointer sp = current.sp();
         Pointer fp = current.fp();
-        Address catchAddress = throwAddressToCatchAddress(ip, throwable);
+        CodePointer catchAddress = throwAddressToCatchAddress(ip, throwable);
         if (!catchAddress.isZero()) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
@@ -511,7 +534,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
 
             int catchPos = posFor(catchAddress);
             if (invalidated() != null) {
-                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET) == current.ip() : "real caller IP should have been saved in rescue slot";
+                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET) == current.ipAsPointer() : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
                 assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress)) :
                     "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";
@@ -522,7 +545,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                                     " to " + voidDeoptStub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
                 }
 
-                catchAddress = voidDeoptStub.codeStart().asPointer();
+                catchAddress = voidDeoptStub.codeStart();
             }
 
             TargetMethod calleeMethod = callee.targetMethod();
@@ -535,22 +558,22 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
                 unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
             } else {
-                Stubs.unwind(catchAddress, sp, fp);
+                Stubs.unwind(catchAddress.toPointer(), sp, fp);
             }
             throw ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
     }
 
     @NEVER_INLINE
-    public static void unwindToCalleeEpilogue(Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+    public static void unwindToCalleeEpilogue(CodePointer catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
-        returnAddressPointer.setWord(catchAddress);
+        returnAddressPointer.setWord(catchAddress.toAddress());
 
-        Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
+        CodePointer epilogueAddress = lastJavaCallee.codeAt(lastJavaCallee.registerRestoreEpilogueOffset());
 
         final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
-        Stubs.unwind(epilogueAddress, calleeStackPointer, Pointer.zero());
+        Stubs.unwind(epilogueAddress.toPointer(), calleeStackPointer, Pointer.zero());
     }
 
     /**
@@ -560,7 +583,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @return {@code true} if the stack walker should continue walking, {@code false} if the visitor is finished visiting
      */
     @Override
-    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+    @HOSTED_ONLY
+    public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
@@ -572,7 +596,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @param current the current frame
      */
     @Override
-    public void advance(Cursor current) {
+    public void advance(StackFrameCursor current) {
         if (platform().isa == ISA.AMD64) {
             CiCalleeSaveLayout csl = calleeSaveLayout();
             Pointer csa = Pointer.zero();
@@ -587,7 +611,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public Pointer returnAddressPointer(Cursor frame) {
+    public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else {
@@ -596,7 +620,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
+    public int forEachCodePos(CodePosClosure cpc, CodePointer ip) {
         int index = findSafepointIndex(ip);
         if (index < 0) {
             return 0;
@@ -606,7 +630,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public CiDebugInfo debugInfoAt(int safepointIndex, FrameAccess fa) {
-        return debugInfo.infoAt(safepointIndex, fa, true);
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
+        return debugInfo.infoAt(stopIndex, fa, true);
     }
 }

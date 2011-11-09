@@ -155,6 +155,11 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return noSafepointPolls(flags()) || isTemplate();
     }
 
+    @INLINE
+    public final boolean isUsingTaggedLocals() {
+        return isUsingTaggedValues(flags());
+    }
+
     /**
      * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
      *         empty.
@@ -540,6 +545,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     public RiSignature signature() {
         return descriptor();
     }
+
     public int invocationCount() {
         return -1;
     }
@@ -571,4 +577,9 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     public int compiledCodeSize() {
         return -1;
     }
+
+    public boolean canBePermanentlyLinked() {
+        return false;
+    }
+
 }

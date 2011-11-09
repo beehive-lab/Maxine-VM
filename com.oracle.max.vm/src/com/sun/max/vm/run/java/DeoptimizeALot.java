@@ -33,7 +33,6 @@ import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -51,7 +50,7 @@ public class DeoptimizeALot extends Thread {
 
         class Visitor extends RawStackFrameVisitor {
             @Override
-            public boolean visitFrame(Cursor current, Cursor callee) {
+            public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
                 if (!current.isTopFrame()) {
                     TargetMethod tm = current.targetMethod();
                     if (assessMethod(tm)) {
@@ -67,7 +66,7 @@ public class DeoptimizeALot extends Thread {
             boolean assessMethod(TargetMethod tm) {
                 return tm != null &&
                     tm.classMethodActor != null &&
-                    !Code.bootCodeRegion().contains(tm.codeStart()) &&
+                    !Code.bootCodeRegion().contains(tm.codeStart().toAddress()) &&
                     !tm.isBaseline() &&
                     !tm.classMethodActor.isUnsafe() &&
                     tm.invalidated() == null &&

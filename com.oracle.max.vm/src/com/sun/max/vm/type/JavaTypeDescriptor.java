@@ -164,6 +164,8 @@ public final class JavaTypeDescriptor {
     public static final TypeDescriptor FIELD = getDescriptorForTupleType(Field.class);
     public static final TypeDescriptor CONSTRUCTOR = getDescriptorForTupleType(Constructor.class);
 
+    public static final TypeDescriptor CODE_POINTER = getDescriptorForTupleType(CodePointer.class);
+
     /**
      * The {@code getTypeDescriptorForTupleType()} method returns a type descriptor for the specified class. The class
      * must not be either a primitive type or an array type.

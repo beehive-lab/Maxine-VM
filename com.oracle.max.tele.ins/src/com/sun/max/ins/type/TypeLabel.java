@@ -108,13 +108,13 @@ public class TypeLabel extends InspectorLabel {
             teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            teleClassActor = vm().classRegistry().findTeleClassActor(typeDescriptor);
+            teleClassActor = vm().classes().findTeleClassActor(typeDescriptor);
         }
     }
 
     public void redisplay() {
         updateText();
-        setFont(style().defaultFont());
+        setFont(preference().style().defaultFont());
     }
 
     private void updateText() {
@@ -126,7 +126,7 @@ public class TypeLabel extends InspectorLabel {
             final String typeName = javaType.getSimpleName();
             setText(typeName);
             if (teleClassActor == null) {
-                setForeground(style().javaUnresolvedNameColor());
+                setForeground(preference().style().javaUnresolvedNameColor());
                 setWrappedToolTipHtmlText(htmlify("<unloaded>") +  javaType.getName());
             } else {
                 setWrappedToolTipHtmlText(typeDescriptor.toJavaString(true) + "<br>ClassActor = " + htmlify(inspection().nameDisplay().referenceToolTipText(teleClassActor)) + ")");

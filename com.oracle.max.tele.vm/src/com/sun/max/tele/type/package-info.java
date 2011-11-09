@@ -22,6 +22,6 @@
  */
 
 /**
- * Support for types in the tele VM.
+ * Support for types in the VM.
  */
 package com.sun.max.tele.type;

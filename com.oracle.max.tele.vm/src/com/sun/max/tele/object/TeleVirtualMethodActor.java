@@ -35,8 +35,8 @@ public final class TeleVirtualMethodActor extends TeleClassMethodActor {
      * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      */
-    TeleVirtualMethodActor(TeleVM teleVM, Reference virtualMethodActorReference) {
-        super(teleVM, virtualMethodActorReference);
+    TeleVirtualMethodActor(TeleVM vm, Reference virtualMethodActorReference) {
+        super(vm, virtualMethodActorReference);
     }
 
     @Override

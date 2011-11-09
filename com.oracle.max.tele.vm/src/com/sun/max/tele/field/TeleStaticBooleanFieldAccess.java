@@ -33,11 +33,11 @@ public class TeleStaticBooleanFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.BOOLEAN);
     }
 
-    public boolean readBoolean(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readBoolean(fieldActor().offset());
+    public boolean readBoolean(MaxVM vm) {
+        return staticTupleReference(vm).readBoolean(fieldActor().offset());
     }
 
-    public void writeBoolean(TeleVM teleVM, boolean value) {
-        staticTupleReference(teleVM).writeBoolean(fieldActor().offset(), value);
+    public void writeBoolean(MaxVM vm, boolean value) {
+        staticTupleReference(vm).writeBoolean(fieldActor().offset(), value);
     }
 }

@@ -28,6 +28,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
@@ -49,7 +50,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -510,8 +510,8 @@ public class CompilationBroker {
             mpo.entryCount = 0;
 
             if (receiver != null) {
-                Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
-                Address to = newMethod.getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+                Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
+                Address to = newMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
 
                 // Simply overwrite all vtable slots containing 'oldMethod' with 'newMethod'.
                 // These updates can be made atomically without need for a lock.
@@ -594,13 +594,15 @@ public class CompilationBroker {
         }
     }
 
-    private static void logStaticCallPatch(Cursor current, Pointer callSite, Address to) {
+    private static void logStaticCallPatch(StackFrameCursor current, CodePointer callSite, int dcIndex, CodePointer to) {
         if (verboseOption.verboseCompilation) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": Patching static call at ");
             Log.printLocation(current.targetMethod(), callSite, false);
-            Log.print(" to ");
+            Log.print(" (direct callee index ");
+            Log.print(dcIndex);
+            Log.print(") to ");
             Log.println(to);
             Log.unlock(lockDisabledSafepoints);
         }
@@ -684,38 +686,62 @@ public class CompilationBroker {
          */
         static final int FRAME_SEARCH_LIMIT = 10;
 
-        private final Address from1;
-        private final Address from2;
-        private final Address to1;
-        private final Address to2;
+        private final TargetMethod oldMethod;
+        private final TargetMethod newMethod;
         int frameCount;
 
         public DirectCallPatcher(TargetMethod oldMethod, TargetMethod newMethod) {
-            from1 = oldMethod.getEntryPoint(BASELINE_ENTRY_POINT).asAddress();
-            to1 = newMethod.getEntryPoint(BASELINE_ENTRY_POINT).asAddress();
-            from2 = oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
-            to2 = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            this.oldMethod = oldMethod;
+            this.newMethod = newMethod;
+        }
+
+        private int directCalleePosition(TargetMethod tm, CodePointer callSite) {
+            final Safepoints safepoints = tm.safepoints();
+            final int callPos = callSite.minus(tm.codeStart()).toInt();
+            int dcIndex = 0;
+            for (int i = 0; i < safepoints.size(); i++) {
+                if (safepoints.isSetAt(DIRECT_CALL, i)) {
+                    if (safepoints.causePosAt(i) == callPos) {
+                        return dcIndex;
+                    }
+                    dcIndex++;
+                }
+            }
+            return -1;
         }
 
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
             if (platform().isa == ISA.AMD64) {
                 if (current.isTopFrame()) {
                     return true;
                 }
-                Pointer ip = current.ip();
-                Pointer callSite = ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-                if ((callSite.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
-                    Pointer target = ip.plus(callSite.readInt(1));
-                    if (target.equals(from1)) {
-                        logStaticCallPatch(current, callSite, to1);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to1);
+                Pointer ip = current.ipAsPointer();
+                CodePointer callSite = CodePointer.from(ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                Pointer callSitePointer = callSite.toPointer();
+                if ((callSitePointer.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
+                    CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        Object[] directCallees = tm.directCallees();
+                        directCallees[dcIndex] = newMethod;
+                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
                     }
-                    if (target.equals(from2)) {
-                        logStaticCallPatch(current, callSite, to2);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to2);
+                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        Object[] directCallees = tm.directCallees();
+                        directCallees[dcIndex] = newMethod;
+                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
                     }

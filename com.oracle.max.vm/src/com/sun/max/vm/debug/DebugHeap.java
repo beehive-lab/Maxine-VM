@@ -195,6 +195,9 @@ public final class DebugHeap {
         if (isTagging()) {
             checkNonNullRefTag(ref);
         }
+        if (CodePointer.isCodePointer(ref)) {
+            return;
+        }
         final Pointer origin = ref.toOrigin();
         if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
             return;

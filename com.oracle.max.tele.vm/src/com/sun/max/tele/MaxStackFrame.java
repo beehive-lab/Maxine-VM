@@ -26,7 +26,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * Description of a stack frame in the VM.
@@ -77,7 +76,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      * Thread-safe
      *
      * @return the current stack pointer
-     * @see Cursor#sp()
+     * @see StackFrameCursor#sp()
      */
     Pointer sp();
 
@@ -87,7 +86,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      * Thread-safe
      *
      * @return the current frame pointer
-     * @see Cursor#fp()
+     * @see StackFrameCursor#fp()
      */
     Pointer fp();
 
@@ -97,7 +96,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      * This typically would be a method compilation, but it could also be a region of native
      * that has previously been registered during the session.
      *
-     * @see TeleCodeCache#register(TeleExternalCode)
+     * @see VmCodeCacheAccess#register(TeleExternalCode)
      */
     MaxMachineCode machineCode();
 

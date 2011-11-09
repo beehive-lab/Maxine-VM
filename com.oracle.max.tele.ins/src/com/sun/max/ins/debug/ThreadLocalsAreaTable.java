@@ -129,7 +129,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -235,12 +235,15 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
+            if (threadLocalVariable == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             setValue(threadLocalVariable.variableName());
             setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>" +
                             "Description = \"" + threadLocalVariable.variableDocumentation() + "\"<br>" +
                             "Declared in " + threadLocalVariable.declaration());
             if (threadLocalVariable.isReference()) {
-                setForeground(style().wordValidObjectReferenceDataColor());
+                setForeground(preference().style().wordValidObjectReferenceDataColor());
             } else {
                 setForeground(cellForegroundColor(row, column));
             }
@@ -271,6 +274,9 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
+            if (threadLocalVariable == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             if (labels[row] == null) {
                 final ValueMode valueMode = threadLocalVariable.isReference() ? ValueMode.REFERENCE : ValueMode.WORD;
                 labels[row] = new WordValueLabel(inspection(), valueMode, ThreadLocalsAreaTable.this) {
