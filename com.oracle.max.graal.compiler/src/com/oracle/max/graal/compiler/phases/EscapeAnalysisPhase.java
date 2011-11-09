@@ -412,8 +412,10 @@ public class EscapeAnalysisPhase extends Phase {
             if (escapes) {
                 if (usage instanceof FrameState) {
                     // nothing to do...
-                } else if (usage instanceof Invoke) {
-                    invokes.add((Invoke) usage);
+                } else if (usage instanceof CallTargetNode) {
+                    for (Node invoke : ((CallTargetNode) usage).usages()) {
+                        invokes.add((Invoke) invoke);
+                    }
                 } else {
                     exits.add(usage);
                     if (!GraalOptions.TraceEscapeAnalysis) {

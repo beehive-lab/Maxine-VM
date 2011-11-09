@@ -71,7 +71,7 @@ public interface VMEntries {
 
     RiConstantPool RiType_constantPool(HotSpotTypeResolved klass);
 
-    void installMethod(HotSpotTargetMethod targetMethod);
+    long installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
 
     long installStub(HotSpotTargetMethod targetMethod);
 
@@ -112,6 +112,8 @@ public interface VMEntries {
     RiMethod getRiMethod(Method reflectionMethod);
 
     long getMaxCallTargetOffset(CiRuntimeCall rtcall);
+
+    void notifyJavaQueue();
 
     // Checkstyle: resume
 }

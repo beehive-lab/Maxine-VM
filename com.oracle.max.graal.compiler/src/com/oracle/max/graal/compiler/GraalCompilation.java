@@ -206,7 +206,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.EscapeAnalysis) {
-                new EscapeAnalysisPhase(this).apply(graph);
+                new EscapeAnalysisPhase(this).apply(graph, context());
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
