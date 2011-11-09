@@ -83,6 +83,13 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.setResult(this, gen.emitAdd(gen.operand(x()), gen.operand(y())));
+        CiValue op1 = gen.operand(x());
+        CiValue op2 = gen.operand(y());
+        if (!FloatAddNode.livesLonger(this, y(), gen)) {
+            CiValue op = op1;
+            op1 = op2;
+            op2 = op;
+        }
+        gen.setResult(this, gen.emitAdd(op1, op2));
     }
 }
