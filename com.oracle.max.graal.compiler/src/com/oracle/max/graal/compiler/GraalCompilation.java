@@ -171,6 +171,8 @@ public final class GraalCompilation {
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
+            compiler.runPhases(PhasePosition.HIGHEST_LEVEL, graph);
+
             if (GraalOptions.ProbabilityAnalysis) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
@@ -204,7 +206,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.EscapeAnalysis) {
-                new EscapeAnalysisPhase(this).apply(graph);
+                new EscapeAnalysisPhase(this).apply(graph, context());
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 

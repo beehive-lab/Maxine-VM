@@ -3,6 +3,7 @@ syntax: glob
 
 TEST-*
 *.class
+*.pyc
 *.log
 *.iml
 log*.txt

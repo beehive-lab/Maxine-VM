@@ -94,7 +94,7 @@ public class VMEntriesNative implements VMEntries, Remote {
     public native RiConstantPool RiType_constantPool(HotSpotTypeResolved klass);
 
     @Override
-    public native void installMethod(HotSpotTargetMethod targetMethod);
+    public native long installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
 
     @Override
     public native long installStub(HotSpotTargetMethod targetMethod);
@@ -162,6 +162,9 @@ public class VMEntriesNative implements VMEntries, Remote {
 
     @Override
     public native long getMaxCallTargetOffset(CiRuntimeCall rtcall);
+
+    @Override
+    public native void notifyJavaQueue();
 
     // Checkstyle: resume
 }
