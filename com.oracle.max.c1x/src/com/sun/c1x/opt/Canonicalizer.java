@@ -614,14 +614,14 @@ public class Canonicalizer extends DefaultValueVisitor {
                     // don't do canonicalization in the <clinit> method
                     return;
                 }
-                canonical = new Constant(field.kind(false), value);
+                canonical = new Constant(value);
             }
         } else {
             RiField field = i.field();
             if (i.object().isConstant()) {
                 CiConstant value = ((RiResolvedField) field).constantValue(i.object().asConstant());
                 if (value != null) {
-                    canonical = new Constant(field.kind(false), value);
+                    canonical = new Constant(value);
                 }
             }
         }
@@ -921,7 +921,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 CiConstant result = foldInvocation(runtime, (RiResolvedMethod) method, i.arguments());
                 if (result != null) {
                     // folding was successful
-                    setCanonical(new Constant(method.signature().returnKind(false), result));
+                    setCanonical(new Constant(result));
                 }
             }
         }

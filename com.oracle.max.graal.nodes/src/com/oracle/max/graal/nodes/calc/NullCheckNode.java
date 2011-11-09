@@ -46,7 +46,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
      */
     public NullCheckNode(ValueNode object, boolean expectedNull) {
         super(CiKind.Object);
-        assert object == null || object.kind() == CiKind.Object : object;
+        assert object.kind() == CiKind.Object : object.kind();
         this.object = object;
         this.expectedNull = expectedNull;
     }

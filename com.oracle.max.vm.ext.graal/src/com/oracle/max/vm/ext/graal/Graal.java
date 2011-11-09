@@ -108,12 +108,12 @@ public class Graal implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
-        runtime.initialize();
-
         // TODO(ls) implementation of RiType.fields required to enable escape analysis
         GraalOptions.EscapeAnalysis = false;
 
         if (isHosted() && !optionsRegistered) {
+            runtime.initialize();
+
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
@@ -128,7 +128,7 @@ public class Graal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlineAndFoldPhase(runtime, null));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
         }

@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
@@ -33,14 +31,11 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, LIRLowerable {
-
-    @Successor private FixedNode exceptionEdge;
-
-    private boolean canInline = true;
+public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, Invoke, LIRLowerable  {
 
     @Input private MethodCallTargetNode callTarget;
-    private final int bci; // needed because we can not compute the bci from the sateBefore bci of this Invoke was optimized from INVOKEINTERFACE to INVOKESPECIAL
+    private boolean canInline = true;
+    private final int bci;
 
     /**
      * Constructs a new Invoke instruction.
@@ -50,19 +45,11 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
      * @param target the target method being called
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
-    public InvokeNode(int bci, MethodCallTargetNode callTarget) {
+    public InvokeNode(MethodCallTargetNode callTarget, int bci) {
         super(callTarget.returnKind().stackKind());
+        assert callTarget != null;
         this.callTarget = callTarget;
         this.bci = bci;
-    }
-
-    public FixedNode exceptionEdge() {
-        return exceptionEdge;
-    }
-
-    public void setExceptionEdge(FixedNode x) {
-        updatePredecessors(exceptionEdge, x);
-        exceptionEdge = x;
     }
 
     public boolean canInline() {
@@ -91,7 +78,7 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Long) {
-            return super.toString(Verbosity.Short) + "(bci=" + bci + ")";
+            return super.toString(Verbosity.Short) + "(bci=" + bci() + ")";
         } else {
             return super.toString(verbosity);
         }
@@ -102,9 +89,13 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     }
 
     @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("bci", bci);
-        return properties;
+    public FixedNode node() {
+        return this;
+    }
+
+    @Override
+    public FrameState stateDuring() {
+        FrameState stateAfter = stateAfter();
+        return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.callTarget.targetMethod().signature().returnKind(false));
     }
 }

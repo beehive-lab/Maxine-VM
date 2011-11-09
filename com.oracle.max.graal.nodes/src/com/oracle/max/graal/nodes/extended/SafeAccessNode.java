@@ -26,7 +26,7 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
 
-public abstract class SafeAccessNode extends StateSplit {
+public abstract class SafeAccessNode extends AbstractStateSplit {
 
     @Input private ValueNode object;
     @Input private LocationNode location;

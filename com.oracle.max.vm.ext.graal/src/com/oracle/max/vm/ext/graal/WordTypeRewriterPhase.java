@@ -49,8 +49,7 @@ public class WordTypeRewriterPhase extends Phase {
         if (node.kind() == CiKind.Object) {
             if (node instanceof ConstantNode) {
                 ConstantNode c = (ConstantNode) node;
-                assert c.value.kind == CiKind.Object || c.value.kind == WordUtil.archKind();
-                return c.value.kind == WordUtil.archKind();
+                return c.value.asObject() instanceof WordUtil.WrappedWord;
             }
             return isWord(node.declaredType());
         }
@@ -67,11 +66,18 @@ public class WordTypeRewriterPhase extends Phase {
     }
 
     private void changeToWord(ValueNode valueNode) {
-        if (valueNode.kind() != CiKind.Object) {
-            assert valueNode.kind() == CiKind.Long : "node=" + valueNode + ", kind= " + valueNode.kind();
+        if (valueNode.kind() == WordUtil.archKind()) {
             return;
         }
-        valueNode.setKind(CiKind.Long);
+        assert valueNode.kind() == CiKind.Object;
+
+        if (valueNode instanceof ConstantNode) {
+            ConstantNode c = (ConstantNode) valueNode;
+            valueNode = ConstantNode.forCiConstant(((WordUtil.WrappedWord) c.value.asObject()).archConstant(), null, valueNode.graph());
+            c.replaceAndDelete(valueNode);
+        } else {
+            valueNode.setKind(WordUtil.archKind());
+        }
 
         // Propagate word kind.
         for (Node n : valueNode.usages()) {

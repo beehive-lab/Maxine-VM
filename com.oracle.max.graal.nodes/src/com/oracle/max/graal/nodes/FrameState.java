@@ -623,7 +623,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        // Nothing to do, frame states are processed as part of the handling of StateSplit nodes.
+        // Nothing to do, frame states are processed as part of the handling of AbstractStateSplit nodes.
     }
 
     @Override

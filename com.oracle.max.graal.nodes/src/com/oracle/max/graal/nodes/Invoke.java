@@ -22,12 +22,28 @@
  */
 package com.oracle.max.graal.nodes;
 
-public interface StateSplit {
+import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.java.*;
+
+public interface Invoke extends StateSplit {
+
+    FixedNode next();
+
+    void setNext(FixedNode x);
+
+    void setCanInline(boolean b);
+
+    boolean canInline();
+
+    MethodCallTargetNode callTarget();
+
+    int bci();
+
+    FixedNode node();
+
+    FrameState stateDuring();
 
     FrameState stateAfter();
 
-    void setStateAfter(FrameState x);
-
-    boolean needsStateAfter();
-
+    Node predecessor();
 }

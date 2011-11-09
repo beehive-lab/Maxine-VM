@@ -75,7 +75,7 @@ public abstract class LabelRef {
 
             @Override
             public String toString() {
-                return block.suxAt(suxIndex).toString();
+                return suxIndex < block.numberOfSux() ? block.suxAt(suxIndex).toString() : "?" + block + ":" + suxIndex + "?";
             }
         };
     }

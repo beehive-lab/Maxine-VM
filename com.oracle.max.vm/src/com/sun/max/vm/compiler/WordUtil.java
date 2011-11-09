@@ -32,6 +32,26 @@ import com.sun.max.vm.type.*;
  * Utility functions to bring the {@link Word} type to the compiler interface.
  */
 public class WordUtil {
+
+    /**
+     * Boxed word so that the compiler front can treat a Word constant as an object.
+     * After parsing, the compiler converts the object constant to the architecture-specific constant.
+     */
+    public static class WrappedWord {
+        private final Word value;
+
+        public WrappedWord(Word value) {
+            this.value = value;
+        }
+
+        public CiConstant archConstant() {
+            if (Word.width() == 64) {
+                return CiConstant.forLong(value.asAddress().toLong());
+            }
+            return CiConstant.forInt(value.asAddress().toInt());
+        }
+    }
+
     /**
      * {@link CiConstant} representation of {@link Word#zero()}.
      */
@@ -41,10 +61,7 @@ public class WordUtil {
      * Creates an architecture-specific {@link Word} constant for the compiler.
      */
     public static CiConstant constant(Word value) {
-        if (Word.width() == 64) {
-            return CiConstant.forLong(value.asAddress().toLong());
-        }
-        return CiConstant.forInt(value.asAddress().toInt());
+        return CiConstant.forObject(new WrappedWord(value));
     }
 
     /**
