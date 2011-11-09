@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.alloc.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -37,15 +38,29 @@ import com.oracle.max.graal.nodes.java.*;
  */
 public final class LIRBlock {
 
+    private final Block block;
+
+    private final int blockID;
+    private final int loopIndex;
+    private final int loopDepth;
+
     public final Label label;
     private List<LIRInstruction> lir;
-    private final int blockID;
     private FrameState lastState;
-    private List<Node> instructions = new ArrayList<Node>(4);
-    private List<LIRBlock> predecessors = new ArrayList<LIRBlock>(4);
-    private List<LIRBlock> successors = new ArrayList<LIRBlock>(4);
+
+    private final List<Node> instructions;
+    private List<LIRBlock> predecessors;
+    private List<LIRBlock> successors;
     private LIRDebugInfo debugInfo;
     private boolean align;
+
+    private final Node first;
+    private final Node last;
+
+    private int linearScanNumber;
+    private final boolean linearScanLoopEnd;
+    private final boolean linearScanLoopHeader;
+
 
     /**
      * Bit map specifying which {@linkplain OperandPool operands} are live upon entry to this block.
@@ -79,24 +94,34 @@ public final class LIRBlock {
     private int firstLirInstructionID;
     private int lastLirInstructionID;
 
-    public LIRBlock(Label label, LIRDebugInfo debugInfo) {
-        this.label = label;
-        blockID = -1;
-        this.debugInfo = debugInfo;
-    }
 
     public LIRDebugInfo debugInfo() {
         return this.debugInfo;
     }
 
-    public LIRBlock(int blockID) {
-        this.blockID = blockID;
+    public LIRBlock(Block block) {
+        this.block = block;
+
+        blockID = block.blockID();
+        loopIndex = block.loopIndex();
+        loopDepth = block.loopDepth();
+
         label = new Label();
-        loopIndex = -1;
         linearScanNumber = blockID;
-        instructions = new ArrayList<Node>(4);
-        predecessors = new ArrayList<LIRBlock>(4);
-        successors = new ArrayList<LIRBlock>(4);
+        instructions = block.getInstructions();
+        predecessors = new ArrayList<LIRBlock>(block.getPredecessors().size());
+        successors = new ArrayList<LIRBlock>(block.getSuccessors().size());
+
+
+        linearScanLoopEnd = block.isLoopEnd();
+        linearScanLoopHeader = block.isLoopHeader();
+
+        first = block.firstNode();
+        last = block.lastNode();
+    }
+
+    public Block schedulerBlock() {
+        return block;
     }
 
     public List<Node> getInstructions() {
@@ -126,8 +151,6 @@ public final class LIRBlock {
     public void setLastLirInstructionId(int lastLirInstructionId) {
         this.lastLirInstructionID = lastLirInstructionId;
     }
-
-    public int loopDepth;
 
     public List<LIRInstruction> lir() {
         return lir;
@@ -186,23 +209,9 @@ public final class LIRBlock {
         return loopIndex;
     }
 
-    public void setLoopIndex(int v) {
-        loopIndex = v;
-    }
-
-    public void setLoopDepth(int v) {
-        this.loopDepth = v;
-    }
-
-    private int loopIndex;
-
     public Label label() {
         return label;
     }
-
-    private int linearScanNumber = -1;
-    private boolean linearScanLoopEnd;
-    private boolean linearScanLoopHeader;
 
     public void setLinearScanNumber(int v) {
         linearScanNumber = v;
@@ -212,16 +221,8 @@ public final class LIRBlock {
         return linearScanNumber;
     }
 
-    public void setLinearScanLoopEnd() {
-        linearScanLoopEnd = true;
-    }
-
     public boolean isLinearScanLoopEnd() {
         return linearScanLoopEnd;
-    }
-
-    public void setLinearScanLoopHeader() {
-        this.linearScanLoopHeader = true;
     }
 
     public boolean isLinearScanLoopHeader() {
@@ -242,10 +243,6 @@ public final class LIRBlock {
         predecessors.clear();
     }
 
-    public void setInstructions(List<Node> list) {
-        instructions = list;
-    }
-
     public void setLastState(FrameState fs) {
         lastState = fs;
     }
@@ -254,9 +251,6 @@ public final class LIRBlock {
         return lastState;
     }
 
-    private Node first;
-    private Node last;
-
     public Node firstInstruction() {
         return first;
     }
@@ -264,15 +258,6 @@ public final class LIRBlock {
 
     public Node lastInstruction() {
         return last;
-    }
-
-    public void setFirstInstruction(Node n) {
-        first = n;
-    }
-
-
-    public void setLastInstruction(Node n) {
-        last = n;
     }
 
     public boolean endsWithJump() {
