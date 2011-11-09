@@ -56,6 +56,7 @@ public class GraalCompiler implements CiCompiler  {
      * A compiler extension phase can chose to run at the end of periods 1-3.
      */
     public static enum PhasePosition {
+        HIGHEST_LEVEL,
         HIGH_LEVEL,
         MID_LEVEL,
         LOW_LEVEL

@@ -171,6 +171,8 @@ public final class GraalCompilation {
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
+            compiler.runPhases(PhasePosition.HIGHEST_LEVEL, graph);
+
             if (GraalOptions.ProbabilityAnalysis) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
