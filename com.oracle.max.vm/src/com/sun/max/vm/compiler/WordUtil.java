@@ -34,7 +34,7 @@ import com.sun.max.vm.type.*;
 public class WordUtil {
 
     /**
-     * Boxed word so that the compiler front can treat a Word constant as an object.
+     * Boxed word so that the compiler front end can treat a Word constant as an object.
      * After parsing, the compiler converts the object constant to the architecture-specific constant.
      */
     public static class WrappedWord {
@@ -44,24 +44,32 @@ public class WordUtil {
             this.value = value;
         }
 
+
         public CiConstant archConstant() {
-            if (Word.width() == 64) {
-                return CiConstant.forLong(value.asAddress().toLong());
-            }
-            return CiConstant.forInt(value.asAddress().toInt());
+            return WordUtil.archConstant(value);
         }
     }
 
     /**
-     * {@link CiConstant} representation of {@link Word#zero()}.
+     * Architecture-specific {@link CiConstant} representation of {@link Word#zero()}.
      */
-    public static final CiConstant ZERO = constant(Word.zero());
+    public static final CiConstant ZERO = archConstant(Word.zero());
 
     /**
-     * Creates an architecture-specific {@link Word} constant for the compiler.
+     * Gets a {@link WrappedWord wrapped} word constant for the compiler.
      */
-    public static CiConstant constant(Word value) {
+    public static CiConstant wrappedConstant(Word value) {
         return CiConstant.forObject(new WrappedWord(value));
+    }
+
+    /**
+     * Creates an architecture-specific {@link Word} constant.
+     */
+    public static CiConstant archConstant(Word value) {
+        if (Word.width() == 64) {
+            return CiConstant.forLong(value.asAddress().toLong());
+        }
+        return CiConstant.forInt(value.asAddress().toInt());
     }
 
     /**

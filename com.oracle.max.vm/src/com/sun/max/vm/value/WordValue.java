@@ -202,7 +202,7 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public CiConstant asCiConstant() {
-        return WordUtil.constant(value);
+        return WordUtil.wrappedConstant(value);
     }
 
 }
