@@ -168,6 +168,13 @@ public interface MaxVMState  {
     boolean isInGC();
 
     /**
+     * Is the VM in the midst of a code eviction at this state transition?
+     *
+     * @return whether the VM, when paused, is in the middle of a code eviction.
+     */
+    boolean isInEviction();
+
+    /**
      * @return previous state summary in the history; null in the first element in the history.
      */
     MaxVMState previous();

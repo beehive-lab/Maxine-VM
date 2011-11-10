@@ -30,7 +30,7 @@ import com.sun.max.vm.reference.*;
 public class Package extends BootImagePackage {
     public Package() {
         super();
-        registerScheme(ReferenceScheme.class, DirectInspectorReferenceScheme.class);
+        registerScheme(ReferenceScheme.class, RemoteReferenceScheme.class);
     }
 
 }

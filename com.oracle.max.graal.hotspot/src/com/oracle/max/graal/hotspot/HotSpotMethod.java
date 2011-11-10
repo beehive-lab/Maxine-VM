@@ -36,4 +36,11 @@ public abstract class HotSpotMethod extends CompilerObject implements RiMethod {
     public final String name() {
         return name;
     }
+
+    @Override
+    public boolean canBePermanentlyLinked() {
+        // relevant in Maxine only
+        return false;
+    }
+
 }

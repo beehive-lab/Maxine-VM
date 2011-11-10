@@ -50,9 +50,9 @@ public class PreferenceDialog extends SimpleDialog {
         generalLabelPanel.add(new TextLabel(inspection, "General"), BorderLayout.WEST);
         prefPanel.add(generalLabelPanel);
 
-        final JPanel keyBindingsPanel = inspection.globalPreferencesPanel();
-        keyBindingsPanel.setBorder(border);
-        prefPanel.add(keyBindingsPanel);
+        final JPanel globalPreferencesPanel = inspection.preference().getPanel();
+        globalPreferencesPanel.setBorder(border);
+        prefPanel.add(globalPreferencesPanel);
 
         final JPanel methodLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         methodLabelPanel.setBorder(border);

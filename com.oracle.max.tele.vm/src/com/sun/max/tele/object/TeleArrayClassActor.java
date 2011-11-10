@@ -30,18 +30,18 @@ import com.sun.max.vm.reference.*;
 
 /**
  *
- * Class representing a reference to an array class in the {@link TeleVM}.
+ * Class representing a reference to an array class in the VM.
  */
 public class TeleArrayClassActor extends TeleReferenceClassActor implements ArrayTypeProvider {
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayClassActor.class.getName());
 
-    protected TeleArrayClassActor(TeleVM teleVM, Reference referenceClassActorReference) {
-        super(teleVM, referenceClassActorReference);
+    protected TeleArrayClassActor(TeleVM vm, Reference referenceClassActorReference) {
+        super(vm, referenceClassActorReference);
     }
 
     public ReferenceTypeProvider elementType() {
-        return vm().classRegistry().findTeleClassActor(this.classActor().componentClassActor().typeDescriptor);
+        return classes().findTeleClassActor(this.classActor().componentClassActor().typeDescriptor);
     }
 
     public ArrayProvider newInstance(int length) {

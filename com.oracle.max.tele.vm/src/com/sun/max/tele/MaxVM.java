@@ -27,8 +27,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -84,10 +84,20 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return access to the VM's class registry and related information.
      */
-    MaxClassRegistry classRegistry();
+    MaxClassRegistry classes();
 
     /**
-     * @return access to the VM heap.
+     * @return access to low level memory reading from the VM.
+     */
+    MaxMemory memory();
+
+    /**
+     * @return access to objects in the VM
+     */
+    MaxObjects objects();
+
+    /**
+     * @returns access to the heap in the VM.
      */
     MaxHeap heap();
 
@@ -103,7 +113,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      *
      * @return the singleton manager for information about code in the VM.
      */
-    MaxCodeManager codeManager();
+    MaxCodeLocationFactory codeLocationFactory();
 
     /**
      * Gets the manager for creating and managing VM breakpoints.
@@ -244,16 +254,16 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return start location of the boot image in memory.
      */
-    Pointer bootImageStart();
+    Address bootImageStart();
 
     /**
-     * @return how much reliance is placed on the {@link TeleXInterpreter} when
+     * @return how much reliance is placed on the {@link TeleInterpreter} when
      * communicating with the VM (0=none, 1=some, etc)
      */
     int getInterpreterUseLevel();
 
     /**
-     * Controls how much reliance is placed on the {@link TeleXInterpreter} when
+     * Controls how much reliance is placed on the {@link TeleInterpreter} when
      * communicating with the VM.
      *
      * @param interpreterUseLevel  (0=none, 1=some, etc)
@@ -289,21 +299,13 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Low-level read of a word as a generic boxed value from memory of the VM.
-     */
-    Value readWordValue(Address address);
-
-    /**
-     * Low-level read of bytes from memory of the VM.
-     */
-    void readBytes(Address address, byte[] bytes);
-
-    /**
-     * @param origin current absolute location of the beginning of a heap object's memory in the VM,
+     * Creates a remote object reference that can be used for access to a VM object.
+     *
+     * @param origin current location (origin) of a heap object's memory in the VM,
      * subject to relocation by GC.
-     * @return a {@link Reference} to the object.
+     * @return a remote {@link Reference} to the object.
      */
-    Reference originToReference(final Pointer origin);
+    Reference makeReference(final Address origin);
 
     /**
      * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
@@ -311,33 +313,14 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     Reference bootClassRegistryReference();
 
     /**
-     * @param origin an absolute memory location in the VM.
-     * @return whether there is a heap object with that origin.
-     */
-    boolean isValidOrigin(Pointer origin);
-
-    /**
-     * @param word contents of a memory word from the VM.
-     * @return the word interpreted as a memory location, wrapped in a Reference.
-     */
-    Reference wordToReference(Word word);
-
-    /**
+     * Creates a boxed value that acts as a reference to an object in the VM, useful for
+     * creating arguments for remote interpretation.
+     *
      * @param reference a {@link Reference} to memory in the VM.
      * @return a {@link Value} that wraps a {@link Reference} to a memory location in the VM.
+     * @see #interpretMethod(ClassMethodActor, Value...)
      */
     ReferenceValue createReferenceValue(Reference reference);
-
-    /**
-     * Fetches a primitive value from an array in the memory of the VM.
-     *
-     * @param kind identifies one of the basic VM value types
-     * @param reference memory location in the VM of an array origin
-     * @param index offset into the array
-     * @return a value of the specified kind
-     * @throws InvalidReferenceException
-     */
-    Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException;
 
     /**
      * Interesting, predefined method entries that might be useful, for example, for setting breakpoints.

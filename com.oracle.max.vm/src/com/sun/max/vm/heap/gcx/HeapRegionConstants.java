@@ -49,13 +49,13 @@ public final class HeapRegionConstants {
 
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
-    static int regionSizeInBytes;
+    public static int regionSizeInBytes;
     @CONSTANT_WHEN_NOT_ZERO
-    static int regionSizeInWords;
+    public static int regionSizeInWords;
     @CONSTANT_WHEN_NOT_ZERO
-    static int log2RegionSizeInBytes;
+    public static int log2RegionSizeInBytes;
     @CONSTANT_WHEN_NOT_ZERO
-    static int log2RegionSizeInWords;
+    public static int log2RegionSizeInWords;
     @CONSTANT_WHEN_NOT_ZERO
     static Address regionAlignmentMask;
 
@@ -78,13 +78,6 @@ public final class HeapRegionConstants {
         regionAlignmentMask = Address.fromInt(regionSizeInBytes).minus(1);
     }
 
-    static void initializeConstants() {
-        // TODO: this is where it would be interesting to use annotation to ask the boot image
-        // generator to keep track of methods that depends on the values below and force a
-        // re-compilation of these methods at startup (or opportunistically).
-        initializeConstants(DefaultHeapRegionSize.toInt());
-    }
-
     static boolean isAligned(Address address) {
         return address.isAligned(regionSizeInBytes);
     }
@@ -98,7 +91,7 @@ public final class HeapRegionConstants {
      * @param sizeInBytes size in bytes
      * @return a number of regions.
      */
-    static int numberOfRegions(Size sizeInBytes) {
+    public static int numberOfRegions(Size sizeInBytes) {
         return sizeInBytes.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 

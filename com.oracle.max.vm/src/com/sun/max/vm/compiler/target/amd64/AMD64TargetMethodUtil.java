@@ -33,7 +33,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 
 /**
@@ -75,14 +74,15 @@ public final class AMD64TargetMethodUtil {
         return UnsignedMath.divide(AMD64.cpuRegisters.length, Bytes.WIDTH);
     }
 
-    public static boolean isPatchableCallSite(Address callSite) {
+    public static boolean isPatchableCallSite(CodePointer callSite) {
         // We only update the disp of the call instruction.
         // The compiler(s) ensure that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
-        final Address endOfCallSite = callSite.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
-        return callSite.plus(1).isWordAligned() ? true :
+        final Address callSiteAddress = callSite.toAddress();
+        final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
+        return callSiteAddress.plus(1).isWordAligned() ? true :
         // last byte of call site:
-        callSite.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
+        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -92,8 +92,8 @@ public final class AMD64TargetMethodUtil {
      * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
-    public static Address readCall32Target(TargetMethod tm, int callPos) {
-        final Pointer callSite = tm.codeStart().plus(callPos);
+    public static CodePointer readCall32Target(TargetMethod tm, int callPos) {
+        final CodePointer callSite = tm.codeAt(callPos);
         int disp32;
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
@@ -104,12 +104,12 @@ public final class AMD64TargetMethodUtil {
                 (code[callPos + 2] & 0xff) << 8 |
                 (code[callPos + 1] & 0xff) << 0;
         } else {
-            assert callSite.readByte(0) == (byte) RIP_CALL : callSite.to0xHexString();
-            disp32 =
-                (callSite.readByte(4) & 0xff) << 24 |
-                (callSite.readByte(3) & 0xff) << 16 |
-                (callSite.readByte(2) & 0xff) << 8 |
-                (callSite.readByte(1) & 0xff) << 0;
+            final Pointer callSitePointer = callSite.toPointer();
+            assert callSitePointer.readByte(0) == (byte) RIP_CALL
+                // deopt might replace the first call in a method with a jump (redirection)
+                || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
+                : callSitePointer.readByte(0);
+            disp32 = callSitePointer.readInt(1);
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
@@ -122,8 +122,8 @@ public final class AMD64TargetMethodUtil {
      * @param target the absolute target address of the CALL
      * @return the target of the call prior to patching
      */
-    public static Address fixupCall32Site(TargetMethod tm, int callOffset, Address target) {
-        final Pointer callSite = tm.codeStart().plus(callOffset);
+    public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
+        CodePointer callSite = tm.codeAt(callOffset);
         if (!isPatchableCallSite(callSite)) {
             // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
             // check for alignment of call site also here.
@@ -131,7 +131,7 @@ public final class AMD64TargetMethodUtil {
             // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
         }
 
-        long disp64 = target.asAddress().minus(callSite.plus(RIP_CALL_INSTRUCTION_LENGTH)).toLong();
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         int oldDisp32;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
@@ -150,17 +150,18 @@ public final class AMD64TargetMethodUtil {
                 code[callOffset + 4] = (byte) (disp32 >> 24);
             }
         } else {
+            final Pointer callSitePointer = callSite.toPointer();
             oldDisp32 =
-                (callSite.readByte(4) & 0xff) << 24 |
-                (callSite.readByte(3) & 0xff) << 16 |
-                (callSite.readByte(2) & 0xff) << 8 |
-                (callSite.readByte(1) & 0xff) << 0;
+                (callSitePointer.readByte(4) & 0xff) << 24 |
+                (callSitePointer.readByte(3) & 0xff) << 16 |
+                (callSitePointer.readByte(2) & 0xff) << 8 |
+                (callSitePointer.readByte(1) & 0xff) << 0;
             if (oldDisp32 != disp32) {
-                callSite.writeByte(0, (byte) RIP_CALL);
-                callSite.writeByte(1, (byte) disp32);
-                callSite.writeByte(2, (byte) (disp32 >> 8));
-                callSite.writeByte(3, (byte) (disp32 >> 16));
-                callSite.writeByte(4, (byte) (disp32 >> 24));
+                callSitePointer.writeByte(0, (byte) RIP_CALL);
+                callSitePointer.writeByte(1, (byte) disp32);
+                callSitePointer.writeByte(2, (byte) (disp32 >> 8));
+                callSitePointer.writeByte(3, (byte) (disp32 >> 16));
+                callSitePointer.writeByte(4, (byte) (disp32 >> 24));
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
@@ -175,19 +176,20 @@ public final class AMD64TargetMethodUtil {
      *
      * @return the target of the call prior to patching
      */
-    public static Address mtSafePatchCallDisplacement(TargetMethod tm, Pointer callSite, Address target) {
+    public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
-        long disp64 = target.minus(callSite.plus(RIP_CALL_INSTRUCTION_LENGTH)).toLong();
+        final Pointer callSitePointer = callSite.toPointer();
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-        int oldDisp32 = callSite.readInt(1);
+        int oldDisp32 = callSitePointer.readInt(1);
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                callSite.writeInt(1,  disp32);
+                callSitePointer.writeInt(1,  disp32);
                 // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
             }
         }
@@ -201,13 +203,13 @@ public final class AMD64TargetMethodUtil {
      * @param pos the position in {@code tm} at which to apply the patch
      * @param target the target of the jump instruction being patched in
      */
-    public static void patchWithJump(TargetMethod tm, int pos, Address target) {
+    public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
-        final Pointer patchSite = tm.codeStart().plus(pos);
+        final Pointer patchSite = tm.codeAt(pos).toPointer();
 
-        long disp64 = target.asAddress().minus(patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH)).toLong();
+        long disp64 = target.toLong() - patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
 
@@ -223,29 +225,28 @@ public final class AMD64TargetMethodUtil {
     }
 
     @HOSTED_ONLY
-    public static boolean atFirstOrLastInstruction(Cursor current) {
+    public static boolean atFirstOrLastInstruction(StackFrameCursor current) {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod tm = current.targetMethod();
-        Pointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
+        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
             CallEntryPoint.C_ENTRY_POINT.in(tm) :
             CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
 
-        return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
+        return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
     }
 
-    public static boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+    @HOSTED_ONLY
+    public static boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
         Pointer sp = current.sp();
-        if (MaxineVM.isHosted()) {
-            // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a safepoint.
-            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
-                sp = sp.minus(current.targetMethod().frameSize());
-            }
+        // Only during a stack walk in the context of the Inspector can execution
+        // be anywhere other than at a safepoint.
+        if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.vmIP(), current.targetMethod()))) {
+            sp = sp.minus(current.targetMethod().frameSize());
         }
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), sp, sp);
+        StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), sp, sp);
         return visitor.visitFrame(stackFrame);
     }
 
@@ -260,7 +261,7 @@ public final class AMD64TargetMethodUtil {
      * @param csl the layout of the callee save area in {@code current}
      * @param csa the address of the callee save area in {@code current}
      */
-    public static void advance(Cursor current, CiCalleeSaveLayout csl, Pointer csa) {
+    public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
         assert csa.isZero() == (csl == null);
         TargetMethod tm = current.targetMethod();
         Pointer sp = current.sp();
@@ -290,10 +291,15 @@ public final class AMD64TargetMethodUtil {
         }
 
         current.setCalleeSaveArea(csl, csa);
+
+        boolean wasDisabled = SafepointPoll.disable();
         sfw.advance(callerIP, callerSP, callerFP);
+        if (!wasDisabled) {
+            SafepointPoll.enable();
+        }
     }
 
-    public static Pointer returnAddressPointer(Cursor frame) {
+    public static Pointer returnAddressPointer(StackFrameCursor frame) {
         TargetMethod tm = frame.targetMethod();
         Pointer sp = frame.sp();
         return sp.plus(tm.frameSize());

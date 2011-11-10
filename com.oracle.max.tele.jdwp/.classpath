@@ -11,8 +11,12 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
 	<classpathentry exported="true" kind="lib" path="/com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graph"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.nodes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.maxri"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.t1x"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.elf"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.tele.vm"/>
 	<classpathentry kind="output" path="bin"/>

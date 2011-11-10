@@ -43,7 +43,7 @@ import com.sun.max.vm.value.*;
  * The Interpreter's interface to the VM.  Encapsulates all the state of the VM.
  * Can run without VM for testing.
  */
-public final class Machine extends AbstractTeleVMHolder{
+public final class Machine extends AbstractVmHolder {
 
     private ExecutionThread currentThread;
 
@@ -58,7 +58,7 @@ public final class Machine extends AbstractTeleVMHolder{
         if (vm() == null) {
             return ObjectReferenceValue.from(reference.toJava());
         } else {
-            return vm().createReferenceValue(reference);
+            return referenceManager().createReferenceValue(reference);
         }
     }
 
@@ -161,14 +161,14 @@ public final class Machine extends AbstractTeleVMHolder{
     /**
      * Converts a given reference to an object to a {@link Throwable} instance.
      *
-     * @param vm the tele VM to be used if {@code throwableReference} is a reference in a VM's address space
+     * @param vm the VM to be used if {@code throwableReference} is a reference in a VM's address space
      * @param throwableReference the reference to be converted to a {@code Throwable instance}
      * @return a {@code Throwable instance} converted from {@code throwableReference}
      */
     private static Throwable toThrowable(TeleVM vm, ReferenceValue throwableReference) {
         if (throwableReference instanceof TeleReferenceValue) {
             try {
-                return (Throwable) vm.heap().makeTeleObject(throwableReference.asReference()).deepCopy();
+                return (Throwable) vm.objects().makeTeleObject(throwableReference.asReference()).deepCopy();
             } catch (Exception e1) {
                 throw TeleError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }
@@ -210,7 +210,7 @@ public final class Machine extends AbstractTeleVMHolder{
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (vm() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(fieldActor.holder().typeDescriptor);
+            final TeleClassActor teleClassActor = classes().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
@@ -236,7 +236,8 @@ public final class Machine extends AbstractTeleVMHolder{
                     return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
                 }
                 case REFERENCE: {
-                    return vm().createReferenceValue(vm().wordToReference(staticTupleReference.readWord(fieldActor.offset())));
+                    final TeleReference reference = referenceManager().makeReference(staticTupleReference.readWord(fieldActor.offset()).asAddress());
+                    return referenceManager().createReferenceValue(reference);
                 }
             }
         } else {
@@ -271,7 +272,8 @@ public final class Machine extends AbstractTeleVMHolder{
         } else {
             assert kind.isReference;
             if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-                return vm().createReferenceValue(vm().wordToReference(instance.readWord(fieldActor.offset())));
+                final TeleReference reference = referenceManager().makeReference(instance.readWord(fieldActor.offset()).asAddress());
+                return referenceManager().createReferenceValue(reference);
             } else {
                 return fieldActor.readValue(instance);
             }
@@ -379,7 +381,7 @@ public final class Machine extends AbstractTeleVMHolder{
             return remoteReference;
         }
 
-        final ClassActor remoteReferenceClassActor = vm().classRegistry().makeClassActorForTypeOf(remoteReference);
+        final ClassActor remoteReferenceClassActor = classes().makeClassActorForTypeOf(remoteReference);
 
         if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
             return Reference.fromJava(vm().getString(remoteReference));

@@ -22,8 +22,15 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.field.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.reference.*;
+import com.sun.max.tele.type.*;
+import com.sun.max.vm.type.*;
 
 /**
  * An object that refer to some aspect of the VM state, with
@@ -34,34 +41,81 @@ public interface TeleVMAccess {
     /**
      * @return the instance of VM being managed by this code.
      */
-    TeleVM vm();
+    MaxVM vm();
 
     /**
-     * Gets the manager for locating and managing code related information in the VM.
-     * <br>
+     * Gets access to the registry of loaded classes in the
+     * VM and related information.
+     *
+     * @see ClassRegistry
+     * @see VmClassAccess
+     */
+    VmClassAccess classes();
+
+    /**
+     * Gets access to low level reading & writing methods
+     * for VM memory.
+     */
+    VmMemoryAccess memory();
+
+    /**
+     * Gets access to information and services for managing
+     * object {@link Reference}s in the VM.
+     *
+     * @see Reference
+     * @see TeleRererence
+     */
+    VmReferenceManager referenceManager();
+
+    /**
+     * Gets access to predefined accessors to specific fields
+     * in specific classes.
+     */
+    VmFieldAccess fields();
+
+    /**
+     * Gets the manager for information about objects in the VM.
+     *
+     * @return the singleton manager for object information.
+     */
+    VmObjectAccess objects();
+
+    /**
+     * Gets access to information about the heap in the VM.
+     */
+    VmHeapAccess heap();
+
+    /**
+     * Gets access to information about compiled code in the VM.
+     */
+    VmCodeCacheAccess codeCache();
+
+    /**
+     * Gets the manager for creating and managing code location information in the VM.
+     * <p>
      * Thread-safe
      *
-     * @return the singleton manager for information about code in the VM.
+     * @return the singleton manager for information about code locations in the VM.
      */
-    CodeManager codeManager();
+    CodeLocationFactory codeLocationFactory();
 
     /**
      * Gets the factory for creating and managing VM breakpoints.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton factory for creating and managing VM breakpoints
      */
-    TeleBreakpointManager breakpointManager();
+    VmBreakpointManager breakpointManager();
 
     /**
      * Gets the factory for creating and managing VM watchpoints; null
      * if watchpoints are not supported on this platform.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton factory for creating and managing VM watchpoints, or
      * null if watchpoints not supported.
      */
-    TeleWatchpoint.WatchpointManager watchpointManager();
+    VmWatchpoint.WatchpointManager watchpointManager();
 }

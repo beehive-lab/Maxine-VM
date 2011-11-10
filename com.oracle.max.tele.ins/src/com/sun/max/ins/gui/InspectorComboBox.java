@@ -34,6 +34,6 @@ public class InspectorComboBox extends JComboBox {
     public InspectorComboBox(Inspection inspection, Object[] items) {
         super(items);
         setOpaque(true);
-        setFont(inspection.style().textLabelFont());
+        setFont(inspection.preference().style().textLabelFont());
     }
 }

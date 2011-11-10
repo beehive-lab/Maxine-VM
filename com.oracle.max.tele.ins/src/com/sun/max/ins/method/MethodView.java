@@ -110,7 +110,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
                 if (nativeCodeInfo != null) {
                     try {
-                        final MaxExternalCode nativeCode = inspection.vm().codeCache().createExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
+                        final MaxExternalCode nativeCode = inspection.vm().codeCache().registerExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
                         methodView = MethodView.make(inspection, nativeCode);
                     } catch (MaxInvalidAddressException e) {
                         inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
@@ -128,10 +128,9 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                                 if (name == null || name.equals("")) {
                                     name = defaultDescription;
                                 }
-                                final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, nBytes, name);
+                                final MaxExternalCode externalCode = vm().codeCache().registerExternalCode(nativeAddress, nBytes, name);
                                 result.setValue(MethodView.make(inspection, externalCode));
-                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(),
-// nativeAddress));
+                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {
                                 inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
                             } catch (MaxVMBusyException maxVMBusyException) {

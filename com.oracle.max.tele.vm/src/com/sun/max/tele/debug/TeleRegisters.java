@@ -38,7 +38,7 @@ import com.sun.max.unsafe.*;
 /**
  * Abstract base class for caching the values of a set of ISA defined registers for a given thread.
  */
-abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache {
+abstract class TeleRegisters extends AbstractVmHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 2;
 
@@ -55,8 +55,8 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
     private final byte[] registerData;
     private final ByteArrayInputStream registerDataInputStream;
 
-    protected TeleRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet, CiRegister[] registers) {
-        super(teleVM);
+    protected TeleRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet, CiRegister[] registers) {
+        super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleRegisterSet.thread().entityName() + " creating");
         tracer.begin();
         this.registers = registers;

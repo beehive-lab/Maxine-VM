@@ -418,7 +418,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     /**
      * Traverses all subclasses of this class, depth-first.
      *
-     * Note: This is not thread safe and should only be called when the class hierarchy is guaranteed not to be changing.
+     * Note: This is not thread safe and should only be called when no class loading can occur (e.g., at a safepoint).
      *
      * @return {@code true} if the complete hierarchy of this class was traversed, {@code false} if {@code c} terminated
      *         the traversal prematurely
@@ -438,6 +438,44 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             } while(classId != NULL_CLASS_ID && cont);
         }
         return cont;
+    }
+
+    /**
+     * Traverse all classes in unspecified order.
+     *
+     * Note: This is not thread safe and should only be called when no class loading can occur (e.g., at a safepoint).
+     *
+     * @return {@code true} if indeed all classes were addressed, {@code false} if {@code c} terminated traversal prematurely.
+     */
+    public static boolean allClassesDo(Closure c) {
+        final int largestClassID = ClassID.largestClassId();
+        for (int id = 0; id <= largestClassID; ++id) {
+            final ClassActor ca = ClassID.toClassActor(id);
+            if (ca != null && !c.doClass(ca)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Traverses all non-instance classes in unspecified order.
+     * This method is offered because non-instance classes are not part of the inheritance hierarchy represented in sibling lists.
+     *
+     * Note: this is not thread-safe and should only be called when no class loading can occur (e.g., at a safepoint).
+     *
+     * @return {@code true} if indeed all non-instance classes were addressed, {@code false} if {@code c} terminated traversal
+     * prematurely.
+     */
+    public static boolean allNonInstanceClassesDo(Closure c) {
+        final int largestClassID = ClassID.largestClassId();
+        for (int id = 0; id <= largestClassID; ++id) {
+            final ClassActor ca = ClassID.toClassActor(id);
+            if (ca != null && !ca.isInstanceClass() && !c.doClass(ca)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1219,6 +1257,11 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     public final DynamicHub dynamicHub() {
         return dynamicHub;
+    }
+
+    public final void copyHubs(ClassActor ca) {
+        this.dynamicHub = ca.dynamicHub;
+        this.staticHub = ca.staticHub;
     }
 
     @CONSTANT

@@ -345,7 +345,7 @@ public class VmThread {
             boolean lockDisabledSafepoints = Log.lock();
             Log.printThread(VmThread.current(), false);
             Log.print(": ");
-            Throw.logFrame("Caught in ", handler, handler.codeStart().plus(pos));
+            Throw.logFrame("Caught in ", handler, handler.codeAt(pos).toPointer());
             Log.unlock(lockDisabledSafepoints);
         }
         exception = e;

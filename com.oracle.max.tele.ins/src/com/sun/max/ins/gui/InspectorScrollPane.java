@@ -68,10 +68,6 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -82,6 +78,10 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     public void redisplay() {

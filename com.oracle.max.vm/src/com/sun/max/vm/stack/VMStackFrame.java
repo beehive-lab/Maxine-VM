@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -29,6 +30,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * A {@code CompiledStackFrame} object abstracts an activation frame on a call stack for a method compiled by the VM.
  */
+@HOSTED_ONLY
 public abstract class VMStackFrame extends StackFrame {
 
     public final VMFrameLayout layout;
@@ -63,7 +65,7 @@ public abstract class VMStackFrame extends StackFrame {
     @Override
     public String toString() {
         ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        String offset = "[+" + targetMethod.posFor(ip) + "]";
+        String offset = "[+" + targetMethod.posFor(CodePointer.from(ip)) + "]";
         if (classMethodActor != null) {
             return classMethodActor.format("%H.%n(%p)@") + ip.toHexString() + offset;
         }

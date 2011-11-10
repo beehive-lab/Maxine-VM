@@ -42,7 +42,7 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
         throw TeleError.unimplemented();
     }
 
-    public TeleFloatingPointRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, getFloatingPointRegisters());
+    public TeleFloatingPointRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet) {
+        super(vm, teleRegisterSet, getFloatingPointRegisters());
     }
 }

@@ -49,7 +49,7 @@ import com.sun.max.vm.value.*;
  *
  * @see VmThreadLocal
  */
-public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsArea {
+public final class TeleThreadLocalsArea extends AbstractVmHolder implements TeleVMCache, MaxThreadLocalsArea {
 
     private static final int TRACE_LEVEL = 2;
 
@@ -66,8 +66,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
 
         private final TeleThreadLocalsArea teleThreadLocalsArea;
 
-        private ThreadLocalsAreaMemoryRegion(TeleVM teleVM, TeleThreadLocalsArea owner, String regionName, Address start, int nBytes) {
-            super(teleVM, regionName, start, nBytes);
+        private ThreadLocalsAreaMemoryRegion(MaxVM vm, TeleThreadLocalsArea owner, String regionName, Address start, int nBytes) {
+            super(vm, regionName, start, nBytes);
             this.teleThreadLocalsArea = owner;
         }
 
@@ -113,14 +113,14 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
      * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
      * @param description a readable description of the area
      */
-    public TeleThreadLocalsArea(TeleVM teleVM, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Pointer start) {
+    public TeleThreadLocalsArea(MaxVM vm, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Pointer start) {
         super(teleNativeThread.vm());
         assert !start.isZero();
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
         this.tlaMemoryRegion =
-            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize().toInt());
+            new ThreadLocalsAreaMemoryRegion(vm, this, entityName, start.asAddress(), VmThreadLocal.tlaSize().toInt());
         this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
         final int wordSize = teleNativeThread.vm().platform().nBytesInWord();
@@ -130,7 +130,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
             threadLocalVariables[vmThreadLocal.index] = teleThreadLocalVariable;
             nameToThreadLocalVariable.put(vmThreadLocal.name, teleThreadLocalVariable);
         }
-        this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " when in state " + safepointState + " in the " + teleVM.entityName();
+        this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " when in state " + safepointState + " in the " + vm.entityName();
     }
 
     public void updateCache(long epoch) {

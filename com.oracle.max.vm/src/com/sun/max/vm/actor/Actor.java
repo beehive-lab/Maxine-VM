@@ -90,11 +90,17 @@ public abstract class Actor {
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
-    public static final int C_FUNCTION_NOLATCH =   0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
+
+    // VM-internal flag for tagging:
+    // * methods that use tagged local variables have this flag set,
+    public static final int USES_TAGGED_VALUES =   0x08000000;
+    // * and so have fields that are of a tagged type.
+    public static final int TAGGED_FIELD       =   0x08000000;
+
 
     /**
      * Mask of flags that a substitutee should adopt from its {@linkplain SUBSTITUTE substitute}.
@@ -345,11 +351,6 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isCFunctionNoLatch(int flags) {
-        return (flags & C_FUNCTION) != 0 && (flags & C_FUNCTION_NOLATCH) != 0;
-    }
-
-    @INLINE
     public static boolean isVmEntryPoint(int flags) {
         return (flags & VM_ENTRY_POINT) != 0;
     }
@@ -443,6 +444,21 @@ public abstract class Actor {
     @INLINE
     public static boolean hasFinalizer(int flags) {
         return (flags & FINALIZER) != 0;
+    }
+
+    @INLINE
+    public static boolean isUsingTaggedValues(int flags) {
+        return (flags & USES_TAGGED_VALUES) != 0;
+    }
+
+    @INLINE
+    public void setIsUsingTaggedValues() {
+        flags |= USES_TAGGED_VALUES;
+    }
+
+    @INLINE
+    public static boolean isTaggedField(int flags) {
+        return (flags & TAGGED_FIELD) != 0;
     }
 
     /**

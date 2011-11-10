@@ -53,10 +53,6 @@ public abstract class InspectorTableModel extends AbstractTableModel implements 
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -67,6 +63,10 @@ public abstract class InspectorTableModel extends AbstractTableModel implements 
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     /**

@@ -172,7 +172,7 @@ public final class FatalError extends Error {
 
         if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
-            exit(false, Address.zero());
+            exit(false, Pointer.zero());
         }
         recursionCount++;
 
@@ -218,7 +218,7 @@ public final class FatalError extends Error {
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
-        Address ip = Address.zero();
+        Pointer ip = Pointer.zero();
         if (trappedInNative && !trapFrame.isZero())  {
             ip = vm().trapFrameAccess.getPC(trapFrame);
         }
@@ -228,7 +228,7 @@ public final class FatalError extends Error {
     }
 
     @NEVER_INLINE
-    private static void exit(boolean doTrapExit, Address instructionPointer) {
+    private static void exit(boolean doTrapExit, Pointer instructionPointer) {
         if (CoreOnError) {
             MaxineVM.core_dump();
         }
@@ -250,7 +250,7 @@ public final class FatalError extends Error {
     @NEVER_INLINE
     public static void crash(String message) {
         Log.println(message);
-        exit(false, Address.zero());
+        exit(false, Pointer.zero());
     }
 
     /**

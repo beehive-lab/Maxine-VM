@@ -144,7 +144,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
         assert nBytes < Integer.MAX_VALUE;
         final byte[] bytes = new byte[(int) nBytes];
         try {
-            vm().readBytes(getMemoryRegion(row).start(), bytes);
+            vm().memory().readBytes(getMemoryRegion(row).start(), bytes);
         } catch (DataIOError dataIOError) {
             return null;
         }

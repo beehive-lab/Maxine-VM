@@ -77,6 +77,7 @@ class Env(ArgumentParser):
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
         self.add_argument('-d', action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
+        self.add_argument('--graalvm', help='path to GraalVM installation (default: $GRAALVM)', metavar='<path>')
         self.add_argument('--cp-pfx', dest='cp_prefix', help='class path prefix', metavar='<arg>')
         self.add_argument('--cp-sfx', dest='cp_suffix', help='class path suffix', metavar='<arg>')
         self.add_argument('--J', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
@@ -84,7 +85,7 @@ class Env(ArgumentParser):
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
         self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=self.default_java_home())
-        self.add_argument('--java', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
+        self.add_argument('--java', help='Java VM executable (default: bin/java under $JAVA_HOME)', metavar='<path>')
         self.add_argument('--trace', dest='java_trace', help='trace level for Java tools that use it', metavar='<n>', default=1)
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
         self.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
@@ -96,12 +97,10 @@ class Env(ArgumentParser):
         self.parse_args(namespace=self)
 
         if self.java_home is None or self.java_home == '':
-            self.log('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
-            self.abort(1)
+            self.abort('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
 
         if self.user_home is None or self.user_home == '':
-            self.log('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
-            self.abort(1)
+            self.abort('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
 
         if self.os is None:
             self.remote = False
@@ -159,6 +158,37 @@ class Env(ArgumentParser):
     def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         return self.run(self.format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
     
+    def run_graalvm(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
+        if self.graalvm is None:
+            self.graalvm = os.getenv('GRAALVM')
+            if self.graalvm is None:
+                self.abort('Cannot find GraalVM - use --graalvm option or set GRAALVM variable')
+                
+        if self.os == 'windows':
+            graalvm_exe = join(self.graalvm, 'bin', 'java.exe')
+        else:
+            graalvm_exe = join(self.graalvm, 'bin', 'java')
+            
+        if not exists(graalvm_exe):
+            self.abort('GraalVM executable does not exist: ' + graalvm_exe)
+            
+        try:
+            version_cmd = [graalvm_exe, '-graal', '-XX:-BootstrapGraal', '-version']
+            output = subprocess.check_output(version_cmd, stderr=subprocess.STDOUT)
+            if 'Graal VM' not in output:
+                self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                            '\nReason: "Graal VM" was not in the output of the following command:\n\t' + ' '.join(version_cmd))
+        except:
+            self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd))
+            
+        graalvm_cmd = [graalvm_exe, '-graal']
+        
+        if self.java_dbg:
+            graalvm_cmd += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+        
+        return self.run(graalvm_cmd + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+
     def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
         Run a command in a subprocess, wait for it to complete and return the exit status of the process.
@@ -246,12 +276,11 @@ class Env(ArgumentParser):
                 self.abort(e.returncode)
 
         output = output.split()
-        assert output[0] == 'java'
+        assert output[0] == 'java' or output[0] == 'openjdk'
         assert output[1] == 'version'
         version = output[2]
         if not version.startswith('"1.6') and not version.startswith('"1.7'):
-            self.log('Requires Java version 1.6 or 1.7, got version ' + version)
-            self.abort(1)
+            self.abort('Requires Java version 1.6 or 1.7, got version ' + version)
 
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
@@ -272,6 +301,17 @@ class Env(ArgumentParser):
             elif exists('/usr/jdk/latest'):
                 javaHome = '/usr/jdk/latest'
         return javaHome
+
+    def gmake_cmd(self):
+        for a in ['make', 'gmake', 'gnumake']:
+            try:
+                output = subprocess.check_output([a, '--version'])
+                if 'GNU' in output:
+                    return a;
+            except:
+                pass
+        self.abort('Could not find a GNU make executable on the current path.')
+
            
     def abort(self, codeOrMessage):
         """
@@ -304,8 +344,7 @@ class Env(ArgumentParser):
                 if url.startswith('zip:') or url.startswith('jar:'):
                     i = url.find('!/')
                     if i == -1:
-                        self.log('Zip or jar URL does not contain "!/": ' + url)
-                        self.abort(1)
+                        self.abort('Zip or jar URL does not contain "!/": ' + url)
                     url, _, entry = url[len('zip:'):].partition('!/')
                     with contextlib.closing(url_open(url)) as f:
                         data = f.read()

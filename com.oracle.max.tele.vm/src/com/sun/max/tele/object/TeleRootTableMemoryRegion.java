@@ -65,7 +65,7 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
             return false;
         }
         try {
-            wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
+            wordsUsed = fields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability
             TeleWarning.message("TeleLinearAllocationMemoryRegion dataIOError:", dataIOError);

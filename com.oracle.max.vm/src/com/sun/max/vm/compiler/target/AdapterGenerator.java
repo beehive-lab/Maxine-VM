@@ -40,7 +40,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.type.*;
 
 /**
@@ -270,7 +269,7 @@ public abstract class AdapterGenerator {
      * @param current the current stack frame cursor
      * @return true if the cursor was advanced
      */
-    public abstract boolean advanceIfInPrologue(Cursor current);
+    public abstract boolean advanceIfInPrologue(StackFrameCursor current);
 
     /**
      * Emits the prologue that makes a calls to a given adapter.
@@ -301,8 +300,8 @@ public abstract class AdapterGenerator {
     /**
      * Determines if a given instruction pointer denotes a position in a given method's adapter prologue.
      */
-    public boolean inPrologue(Address ip, TargetMethod targetMethod) {
-        return targetMethod.classMethodActor != null && ip.minus(targetMethod.codeStart).lessThan(prologueSizeForCallee(targetMethod.classMethodActor));
+    public boolean inPrologue(CodePointer ip, TargetMethod targetMethod) {
+        return targetMethod.classMethodActor != null && ip.minus(targetMethod.codeStart()).toPointer().lessThan(prologueSizeForCallee(targetMethod.classMethodActor));
     }
 
     /**

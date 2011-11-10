@@ -28,18 +28,17 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A dialog to let the user select a class in the {@linkplain TeleClassRegistry Inspector class registry}.
+ * A dialog to let the user select a class in the {@linkplain VmClassRegistry Inspector class registry}.
  */
 public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
 
     @Override
     protected TeleObject convertSelectedItem(Object listItem) {
         final String name = (String) listItem;
-        return vm().classRegistry().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        return vm().classes().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
     }
 
     /**
@@ -82,7 +81,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            final Set<TypeDescriptor> typeDescriptors = vm().classRegistry().typeDescriptors();
+            final Set<TypeDescriptor> typeDescriptors = vm().classes().typeDescriptors();
             final SortedSet<String> classNames = new TreeSet<String>();
             for (TypeDescriptor typeDescriptor : typeDescriptors) {
                 final String className = match(filter, typeDescriptor);
@@ -105,7 +104,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     }
 
     /**
-     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry Inspector class registry}.
+     * Displays a dialog to let the user select a class from the {@linkplain VmClassRegistry Inspector class registry}.
      *
      * @return the reference to the selected class actor or {@link XXX_TeleReference#ZERO} if the user canceled the dialog
      */
@@ -116,7 +115,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     }
 
     /**
-     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry Inspector class registry}.
+     * Displays a dialog to let the user select a class from the {@linkplain VmClassRegistry Inspector class registry}.
      * @param inspection
      * @param title Title string for the dialog frame.
      * @param actionName Name of the action, appears on on the button to activate
