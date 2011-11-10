@@ -144,29 +144,29 @@ public class Main {
 
         // Initialize TeleVM.
         LOGGER.info("Initializing TeleVM");
-        final TeleVM teleVM = initTeleVM(new ArrayList<String>(), arguments);
-        if (teleVM == null) {
+        final TeleVM vm = initTeleVM(new ArrayList<String>(), arguments);
+        if (vm == null) {
             LOGGER.severe("Error creating TeleVM => exiting");
             return;
         }
-        teleVM.lock();
+        vm.lock();
         try {
-            teleVM.modifyInspectableFlags(Inspectable.INSPECTED, true);
+            vm.modifyInspectableFlags(Inspectable.INSPECTED, true);
         } finally {
-            teleVM.unlock();
+            vm.unlock();
         }
 
         // Execute until entry point is reached.
         LOGGER.info("Starting TeleVM");
         try {
-            teleVM.advanceToJavaEntryPoint();
+            vm.advanceToJavaEntryPoint();
         } catch (IOException e) {
             LOGGER.severe("Exception occurred while starting TeleVM: " + e.toString());
             System.exit(-1);
         }
         LOGGER.info("Start point reached");
 
-        final VMAccess vmAccess = teleVM.vmAccess();
+        final VMAccess vmAccess = vm.vmAccess();
 
         // For increasing the speed of the call later on.
         vmAccess.getAllReferenceTypes();

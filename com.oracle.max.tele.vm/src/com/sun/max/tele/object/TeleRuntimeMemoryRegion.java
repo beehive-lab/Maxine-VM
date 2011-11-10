@@ -75,7 +75,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             return false;
         }
         statsPrinter.addStat(localStatsPrinter);
-        if (!isRelocatable() && isAllocated() && regionNameCache != null) {
+        if (!checkForRelocation() && isAllocated() && regionNameCache != null) {
             statsPrinter.addStat("allocated & not relocatable, no location refresh needed");
             return true;
         }
@@ -87,13 +87,13 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
      */
     private boolean updateRegionInfoCache() {
         try {
-            final long nBytes = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize().toLong();
+            final long nBytes = fields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
-            final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
-            final TeleString teleString = (TeleString) heap().makeTeleObject(regionNameStringReference);
+            final Reference regionNameStringReference = fields().MemoryRegion_regionName.readReference(reference());
+            final TeleString teleString = (TeleString) objects().makeTeleObject(regionNameStringReference);
             final String regionName = teleString == null ? "<null>" : teleString.getString();
 
-            Address regionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
+            Address regionStart = fields().MemoryRegion_start.readWord(reference()).asAddress();
             if (regionStart.isZero() && regionName != null && regionName.equals(heap().bootHeapRegionName())) {
                 // Ugly special case: the regionStart field of the static that defines the boot heap region
                 // is set at zero in the boot image and only gets set to the real value when the VM starts running.
@@ -162,6 +162,16 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /**
+     * Determines whether an address is in the region of VM memory described by this object.
+     *
+     * @param address a location in VM memory
+     * @return whether the location is in this region
+     */
+    public final boolean contains(Address address) {
+        return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionEnd());
+    }
+
+    /**
      * Determines whether an address is in the allocated portion of the {@link MemoryRegion}
      * described by a memory region object in the VM.
      * <br>
@@ -169,7 +179,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
      * specific subclasses may have more refined information available.
      */
     public boolean containsInAllocated(Address address) {
-        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(getRegionEnd()) : false;
+        return isAllocated() ? contains(address) : false;
     }
 
     /**
@@ -181,10 +191,20 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /**
-     * @return whether the memory region described by a {@link MemoryRegion} object in the VM
-     * can be relocated once allocated.
+     * Determines whether this memory region, once allocated, should be checked for relocation.  If {@code true}
+     * then the location needs to be checked
+     * on every refresh cycle.  If {@code false} then the check can be skipped.
+     * <p>
+     * Conservatively assume {@code true} for memory regions in general, of which we model only a
+     * relatively small number.  For subclasses of {@link MemoryRegion} in the VM that exist in large
+     * numbers, then efficient refresh is made possible by designating a special subclass of {@link TeleRuntimeMemoryRegion}
+     * that implements a more precise decision on whether to check on every update.  A notable example of this the
+     * the {@link TeleTargetMethod} subclass, which is used for large number of {@link TargetMethod} instances.
+     *
+     * @return whether this memory region, described by a {@link MemoryRegion} object in the VM,
+     * should be assume to be relocatable.
      */
-    public boolean isRelocatable() {
+    protected boolean checkForRelocation() {
         return true;
     }
 

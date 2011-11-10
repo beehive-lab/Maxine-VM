@@ -26,17 +26,17 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link AbstractPoolConstant} in the tele VM.
+ * Inspector's canonical surrogate for an object of type {@link AbstractPoolConstant} in the VM.
  */
 public class TelePoolConstant extends TeleTupleObject {
 
-    TelePoolConstant(TeleVM teleVM, Reference poolConstantReference) {
-        super(teleVM, poolConstantReference);
+    TelePoolConstant(TeleVM vm, Reference poolConstantReference) {
+        super(vm, poolConstantReference);
     }
 
     /**
-     * @return whether a reference constant in the {@link TeleVM} is resolved; true for non-reference constants.
-     * Does not read from the {@link TeleVM}.
+     * @return whether a reference constant in the VM is resolved; true for non-reference constants.
+     * Does not read from the VM}.
      */
     public boolean isResolved() {
         return true;

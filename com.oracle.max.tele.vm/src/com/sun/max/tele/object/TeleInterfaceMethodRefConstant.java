@@ -62,8 +62,8 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
          */
         public TeleInterfaceMethodActor getTeleInterfaceMethodActor() {
             if (teleInterfaceMethodActor == null) {
-                final Reference methodActorReference = vm().teleFields().ResolvedMethodRefConstant_methodActor.readReference(reference());
-                teleInterfaceMethodActor = (TeleInterfaceMethodActor) heap().makeTeleObject(methodActorReference);
+                final Reference methodActorReference = fields().ResolvedMethodRefConstant_methodActor.readReference(reference());
+                teleInterfaceMethodActor = (TeleInterfaceMethodActor) objects().makeTeleObject(methodActorReference);
             }
             return teleInterfaceMethodActor;
         }

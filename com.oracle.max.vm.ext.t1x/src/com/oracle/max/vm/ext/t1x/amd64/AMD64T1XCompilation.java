@@ -318,6 +318,18 @@ public class AMD64T1XCompilation extends T1XCompilation {
     }
 
     @Override
+    protected void emitUnprotectMethod()  {
+        protectionLiteralIndex = objectLiterals.size();
+        objectLiterals.add(T1XTargetMethod.PROTECTED);
+
+        asm.xorq(scratch, scratch);
+        asm.movq(CiAddress.Placeholder, scratch);
+
+        int dispPos = buf.position() - 4;
+        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+    }
+
+    @Override
     protected void emitEpilogue() {
         asm.addq(rbp, framePointerAdjustment());
         asm.leave();

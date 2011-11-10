@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  */
-public abstract class TeleNativeThread extends AbstractTeleVMHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
+public abstract class TeleNativeThread extends AbstractVmHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
@@ -102,7 +102,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
     private final TeleThreadLocalsBlock threadLocalsBlock;
 
     private MaxThreadState state = SUSPENDED;
-    private TeleTargetBreakpoint breakpoint;
+    private VmTargetBreakpoint breakpoint;
     private FrameProvider[] frameCache;
 
     /**
@@ -230,7 +230,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         return state;
     }
 
-    public final TeleTargetBreakpoint breakpoint() {
+    public final VmTargetBreakpoint breakpoint() {
         return breakpoint;
     }
 
@@ -252,7 +252,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         }
         // No need to refresh registers: the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
-        return codeManager().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
+        return codeLocationFactory().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
     }
 
     public final TeleVmThread teleVmThread() {
@@ -298,7 +298,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
     }
 
     final StackFrame top() {
-        StackFrame top = new TeleStackFrameWalker(teleProcess.vm(), this).frames(2).get(0);
+        StackFrame top = new TeleStackFrameWalker(vm(), this).frames(2).get(0);
         return top;
     }
 
@@ -311,7 +311,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         if (framesRefreshedEpoch < epoch || maxDepth != this.framesMaxDepth) {
             Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
             threadLocalsBlock.updateCache(epoch);
-            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames(maxDepth);
+            final List<StackFrame> newFrames = new TeleStackFrameWalker(vm(), this).frames(maxDepth);
             framesMaxDepth = maxDepth;
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
@@ -402,8 +402,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
      * instruction on which the breakpoint was set.
      */
     private void refreshBreakpoint() {
-        final TeleTargetBreakpoint.TargetBreakpointManager breakpointManager = teleProcess().targetBreakpointManager();
-        TeleTargetBreakpoint breakpoint = null;
+        final VmTargetBreakpoint.TargetBreakpointManager breakpointManager = teleProcess().targetBreakpointManager();
+        VmTargetBreakpoint breakpoint = null;
 
         try {
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
@@ -672,7 +672,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                         TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().asAddress());
+                    compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().toAddress());
                     if (compiledCode == null) {
                         TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
@@ -683,7 +683,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
                 int index = -1;
                 if (stackFrame.targetMethod() != null) {
-                    index = stackFrame.targetMethod().findSafepointIndex(stackFrame.ip);
+                    index = stackFrame.targetMethod().findSafepointIndex(CodePointer.from(stackFrame.ip));
                 }
                 if (index != -1) {
                     final int stopIndex = index;

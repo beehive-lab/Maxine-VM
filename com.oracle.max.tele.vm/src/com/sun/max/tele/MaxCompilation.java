@@ -23,6 +23,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.stack.*;
@@ -34,10 +35,9 @@ import com.sun.max.vm.stack.*;
 public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
 
     /**
-     * @return the 0-based sequence number of this compilation among the
-     * possibly multiple compilations of the method.
+     * @return true if this is a baseline compilation, false if optimized.
      */
-    int compilationIndex();
+    boolean isBaseline();
 
     /**
      * Gets accessor to the method descriptor in the VM for this compilation.
@@ -61,6 +61,18 @@ public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
      * in the VM.
      */
     ClassActor classActorForObjectType();
+
+
+    /**
+     * Determines whether there is machine code in this compilation at a specified memory
+     * location in the VM.
+     *
+     * @param address an absolute memory location in the VM.
+     * @return whether there is machine code at the address
+     * @throws IllegalArgumentException if the location is not within the code cache
+     * memory allocated for this compilation.
+     */
+    boolean isValidCodeLocation(Address address) throws IllegalArgumentException;
 
     VMFrameLayout frameLayout();
 }

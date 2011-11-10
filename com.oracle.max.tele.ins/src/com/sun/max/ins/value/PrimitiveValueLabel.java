@@ -56,7 +56,7 @@ public class PrimitiveValueLabel extends ValueLabel {
     }
 
     public void redisplay() {
-        setFont(style().primitiveDataFont());
+        setFont(preference().style().primitiveDataFont());
         updateText();
     }
 

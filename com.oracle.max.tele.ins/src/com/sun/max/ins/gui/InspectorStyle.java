@@ -141,7 +141,8 @@ public interface InspectorStyle {
 
     Color vmNoProcessBackgroundColor();
     Color vmStoppedBackgroundColor(boolean withInvalidReferences);
-    Color vmStoppedinGCBackgroundColor(boolean withInvalidReferences);
+    Color vmStoppedInGCBackgroundColor(boolean withInvalidReferences);
+    Color vmStoppedInEvictionBackgroundColor();
     Color vmRunningBackgroundColor();
     Color vmTerminatedBackgroundColor();
 

@@ -29,6 +29,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
 
 /**
+ * A runtime value (of type {@link java.lang.Object}) that
+ * can be stored in fields and array elements of other objects, and
+ * which is used by the mutator to refer to objects and parts thereof.
  */
 public abstract class Reference implements Accessor {
 
@@ -78,6 +81,11 @@ public abstract class Reference implements Accessor {
     @INLINE
     public final boolean isAllOnes() {
         return referenceScheme().isAllOnes(this);
+    }
+
+    @INLINE
+    public final boolean isTagged() {
+        return referenceScheme().isTagged(this);
     }
 
     @INLINE(override = true)

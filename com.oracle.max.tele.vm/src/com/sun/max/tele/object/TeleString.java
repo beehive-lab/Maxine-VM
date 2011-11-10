@@ -28,14 +28,14 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link String} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link String} in the VM.
  */
 public class TeleString extends TeleTupleObject implements StringProvider {
 
     private String string;
 
     public String getString() {
-        if (isLive()) {
+        if (memoryStatus().isLive()) {
             String s = vm().getString(reference());
             if (s != null) {
                 string = SymbolTable.intern(s);
@@ -44,8 +44,8 @@ public class TeleString extends TeleTupleObject implements StringProvider {
         return string;
     }
 
-    protected TeleString(TeleVM teleVM, Reference stringReference) {
-        super(teleVM, stringReference);
+    protected TeleString(TeleVM vm, Reference stringReference) {
+        super(vm, stringReference);
     }
 
     @Override

@@ -34,11 +34,11 @@ import com.sun.max.tele.debug.*;
  */
 public class ThreadGroupProviderImpl implements ThreadGroupProvider {
 
-    private final TeleVM teleVM;
+    private final TeleVM vm;
     private final boolean containsJavaThreads;
 
-    public ThreadGroupProviderImpl(TeleVM teleVM, boolean b) {
-        this.teleVM = teleVM;
+    public ThreadGroupProviderImpl(TeleVM vm, boolean b) {
+        this.vm = vm;
         this.containsJavaThreads = b;
     }
 
@@ -52,7 +52,7 @@ public class ThreadGroupProviderImpl implements ThreadGroupProvider {
 
     public ThreadProvider[] getThreadChildren() {
         final List<ThreadProvider> result = new LinkedList<ThreadProvider>();
-        for (TeleNativeThread t : teleVM.teleProcess().threads()) {
+        for (TeleNativeThread t : vm.teleProcess().threads()) {
             if (t.isJava() == containsJavaThreads) {
                 result.add(t);
             }

@@ -42,7 +42,7 @@ import com.sun.max.vm.value.*;
  *
  * NOTE: (mlvdv) Although the name of this class suggests that it is
  * part of the {@link TeleObject} class hierarchy that is used to
- * model the state of heap objects in the tele VM, it is in fact
+ * model the state of heap objects in the VM, it is in fact
  * not part of that hierarchy.  This represents the clash of two
  * models for doing things that have not yet been resolved.
  * The function of a {@link TeleReferenceValue} is very much
@@ -52,15 +52,15 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleReferenceValue extends ReferenceValue {
 
-    private final TeleVM teleVM;
+    private final TeleVM vm;
     public final TeleReference reference;
 
-    public static TeleReferenceValue from(TeleVM teleVM, Reference reference) {
-        return new TeleReferenceValue(teleVM, reference);
+    public static TeleReferenceValue from(TeleVM vm, Reference reference) {
+        return new TeleReferenceValue(vm, reference);
     }
 
-    private TeleReferenceValue(TeleVM teleVM, Reference reference) {
-        this.teleVM = teleVM;
+    private TeleReferenceValue(TeleVM vm, Reference reference) {
+        this.vm = vm;
         this.reference = (TeleReference) reference;
     }
 
@@ -141,7 +141,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return teleVM.referenceScheme().toOrigin(reference);
+        return vm.referenceManager().toOrigin(reference);
     }
 
     @Override
@@ -164,6 +164,6 @@ public final class TeleReferenceValue extends ReferenceValue {
         if (reference.isLocal()) {
             return ClassActor.fromJava(reference.toJava().getClass());
         }
-        return teleVM.classRegistry().makeClassActorForTypeOf(reference);
+        return vm.classes().makeClassActorForTypeOf(reference);
     }
 }

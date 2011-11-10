@@ -66,7 +66,7 @@ public class NativeFunctionSearchDialog extends FilteredListDialog<SymbolInfo> {
     private LibInfo libInfo;
 
     /**
-     * Displays a dialog to let the use select one or more native functions in the tele VM.
+     * Displays a dialog to let the use select one or more native functions in the VM.
      *
      * @param title for dialog window
      * @param actionName name to appear on button

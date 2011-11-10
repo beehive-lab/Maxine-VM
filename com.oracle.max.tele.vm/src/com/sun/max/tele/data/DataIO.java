@@ -75,8 +75,9 @@ public interface DataIO {
          * @param dataIO the source of data to be read
          * @param src the location in the source where reading should start
          * @param dst the buffer to be filled with the data
+         * @throws DataIOError if the read fails
          */
-        public static void readFully(DataIO dataIO, Address src, ByteBuffer dst) {
+        public static void readFully(DataIO dataIO, Address src, ByteBuffer dst) throws DataIOError {
             final int length = dst.limit();
             int n = 0;
             assert dst.position() == 0;
@@ -97,8 +98,9 @@ public interface DataIO {
          * @param src the location in the source where reading should start
          * @param length the total number of bytes to be read
          * @return the bytes read from the source.
+         * @throws DataIOError if the read fails
          */
-        public static byte[] readFully(DataIO dataIO, Address src, int length) {
+        public static byte[] readFully(DataIO dataIO, Address src, int length) throws DataIOError {
             final ByteBuffer buffer = ByteBuffer.wrap(new byte[length]);
             readFully(dataIO, src, buffer);
             return buffer.array();

@@ -1032,10 +1032,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 Log.println("BEGIN: Verifying code objects");
             }
 
-            CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
-            if (!codeRegion.size().isZero()) {
-                DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, refVerifier);
-            }
+            verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
+            verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
+
             if (Heap.traceGCPhases()) {
                 Log.println("END: Verifying code objects");
             }
@@ -1044,6 +1043,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         if (Heap.traceGCPhases()) {
             Log.print("END: Verifying object spaces ");
             Log.println(when);
+        }
+    }
+
+    private void verifyCodeRegion(CodeRegion cr) {
+        if (!cr.size().isZero()) {
+            DebugHeap.verifyRegion(cr.regionName(), cr.start().asPointer(), cr.getAllocationMark(), toSpace, refVerifier);
         }
     }
 

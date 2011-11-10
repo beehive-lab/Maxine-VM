@@ -60,6 +60,14 @@ public interface RiRuntime {
     boolean mustNotInline(RiResolvedMethod method);
 
     /**
+     * Notify the runtime of an inlining event.
+     *
+     * @param caller the method into whose code {@code callee}'s code is inlined
+     * @param callee the method whose code is inlined into {@code caller}'s
+     */
+    void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee);
+
+    /**
      * Checks whether the specified method cannot be compiled.
      * @param method the method being called
      * @return {@code true} if the method cannot be compiled

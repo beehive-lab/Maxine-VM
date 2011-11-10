@@ -68,7 +68,7 @@ public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCe
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
         Value memoryValue = null;
         try {
-            memoryValue = vm().readWordValue(tableModel.getAddress(row));
+            memoryValue = vm().memory().readWordValue(tableModel.getAddress(row));
         } catch (InvalidReferenceException invalidReferenceException) {
             return gui().getUnavailableDataTableCellRenderer();
         } catch (DataIOError dataIOError) {
@@ -77,7 +77,7 @@ public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCe
         label.setValue(memoryValue);
         label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
         if (inspectorTable.isBoundaryRow(row)) {
-            label.setBorder(style().defaultPaneTopBorder());
+            label.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             label.setBorder(null);
         }

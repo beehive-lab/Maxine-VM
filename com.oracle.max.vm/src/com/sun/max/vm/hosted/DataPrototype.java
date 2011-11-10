@@ -209,7 +209,7 @@ public final class DataPrototype extends Prototype {
      * @param region the region in which to create the page alignment object
      * @return the object allocated
      */
-    private Object createPageAlignmentObject(LinearAllocatorHeapRegion region) {
+    private Object createPageAlignmentObject(LinearAllocatorRegion region) {
         final int rest = region.getAllocationMark().minus(region.start()).remainder(pageSize);
         if (rest == 0) {
             return null;
@@ -900,7 +900,7 @@ public final class DataPrototype extends Prototype {
 
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             targetMethod.setStart(targetMethod.start().plus(delta));
-            targetMethod.setCodeStart(targetMethod.codeStart().plus(delta));
+            targetMethod.setCodeStart(targetMethod.codeStart().plus(delta).toPointer());
         }
     }
 
@@ -918,8 +918,8 @@ public final class DataPrototype extends Prototype {
      */
     private void adjustMemoryRegions() {
         Trace.begin(1, "adjustMemoryRegions");
-        final LinearAllocatorHeapRegion heap = Heap.bootHeapRegion;
-        final LinearAllocatorHeapRegion code = Code.bootCodeRegion();
+        final LinearAllocatorRegion heap = Heap.bootHeapRegion;
+        final LinearAllocatorRegion code = Code.bootCodeRegion();
 
         final Address codeStart = heap.end().roundedUpBy(pageSize);
         final int delta = codeStart.minus(code.start()).toInt();

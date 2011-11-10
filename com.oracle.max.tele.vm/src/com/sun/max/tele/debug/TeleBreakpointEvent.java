@@ -30,11 +30,11 @@ import com.sun.max.unsafe.*;
  */
 public class TeleBreakpointEvent implements MaxBreakpointEvent {
 
-    private final TeleBreakpoint teleBreakpoint;
+    private final VmBreakpoint teleBreakpoint;
     private final TeleNativeThread teleNativeThread;
     private final Address address;
 
-    public TeleBreakpointEvent(TeleBreakpoint teleBreakpoint, TeleNativeThread teleNativeThread) {
+    public TeleBreakpointEvent(VmBreakpoint teleBreakpoint, TeleNativeThread teleNativeThread) {
         this.teleBreakpoint = teleBreakpoint;
         this.teleNativeThread = teleNativeThread;
         this.address = teleNativeThread.registers().instructionPointer();

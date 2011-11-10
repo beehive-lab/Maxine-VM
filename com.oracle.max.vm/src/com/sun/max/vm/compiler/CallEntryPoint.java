@@ -95,8 +95,8 @@ public enum CallEntryPoint {
     /**
      * Gets the address of this call entry point in a given target method.
      */
-    public Pointer in(TargetMethod targetMethod) {
-        return targetMethod.codeStart().plus(offset());
+    public CodePointer in(TargetMethod targetMethod) {
+        return targetMethod.codeAt(offset());
     }
 
     /**

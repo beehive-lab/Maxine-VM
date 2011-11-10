@@ -62,6 +62,13 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
         if (x != null && x.declaredType() != null && x.declaredType().isSubtypeOf(toType)) {
             return x;
         }
+        if (kind != CiKind.Object && x.kind() == kind) {
+            return x;
+        }
+        if (x instanceof MaxineUnsafeCastNode) {
+            MaxineUnsafeCastNode uc = (MaxineUnsafeCastNode) x;
+            return graph().unique(new MaxineUnsafeCastNode(uc.x(), toType));
+        }
         return this;
     }
 

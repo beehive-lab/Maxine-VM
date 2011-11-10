@@ -83,14 +83,27 @@ public final class CodeCacheMetricsPrinter {
 
     public void printTo(PrintStream out) {
         final CodeManager codeManager = Code.getCodeManager();
-        final CodeRegion runtimeCodeRegion = codeManager.getRuntimeCodeRegion();
+        printRegionTo(codeManager.getRuntimeBaselineCodeRegion(), out);
+        printRegionTo(codeManager.getRuntimeOptCodeRegion(), out);
+    }
+
+    void printRegionTo(CodeRegion cr, PrintStream out) {
+        final String regionName = cr.regionName();
+        final char[] stars = new char[regionName.length() + 22];
+        Arrays.fill(stars, '*');
+        final String line = new String(stars);
+        out.println(line);
+        out.println("********** " + regionName + " **********");
+        out.println(line);
+
         if (verbose) {
             out.println("Bytecode\tMachineCode\tInvocations\tCodeType\tMethod");
         }
+
         TreeMap<String, CodeCacheMetricsPrinter.Metrics> metrics = new TreeMap<String, CodeCacheMetricsPrinter.Metrics>();
         TreeMap<String, CodeCacheMetricsPrinter.Metrics> metrics2 = new TreeMap<String, CodeCacheMetricsPrinter.Metrics>();
 
-        for (TargetMethod targetMethod : runtimeCodeRegion.copyOfTargetMethods()) {
+        for (TargetMethod targetMethod : cr.copyOfTargetMethods()) {
             ClassMethodActor methodActor = targetMethod.classMethodActor();
             int bcSize = methodActor == null ? 0 : methodActor.codeSize();
             int mcSize = targetMethod.codeLength();

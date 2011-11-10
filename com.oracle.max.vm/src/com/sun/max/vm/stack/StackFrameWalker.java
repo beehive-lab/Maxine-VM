@@ -29,9 +29,7 @@ import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -41,7 +39,16 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * The mechanism for iterating over the frames in a thread's stack.
+ * A walker that iterates over the frames in a thread's stack.
+ * <p>
+ * The walker manages two {@linkplain StackFrameCursor cursors} internally, each of which encapsulates
+ * the state needed about a stack frame: one for the <em>current</em>
+ * frame (caller frame) and one for the <em>previous</em> frame (callee frame).
+ * <p>
+ * The walker destructively updates the cursors' contents, rather than allocating new ones,
+ * since allocation is disallowed when walking the stack for reference map preparation.
+ *
+ * @see StackFrameCursor
  */
 public abstract class StackFrameWalker {
 
@@ -54,145 +61,7 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * The cursor class encapsulates all the state associated with a single stack frame,
-     * including the target method, the instruction pointer, stack pointer, frame pointer, register state,
-     * and whether the frame is the top frame. The stack frame walker manages two cursors internally: the current
-     * frame (caller frame) and the last frame (callee frame) and destructively updates their contents
-     * when walking the stack, rather than allocating new ones, since allocation is disallowed when
-     * walking the stack for reference map preparation.
-     */
-    public final class Cursor {
-
-        TargetMethod tm;
-        Pointer ip = Pointer.zero();
-        Pointer sp = Pointer.zero();
-        Pointer fp = Pointer.zero();
-        CiCalleeSaveLayout csl;
-        Pointer csa;
-        boolean isTopFrame = false;
-
-        private Cursor() {
-        }
-
-        /**
-         * Updates the cursor to point to the next stack frame.
-         * This method implicitly sets {@link Cursor#isTopFrame()} of this cursor to {@code false} and
-         * {@link Cursor#targetMethod()} of this cursor to {@code null}.
-         * @param tm the new target method or {@code null} if {@code ip} denotes native code
-         * @param ip the new instruction pointer
-         * @param sp the new stack pointer
-         * @param fp the new frame pointer
-         */
-        Cursor advance(TargetMethod tm, Pointer ip, Pointer sp, Pointer fp) {
-            return setFields(tm, ip, sp, fp, false);
-        }
-
-        void reset() {
-            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
-        }
-
-        private void copyFrom(Cursor other) {
-            setFields(other.tm, other.ip, other.sp, other.fp, other.isTopFrame);
-            setCalleeSaveArea(other.csl, other.csa);
-        }
-
-        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
-            this.tm = targetMethod;
-            this.ip = ip;
-            this.sp = sp;
-            this.fp = fp;
-            this.isTopFrame = isTopFrame;
-            this.csl = null;
-            this.csa = Pointer.zero();
-            return this;
-        }
-
-        /**
-         * Sets the callee save details for this frame cursor. This must be called
-         * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word)
-         * is called (after which this cursor will be the "callee" frame).
-         *
-         * @param csl the layout of the callee save area in the frame denoted by this cursor
-         * @param csa the address of the callee save area in the frame denoted by this cursor
-         */
-        public void setCalleeSaveArea(CiCalleeSaveLayout csl, Pointer csa) {
-            FatalError.check((csl == null) == csa.isZero(), "inconsistent callee save area info");
-            this.csl = csl;
-            this.csa = csa;
-        }
-
-        /**
-         * @return the stack frame walker for this cursor
-         */
-        public StackFrameWalker stackFrameWalker() {
-            return StackFrameWalker.this;
-        }
-
-        /**
-         * @return the target method corresponding to the instruction pointer.
-         */
-        public TargetMethod targetMethod() {
-            return tm;
-        }
-
-        /**
-         * Gets the address of the next instruction that will be executed in this frame.
-         * If this is not the {@linkplain #isTopFrame() top frame}, then this is the
-         * return address saved by a call instruction. The exact interpretation of this
-         * return address depends on the {@linkplain ISA#offsetToReturnPC platform}.
-         *
-         * @return the current instruction pointer.
-         */
-        public Pointer ip() {
-            return ip;
-        }
-
-        /**
-         * @return the current stack pointer.
-         */
-        public Pointer sp() {
-            return sp;
-        }
-
-        /**
-         * @return the current frame pointer.
-         */
-        public Pointer fp() {
-            return fp;
-        }
-
-        /**
-         * @return {@code true} if this frame is the top frame
-         */
-        public boolean isTopFrame() {
-            return isTopFrame;
-        }
-
-        /**
-         * Gets the layout of the callee save area in this frame.
-         *
-         * @return {@code null} if there is no callee save area in this frame
-         */
-        public CiCalleeSaveLayout csl() {
-            return csl;
-        }
-
-        /**
-         * Gets the address of the callee save area in this frame.
-         *
-         * @return {@link Pointer#zero()} if there is no callee save area in this frame
-         */
-        public Pointer csa() {
-            return csa;
-        }
-    }
-
-    protected StackFrameWalker() {
-    }
-
-    /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     *
      */
     public enum Purpose {
         /**
@@ -217,7 +86,7 @@ public abstract class StackFrameWalker {
          * Reflecting on the frames of a thread's stack.
          * This type of stack walk is not allocation free.
          */
-        INSPECTING(StackFrameVisitor.class);
+        INSPECTING(null);
 
         private final Class contextType;
 
@@ -229,16 +98,29 @@ public abstract class StackFrameWalker {
          * Determines if a given context object is of the type expected by this purpose.
          */
         public final boolean isValidContext(Object context) {
+            if (this == INSPECTING) {
+                return true;
+            }
             return contextType.isInstance(context);
         }
     }
 
-    private final Cursor current = new Cursor();
-    private final Cursor callee = new Cursor();
+    protected StackFrameCursor current;
+    protected StackFrameCursor callee;
 
     private Purpose purpose = null;
     private Pointer currentAnchor;
+
+    @HOSTED_ONLY
     private StackFrame calleeStackFrame;
+
+    protected StackFrameWalker() {
+        // These initializations are overridden by the Inspector with variant cursor implementations.
+        // This is an awkward and fragile way to handle the override, but it avoids object initialization problems
+        // during construction of the Inspector's specialization of the walker.
+        this.current = new StackFrameCursor(this);
+        this.callee = new StackFrameCursor(this);
+    }
 
     /**
      * Walks a thread's stack.
@@ -260,20 +142,20 @@ public abstract class StackFrameWalker {
         current.reset();
         callee.reset();
 
-        current.ip = ip;
+        current.ip.derive(ip);
         current.sp = sp;
         current.fp = fp;
         current.isTopFrame = true;
-        current.tm = targetMethodFor(ip);
 
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
         boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
+
         while (!current.sp.isZero()) {
-            TargetMethod tm = current.tm;
-            TargetMethod calleeTM = callee.tm;
+            TargetMethod tm = current.targetMethod();
+            TargetMethod calleeTM = callee.targetMethod();
             traceCursor(current);
 
             if (tm != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
@@ -291,12 +173,11 @@ public abstract class StackFrameWalker {
                 // did not find target method => in native code
                 if (purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                    if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, current.ip, current.fp, current.sp))) {
+                    if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, current.nativeIP(), current.fp, current.sp))) {
                         break;
                     }
                 } else if (purpose == RAW_INSPECTING) {
                     final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                    current.tm = null;
                     current.isTopFrame = isTopFrame;
                     if (!stackFrameVisitor.visitFrame(current, callee)) {
                         break;
@@ -354,7 +235,7 @@ public abstract class StackFrameWalker {
         }
     }
 
-    private boolean walkFrame(Cursor current, Cursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
+    private boolean walkFrame(StackFrameCursor current, StackFrameCursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
         boolean proceed = true;
         if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
             // walk the frame for reference map preparation
@@ -396,11 +277,11 @@ public abstract class StackFrameWalker {
         }
     }
 
-    private void traceCursor(Cursor cursor) {
+    private void traceCursor(StackFrameCursor cursor) {
         if (TraceStackWalk) {
-            if (cursor.tm != null) {
+            if (cursor.targetMethod() != null) {
                 Log.print("StackFrameWalk: Frame at ");
-                Log.printLocation(cursor.tm, cursor.ip, false);
+                Log.printLocation(cursor.targetMethod(), cursor.vmIP(), false);
                 Log.print(", isTopFrame=");
                 Log.print(cursor.isTopFrame);
                 Log.print(", sp=");
@@ -410,7 +291,7 @@ public abstract class StackFrameWalker {
                 Log.println("");
             } else {
                 Log.print("StackFrameWalk: Frame for native function [IP=");
-                Log.print(cursor.ip);
+                Log.print(cursor.nativeIP());
                 Log.println(']');
             }
         }
@@ -448,9 +329,15 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset);
             final Word lastJavaCallerStackPointer = readWord(anchor, JavaFrameAnchor.SP.offset);
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
-            advance(checkNativeFunctionCall(lastJavaCallerInstructionPointer.asPointer(), true),
+
+            boolean wasDisabled = SafepointPoll.disable();
+            advance(checkNativeFunctionCall(CodePointer.from(lastJavaCallerInstructionPointer), true).toPointer(),
                     lastJavaCallerStackPointer,
                     lastJavaCallerFramePointer);
+            if (!wasDisabled) {
+                SafepointPoll.enable();
+            }
+
             return true;
         }
         return false;
@@ -462,15 +349,20 @@ public abstract class StackFrameWalker {
      */
     private void advanceFrameInNative(Pointer anchor, Purpose purpose) {
         FatalError.check(!anchor.isZero(), "No native stub frame anchor found when executing 'in native'");
-        Pointer nativeFunctionCall = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
+        CodePointer nativeFunctionCall = CodePointer.from(readWord(anchor, JavaFrameAnchor.PC.offset));
         if (nativeFunctionCall.isZero()) {
             FatalError.unexpected("Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
-        Pointer ip = checkNativeFunctionCall(nativeFunctionCall, purpose != INSPECTING && purpose != RAW_INSPECTING);
+        CodePointer ip = checkNativeFunctionCall(nativeFunctionCall, purpose != INSPECTING && purpose != RAW_INSPECTING);
         if (ip.isZero()) {
             ip = nativeFunctionCall;
         }
-        advance(ip, readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset));
+
+        boolean wasDisabled = SafepointPoll.disable();
+        advance(ip.toPointer(), readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset));
+        if (!wasDisabled) {
+            SafepointPoll.enable();
+        }
     }
 
     /**
@@ -540,8 +432,8 @@ public abstract class StackFrameWalker {
      * @param fatalIfNotFound specifies whether a fatal error should be raised if {@code pc} is not a native call site
      * @return the value of {@code pc} if it is valid or zero if not
      */
-    private Pointer checkNativeFunctionCall(Pointer pc, boolean fatalIfNotFound) {
-        final TargetMethod nativeStub = targetMethodFor(pc);
+    private CodePointer checkNativeFunctionCall(CodePointer pc, boolean fatalIfNotFound) {
+        final TargetMethod nativeStub = targetMethodFor(pc.toPointer());
         if (nativeStub != null) {
             if (TraceStackWalk && purpose == Purpose.REFERENCE_MAP_PREPARING) {
                 final int nativeFunctionCallPos = nativeStub.posFor(pc);
@@ -560,13 +452,32 @@ public abstract class StackFrameWalker {
             Log.println(pc);
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
-        return Pointer.zero();
+        return CodePointer.zero();
+    }
+
+    /**
+     * Looks up a method based on a return address read from a frame. Depending on the architecture,
+     * the return address must be adjusted before searching the code cache to ensure the
+     * address within the method containing the call instruction.
+     */
+    private TargetMethod targetMethodForReturnAddress(Word retAddr) {
+        if (platform().isa.offsetToReturnPC == 0) {
+            // Adjust 'retAddr' to ensure it is within the call instruction.
+            // This ensures we will always get the correct method, even if
+            // the call instruction was the last instruction in a method.
+            return targetMethodFor(retAddr.asPointer().minus(1));
+        } else {
+            return targetMethodFor(retAddr.asPointer());
+        }
     }
 
     /**
      * Walks a thread's stack for the purpose of inspecting one or more frames on the stack. This method takes care of
      * {@linkplain #reset() resetting} this walker before returning.
+     *
+     * This method is only ever used in Inspector contexts, hence the annotation with {@link HOSTED_ONLY}.
      */
+    @HOSTED_ONLY
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final StackFrameVisitor visitor) {
         // Wraps the visit operation to record the visited frame as the parent of the next frame to be visited.
         final StackFrameVisitor wrapper = new StackFrameVisitor() {
@@ -592,7 +503,6 @@ public abstract class StackFrameWalker {
      */
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final RawStackFrameVisitor visitor) {
         walk(ip, sp, fp, RAW_INSPECTING, visitor);
-        calleeStackFrame = null;
         visitor.done();
         reset();
     }
@@ -647,11 +557,10 @@ public abstract class StackFrameWalker {
      * while {@linkplain #inspect(Pointer, Pointer, Pointer, StackFrameVisitor) inspecting}. The returned frame is
      * the callee frame of the next frame to be visited.
      */
+    @HOSTED_ONLY
     public final StackFrame calleeStackFrame() {
         return calleeStackFrame;
     }
-
-    public abstract TargetMethod targetMethodFor(Pointer instructionPointer);
 
     /**
      * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown as part of exception handling.
@@ -663,12 +572,13 @@ public abstract class StackFrameWalker {
     /**
      * Advances this stack walker such that {@link #current} becomes {@link #callee}.
      *
-     * @param retAddr the instruction pointer of the new current frame (i.e. the return address of the previous/callee frame)
-     * @param sp the stack pointer of the new current frame
+     * @param ip the instruction pointer of the new current frame (return address read from the current frame)
+     * @param sp the stack pointer of the new current frame (stack pointer in the caller frame)
      * @param fp the frame pointer of the new current frame
      */
     public final void advance(Word retAddr, Word sp, Word fp) {
         callee.copyFrom(current);
+
         Pointer ip = retAddr.asPointer();
 
         TargetMethod tm = targetMethodForReturnAddress(retAddr);
@@ -682,24 +592,20 @@ public abstract class StackFrameWalker {
             ip = originalReturnAddress;
         }
 
-        current.advance(tm, ip, sp.asPointer(), fp.asPointer());
+        // distinguish between a native function and a target method
+        int pos = 0;
+        if (tm != null) {
+            // target method
+            pos = tm.posFor(CodePointer.from(ip));
+            ip = Pointer.zero();
+        } else {
+            // native function
+        }
+
+        current.advance(tm, pos, ip, sp.asPointer(), fp.asPointer());
     }
 
-    /**
-     * Looks up a method based on a return address read from a frame. Depending on the architecture,
-     * the return address must be adjusted before searching the code cache to ensure the
-     * address within the method containing the call instruction.
-     */
-    TargetMethod targetMethodForReturnAddress(Word retAddr) {
-        if (platform().isa.offsetToReturnPC == 0) {
-            // Adjust 'retAddr' to ensure it is within the call instruction.
-            // This ensures we will always get the correct method, even if
-            // the call instruction was the last instruction in a method.
-            return targetMethodFor(retAddr.asPointer().minus(1));
-        } else {
-            return targetMethodFor(retAddr.asPointer());
-        }
-    }
+    public abstract TargetMethod targetMethodFor(Pointer instructionPointer);
 
     public abstract Word readWord(Address address, int offset);
     public abstract byte readByte(Address address, int offset);

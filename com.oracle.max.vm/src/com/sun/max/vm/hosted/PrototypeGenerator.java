@@ -64,12 +64,13 @@ public final class PrototypeGenerator {
     public GraphPrototype createGraphPrototype() {
         // This initial graph prototype ensures that ClassActors are created for
         // all objects hanging off static fields.
-        GraphPrototype graphPrototype = null;
+        GraphPrototype graphPrototype = new GraphPrototype(null);
 
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
         final CompiledPrototype compiledPrototype = new CompiledPrototype(numberOfCompilationThreads);
         compiledPrototype.addEntrypoints();
+        compiledPrototype.addJavaLangObject();
         do {
             for (MethodActor methodActor : vmConfig().runScheme().gatherNativeInitializationMethods()) {
                 compiledPrototype.add(methodActor, null, null);

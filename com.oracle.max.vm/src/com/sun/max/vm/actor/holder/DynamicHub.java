@@ -23,10 +23,10 @@
 package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 
@@ -98,20 +98,6 @@ public final class DynamicHub extends Hub {
         return hub;
     }
 
-    /**
-     * Ensures all the vtable entries in this hub are resolved to compiled methods, not trampolines.
-     */
-    public void compileVTable() {
-        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
-        for (int i = 0; i < allVirtualMethodActors.length; i++) {
-            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final int vTableIndex = firstWordIndex() + i;
-            assert virtualMethodActor.vTableIndex() == vTableIndex;
-            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(virtualMethodActor.makeTargetMethod());
-            setWord(vTableIndex, vTableEntry);
-        }
-    }
-
     void initializeITable(Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup) {
         if (classActor.isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
@@ -124,7 +110,7 @@ public final class DynamicHub extends Hub {
                     Address iTableEntry;
                     iTableEntry = checkCompiled(virtualMethodActor);
                     if (iTableEntry.isZero()) {
-                        iTableEntry = vm().stubs.interfaceTrampoline(iIndex);
+                        iTableEntry = vm().stubs.interfaceTrampoline(iIndex).toAddress();
                     }
                     setWord(iTableIndex, iTableEntry);
                 }
