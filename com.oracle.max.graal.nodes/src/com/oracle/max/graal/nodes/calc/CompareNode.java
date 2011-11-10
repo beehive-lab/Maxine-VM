@@ -40,7 +40,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
     @Input private ValueNode y;
 
     @Data private Condition condition;
-    @Data private boolean unorderedIsTrue;
+    @Data private final boolean unorderedIsTrue;
 
     public ValueNode x() {
         return x;
@@ -95,10 +95,6 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
      */
     public boolean unorderedIsTrue() {
         return unorderedIsTrue;
-    }
-
-    public void setUnorderedIsTrue(boolean unorderedIsTrue) {
-        this.unorderedIsTrue = unorderedIsTrue;
     }
 
     /**
@@ -158,18 +154,22 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
     }
 
     private Node optimizeNormalizeCmp(CiConstant constant, NormalizeCompareNode normalizeNode) {
-        if (normalizeNode.x().kind().isFloatOrDouble()) {
-            // NaN values lead to unexpected comparison results...
-            return this;
-        }
         if (constant.kind == CiKind.Int && constant.asInt() == 0) {
             Condition condition = condition();
+            if (normalizeNode.x().kind().isFloatOrDouble()) {
+                switch (condition) {
+                    case LT: condition = Condition.BT; break;
+                    case LE: condition = Condition.BE; break;
+                    case GE: condition = Condition.AE; break;
+                    case GT: condition = Condition.AT; break;
+                }
+            }
             if (normalizeNode == y()) {
                 condition = condition.mirror();
             }
-            CompareNode result = graph().unique(new CompareNode(normalizeNode.x(), condition, normalizeNode.y()));
             boolean isLess = condition == Condition.LE || condition == Condition.LT || condition == Condition.BE || condition == Condition.BT;
-            result.unorderedIsTrue = condition != Condition.EQ && (condition == Condition.NE || !(isLess ^ normalizeNode.isUnorderedLess));
+            boolean canonUnorderedIsTrue = condition != Condition.EQ && (condition == Condition.NE || !(isLess ^ normalizeNode.isUnorderedLess));
+            CompareNode result = graph().unique(new CompareNode(normalizeNode.x(), condition, canonUnorderedIsTrue, normalizeNode.y()));
             return result;
         }
         return this;
@@ -178,7 +178,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && !y().isConstant()) { // move constants to the left (y)
-            return graph().unique(new CompareNode(y(), condition.mirror(), x()));
+            return graph().unique(new CompareNode(y(), condition.mirror(), unorderedIsTrue(), x()));
         } else if (x().isConstant() && y().isConstant()) {
             CiConstant constX = x().asConstant();
             CiConstant constY = y().asConstant();

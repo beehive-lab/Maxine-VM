@@ -596,8 +596,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 } else if (fullName.equals("floatToIntBits(F)I")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0));
-                    CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
-                    isNan.setUnorderedIsTrue(true);
+                    CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, true, arg));
                     ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forInt(FLOATNAN_RAW_INT_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
@@ -619,8 +618,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 } else if (fullName.equals("doubleToLongBits(D)J")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0));
-                    CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
-                    isNan.setUnorderedIsTrue(true);
+                    CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, true, arg));
                     ConvertNode fpConv = graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, arg));
                     ConditionalStructure conditionalStructure = ConditionalNode.createConditionalStructure(isNan, ConstantNode.forLong(DOUBLENAN_RAW_LONG_BITS, graph), fpConv, 0.1);
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
