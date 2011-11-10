@@ -35,20 +35,24 @@ public final class TeleCodeManager extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 1;
 
-    @Override
-    protected String  tracePrefix() {
-        return "[TeleCodeManager] ";
-    }
-
     private TeleCodeRegion teleBootCodeRegion = null;
 
     /**
-     * Access to the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
-     * <br>
+     * Access to one of the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
+     * <p>
      * Assume that the region is created at startup, and that its identity doesn't change, just the
-     * address when memory is allocated for it.
+     * address when memory is allocated for it.  Assume further that it is managed by the VM
+     * class {@link SemiSpaceCodeRegion}.
      */
-    private TeleCodeRegion teleRuntimeCodeRegion = null;
+    private TeleSemiSpaceCodeRegion teleRuntimeBaselineCodeRegion = null;
+
+    /**
+     * Access to one of the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
+     * <p>
+     * Assume that the region is created at startup, and that its identity doesn't change, just the
+     * address when memory is allocated for it.  Assume further that it is unmanaged.
+     */
+    private TeleCodeRegion teleRuntimeOptCodeRegion = null;
 
     TeleCodeManager(TeleVM vm, Reference codeManagerReference) {
         super(vm, codeManagerReference);
@@ -63,13 +67,16 @@ public final class TeleCodeManager extends TeleTupleObject {
             Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
             final long startTimeMillis = System.currentTimeMillis();
 
-            final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
-            teleBootCodeRegion = (TeleCodeRegion) heap().makeTeleObject(bootCodeRegionReference);
+            final Reference bootCodeRegionReference = fields().Code_bootCodeRegion.readReference(vm());
+            teleBootCodeRegion = (TeleCodeRegion) objects().makeTeleObject(bootCodeRegionReference);
 
-            final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
-            teleRuntimeCodeRegion = (TeleCodeRegion) heap().makeTeleObject(runtimeCodeRegionReference);
+            final Reference runtimeBaselineCodeRegionReference = fields().CodeManager_runtimeBaselineCodeRegion.readReference(vm());
+            teleRuntimeBaselineCodeRegion = (TeleSemiSpaceCodeRegion) objects().makeTeleObject(runtimeBaselineCodeRegionReference);
 
-            Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
+            final Reference runtimeOptCodeRegionReference = fields().CodeManager_runtimeOptCodeRegion.readReference(vm());
+            teleRuntimeOptCodeRegion = (TeleCodeRegion) objects().makeTeleObject(runtimeOptCodeRegionReference);
+
+            Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
         }
     }
 
@@ -84,9 +91,14 @@ public final class TeleCodeManager extends TeleTupleObject {
     /**
      * @return access to the special Runtime {@link CodeRegion} of the VM.
      */
-    public TeleCodeRegion teleRuntimeCodeRegion() {
+    public TeleSemiSpaceCodeRegion teleRuntimeBaselineCodeRegion() {
         initialize();
-        return teleRuntimeCodeRegion;
+        return teleRuntimeBaselineCodeRegion;
+    }
+
+    public TeleCodeRegion teleRuntimeOptCodeRegion() {
+        initialize();
+        return teleRuntimeOptCodeRegion;
     }
 
 }

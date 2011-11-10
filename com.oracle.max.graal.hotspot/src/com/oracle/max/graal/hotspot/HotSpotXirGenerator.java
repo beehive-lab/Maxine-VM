@@ -184,7 +184,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
                     asm.mark(MARK_POLL_RETURN_FAR);
                     asm.pload(target.wordKind, temp, temp, true);
                 } else {
-                    XirOperand rip = asm.createRegister("rip", target.wordKind, CiRegister.InstructionRelative);
+                    XirOperand rip = asm.createRegister("rip", target.wordKind, AMD64.rip);
                     asm.mark(MARK_POLL_RETURN_NEAR);
                     asm.pload(target.wordKind, temp, rip, asm.i(0xEFBEADDE), true);
                 }
@@ -206,7 +206,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
                 asm.mark(MARK_POLL_FAR);
                 asm.pload(target.wordKind, temp, temp, true);
             } else {
-                XirOperand rip = asm.createRegister("rip", target.wordKind, CiRegister.InstructionRelative);
+                XirOperand rip = asm.createRegister("rip", target.wordKind, AMD64.rip);
                 asm.mark(MARK_POLL_NEAR);
                 asm.pload(target.wordKind, temp, rip, asm.i(0xEFBEADDE), true);
             }

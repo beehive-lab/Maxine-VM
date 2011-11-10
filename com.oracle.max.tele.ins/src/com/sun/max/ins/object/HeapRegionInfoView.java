@@ -89,7 +89,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                         final int regionID = Integer.parseInt(input);
                         if (TeleRegionTable.theTeleRegionTable().isValidRegionID(regionID)) {
                             Address regionInfoAddress = TeleRegionTable.theTeleRegionTable().regionInfo(regionID);
-                            final TeleObject teleObject = vm().heap().findObjectAt(regionInfoAddress);
+                            final TeleObject teleObject = vm().objects().findObjectAt(regionInfoAddress);
                             if (teleObject != null && teleObject instanceof TeleHeapRegionInfo) {
                                 focus().setHeapObject(teleObject);
                             }

@@ -41,8 +41,8 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public ConditionalNode(BooleanNode condition, ValueNode trueValue, ValueNode falseValue) {
-        super(trueValue.kind, trueValue, falseValue);
-        assert trueValue.kind == falseValue.kind;
+        super(trueValue.kind(), trueValue, falseValue);
+        assert trueValue.kind() == falseValue.kind();
         this.condition = condition;
     }
 
@@ -73,8 +73,8 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
 
     public static ConditionalStructure createConditionalStructure(BooleanNode condition, ValueNode trueValue, ValueNode falseValue, double trueProbability) {
         Graph graph = condition.graph();
-        assert trueValue.kind == falseValue.kind;
-        CiKind kind = trueValue.kind;
+        assert trueValue.kind() == falseValue.kind();
+        CiKind kind = trueValue.kind();
         IfNode ifNode = graph.add(new IfNode(condition, trueProbability));
         EndNode trueEnd = graph.add(new EndNode());
         EndNode falseEnd = graph.add(new EndNode());

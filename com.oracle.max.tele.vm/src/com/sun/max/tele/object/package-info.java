@@ -22,6 +22,6 @@
  */
 
 /**
- * Remote access to objects in the tele VM heap.
+ * Remote access to objects in the VM heap.
  */
 package com.sun.max.tele.object;

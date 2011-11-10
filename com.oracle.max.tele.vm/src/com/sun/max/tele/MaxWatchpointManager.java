@@ -41,6 +41,7 @@ public interface MaxWatchpointManager {
      * in the VM than is supported by the platform.
      */
     public static final class MaxTooManyWatchpointsException extends MaxException {
+
         public MaxTooManyWatchpointsException(String message) {
             super(message);
         }
@@ -51,6 +52,7 @@ public interface MaxWatchpointManager {
      * in the VM that overlaps with an existing watchpoint.
      */
     public static final class MaxDuplicateWatchpointException extends MaxException {
+
         public MaxDuplicateWatchpointException(String message) {
             super(message);
         }
@@ -58,7 +60,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Adds a listener for watchpoint changes.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @param listener a watchpoint listener
@@ -67,7 +69,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Removes a listener for watchpoint changes.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @param listener a watchpoint listener
@@ -76,7 +78,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Creates a new, active watchpoint that covers a given memory region in the VM.
-     * <br>
+     * <p>
      * The trigger occurs <strong>after</strong> the specified event.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -93,7 +95,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Creates a new, active watchpoint that covers an entire heap object's memory in the VM.
-     * <br>
+     * <p>
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -110,7 +112,7 @@ public interface MaxWatchpointManager {
     /**
      * Creates a new, active watchpoint that covers a heap object's field in the VM. If the object is live,
      * than this watchpoint will track the object's location during GC.
-     * <br>
+     * <p>
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -127,7 +129,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Creates a new, active watchpoint that covers an element in an array in the VM.
-     * <br>
+     * <p>
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -147,7 +149,7 @@ public interface MaxWatchpointManager {
     /**
      * Creates a new, active watchpoint that covers a field in an object's header in the VM.  If the object is live,
      * than this watchpoint will track the object's location during GC.
-     * <br>
+     * <p>
      * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -178,7 +180,7 @@ public interface MaxWatchpointManager {
 
     /**
      * All existing watchpoints set in the VM.
-     * <br>
+     * <p>
      * The collection is immutable and thus thread-safe,
      * but the state of the members is not immutable.
      *
@@ -188,7 +190,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Finds all VM watchpoints that overlap a specified memory region.
-     * <br>
+     * <p>
      *  Immutable collection; membership is thread-safe.
      *
      * @param memoryRegion an area of memory in the VM
@@ -198,7 +200,7 @@ public interface MaxWatchpointManager {
 
     /**
      * Writes a textual description of each existing watchpoint.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @param printStream

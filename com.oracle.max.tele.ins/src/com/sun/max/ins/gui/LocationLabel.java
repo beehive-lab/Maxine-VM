@@ -121,7 +121,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -148,7 +148,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -179,7 +179,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
             updateText();
         }
 
@@ -217,7 +217,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
             updateText();
         }
 
@@ -263,7 +263,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
             updateText();
         }
 
@@ -302,7 +302,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
             updateText();
         }
 
@@ -352,7 +352,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().defaultFont());
+            setFont(preference().style().defaultFont());
             updateText();
         }
 

@@ -35,10 +35,10 @@ public abstract class IntegerArithmeticNode extends ArithmeticNode {
     }
 
     public static IntegerArithmeticNode add(ValueNode v1, ValueNode v2) {
-        assert v1.kind == v2.kind && v1.graph() == v2.graph();
+        assert v1.kind() == v2.kind() && v1.graph() == v2.graph();
         Graph graph = v1.graph();
         //TODO (gd) handle conversions here instead of strong assert ?
-        switch(v1.kind) {
+        switch(v1.kind()) {
             case Int:
                 return graph.unique(new IntegerAddNode(CiKind.Int, v1, v2));
             case Long:
@@ -49,10 +49,10 @@ public abstract class IntegerArithmeticNode extends ArithmeticNode {
     }
 
     public static IntegerArithmeticNode mul(ValueNode v1, ValueNode v2) {
-        assert v1.kind == v2.kind && v1.graph() == v2.graph();
+        assert v1.kind() == v2.kind() && v1.graph() == v2.graph();
         Graph graph = v1.graph();
         //TODO (gd) handle conversions here instead of strong assert ?
-        switch(v1.kind) {
+        switch(v1.kind()) {
             case Int:
                 return graph.unique(new IntegerMulNode(CiKind.Int, v1, v2));
             case Long:

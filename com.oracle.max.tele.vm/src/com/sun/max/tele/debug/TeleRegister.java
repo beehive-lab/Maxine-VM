@@ -34,22 +34,22 @@ import com.sun.max.unsafe.*;
  */
 public final class TeleRegister implements MaxRegister {
 
-    private final TeleVM teleVM;
+    private final MaxVM vm;
     private final TeleRegisters teleRegisters;
     private final CiRegister register;
     private final String entityName;
     private final String entityDescription;
 
     protected TeleRegister(TeleRegisters teleRegisters, CiRegister register, TeleNativeThread teleNativeThread) {
-        this.teleVM = teleNativeThread.vm();
+        this.vm = teleNativeThread.vm();
         this.teleRegisters = teleRegisters;
         this.register = register;
         this.entityName = "Thread-" + teleNativeThread.localHandle() + " register " + register.name;
         this.entityDescription = "A machine register, together with current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
     }
 
-    public TeleVM vm() {
-        return teleVM;
+    public MaxVM vm() {
+        return vm;
     }
 
     public String entityName() {

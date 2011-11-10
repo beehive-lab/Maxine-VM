@@ -154,7 +154,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
     }
 
     public void redisplay() {
-        setFont(style().javaNameFont());
+        setFont(preference().style().javaNameFont());
         updateText();
     }
 

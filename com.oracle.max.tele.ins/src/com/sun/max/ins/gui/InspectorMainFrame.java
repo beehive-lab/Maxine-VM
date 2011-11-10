@@ -186,6 +186,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     private final Inspection inspection;
+    private final InspectorGeometry geometry;
     private final String tracePrefix;
     private final InspectorNameDisplay nameDisplay;
     private final SaveSettingsListener saveSettingsListener;
@@ -225,6 +226,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         super(inspectorName);
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.inspection = inspection;
+        this.geometry = inspection.preference().geometry();
         this.nameDisplay = nameDisplay;
         this.desktopMenu = new InspectorPopupMenu(inspection.vm().entityName() + " Inspector");
 
@@ -267,7 +269,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        setMinimumSize(inspection.geometry().inspectorMinFrameSize());
+        setMinimumSize(geometry.inspectorMinFrameSize());
 
         try {
             if (settings.containsKey(saveSettingsListener, FRAME_X_KEY)) {
@@ -281,13 +283,13 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 setPreferredSize(new Dimension(width, height));
                 setLocation(x, y);
             } else {
-                setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
-                setLocation(inspection.geometry().inspectorDefaultFrameLocation());
+                setPreferredSize(geometry.inspectorPrefFrameSize());
+                setLocation(geometry.inspectorDefaultFrameLocation());
             }
         } catch (Option.Error optionError) {
             InspectorWarning.message(inspection, "Inspector Main Frame settings", optionError);
-            setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
-            setLocation(inspection.geometry().inspectorDefaultFrameLocation());
+            setPreferredSize(geometry.inspectorPrefFrameSize());
+            setLocation(geometry.inspectorDefaultFrameLocation());
         }
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -300,9 +302,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane = new JDesktopPane();
         desktopPane.setOpaque(true);
         if (inspection.vm().inspectionMode() == MaxInspectionMode.IMAGE) {
-            desktopPane.setBackground(inspection.style().vmNoProcessBackgroundColor());
+            desktopPane.setBackground(inspection.preference().style().vmNoProcessBackgroundColor());
         } else {
-            desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(true));
+            desktopPane.setBackground(inspection.preference().style().vmStoppedBackgroundColor(true));
         }
         scrollPane = new InspectorScrollPane(inspection, desktopPane);
         setContentPane(scrollPane);
@@ -586,25 +588,30 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         if (maxVMState.newerThan(lastRefreshedState)) {
             lastRefreshedState = maxVMState;
             setTitle(inspection.currentInspectionTitle());
+            final InspectorStyle style = inspection.preference().style();
             switch (maxVMState.processState()) {
                 case STOPPED:
                     if (maxVMState.isInGC()) {
-                        menuBar.setStateColor(inspection.style().vmStoppedinGCBackgroundColor(invalidReferenceDetected));
+                        desktopPane.setBackground(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
+                        menuBar.setStateColor(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
+                    } else if (maxVMState.isInEviction()) {
+                        desktopPane.setBackground(style.vmStoppedInEvictionBackgroundColor());
+                        menuBar.setStateColor(style.vmStoppedInEvictionBackgroundColor());
                     } else {
-                        desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(invalidReferenceDetected));
-                        menuBar.setStateColor(inspection.style().vmStoppedBackgroundColor(invalidReferenceDetected));
+                        desktopPane.setBackground(style.vmStoppedBackgroundColor(invalidReferenceDetected));
+                        menuBar.setStateColor(style.vmStoppedBackgroundColor(invalidReferenceDetected));
                     }
                     break;
                 case RUNNING:
-                    desktopPane.setBackground(inspection.style().vmRunningBackgroundColor());
-                    menuBar.setStateColor(inspection.style().vmRunningBackgroundColor());
+                    desktopPane.setBackground(style.vmRunningBackgroundColor());
+                    menuBar.setStateColor(style.vmRunningBackgroundColor());
                     break;
                 case UNKNOWN:
-                    desktopPane.setBackground(inspection.style().vmNoProcessBackgroundColor());
+                    desktopPane.setBackground(style.vmNoProcessBackgroundColor());
                     break;
                 case TERMINATED:
-                    desktopPane.setBackground(inspection.style().vmTerminatedBackgroundColor());
-                    menuBar.setStateColor(inspection.style().vmTerminatedBackgroundColor());
+                    desktopPane.setBackground(style.vmTerminatedBackgroundColor());
+                    menuBar.setStateColor(style.vmTerminatedBackgroundColor());
                     break;
                 default:
                     InspectorError.unknownCase(maxVMState.processState().toString());

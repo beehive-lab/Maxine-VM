@@ -3,6 +3,7 @@ syntax: glob
 
 TEST-*
 *.class
+*.pyc
 *.log
 *.iml
 log*.txt
@@ -22,6 +23,7 @@ test-logs.zip
 *.cfg
 vee2010-results
 Base/loaded-classes.jar
+*.pyc
 
 # switch to regexp syntax
 syntax: regexp

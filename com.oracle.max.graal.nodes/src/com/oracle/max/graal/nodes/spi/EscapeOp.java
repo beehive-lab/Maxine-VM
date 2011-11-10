@@ -54,8 +54,8 @@ public abstract class EscapeOp {
             return false;
         } else if (usage instanceof StoreFieldNode) {
             StoreFieldNode x = (StoreFieldNode) usage;
-            // self-references do not escape
-            return x.value() == node && x.object() != node;
+            // self-references do escape
+            return x.value() == node;
         } else if (usage instanceof LoadIndexedNode) {
             LoadIndexedNode x = (LoadIndexedNode) usage;
             if (x.index() == node) {

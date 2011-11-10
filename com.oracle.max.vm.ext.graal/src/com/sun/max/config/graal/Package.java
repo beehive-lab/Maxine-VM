@@ -22,19 +22,39 @@
  */
 package com.sun.max.config.graal;
 
-import com.oracle.max.vm.ext.graal.*;
+import java.util.*;
+
+import com.oracle.max.criutils.*;
+import com.oracle.max.graal.compiler.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.hosted.*;
 
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.oracle.max.graal.**");
+        super("com.oracle.max.vm.ext.graal.**",
+              "com.oracle.max.graal.compiler.**",
+              "com.oracle.max.graal.graph.**",
+              //"com.oracle.max.graal.graphviz.**",
+              "com.oracle.max.graal.nodes.**",
+              "com.oracle.max.graal.snippets.**");
+        JavaPrototype.addObjectIdentityMapContributor(new GraalObjectMapContributor());
+    }
+
+    public static class GraalObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
+        @Override
+        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
+            objectMap.put(TTY.out(), new LogStream(Log.os));
+            if (GraalOptions.PrintCFGToFile) {
+                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
+            }
+        }
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return Graal.class.getName().equals(CompilationBroker.optName());
+        return CompilationBroker.optName().contains("Graal");
     }
 }

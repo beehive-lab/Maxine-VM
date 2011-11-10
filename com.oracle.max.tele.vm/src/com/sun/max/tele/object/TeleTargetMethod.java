@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.hcfdis.*;
+import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
@@ -39,6 +40,7 @@ import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
@@ -46,7 +48,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -55,13 +59,20 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation of a Java {@link ClassMethod} in
- * the VM.
+ * Canonical surrogate for an object of type {@link TargetMethod} in the VM.
+ * The object itself is allocated on the VM heap.  It extends {@link MemoryRegion}, by which it describes the
+ * area allocated for it in the code cache.  This location can change for compilations that are allocated in
+ * managed code cache regions.
  * <p>
- * When this surrogate is first created, it records only the location of the {@link TargetMehod} in VM memory. This
+ * The {@link TargetMethod} stores a method compilation into its allocated area in the form of three arrays
+ * (one or two of which may be omitted) to which the {@link TargetMethod} holds references.
+ * <p>
+ * When this surrogate is first created, it records, in addition to the reference to the {@link TargetMethod},
+ * only a bare minimum of information about the compiled code, mainly just its location in the code cache.  This
  * limitation keeps the overhead low, since an instance of this class is eagerly created for every compilation
  * discovered in the VM. It also avoids creating any other instances of {@link TeleObject}, which can lead to infinite
  * regress in the presence of mutually referential objects, notably with instances of {@link TeleClassMethodActor}.
@@ -69,18 +80,18 @@ import com.sun.max.vm.reference.*;
  * The first time this object is refreshed, it gets an instance of {@link TeleClassMethodActor} that refers to the
  * {@link ClassMethodActor} in the VM that owns the compilation represented by this object.
  * <p>
- * The full contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily: only when
+ * The full contents of the compiled code are copied from the VM, disassembled, and cached lazily: only when
  * needed. The caches are flushed eagerly, whenever an update determines that the code has been changed (i.e. patched),
  * but the new contents are only loaded lazily, as needed.
  * <p>
- * Content loading is performed by (restricted) deep copying the {@link TargetMethod} from the VM, and caching the local
+ * A method compilation is loaded by (restricted) deep copying the {@link TargetMethod} from the VM, and caching the local
  * instance.
- * <p>
- * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created, <strong>do not
- * move in memory</strong> and <strong>are never evicted</strong>.
+ *
+ * @see VmCodeCacheAccess
+ * @see VmCodeCacheRegion
  * @see TeleClassMethodActor
  */
-public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
+public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
     private static final int TRACE_VALUE = 2;
     private static final List<TargetCodeInstruction> EMPTY_TARGET_INSTRUCTIONS =  Collections.emptyList();
@@ -90,6 +101,65 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private static final int[] EMPTY_INT_ARRAY = {};
     private static final RiMethod[] EMPTY_METHOD_ARRAY = {};
     private static final List<Integer> EMPTY_INTEGER_LIST = Collections.emptyList();
+
+    /**
+     * The data produced by a compilation is stored into an area of memory allocated
+     * from some part of the {@linkplain VmCodeCacheAccess code cache}, where it is stored in
+     * standard VM object format.  In particular, it is stored as three contiguous arrays
+     * in the code cache allocation, although two of them might be omitted if not needed.
+     * <p>
+     * The {@link TargetMethod} holds standard object {@link Reference}s to these three
+     * arrays.
+     * <p>
+     * No other kinds of objects should ever appear in a {@linkplain VmCodeCacheRegion
+     * code cache region}, so this enum completely describes the possibilities.
+     */
+    public static enum CodeCacheReferenceKind {
+        /**
+         * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]}
+         * in the code cache holding scalar literals needed by the target code.  This will be null
+         * in the following situations:
+         * <ul>
+         * <li>During the creation of a new method compilation, until the code cache area is allocated,
+         * the method is compiled, and the scalar literals stored into the code cache;</li>
+         * <li>If there are no scalar literals associated with the target code; and</li>
+         * <li>If the compilation has been evicted.</li>
+         * </ul>
+         *
+         * @see TargetMethod#scalarLiterals()
+         */
+        SCALAR_LITERALS,
+
+        /**
+         * Reference possibly held in a {@link TargetMethod} to an instance of {@code Object[]}
+         * in the code cache holding reference literals needed by the target code. This will be null
+         * in the following situations:
+         * <ul>
+         * <li>During the creation of a new method compilation, until the code cache area is allocated,
+         * the method is compiled, and the reference literals stored into the code cache;</li>
+         * <li>If there are no reference literals associated with the target code; and</li>
+         * <li>If the compilation has been evicted.</li>
+         * </ul>
+         *
+         * @see TargetMethod#referenceLiterals()
+         */
+        REFERENCE_LITERALS,
+
+        /**
+         * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]}
+         * in the code cache holding the target code.  This will be null
+         * in the following situations:
+         * <ul>
+         * <li>During the creation of a new method compilation, until the code cache area is allocated,
+         * the method is compiled, and the code stored into the code cache;</li>
+         * <li>If the compilation has been evicted.</li>
+         * </ul>
+         *
+         * @see TargetMethod#code()
+         */
+        CODE;
+    }
+
 
     /**
      * Adapter for bytecode scanning that only knows the constant pool
@@ -175,16 +245,25 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
          * A limited deep copy of the {@link TargetMethod} in the VM, reflecting its state at some point during
          * its lifetime.
          */
-        private final TargetMethod targetMethod;
+        private final TargetMethod targetMethodCopy;
+
 
         /**
          * The version number of this cache, with a new one presumed to be
          * created each time the code in the VM is discovered to have changed.  Note that this might
          * not agree with the actual number of times the code has changed, since it may have changed
          * more than once in a single VM execution cycle.
+         * <p>
+         * Generation 0 corresponds to the initial state, where the data has not been loaded yet.
+         * <p>
+         * Generation -1 corresponds to the "evicted" state, where the code has been removed from
+         * the code cache and the compilation is no longer available for use.
          */
         private final int codeGenerationCount;
 
+        /**
+         * A copy of the machine code for the compilation.
+         */
         private final byte[] code;
 
         /**
@@ -264,17 +343,20 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
          * <p>
          * This constructor should be called with the vm lock held.
          *
-         * @param targetMethod a local copy of the {@link TargetMethod} from the VM.
+         * @param targetMethodCopy a local copy of the {@link TargetMethod} from the VM.
          * @param generationCount number of this cache in the sequence of caches: 0 = no information; 1 VM's initial state.
          * @param teleClassMethodActor access to the {@link ClassMethodActor} in the VM of which this {@link TargetMethod}
          * is a compilation.
          */
-        private TargetMethodCache(TargetMethod targetMethod, int generationCount, TeleClassMethodActor teleClassMethodActor) {
-            assert (targetMethod == null && generationCount == 0) || (targetMethod != null && generationCount > 0);
-            this.targetMethod = targetMethod;
+        private TargetMethodCache(TargetMethod targetMethodCopy, int generationCount, TeleClassMethodActor teleClassMethodActor) {
+            assert (targetMethodCopy == null && generationCount <= 0) || (targetMethodCopy != null && generationCount > 0);
+            this.targetMethodCopy = targetMethodCopy;
             this.codeGenerationCount = generationCount;
 
-            if (targetMethod == null) {
+            if (targetMethodCopy == null || targetMethodCopy.codeLength() == 0) {
+                // Create a null cache as a placeholder until loading is required.
+                // The cache is also null if the target method doesn't have any code yet,
+                // which can be observed during the allocation part of target method creation.
                 this.code = null;
                 this.codeStart = Pointer.zero();
                 this.inlineDataDecoder = null;
@@ -290,19 +372,20 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 this.indexToCallee = EMPTY_METHOD_ARRAY;
                 this.labelIndexes = EMPTY_INTEGER_LIST;
             } else {
-                // The size of the compilation's machine code in bytes.
-                final int targetCodeLength = targetMethod.codeLength();
 
-                this.code = targetMethod.code();
-                this.codeStart = targetMethod.codeStart();
+                // The size of the compilation's machine code in bytes.
+                final int targetCodeLength = targetMethodCopy.codeLength();
+
+                this.code = targetMethodCopy.code();
+                this.codeStart = targetMethodCopy.codeStart().toPointer();
 
                 if (codeStart.isZero()) {
                     this.callEntryPoint = Address.zero();
                 } else {
                     Address callEntryAddress = codeStart;
                     if (MaxineVM.vm().compilationBroker.needsAdapters()) {
-                        final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
-                        final TeleObject teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
+                        final Reference callEntryPointReference = fields().TargetMethod_callEntryPoint.readReference(reference());
+                        final TeleObject teleCallEntryPoint = objects().makeTeleObject(callEntryPointReference);
                         if (teleCallEntryPoint != null) {
                             final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
                             if (callEntryPoint != null) {
@@ -313,7 +396,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                     this.callEntryPoint = callEntryAddress;
                 }
 
-                CodeAnnotation[] annotations = targetMethod.annotations();
+                CodeAnnotation[] annotations = targetMethodCopy.annotations();
                 if (annotations != null && annotations.length > 0) {
                     inlineDataDecoder = HexCodeFileDis.makeInlineDataDecoder(annotations);
                 } else {
@@ -337,7 +420,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
                 // Safepoint position locations in compiled code (by byte offset from the start): null if not available
 
-                final Safepoints safepoints = targetMethod.safepoints();
+                final Safepoints safepoints = targetMethodCopy.safepoints();
                 // Build map:  target instruction position (bytes offset from start) -> the safepoint, 0 if not a safepoint.
                 int[] posToSafepointMap = null;
                 if (safepoints != null && safepoints.size() > 0) {
@@ -348,7 +431,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 }
 
                 // Get the precise map between bytecode and machine code instructions, null if not available
-                this.bciToPosMap = targetMethod.bciToPosMap();
+                this.bciToPosMap = targetMethodCopy.bciToPosMap();
 
                  // Build map:  target instruction position (bytes offset from start) -> debug infos (as much as can be determined).
                 final CiDebugInfo[] posToDebugInfoMap = new CiDebugInfo[targetCodeLength];
@@ -392,7 +475,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 int bci = 0; // position cursor in the original bytecode stream, used if we have a bytecode -> target code map
                 for (int instructionIndex = 0; instructionIndex < instructionCount; instructionIndex++) {
                     final TargetCodeInstruction instruction = instructions.get(instructionIndex);
-                    indexToLocation[instructionIndex] = codeManager().createMachineCodeLocation(instruction.address, "native target code instruction");
+                    indexToLocation[instructionIndex] = codeLocationFactory().createMachineCodeLocation(instruction.address, "native target code instruction");
                     if (instruction.label != null) {
                         labels.add(instructionIndex);
                     }
@@ -514,7 +597,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         }
 
         public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
-            assert targetMethod != null;
+            assert targetMethodCopy != null;
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
@@ -554,7 +637,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
          * @return whether the {@link TargetMethod} being cached has been copied from the VM yet.
          */
         private boolean isLoaded() {
-            return targetMethod != null;
+            return targetMethodCopy != null;
         }
 
         /**
@@ -565,10 +648,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
          * @see TargetMethod#debugInfoAt(int, FrameAccess)
          */
         private CiDebugInfo getDebugInfoAtSafepointIndex(final int safepointIndex) {
-            return TeleClassRegistry.usingTeleClassIDs(new Function<CiDebugInfo>() {
+            return VmClassAccess.usingTeleClassIDs(new Function<CiDebugInfo>() {
                 @Override
                 public CiDebugInfo call() throws Exception {
-                    return targetMethod.debugInfoAt(safepointIndex, null);
+                    return targetMethodCopy.debugInfoAt(safepointIndex, null);
                 }
             });
         }
@@ -600,19 +683,16 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
      *         method matching {@code methodKey}
      */
-    public static List<TeleTargetMethod> get(TeleVM vm, MethodKey methodKey) {
-        TeleClassActor teleClassActor = vm.classRegistry().findTeleClassActor(methodKey.holder());
+    public static List<TeleTargetMethod> get(MaxVM vm, MethodKey methodKey) {
+        TeleClassActor teleClassActor = vm.classes().findTeleClassActor(methodKey.holder());
         if (teleClassActor != null) {
             final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
                 if (teleClassMethodActor.compilationCount() > 0) {
                     ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
                     if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
-                        for (int i = 0; i < teleClassMethodActor.compilationCount(); ++i) {
-                            TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCompilation(i);
-                            if (teleTargetMethod != null) {
-                                result.add(teleTargetMethod);
-                            }
+                        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
+                            result.add(teleTargetMethod);
                         }
                     }
                 }
@@ -622,7 +702,84 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return Collections.emptyList();
     }
 
+    /**
+     * A representation of the Java language entity, if any, from which this method
+     * was compiled.
+     */
     private TeleClassMethodActor teleClassMethodActor = null;
+
+    /**
+     * Absolute origin of an array of scalar literals referred to by target code,
+     * allocated (if non-empty) in the code cache allocation for this method
+     * The location might change if the code cache allocation is moved, or become specially marked as
+     * <em>wiped</em> if the compilation does not survive an eviction cycle.  That special marking is
+     * done by assignment of a distinguished empty array to the field.
+     * <p>
+     * This value is null only until the first successful read of their values from the object in the VM.
+     *
+     * @see CodeCacheReferenceKind#SCALAR_LITERALS
+     * @see TargetMethod
+     * @see TargetMethod#wipe()
+     */
+    private Address scalarLiteralArrayOrigin = null;
+
+    /**
+     * Absolute origin of an array of reference literals referred to by target code,
+     * allocated (if non-empty) in the code cache allocation for this method
+     * The location might change if the code cache allocation is moved, or become specially marked as
+     * <em>wiped</em> if the compilation does not survive an eviction cycle.  That special marking is
+     * done by assignment of a distinguished empty array to the field.
+     * <p>
+     * This value is null only until the first successful read of their values from the object in the VM.
+     *
+     * @see CodeCacheReferenceKind#REFERENCE_LITERALS
+     * @see TargetMethod
+     * @see TargetMethod#wipe()
+     */
+    private Address referenceLiteralArrayOrigin = null;
+
+    /**
+     * Absolute origin of a byte array containing target code,
+     * allocated in the code cache allocation for this method
+     * The location might change if the code cache allocation is moved, or become specially marked as
+     * <em>wiped</em> if the compilation does not survive an eviction cycle.  That special marking is
+     * done by assignment of a distinguished empty array to the field.
+     * <p>
+     * This value is null only until the first successful read of their values from the object in the VM.
+     *
+     * @see CodeCacheReferenceKind#CODE
+     * @see TargetMethod
+     * @see TargetMethod#wipe()
+     */
+    private Address codeByteArrayOrigin = null;
+
+    /**
+     * Absolute location in VM memory of the first byte in
+     * this compilation's target code.
+     */
+    private Address codeStartAddress = null;
+
+    /**
+     * Absolute location in VM memory immediately
+     * after the final byte in this compilation's target code.
+     */
+    private Address codeEndAddress = null;
+
+
+    /**
+     * The location in VM memory of the fixed sentinel assigned to the
+     * code field of the target method when the code is evicted.
+     *
+     * @see TargetMethod#wipe()
+     */
+    private static Address codeWipedSentinelAddress = Address.zero();
+
+
+    /**
+     * A representation of the VM's code cache region in which the {@link TargetRegion}
+     * is allocated.
+     */
+    private VmCodeCacheRegion codeCacheRegion = null;
 
     /**
      * The cache of the actual compiled code in the {@link TargetMethod} is represented as
@@ -651,13 +808,27 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private volatile TargetMethodCache targetMethodCache = new TargetMethodCache(null, 0, null);
 
     /**
-     * Counter for the versions of the {@link TargetMethod} during its lifetime in the VM, starting with
+     * Counter for the versions of the code held by a{@link TargetMethod} during its lifetime
+     * in the VM, starting with
      * its original version, which we call 1. Note that the initial (null) instance of the cache
      * is set to generation 0, which means that the cache begins life as not current.  This is important
      * so that we do perform expensive derivations on the code that are needed far less often than
      * simple meta information about the code.
      */
     private int vmCodeGenerationCount = 1;
+
+    /**
+     * Counter for the number of completed code evictions that have been seen in this
+     * method's code cache region.
+     */
+    private long evictionCount = 0;
+
+    /**
+     * Set permanently to {@code true} when an update detects that the code for this
+     * compilation has not survived an eviction cycle.  The test depends in the management
+     * being used for the code cache region managing this compilation.
+     */
+    private boolean evicted = false;
 
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
@@ -672,6 +843,20 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
+     * Assigns to the representation of a VM {@link TargetMethod} the representation of
+     * the code cache region in which it has been discovered to have been allocated.
+     * <p>
+     * It is assumed that this is only set once, as target methods are assumed not to
+     * move among code cache regions.
+     *
+     * @param codeCacheRegion a code cache region in the VM
+     */
+    public void setCodeCacheRegion(VmCodeCacheRegion codeCacheRegion) {
+        assert this.codeCacheRegion == null;
+        this.codeCacheRegion = codeCacheRegion;
+    }
+
+    /**
      * Gets the cache of information information about the {@link TargetMethod} in the VM,
      * attempting to update it if needed.
      *
@@ -680,8 +865,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private TargetMethodCache targetMethodCache() {
         if (!isCurrent() && vm().tryLock()) {
             try {
-                final TargetMethod targetMethod = (TargetMethod) deepCopy();
-                targetMethodCache = new TargetMethodCache(targetMethod, vmCodeGenerationCount, teleClassMethodActor);
+                final TargetMethod targetMethodCopy = (TargetMethod) deepCopy();
+                targetMethodCache = new TargetMethodCache(targetMethodCopy, vmCodeGenerationCount, teleClassMethodActor);
             } catch (DataIOError dataIOError) {
                 if (teleClassMethodActor == null) {
                     Trace.line(TRACE_VALUE, "WARNING: failed to update class actor");
@@ -695,12 +880,66 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return targetMethodCache;
     }
 
+    private Class compilationClass = null;
+
     /**
      * @return whether the current cache is up to date with the state of the {@link TargetMethod}
      * in the VM.
      */
     private boolean isCurrent() {
         return !targetMethodCache.codeStart.isZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
+    }
+
+    private void setEvicted() {
+        evicted = true;
+        targetMethodCache = new TargetMethodCache(null, -1, null);
+    }
+
+    public boolean isEvicted() {
+        return evicted;
+    }
+
+    /**
+     * Determines whether there is machine code in this compilation at a specified memory
+     * location in the VM, always {@code false} if this compilation has been evicted or
+     * relocated elsewhere.
+     *
+     * @param address an absolute memory location in the VM.
+     * @return whether there is machine code at the address
+     * @throws IllegalArgumentException if the location is not within the code cache
+     * memory allocated for this compilation.
+     */
+    public boolean isValidCodeLocation(Address address) throws IllegalArgumentException {
+        if (isEvicted()) {
+            return false;
+        }
+        if (!contains(address)) {
+            throw new IllegalArgumentException("Address " + address.to0xHexString() + " not in code cache allocation");
+        }
+        return address.greaterEqual(codeStartAddress) && address.lessThan(codeEndAddress);
+    }
+
+    /**
+     * Return the absolute origin location of each of the arrays
+     * holding compilation data that are stored in the compilation's
+     * code cache allocation.
+     * <p>
+     * In the current implementation, these pointers in the
+     * {@link TargetMethod} are set to special statically allocated
+     * sentinels ("wiped") when the compilation is evicted.
+     */
+    public Address codeCacheObjectOrigin(CodeCacheReferenceKind kind) {
+        switch (kind) {
+            case SCALAR_LITERALS:
+                return scalarLiteralArrayOrigin;
+            case REFERENCE_LITERALS:
+                return referenceLiteralArrayOrigin;
+            case CODE:
+                return codeByteArrayOrigin;
+            default:
+                TeleError.unknownCase();
+                return null;
+        }
     }
 
     /** {@inheritDoc}
@@ -720,9 +959,45 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        if (teleClassMethodActor == null) {
-            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-            teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+        if (evicted) {
+            return true;
+        }
+        // TODO (mlvdv) consider optimizing this to avoid the pointer reads if we know there hasn't been a code eviction
+        try {
+            // Start by updating field caches
+            if (teleClassMethodActor == null) {
+                final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
+                teleClassMethodActor = (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
+            }
+            if (codeWipedSentinelAddress.isZero()) {
+                codeWipedSentinelAddress = fields().TargetMethod_WIPED_CODE.readWord(vm()).asAddress();
+            }
+            // Read some fields using low level machinery to avoid circularity with Reference creation
+            if (scalarLiteralArrayOrigin == null || checkForRelocation()) {
+                scalarLiteralArrayOrigin = reference().readWord(fields().TargetMethod_scalarLiterals.fieldActor().offset()).asAddress();
+            }
+            if (referenceLiteralArrayOrigin == null || checkForRelocation()) {
+                referenceLiteralArrayOrigin = reference().readWord(fields().TargetMethod_referenceLiterals.fieldActor().offset()).asAddress();
+            }
+            if (codeByteArrayOrigin == null || checkForRelocation()) {
+                codeByteArrayOrigin = reference().readWord(fields().TargetMethod_code.fieldActor().offset()).asAddress();
+                // Get the absolute location of all target code bytes.
+                // Use low level machinery; we dont' want to create a {@link TeleObject} for every one of them.
+                final RemoteTeleReference codeByteArrayRef = referenceManager().makeTemporaryRemoteReference(codeByteArrayOrigin);
+                final int length = Layout.readArrayLength(codeByteArrayRef);
+                final ArrayLayout byteArrayLayout = Layout.layoutScheme().byteArrayLayout;
+                codeStartAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(0));
+                codeEndAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(length));
+            }
+        } catch (DataIOError dataIOError) {
+            // If something goes wrong, delay the cache update until next time.
+        }
+        // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
+        // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
+        // last check, assuming that the last check wasn't *in* an eviction cycle.
+        if (!codeWipedSentinelAddress.isZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
+            setEvicted();
+            return true;
         }
         if (!targetMethodCache.isLoaded()) {
             // Don't update if we've never loaded the code; delay that until actually needed.
@@ -734,8 +1009,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return true;
         }
         try {
-            final Reference byteArrayReference = vm().teleFields().TargetMethod_code.readReference(reference());
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
+            // Test for a patch to the target code since the last time we looked.
+            final Reference byteArrayReference = fields().TargetMethod_code.readReference(reference());
+            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             final byte[] codeInVM = (byte[]) teleByteArrayObject.shallowCopy();
             if (!Arrays.equals(codeInVM, targetMethodCache.code)) {
                 // The code in the VM is different than in the cache.
@@ -757,7 +1033,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      *
      * @return whether a copy of the {@link TargetMethod} in the VM has been created and cached.
      */
-    public final boolean isLoaded() {
+    public boolean isLoaded() {
         return targetMethodCache.isLoaded();
     }
 
@@ -765,29 +1041,35 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @return count of the generation of the {@link TargetMethod} in the VM, as of the last
      * check.
      */
-    public final int vmCodeGenerationCount() {
+    public int vmCodeGenerationCount() {
         return vmCodeGenerationCount;
+    }
+
+    /**
+     * Determines whether this is a baseline compilation; if not, it can be assumed to be an optimized compilation.
+     */
+    public boolean isBaseline() {
+        if (compilationClass == null) {
+            compilationClass = classActorForObjectType().javaClass();
+        }
+        return compilationClass == T1XTargetMethod.class;
     }
 
     /**
      * @return a local copy of the {@link TargetMethod} in the VM, the most recent generation.
      */
-    public final TargetMethod targetMethod() {
-        return targetMethodCache().targetMethod;
+    public TargetMethod targetMethod() {
+        return targetMethodCache().targetMethodCopy;
     }
 
     /**
      * @return surrogate for the {@link ClassMethodActor} in the VM for which this code was compiled.
      */
-    public final TeleClassMethodActor getTeleClassMethodActor() {
+    public TeleClassMethodActor getTeleClassMethodActor() {
         return teleClassMethodActor;
     }
 
-    public final int compilationIndex() {
-        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(this);
-    }
-
-    public final InstructionMap getInstructionMap() {
+    public InstructionMap getInstructionMap() {
         return targetMethodCache();
     }
 
@@ -796,7 +1078,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      *
      * @see TargetMethod#codeStart()
      */
-    public final Pointer getCodeStart() {
+    public Pointer getCodeStart() {
         return targetMethodCache().codeStart;
     }
 
@@ -805,14 +1087,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      *
      * @return {@link Address#zero()} if this target method has not yet been compiled
      */
-    public final Address callEntryPoint() {
+    public Address callEntryPoint() {
         return targetMethodCache().callEntryPoint;
     }
 
     /**
      * Gets the local mirror of the class method actor associated with this target method. This may be null.
      */
-    public final ClassMethodActor classMethodActor() {
+    public ClassMethodActor classMethodActor() {
         return teleClassMethodActor == null ? null : teleClassMethodActor.classMethodActor();
     }
 
@@ -861,19 +1143,41 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return vm().vmAccess().getReferenceType(getClass());
     }
 
+    // TODO (mlvdv)  the renaming was probably wrong; rethink all this.
     /** {@inheritDoc}
      * <p>
-   * Assume that a {@link TargetMethod} (method compilation) region does not move (see class comment).
+     * A {@link TargetMethod} (method compilation) region does not move (see class comment)
+     * unless it is in a managed code cache region; we might not know, however, until we
+     * have been told the region in which the code is allocated.
      */
     @Override
-    public boolean isRelocatable() {
-        return false;
+    public boolean checkForRelocation() {
+        return true;
+//        if (codeCacheRegion == null) {
+//            // For some reason we don't yet have information about the code cache
+//            // region in which this target method is allocated.  Be conservative.
+//            return true;
+//        }
+//        if (!codeCacheRegion.isManaged()) {
+//            // In an unmanaged code region, code is assumed to never move.
+//            return false;
+//        }
+//        if (codeCacheRegion.isInEviction()) {
+//            // If we are in the middle of an eviction, always check.
+//            return true;
+//        }
+//        if (codeCacheRegion.evictionCount() > evictionCount) {
+//            // A new code eviction has completed
+//            evictionCount = codeCacheRegion.evictionCount();
+//            return true;
+//        }
+//        return false;
     }
 
     public void writeSummary(PrintStream printStream) {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
         writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
-        writer.println("compilation: " + compilationIndex());
+        writer.println("compilation: " + (isBaseline() ? "BASELINE" : "OPTIMIZED"));
         writer.flush();
         final Platform platform = platform();
         final TargetMethodCache tmCache = targetMethodCache();

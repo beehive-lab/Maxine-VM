@@ -57,6 +57,7 @@ public class MixedFrames {
             OtherClass.updateFields(this, recursion - 1, intValue);
             return;
         }
+        System.gc();
         if (i != intValue) {
             System.out.println(i + " != " + intValue);
         }

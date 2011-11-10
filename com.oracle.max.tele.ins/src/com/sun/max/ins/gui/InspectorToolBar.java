@@ -59,10 +59,6 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder, Prob
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -73,6 +69,10 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder, Prob
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     public void redisplay() {

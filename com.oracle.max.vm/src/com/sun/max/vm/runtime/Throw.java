@@ -33,13 +33,11 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -75,10 +73,11 @@ public final class Throw {
     static class StackFrameDumper extends RawStackFrameVisitor {
         int frames;
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
             if (frames++ < TraceExceptionsRawMaxFrames) {
                 // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
-                Throw.logFrame("        -> ", current.targetMethod(), current.ip());
+                final Pointer ip = current.ipAsPointer();
+                Throw.logFrame("        -> ", current.targetMethod(), ip);
             }
             return true;
         }
@@ -113,7 +112,7 @@ public final class Throw {
      * @param fp the frame pointer to be used when determining the point at which exception was raised
      * @param ip the instruction pointer to be used when determining the point at which exception was raised
      */
-    public static void raise(Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
+    public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
@@ -122,7 +121,7 @@ public final class Throw {
         VmThread.current().checkYellowZoneForRaisingException();
         SafepointPoll.disable();
 
-        sfw.unwind(ip, sp, fp, throwable);
+        sfw.unwind(ip.toPointer(), sp, fp, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
 
@@ -174,7 +173,7 @@ public final class Throw {
 
         convertAssertionToFatalError(throwable);
         traceThrow(throwable);
-        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
+        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), CodePointer.from(here()));
     }
 
     public static void traceThrow(Throwable throwable) {
@@ -214,7 +213,7 @@ public final class Throw {
      * @param fp the frame pointer at which to begin the stack trace
      */
     @NEVER_INLINE
-    public static void stackDump(String message, final Pointer ip, final Pointer sp, final Pointer fp) {
+    public static void stackDump(String message, Pointer ip, final Pointer sp, final Pointer fp) {
         if (message != null) {
             Log.println(message);
         }
@@ -236,7 +235,7 @@ public final class Throw {
         }
 
         Pointer anchor = JavaFrameAnchor.from(tla);
-        final Pointer ip = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
+        Pointer ip = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
         final VmThread vmThread = VmThread.fromTLA(tla);
         if (ip.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");
@@ -275,10 +274,10 @@ public final class Throw {
         Log.println(message);
         Pointer pointer = sp.wordAligned();
         while (pointer.lessThan(end)) {
-            final Pointer potentialCodePointer = pointer.getWord().asPointer();
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
+            final CodePointer potentialCodePointer = CodePointer.from(pointer.getWord());
+            final TargetMethod targetMethod = potentialCodePointer.toTargetMethod();
             if (targetMethod != null) {
-                logFrame(null, targetMethod, potentialCodePointer);
+                logFrame(null, targetMethod, potentialCodePointer.toPointer());
             }
             pointer = pointer.plus(Word.size());
         }
@@ -350,11 +349,11 @@ public final class Throw {
         }
         if (targetMethod != null) {
             Log.printMethod(targetMethod, false);
-            final Pointer codeStart = targetMethod.codeStart();
+            CodePointer codeStart = targetMethod.codeStart();
             Log.print(" [");
             Log.print(codeStart);
             Log.print("+");
-            Log.print(ip.minus(codeStart).toInt());
+            Log.print(ip.minus(codeStart.toAddress()).toInt());
             Log.print("]");
         } else {
             Log.print("native{");

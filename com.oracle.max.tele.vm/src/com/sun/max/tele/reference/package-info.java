@@ -21,6 +21,6 @@
  * questions.
  */
 /**
- * Special reference schemes used for remote access to a tele VM.
+ * Special reference schemes used for remote access to a VM.
  */
 package com.sun.max.tele.reference;

@@ -69,7 +69,7 @@ import com.sun.max.vm.value.*;
  * </ul>
  * @see TeleObject
  */
-public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {
+public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
@@ -111,9 +111,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     /**
      * @return the singleton manager for instances of {@link TeleObject}.
      */
-    public static TeleObjectFactory make(TeleVM teleVM, long processEpoch) {
+    public static TeleObjectFactory make(TeleVM vm, long processEpoch) {
         if (teleObjectFactory == null) {
-            teleObjectFactory = new TeleObjectFactory(teleVM, processEpoch);
+            teleObjectFactory = new TeleObjectFactory(vm, processEpoch);
         }
         return teleObjectFactory;
     }
@@ -133,7 +133,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         Collections.synchronizedMap(new HashMap<Long, WeakReference<TeleObject>>());
 
     /**
-     * Constructors for specific classes of tuple objects in the heap in the {@teleVM}.
+     * Constructors for specific classes of tuple objects in the heap in the VM.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.
      */
@@ -186,8 +186,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
     private long lastUpdateEpoch = -1L;
 
-    private TeleObjectFactory(TeleVM teleVM, long processEpoch) {
-        super(teleVM);
+    private TeleObjectFactory(TeleVM vm, long processEpoch) {
+        super(vm);
         assert vm().lockHeldByCurrentThread();
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
@@ -213,6 +213,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         // Maxine code management
         classToTeleTupleObjectConstructor.put(TargetMethod.class, getConstructor(TeleTargetMethod.class));
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
+        classToTeleTupleObjectConstructor.put(SemiSpaceCodeRegion.class, getConstructor(TeleSemiSpaceCodeRegion.class));
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
         classToTeleTupleObjectConstructor.put(MemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
         classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
@@ -303,19 +304,27 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      *
      * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
+     * @throws TeleError if the reference is not live or is an instance of {@link TemporaryTeleReference}
      */
-    public TeleObject make(Reference reference) {
+    public TeleObject make(Reference reference) throws TeleError {
         assert reference != null;
         if (reference.isZero()) {
             return null;
         }
+        if (reference instanceof TemporaryTeleReference) {
+            TeleWarning.message("Attempt to create TeleObject with temporary Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
+        }
+        if (!((TeleReference) reference).isLive()) {
+            TeleError.unexpected("Attempt to create TeleObject with non-live Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
+        }
+
         //assert vm().lockHeldByCurrentThread();
         TeleObject teleObject = getTeleObject(reference);
         if (teleObject != null) {
             return teleObject;
         }
         // Keep all the VM traffic outside of synchronization.
-        if (!vm().isValidOrigin(reference.toOrigin())) {
+        if (!objects().isValidOrigin(reference.toOrigin())) {
             return null;
         }
 
@@ -341,9 +350,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         try {
             // If the location in fact points to a well-formed object in the VM, we will be able to determine the
             // meta-information necessary to understanding how to access information in the object.
-            hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(reference));
-            classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
-            classActor = vm().classRegistry().makeClassActor(classActorReference);
+            hubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(reference).asAddress());
+            classActorReference = fields().Hub_classActor.readReference(hubReference);
+            classActor = classes().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
                             " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
@@ -352,9 +361,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         }
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = vm().wordToReference(Layout.readHubReferenceAsWord(hubReference));
-        final Reference hubClassActorReference = vm().teleFields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = vm().classRegistry().makeClassActor(hubClassActorReference);
+        final Reference hubhubReference = referenceManager().makeReference(Layout.readHubReferenceAsWord(hubReference).asAddress());
+        final Reference hubClassActorReference = fields().Hub_classActor.readReference(hubhubReference);
+        final ClassActor hubClassActor = classes().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             teleObject = getTeleObject(reference);

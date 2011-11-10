@@ -194,7 +194,7 @@ public class Stubs {
 
     private int prologueSize = -1;
 
-    public synchronized Address interfaceTrampoline(int iIndex) {
+    public synchronized CodePointer interfaceTrampoline(int iIndex) {
         if (interfaceTrampolines.size() <= iIndex) {
             for (int i = interfaceTrampolines.size(); i <= iIndex; i++) {
                 String stubName = "itrampoline<" + i + ">";
@@ -207,7 +207,7 @@ public class Stubs {
         return VTABLE_ENTRY_POINT.in(interfaceTrampolines.get(iIndex));
     }
 
-    public synchronized Address virtualTrampoline(int vTableIndex) {
+    public synchronized CodePointer virtualTrampoline(int vTableIndex) {
         if (virtualTrampolines.size() <= vTableIndex) {
             for (int i = virtualTrampolines.size(); i <= vTableIndex; i++) {
                 String stubName = "vtrampoline<" + i + ">";
@@ -244,8 +244,7 @@ public class Stubs {
         }
     }
 
-    private static Address adjustEntryPointForCaller(Address virtualDispatchEntryPoint, Pointer pcInCaller) {
-        final TargetMethod caller = Code.codePointerToTargetMethod(pcInCaller);
+    private static CodePointer adjustEntryPointForCaller(CodePointer virtualDispatchEntryPoint, TargetMethod caller) {
         CallEntryPoint callEntryPoint = caller.callEntryPoint;
         return virtualDispatchEntryPoint.plus(callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -259,14 +258,27 @@ public class Stubs {
      *            look up the caller in the code cache
      */
     private static Address resolveVirtualCall(Object receiver, int vTableIndex, Pointer pcInCaller) {
+        // pcInCaller must be dealt with before any safepoint
+        CodePointer cpCallSite = CodePointer.from(pcInCaller);
+        final TargetMethod caller = cpCallSite.toTargetMethod();
+
         final Hub hub = ObjectAccess.readHub(receiver);
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
-        hub.setWord(vTableIndex, vtableEntryPoint);
-        return adjustEntryPointForCaller(vtableEntryPoint, pcInCaller);
+
+        CodePointer vtableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT);
+        hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
+
+        CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);
+
+        // remember calls from boot code region to baseline code cache
+        if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
+            CodeManager.recordBootToBaselineCaller(caller);
+        }
+
+        return adjustedEntryPoint.toAddress();
     }
 
     /**
@@ -278,14 +290,27 @@ public class Stubs {
      *            look up the caller in the code cache
      */
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
+        // pcInCaller must be dealt with before any safepoint
+        CodePointer cpCallSite = CodePointer.from(pcInCaller);
+        final TargetMethod caller = cpCallSite.toTargetMethod();
+
         final Hub hub = ObjectAccess.readHub(receiver);
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByIIndex(iIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address itableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
-        hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint);
-        return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
+
+        CodePointer itableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT);
+        hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint.toAddress());
+
+        CodePointer adjustedEntryPoint = adjustEntryPointForCaller(itableEntryPoint, caller);
+
+        // remember calls from boot code region to baseline code cache
+        if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
+            CodeManager.recordBootToBaselineCaller(caller);
+        }
+
+        return adjustedEntryPoint.toAddress();
     }
 
     private Stub genDynamicTrampoline(int index, boolean isInterface, String stubName) {
@@ -354,12 +379,18 @@ public class Stubs {
 
     @PLATFORM(cpu = "amd64")
     private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
-        final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
+        CodePointer cpCallSite = CodePointer.from(callSite);
 
-        final ClassMethodActor callee = caller.callSiteToCallee(callSite);
+        final TargetMethod caller = cpCallSite.toTargetMethod();
+        final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
 
-        final Address calleeEntryPoint = callee.makeTargetMethod().getEntryPoint(caller.callEntryPoint).asAddress();
-        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
+        final CodePointer calleeEntryPoint = callee.makeTargetMethod().getEntryPoint(caller.callEntryPoint);
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
+
+        // remember calls from boot code region to baseline code cache
+        if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
+            CodeManager.recordBootToBaselineCaller(caller);
+        }
     }
 
     /**
@@ -681,7 +712,7 @@ public class Stubs {
 
         @Override
         void apply() {
-            Pointer patchAddr = stub.codeStart.plus(pos);
+            Pointer patchAddr = stub.codeAt(pos).toPointer();
             patchAddr.writeLong(0, runtimeRoutine.address().toLong());
         }
     }

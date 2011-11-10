@@ -22,19 +22,23 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * A {@code StackFrame} object abstracts an activation frame on a call stack.
+ *
+ * TODO (Michael H) consider moving this class to tele, as it is only ever used in Inspector contexts.
+ * For the time being, it is instead annotated with {@link HOSTED_ONLY}.
  */
+@HOSTED_ONLY
 public abstract class StackFrame {
 
     /**
      * An address indicating (but not necessarily equal to) the next instruction to be executed in this frame.
      *
-     * @see Cursor#ip()
+     * @see StackFrameCursor#ip()
      */
     public final Pointer ip;
     public final Pointer sp;

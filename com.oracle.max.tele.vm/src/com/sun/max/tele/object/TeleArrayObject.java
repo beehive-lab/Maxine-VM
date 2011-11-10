@@ -103,11 +103,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      * @return the value read from the specified field in this array in the VM
      */
     public Value readElementValue(int index) {
-        return vm().getElementValue(componentKind(), reference(), index);
+        return memory().readArrayElementValue(componentKind(), reference(), index);
     }
 
     public void copyElements(int srcIndex, Object dst, int dstIndex, int length) {
-        vm().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
+        memory().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
     }
 
     @Override
@@ -157,7 +157,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
                 Object[] referenceArray = (Object[]) newArray;
                 for (int index = 0; index < length; index++) {
                     final Value value = readElementValue(index);
-                    final TeleObject teleValueObject = heap().makeTeleObject(value.asReference());
+                    final TeleObject teleValueObject = objects().makeTeleObject(value.asReference());
                     if (teleValueObject != null) {
                         referenceArray[index] = teleValueObject.makeDeepCopy(context);
                     }

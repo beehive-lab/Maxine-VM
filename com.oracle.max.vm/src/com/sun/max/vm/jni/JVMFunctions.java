@@ -39,7 +39,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -94,7 +93,7 @@ public class JVMFunctions {
     static class LatestUserDefinedLoaderVisitor extends RawStackFrameVisitor {
         ClassLoader result;
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
             TargetMethod targetMethod = current.targetMethod();
             if (current.isTopFrame() || targetMethod == null || targetMethod.classMethodActor == null || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
                 return true;

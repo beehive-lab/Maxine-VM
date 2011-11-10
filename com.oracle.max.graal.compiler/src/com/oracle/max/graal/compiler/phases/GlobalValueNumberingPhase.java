@@ -29,10 +29,6 @@ import com.oracle.max.graal.nodes.*;
 
 public class GlobalValueNumberingPhase extends Phase {
 
-    public GlobalValueNumberingPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
     protected void run(StructuredGraph graph) {
         NodeBitMap visited = graph.createNodeBitMap();

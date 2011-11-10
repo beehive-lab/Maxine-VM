@@ -31,15 +31,16 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
@@ -179,7 +180,12 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public Pointer returnAddressPointer(Cursor frame) {
+    public Lifespan lifespan() {
+        return Lifespan.LONG;
+    }
+
+    @Override
+    public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else {
@@ -188,7 +194,7 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public void advance(Cursor current) {
+    public void advance(StackFrameCursor current) {
         if (platform().isa == ISA.AMD64) {
             CiCalleeSaveLayout csl = calleeSaveLayout();
             Pointer csa = Pointer.zero();
@@ -203,7 +209,8 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+    @HOSTED_ONLY
+    public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else {
@@ -229,32 +236,32 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public boolean isPatchableCallSite(Address callSite) {
+    public boolean isPatchableCallSite(CodePointer callSite) {
         FatalError.unexpected("Stub should never be patched");
         return false;
     }
 
     @Override
-    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     @Override
-    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
         throw FatalError.unexpected("Stub should never be patched");
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
-        return Address.zero();
+    public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+        return CodePointer.zero();
     }
 
     @Override
-    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
     }
 
     @Override
-    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         // Exceptions do not occur in stubs
     }
 }

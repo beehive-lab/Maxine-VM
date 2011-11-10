@@ -28,6 +28,7 @@ import java.util.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -40,7 +41,7 @@ import com.sun.cri.ri.*;
  */
 public class Snippets {
 
-    public static void install(GraalRuntime runtime, CiTarget target, SnippetsInterface obj, boolean plotGraphs) {
+    public static void install(GraalCompiler compiler, GraalRuntime runtime, CiTarget target, SnippetsInterface obj, boolean plotGraphs) {
         Class<? extends SnippetsInterface> clazz = obj.getClass();
         Class<?> original = clazz.getAnnotation(ClassSubstitution.class).value();
         GraalContext context = new GraalContext("Installing Snippet");
@@ -57,30 +58,33 @@ public class Snippets {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
                 RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
-                GraphBuilderPhase graphBuilder = new GraphBuilderPhase(context, runtime, snippetRiMethod, null, false, true);
+                GraphBuilderPhase graphBuilder = new GraphBuilderPhase(runtime, snippetRiMethod, null, false, true);
                 StructuredGraph graph = new StructuredGraph();
-                graphBuilder.apply(graph);
+                graphBuilder.apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
                     observer.printSingleGraph(method.getName(), graph);
                 }
 
-                new SnippetIntrinsificationPhase(context, runtime).apply(graph);
+                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
-                Collection<InvokeNode> invokes = new ArrayList<InvokeNode>();
+                Collection<Invoke> invokes = new ArrayList<Invoke>();
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
                     invokes.add(invoke);
                 }
-                new InliningPhase(context, runtime, target, invokes, null).apply(graph);
+                for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+                    invokes.add(invoke);
+                }
+                new InliningPhase(compiler, runtime, target, invokes, null).apply(graph, context);
 
-                new SnippetIntrinsificationPhase(context, runtime).apply(graph);
+                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
                     observer.printSingleGraph(method.getName(), graph);
                 }
-                new DeadCodeEliminationPhase(context).apply(graph);
+                new DeadCodeEliminationPhase().apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
@@ -91,6 +95,15 @@ public class Snippets {
                 targetRiMethod.compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("Could not resolve method to substitute with: " + snippet.getName(), e);
+            } catch (VerificationError error) {
+                if (context.isObserved()) {
+                    if (error.node() != null) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    } else if (error.graph() != null) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    }
+                }
+                throw error;
             }
         }
     }

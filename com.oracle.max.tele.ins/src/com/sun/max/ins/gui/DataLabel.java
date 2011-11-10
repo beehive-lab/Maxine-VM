@@ -50,7 +50,7 @@ public abstract class DataLabel extends InspectorLabel {
 
     public void redisplay() {
         // Default styles
-        setFont(style().primitiveDataFont());
+        setFont(preference().style().primitiveDataFont());
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
         }
     }
 
@@ -87,7 +87,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
         }
     }
 
@@ -106,7 +106,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -137,7 +137,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -180,7 +180,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -217,7 +217,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
         }
     }
 
@@ -233,7 +233,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().charDataFont());
+            setFont(preference().style().charDataFont());
         }
     }
 
@@ -248,7 +248,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
         }
     }
 
@@ -272,7 +272,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
         }
 
         public void setValue(int n) {
@@ -301,7 +301,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
         }
 
         protected void setValue(int n) {
@@ -330,7 +330,7 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             // TODO: define a font for floats
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
         }
 
         protected void updateText() {
@@ -361,7 +361,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
         }
         public void setValue(long n) {
             this.n = n;
@@ -383,7 +383,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
         }
     }
 
@@ -400,7 +400,7 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             // TODO: define a font for doubles
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
         }
 
         private void updateText() {
@@ -473,7 +473,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().hexDataFont());
+            setFont(preference().style().hexDataFont());
             updateText();
         }
 
@@ -566,7 +566,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            setFont(style().decimalDataFont());
+            setFont(preference().style().decimalDataFont());
             updateText();
         }
 

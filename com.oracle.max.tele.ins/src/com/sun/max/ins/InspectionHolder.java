@@ -47,11 +47,6 @@ public interface InspectionHolder {
     InspectorGUI gui();
 
     /**
-     * @return visual specifications for user interaction during the session
-     */
-    InspectorStyle style();
-
-    /**
      * @return information about the user focus of attention in the view state.
      */
     InspectionFocus focus();
@@ -65,4 +60,9 @@ public interface InspectionHolder {
      * @return access to {@link InspectorAction}s of general use.
      */
     InspectionActions actions();
+
+    /**
+     * @return access to various kinds of user preferences
+     */
+    InspectionPreferences preference();
 }

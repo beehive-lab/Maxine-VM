@@ -120,7 +120,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public InspectorFrame createFrame(boolean addMenuBar) {
         final InspectorFrame frame = super.createFrame(addMenuBar);
-        gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        gui().setLocationRelativeToMouse(this, preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
@@ -139,6 +139,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
+        memoryMenu.add(actions().copyObjectOrigin(teleObject, "Copy this object's origin to clipboard"));
+        memoryMenu.add(actions().copyObjectDescription(teleObject, "Copy this object's origin + description to clipboard"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
@@ -161,7 +163,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (instanceViewPreferences.showHeader()) {
             objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
-            objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
+            objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
             // Will add without column headers
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
@@ -178,18 +180,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(currentObjectOrigin);
         final String regionSuffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
-
-        switch (teleObject.getTeleObjectMemoryState()) {
-            case LIVE:
-                Pointer pointer = teleObject.origin();
-                title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
-                return title + regionSuffix;
-            case OBSOLETE:
-                return TeleObjectMemory.State.OBSOLETE.label() + " " + title + regionSuffix;
-            case DEAD:
-                return TeleObjectMemory.State.DEAD.label() + " " + title + regionSuffix;
+        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
+        if (memoryStatus.isLive()) {
+            Pointer pointer = teleObject.origin();
+            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+            return title + regionSuffix;
         }
-        return null;
+        return memoryStatus.label() + " " + title + regionSuffix;
     }
 
     @Override
@@ -248,16 +245,17 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        if (teleObject.isObsolete() && followingTeleObject) {
+        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
+        if (memoryStatus.isObsolete() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
-            if (viewManager.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
+            if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
                 setWarning();
                 setTitle();
                 return;
             }
-            viewManager.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
+            viewManager.resetObjectToViewMapEntry(teleObject, forwardedTeleObject, this);
             teleObject = forwardedTeleObject;
             currentObjectOrigin = teleObject.origin();
             reconstructView();
@@ -277,12 +275,15 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             }
         }
         setTitle();
-        if (teleObject.isDead()) {
-            setStateColor(style().vmTerminatedBackgroundColor());
-        } else if (teleObject.isObsolete()) {
-            setStateColor(style().vmStoppedinGCBackgroundColor(false));
-        } else {
-            setStateColor(null);
+        switch(memoryStatus) {
+            case DEAD:
+                setStateColor(preference().style().vmTerminatedBackgroundColor());
+                break;
+            case OBSOLETE:
+                setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+                break;
+            default:
+                setStateColor(null);
         }
     }
 

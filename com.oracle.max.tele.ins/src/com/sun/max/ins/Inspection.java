@@ -156,10 +156,6 @@ public final class Inspection implements InspectionHolder {
         return inspectorMainFrame;
     }
 
-    public InspectorStyle style() {
-        return preferences.style();
-    }
-
     public InspectionFocus focus() {
         return focus;
     }
@@ -170,6 +166,10 @@ public final class Inspection implements InspectionHolder {
 
     public InspectionActions actions() {
         return inspectionActions;
+    }
+
+    public InspectionPreferences preference() {
+        return preferences;
     }
 
     public OptionSet options() {
@@ -191,29 +191,18 @@ public final class Inspection implements InspectionHolder {
             } else {
                 sb.append(vmState.processState().label());
                 if (vmState.isInGC()) {
-                    sb.append(" in GC");
+                    sb.append(", in GC");
+                }
+                if (vmState.isInEviction()) {
+                    sb.append(", in Eviction");
                 }
             }
         }
         return sb.toString();
     }
 
-    /**
-     * @return a GUI panel suitable for setting global preferences for the inspection session.
-     */
-    public JPanel globalPreferencesPanel() {
-        return preferences.getPanel();
-    }
-
     public InspectionSettings settings() {
         return settings;
-    }
-
-    /**
-     * Default size and layout for windows; overridden by persistent settings from previous sessions.
-     */
-    public InspectorGeometry geometry() {
-        return preferences.geometry();
     }
 
     /**
@@ -222,20 +211,6 @@ public final class Inspection implements InspectionHolder {
      */
     public InspectorNameDisplay nameDisplay() {
         return nameDisplay;
-    }
-
-    /**
-     * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
-     */
-    public boolean investigateWordValues() {
-        return preferences.investigateWordValues();
-    }
-
-    /**
-     * Informs this inspection of a new action that can operate on this inspection.
-     */
-    public void registerAction(InspectorAction inspectorAction) {
-        preferences.registerAction(inspectorAction);
     }
 
     /**

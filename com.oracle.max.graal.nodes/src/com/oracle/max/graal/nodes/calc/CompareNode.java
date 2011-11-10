@@ -72,7 +72,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
      */
     public CompareNode(ValueNode x, Condition condition, boolean unorderedIsTrue, ValueNode y) {
         super(CiKind.Illegal);
-        assert (x == null && y == null) || x.kind == y.kind;
+        assert (x == null && y == null) || x.kind() == y.kind();
         this.condition = condition;
         this.unorderedIsTrue = unorderedIsTrue;
         this.x = x;
@@ -158,7 +158,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
     }
 
     private Node optimizeNormalizeCmp(CiConstant constant, NormalizeCompareNode normalizeNode) {
-        if (normalizeNode.x().kind.isFloatOrDouble()) {
+        if (normalizeNode.x().kind().isFloatOrDouble()) {
             // NaN values lead to unexpected comparison results...
             return this;
         }
@@ -196,10 +196,10 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
             }
         }
 
-        if (x() == y() && x().kind != CiKind.Float && x().kind != CiKind.Double) {
+        if (x() == y() && x().kind() != CiKind.Float && x().kind() != CiKind.Double) {
             return ConstantNode.forBoolean(condition().check(1, 1), graph());
         }
-        if ((condition == Condition.NE || condition == Condition.EQ) && x().kind == CiKind.Object) {
+        if ((condition == Condition.NE || condition == Condition.EQ) && x().kind() == CiKind.Object) {
             ValueNode object = null;
             if (x().isNullConstant()) {
                 object = y();

@@ -34,7 +34,7 @@ public class TeleStaticWordFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.WORD);
     }
 
-    public Word readWord(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readWord(fieldActor().offset());
+    public Word readWord(MaxVM vm) {
+        return staticTupleReference(vm).readWord(fieldActor().offset());
     }
 }

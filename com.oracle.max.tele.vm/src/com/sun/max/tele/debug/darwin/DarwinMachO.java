@@ -27,79 +27,138 @@ import java.nio.*;
 
 
 /**
- * Access to Mach_O 64-bit format for Darwin core dumps.
+ * (Limited) Access to Mach_O 64-bit format files. See /usr/include/mach-o/*.h for source.
+ * Note that a file may (unusually) contain multiple binaries for different architectures,
+ * see /usr/include/mach-o/fat.h. Such a file is called a universal binary file, (cf an archive file).
  *
  */
 public class DarwinMachO {
 
-    public static class Header {
-        public int magic;
-        public int cputype;
-        public int cpusubtype;
-        public int filetype;
-        public int ncmds;
-        public int sizeofcmds;
-        public int flags;
-        public int reserved;
+    /**
+     * Encapsulates whether the MachO file is embedded in a universal binary file.
+     */
+    public static class MachORandomAccessFile extends RandomAccessFile {
 
-        public static Header read(RandomAccessFile in) throws IOException {
-            Header result = new Header();
-            result.magic = readInt(in);
-            result.cputype = readInt(in);
-            result.cpusubtype = readInt(in);
-            result.filetype = readInt(in);
-            result.ncmds = readInt(in);
-            result.sizeofcmds = readInt(in);
-            result.flags = readInt(in);
-            readInt(in); // skip reserved
-            return result;
+        /**
+         * If non-zero, offset to start of architecture-specific MachO file in FAT file.
+         */
+        private int fatOffset;
+
+        private MachORandomAccessFile(String path) throws FileNotFoundException {
+            super(path, "r");
+        }
+
+        @Override
+        public void seek(long filePos) throws IOException {
+            super.seek(filePos + fatOffset);
+        }
+
+        @Override
+        public long getFilePointer() throws IOException {
+            long fp = super.getFilePointer();
+            return fp - fatOffset;
         }
     }
 
-    public static class LoadCommand {
+    public final MachORandomAccessFile raf;
+    private Header header;
+    private LoadCommand[] loadCommands;
+
+    public DarwinMachO(String path) throws FileNotFoundException, IOException {
+        raf = new MachORandomAccessFile(path);
+        header = new Header();
+    }
+
+    private class FatArch {
+        final static int X86_64 = 0x01000007;
+        int cputype;
+        int cpusubtype;
+        int offset;
+        int size;
+        int align;
+
+        private FatArch() throws IOException {
+            cputype = raf.readInt();
+            cpusubtype = raf.readInt();
+            offset = raf.readInt();
+            size = raf.readInt();
+            align = raf.readInt();
+        }
+    }
+
+    public class Header {
+        private static final int FAT_MAGIC = 0xcafebabe;
+        public final int magic;
+        public final int cputype;
+        public final int cpusubtype;
+        public final int filetype;
+        public final int ncmds;
+        public final int sizeofcmds;
+        public final int flags;
+        public final int reserved;
+
+        private Header() throws IOException {
+            int magic = raf.readInt();
+            boolean found = false;
+            if (magic == FAT_MAGIC) {
+                // find our architecture subfile
+                int nFatArch = raf.readInt();
+                for (int i = 0; i < nFatArch; i++) {
+                    FatArch fatArch = new FatArch();
+                    if (fatArch.cputype == FatArch.X86_64) {
+                        found = true;
+                        raf.seek(fatArch.offset);
+                        raf.fatOffset = fatArch.offset;
+                        magic = readInt();
+                        break;
+                    }
+                }
+                assert found : "failed to find X86_64 architecture in MachO FAT file";
+            }
+            this.magic = magic;
+            cputype = readInt();
+            cpusubtype = readInt();
+            filetype = readInt();
+            ncmds = readInt();
+            sizeofcmds = readInt();
+            flags = readInt();
+            reserved = readInt();
+
+        }
+
+    }
+
+    public Header getHeader() throws IOException {
+        if (header == null) {
+            header = new Header();
+        }
+        return header;
+    }
+
+    /**
+     * Common base class for all Mach-O load command types.
+     */
+    public class LoadCommand {
         public static final int LC_SEGMENT_64 = 0x19;
         public static final int LC_THREAD = 0x4;
+        public static final int LC_SYMTAB = 0x2;
 
-        public int cmd;
-        public int cmdsize;
+        public final int cmd;
+        public final int cmdsize;
 
-        LoadCommand(int cmd, int cmdsize) {
-            this.cmd = cmd;
-            this.cmdsize = cmdsize;
+        protected LoadCommand() throws IOException {
+            this.cmd = readInt();
+            this.cmdsize = readInt();
         }
 
-        LoadCommand(RandomAccessFile in) throws IOException {
-            this.cmd = readInt(in);
-            this.cmdsize = readInt(in);
-        }
-
-        public static LoadCommand read(RandomAccessFile in) throws IOException {
-            LoadCommand result = null;
-            final long ptr = in.getFilePointer();
-            final int cmd = readInt(in);
-            final int cmdsize = readInt(in);
-            in.seek(ptr);
-            switch (cmd) {
-                case LC_SEGMENT_64:
-                    result = Segment64LoadCommand.read(in);
-                    break;
-                case LC_THREAD:
-                    result = ThreadLoadCommand.read(in);
-                    break;
-                default:
-                    result = new LoadCommand(in);
-            }
-            // skip over entire command
-            in.seek(ptr + cmdsize);
-            return result;
-        }
-
-        public String name() {
+        public String typeName() {
             switch (cmd) {
                 case LC_SEGMENT_64:
                     return "LC_SEGMENT_64";
                 case LC_THREAD:
                     return "LC_THREAD";
+                case LC_SYMTAB:
+                    return "LC_SYMTAB";
                 default:
                     return "LC #" + cmd;
             }
@@ -107,183 +166,370 @@ public class DarwinMachO {
 
     }
 
-    public static final class Segment64LoadCommand extends LoadCommand {
-        String segName;
-        long vmaddr;
-        long vmsize;
-        long fileoff;
-        long filesize;
-        // more we don't care about
-
-        private Segment64LoadCommand(RandomAccessFile in) throws IOException {
-            super(in);
+    /**
+     * Reads a load command structure starting at the current file position, invoking
+     * the appropriate subclass {@code read} command, based on the {@code cmd} field.
+     * Leaves the file pointer at the next load command (if any).
+     *
+     * @return instance of the appropriate subclass for discovered command type
+     * @throws IOException
+     */
+    private LoadCommand readNextLoadCommand() throws IOException {
+        LoadCommand result = null;
+        final long ptr = raf.getFilePointer();
+        final int cmd = readInt();
+        final int cmdsize = readInt();
+        raf.seek(ptr);
+        switch (cmd) {
+            case LoadCommand.LC_SEGMENT_64:
+                result = new Segment64LoadCommand();
+                break;
+            case LoadCommand.LC_THREAD:
+                result = new ThreadLoadCommand();
+                break;
+            case LoadCommand.LC_SYMTAB:
+                result = new SymTabLoadCommand();
+                break;
+            default:
+                result = new LoadCommand();
         }
+        // skip over entire command
+        raf.seek(ptr + cmdsize);
+        return result;
+    }
 
-        public static Segment64LoadCommand read(RandomAccessFile in) throws IOException {
-            final Segment64LoadCommand result = new Segment64LoadCommand(in);
+    public LoadCommand[] getLoadCommands() throws IOException {
+        if (loadCommands == null) {
+            getHeader();
+            loadCommands = new LoadCommand[header.ncmds];
+            for (int i = 0; i < header.ncmds; i++) {
+                loadCommands[i] = readNextLoadCommand();
+            }
+        }
+        return loadCommands;
+    }
+
+    public final class Segment64LoadCommand extends LoadCommand {
+        public final String segName;
+        public final long vmaddr;
+        public final long vmsize;
+        public final long fileoff;
+        public final long filesize;
+        public final int maxprot;
+        public final int initprot;
+        public final int nsects;
+        public final int flags;
+        public final Section64[] sections;
+
+        private Segment64LoadCommand() throws IOException {
             final byte[] segname = new byte[16];
             for (int i = 0; i < 16; i++) {
-                segname[i] = in.readByte();
+                segname[i] = raf.readByte();
             }
-            result.segName = new String(segname);
-            result.vmaddr = readLong(in);
-            result.vmsize = readLong(in);
-            result.fileoff = readLong(in);
-            result.filesize = readLong(in);
-            return result;
+            segName = new String(segname);
+            vmaddr = readLong();
+            vmsize = readLong();
+            fileoff = readLong();
+            filesize = readLong();
+            maxprot = readInt();
+            initprot = readInt();
+            nsects = readInt();
+            flags = readInt();
+            sections = new Section64[nsects];
+            for (int i = 0; i < nsects; i++) {
+                sections[i] = new Section64(this);
+            }
+        }
+
+    }
+
+    public class Section64 {
+        public final String sectname;
+        public final String segname;
+        public final long addr;
+        public final long size;
+        public final int offset;
+        public final int align;
+        public final int reloff;
+        public final int nreloc;
+        public final int flags;
+        public final int reserved1;
+        public final int reserved2;
+        public final int reserved3;
+        public final Segment64LoadCommand owningSegment;
+
+        private Section64(Segment64LoadCommand segment64) throws IOException {
+            owningSegment = segment64;
+            sectname = readName();
+            segname = readName();
+            addr = readLong();
+            size = readLong();
+            offset = readInt();
+            align = readInt();
+            reloff = readInt();
+            nreloc = readInt();
+            flags = readInt();
+            reserved1 = readInt();
+            reserved2 = readInt();
+            reserved3 = readInt();
+        }
+
+        private String readName() throws IOException {
+            byte[] nameBytes = new byte[16];
+            int length = 0;
+            for (int i = 0; i < nameBytes.length; i++) {
+                nameBytes[i] = raf.readByte();
+                if (nameBytes[i] != 0) {
+                    length++;
+                }
+            }
+            return new String(nameBytes, 0, length);
+        }
+
+        public boolean isText() {
+            return segname.equals("__TEXT");
         }
     }
 
-    public static class ThreadLoadCommand extends LoadCommand {
-        public ThreadRegState regstate;
-        public ThreadFPRegState fpregstate;
-        public ThreadExceptionState exstate;
+    public class ThreadLoadCommand extends LoadCommand {
+        public final ThreadRegState regstate;
+        public final ThreadFPRegState fpregstate;
+        public final ThreadExceptionState exstate;
 
-        ThreadLoadCommand(RandomAccessFile in) throws IOException {
-            super(in);
+        ThreadLoadCommand() throws IOException {
+            regstate = new ThreadRegState();
+            fpregstate = new ThreadFPRegState();
+            exstate = new ThreadExceptionState();
         }
 
-        public static ThreadLoadCommand read(RandomAccessFile in) throws IOException {
-            final ThreadLoadCommand result = new ThreadLoadCommand(in);
-            result.regstate = ThreadRegState.read(in);
-            result.fpregstate = ThreadFPRegState.read(in);
-            result.exstate = ThreadExceptionState.read(in);
-            return result;
+    }
+
+    public class ThreadState {
+        public final int flavor;
+        public final int count;
+
+        protected ThreadState() throws IOException {
+            flavor = readInt();
+            count = readInt();
         }
     }
 
-    public static class ThreadState {
-        int flavor;
-        int count;
+    public class ThreadRegState extends ThreadState {
+        public final int tsh_flavor;
+        public final int tsh_count;
+        public final ByteBuffer regbytes; // we also store registers as a directly allocated ByteBuffer for passing to native code
+        public final long      rax;
+        public final long      rbx;
+        public final long      rcx;
+        public final long      rdx;
+        public final long      rdi;
+        public final long      rsi;
+        public final long      rbp;
+        public final long      rsp;
+        public final long      r8;
+        public final long      r9;
+        public final long      r10;
+        public final long      r11;
+        public final long      r12;
+        public final long      r13;
+        public final long      r14;
+        public final long      r15;
+        public final long      rip;
+        public final long      rflags;
+        public final long      cs;
+        public final long      fs;
+        public final long      gs;
 
-        protected ThreadState(RandomAccessFile in) throws IOException {
-            flavor = readInt(in);
-            count = readInt(in);
-        }
-    }
-
-    public static class ThreadRegState extends ThreadState {
-        int tsh_flavor;
-        int tsh_count;
-        ByteBuffer regbytes; // we also store registers as a directly allocated ByteBuffer for passing to native code
-        long      rax;
-        long      rbx;
-        long      rcx;
-        long      rdx;
-        long      rdi;
-        long      rsi;
-        long      rbp;
-        long      rsp;
-        long      r8;
-        long      r9;
-        long      r10;
-        long      r11;
-        long      r12;
-        long      r13;
-        long      r14;
-        long      r15;
-        long      rip;
-        long      rflags;
-        long      cs;
-        long      fs;
-        long      gs;
-
-        ThreadRegState(RandomAccessFile in) throws IOException {
-            super(in);
-        }
-
-        public static ThreadRegState read(RandomAccessFile in) throws IOException {
-            final ThreadRegState result = new ThreadRegState(in);
-            result.tsh_flavor = readInt(in);
-            result.tsh_count = readInt(in);
-            final long ptr = in.getFilePointer();
-            result.rax = readLong(in);
-            result.rbx = readLong(in);
-            result.rcx = readLong(in);
-            result.rdx = readLong(in);
-            result.rdi = readLong(in);
-            result.rsi = readLong(in);
-            result.rbp = readLong(in);
-            result.rsp = readLong(in);
-            result.r8 = readLong(in);
-            result.r9 = readLong(in);
-            result.r10 = readLong(in);
-            result.r11 = readLong(in);
-            result.r12 = readLong(in);
-            result.r13 = readLong(in);
-            result.r14 = readLong(in);
-            result.r15 = readLong(in);
-            result.rip = readLong(in);
-            result.rflags = readLong(in);
-            result.cs = readLong(in);
-            result.fs = readLong(in);
-            result.gs = readLong(in);
-            in.seek(ptr);
+        ThreadRegState() throws IOException {
+            tsh_flavor = readInt();
+            tsh_count = readInt();
+            final long ptr = raf.getFilePointer();
+            rax = readLong();
+            rbx = readLong();
+            rcx = readLong();
+            rdx = readLong();
+            rdi = readLong();
+            rsi = readLong();
+            rbp = readLong();
+            rsp = readLong();
+            r8 = readLong();
+            r9 = readLong();
+            r10 = readLong();
+            r11 = readLong();
+            r12 = readLong();
+            r13 = readLong();
+            r14 = readLong();
+            r15 = readLong();
+            rip = readLong();
+            rflags = readLong();
+            cs = readLong();
+            fs = readLong();
+            gs = readLong();
+            raf.seek(ptr);
             // read and store again as byte array
-            result.regbytes = ByteBuffer.allocateDirect(result.tsh_count * 4);
-            for (int i = 0; i < result.tsh_count * 4; i++) {
-                result.regbytes.put(in.readByte());
+            regbytes = ByteBuffer.allocateDirect(tsh_count * 4);
+            for (int i = 0; i < tsh_count * 4; i++) {
+                regbytes.put(raf.readByte());
             }
-            return result;
         }
+
     }
 
-    public static class ThreadFPRegState extends ThreadState {
-
-        int fsh_flavor;
-        int fsh_count;
+    public class ThreadFPRegState extends ThreadState {
+        public final int fsh_flavor;
+        public final int fsh_count;
         ByteBuffer regbytes; // way too complex for individual declarations; do it all via native code
 
-        ThreadFPRegState(RandomAccessFile in) throws IOException {
-            super(in);
-        }
-
-        public static ThreadFPRegState read(RandomAccessFile in) throws IOException {
-            final ThreadFPRegState result = new ThreadFPRegState(in);
-            result.fsh_flavor = readInt(in);
-            result.fsh_count = readInt(in);
-            result.regbytes = ByteBuffer.allocateDirect(result.fsh_count * 4);
-            for (int i = 0; i < result.fsh_count * 4; i++) {
-                result.regbytes.put(in.readByte());
+        ThreadFPRegState() throws IOException {
+            fsh_flavor = readInt();
+            fsh_count = readInt();
+            regbytes = ByteBuffer.allocateDirect(fsh_count * 4);
+            for (int i = 0; i < fsh_count * 4; i++) {
+                regbytes.put(raf.readByte());
             }
-            return result;
+        }
+
+    }
+
+    public class ThreadExceptionState extends ThreadState {
+        public final int esh_flavor;
+        public final int esh_count;
+        public final int trapno;
+        public final int err;
+        public final long faultvaddr;
+
+        ThreadExceptionState() throws IOException {
+            super();
+            esh_flavor = readInt();
+            esh_count = readInt();
+            trapno = readInt();
+            err = readInt();
+            faultvaddr = readLong();
+        }
+
+    }
+
+    public class SymTabLoadCommand extends LoadCommand {
+        public final int symoff;
+        public final int nsyms;
+        public final int stroff;
+        public final int strsize;
+        /**
+         * Lazily created string table.
+         */
+        private byte[] stringTable;
+        /**
+         * Lazily created symbol table.
+         */
+        private NList64[] symbolTable;
+
+        SymTabLoadCommand() throws IOException {
+            super();
+            symoff = readInt();
+            nsyms = readInt();
+            stroff = readInt();
+            strsize = readInt();
+        }
+
+        public NList64[] getSymbolTable() throws IOException {
+            if (symbolTable != null) {
+                return symbolTable;
+            }
+            stringTable = new byte[strsize];
+            raf.seek(stroff);
+            for (int i = 0; i < strsize; i++) {
+                stringTable[i] = raf.readByte();
+            }
+            symbolTable = new NList64[nsyms];
+            raf.seek(symoff);
+            for (int i = 0; i < nsyms; i++) {
+                symbolTable[i] = new NList64();
+            }
+            return symbolTable;
+        }
+
+        public String getSymbolName(NList64 nlist64) {
+            String symbol = "";
+            if (nlist64.strx != 0) {
+                byte sb = stringTable[nlist64.strx];
+                int sl = 0;
+                while (sb != 0) {
+                    sb = stringTable[nlist64.strx + sl];
+                    sl++;
+                }
+                // remove leading/trailing underscores which bracket all symbols
+                symbol = new String(stringTable, nlist64.strx + 1, sl - 2);
+            }
+            return symbol;
+        }
+
+    }
+
+    public class NList64 {
+        public static final int STAB = 0xe0;
+        public static final int PEXT = 0x10;
+        public static final int TYPE = 0xe;
+        public static final int EXT = 0x1;
+
+        public static final int UNDF = 0x0;
+        public static final int ABS  = 0x2;
+        public static final int SECT = 0xe;
+        public static final int PBUD = 0xc;
+        public static final int INDR = 0xa;
+
+        public final int strx;
+        public final byte type;
+        public final byte sect;
+        public final short desc;
+        public final long value;
+
+        NList64() throws IOException {
+            strx = readInt();
+            type = raf.readByte();
+            sect = raf.readByte();
+            desc = readShort();
+            value = readLong();
         }
     }
 
-    public static class ThreadExceptionState extends ThreadState {
-        int esh_flavor;
-        int esh_count;
-        int trapno;
-        int err;
-        long faultvaddr;
-
-        ThreadExceptionState(RandomAccessFile in) throws IOException {
-            super(in);
+    /**
+     * Locates a given section within a given array of load commands.
+     * Sections are numbered from 1 as they occur within SEGMENT_64 commands.
+     * @param loadCommands
+     * @param sectToFind
+     * @return
+     */
+    public static Section64 getSection(LoadCommand[] loadCommands, int sectToFind) {
+        int sect = 1;
+        for (int i = 0; i < loadCommands.length; i++) {
+            if (loadCommands[i].cmd == LoadCommand.LC_SEGMENT_64) {
+                Segment64LoadCommand slc = (Segment64LoadCommand) loadCommands[i];
+                if (sectToFind < sect + slc.nsects) {
+                    return slc.sections[sectToFind - sect];
+                }
+                sect += slc.nsects;
+            }
         }
-
-        public static ThreadExceptionState read(RandomAccessFile in) throws IOException {
-            final ThreadExceptionState result = new ThreadExceptionState(in);
-            result.esh_flavor = readInt(in);
-            result.esh_count = readInt(in);
-            result.trapno = readInt(in);
-            result.err = readInt(in);
-            result.faultvaddr = readLong(in);
-            return result;
-        }
+        return null;
     }
 
+    public short readShort() throws IOException {
+        final int b1 = raf.read();
+        final int b2 = raf.read();
+        return (short) (((b2 << 8) | b1) & 0xFFFF);
+    }
 
-    public static int readInt(RandomAccessFile in) throws IOException {
-        final int b1 = in.read();
-        final int b2 = in.read();
-        final int b3 = in.read();
-        final int b4 = in.read();
+    public int readInt() throws IOException {
+        final int b1 = raf.read();
+        final int b2 = raf.read();
+        final int b3 = raf.read();
+        final int b4 = raf.read();
         return (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
     }
 
-    public static long readLong(RandomAccessFile in) throws IOException {
-        final long lw = readInt(in);
-        final long hw = readInt(in);
+    public long readLong() throws IOException {
+        final long lw = readInt();
+        final long hw = readInt();
         return hw << 32 | (lw & 0xFFFFFFFFL);
     }
 

@@ -98,7 +98,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                 }
             }
         } else {
-            for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
+            for (MaxCodeCacheRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
                 for (MaxCompilation compiledCode : teleCompiledCodeRegion.compilations()) {
                     ClassMethodActor methodActor = compiledCode.classMethodActor();
                     String methodCompilationType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
@@ -140,13 +140,13 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
     }
 
     /**
-     * Displays a dialog to let the use select one or more compiled methods in the tele VM.
+     * Displays a dialog to let the use select one or more compiled methods in the VM.
      *
-     * @param teleClassActor a {@link ClassActor} in the tele VM. If null, then all method compilations in the VM are presented for selection.
+     * @param teleClassActor a {@link ClassActor} in the VM. If null, then all method compilations in the VM are presented for selection.
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link MaxCompilation} in the tele VM, null if user canceled.
+     * @return references to the selected instances of {@link MaxCompilation} in the VM, null if user canceled.
      */
     public static List<MaxCompilation> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
         final MethodCompilationSearchDialog dialog = new MethodCompilationSearchDialog(inspection, teleClassActor, title, actionName, multi);

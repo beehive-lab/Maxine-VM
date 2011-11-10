@@ -108,41 +108,41 @@ public final class BootImageTable extends InspectorTable {
             addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);
             addRow("string data size:", new DataLabel.IntAsHex(inspection(), header.stringInfoSize), null);
 
-            final Pointer bootImageStart = vm().bootImageStart();
+            final Address bootImageStart = vm().bootImageStart();
 
-            final Pointer bootHeapStart = bootImageStart;
-            final Pointer bootHeapEnd = bootHeapStart.plus(header.heapSize);
+            final Address bootHeapStart = bootImageStart;
+            final Address bootHeapEnd = bootHeapStart.plus(header.heapSize);
             final String toolTipPrefix = "Value ";
 
             addRow("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapStart, toolTipPrefix));
             addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header.heapSize), null);
             addRow("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapEnd, toolTipPrefix));
 
-            final Pointer bootCodeStart = bootHeapEnd;
-            final Pointer bootCodeEnd = bootCodeStart.plus(header.codeSize);
+            final Address bootCodeStart = bootHeapEnd;
+            final Address bootCodeEnd = bootCodeStart.plus(header.codeSize);
 
             addRow("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeStart, toolTipPrefix));
             addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.codeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd, toolTipPrefix));
 
-            final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
+            final Address runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer, toolTipPrefix));
-            final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
+            final Address threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
             addRow("VmThread.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer, toolTipPrefix));
-            final Pointer threadAttachMethodPointer = bootImageStart.plus(header.vmThreadAttachMethodOffset);
+            final Address threadAttachMethodPointer = bootImageStart.plus(header.vmThreadAttachMethodOffset);
             addRow("VmThread.attach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadAttachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadAttachMethodPointer, toolTipPrefix));
-            final Pointer threadDetachMethodPointer = bootImageStart.plus(header.vmThreadDetachMethodOffset);
+            final Address threadDetachMethodPointer = bootImageStart.plus(header.vmThreadDetachMethodOffset);
             addRow("VmThread.detach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadDetachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadDetachMethodPointer, toolTipPrefix));
 
-            final Pointer classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
+            final Address classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer, toolTipPrefix));
 
-            final Pointer dynamicHeapRegionsFieldPointer = bootHeapStart.plus(header.dynamicHeapRegionsArrayFieldOffset);
+            final Address dynamicHeapRegionsFieldPointer = bootHeapStart.plus(header.dynamicHeapRegionsArrayFieldOffset);
             addRow("dynamic heap regions array field:",
                             new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, dynamicHeapRegionsFieldPointer, BootImageTable.this),
                             new MemoryRegionValueLabel(inspection(), dynamicHeapRegionsFieldPointer, toolTipPrefix));
 
-            final Pointer tlaListHead = bootImageStart.plus(header.tlaListHeadOffset);
+            final Address tlaListHead = bootImageStart.plus(header.tlaListHeadOffset);
             addRow("TLA list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, tlaListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), tlaListHead, toolTipPrefix));
         }
 

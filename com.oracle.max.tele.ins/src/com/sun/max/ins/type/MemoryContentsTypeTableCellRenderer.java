@@ -70,7 +70,7 @@ public final class MemoryContentsTypeTableCellRenderer extends InspectorTableCel
         label.setToolTipPrefix(inspectorMemoryTableModel.getRowDescription(row) + "<br>Type = ");
         label.setValue(rowType);
         if (inspectorTable.isBoundaryRow(row)) {
-            label.setBorder(style().defaultPaneTopBorder());
+            label.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             label.setBorder(null);
         }

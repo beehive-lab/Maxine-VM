@@ -39,6 +39,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -67,6 +68,23 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRuntime implements GraalRuntime {
 
+    public static final class CompilationInfo {
+
+        public boolean usesTagging = false;
+
+        public void reset() {
+            usesTagging = false;
+        }
+
+    }
+
+    public static final ThreadLocal<CompilationInfo> compilationInfo = new ThreadLocal<CompilationInfo>() {
+        @Override
+        protected CompilationInfo initialValue() {
+            return new CompilationInfo();
+        }
+    };
+
     private static MaxRuntime instance = new MaxRuntime();
 
     private IntrinsicImpl.Registry intrinsicRegistry;
@@ -80,6 +98,29 @@ public class MaxRuntime implements GraalRuntime {
 
     public void setIntrinsicRegistry(IntrinsicImpl.Registry registry) {
         intrinsicRegistry = registry;
+    }
+
+    @HOSTED_ONLY
+    private boolean initialized;
+
+    @HOSTED_ONLY
+    public void initialize() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        // search for the runtime call and register critical methods
+        for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            int flags = m.getModifiers();
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+                new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
+            }
+        }
+
+        // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
+        // must go through a stub that saves the register state before calling the deopt routine.
+        CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
+        uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
     }
 
     /**
@@ -98,6 +139,9 @@ public class MaxRuntime implements GraalRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiResolvedMethod method) {
+        if (!(method instanceof ClassMethodActor)) {
+            return false;
+        }
         ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
         if (methodActor.isInline()) {
             return true;
@@ -137,6 +181,15 @@ public class MaxRuntime implements GraalRuntime {
         }
 
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
+    }
+
+    @Override
+    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
+        final ClassMethodActor cmaCallee = asClassMethodActor(callee, "notifyInline()");
+        if (cmaCallee.isUsingTaggedLocals()) {
+            final CompilationInfo ci = compilationInfo.get();
+            ci.usesTagging = true;
+        }
     }
 
     /**
@@ -421,11 +474,13 @@ public class MaxRuntime implements GraalRuntime {
         if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
             StructuredGraph graph = load.graph();
-            assert load.kind != CiKind.Illegal;
+            assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
-            ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
+            if (load.object().kind() == CiKind.Object) {
+                memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
+            }
             FixedNode next = load.next();
             load.setNext(null);
             memoryRead.setNext(next);
@@ -436,6 +491,9 @@ public class MaxRuntime implements GraalRuntime {
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
+            if (store.object().kind() == CiKind.Object) {
+                write.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(store.object(), false))));
+            }
             FixedNode next = store.next();
             store.setNext(null);
             // TODO: add Maxine-specific write barrier
@@ -457,7 +515,12 @@ public class MaxRuntime implements GraalRuntime {
                 StructuredGraph graph = new StructuredGraph();
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
-                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, i));
+                    ValueNode valueNode = (ValueNode) parameters.get(i);
+                    if (valueNode.isConstant()) {
+                        args[i] = ConstantNode.forCiConstant(valueNode.asConstant(), this, graph);
+                    } else {
+                        args[i] = graph.unique(new LocalNode(valueNode.kind(), i));
+                    }
                 }
                 ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
                 if (node instanceof FixedNode) {
@@ -490,11 +553,22 @@ public class MaxRuntime implements GraalRuntime {
         return MethodActor.fromJava(reflectionMethod);
     }
 
-    public void installMethod(RiMethod method, CiTargetMethod code) {
+    public RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
         ClassMethodActor cma = (ClassMethodActor) method;
         synchronized (cma) {
             MaxTargetMethod tm = new MaxTargetMethod(cma, code, true);
             cma.compiledState = new Compilations(null, tm);
         }
+        return null;
+    }
+
+    @Override
+    public void executeOnCompilerThread(Runnable r) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
+        throw new UnsupportedOperationException();
     }
 }

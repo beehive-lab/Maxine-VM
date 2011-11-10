@@ -31,21 +31,31 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link ClassMethodActor} in the VM.
  * <p>
- * Note that the compilations of a method are recorded as a {@linkplain ClassMethodActor#compiledState single polymorphic object} field
- * that must be decoded using knowledge of how the encoding is done in the VM.
+ * This object also provides access to compilations of the method in the VM, of which
+ * there are 0, 1, or 2 in ordinary cases: possibly a "baseline" compilation and possibly
+ * an "optimized" compilation.
  * <p>
- * It is more important
+ * The update strategy for this class relies upon the immutability of the class used to record the current
+ * compilation state for the method:  {@link Compilations}.  If that object has not changed in
+ * the {@link ClassMethodActor} then the fields holding compilations will not be revisited.
+ * <p>
+ * Note, however, that there can be active compilations of the method in situations where
+ * an activation record exists on the stack for a compilation that might have been subsequently
+ * replaced:  deoptimized, replaced by a baseline compilation, and optimized again.  No record
+ * of these is kept.  Any forgotten compilation in this situation will have been invalidated.
  *
  * @see ClassMethodActor
  * @see Compilations
@@ -53,12 +63,20 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 
-    private static final TeleTargetMethod[] NO_TARGET_METHODS = {};
+    private static List<TeleTargetMethod> EMPTY = Collections.emptyList();
+
+    private TeleObject currentCompiledState = null;
 
     /**
-     * Cached history of compilation for this method in the tele VM.
+     * Currently available compilations.
      */
-    private TeleTargetMethod[] teleTargetMethodHistory = NO_TARGET_METHODS;
+    private TeleTargetMethod baselineTargetMethod = null;
+    private TeleTargetMethod optimizedTargetMethod = null;
+
+    /**
+     * A cached list of currently available compilations.
+     */
+    private List<TeleTargetMethod> compilations = EMPTY;
 
     /**
      * Constructs a {@link TeleObject} specialized for dealing with the information stored in a VM
@@ -79,8 +97,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     /** {@inheritDoc}
      * <p>
      * The compilation history associated with a {@link ClassMethodActor} in the VM
-     * is assumed to grow monotonically, as recompilations
-     * take place in the VM, and that the old compilations still persist.
+     * is assumed to be represented by an immutable object that is replaced each
+     * time there is some change in the compilation state.
      */
     @Override
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
@@ -88,23 +106,37 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             return false;
         }
         try {
-            final Reference compiledStateReference = vm().teleFields().ClassMethodActor_compiledState.readReference(reference());
-            if (!compiledStateReference.isZero()) {
-                if (!updatingCompiledState) {
-                    updatingCompiledState = true;
-                    // the method has been compiled; check the type to determine the number of times
-                    translateCompiledState(heap().makeTeleObject(compiledStateReference));
-                    updatingCompiledState = false;
-                } else {
-                    // prevent infinite recursion
-                    Trace.line(1, "Cut off infinite recursion between TeleClassMethodActor.updateObjectCache() and TeleTargetMethod.updateObjectCache()");
+            final Reference compiledStateReference = fields().ClassMethodActor_compiledState.readReference(reference());
+            if (compiledStateReference.isZero()) {
+                clearCompiledState();
+            } else if (updatingCompiledState) {
+                // We're already in an update; prevent infinite recursion
+                Trace.line(1, "Cut off infinite recursion between TeleClassMethodActor.updateObjectCache() and TeleTargetMethod.updateObjectCache()");
+            } else {
+                updatingCompiledState = true;
+                // the method has been compiled; see if it has changed since the last update.
+                final TeleObject compiledState = objects().makeTeleObject(compiledStateReference);
+                if (compiledState == null) {
+                    clearCompiledState();
+                } else if (compiledState != currentCompiledState) {
+                    translateCompiledState(compiledState);
+                    currentCompiledState = compiledState;
                 }
+                updatingCompiledState = false;
             }
         } catch (DataIOError dataIOError) {
+            updatingCompiledState = false;
             // If something goes wrong, delay the cache update until next time.
             return false;
         }
         return true;
+    }
+
+    private void clearCompiledState() {
+        currentCompiledState = null;
+        baselineTargetMethod = null;
+        optimizedTargetMethod = null;
+        compilations = EMPTY;
     }
 
    /**
@@ -124,9 +156,9 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         Reference codeAttributeReference = null;
         if (vm().tryLock()) {
             try {
-                codeAttributeReference = vm().teleFields().ClassMethodActor_codeAttribute.readReference(reference());
+                codeAttributeReference = fields().ClassMethodActor_codeAttribute.readReference(reference());
                 if (codeAttributeReference != null) {
-                    return (TeleCodeAttribute) heap().makeTeleObject(codeAttributeReference);
+                    return (TeleCodeAttribute) objects().makeTeleObject(codeAttributeReference);
                 }
             } catch (TerminatedProcessIOException terminatedProcessIOException) {
             } finally {
@@ -137,7 +169,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
     public TargetMethodAccess[] getTargetMethods() {
-        return teleTargetMethodHistory;
+        TeleError.unimplemented();
+        return null;
     }
 
     /**
@@ -148,31 +181,35 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      *
      * @see ClassMethodActor
      * @see Compilations
-     * @param compiledState an object that represents an encoded compilation history
+     * @param compiledState an object that represents a polymorphic encoding of the current compilation state
      */
     private void translateCompiledState(TeleObject compiledState) {
         if (compiledState == null) {
-            return;
-        }
-        if (compiledState.classActorForObjectType().javaClass() == Compilations.class) {
-            Reference baselineReference = vm().teleFields().Compilations_baseline.readReference(compiledState.reference());
-            Reference optimizedReference = vm().teleFields().Compilations_optimized.readReference(compiledState.reference());
-            ArrayList<TeleTargetMethod> hist = new ArrayList<TeleTargetMethod>(2);
-            if (!optimizedReference.isZero()) {
-                hist.add((TeleTargetMethod) heap().makeTeleObject(optimizedReference));
+            clearCompiledState();
+        } else if (compiledState.classActorForObjectType().javaClass() == Compilations.class) {
+            Reference optimizedReference = fields().Compilations_optimized.readReference(compiledState.reference());
+            Reference baselineReference = fields().Compilations_baseline.readReference(compiledState.reference());
+            compilations = new ArrayList<TeleTargetMethod>(2);
+            if (optimizedReference.isZero()) {
+                optimizedTargetMethod = null;
+            } else {
+                optimizedTargetMethod = (TeleTargetMethod) objects().makeTeleObject(optimizedReference);
+                compilations.add(optimizedTargetMethod);
             }
-            if (!baselineReference.isZero()) {
-                hist.add((TeleTargetMethod) heap().makeTeleObject(baselineReference));
+            if (baselineReference.isZero()) {
+                baselineTargetMethod = null;
+            } else {
+                baselineTargetMethod = (TeleTargetMethod) objects().makeTeleObject(baselineReference);
+                compilations.add(baselineTargetMethod);
             }
-            teleTargetMethodHistory = hist.toArray(new TeleTargetMethod[hist.size()]);
         } else if (compiledState.classActorForObjectType().javaClass() == Compilation.class) {
             // this is a compilation that is currently underway, get the previous compiled state from it
-            Reference prevCompilationsReference = vm().teleFields().Compilation_prevCompilations.readReference(compiledState.reference());
+            Reference prevCompilationsReference = fields().Compilation_prevCompilations.readReference(compiledState.reference());
             if (!prevCompilationsReference.isZero()) {
-                translateCompiledState(heap().makeTeleObject(prevCompilationsReference));
+                translateCompiledState(objects().makeTeleObject(prevCompilationsReference));
             }  else {
                 // this is the first compilation, no previous state
-                teleTargetMethodHistory = NO_TARGET_METHODS;
+                clearCompiledState();
             }
         }
     }
@@ -181,48 +218,39 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      * @return the number of times this method has been compiled
      */
     public final int compilationCount() {
-        return teleTargetMethodHistory.length;
+        return compilations.size();
     }
 
     /**
      * @return all compilations of the method, in order, oldest first.
      */
     public Iterable<TeleTargetMethod> compilations() {
-        return Arrays.asList(teleTargetMethodHistory);
+        return compilations;
     }
 
    /**
-     * @return  surrogate for the most recent compilation of this method in the VM,
+     * Gets the most recent, most optimized compilation of this method in the VM,
      * null if no compilations.
      */
     public TeleTargetMethod getCurrentCompilation() {
-        if (compilationCount() > 0) {
-            return teleTargetMethodHistory[teleTargetMethodHistory.length - 1];
+        if (optimizedTargetMethod != null) {
+            return optimizedTargetMethod;
         }
-        return null;
+        return baselineTargetMethod;
     }
 
     /**
      * @return the specified compilation of the method in the VM, first compilation at index=0; null if no such compilation.
      */
-    public TeleTargetMethod getCompilation(int index) {
-        if (0 <= index && index < teleTargetMethodHistory.length) {
-            return teleTargetMethodHistory[index];
+    public TeleTargetMethod getCompilation(Nature nature) {
+        switch (nature) {
+            case BASELINE:
+                return baselineTargetMethod;
+            case OPT:
+                return optimizedTargetMethod;
+            default:
+                return null;
         }
-        return null;
-    }
-
-    /**
-     * @param teleTargetMethod
-     * @return the position of the specified compilation in the VM in the compilation history of this method, -1 if not present
-     */
-    public int compilationIndexOf(TeleTargetMethod teleTargetMethod) {
-        for (int i = 0; i <= teleTargetMethodHistory.length - 1; i++) {
-            if (teleTargetMethodHistory[i] == teleTargetMethod) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     @Override

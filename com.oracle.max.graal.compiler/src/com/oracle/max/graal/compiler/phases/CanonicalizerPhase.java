@@ -28,6 +28,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -39,14 +40,11 @@ public class CanonicalizerPhase extends Phase {
     private final CiAssumptions assumptions;
     private final RiRuntime runtime;
 
-    private NodeWorkList nodeWorkList;
-
-    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, CiAssumptions assumptions) {
-        this(context, target, runtime, false, assumptions);
+    public CanonicalizerPhase(CiTarget target, RiRuntime runtime, CiAssumptions assumptions) {
+        this(target, runtime, false, assumptions);
     }
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, RiRuntime runtime, boolean newNodes, CiAssumptions assumptions) {
-        super(context);
+    public CanonicalizerPhase(CiTarget target, RiRuntime runtime, boolean newNodes, CiAssumptions assumptions) {
         this.newNodes = newNodes;
         this.target = target;
         this.assumptions = assumptions;
@@ -55,12 +53,16 @@ public class CanonicalizerPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        nodeWorkList = graph.createNodeWorkList(!newNodes, MAX_ITERATION_PER_NODE);
+        NodeWorkList nodeWorkList = graph.createNodeWorkList(!newNodes, MAX_ITERATION_PER_NODE);
         if (newNodes) {
             nodeWorkList.addAll(graph.getNewNodes());
         }
-        Tool tool = new Tool();
-        int canonicalized = 0;
+
+        canonicalize(graph, nodeWorkList, runtime, target, assumptions);
+    }
+
+    public static void canonicalize(StructuredGraph graph, NodeWorkList nodeWorkList, RiRuntime runtime, CiTarget target, CiAssumptions assumptions) {
+        Tool tool = new Tool(nodeWorkList, runtime, target, assumptions);
         for (Node node : nodeWorkList) {
             if (node instanceof Canonicalizable) {
                 if (GraalOptions.TraceCanonicalizer) {
@@ -117,18 +119,33 @@ public class CanonicalizerPhase extends Phase {
                     if (canonical != null) {
                         nodeWorkList.replaced(canonical, node, false, EdgeType.USAGES);
                     }
-                    canonicalized++;
                 }
             }
         }
-        if (canonicalized > 0 && GraalOptions.Meter) {
-            context.metrics.NodesCanonicalized += canonicalized;
+
+        while (graph.getUsagesDroppedNodesCount() > 0) {
+            for (Node n : graph.getAndCleanUsagesDroppedNodes()) {
+                if (!n.isDeleted() && n.usages().size() == 0 && n instanceof FloatingNode) {
+                    GraphUtil.killFloating((FloatingNode) n);
+                }
+            }
         }
     }
 
-    private final class Tool implements CanonicalizerTool {
+    private static final class Tool implements CanonicalizerTool {
 
         private Node node;
+        private final NodeWorkList nodeWorkList;
+        private final RiRuntime runtime;
+        private final CiTarget target;
+        private final CiAssumptions assumptions;
+
+        public Tool(NodeWorkList nodeWorkList, RiRuntime runtime, CiTarget target, CiAssumptions assumptions) {
+            this.nodeWorkList = nodeWorkList;
+            this.runtime = runtime;
+            this.target = target;
+            this.assumptions = assumptions;
+        }
 
         @Override
         public void deleteBranch(FixedNode branch) {
@@ -217,11 +234,17 @@ public class CanonicalizerPhase extends Phase {
             this.node = node;
         }
 
+        /**
+         * @return the current target or {@code null} if no target is available in the current context.
+         */
         @Override
         public CiTarget target() {
             return target;
         }
 
+        /**
+         * @return an object that can be used for recording assumptions or {@code null} if assumptions are not allowed in the current context.
+         */
         @Override
         public CiAssumptions assumptions() {
             return assumptions;

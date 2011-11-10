@@ -58,4 +58,6 @@ public interface VMExits {
     void shutdownCompiler() throws Throwable;
 
     void startCompiler();
+
+    void pollJavaQueue();
 }

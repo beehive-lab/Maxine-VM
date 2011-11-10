@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public abstract class AbstractVectorNode extends StateSplit implements LIRLowerable {
+public abstract class AbstractVectorNode extends AbstractStateSplit implements LIRLowerable {
 
     @Input private AbstractVectorNode vector;
 

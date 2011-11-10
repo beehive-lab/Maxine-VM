@@ -147,7 +147,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
                         "Boot heap region must be mapped at start of reserved virtual space");
 
-        final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
+        final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
         final Address  heapLowerBound = endOfCodeRegion;

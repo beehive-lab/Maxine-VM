@@ -43,11 +43,11 @@ public class TeleStaticTuple extends TeleTupleObject {
      * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
      * object and another are mutually referential.
      *
-     * @param teleVM
+     * @param vm
      * @param reference
      */
-    protected TeleStaticTuple(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+    protected TeleStaticTuple(TeleVM vm, Reference reference) {
+        super(vm, reference);
     }
 
     @Override

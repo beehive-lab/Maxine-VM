@@ -22,23 +22,35 @@
  */
 package com.sun.max.tele.reference;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * The raw bits do not change.
+ * A fixed, remote {@link Address} in VM memory, wrapped as if it were a {@link Reference}
+ * so that it can be manipulated with standard VM code.
+ * <p>
+ * Equality for instances is defined as {@link Address} equality with other instances of the class.
+ *
+ * @see Reference
+ * @see VmReferenceManager
  */
 public abstract class ConstantTeleReference extends RemoteTeleReference {
 
     private final Address raw;
 
+    protected ConstantTeleReference(TeleVM vm, Address rawRef) {
+        super(vm);
+        raw = rawRef;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In this implementation, the remote location does not change, so this method is constant.
+     */
     @Override
     public Address raw() {
         return raw;
-    }
-
-    protected ConstantTeleReference(TeleReferenceScheme teleReferenceScheme, Address rawRef) {
-        super(teleReferenceScheme);
-        raw = rawRef;
     }
 
     @Override

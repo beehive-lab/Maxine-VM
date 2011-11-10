@@ -49,7 +49,7 @@ public class TextLabel extends InspectorLabel {
     }
 
     public void redisplay() {
-        setFont(style().textLabelFont());
+        setFont(preference().style().textLabelFont());
     }
 
 }

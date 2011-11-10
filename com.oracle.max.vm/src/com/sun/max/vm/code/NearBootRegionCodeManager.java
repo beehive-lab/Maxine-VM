@@ -26,6 +26,7 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
 /**
@@ -44,11 +45,17 @@ public class NearBootRegionCodeManager extends CodeManager {
      */
     @Override
     void initialize() {
-        final Address address = Code.bootCodeRegion().end().alignUp(Platform.platform().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
+        final Address baselineAddress = Code.bootCodeRegion().end().alignUp(Platform.platform().pageSize);
+        tryAllocate(runtimeBaselineCodeRegionSize, runtimeBaselineCodeRegion, baselineAddress);
+        final Address optAddress = runtimeBaselineCodeRegion.end().alignUp(Platform.platform().pageSize);
+        tryAllocate(runtimeOptCodeRegionSize, runtimeOptCodeRegion, optAddress);
+    }
+
+    private void tryAllocate(VMSizeOption s, CodeRegion cr, Address address) {
+        final Size size = s.getValue();
         if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
+            throw ProgramError.unexpected("could not allocate " + cr.regionName());
         }
-        runtimeCodeRegion.bind(address, size);
+        cr.bind(address, size);
     }
 }

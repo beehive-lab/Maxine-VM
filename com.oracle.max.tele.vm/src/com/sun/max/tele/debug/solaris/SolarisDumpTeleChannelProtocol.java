@@ -48,7 +48,7 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
         }
     }
 
-    public SolarisDumpTeleChannelProtocol(TeleVM teleVM, File vm, File dumpFile) {
+    public SolarisDumpTeleChannelProtocol(MaxVM teleVM, File vm, File dumpFile) {
         super(teleVM, vm, dumpFile);
         SolarisNoteEntryHandler noteEntryHandler = new SolarisNoteEntryHandler();
         processNoteSection(noteEntryHandler);

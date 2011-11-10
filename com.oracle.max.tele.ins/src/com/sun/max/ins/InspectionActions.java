@@ -494,7 +494,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().classRegistry().updateLoadableTypeDescriptorsFromClasspath();
+            vm().classes().updateLoadableTypeDescriptorsFromClasspath();
         }
     }
 
@@ -645,6 +645,72 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             action.setEnabled(false);
         }
         return action;
+    }
+
+    /**
+     * Action:  copies a hex string version of a VM object's origin to the system clipboard.
+     */
+    final class CopyObjectOriginAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
+        private final TeleObject teleObject;
+
+        private CopyObjectOriginAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleObject = teleObject;
+        }
+
+        @Override
+        public void procedure() {
+            gui().postToClipboard(teleObject.origin().toHexString());
+        }
+    }
+
+    /**
+     * Creates an action that will copy a hex string version of a VM object's origin
+     * to the system clipboard.
+     *
+     * @param teleObject a VM object
+     * @param actionTitle optional title of the action
+     * @return an action to copy the object's origin addreess
+     */
+    public final InspectorAction copyObjectOrigin(TeleObject teleObject, String actionTitle) {
+        return new CopyObjectOriginAction(teleObject, actionTitle);
+    }
+
+    /**
+     * Action:  copies a hex string version of a VM object's origin,
+     * followed by a textual description of the object to the system clipboard.
+     */
+    final class CopyObjectDescriptionAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
+        private final TeleObject teleObject;
+
+        private CopyObjectDescriptionAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleObject = teleObject;
+        }
+
+        @Override
+        public void procedure() {
+            final StringBuilder sb = new StringBuilder(teleObject.origin().toHexString());
+            sb.append(": ");
+            sb.append(inspection().nameDisplay().referenceLabelText(teleObject));
+            gui().postToClipboard(sb.toString());
+        }
+    }
+
+    /**
+     * Creates an action that will copy a hex string version of a VM object's origin,
+     * followed by a textual description of the object to the system clipboard.
+     *
+     * @param teleObject the VM object to be described
+     * @param actionTitle optional title of the action
+     * @return an action to copy the description
+     */
+    public final InspectorAction copyObjectDescription(TeleObject teleObject, String actionTitle) {
+        return new CopyObjectDescriptionAction(teleObject, actionTitle);
     }
 
     /**
@@ -1005,7 +1071,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SelectMemoryRegionAction(memoryRegion, actionTitle);
     }
 
-
     /**
      * Action: create an Object view for the boot {@link ClassRegistry} in the VM.
      */
@@ -1020,7 +1085,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final TeleObject teleBootClassRegistry = vm().heap().findTeleObject(vm().bootClassRegistryReference());
+                final TeleObject teleBootClassRegistry = vm().objects().findTeleObject(vm().bootClassRegistryReference());
                 focus().setHeapObject(teleBootClassRegistry);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -1086,7 +1151,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         gui().errorMessage("failed to find classActor for ID:  " + InspectorLabel.intTo0xHex(serial));
                     } else {
@@ -1126,7 +1191,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         gui().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {
@@ -1437,7 +1502,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(address, "user specified address"));
+                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
                 }
             };
         }
@@ -1575,7 +1640,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation teleCodeLocation = vm().codeManager().createBytecodeLocation(teleClassMethodActor, 0, "view method bytecode action");
+            final MaxCodeLocation teleCodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "view method bytecode action");
             focus().setCodeLocation(teleCodeLocation);
         }
     }
@@ -1623,7 +1688,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecodes for Method...", "View");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                    final MaxCodeLocation teleCodeLocation = vm().codeManager().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
+                    final MaxCodeLocation teleCodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
                     focus().setCodeLocation(teleCodeLocation);
                 }
             }
@@ -1700,7 +1765,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (libInfo != null) {
                 final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(functions).base, "native function address from library"), true);
+                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).base, "native function address from library"), true);
                 }
             }
         }
@@ -1768,7 +1833,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompilation compiledCode = compilations.get(index);
                     final StringBuilder name = new StringBuilder();
-                    name.append(inspection().nameDisplay().methodCompilationID(compiledCode));
+                    name.append(inspection().nameDisplay().shortMethodCompilationID(compiledCode));
                     name.append("  ");
                     name.append(compiledCode.classActorForObjectType().simpleName());
                     add(actions().viewMethodCodeAtLocation(compiledCode.getCallEntryLocation(), name.toString()));
@@ -1820,7 +1885,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+            focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
         }
     }
 
@@ -1868,7 +1933,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(address, "native code address specified by user"), true);
+                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "native code address specified by user"), true);
                 }
             };
         }
@@ -2412,7 +2477,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void entered(Address address, String description) {
                     if (!address.isZero()) {
                         try {
-                            final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(address, "set machine breakpoint"));
+                            final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
                             if (breakpoint == null) {
                                 gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
                             } else {
@@ -2629,7 +2694,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         MaxBreakpoint machineCodeBreakpoint = null;
                         for (NativeCodeLibraries.SymbolInfo symbolInfo : functions) {
                             machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(symbolInfo.base, "set machine breakpoint"));
+                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(symbolInfo.base, "set machine breakpoint"));
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -2780,7 +2845,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation location = vm().codeManager().createBytecodeLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
+            final MaxCodeLocation location = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
             try {
                 vm().breakpointManager().makeBreakpoint(location);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -2827,7 +2892,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecodes method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     try {
-                        vm().breakpointManager().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                        vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
                     }
@@ -2868,7 +2933,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
                 try {
-                    vm().breakpointManager().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                    vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                 } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
                 }
@@ -4094,7 +4159,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     // User clicked cancel.
                     return;
                 }
-                receiver = vm().createReferenceValue(vm().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
+                receiver = vm().createReferenceValue(vm().makeReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
                 final ClassActor dynamicClass = receiver.getClassActor();
                 classMethodActor = dynamicClass.findClassMethodActor(classMethodActor.name, classMethodActor.descriptor());
             }

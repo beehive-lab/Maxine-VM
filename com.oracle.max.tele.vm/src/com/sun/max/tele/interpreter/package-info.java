@@ -21,7 +21,7 @@
  * questions.
  */
 /**
- * An interpreter for running queries on remote objects in the tele VM.
+ * An interpreter for running queries on remote objects in the VM.
  *
  * Derived from the JavaInJava interpreter by Antero Taivalsaari.
  * See Sun Labs tech report TR-98-64:

@@ -22,15 +22,9 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.nodes.*;
 
 public class RemovePlaceholderPhase extends Phase {
-
-    public RemovePlaceholderPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
     protected void run(StructuredGraph graph) {
         for (PlaceholderNode n : graph.getNodes(PlaceholderNode.class)) {

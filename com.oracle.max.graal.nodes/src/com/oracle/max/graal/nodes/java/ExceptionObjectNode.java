@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code ExceptionObject} instruction represents the incoming exception object to an exception handler.
  */
-public final class ExceptionObjectNode extends StateSplit implements LIRLowerable {
+public final class ExceptionObjectNode extends AbstractStateSplit implements LIRLowerable {
 
     /**
      * Constructs a new ExceptionObject instruction.

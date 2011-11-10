@@ -34,7 +34,7 @@ import com.sun.max.vm.reference.*;
 /**
  * The special region describing the heap in the boot image.
  */
-public class BootHeapRegion extends LinearAllocatorHeapRegion {
+public class BootHeapRegion extends LinearAllocatorRegion {
 
     private byte[] referenceMapBytes;
 

@@ -152,7 +152,7 @@ public class IdealGraphPrinter {
         }
         if (schedule == null) {
             try {
-                schedule = new IdentifyBlocksPhase(GraalContext.EMPTY_CONTEXT, true);
+                schedule = new IdentifyBlocksPhase(true);
                 schedule.apply((StructuredGraph) graph, false, false);
             } catch (Throwable t) {
                 // nothing to do here...

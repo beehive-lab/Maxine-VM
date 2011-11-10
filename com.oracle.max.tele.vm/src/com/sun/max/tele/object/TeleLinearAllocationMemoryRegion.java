@@ -59,8 +59,8 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
         }
     };
 
-    public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
-        super(teleVM, linearAllocationMemoryRegionReference);
+    public TeleLinearAllocationMemoryRegion(TeleVM vm, Reference linearAllocationMemoryRegionReference) {
+        super(vm, linearAllocationMemoryRegionReference);
         // Initialize mark to region end: default 100% utilization
         markCache = super.getRegionEnd();
         updateMarkCache();
@@ -97,7 +97,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
      */
     private boolean updateMarkCache() {
         try {
-            final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+            final Reference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
             markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
             usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
         } catch (DataIOError dataIOError) {

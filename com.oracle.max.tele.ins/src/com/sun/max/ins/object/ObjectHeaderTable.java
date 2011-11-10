@@ -90,7 +90,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.tableModel = new ObjectHeaderTableModel(inspection, teleObject.origin());
         ObjectHeaderColumnModel columnModel = new ObjectHeaderColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
-        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, preference().style().defaultBorderColor()));
         updateFocusSelection();
     }
 
@@ -146,7 +146,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -181,7 +181,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         public ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            if (teleObject.isLive()) {
+            if (teleObject.memoryStatus().isLive()) {
                 teleHub = teleObject.getTeleHub();
             }
         }
@@ -253,7 +253,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         @Override
         public void refresh() {
             setOrigin(teleObject.origin());
-            if (teleObject.isLive()) {
+            if (teleObject.memoryStatus().isLive()) {
                 teleHub = teleObject.getTeleHub();
             }
             super.refresh();
@@ -295,7 +295,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                                 return WordValue.ZERO;
                             }
                             final Address hubFieldAddress = teleObject.headerAddress(HeaderField.HUB);
-                            return vm().readWordValue(hubFieldAddress);
+                            return vm().memory().readWordValue(hubFieldAddress);
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {
@@ -335,7 +335,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             final Address headerFieldAddress = teleObject.headerAddress(finalHeaderField);
-                            return  vm().readWordValue(headerFieldAddress);
+                            return vm().memory().readWordValue(headerFieldAddress);
                         }
                     };
                 }

@@ -32,8 +32,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleInterfaceActor extends TeleClassActor implements InterfaceProvider {
 
-    protected TeleInterfaceActor(TeleVM teleVM, Reference interfaceActorReference) {
-        super(teleVM, interfaceActorReference);
+    protected TeleInterfaceActor(TeleVM vm, Reference interfaceActorReference) {
+        super(vm, interfaceActorReference);
     }
 
     public InterfaceActor interfaceActor() {

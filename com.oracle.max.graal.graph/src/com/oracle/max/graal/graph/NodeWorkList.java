@@ -99,6 +99,10 @@ public class NodeWorkList implements Iterable<Node> {
         }
     }
 
+    public void clearVisited() {
+        visited.clearAll();
+    }
+
     public void replaced(Node newNode, Node oldNode, EdgeType... edges) {
         this.replaced(newNode, oldNode, false, edges);
     }
