@@ -237,7 +237,7 @@ public class DarwinMachO {
             flags = readInt();
             sections = new Section64[nsects];
             for (int i = 0; i < nsects; i++) {
-                sections[i] = new Section64();
+                sections[i] = new Section64(this);
             }
         }
 
@@ -256,8 +256,10 @@ public class DarwinMachO {
         public final int reserved1;
         public final int reserved2;
         public final int reserved3;
+        public final Segment64LoadCommand owningSegment;
 
-        private Section64() throws IOException {
+        private Section64(Segment64LoadCommand segment64) throws IOException {
+            owningSegment = segment64;
             sectname = readName();
             segname = readName();
             addr = readLong();
