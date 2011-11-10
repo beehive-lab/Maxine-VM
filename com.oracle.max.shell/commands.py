@@ -520,6 +520,15 @@ def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
 
+def gcut(env, args):
+    """runs the Graal Compiler Unit Tests in the GraalVM"""
+    # (ds) The boot class path must be used for some reason I don't quite understand
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + args)
+
+def graalvm(env, args):
+    """runs the GraalVM"""
+    env.run_graalvm(args)
+
 def hcfdis(env, args):
     """disassembles HexCodeFiles embedded in text files
 
@@ -975,6 +984,8 @@ table = {
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
+    'gcut': [gcut, 'patterns...'],
+    'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],
     'help': [help_, '[command]'],
