@@ -26,12 +26,10 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.ext.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.target.*;
 import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -136,15 +134,6 @@ public class GraalCompiler implements CiCompiler  {
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             try {
                 result = compilation.compile();
-            } catch (VerificationError error) {
-                if (GraalCompiler.this.context.isObserved()) {
-                    if (error.node() != null) {
-                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
-                    } else if (error.graph() != null) {
-                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
-                    }
-                }
-                throw error;
             } finally {
                 filter.remove();
                 if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {

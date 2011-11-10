@@ -131,23 +131,34 @@ public final class GraalCompilation {
     public CiResult compile() {
         CiTargetMethod targetMethod;
         try {
-            emitHIR();
-            emitLIR();
-            targetMethod = emitCode();
+            try {
+                emitHIR();
+                emitLIR();
+                targetMethod = emitCode();
 
-            if (GraalOptions.Meter) {
-                context().metrics.BytecodesCompiled += method.codeSize();
+                if (GraalOptions.Meter) {
+                    context().metrics.BytecodesCompiled += method.codeSize();
+                }
+            } catch (CiBailout b) {
+                return new CiResult(null, b, stats);
+            } catch (VerificationError e) {
+                throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
+            } catch (Throwable t) {
+                if (GraalOptions.BailoutOnException) {
+                    return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
+                } else {
+                    throw new RuntimeException("Exception while compiling: " + method, t);
+                }
             }
-        } catch (CiBailout b) {
-            return new CiResult(null, b, stats);
-        } catch (VerificationError e) {
-            throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
-        } catch (Throwable t) {
-            if (GraalOptions.BailoutOnException) {
-                return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
-            } else {
-                throw new RuntimeException("Exception while compiling: " + method, t);
+        } catch (VerificationError error) {
+            if (context().isObserved()) {
+                if (error.node() != null) {
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                } else if (error.graph() != null) {
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                }
             }
+            throw error;
         } finally {
             if (context().isObserved()) {
                 context().observable.fireCompilationFinished(new CompilationEvent(this));
