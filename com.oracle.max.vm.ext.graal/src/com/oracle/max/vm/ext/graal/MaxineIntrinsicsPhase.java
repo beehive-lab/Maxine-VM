@@ -22,9 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.compiler.phases.*;
-import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.maxri.*;
@@ -32,14 +31,12 @@ import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.member.*;
 
 
-public class MustInlinePhase extends Phase {
+public class MaxineIntrinsicsPhase extends Phase {
 
     private final MaxRuntime runtime;
-    private final RiResolvedType accessor;
 
-    public MustInlinePhase(MaxRuntime runtime, RiResolvedType accessor) {
+    public MaxineIntrinsicsPhase(MaxRuntime runtime) {
         this.runtime = runtime;
-        this.accessor = accessor;
     }
 
     @Override
@@ -48,31 +45,20 @@ public class MustInlinePhase extends Phase {
             Invoke invoke = callTarget.invoke();
             RiResolvedMethod method = callTarget.targetMethod();
             if (invoke != null) {
-                assert ((MethodActor) method).intrinsic() == null : "Intrinsics must be resolved before this phase " + ((MethodActor) method).intrinsic();
-                if (runtime.mustInline(method)) {
-                    StructuredGraph inlineGraph = (StructuredGraph) method.compilerStorage().get(MustInlinePhase.class);
-                    if (inlineGraph == null) {
-                        inlineGraph = new StructuredGraph();
-                        new GraphBuilderPhase(runtime, method).apply(inlineGraph);
-                        RiResolvedType curAccessor = getAccessor(method, accessor);
-                        if (curAccessor != null) {
-                            new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
-                        }
-                        new FoldPhase(runtime).apply(inlineGraph);
-                        new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
-                        new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
-                        method.compilerStorage().put(MustInlinePhase.class, inlineGraph);
-                    }
-                    InliningUtil.inline(invoke, inlineGraph, false);
+                MethodActor methodActor = (MethodActor) method;
+                if (methodActor.intrinsic() != null) {
+                    intrinsify(invoke, methodActor);
                 }
             }
         }
     }
 
-    private RiResolvedType getAccessor(RiResolvedMethod method, RiResolvedType accessor) {
-        if (method.accessor() != null) {
-            return method.accessor();
+    public void intrinsify(Invoke invoke, MethodActor method) {
+        IntrinsicImpl impl = runtime.getIntrinsicRegistry().get(method);
+        assert impl != null : method.intrinsic();
+        if (impl != null) {
+            ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(runtime, invoke.callTarget().graph(), method, invoke.callTarget().arguments());
+            invoke.intrinsify(node);
         }
-        return accessor;
     }
 }
