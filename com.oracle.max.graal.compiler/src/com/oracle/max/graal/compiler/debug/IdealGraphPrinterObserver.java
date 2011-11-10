@@ -145,7 +145,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
                 printer = null;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error opening connection to " + host + ":" + port + ": " + e);
 
             if (socket != null) {
                 try {

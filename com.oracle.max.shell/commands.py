@@ -523,7 +523,29 @@ def graal(env, args):
 def gcut(env, args):
     """runs the Graal Compiler Unit Tests in the GraalVM"""
     # (ds) The boot class path must be used for some reason I don't quite understand
-    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + args)
+    
+    def find_test_classes(testClassList, searchDir, pkgRoot):
+        for root, _, files in os.walk(searchDir):
+            for name in files:
+                if name.endswith('.java') and name != 'package-info.java':
+                    isTest = False
+                    with open(join(root, name)) as f:
+                        for line in f:
+                            if line.strip() == '@Test':
+                                isTest = True
+                                break
+                    if isTest:
+                        pkg = root[len(searchDir) + 1:].replace(os.sep, '.')
+                        testClassList.append(pkg + '.' + name[:-len('.java')])
+
+    pkgRoot = 'com.oracle.max.graal.compiler.test'
+    searchDir = join(env.maxine_home, 'com.oracle.max.graal.compiler', 'test')
+    testsDir = join(searchDir, pkgRoot.replace('.', os.sep))
+    print testsDir
+    javaClassList = []
+    find_test_classes(javaClassList, searchDir, pkgRoot)
+    
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + javaClassList)
 
 def graalvm(env, args):
     """runs the GraalVM"""
