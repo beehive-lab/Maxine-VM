@@ -318,7 +318,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInstanceOf(InstanceOf x) {
         XirArgument obj = toXirArgument(x.object());
-        XirSnippet snippet = xir.genInstanceOf(site(x), obj, toXirArgument(x.targetClassInstruction), x.targetClass());
+        XirSnippet snippet = xir.genMaterializeInstanceOf(site(x), obj, toXirArgument(x.targetClassInstruction), XirArgument.forInt(1), XirArgument.forInt(0), x.targetClass());
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 

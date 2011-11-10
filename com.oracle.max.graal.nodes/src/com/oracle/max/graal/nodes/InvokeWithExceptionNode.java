@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -157,5 +158,25 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     @Override
     public boolean needsStateAfter() {
         return true;
+    }
+
+    @Override
+    public void intrinsify(Node node) {
+        killExceptionEdge();
+        if (node instanceof FixedWithNextNode) {
+            FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
+            FixedNode next = this.next();
+            setNext(null);
+            fixedWithNextNode.setNext(next);
+            this.replaceAndDelete(node);
+        } else if (node instanceof FloatingNode) {
+            FixedNode next = this.next();
+            setNext(null);
+            this.replaceAtPredecessors(next);
+            this.replaceAtUsages(node);
+            this.delete();
+        } else {
+            assert false : node;
+        }
     }
 }

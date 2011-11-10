@@ -70,6 +70,10 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         this.invokeKind = kind;
     }
 
+    public void setTargetMethod(RiResolvedMethod method) {
+        targetMethod = method;
+    }
+
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
      * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
