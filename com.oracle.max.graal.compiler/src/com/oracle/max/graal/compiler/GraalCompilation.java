@@ -179,10 +179,11 @@ public final class GraalCompilation {
                 GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(compiler.runtime, method, stats);
                 graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
                 graphBuilderPhase.apply(graph, context());
+
+                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
-
-            compiler.runPhases(PhasePosition.HIGHEST_LEVEL, graph);
 
             if (GraalOptions.ProbabilityAnalysis) {
                 new ComputeProbabilityPhase().apply(graph, context());
@@ -193,7 +194,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.Inline) {
-                new InliningPhase(compiler.runtime, compiler.target, null, assumptions).apply(graph, context());
+                new InliningPhase(compiler, compiler.runtime, compiler.target, null, assumptions).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
