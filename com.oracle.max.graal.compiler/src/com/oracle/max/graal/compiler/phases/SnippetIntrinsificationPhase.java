@@ -164,15 +164,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
                                                     MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
                                                     assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
-                                                    for (Invoke invokeNode : checkCastCallTarget.invokes()) {
-                                                        if (invokeNode instanceof InvokeWithExceptionNode) {
-                                                            // Destroy exception edge & clear stateAfter.
-                                                            InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
-                                                            invokeWithExceptionNode.killExceptionEdge();
-                                                        }
-                                                        invokeNode.node().replaceAtUsages(newInstance);
-                                                        invokeNode.node().replaceAndDelete(invokeNode.next());
+                                                    Invoke invokeNode = checkCastCallTarget.invoke();
+                                                    if (invokeNode instanceof InvokeWithExceptionNode) {
+                                                        // Destroy exception edge & clear stateAfter.
+                                                        InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                                        invokeWithExceptionNode.killExceptionEdge();
                                                     }
+                                                    invokeNode.node().replaceAtUsages(newInstance);
+                                                    invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     checkCastCallTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
                                                     checkCastUsage.replaceFirstInput(checkCastNode, null);
