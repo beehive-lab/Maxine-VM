@@ -54,7 +54,7 @@ public class GraalCompiler implements CiCompiler  {
      * A compiler extension phase can chose to run at the end of periods 1-3.
      */
     public static enum PhasePosition {
-        HIGHEST_LEVEL,
+        AFTER_PARSING,
         HIGH_LEVEL,
         MID_LEVEL,
         LOW_LEVEL
@@ -70,7 +70,7 @@ public class GraalCompiler implements CiCompiler  {
         phases[pos.ordinal()].add(phase);
     }
 
-    void runPhases(PhasePosition pos, StructuredGraph graph) {
+    public void runPhases(PhasePosition pos, StructuredGraph graph) {
         if (phases[pos.ordinal()] != null) {
             for (Phase p : phases[pos.ordinal()]) {
                 p.apply(graph, context);
