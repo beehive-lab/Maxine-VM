@@ -25,7 +25,6 @@ package com.sun.max.config.c1x;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.vm.ext.c1x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.max.config.*;
@@ -36,7 +35,8 @@ import com.sun.max.vm.hosted.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.sun.c1x.**");
+        super("com.sun.c1x.**",
+              "com.oracle.max.vm.ext.c1x.**");
         JavaPrototype.addObjectIdentityMapContributor(new C1XObjectMapContributor());
     }
 
@@ -52,6 +52,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return C1X.class.getName().equals(CompilationBroker.optName());
+        return CompilationBroker.optName().contains("C1X");
     }
 }

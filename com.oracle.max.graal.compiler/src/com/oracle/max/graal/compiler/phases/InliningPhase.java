@@ -419,6 +419,12 @@ public class InliningPhase extends Phase {
             return false;
         }
         RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
+        if (runtime.mustNotInline(resolvedMethod)) {
+            if (GraalOptions.TraceInlining) {
+                TTY.println("not inlining %s because the CRI set it to be non-inlinable", methodName(resolvedMethod));
+            }
+            return false;
+        }
         if (Modifier.isNative(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is a native method", methodName(resolvedMethod));
