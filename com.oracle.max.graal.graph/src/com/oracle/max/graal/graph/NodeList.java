@@ -96,6 +96,10 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return (T) nodes[index];
     }
 
+    public T last() {
+        return get(size() - 1);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public T set(int index, T node) {
