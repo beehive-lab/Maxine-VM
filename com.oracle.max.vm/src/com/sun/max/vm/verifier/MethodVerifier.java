@@ -69,6 +69,9 @@ public abstract class MethodVerifier {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             verifyError("Expected a non-primitive type");
         }
+        if (typeDescriptor.equals(JavaTypeDescriptor.CODE_POINTER)) {
+            classMethodActor.setIsUsingTaggedValues();
+        }
         return classVerifier().getObjectType(typeDescriptor);
     }
 

@@ -31,10 +31,15 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.tele.*;
 
+// TODO (mlvdv) This mechanism is only relevant to inspection of VM's with relocating
+// GC.  It should be pushed down into the heap-specific support, implementations of {@link TeleHeapScheme}
+
 /**
- * Access to and management of a special array in the VM
+ * Access to and management of a special array in VM memory
  * that holds GC roots on behalf of references held in the Inspector.
- * <br>
+ * <p>
+ * <strong>Assumption:</strong> the special array, once allocated, does not move.
+ * <p>
  * Remote references held by the inspector are implemented as a
  * handle that identifies an entry in this table, which contains actual
  * memory addresses in the VM.  In order to track object movement
@@ -42,24 +47,55 @@ import com.sun.max.vm.tele.*;
  * VM, where it can be updated by the GC.
  *
  * @see InspectableHeapInfo
- * @see TeleHeap
+ * @see VmObjectAccess
  */
-public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache {
-
+public final class TeleRoots extends AbstractVmHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+    private static final int DETAILED_TRACE_VALUE = 2;
 
     private final TimedTrace updateTracer;
 
     private long lastUpdateEpoch = -1L;
 
-    private final TeleReferenceScheme teleReferenceScheme;
+    private final VmReferenceManager teleReferenceManager;
+
+    // TODO (mlvdv) this properly belongs to implementations of {@link TeleHeapScheme}
+    // that support relocating collectors and should be moved.
+    /**
+     * Memory location of the specially allocated memory in the VM to be
+     * used for the Inspector root table.
+     */
+    private Address rootsRegionStart = Pointer.zero();
+
+    // TODO (mlvdv) this properly belongs to implementations of {@link TeleHeapScheme}
+    // that support relocating collectors and should be moved.
+    /**
+     * Gets the raw location of the tele roots table in VM memory.  This is a specially allocated
+     * region of memory that is assumed will not move.
+     * <br>
+     * It is equivalent to the starting location of the roots region, but must be
+     * accessed this way instead to avoid a circularity.  It is used before
+     * more abstract objects such as {@link TeleFixedMemoryRegion}s can be created.
+     *
+     * @return location of the specially allocated VM memory region where teleRoots are stored.
+     * @see InspectableHeapInfo
+     */
+    private Address rootsRegionStart() {
+        if (rootsRegionStart.isZero()) {
+            // The address of the tele roots field must be known before we can create any instances of relocatable
+            // references, since those references must be registered in the VM's root table using this address.
+            rootsRegionStart = fields().InspectableHeapInfo_rootsPointer.readWord(vm()).asAddress();
+            Trace.line(TRACE_VALUE, "rootsRegionStart=" + rootsRegionStart.to0xHexString());
+        }
+        return rootsRegionStart;
+    }
 
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
     /**
-     * Queue of pending tele roots to be cleared. Asynchronous unregistration is required
+     * Set of pending tele root handles to be cleared. Asynchronous unregistration is required
      * given that roots can be unregistered by a call from {@link MutableTeleReference#finalize()}
      * on the finalization thread. Clearing the entry in the remote root table requires writing
      * to the VM which may require acquiring certain locks. All too often acquiring these
@@ -67,24 +103,31 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
      */
     private final BitSet unregistrationQueue = new BitSet();
 
-    TeleRoots(TeleReferenceScheme teleReferenceScheme) {
-        super(teleReferenceScheme.vm());
+    TeleRoots(TeleVM vm, VmReferenceManager teleReferenceManager) {
+        super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
 
-        this.teleReferenceScheme = teleReferenceScheme;
+        this.teleReferenceManager = teleReferenceManager;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Updating the <strong>root cache</strong> involves copying the VM's copy
+     * of the Inspector root table, possibly modified by GC since the last update,
+     * into the local cache of the root table.
+     */
     public void updateCache(long epoch) {
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
-            // Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
             final int numberOfIndices = usedIndices.length();
             for (int i = 0; i < numberOfIndices; i++) {
-                WordArray.set(cachedRoots, i, teleRootsReference().getWord(0, i).asAddress());
+                Trace.line(DETAILED_TRACE_VALUE, tracePrefix() + "copying from VM(" + i + ")");
+                WordArray.set(cachedRoots, i, memory().getWord(rootsRegionStart(), 0, i).asAddress());
             }
             lastUpdateEpoch = epoch;
             updateTracer.end(null);
@@ -93,7 +136,18 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         }
     }
 
+    public int registeredRootCount() {
+        int count = 0;
+        for (Address address : cachedRoots) {
+            if (address != null && !address.equals(Address.zero())) {
+                count++;
+            }
+        }
+        return count;
+    }
 
+    // TODO (mlvdv) Why isn't this done with every refresh (but probably shouldn't be done during GC)?
+    // At present this only happens when a GC has just completed.
     /**
      * Clears the entries in the VM's Tele root table that were submitted by {@link #unregister(int)}.
      */
@@ -102,19 +156,18 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
             for (int index = unregistrationQueue.nextSetBit(0); index >= 0; index = unregistrationQueue.nextSetBit(index + 1)) {
                 WordArray.set(cachedRoots, index, Address.zero());
                 usedIndices.clear(index);
-                teleRootsReference().setWord(0, index, Word.zero());
+                //teleRootsReference().setWord(0, index, Word.zero());
+                Trace.line(DETAILED_TRACE_VALUE, tracePrefix() + "Unegistering(" + index + ")");
+                memory().setWord(rootsRegionStart(), 0, index, Word.zero());
             }
             usedIndices.andNot(unregistrationQueue);
             unregistrationQueue.clear();
         }
     }
 
-    private RemoteTeleReference teleRootsReference() {
-        return teleReferenceScheme.createTemporaryRemoteTeleReference(vm().dataAccess().readWord(heap().teleRootsPointer()).asAddress());
-    }
-
     /**
-     * Register a VM location in the VM's Inspector root table.
+     * Register a VM memory location in the VM's Inspector root table, both the local copy
+     * and the one in VM memory.
      */
     int register(Address rawReference) {
         final int index = usedIndices.nextClearBit(0);
@@ -122,7 +175,9 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         // Local copy of root table
         WordArray.set(cachedRoots, index, rawReference);
         // Remote root table
-        teleRootsReference().setWord(0, index, rawReference);
+        //teleRootsReference().setWord(0, index, rawReference);
+        Trace.line(DETAILED_TRACE_VALUE, tracePrefix() + "Registering(" + index + "," + rawReference.toHexString() + ")");
+        memory().setWord(rootsRegionStart(), 0, index, rawReference);
         return index;
     }
 
@@ -132,6 +187,7 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
      */
     void unregister(int index) {
         synchronized (unregistrationQueue) {
+            Trace.line(DETAILED_TRACE_VALUE, tracePrefix() + "Enqueuing unregistration(" + index + ")");
             unregistrationQueue.set(index);
         }
     }

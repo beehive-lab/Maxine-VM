@@ -310,7 +310,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
         sb.append(classMethodActor.name.toString());
-        sb.append(inspection().nameDisplay().methodCompilationID(compiledCode));
+        sb.append(inspection().nameDisplay().shortMethodCompilationID(compiledCode));
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);

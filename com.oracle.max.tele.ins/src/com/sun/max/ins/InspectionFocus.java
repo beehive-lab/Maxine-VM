@@ -359,7 +359,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
 //            if (_memoryRegion != null) {
-//                final MaxThread thread = teleVM().threadContaining(_memoryRegion.start());
+//                final MaxThread thread = vm().threadContaining(_memoryRegion.start());
 //                if (thread != null) {
 //                    setThread(thread);
 //                }
@@ -473,7 +473,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * Currently selected object in the tele VM heap; may be null.
+     * Currently selected object in the VM heap; may be null.
      */
     public TeleObject heapObject() {
         return heapObject;

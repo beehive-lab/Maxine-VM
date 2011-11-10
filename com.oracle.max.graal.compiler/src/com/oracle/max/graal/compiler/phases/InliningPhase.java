@@ -146,6 +146,7 @@ public class InliningPhase extends Phase {
                 }
             }
 
+            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
             InliningUtil.inline(invoke, graph, true);
         }
 

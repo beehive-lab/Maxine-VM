@@ -96,6 +96,7 @@ enum
 epilogue
 finalizer
 finalizers
+fixup
 floatable
 foo
 generational
@@ -127,6 +128,8 @@ invokeinterface
 invokespecial
 invokestatic
 invokevirtual
+itable
+itables
 iterable
 javadoc
 jit
@@ -135,6 +138,7 @@ linux
 logo
 malformed
 malloc
+memoize
 metadata
 misc
 mlvdv
@@ -210,13 +214,18 @@ uncompiled
 undock
 undockable
 unix
+unmark
+unmarking
 unpark
 unparks
 upcall
 upcalls
 viewport
 vm
+vtable
+vtables
 watchpoint
 watchpoints
 wattage
+workflow
 wrt

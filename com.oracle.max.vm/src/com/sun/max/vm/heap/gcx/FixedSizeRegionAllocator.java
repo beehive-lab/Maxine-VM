@@ -31,14 +31,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Region allocator initialized. The allocator offers method to allocate / free / commit and uncommit
+ * Region allocator.
+ * The allocator offers method to allocate / free / commit and uncommit
  * fixed size regions from a memory pool backed up by a contiguous range of virtual addresses.
  * The region size must be a power of 2 integral number of virtual memory pages.
  * Methods for allocating individual unit or contiguous ranges are provided.
  * Allocating a region means the range of virtual memory addresses corresponding to the region are reserved.
  * In order to use them, the underlying virtual memory needs to be committed.
  */
-public class FixedSizeRegionAllocator {
+class FixedSizeRegionAllocator {
 
     /**
      * A bit set class tailored to the needs of the region allocator.
@@ -243,7 +244,7 @@ public class FixedSizeRegionAllocator {
      */
     private int highestAllocated;
 
-    public FixedSizeRegionAllocator(String name) {
+    FixedSizeRegionAllocator(String name) {
         backingStorage = new MemoryRegion(name);
         allocated = new RegionBitSet();
         committed = new RegionBitSet();
@@ -262,7 +263,7 @@ public class FixedSizeRegionAllocator {
      * @param the size of the regions. Must be a multiple of the platform's page size.
      * @param amount of space already allocated from the start of the backing storage space.
      */
-    public void initialize(Address start, int numRegions, int numPreCommitted) {
+    void initialize(Address start, int numRegions, int numPreCommitted) {
         FatalError.check(backingStorage.start().isZero(), "Can only be initialized once");
         final int numWordsPerBitSet = 1 + (numRegions >> RegionBitSet.LOG2_BITS_PER_WORD);
         numFreeRegions = numRegions;
@@ -284,7 +285,7 @@ public class FixedSizeRegionAllocator {
         }
     }
 
-    public boolean contains(Address address) {
+    boolean contains(Address address) {
         return backingStorage.contains(address);
     }
 

@@ -42,7 +42,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @see SemiSpaceHeapScheme
  */
-final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
+final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
 
     private static final List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
 
@@ -122,7 +122,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements Tele
     @Override
     public boolean isObjectForwarded(Pointer origin) {
         if (!origin.isZero()) {
-            Pointer possibleForwardingPointer = vm().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 return true;
             }
@@ -140,7 +140,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements Tele
 
     public Pointer getForwardedOrigin(Pointer origin) {
         if (!origin.isZero()) {
-            Pointer possibleForwardingPointer = vm().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 final Pointer newCell = getTrueLocationFromPointer(possibleForwardingPointer);
                 if (!newCell.isZero()) {

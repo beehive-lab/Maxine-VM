@@ -34,6 +34,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramWarning.Handler;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
@@ -131,6 +132,13 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling {@link LogPrintStream#printSymbol(CodePointer)} on {@link #out}.
+     */
+    public static void printSymbol(CodePointer cp) {
+        out.printSymbol(cp);
+    }
+
+    /**
      * Equivalent to calling {@link com.sun.max.vm.Log.LogPrintStream#printf(String, Object[])} on {@link #out}.
      */
     public static void print(String... arr) {
@@ -221,6 +229,13 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling {@link LogPrintStream#print(CodePointer)} on {@link #out}.
+     */
+    public static void print(CodePointer cp) {
+        out.print(cp);
+    }
+
+    /**
      * Equivalent to calling {@link LogPrintStream#println(String)} on {@link #out}.
      */
     public static void println(String s) {
@@ -305,10 +320,65 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling (@link LogPrintStream#println(CodePointer)} on {@link #out}.
+     */
+    public static void println(CodePointer cp) {
+        out.println(cp);
+    }
+
+    /**
      * Equivalent to calling {@link LogPrintStream#printField(FieldActor, boolean)} on {@link #out}.
      */
     public static void printFieldActor(FieldActor fieldActor, boolean withNewline) {
         out.printField(fieldActor, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printMethod(TargetMethod, boolean)} passing {@code false}
+     * as the {@code boolean} parameter.
+     */
+    public static void print(TargetMethod tm) {
+        printMethod(tm, false);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printMethod(TargetMethod, boolean)} passing {@code true}
+     * as the {@code boolean} parameter.
+     */
+    public static void println(TargetMethod tm) {
+        printMethod(tm, true);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printMethod(MethodActor, boolean)} passing {@code false}
+     * as the {@code boolean} parameter.
+     */
+    public static void print(MethodActor ma) {
+        printMethod(ma, false);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printMethod(MethodActor, boolean)} passing {@code true}
+     * as the {@code boolean} parameter.
+     */
+    public static void println(MethodActor ma) {
+        printMethod(ma, true);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printHub(Hub, boolean)} passing {@code false} as the
+     * {@code boolean} parameter.
+     */
+    public static void print(Hub hub) {
+        printHub(hub, false);
+    }
+
+    /**
+     * Equivalent to calling {@link Log#printHub(Hub, boolean)} passing {@code true} as the
+     * {@code boolean} parameter.
+     */
+    public static void println(Hub hub) {
+        printHub(hub, true);
     }
 
     /**
@@ -349,8 +419,22 @@ public final class Log {
     /**
      * Equivalent to calling {@link #printLocation(TargetMethod, int, boolean) printLocation}{@code (tm, tm.posFor(ip), withNewLine)}.
      */
-    public static void printLocation(TargetMethod tm, Address ip, boolean withNewline) {
+    public static void printLocation(TargetMethod tm, CodePointer ip, boolean withNewline) {
         printLocation(tm, tm.posFor(ip), withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printHub(Hub, boolean)} on {@link #out}.
+     */
+    public static void printHub(Hub hub, boolean withNewLine) {
+        if (hub == null) {
+            out.print("<no hub>");
+            if (withNewLine) {
+                out.println();
+            }
+        } else {
+            out.printHub(hub, withNewLine);
+        }
     }
 
     /**
@@ -487,6 +571,10 @@ public final class Log {
             } else {
                 log_print_symbol(address.asAddress());
             }
+        }
+
+        public void printSymbol(CodePointer cp) {
+            printSymbol(cp.toAddress());
         }
 
         /**
@@ -660,6 +748,14 @@ public final class Log {
                 log_print_word(word);
             }
         }
+        public void print(CodePointer cp) {
+            if (MaxineVM.isHosted()) {
+                print(cp.toAddress());
+            } else {
+                // locking is not really necessary for primitives
+                log_print_word(cp.toAddress());
+            }
+        }
         @Override
         public void println(String s) {
             if (MaxineVM.isHosted()) {
@@ -777,6 +873,17 @@ public final class Log {
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
                 log_print_word(word);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+
+        public void println(CodePointer cp) {
+            if (MaxineVM.isHosted()) {
+                println(cp.toAddress());
+            } else {
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_word(cp.toAddress());
                 log_print_newline();
                 Log.unlock(lockDisabledSafepoints);
             }
@@ -905,7 +1012,7 @@ public final class Log {
          */
         public void printLocation(TargetMethod tm, int pos, boolean withNewline) {
             boolean lockDisabledSafepoints = lock();
-            Address ip = tm.codeStart().plus(pos);
+            CodePointer ip = tm.codeAt(pos);
             print(ip);
             print(" {");
             printSimpleName(ObjectAccess.readClassActor(tm).name.string);
@@ -927,7 +1034,31 @@ public final class Log {
 
 
         /**
-         * Prints a {@link VmThread} to this stream. The output is of the form:
+         * Convenience routine for printing a {@link Hub} to this stream. The output is of the form:
+         *
+         * <pre>
+         *     {Static|Dynamic}Hub[&lt;class name&gt;]
+         * </pre>
+         *
+         * @param hub the hub to print
+         * @withNewLine specifies if a newline should be appended to the stream after the hub
+         */
+        public void printHub(Hub hub, boolean withNewLine) {
+            if (hub instanceof StaticHub) {
+                Log.print("Static");
+            } else {
+                Log.print("Dynamic");
+            }
+            Log.print("Hub[");
+            Log.print(hub.classActor.name());
+            Log.print(']');
+            if (withNewLine) {
+                Log.println();
+            }
+        }
+
+        /**
+         * Convenience routine for printing a {@link VmThread} to this stream. The output is of the form:
          *
          * <pre>
          *     &lt;name&gt;[&lt;id&gt;]

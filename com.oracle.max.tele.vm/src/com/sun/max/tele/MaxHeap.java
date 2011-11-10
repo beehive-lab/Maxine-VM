@@ -25,22 +25,31 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 
 /**
- * Access to the heap in the VM.
+ * Access to the VM's heap.
+ * <p>
+ * The current working assumption is that the heap consists of multiple regions, each of which may be managed
+ * differently in terms of memory management and in the (closely related) management of object references.
+ * <p>
+ * For now, not all objects are considered to be in the heap; information stored as objects is also present
+ * in the code cache.  This could all be unified at some point in the future.
+ *
+ * @see MaxObjects
+ * @see MaxCodeCache
  */
 public interface MaxHeap extends MaxEntity<MaxHeap> {
 
+    // TODO (mlvdv) This interface as well as others related to memory management is evolving.
+
     /**
-     * @return description of the special heap region included in the binary image.
+     * @return description of the special object heap region included in the binary image.
      */
     MaxHeapRegion bootHeapRegion();
 
     /**
-     * @return description of the special non-collected heap region.
+     * @return description of the special non-collected object heap region.
      */
     MaxHeapRegion immortalHeapRegion();
 
@@ -52,7 +61,7 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     List<MaxHeapRegion> heapRegions();
 
     /**
-     * Finds a heap region by location.
+     * Finds a heap region by memory location.
      *
      * @param address a memory location in the VM.
      * @return the allocated heap region, if any, that includes that location
@@ -80,58 +89,11 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     MaxMemoryRegion rootsMemoryRegion();
 
     /**
-     * Locator for TeleObjects, which
-     * provide access to object contents and specialized methods that encapsulate
-     * knowledge of the heap's design.
-     * Special subclasses are created for Maxine implementation objects of special interest,
-     *  and for other objects for which special treatment is needed.
+     * Indicates whether heap management provides detailed heap region information.
      *
-     * @param reference a heap object in the VM;
-     * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
-     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     * @return true if detailed heap region information can be provided by heap management.
      */
-    TeleObject findTeleObject(Reference reference) throws MaxVMBusyException;
-
-    /**
-     * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
-     * @return an accessor for the specified heap object.
-     */
-    TeleObject findObjectByOID(long id);
-
-    /**
-     * Finds an object whose origin is at the specified address.
-     *
-     * @param origin memory location in the VM
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectAt(Address origin);
-
-    /**
-     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
-     *
-     * @param cellAddress search starts with word preceding this address
-     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
-
-    /**
-     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
-     *
-     * @param cellAddress search starts with word following this address
-     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
-
-    /**
-     * Writes current statistics concerning inspection of the VM's heap.
-     *
-     * @param printStream stream to which to write
-     * @param indent number of spaces to indent each line
-     * @param verbose possibly write extended information when true
-     */
-    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+    boolean providesHeapRegionInfo();
 
     /**
      * Return heap-specific memory management information that the heap maintains about the region of memory containing the specified location,
@@ -144,15 +106,19 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
-     * Indicates whether heap management provides detailed heap region information.
-     * @return true if detailed heap region information can be provided by heap management.
-     */
-    boolean providesHeapRegionInfo();
-
-    /**
      * Return heap-specific implementation of {@link MaxMarkBitsInfo} that the inspector can use to display mark-bit information for heap
      * scheme using a mark-bitmap for trace-based collection.
      * @return an implementation of MaxMarBitsInfo or null
      */
     MaxMarkBitsInfo markBitInfo();
+
+    /**
+     * Writes current statistics concerning inspection of the VM's heap.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+
 }

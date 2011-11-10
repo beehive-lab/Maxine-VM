@@ -263,7 +263,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
         // boot heap account.
-        managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+        managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize);
         try {
             VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
 
@@ -289,7 +289,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
             }
 
             // Now fix up the boot heap account to records the regions used up to now.
-            managerHeapAccount.recordAllocated(0, initialNumRegions, null, false);
+            // They are recorded committed
+            HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions);
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
         }

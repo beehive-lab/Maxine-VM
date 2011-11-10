@@ -93,48 +93,49 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         JButton button = new InspectorButton(inspection, actions().toggleBytecodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugToggleBreakpointbuttonIcon());
+        final InspectorStyle style = preference().style();
+        button.setIcon(style.debugToggleBreakpointbuttonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepOverButtonIcon());
+        button.setIcon(style.debugStepOverButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepInButtonIcon());
+        button.setIcon(style.debugStepInButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugStepOutButtonIcon());
+        button.setIcon(style.debugStepOutButtonIcon());
         button.setEnabled(haveMachineCodeAddresses());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugRunToCursorButtonIcon());
+        button.setIcon(style.debugRunToCursorButtonIcon());
         button.setEnabled(haveMachineCodeAddresses());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugContinueButtonIcon());
+        button.setIcon(style.debugContinueButtonIcon());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
-        button.setIcon(style().debugPauseButtonIcon());
+        button.setIcon(style.debugPauseButtonIcon());
         toolBar().add(button);
 
         toolBar().add(Box.createHorizontalGlue());
@@ -155,7 +156,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         });
         viewOptionsButton.setToolTipText("Bytecodes view options");
         viewOptionsButton.setText(null);
-        viewOptionsButton.setIcon(style().generalPreferencesIcon());
+        viewOptionsButton.setIcon(style.generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());
@@ -181,7 +182,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int bci = tableModel.rowToInstruction(row).bci;
-        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view set focus"), false);
+        focus().setCodeLocation(vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view set focus"), false);
     }
 
     @Override
@@ -209,7 +210,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         super.redisplay();
         table.redisplay();
         // TODO (mlvdv)  code view hack for style changes
-        table.setRowHeight(style().codeTableRowHeight());
+        table.setRowHeight(preference().style().codeTableRowHeight());
         invalidate();
         repaint();
     }
@@ -220,10 +221,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         BytecodeTable(Inspection inspection, InspectorTableModel tableModel, InspectorTableColumnModel tableColumnModel) {
             super(inspection, tableModel, tableColumnModel);
             setFillsViewportHeight(true);
-            setShowHorizontalLines(style().codeTableShowHorizontalLines());
-            setShowVerticalLines(style().codeTableShowVerticalLines());
-            setIntercellSpacing(style().codeTableIntercellSpacing());
-            setRowHeight(style().codeTableRowHeight());
+            final InspectorStyle style = preference().style();
+            setShowHorizontalLines(style.codeTableShowHorizontalLines());
+            setShowVerticalLines(style.codeTableShowVerticalLines());
+            setIntercellSpacing(style.codeTableIntercellSpacing());
+            setRowHeight(style.codeTableRowHeight());
             setRowSelectionAllowed(true);
             setColumnSelectionAllowed(true);
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -242,9 +244,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final Address machineCodeFirstAddress = bytecodeInstruction.machineCodeFirstAddress;
                     final int bci = bytecodeInstruction.bci;
                     if (machineCodeFirstAddress.isZero()) {
-                        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view"));
+                        focus().setCodeLocation(vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view"));
                     } else {
-                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), bci, "bytecode view"), true);
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), bci, "bytecode view"), true);
                     }
                 }
             }
@@ -257,7 +259,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
          */
         @Override
         public Color cellForegroundColor(int row, int col) {
-            return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
+            final InspectorStyle style = preference().style();
+            return isInstructionPointer(row) ? style.debugIPTextColor() : (isCallReturn(row) ? style.debugCallReturnTextColor() : null);
         }
 
         /**
@@ -269,7 +272,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (searchMatchingRows != null) {
                 for (int matchingRow : searchMatchingRows) {
                     if (row == matchingRow) {
-                        return style().searchMatchedBackground();
+                        return preference().style().searchMatchedBackground();
                     }
                 }
             }
@@ -437,7 +440,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private void setBackgroundForRow(JComponent component, int row) {
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
-            component.setBackground(style().searchMatchedBackground());
+            component.setBackground(preference().style().searchMatchedBackground());
         } else {
             component.setOpaque(false);
         }
@@ -453,6 +456,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             setToolTipPrefix(tableModel.getRowDescription(row));
             final StringBuilder toolTipSB = new StringBuilder(100);
             final MaxStackFrame stackFrame = stackFrame(row);
+            final InspectorStyle style = preference().style();
             if (stackFrame != null) {
                 if (stackFrame.position() == 0) {
                     toolTipSB.append("<br>IP (stack frame 0) in thread ");
@@ -464,11 +468,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 toolTipSB.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
                 toolTipSB.append(" points here");
                 if (stackFrame.isTop()) {
-                    setIcon(style().debugIPTagIcon());
-                    setForeground(style().debugIPTagColor());
+                    setIcon(style.debugIPTagIcon());
+                    setForeground(style.debugIPTagColor());
                 } else {
-                    setIcon(style().debugCallReturnTagIcon());
-                    setForeground(style().debugCallReturnTagColor());
+                    setIcon(style.debugCallReturnTagIcon());
+                    setForeground(style.debugCallReturnTagColor());
                 }
             } else {
                 setIcon(null);
@@ -483,9 +487,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 toolTipSB.append("; ");
                 toolTipSB.append(bytecodeBreakpoint.isEnabled() ? ", enabled" : ", disabled");
                 if (bytecodeBreakpoint.isEnabled()) {
-                    setBorder(style().debugEnabledBytecodeBreakpointTagBorder());
+                    setBorder(style.debugEnabledBytecodeBreakpointTagBorder());
                 } else {
-                    setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
+                    setBorder(style.debugDisabledBytecodeBreakpointTagBorder());
                 }
             } else if (machineCodeBreakpoints.size() > 0) {
                 boolean enabled = false;
@@ -495,9 +499,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     enabled = enabled || machineCodeBreakpoint.isEnabled();
                 }
                 if (enabled) {
-                    setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
+                    setBorder(style.debugEnabledMachineCodeBreakpointTagBorder());
                 } else {
-                    setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
+                    setBorder(style.debugDisabledMachineCodeBreakpointTagBorder());
                 }
             } else {
                 setBorder(null);
@@ -592,7 +596,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     renderer.setForeground(bytecodeTable.cellForegroundColor(row, col));
                 }
                 renderer.setToolTipPrefix(tableModel.getRowDescription(row) + " operand:<br>Constant pool reference = ");
-                renderer.setFont(style().bytecodeOperandFont());
+                renderer.setFont(preference().style().bytecodeOperandFont());
             } else {
                 InspectorError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }

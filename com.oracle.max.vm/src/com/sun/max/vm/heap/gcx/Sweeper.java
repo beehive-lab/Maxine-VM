@@ -107,10 +107,22 @@ public abstract class Sweeper {
      */
     public abstract Size minReclaimableSpace();
 
+    /**
+     * Linearly walk over the spaces swept by the sweeper to perform post-mark-sweep verification using the verifier given in argument.
+     * @param verifier
+     */
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
+    /**
+     * Start of the region being swept.
+     * @return an address
+     */
     public abstract Address startOfSweepingRegion();
 
+    /**
+     * End of the region being swept.
+     * @return an address
+     */
     public abstract Address endOfSweepingRegion();
 
 }

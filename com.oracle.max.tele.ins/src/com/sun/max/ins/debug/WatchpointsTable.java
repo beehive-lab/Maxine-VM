@@ -104,7 +104,7 @@ public final class WatchpointsTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.rowToWatchpoint(row).memoryRegion().contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -309,25 +309,26 @@ public final class WatchpointsTable extends InspectorTable {
             JLabel label = this;
             String labelText = "";
             String toolTipText = "";
-            setFont(style().defaultFont());
+            final InspectorStyle style = preference().style();
+            setFont(style.defaultFont());
             // See if any registers point here
             final MaxThread thread = focus().thread();
             if (thread != null) {
                 final List<MaxRegister> registers = thread.registers().find(watchpoint.memoryRegion());
                 if (registers.isEmpty()) {
-                    label.setForeground(style().memoryDefaultTagTextColor());
+                    label.setForeground(style.memoryDefaultTagTextColor());
                 } else {
                     final String registerNameList = inspection().nameDisplay().registerNameList(registers);
                     labelText += registerNameList + "-->";
                     toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
-                    setForeground(style().memoryRegisterTagTextColor());
+                    setForeground(style.memoryRegisterTagTextColor());
                 }
             }
             // If a watchpoint is currently triggered here, add a pointer icon.
             final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
             if (watchpointEvent != null && tableModel.rowToWatchpoint(row).memoryRegion().contains(watchpointEvent.address())) {
-                label.setIcon(style().debugIPTagIcon());
-                label.setForeground(style().debugIPTagColor());
+                label.setIcon(style.debugIPTagIcon());
+                label.setForeground(style.debugIPTagColor());
             } else {
                 label.setIcon(null);
                 label.setForeground(null);

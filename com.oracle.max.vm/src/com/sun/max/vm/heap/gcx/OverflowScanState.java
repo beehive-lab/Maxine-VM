@@ -22,13 +22,13 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ColorMapScanState;
-import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ForwardScanState;
 import com.sun.max.vm.heap.gcx.TricolorHeapMarker.MarkingStackFlusher;
-import static com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
 
 /**
  * State of an overflow scan of the tricolor map. A scan of the tricolor map enter this state when the marking stack overflow.
@@ -95,11 +95,18 @@ abstract class OverflowScanState extends ColorMapScanState {
      * @param bitmapWordIndex
      * @param rightmostBitmapWordIndex
      */
-    void visitGreyObjectsTillEndOfScan(int bitmapWordIndex, int rightmostBitmapWordIndex) {
+    void visitGreyObjectsToEndOfScan(int bitmapWordIndex, int rightmostBitmapWordIndex) {
         // This is slightly different from the forward scan:
         // The scan ends when reaching the forward scan finger. This one may be located in word shared with some
         // object visited during overflow scan. So we must check that precise condition to avoid visiting
         // objects already visited by the forward scan.
+        // We do that only for the last mark bitmap word, the one the forward scan finger points to.
+        if (bitmapWordIndex < rightmostBitmapWordIndex) {
+            final int beforeRightmostBitmapWordIndex = rightmostBitmapWordIndex - 1;
+            // Avoid systematic testing of marked object against the end of scan for all but the last bitmap word.
+            visitGreyObjects(bitmapWordIndex, beforeRightmostBitmapWordIndex);
+            bitmapWordIndex = beforeRightmostBitmapWordIndex;
+        }
 
         final Pointer colorMapBase = heapMarker.colorMapBase();
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
@@ -140,49 +147,15 @@ abstract class OverflowScanState extends ColorMapScanState {
     }
 
     /**
-     * Visit all grey objects whose mark is within the specified range of words of the color map.
-     * The forward scan finger is guaranteed not to be within the rightmost bitmap word of the range.
+     * Visit grey objects between the overflow scan's finger and the forward scan finger. The grey objects are located in the potentially discontinuous
+     * ranges of regions identified by the {@link HeapRegionInfoIterable} arguments.
      *
-     * @param bitmapWordIndex
-     * @param rightmostBitmapWordIndex
+     * @param regionsRanges an iterable over the regions ranges that comprises the grey objects to visit.
      */
-    void visitGreyObjectsBeforeEndOfScan(int bitmapWordIndex, int rightmostBitmapWordIndex) {
-        // Same as above, but we don't need to check against the forward scan finger since the scanned range is strictly before it.
-        final Pointer colorMapBase = heapMarker.colorMapBase();
-        while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (bitmapWord != 0L) {
-                final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
-                if (greyMarksInWord != 0L) {
-                    // First grey mark is the least set bit.
-                    final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
-                    final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
-                    Pointer p = heapMarker.addressOf(bitIndexOfGreyCell).asPointer();
-                    p = markAndVisitCell(p);
-                    // Get bitmap word index at the end of the object. This may avoid reading multiple mark bitmap words
-                    // when marking objects crossing multiple mark bitmap words.
-                    bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                    continue;
-                } else if ((bitmapWord >>> TricolorHeapMarker.LAST_BIT_INDEX_IN_WORD) == 1L) {
-                    // Mark span two words. Check first bit of next word to decide if mark is grey.
-                    bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
-                    if ((bitmapWord & 1) != 0) {
-                        // it is a grey object.
-                        final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + TricolorHeapMarker.LAST_BIT_INDEX_IN_WORD;
-                        Pointer p = heapMarker.addressOf(bitIndexOfGreyCell).asPointer();
-                        p = markAndVisitCell(p);
-                        bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                        continue;
-                    }
-                }
-            }
-            bitmapWordIndex++;
-        }
-    }
-
-
-    private  void visitGreyObjects(HeapRegionRangeIterable regionsRanges, int fingerBitmapWordIndex, int rightmostBitmapWordIndex) {
+    protected  void visitGreyObjects(HeapRegionRangeIterable regionsRanges) {
         final int log2RegionToBitmapWord = HeapRegionConstants.log2RegionSizeInBytes - heapMarker.log2BitmapWord;
+        int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
+        int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
         int fingerRegion = HeapRegionConstants.regionStart(finger).minus(heapMarker.coveredAreaStart).unsignedShiftedRight(HeapRegionConstants.log2RegionSizeInBytes).toInt();
         regionsRanges.reset(fingerRegion);
 
@@ -194,19 +167,10 @@ abstract class OverflowScanState extends ColorMapScanState {
                 fingerBitmapWordIndex = rangeLeftmostBitmapWordIndex;
             }
             if (rangeRightmostBitmapWordIndex > rightmostBitmapWordIndex) {
-                visitGreyObjectsTillEndOfScan(fingerBitmapWordIndex, rightmostBitmapWordIndex);
+                visitGreyObjectsToEndOfScan(fingerBitmapWordIndex, rightmostBitmapWordIndex);
                 break;
             }
-            visitGreyObjectsBeforeEndOfScan(fingerBitmapWordIndex, rangeRightmostBitmapWordIndex);
-        }
-    }
-
-    @INLINE
-    protected void visitGreyObjects(int fingerBitmapWordIndex, int rightmostBitmapWordIndex) {
-        if (regionsRanges != null) {
-            visitGreyObjects(regionsRanges, fingerBitmapWordIndex, rightmostBitmapWordIndex);
-        } else {
-            visitGreyObjectsTillEndOfScan(fingerBitmapWordIndex, rightmostBitmapWordIndex);
+            visitGreyObjects(fingerBitmapWordIndex, rangeRightmostBitmapWordIndex);
         }
     }
 

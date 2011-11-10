@@ -33,8 +33,8 @@ import com.sun.max.vm.reference.*;
 public final class TeleInterfaceMethodActor extends TeleMethodActor {
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleInterfaceMethodActor(TeleVM teleVM, Reference interfaceMethodActorReference) {
-        super(teleVM, interfaceMethodActorReference);
+    protected TeleInterfaceMethodActor(TeleVM vm, Reference interfaceMethodActorReference) {
+        super(vm, interfaceMethodActorReference);
     }
 
     /**

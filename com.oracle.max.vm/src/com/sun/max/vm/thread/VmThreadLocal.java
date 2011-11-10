@@ -56,7 +56,7 @@ import com.sun.max.vm.stack.*;
  * All thread local variables occupy one word and have a constant {@linkplain Nature nature}.
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
- * are three TLAs per thread, one for each of the {@linkplain SafepointPoVmThreadLocalll safepoint} states:
+ * are three TLAs per thread, one for each of the {@linkplain SafepointPoll safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
  * <dd>Safepoints for the thread are {@linkplain SafepointPoll#enable() enabled}. The base address of this TLA is
@@ -203,7 +203,7 @@ public class VmThreadLocal {
     public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", false, "points to table of JNI functions");
 
     /**
-     * The address of the current {@linkplain JavaFrameAnchor anchor list} for a thread.
+     * The address of the current {@linkplain JavaFrameAnchor Java frame anchor list} for a thread.
      */
     public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "", Nature.Single);
 
@@ -455,7 +455,7 @@ public class VmThreadLocal {
     @NEVER_INLINE
     public static long prepareCurrentStackReferenceMap() {
         return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentTLA(),
-                                                                                Pointer.fromLong(here()),
+                                                                                CodePointer.from(here()),
                                                                                 getAbiStackPointer(),
                                                                                 getAbiFramePointer(), true);
     }

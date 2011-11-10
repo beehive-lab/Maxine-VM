@@ -57,7 +57,7 @@ public class MachineCodeLabel extends InspectorLabel {
     }
 
     public final void redisplay() {
-        setFont(style().defaultBoldFont());
+        setFont(preference().style().defaultBoldFont());
     }
 
 }

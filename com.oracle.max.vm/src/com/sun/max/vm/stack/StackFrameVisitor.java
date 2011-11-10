@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
+
 /**
  * A visitor for traversing the frames on a thread's stack. The details of each frame traversed in the
  * stack walk are passed to {@link #visitFrame(StackFrame)}
@@ -29,6 +31,7 @@ package com.sun.max.vm.stack;
  *
  * @see RawStackFrameVisitor
  */
+@HOSTED_ONLY
 public abstract class StackFrameVisitor {
 
     /**

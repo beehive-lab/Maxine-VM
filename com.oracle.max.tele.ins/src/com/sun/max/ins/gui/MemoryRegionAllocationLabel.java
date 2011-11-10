@@ -116,10 +116,10 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
     public void redisplay() {
         switch(displayMode) {
             case ALLOCATED:
-                setFont(style().hexDataFont());
+                setFont(preference().style().hexDataFont());
                 break;
             case PERCENT:
-                setFont(style().primitiveDataFont());
+                setFont(preference().style().primitiveDataFont());
                 break;
         }
         refresh(true);

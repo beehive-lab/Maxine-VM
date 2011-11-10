@@ -36,7 +36,7 @@ import com.sun.max.unsafe.*;
  * Access to register state for a thread in the VM.
  * Updates cache of VM state lazily, based on the process {@linkplain TeleProcess#epoch() epoch}.
  */
-public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleVMCache, MaxRegisterSet {
+public final class TeleRegisterSet extends AbstractVmHolder implements TeleVMCache, MaxRegisterSet {
 
     private static final int TRACE_VALUE = 2;
 
@@ -60,16 +60,16 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
     private final List<MaxRegister> floatingPointRegisters;
     private final List<MaxRegister> stateRegisters;
 
-    public TeleRegisterSet(TeleVM teleVM, TeleNativeThread teleNativeThread) {
-        super(teleVM);
+    public TeleRegisterSet(TeleVM vm, TeleNativeThread teleNativeThread) {
+        super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleNativeThread.entityName() + " creating");
         tracer.begin();
         this.entityName = "Thread-" + teleNativeThread.localHandle() + " register set";
         this.entityDescription = "The machine registers, together with their current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
         this.teleNativeThread = teleNativeThread;
-        this.teleIntegerRegisters = new TeleIntegerRegisters(teleVM, this);
-        this.teleFloatingPointRegisters = new TeleFloatingPointRegisters(teleVM, this);
-        this.teleStateRegisters = new TeleStateRegisters(teleVM, this);
+        this.teleIntegerRegisters = new TeleIntegerRegisters(vm, this);
+        this.teleFloatingPointRegisters = new TeleFloatingPointRegisters(vm, this);
+        this.teleStateRegisters = new TeleStateRegisters(vm, this);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleNativeThread.entityName() + " updating");
 
         final int integerRegisterCount = teleIntegerRegisters.registers.length;

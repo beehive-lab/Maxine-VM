@@ -22,44 +22,42 @@
  */
 package com.sun.max.tele.object;
 
-import java.util.*;
-
 import com.sun.max.tele.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a {@link CodeRegion} object in the VM, which describes a VM memory region
- * that is used to allocate compiled code.
- * <br>
- * This implementation eagerly caches descriptions of every {@TargetMethod} object allocated
- * in the region.
+ * Canonical surrogate for an object of type {@link CodeRegion} object in the VM, which describes a VM memory region
+ * in which method compilations are allocated.
+ *
  * @see CodeRegion
  */
-public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
+public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
     private static final int TRACE_VALUE = 2;
 
     private boolean initialized = false;
     private boolean isBootCodeRegion = false;
-    private final List<TeleTargetMethod> teleTargetMethods = new ArrayList<TeleTargetMethod>();
 
-    private final Object localStatsPrinter = new Object() {
+    /**
+     * Reference to the array of references to {@link TargetMethod}s allocated in the code cache region.
+     */
+    private Reference targetMethodsReference = null;
 
-        private int previousMethodCount = 0;
+    // These two counters tell us when an eviction has taken place since the last time
+    // we checked, and whether we are currently in an eviction.
+    protected long evictionStartedCount = 0;
+    protected long evictionCompletedCount = 0;
 
-        @Override
-        public String toString() {
-            final int methodCount = teleTargetMethods.size();
-            final int newMethodCount =  methodCount - previousMethodCount;
-            final StringBuilder msg = new StringBuilder();
-            msg.append("#methods=(").append(methodCount);
-            msg.append(",new=").append(newMethodCount).append(")");
-            previousMethodCount = methodCount;
-            return msg.toString();
-        }
-    };
+    // These two counters tell us whether an addition to the array of target methods
+    // in the code region has happened since the last time we checked, which has
+    // implications for efficient refreshing our model of the array's contents.
+    // They also tell us whether we an addition is currently underway,
+    // in which case the state of the array is indeterminate.
+    protected int additionStartedCount = 0;
+    protected int additionCompletedCount = 0;
 
     TeleCodeRegion(TeleVM vm, Reference codeRegionReference) {
         super(vm, codeRegionReference);
@@ -69,7 +67,7 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      * @return whether the {@link CodeRegion} object describes the "boot code" region,
      * which is contained in the boot image of the VM.
      */
-    private boolean isBootCodeRegion() {
+    public final boolean isBootCodeRegion() {
         initialize();
         return isBootCodeRegion;
     }
@@ -77,44 +75,46 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     private void initialize() {
         if (!initialized) {
             isBootCodeRegion = getRegionName().equals(vm().codeCache().bootCodeRegionName());
+            targetMethodsReference = fields().CodeRegion_targetMethods.readReference(reference());
             initialized = true;
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Register any new compiled methods that have appeared since the previous successful refresh.
-     */
     @Override
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        // Don't try until the code cache is ready, which it isn't early in the startup sequence.
-        // Also make sure that the region has actually been allocated before trying.
-        if (!vm().codeCache().isInitialized() || !isAllocated()) {
-            return false;
+        // The target methods array might change if the array is grown, or via eviction.
+        targetMethodsReference = fields().CodeRegion_targetMethods.readReference(reference());
+        additionStartedCount = fields().CodeRegion_additionStartedCount.readInt(reference());
+        additionCompletedCount = fields().CodeRegion_additionCompletedCount.readInt(reference());
+        if (isManaged()) {
+            evictionStartedCount = fields().CodeRegion_evictionStartedCount.readLong(reference());
+            evictionCompletedCount = fields().CodeRegion_evictionCompletedCount.readLong(reference());
         }
-        int length = vm().teleFields().CodeRegion_length.readInt(reference());
-        Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
-        int index = teleTargetMethods.size();
-        while (index < length) {
-            Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, targetMethodsReference, index++).asReference();
-            // Creating a {@link TeleTargetMethod} causes it to be added to the code registry
-            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
-            if (teleTargetMethod == null) {
-                vm().invalidReferencesLogger().record(targetMethodReference, TeleTargetMethod.class);
-                continue;
-            }
-            teleTargetMethods.add(teleTargetMethod);
-        }
-        statsPrinter.addStat(localStatsPrinter);
         return true;
     }
 
+    /**
+     * Gets a reference to a {@link TargetMethod} from the code cache region.
+     *
+     * @param index identifies the desired target method.  Must be less than {@link #nTargetMethods()}.
+     * @return a reference to a {@link TargetMethod} in the VM.
+     */
+    public final Reference getTargetMethodReference(int index) {
+        return memory().readArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
+    }
+
+    /**
+     * @return the number of {@link TargetMethod}s currently in the code cache region in the VM.
+     */
+    public final int nTargetMethods() {
+        return fields().CodeRegion_length.readInt(reference());
+    }
+
     @Override
-    public long getRegionNBytes() {
+    public final long getRegionNBytes() {
         if (isBootCodeRegion()) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
@@ -125,25 +125,24 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     /**
-     * Gets all method compilations; assumes no eviction, no reordering.
-     *
-     * @return all compiled methods known to be in the region.
+     * @return whether code eviction ever takes place in this code region
      */
-    public List<TeleTargetMethod> teleTargetMethods() {
-        return teleTargetMethods;
+    public boolean isManaged() {
+        return false;
     }
 
     /**
-     * @return the number of method compilations that have been copied from
-     * the VM and cached locally.
+     * @return whether eviction is underway in this code region
      */
-    public int methodLoadedCount() {
-        int count = 0;
-        for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-            if (teleTargetMethod.isLoaded()) {
-                count++;
-            }
-        }
-        return count;
+    public final boolean isInEviction() {
+        return evictionCompletedCount < evictionStartedCount;
     }
+
+    /**
+     * @return the number of code evictions that have been completed in this code region
+     */
+    public final long evictionCount() {
+        return evictionCompletedCount;
+    }
+
 }

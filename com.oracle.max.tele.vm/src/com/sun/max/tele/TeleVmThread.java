@@ -44,14 +44,14 @@ public class TeleVmThread extends TeleTupleObject {
     // assume that strings are immutable, so only re-read when the reference changes.
     private Reference nameReference;
 
-    public TeleVmThread(TeleVM teleVM, Reference vmThreadReference) {
-        super(teleVM, vmThreadReference);
+    public TeleVmThread(TeleVM vm, Reference vmThreadReference) {
+        super(vm, vmThreadReference);
     }
 
     public String name() {
         if (vm().teleProcess().epoch() > lastRefreshedEpoch) {
             try {
-                final Reference nameReference = vm().teleFields().VmThread_name.readReference(reference());
+                final Reference nameReference = fields().VmThread_name.readReference(reference());
                 if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
                     if (nameReference.isZero()) {
                         name = "*unset*";

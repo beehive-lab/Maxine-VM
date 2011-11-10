@@ -340,6 +340,14 @@ public abstract class Word {
         return asOffset().toInt() == other.asOffset().toInt();
     }
 
+    @INLINE
+    public final boolean equals(CodePointer other) {
+        if (isHosted()) {
+            return ((Boxed) this).value() == other.toLong();
+        }
+        return asAddress().toLong() == other.toLong();
+    }
+
     @Override
     public final boolean equals(Object other) {
         throw ProgramError.unexpected("must not call equals(Object) with Word argument");

@@ -92,7 +92,7 @@ public final class ThreadsTable extends InspectorTable {
         final MaxThread thread = (MaxThread) tableModel.getValueAt(row, 0);
         final MaxThreadState threadState = thread.state();
         if (threadState == BREAKPOINT || threadState == WATCHPOINT) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -180,6 +180,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final int id = thread.id();
             if (id < 0) {
                 setText("");
@@ -204,6 +207,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final String handleString = thread.handleString();
             setText(handleString);
             setToolTipText("Thread handle:  " + handleString);
@@ -222,6 +228,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final String handleString = Long.toString(thread.localHandle());
             setText(handleString);
             setToolTipText("Local thread handle:  " + handleString);
@@ -240,6 +249,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             String kind;
             if (thread.isJava()) {
                 kind = "Java";
@@ -267,6 +279,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             setValue(inspection().nameDisplay().shortName(thread), "Thread name:  " + inspection().nameDisplay().longName(thread));
             setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
@@ -283,6 +298,9 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
+            if (thread == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final MaxThreadState threadState = thread.state();
             setText(threadState.toString());
             String toolTipText = "Thread status: " + threadState;

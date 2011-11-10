@@ -35,7 +35,7 @@ import com.sun.max.vm.hosted.*;
 public class ReadOnlyTeleVM extends TeleVM {
 
     /**
-     * Creates a tele VM instance for inspecting a boot image without executing it.
+     * Creates a VM instance for inspecting a boot image without executing it.
      *
      * @param bootImage the metadata describing the boot image in {@code bootImageFile}
      * @param sourcepath the source code path to search for class or interface definitions

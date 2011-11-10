@@ -92,6 +92,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.addSeparator();
         menu.add(actions.refreshAll());
         menu.addSeparator();
+        menu.add(views().resetViewsToDefaultAction());
         menu.add(views().deactivateAllViewsAction());
         menu.addSeparator();
         menu.add(actions.preferences());

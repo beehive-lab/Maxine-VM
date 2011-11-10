@@ -110,19 +110,28 @@
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="illegal trailing whitespace(s) at the end of the line"/>
       <property name="format" value="\s$"/>
-      <property name="message" value="Illegal trailing whitespace(s) at the end of the line."/>
+      <property name="message" value="illegal trailing whitespace(s) at the end of the line"/>
       <property name="ignoreComments" value="true"/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for trailing spaces at the end of a line"/>
     </module>
     <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="illegal space before comma"/>
       <property name="format" value=" ,"/>
+      <property name="message" value="illegal space before comma"/>
       <property name="ignoreComments" value="true"/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.customMessage" value="Illegal whitespace before a comma."/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for whitespace before a comma."/>
     </module>
     <module name="ConstantName">
       <property name="format" value="^[a-zA-Z0-9][a-zA-Z0-9_]*$"/>
+    </module>
+    <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="temporary breakpoint hook should be removed or commented out"/>
+      <property name="format" value="System\.console\(\)"/>
+      <property name="message" value="temporary breakpoint hook should be removed or commented out"/>
+      <property name="ignoreComments" value="true"/>
     </module>
   </module>
   <module name="RegexpHeader">
@@ -179,5 +188,4 @@
     <property name="format" value="\r\n"/>
     <property name="message" value="illegal Windows line ending"/>
   </module>
-
 </module>

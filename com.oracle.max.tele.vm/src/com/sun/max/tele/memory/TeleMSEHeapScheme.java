@@ -33,7 +33,7 @@ import com.sun.max.vm.heap.gcx.mse.*;
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
  */
-final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
+final class TeleMSEHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
     private TeleRegionTable teleRegionTable;
 
     TeleMSEHeapScheme(TeleVM vm) {
@@ -89,7 +89,7 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
                 if (regionID < 0) {
                     return null;
                 }
-                return heap().makeTeleObject(vm().originToReference(teleRegionTable.regionInfo(regionID).asPointer()));
+                return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
             }
         };
     }

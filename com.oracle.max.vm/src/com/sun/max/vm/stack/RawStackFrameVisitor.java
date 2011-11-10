@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * A visitor for traversing the frames on a thread's stack. This visitor avoids any allocation
@@ -40,14 +39,14 @@ public abstract class RawStackFrameVisitor {
      *
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
-    public abstract boolean visitFrame(Cursor current, Cursor callee);
+    public abstract boolean visitFrame(StackFrameCursor current, StackFrameCursor callee);
 
     public void done() {
     }
 
     public static class Default extends RawStackFrameVisitor {
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
             return true;
         }
     }

@@ -215,20 +215,20 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         final TextLabel holderLabel = new TextLabel(inspection, "Declaring class:");
         final JButton holderButton = new JButton(new TypeFieldChooser("...", holderField));
         holderButton.setText(null);
-        holderButton.setIcon(style().generalFindIcon());
+        holderButton.setIcon(preference().style().generalFindIcon());
         holderButton.setToolTipText("Find declaring class...");
         final JLabel nameLabel = new JLabel("Name:");
         final TextLabel returnTypeLabel = new TextLabel(inspection, "Return type:");
         final JButton returnTypeButton = new JButton(new TypeFieldChooser("...", returnTypeField));
         returnTypeButton.setText(null);
-        returnTypeButton.setIcon(style().generalFindIcon());
+        returnTypeButton.setIcon(preference().style().generalFindIcon());
         returnTypeButton.setToolTipText("Find return type...");
 
         final JScrollPane parametersPane = new InspectorScrollPane(inspection, parametersField);
         final TextLabel parametersLabel = new TextLabel(inspection, "Parameters:");
         final JButton parametersButton = new JButton(new TypeFieldChooser("...", parametersField));
         parametersButton.setText(null);
-        parametersButton.setIcon(style().generalFindIcon());
+        parametersButton.setIcon(preference().style().generalFindIcon());
         parametersButton.setToolTipText("Find parameters....");
 
         okButton = new JButton(new AbstractAction("OK") {

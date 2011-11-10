@@ -142,7 +142,6 @@ public final class TeleDisassembler {
     }
 
     private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
-        //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (platform.isa) {
             case AMD64: {
                 return new AMD64LoadLiteralParser(disassembler, codeStart);

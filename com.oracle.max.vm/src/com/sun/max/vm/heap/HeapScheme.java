@@ -123,7 +123,7 @@ public interface HeapScheme extends VMScheme {
      * Performs a garbage collection.
      *
      * @param requestedFreeSpace the minimum amount of space the collection must free up
-     * @return {@code true} if {@code requestedFreeSpace} was freed up, {@code false} otherwise
+     * @return {@code true} if at least {@code requestedFreeSpace} was freed up, {@code false} otherwise
      */
     boolean collectGarbage(Size requestedFreeSpace);
 

@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.management.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Utilities for managing target code. This class offers a number of services
@@ -69,10 +70,11 @@ public final class Code {
     }
 
     /**
-     * Initializes the code manager.
+     * Initializes the code manager and {@link CodePointer} base address.
      */
     public static void initialize() {
         codeManager.initialize();
+        CodePointer.initialize(bootCodeRegion.start());
     }
 
     /**
@@ -83,7 +85,7 @@ public final class Code {
      * @param targetMethod the target method for which the code-related arrays are allocated
      */
     public static void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
-        codeManager.allocate(targetBundleLayout, targetMethod, false);
+        codeManager.allocate(targetBundleLayout, targetMethod, false, targetMethod.lifespan());
     }
 
     /**
@@ -96,7 +98,7 @@ public final class Code {
      * @param targetMethod the target method for which the code-related arrays are allocated
      */
     public static void allocateInHeap(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
-        codeManager.allocate(targetBundleLayout, targetMethod, true);
+        codeManager.allocate(targetBundleLayout, targetMethod, true, targetMethod.lifespan());
     }
 
     /**
@@ -118,8 +120,13 @@ public final class Code {
      * one exists; {@code null} otherwise
      */
     @INSPECTED
-    public static TargetMethod codePointerToTargetMethod(Address codePointer) {
-        return codeManager.codePointerToTargetMethod(codePointer);
+    public static TargetMethod codePointerToTargetMethod(Pointer codePointer) {
+        boolean wasDisabled = SafepointPoll.disable();
+        TargetMethod result = codeManager.codePointerToTargetMethod(codePointer);
+        if (!wasDisabled) {
+            SafepointPoll.enable();
+        }
+        return result;
     }
 
     /**
@@ -143,7 +150,7 @@ public final class Code {
     }
 
     public static Size getRuntimeCodeRegionSize() {
-        return codeManager.getRuntimeCodeRegionSize();
+        return codeManager.getRuntimeBaselineCodeRegionSize().plus(codeManager.getRuntimeOptCodeRegionSize());
     }
 
     public static MemoryManagerMXBean getMemoryManagerMXBean() {
@@ -163,8 +170,8 @@ public final class Code {
         CodeMemoryManagerMXBean(String name) {
             super(name);
             add(new CodeMemoryPoolMXBean(bootCodeRegion(), this));
-            add(new CodeMemoryPoolMXBean(codeManager.getRuntimeCodeRegion(), this));
-
+            add(new CodeMemoryPoolMXBean(codeManager.getRuntimeBaselineCodeRegion(), this));
+            add(new CodeMemoryPoolMXBean(codeManager.getRuntimeOptCodeRegion(), this));
         }
     }
 
