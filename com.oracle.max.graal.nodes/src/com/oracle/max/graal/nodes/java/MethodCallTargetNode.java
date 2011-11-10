@@ -24,11 +24,13 @@ package com.oracle.max.graal.nodes.java;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public class MethodCallTargetNode extends CallTargetNode {
+public class MethodCallTargetNode extends CallTargetNode implements Node.IterableNodeType, Canonicalizable {
     public enum InvokeKind {
         Interface,
         Special,
@@ -37,8 +39,8 @@ public class MethodCallTargetNode extends CallTargetNode {
     }
 
     @Data private final RiType returnType;
-    @Data private final RiResolvedMethod targetMethod;
-    @Data private final InvokeKind invokeKind;
+    @Data private RiResolvedMethod targetMethod;
+    @Data private InvokeKind invokeKind;
     /**
      * @param arguments
      */
@@ -66,6 +68,10 @@ public class MethodCallTargetNode extends CallTargetNode {
         return invokeKind;
     }
 
+    public void setInvokeKind(InvokeKind kind) {
+        this.invokeKind = kind;
+    }
+
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
      * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
@@ -89,8 +95,31 @@ public class MethodCallTargetNode extends CallTargetNode {
         return targetMethod().signature().returnKind(false);
     }
 
-    public Collection<InvokeNode> invokes() {
-        return ValueUtil.filter(this.usages(), InvokeNode.class);
+    public Collection<Invoke> invokes() {
+        ArrayList<Invoke> invokes = new ArrayList<Invoke>();
+        for (Node node : usages()) {
+            if (node instanceof Invoke) {
+                invokes.add((Invoke) node);
+            }
+        }
+        return invokes;
+    }
+
+    public Invoke invoke() {
+        if (this.usages().size() == 0) {
+            return null;
+        }
+        return (Invoke) this.usages().iterator().next();
+    }
+
+
+    @Override
+    public boolean verify() {
+        assert usages().size() <= 1 : "call target may only be used by a single invoke";
+        for (Node n : usages()) {
+            assertTrue(n instanceof Invoke, "call target can only be used from an invoke (%s)", n);
+        }
+        return super.verify();
     }
 
     @Override
@@ -100,5 +129,17 @@ public class MethodCallTargetNode extends CallTargetNode {
         } else {
             return super.toString(verbosity);
         }
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (!isStatic()) {
+            ValueNode receiver = receiver();
+            if (receiver != null && receiver.exactType() != null && invokeKind == InvokeKind.Interface) {
+                invokeKind = InvokeKind.Virtual;
+                targetMethod = receiver.exactType().resolveMethodImpl(targetMethod);
+            }
+        }
+        return this;
     }
 }

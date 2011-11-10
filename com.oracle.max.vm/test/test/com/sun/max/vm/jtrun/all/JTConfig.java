@@ -619,6 +619,7 @@ public class JTConfig {
         jtt.optimize.Fold_Convert04.class,
         jtt.optimize.Fold_Double01.class,
         jtt.optimize.Fold_Double02.class,
+        jtt.optimize.Fold_Double03.class,
         jtt.optimize.Fold_Float01.class,
         jtt.optimize.Fold_Float02.class,
         jtt.optimize.Fold_InstanceOf01.class,

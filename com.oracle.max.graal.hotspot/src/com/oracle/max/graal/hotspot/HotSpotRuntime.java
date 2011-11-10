@@ -25,6 +25,7 @@ package com.oracle.max.graal.hotspot;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -61,6 +62,8 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
     private IdentityHashMap<RiMethod, StructuredGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, StructuredGraph>();
+
+    private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
 
     public HotSpotRuntime(GraalContext context, HotSpotVMConfig config, Compiler compiler) {
         this.context = context;
@@ -254,7 +257,7 @@ public class HotSpotRuntime implements GraalRuntime {
             }
             StructuredGraph graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
-            assert field.kind != CiKind.Illegal;
+            assert field.kind() != CiKind.Illegal;
             ReadNode memoryRead = graph.unique(new ReadNode(field.field().kind(true).stackKind(), field.object(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
             memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
             FixedNode next = field.next();
@@ -344,10 +347,10 @@ public class HotSpotRuntime implements GraalRuntime {
         } else if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
             StructuredGraph graph = load.graph();
-            assert load.kind != CiKind.Illegal;
+            assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
-            ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
             memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
             FixedNode next = load.next();
             load.setNext(null);
@@ -540,8 +543,8 @@ public class HotSpotRuntime implements GraalRuntime {
                         IfNode elementClassIf = graph.add(new IfNode(graph.unique(new CompareNode(srcClass, Condition.EQ, destClass)), 0.5));
                         destClass.setNext(elementClassIf);
                         ifNode.setFalseSuccessor(BeginNode.begin(anchor));
-                        MethodCallTargetNode target = graph.unique(new MethodCallTargetNode(InvokeKind.Static, method, new ValueNode[]{src, srcPos, dest, destPos, length}, method.signature().returnType(holder)));
-                        newInvoke = graph.add(new InvokeNode(bci, target));
+                        MethodCallTargetNode target = graph.add(new MethodCallTargetNode(InvokeKind.Static, method, new ValueNode[]{src, srcPos, dest, destPos, length}, method.signature().returnType(holder)));
+                        newInvoke = graph.add(new InvokeNode(target, FrameState.BEFORE_BCI));
                         newInvoke.setCanInline(false);
                         newInvoke.setStateAfter(stateAfter);
                         elementClassIf.setFalseSuccessor(BeginNode.begin(newInvoke));
@@ -797,9 +800,35 @@ public class HotSpotRuntime implements GraalRuntime {
         return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
-    public void installMethod(RiMethod method, CiTargetMethod code) {
+    public HotSpotCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
         Compiler compilerInstance = CompilerImpl.getInstance();
-        HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code);
+        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, true);
+        return new HotSpotCompiledMethod(compilerInstance, (HotSpotMethodResolved) method, nmethod);
+    }
+
+    @Override
+    public void executeOnCompilerThread(Runnable r) {
+        tasks.add(r);
+        compiler.getVMEntries().notifyJavaQueue();
+    }
+
+    public void pollJavaQueue() {
+        Runnable r = tasks.poll();
+        while (r != null) {
+            try {
+                r.run();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            r = tasks.poll();
+        }
+    }
+
+    @Override
+    public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
+        Compiler compilerInstance = CompilerImpl.getInstance();
+        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
+        return new HotSpotCompiledMethod(compilerInstance, method, nmethod);
     }
 
     @Override

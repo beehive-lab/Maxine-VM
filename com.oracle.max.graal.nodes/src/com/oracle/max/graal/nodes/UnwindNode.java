@@ -38,7 +38,7 @@ public final class UnwindNode extends FixedNode implements LIRLowerable {
 
     public UnwindNode(ValueNode exception) {
         super(CiKind.Object);
-        assert exception == null || exception.kind == CiKind.Object;
+        assert exception == null || exception.kind() == CiKind.Object;
         this.exception = exception;
     }
 

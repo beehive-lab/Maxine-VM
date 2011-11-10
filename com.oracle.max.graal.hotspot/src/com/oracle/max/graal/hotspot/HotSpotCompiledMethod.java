@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.c1x;
+package com.oracle.max.graal.hotspot;
 
-import com.sun.max.config.*;
+import com.sun.cri.ri.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
+/**
+ * Implementation of RiCompiledMethod for HotSpot. Stores a reference to the nmethod which contains the compiled code.
+ */
+public class HotSpotCompiledMethod extends CompilerObject implements RiCompiledMethod {
+
+    private final RiResolvedMethod method;
+    private final long nmethod;
+
+    public HotSpotCompiledMethod(Compiler compiler, RiResolvedMethod method, long nmethod) {
+        super(compiler);
+        this.method = method;
+        this.nmethod = nmethod;
+    }
+
+    @Override
+    public RiResolvedMethod method() {
+        return method;
+    }
+
+    @Override
+    public String toString() {
+        return "compiled method " + method + " @" + nmethod;
     }
 }

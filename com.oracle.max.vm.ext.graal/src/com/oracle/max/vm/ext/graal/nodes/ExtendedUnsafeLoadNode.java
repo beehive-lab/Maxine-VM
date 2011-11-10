@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
 /**
  * Load of a value from a location specified as an offset relative to an object.
  */
-public class ExtendedUnsafeLoadNode extends StateSplit implements Lowerable, Node.ValueNumberable {
+public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowerable, Node.ValueNumberable {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;
@@ -66,10 +66,12 @@ public class ExtendedUnsafeLoadNode extends StateSplit implements Lowerable, Nod
 
     @Override
     public void lower(CiLoweringTool tool) {
-        assert kind != CiKind.Illegal;
+        assert kind() != CiKind.Illegal;
         LocationNode location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), displacement(), offset(), graph());
-        ReadNode memoryRead = graph().unique(new ReadNode(kind, object(), location));
-        memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
+        ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
+        if (object().kind() == CiKind.Object) {
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
+        }
         FixedNode next = next();
         setNext(null);
         memoryRead.setNext(next);

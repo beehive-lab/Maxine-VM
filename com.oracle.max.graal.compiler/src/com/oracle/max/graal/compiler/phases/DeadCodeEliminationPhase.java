@@ -34,10 +34,6 @@ public class DeadCodeEliminationPhase extends Phase {
     private NodeFlood flood;
     private StructuredGraph graph;
 
-    public DeadCodeEliminationPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
     protected void run(StructuredGraph graph) {
         this.graph = graph;
@@ -60,7 +56,7 @@ public class DeadCodeEliminationPhase extends Phase {
             }
         }
 
-        new PhiSimplificationPhase(context).apply(graph);
+        new PhiSimplificationPhase().apply(graph, context);
     }
 
     private void iterateSuccessors() {
