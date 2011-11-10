@@ -290,7 +290,7 @@ public class Deoptimization extends VmOperation {
         @Override
         public void setIP(Info info, Pointer ip) {
             if (returnAddressIndex >= 0) {
-                info.slots.set(returnAddressIndex, WordUtil.constant(ip));
+                info.slots.set(returnAddressIndex, WordUtil.archConstant(ip));
                 traceContinuation(ip);
             }
         }
@@ -442,7 +442,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
-        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.constant(returnValue));
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.archConstant(returnValue));
     }
 
     /**
@@ -776,8 +776,8 @@ public class Deoptimization extends VmOperation {
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
         cont.setIP(info, info.returnIP.asPointer());
-        cont.setSP(info, WordUtil.constant(info.callerSP));
-        cont.setFP(info, WordUtil.constant(info.callerFP));
+        cont.setSP(info, WordUtil.archConstant(info.callerSP));
+        cont.setFP(info, WordUtil.archConstant(info.callerFP));
 
         int slotsSize = info.slotsSize();
         Pointer slotsAddrs = sp.plus(tm.frameSize() + STACK_SLOT_SIZE).minus(slotsSize);
@@ -790,7 +790,7 @@ public class Deoptimization extends VmOperation {
             if (c.kind.isJsr()) {
                 int slotIndex = c.asInt();
                 Pointer slotAddr = slotsAddrs.plus(slotIndex * STACK_SLOT_SIZE);
-                slots.set(i, WordUtil.constant(slotAddr));
+                slots.set(i, WordUtil.archConstant(slotAddr));
             }
         }
 
