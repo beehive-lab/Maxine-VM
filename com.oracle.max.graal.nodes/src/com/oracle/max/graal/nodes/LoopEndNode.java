@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 
 public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
-    @Input private LoopBeginNode loopBegin;
+    @Input(notDataflow = true) private LoopBeginNode loopBegin;
 
     public LoopBeginNode loopBegin() {
         return loopBegin;
