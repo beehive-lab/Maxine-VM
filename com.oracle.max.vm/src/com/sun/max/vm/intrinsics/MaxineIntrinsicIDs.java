@@ -179,13 +179,15 @@ public class MaxineIntrinsicIDs {
     public static final String IFLATCHBITREAD = p + "IFLATCHBITREAD";
 
     /**
-     * Read a value from memory.
+     * Reads a value from memory.
      * <p>
-     * The method definition must have one of the following forms:
+     * The method definition must have one of the following signatures:
      * <pre>
-     * T Pointer.m(int offset)
-     * T Pointer.readByte(Offset offset)
-     * T Pointer.getByte(int displacement, int index)
+     *
+     *     T (int offset)
+     *     T (Offset offset)
+     *     T (int displacement, int index)
+     *
      * where T is any Java type (primitive type, Object, or Word)
      *
      * this: The base of the address to read.
@@ -197,13 +199,16 @@ public class MaxineIntrinsicIDs {
     public static final String PREAD = p + "PREAD";
 
     /**
-     * Read a value to memory.
+     * Writes a value to memory.
      * <p>
      * The method definition must have one of the following forms:
+     * The method definition must have one of the following signatures:
      * <pre>
-     * void Pointer.m(int offset, T value)
-     * void Pointer.readByte(Offset offset, T value)
-     * void Pointer.getByte(int displacement, int index, T value)
+     *
+     *     void (int offset, T value)
+     *     void (Offset offset, T value)
+     *     void (int displacement, int index, T value)
+     *
      * where T is any Java type (primitive type, Object, or Word)
      *
      * this: The base of the address to read.
