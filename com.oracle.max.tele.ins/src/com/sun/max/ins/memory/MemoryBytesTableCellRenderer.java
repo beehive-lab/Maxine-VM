@@ -69,7 +69,7 @@ public final class MemoryBytesTableCellRenderer extends InspectorTableCellRender
         label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>As bytes: ");
         label.setValue(rowBytes);
         if (inspectorTable.isBoundaryRow(row)) {
-            label.setBorder(style().defaultPaneTopBorder());
+            label.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             label.setBorder(null);
         }

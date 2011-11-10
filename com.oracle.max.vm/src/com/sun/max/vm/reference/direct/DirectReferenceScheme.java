@@ -447,6 +447,11 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     @Override
+    public boolean isTagged(Reference ref) {
+        return toOrigin(ref).isBitSet(0);
+    }
+
+    @Override
     public Reference marked(Reference ref) {
         final Pointer origin = toOrigin(ref).bitSet(0);
         return fromOrigin(origin);

@@ -75,7 +75,8 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         super(inspection);
         this.owner = parent;
         rowMatcher = rowTextMatcher;
-        setBorder(style().defaultPaneBorder());
+        final InspectorStyle style = inspection.preference().style();
+        setBorder(style.defaultPaneBorder());
         setFloatable(false);
         setRollover(true);
         add(new TextLabel(inspection, "Search: "));
@@ -114,7 +115,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                 owner.selectPreviousResult();
             }
         });
-        previousButton.setIcon(style().searchPreviousMatchButtonIcon());
+        previousButton.setIcon(style.searchPreviousMatchButtonIcon());
         previousButton.setText(null);
         previousButton.setToolTipText("Scroll to previous matching line");
         previousButton.setEnabled(false);
@@ -125,7 +126,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                 owner.selectNextResult();
             }
         });
-        nextButton.setIcon(style().searchNextMatchButtonIcon());
+        nextButton.setIcon(style.searchNextMatchButtonIcon());
         nextButton.setText(null);
         nextButton.setToolTipText("Scroll to next matching line");
         nextButton.setEnabled(false);
@@ -136,7 +137,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                 owner.closeRequested();
             }
         });
-        closeButton.setIcon(style().codeViewCloseIcon());
+        closeButton.setIcon(style.codeViewCloseIcon());
         closeButton.setToolTipText("Close Search");
         add(closeButton);
     }
@@ -166,7 +167,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                     pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE + Pattern.LITERAL);
                 }
             } catch (PatternSyntaxException patternSyntaxException) {
-                textField.setBackground(style().searchFailedBackground());
+                textField.setBackground(preference().style().searchFailedBackground());
                 statusLabel.setText("regexp error");
                 matchingRows = null;
                 owner.setSearchResult(matchingRows);
@@ -177,11 +178,11 @@ public class RowTextSearchToolBar extends InspectorToolBar {
             statusLabel.setText(Integer.toString(matchCount) + "/" + rowMatcher.rowCount() + " rows");
 
             if (matchCount > 0) {
-                textField.setBackground(style().searchMatchedBackground());
+                textField.setBackground(preference().style().searchMatchedBackground());
                 nextButton.setEnabled(true);
                 previousButton.setEnabled(true);
             } else {
-                textField.setBackground(style().searchFailedBackground());
+                textField.setBackground(preference().style().searchFailedBackground());
                 nextButton.setEnabled(false);
                 previousButton.setEnabled(false);
             }

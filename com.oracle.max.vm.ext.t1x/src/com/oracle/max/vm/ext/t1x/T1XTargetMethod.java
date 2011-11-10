@@ -51,6 +51,7 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.CallerContinuation;
@@ -63,7 +64,6 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -74,6 +74,8 @@ import com.sun.max.vm.type.*;
 public final class T1XTargetMethod extends TargetMethod {
 
     static final int SYNC_METHOD_CATCH_TYPE_CPI = -1;
+
+    public static final String PROTECTED = "PROTECTED";
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
@@ -169,6 +171,16 @@ public final class T1XTargetMethod extends TargetMethod {
      */
     public final MethodProfile profile;
 
+    /**
+     * Index for the method protection sentinel (for code eviction) in the reference literals array.
+     */
+    public final int protectionLiteralIndex;
+
+    /**
+     * Number of {@linkplain CodeEviction code eviction cycles} this method survived.
+     */
+    private int survivedEvictions = 0;
+
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
 
@@ -199,6 +211,9 @@ public final class T1XTargetMethod extends TargetMethod {
             profile = null;
         }
 
+        assert comp.protectionLiteralIndex == 0 : "protection literal should be first but is " + comp.protectionLiteralIndex;
+        protectionLiteralIndex = comp.protectionLiteralIndex;
+
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position());
         if (install) {
@@ -208,7 +223,7 @@ public final class T1XTargetMethod extends TargetMethod {
         }
 
         // Copy code
-        comp.buf.copyInto(code, 0, code.length);
+        comp.buf.copyInto(code(), 0, code().length);
 
         // Copy reference literals
         if (referenceLiterals != null) {
@@ -218,6 +233,8 @@ public final class T1XTargetMethod extends TargetMethod {
                 ArrayAccess.setObject(referenceLiterals, i, literal);
             }
         }
+
+        assert referenceLiterals[protectionLiteralIndex] == PROTECTED : "expected protection literal, found " + referenceLiterals[protectionLiteralIndex];
 
         if (safepointsBuilder.safepoints.size() != 0) {
             final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, safepointsBuilder.bytecodeSafepointsIterator, frame);
@@ -235,11 +252,64 @@ public final class T1XTargetMethod extends TargetMethod {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+
+        // if the VM is running, validate freshly generated code
+        assert MaxineVM.isHosted() || CodeCacheValidation.instance.validateSingleMethod(this);
     }
 
     @Override
     public VMFrameLayout frameLayout() {
         return frame;
+    }
+
+    @Override
+    public Lifespan lifespan() {
+        return (classMethodActor != null && classMethodActor.isClassInitializer()) ? Lifespan.ONE_SHOT : Lifespan.SHORT;
+    }
+
+    @Override
+    public boolean isProtected() {
+        return referenceLiterals[protectionLiteralIndex] == PROTECTED;
+    }
+
+    @Override
+    public void protect() {
+        referenceLiterals[protectionLiteralIndex] = PROTECTED;
+    }
+
+    /**
+     * Notify this method of a survived {@linkplain CodeEviction code eviction cycle}. This is done
+     * by simply incrementing the {@link #survivedEvictions} counter.
+     */
+    @Override
+    public void survivedEviction() {
+        ++survivedEvictions;
+    }
+
+    /**
+     * This method was {@linkplain CodeEviction evicted} if its {@link #survivedEvictions} counter
+     * is smaller than the current eviction count.
+     */
+    @Override
+    public boolean wasEvicted() {
+        return survivedEvictions < CodeEviction.evictionCount();
+    }
+
+    /**
+     * The number of times this method was relocated is equal to the number of {@linkplain CodeEviction
+     * eviction cycles} it survived.
+     */
+    @Override
+    public int timesRelocated() {
+        return survivedEvictions;
+    }
+
+    /**
+     * @return {@code true} if this target method's {@link ClassMethodActor} says so.
+     */
+    @Override
+    public boolean isUsingTaggedLocals() {
+        return classMethodActor.isUsingTaggedLocals();
     }
 
     @Override
@@ -302,12 +372,12 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean isPatchableCallSite(Address callSite) {
+    public boolean isPatchableCallSite(CodePointer callSite) {
         return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
     }
 
     @Override
-    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
@@ -324,9 +394,26 @@ public final class T1XTargetMethod extends TargetMethod {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }
 
+    /**
+     * This version of {@code posFor()} accounts for the possibility of a method having moved in the code cache.
+     */
     @Override
-    public Address patchCallSite(int callOffset, Address callEntryPoint) {
-        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+    public int posFor(CodePointer ip) {
+        int pos = super.posFor(ip);
+        if (pos == -1) {
+            if (Code.getCodeManager().getRuntimeBaselineCodeRegion().isInFromSpace(ip.toAddress())) {
+                pos = (int) (ip.toLong() - (oldStart.toLong() + codeStart().toLong() - start().toLong()));
+            }
+            if (pos < 0 && pos > code().length) {
+                pos = -1;
+            }
+        }
+        return pos;
+    }
+
+    @Override
+    public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
+        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
     }
 
     @Override
@@ -349,6 +436,11 @@ public final class T1XTargetMethod extends TargetMethod {
         return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
+    @INLINE
+    private CodePointer relocateIP(CodePointer ip) {
+        return CodePointer.from(start).plus(ip.minus(oldStart));
+    }
+
     public int posForBci(int bci) {
         return bciToPos[bci];
     }
@@ -368,8 +460,8 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
-        int bci = bciFor(ip.asPointer());
+    public int forEachCodePos(CodePosClosure cpc, CodePointer ip) {
+        int bci = bciFor(ip);
         if (bci >= 0) {
             cpc.doCodePos(classMethodActor, bci);
             return 1;
@@ -386,7 +478,7 @@ public final class T1XTargetMethod extends TargetMethod {
      *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
      *         code, prologue or epilogue.
      */
-    public int bciFor(Pointer ip) {
+    public int bciFor(CodePointer ip) {
         assert bciToPos != null;
         assert bciToPos.length > 0;
         final int pos = posFor(ip);
@@ -458,7 +550,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 // in the pause loop below.
                 // One case where such recursion is possible is if a GC is requested while
                 // this thread is preparing ref maps during ref map verification (i.e. -XX:+VerifyRefMaps).
-                boolean mustReenableSafepoints = !MaxineVM.isHosted() && !SafepointPoll.disable();
+                boolean mustReenableSafepoints = !SafepointPoll.disable();
 
                 referenceMapEditor.fillInMaps();
                 this.refMapEditor.set(null);
@@ -487,9 +579,9 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address ip, Throwable exception) {
+    public CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception) {
         if (handlers.length != 0) {
-            final int exceptionPos = posFor(ip.asPointer());
+            final int exceptionPos = posFor(ip);
             int exceptionBCI = bciForPos(exceptionPos);
             if (exceptionBCI != -1) {
                 for (CiExceptionHandler e : handlers) {
@@ -499,7 +591,7 @@ public final class T1XTargetMethod extends TargetMethod {
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(exceptionPos, exceptionBCI, e.handlerBCI, handlerPos);
-                                return codeStart.plus(handlerPos);
+                                return codeAt(handlerPos);
                             }
                         }
                     }
@@ -510,20 +602,20 @@ public final class T1XTargetMethod extends TargetMethod {
                 if (syncMethodHandler.startBCI <= exceptionPos && exceptionPos < syncMethodHandler.endBCI) {
                     int handlerPos = syncMethodHandler.handlerBCI;
                     checkHandler(exceptionPos, exceptionBCI, -1, handlerPos);
-                    return codeStart.plus(handlerPos);
+                    return codeAt(handlerPos);
                 }
             }
         }
-        return Address.zero();
+        return CodePointer.zero();
     }
 
     void checkHandler(int excPos, int excBCI, int handlerBCI, int handlerPos) {
-        if (handlerPos <= 0 || handlerPos >= code.length) {
+        if (handlerPos <= 0 || handlerPos >= code().length) {
             FatalError.unexpected("Bad handler for exception at pos " + excPos + " (bci: " + excBCI + ") in " + this + ": handler pos " + handlerPos + " (bci: " + handlerBCI + ")");
         }
     }
 
-    private int bciForCallSite(Pointer returnIP) {
+    private int bciForCallSite(CodePointer returnIP) {
         // The instruction pointer is now just beyond the call machine instruction.
         // In case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
         // Thus we always look up what bytecode we were in during the call.
@@ -531,6 +623,13 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     private static int getInvokeCPI(byte[] code, int invokeBCI) {
+        assert invokeBCI >= 0 : "illegal bytecode index";
+        assert
+            code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE
+         || code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL
+         || code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC
+         || code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
+         :  "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
         return ((code[invokeBCI + 1] & 0xff) << 8) | (code[invokeBCI + 2] & 0xff);
     }
 
@@ -548,11 +647,15 @@ public final class T1XTargetMethod extends TargetMethod {
      *
      * @param caller the T1X method frame cursor
      */
-    private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
+    private void prepareTrampolineRefMap(StackFrameCursor caller, FrameReferenceMapVisitor preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
         // the called method by looking at the bytecode of the caller method
-        int bci = bciForCallSite(caller.ip());
+        CodePointer cip = caller.vmIP();
+        if (Code.getCodeManager().getRuntimeBaselineCodeRegion().isInFromSpace(cip.toAddress())) {
+            cip = relocateIP(cip);
+        }
+        int bci = bciForCallSite(cip);
         ConstantPool constantPool = codeAttribute.cp;
         byte[] code = codeAttribute.code();
         MethodRefConstant methodRef = constantPool.methodAt(getInvokeCPI(code, bci));
@@ -576,7 +679,7 @@ public final class T1XTargetMethod extends TargetMethod {
                         Log.print(", type: ");
                         Log.println(parameter.string);
                     }
-                    preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
+                    preparer.visitReferenceMapBits(caller, slotPointer, 1, 1);
                 }
                 int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;
                 slotPointer = slotPointer.plus(slotSize * parameterSlots);
@@ -589,7 +692,7 @@ public final class T1XTargetMethod extends TargetMethod {
                     Log.print("    receiver, type: ");
                     Log.println(methodRef.holder(constantPool).string);
                 }
-                preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
+                preparer.visitReferenceMapBits(caller, slotPointer, 1, 1);
             }
         }
     }
@@ -602,7 +705,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
         finalizeReferenceMaps();
 
         CiCalleeSaveLayout csl = callee.csl();
@@ -619,7 +722,11 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        int safepointIndex = findSafepointIndex(current.ip());
+        CodePointer cip = current.vmIP();
+        if (Code.getCodeManager().getRuntimeBaselineCodeRegion().isInFromSpace(cip.toAddress())) {
+            cip = relocateIP(cip);
+        }
+        int safepointIndex = findSafepointIndex(cip);
         if (safepointIndex < 0) {
             // this is very bad.
             throw FatalError.unexpected("could not find safepoint index");
@@ -644,7 +751,7 @@ public final class T1XTargetMethod extends TargetMethod {
                             Log.print("    register: ");
                             Log.println(csl.registers[reg].name);
                         }
-                        preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                        preparer.visitReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
                     reg++;
                     b = b >>> 1;
@@ -658,7 +765,7 @@ public final class T1XTargetMethod extends TargetMethod {
         preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
         int byteIndex = safepointIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
-            preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);
+            preparer.visitReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);
             slotPointer = slotPointer.plusWords(8);
             byteIndex++;
         }
@@ -690,25 +797,25 @@ public final class T1XTargetMethod extends TargetMethod {
         }
     }
 
-    static Pointer throwAddress(Cursor frame) {
+    static CodePointer throwAddress(StackFrameCursor frame) {
         if (!frame.isTopFrame() && platform().isa.offsetToReturnPC == 0) {
             // Adjust 'retAddr' to ensure it is within the call instruction.
-            return frame.ip().minus(1);
+            return frame.vmIP().minus(1);
         } else {
-            return frame.ip();
+            return frame.vmIP();
         }
     }
 
     @Override
-    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         StackFrameWalker sfw = current.stackFrameWalker();
-        Pointer throwAddress = throwAddress(current);
-        Address catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
+        CodePointer throwAddress = throwAddress(current);
+        CodePointer catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
 
         if (!catchAddress.isZero()) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
-                Log.print(current.ip().minus(codeStart()).toInt());
+                Log.print(current.vmIP().minus(codeStart()).toInt());
                 Log.print(" is ");
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
@@ -723,7 +830,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 // Store the exception for the handler
                 VmThread.current().storeExceptionForHandler(throwable, this, posFor(catchAddress));
 
-                Stubs.unwind(catchAddress, catcherSP, localVariablesBase);
+                Stubs.unwind(catchAddress.toPointer(), catcherSP, localVariablesBase);
                 FatalError.unexpected("should not reach here");
             } else {
                 unimplISA();
@@ -733,7 +840,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
     @PLATFORM(cpu = "amd64")
     @HOSTED_ONLY
-    private FramePointerStateAMD64 computeFramePointerState(Cursor current, StackFrameWalker stackFrameWalker, Pointer lastPrologueInstr) {
+    private FramePointerStateAMD64 computeFramePointerState(StackFrameCursor current, StackFrameWalker stackFrameWalker, CodePointer lastPrologueInstr) {
         // Checkstyle: stop
         final byte ENTER = (byte) 0xC8;
         final byte LEAVE = (byte) 0xC9;
@@ -744,9 +851,9 @@ public final class T1XTargetMethod extends TargetMethod {
         // Checkstyle: resume
 
 
-        Pointer ip = current.ip();
-        byte byteAtIP = stackFrameWalker.readByte(ip, 0);
-        if (ip.lessThan(lastPrologueInstr) || byteAtIP == ENTER || byteAtIP == RET || byteAtIP == RET2) {
+        CodePointer ip = current.vmIP();
+        byte byteAtIP = stackFrameWalker.readByte(ip.toPointer(), 0);
+        if (ip.toPointer().lessThan(lastPrologueInstr.toPointer()) || byteAtIP == ENTER || byteAtIP == RET || byteAtIP == RET2) {
             return FramePointerStateAMD64.CALLER_FRAME_IN_RBP;
         }
         if (ip.equals(lastPrologueInstr) || byteAtIP == LEAVE) {
@@ -759,24 +866,22 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+    @HOSTED_ONLY
+    public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (isAMD64()) {
             StackFrameWalker sfw = current.stackFrameWalker();
             Pointer localVariablesBase = current.fp();
-            if (MaxineVM.isHosted()) {
-                // Inspector context only
-                Pointer startOfPrologue;
-                AdapterGenerator generator = AdapterGenerator.forCallee(this);
-                if (generator != null) {
-                    startOfPrologue = codeStart.plus(generator.prologueSizeForCallee(classMethodActor));
-                } else {
-                    startOfPrologue = codeStart;
-                }
-                Pointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
-                FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
-                localVariablesBase = framePointerState.localVariablesBase(current);
+            CodePointer startOfPrologue;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
+            } else {
+                startOfPrologue = codeStart();
             }
-            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
+            CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+            FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
+            localVariablesBase = framePointerState.localVariablesBase(current);
+            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
             return visitor.visitFrame(stackFrame);
         } else {
             throw unimplISA();
@@ -784,7 +889,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void advance(Cursor current) {
+    public void advance(StackFrameCursor current) {
         if (isAMD64()) {
             StackFrameWalker sfw = current.stackFrameWalker();
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
@@ -792,18 +897,18 @@ public final class T1XTargetMethod extends TargetMethod {
             Pointer callerFP = sfw.readWord(returnRIP, -Word.size()).asPointer();
             if (MaxineVM.isHosted()) {
                 // Inspector context only
-                Pointer startOfPrologue;
+                CodePointer startOfPrologue;
                 AdapterGenerator generator = AdapterGenerator.forCallee(this);
                 if (generator != null) {
                     if (generator.advanceIfInPrologue(current)) {
                         return;
                     }
-                    startOfPrologue = codeStart.plus(generator.prologueSizeForCallee(classMethodActor));
+                    startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
                 } else {
-                    startOfPrologue = codeStart;
+                    startOfPrologue = codeStart();
                 }
 
-                Pointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+                CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 returnRIP = framePointerState.returnIP(current);
                 callerFP = framePointerState.callerFP(current);
@@ -817,14 +922,18 @@ public final class T1XTargetMethod extends TargetMethod {
                 callerSP = callerSP.plus(stackAmountInBytes);
             }
 
+            boolean wasDisabled = SafepointPoll.disable();
             sfw.advance(callerIP, callerSP, callerFP);
+            if (!wasDisabled) {
+                SafepointPoll.enable();
+            }
         } else {
             unimplISA();
         }
     }
 
     @Override
-    public Pointer returnAddressPointer(Cursor frame) {
+    public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (isAMD64()) {
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             return frame.fp().plus(dispToRip);
@@ -843,10 +952,10 @@ public final class T1XTargetMethod extends TargetMethod {
         int bci = frame.bci;
         ClassMethodActor method = classMethodActor;
         assert classMethodActor == frame.method : classMethodActor + " != " + frame.method;
-        Pointer ip = findContinuationIP(exception, bci);
+        CodePointer ip = findContinuationIP(exception, bci);
 
         // record continuation instruction pointer
-        cont.setIP(info, ip);
+        cont.setIP(info, ip.toPointer());
 
         if (exception == null) {
             // record continuation stack pointer
@@ -942,15 +1051,15 @@ public final class T1XTargetMethod extends TargetMethod {
      * @param exception if non-null, then the returned address will be for the handler of this exception
      * @param bci the BCI specified by a debug info {@linkplain CiFrame frame}
      */
-    private Pointer findContinuationIP(Throwable exception, int bci) throws FatalError {
-        Pointer ip;
+    private CodePointer findContinuationIP(Throwable exception, int bci) throws FatalError {
+        CodePointer ip;
         if (exception == null) {
             RiMethod callee = classMethodActor.codeAttribute().calleeAt(bci);
             ip = findTemplateCallReturnAddress(bci, callee);
         } else {
             // Unwinding to deoptimized frame containing the handler for 'exception'
             int curPos = bciToPos[bci];
-            Pointer handler = throwAddressToCatchAddress(codeStart.plus(curPos), exception).asPointer();
+            CodePointer handler = throwAddressToCatchAddress(codeAt(curPos), exception);
             assert !handler.isZero() : "could not (re)find handler for " + exception + " thrown at " + this + "+" + curPos;
             ip = handler;
         }
@@ -962,7 +1071,7 @@ public final class T1XTargetMethod extends TargetMethod {
      *
      * @param bci BCI of the bytecode invoke instruction that was translated to a template call
      */
-    private Pointer findTemplateCallReturnAddress(int bci, RiMethod callee) throws FatalError {
+    private CodePointer findTemplateCallReturnAddress(int bci, RiMethod callee) throws FatalError {
         int templateCallReturnPos = -1;
         int curPos = bciToPos[bci];
         if (callee != null) {
@@ -993,11 +1102,11 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
         if (templateCallReturnPos != -1) {
-            return codeStart().plus(templateCallReturnPos);
+            return codeAt(templateCallReturnPos);
         } else {
             FatalError.check(callee == null || ((RiResolvedMethod) callee).intrinsic() != null, "could not find template call for non-intrinisc method at " + curPos + " in " + this);
             // Must be a safepoint
-            return codeStart().plus(curPos);
+            return codeAt(curPos);
         }
     }
 }
@@ -1016,19 +1125,19 @@ enum FramePointerStateAMD64 {
     IN_RBP {
 
         @Override
-        Pointer localVariablesBase(Cursor current) {
+        Pointer localVariablesBase(StackFrameCursor current) {
             return current.fp();
         }
 
         @Override
-        Pointer returnIP(Cursor current) {
+        Pointer returnIP(StackFrameCursor current) {
             T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
             int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
             return current.fp().plus(dispToRip);
         }
 
         @Override
-        Pointer callerFP(Cursor current) {
+        Pointer callerFP(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
         }
     },
@@ -1040,18 +1149,18 @@ enum FramePointerStateAMD64 {
     CALLER_FRAME_IN_RBP {
 
         @Override
-        Pointer localVariablesBase(Cursor current) {
+        Pointer localVariablesBase(StackFrameCursor current) {
             int offsetToSaveArea = current.targetMethod().frameSize();
             return current.sp().minus(offsetToSaveArea);
         }
 
         @Override
-        Pointer returnIP(Cursor current) {
+        Pointer returnIP(StackFrameCursor current) {
             return current.sp();
         }
 
         @Override
-        Pointer callerFP(Cursor current) {
+        Pointer callerFP(StackFrameCursor current) {
             return current.fp();
         }
     },
@@ -1063,19 +1172,19 @@ enum FramePointerStateAMD64 {
     CALLER_FRAME_AT_RBP {
 
         @Override
-        Pointer localVariablesBase(Cursor current) {
+        Pointer localVariablesBase(StackFrameCursor current) {
             T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
             int dispToFrameStart = targetMethod.frameSize() - (targetMethod.sizeOfNonParameterLocals() + Word.size());
             return current.fp().minus(dispToFrameStart);
         }
 
         @Override
-        Pointer returnIP(Cursor current) {
+        Pointer returnIP(StackFrameCursor current) {
             return current.fp().plus(Word.size());
         }
 
         @Override
-        Pointer callerFP(Cursor current) {
+        Pointer callerFP(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
         }
     },
@@ -1087,32 +1196,33 @@ enum FramePointerStateAMD64 {
     RETURNING_FROM_RUNTIME {
 
         @Override
-        Pointer localVariablesBase(Cursor current) {
+        Pointer localVariablesBase(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
         }
 
         @Override
-        Pointer returnIP(Cursor current) {
+        Pointer returnIP(StackFrameCursor current) {
             T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
             int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
             return localVariablesBase(current).plus(dispToRip);
         }
 
         @Override
-        Pointer callerFP(Cursor current) {
+        Pointer callerFP(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
         }
     };
 
-    abstract Pointer localVariablesBase(Cursor current);
+    abstract Pointer localVariablesBase(StackFrameCursor current);
 
-    abstract Pointer returnIP(Cursor current);
+    abstract Pointer returnIP(StackFrameCursor current);
 
-    abstract Pointer callerFP(Cursor current);
+    abstract Pointer callerFP(StackFrameCursor current);
 
     /**
      * Offset to the last instruction of the prologue from the JIT entry point. The prologue comprises two instructions,
      * the first one of which is enter (fixed size, 4 bytes long).
      */
     public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
+
 }

@@ -30,8 +30,8 @@ import com.sun.max.vm.type.*;
  */
 public class TeleVirtualMethodAccess extends TeleMethodAccess {
 
-    public TeleVirtualMethodAccess(TeleVM teleVM, Class holder, String name, SignatureDescriptor signature) {
-        super(teleVM, holder, name, signature);
+    public TeleVirtualMethodAccess(TeleVM vm, Class holder, String name, SignatureDescriptor signature) {
+        super(vm, holder, name, signature);
         TeleError.check(!methodActor().isStatic());
     }
 }

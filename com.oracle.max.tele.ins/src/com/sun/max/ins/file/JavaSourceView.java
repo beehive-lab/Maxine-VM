@@ -101,12 +101,12 @@ public final class JavaSourceView extends FileView<JavaSourceView> {
     public void createViewContent() {
         textArea = new JTextArea(readFile());
         textArea.setEditable(false);
-        textArea.setFont(style().javaNameFont());
+        textArea.setFont(preference().style().javaNameFont());
         textArea.setCaretPosition(0);
 
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
         setContentPane(scrollPane);
-        setGeometry(inspection().geometry().preferredFrameGeometry(ViewKind.JAVA_SOURCE));
+        setGeometry(preference().geometry().preferredFrameGeometry(ViewKind.JAVA_SOURCE));
     }
 
     @Override

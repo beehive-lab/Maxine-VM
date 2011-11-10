@@ -52,11 +52,11 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         return dataAccess;
     }
 
-    public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
-        super(teleVM, platform, ProcessState.UNKNOWN);
-        this.heapPointer = Pointer.fromLong(TeleHeap.heapAddressOption());
+    public ReadOnlyTeleProcess(TeleVM vm, Platform platform, File programFile) throws BootImageException {
+        super(vm, platform, ProcessState.UNKNOWN);
+        this.heapPointer = Pointer.fromLong(VmHeapAccess.heapAddressOption());
         try {
-            dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage());
+            dataAccess = map(vm.bootImageFile(), vm.bootImage());
         } catch (IOException ioException) {
             throw new BootImageException("Error mapping in boot image", ioException);
         }

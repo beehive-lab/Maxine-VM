@@ -196,7 +196,7 @@ public class Compilation {
 
         try {
 
-            InspectableCodeInfo.notifyCompilationEvent(classMethodActor, null);
+            InspectableCompilationInfo.notifyCompilationEvent(classMethodActor, null);
 
             methodString = logBeforeCompilation(compiler);
             if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
@@ -212,7 +212,7 @@ public class Compilation {
             if (result == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
-            InspectableCodeInfo.notifyCompilationEvent(result.classMethodActor, result);
+            InspectableCompilationInfo.notifyCompilationEvent(result.classMethodActor, result);
 
             if (startCompile != 0) {
                 compilationTime += System.currentTimeMillis() - startCompile;

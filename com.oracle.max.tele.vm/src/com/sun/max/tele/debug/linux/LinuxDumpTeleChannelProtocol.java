@@ -44,7 +44,7 @@ public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdap
         ByteBuffer psinfo; // copy of taskPsInfo
     }
 
-    public LinuxDumpTeleChannelProtocol(TeleVM teleVM, File vm, File dump) {
+    public LinuxDumpTeleChannelProtocol(MaxVM teleVM, File vm, File dump) {
         super(teleVM, vm, dump);
         LinuxNoteEntryHandler noteEntryHandler = new LinuxNoteEntryHandler();
         processNoteSection(noteEntryHandler);

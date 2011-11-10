@@ -22,8 +22,12 @@
  */
 package com.sun.max.tele.reference;
 
+import static com.sun.max.tele.reference.ObjectMemoryStatus.*;
+
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
+// TODO (mlvdv) this will eventually be replaced.
 /**
  * Raw bits may change due to tele GC.
  */
@@ -32,29 +36,24 @@ public final class MutableTeleReference extends RemoteTeleReference {
     private int index;
     private Address lastValidPointer = Address.zero();
 
-    int index() {
-        if (forwardedTeleRef != null) {
-            if (forwardedTeleRef instanceof MutableTeleReference) {
-                final MutableTeleReference mutableTeleRef = (MutableTeleReference) getForwardedTeleRef();
-                return mutableTeleRef.index();
-            }
-        }
-        return index;
+    MutableTeleReference(TeleVM vm, int index) {
+        super(vm);
+        this.index = index;
     }
 
     @Override
-    public TeleObjectMemory.State getTeleObjectMemoryState() {
+    public ObjectMemoryStatus memoryStatus() {
         if (forwardedTeleRef != null) {
             MutableTeleReference forwardedTeleRef = (MutableTeleReference) getForwardedTeleRef();
             if (forwardedTeleRef.index() == -1) {
-                return TeleObjectMemory.State.DEAD;
+                return DEAD;
             }
-            return TeleObjectMemory.State.OBSOLETE;
+            return OBSOLETE;
         }
         if (index == -1) {
-            return TeleObjectMemory.State.DEAD;
+            return DEAD;
         }
-        return TeleObjectMemory.State.LIVE;
+        return LIVE;
     }
 
     @Override
@@ -62,18 +61,13 @@ public final class MutableTeleReference extends RemoteTeleReference {
         if (index == -1 || forwardedTeleRef != null) {
             return lastValidPointer;
         }
-        Address tmp = teleReferenceScheme().getRawReference(this);
+        Address tmp = vm().referenceManager().getRawReference(this);
         if (!tmp.equals(Address.zero())) {
             lastValidPointer = tmp;
             return tmp;
         }
         index = -1;
         return lastValidPointer;
-    }
-
-    MutableTeleReference(TeleReferenceScheme teleReferenceScheme, int index) {
-        super(teleReferenceScheme);
-        this.index = index;
     }
 
     @Override
@@ -92,8 +86,8 @@ public final class MutableTeleReference extends RemoteTeleReference {
 
     @Override
     public void finalize() throws Throwable {
-        if (isLive()) {
-            teleReferenceScheme().finalizeMutableTeleReference(index);
+        if (memoryStatus().isLive()) {
+            vm().referenceManager().finalizeMutableTeleReference(index);
         }
         super.finalize();
     }
@@ -101,5 +95,15 @@ public final class MutableTeleReference extends RemoteTeleReference {
     @Override
     public String toString() {
         return "<" + index + ">";
+    }
+
+    int index() {
+        if (forwardedTeleRef != null) {
+            if (forwardedTeleRef instanceof MutableTeleReference) {
+                final MutableTeleReference mutableTeleRef = (MutableTeleReference) getForwardedTeleRef();
+                return mutableTeleRef.index();
+            }
+        }
+        return index;
     }
 }

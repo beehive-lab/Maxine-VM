@@ -22,6 +22,6 @@
  */
 /**
  * "Unsafe" operations that transgress the safety guarantees of the core Java language specification:
- * direct memory access, unchecked type casts, unchecked member access, etc.
+ * direct memory access, unchecked type casts, unchecked member access, tagged pointers, etc.
  */
 package com.sun.max.unsafe;

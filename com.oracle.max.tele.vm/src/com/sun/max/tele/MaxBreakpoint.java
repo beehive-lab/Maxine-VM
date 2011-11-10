@@ -101,7 +101,7 @@ public interface MaxBreakpoint {
      *
      * @return a breakpoint that "owns" this one; null if none.
      */
-    TeleBreakpoint owner();
+    VmBreakpoint owner();
 
     /**
      * Removes this breakpoint from the VM.

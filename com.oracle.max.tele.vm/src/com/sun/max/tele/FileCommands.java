@@ -57,7 +57,7 @@ public class FileCommands {
         return defaultCommandFile;
     }
 
-    public static void executeCommandsFromFile(TeleVM teleVM, String filename) {
+    public static void executeCommandsFromFile(MaxVM vm, String filename) {
         lineNumber = 0;
         BufferedReader bs = null;
         try {
@@ -72,7 +72,7 @@ public class FileCommands {
                     continue;
                 }
                 try {
-                    doCommand(teleVM, line);
+                    doCommand(vm, line);
                 } catch (CommandException commandException) {
                     TeleError.unexpected("File Command failed ", commandException);
                 }
@@ -89,23 +89,23 @@ public class FileCommands {
         }
     }
 
-    private static void doCommand(TeleVM teleVM, String line) throws CommandException {
+    private static void doCommand(MaxVM vm, String line) throws CommandException {
         final int index = line.indexOf(' ');
         final String command = (index < 0) ? line : line.substring(0, index);
         final String arguments = (index < 0) ? "" : line.substring(index + 1);
         if (command.equals("break")) {
-            doBreak(teleVM, arguments);
+            doBreak(vm, arguments);
         }
     }
 
-    private static void doBreak(TeleVM teleVM, String arg) throws CommandException {
+    private static void doBreak(MaxVM vm, String arg) throws CommandException {
         final int index = arg.lastIndexOf('.');
         if (index < 0) {
             throw new CommandException("syntax error: class name missing");
         }
         final String className = arg.substring(0, index);
         final String methodSignature = arg.substring(index + 1);
-        final TeleClassActor teleClassActor = teleVM.classRegistry().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(className));
+        final TeleClassActor teleClassActor = vm.classes().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(className));
         if (teleClassActor == null) {
             throw new CommandException("failed to find class: " + className + " (not qualified or misspelled?)");
         }
@@ -115,10 +115,10 @@ public class FileCommands {
                 found = true;
                 final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
                 if (teleTargetMethod != null) {
-                    final MaxCompilation compiledCode = teleVM.codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
+                    final MaxCompilation compiledCode = vm.codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
                     if (compiledCode != null) {
                         try {
-                            teleVM.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
+                            vm.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
                         } catch (MaxVMBusyException e) {
                             TeleError.unexpected(" failed to set breakpoint from file: VM Busy");
                             e.printStackTrace();

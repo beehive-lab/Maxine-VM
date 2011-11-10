@@ -44,7 +44,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
@@ -116,7 +115,7 @@ public final class JniFunctions {
     @INLINE
     public static Pointer reenterJavaFromNative(Pointer etla) {
         Word previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer anchor = JavaFrameAnchor.create(Word.zero(), Word.zero(), Word.zero(), previousAnchor);
+        Pointer anchor = JavaFrameAnchor.create(Word.zero(), Word.zero(), CodePointer.zero(), previousAnchor);
         // a JNI upcall is similar to a native method returning; reuse the native call epilogue sequence
         Snippets.nativeCallEpilogue0(etla, anchor);
         return anchor;
@@ -176,7 +175,7 @@ public final class JniFunctions {
             Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
             final Address jniStubPC = jniStubAnchor.isZero() ? Address.zero() : JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
             if (!jniStubPC.isZero()) {
-                final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
+                final TargetMethod nativeMethod = CodePointer.from(jniStubPC).toTargetMethod();
                 Log.print(", last down call: ");
                 FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
                 Log.print(nativeMethod.classMethodActor().name.string);

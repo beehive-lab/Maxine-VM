@@ -34,27 +34,24 @@ import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Holds information about a block of code in
- * the process of the VM, about which little is known
- * other than the memory location and possibly a name
+ * Holds information about a block of code in the process of the VM, about which little is known
+ * other than the memory location that is not in any VM-allocated region, and possibly a name
  * assigned during a session.
- * <br>
+ * <p>
  * No attempt is made to check for changes to the code during
  * a session, unlike VM target methods.
  */
-public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxExternalCode {
+public final class TeleExternalCode extends AbstractVmHolder implements MaxExternalCode {
 
     /**
-     * Description of a region of external native code discovered with the VM.
-     * <br>
+     * Description of a region of external native code discovered in the VM's process.
+     * <p>
      * This region has no parent, as little is known about it.
-     * <br>
+     * <p>
      * This region has no children.
-     *
      */
     private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCode> {
 
@@ -62,7 +59,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         private MaxExternalCode owner;
 
-        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, long nBytes) {
+        private ExternalCodeMemoryRegion(MaxVM vm, MaxExternalCode owner, String name, Address start, long nBytes) {
             super(vm, name, start, nBytes);
             this.owner = owner;
         }
@@ -98,14 +95,14 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
          */
         private final List<Integer> labelIndexes;
 
-        ExternalCodeInstructionMap() {
+        ExternalCodeInstructionMap() throws MaxInvalidAddressException {
             instructions = getInstructions();
             final int length = instructions.size();
             final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
             final List<Integer> labels = new ArrayList<Integer>();
             for (int index = 0; index < length; index++) {
                 final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                locations.add(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
+                locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
                 if (targetCodeInstruction.label != null) {
                     labels.add(index);
                 }
@@ -204,31 +201,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         }
     }
 
-    /**
-     * Creates representation for a block of native code not previously known.
-     * <br>
-     * Must be called in thread with the VM lock held.
-     *
-     * @param codeStart starting memory location of the code in VM memory
-     * @param nBytes size of the region in bytes
-     * @param name a name for the region
-     *  @return a newly created surrogate for a block of native code discovered in the VM
-     * about which little more is known than its location.  The location must not overlap any code
-     * region already known.
-     * @throws MaxInvalidAddressException if memory cannot be read
-     */
-    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, long nBytes, String name) throws MaxInvalidAddressException {
-        assert teleVM.lockHeldByCurrentThread();
-        TeleExternalCode teleExternalCode = null;
-        try {
-            // Fail if the region specified by 'address' and 'nBytes' overlaps an existing native entry
-            teleExternalCode = new TeleExternalCode(teleVM, codeStart, nBytes, name);
-        } catch (IllegalArgumentException illegalArgumentException) {
-            TeleError.unexpected("External native code region is overlapping an existing code region");
-        }
-        return teleExternalCode;
-    }
-
     private final ExternalCodeMemoryRegion externalCodeMemoryRegion;
 
     private InstructionMap instructionMap = null;
@@ -239,41 +211,37 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
     /**
      * Creates a representation of a block of native code about which little is known.
-     * <br>
+     * <p>
      * No subsequent checks are made to determine whether the code gets modified.
      *
-     * @param teleVM
+     * @param vm the VM
      * @param start starting location of code in memory
      * @param nBytes length in bytes of code in memory
      * @param name the name to assign to the block of code in the registry
      * @throws IllegalArgumentException if the range overlaps one already in the registry
      * @throws MaxInvalidAddressException if unable to read memory.
      */
-    private TeleExternalCode(TeleVM teleVM, Address start, long nBytes, String name) throws MaxInvalidAddressException {
-        super(teleVM);
-        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, nBytes);
-
-        try {
-            this.instructionMap = new ExternalCodeInstructionMap();
-        } catch (DataIOError dataIOError) {
-            throw new MaxInvalidAddressException(start);
-        }
-        // Register so that it can be located by address.
-        vm().codeCache().register(this);
+    public TeleExternalCode(TeleVM vm, Address start, long nBytes, String name) throws MaxInvalidAddressException {
+        super(vm);
+        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(vm, this, name, start, nBytes);
+        this.instructionMap = new ExternalCodeInstructionMap();
     }
 
-    private List<TargetCodeInstruction> getInstructions() {
+    private List<TargetCodeInstruction> getInstructions() throws MaxInvalidAddressException {
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
+            final Address codeStart = getCodeStart();
             try {
                 final long nBytes = externalCodeMemoryRegion.nBytes();
                 assert nBytes < Integer.MAX_VALUE;
-                code = vm().dataAccess().readFully(getCodeStart(), (int) nBytes);
+                code = memory().readBytes(codeStart, (int) nBytes);
+            } catch (DataIOError dataIOError) {
+                throw new MaxInvalidAddressException(codeStart, "Can't read data at " + codeStart.to0xHexString());
             } finally {
                 vm().unlock();
             }
             if (code != null) {
-                instructions = TeleDisassembler.decode(platform(), getCodeStart(), code, null);
+                instructions = TeleDisassembler.decode(platform(), codeStart, code, null);
             }
         }
         return instructions;
@@ -320,7 +288,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
     public CodeLocation getCodeStartLocation() {
         final Address codeStart = getCodeStart();
         if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in external native code");
+            codeStartLocation = codeLocationFactory().createMachineCodeLocation(codeStart, "code start location in external native code");
         }
         return codeStartLocation;
     }

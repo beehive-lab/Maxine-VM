@@ -56,24 +56,23 @@ public final class Inspectable {
     @INSPECTED
     private static int flags;
 
-    private static boolean optionChecked;
-
     /**
      * Determines if the VM process is being inspected.
+     * N.B. If this method is called in the {@code PRIMORDIAL} phase
+     * it will not honor the {@link #MakeInspectable} option because
+     * that is not set until the {@code PRISTINE} phase.
      */
     public static boolean isVmInspected() {
         if ((flags & INSPECTED) != 0) {
             return true;
         }
-        if (optionChecked || MaxineVM.isHosted()) {
-            // A hosted VM is never inspected, plus it avoids setting optionChecked
-            // during a build, which would then need resetting
+        if (MaxineVM.isHosted()) {
+            // A hosted VM is never inspected.
             return false;
         }
         if (MakeInspectable) {
             flags = INSPECTED;
         }
-        optionChecked = true;
         return (flags & INSPECTED) != 0;
     }
 

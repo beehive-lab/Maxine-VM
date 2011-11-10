@@ -34,11 +34,11 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A {@code TeleMethodAccess} provides a mechanism for accessing a method in a tele VM.
+ * A {@code TeleMethodAccess} provides a mechanism for accessing a method in a VM.
  * It includes support for {@linkplain #interpret(Value...) invoking} such a method in the
- * context of the tele VM.
+ * context of the VM.
  */
-public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
+public abstract class TeleMethodAccess extends AbstractVmHolder {
 
     private static MethodActor findMethodActor(Class holder, String name, SignatureDescriptor signature) {
         final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
@@ -61,8 +61,8 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 
     private final MethodActor methodActor;
 
-    protected TeleMethodAccess(TeleVM teleVM, Class holder, String name, SignatureDescriptor signature) {
-        super(teleVM);
+    protected TeleMethodAccess(TeleVM vm, Class holder, String name, SignatureDescriptor signature) {
+        super(vm);
         if (signature != null) {
             methodActor = findMethodActor(holder, name, signature);
             TeleError.check(methodActor != null, "could not find method " + name + signature + " in " + holder);

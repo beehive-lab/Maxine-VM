@@ -38,9 +38,9 @@ import com.sun.max.vm.hosted.*;
 public class TestTeleVM {
 
     private static final String TELE_LIBRARY_NAME = "tele";
-    private static TeleVM teleVM = null;
+    private static MaxVM vm = null;
 
-    public static TeleVM create() {
+    public static MaxVM create() {
         final Options options = new Options();
 
         final File bootJar = BootImageGenerator.getBootImageJarFile(null);
@@ -61,23 +61,23 @@ public class TestTeleVM {
         options.vmArguments.setValue(vmArguments);
 
         try {
-            teleVM = TeleVM.create(options);
+            vm = TeleVM.create(options);
         } catch (BootImageException e) {
             System.out.println("Failed to load boot image " + BootImageGenerator.getBootImageFile(null).toString());
             e.printStackTrace();
         }
 
-        return teleVM;
+        return vm;
     }
 
     public static void main(String[] argv) {
         //HostObjectAccess.setMainThread(Thread.currentThread());
         LogManager.getLogManager().getLogger("").setLevel(Level.ALL);
         System.out.println("creating VM");
-        final TeleVM teleVM = create();
+        final MaxVM vm = create();
         System.out.println("end creating VM");
         try {
-            teleVM.resume(true, false);
+            vm.resume(true, false);
         } catch (Exception e) {
             e.printStackTrace();
         }

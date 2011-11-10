@@ -32,12 +32,12 @@ import com.sun.max.unsafe.*;
  * Representation of a span of memory in the VM where the description of the memory
  * is held by a object in the VM and might change.
  */
-public abstract class TeleDelegatedMemoryRegion extends TeleMemoryRegion {
+public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion {
 
     private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
 
-    protected TeleDelegatedMemoryRegion(TeleVM teleVM, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
-        super(teleVM);
+    protected TeleDelegatedMemoryRegion(MaxVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+        super(vm);
         this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
     }
 

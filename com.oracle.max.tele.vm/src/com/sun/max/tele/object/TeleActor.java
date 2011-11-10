@@ -52,7 +52,7 @@ public abstract class TeleActor extends TeleTupleObject {
      *         {@link Actor} in the VM.
      */
     public final int getFlags() {
-        return vm().teleFields().Actor_flags.readInt(reference());
+        return fields().Actor_flags.readInt(reference());
     }
 
     /**
@@ -206,8 +206,8 @@ public abstract class TeleActor extends TeleTupleObject {
         if (actorName == null) {
             // Have to read the name using low level operations, because the name needed
             // to create the local instance of the Actor.
-            Reference utf8ConstantReference = vm().teleFields().Actor_name.readReference(reference());
-            TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) heap().makeTeleObject(utf8ConstantReference);
+            Reference utf8ConstantReference = fields().Actor_name.readReference(reference());
+            TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) objects().makeTeleObject(utf8ConstantReference);
             actorName = teleUtf8Constant.utf8Constant();
         }
         return actorName;

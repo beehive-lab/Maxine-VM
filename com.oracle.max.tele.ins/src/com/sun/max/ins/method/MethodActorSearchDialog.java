@@ -34,7 +34,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * A dialog to let the user select a method from a specified {@link ClassActor} in the tele VM.
+ * A dialog to let the user select a method from a specified {@link ClassActor} in the VM.
  */
 public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
 

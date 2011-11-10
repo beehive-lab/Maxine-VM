@@ -57,34 +57,34 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleInterpreter {
 
-    private final TeleVM teleVM;
+    private final TeleVM vm;
 
     private Machine machine;
     private Value returnValue;
     private int instructionsExecuted;
 
-    public TeleInterpreter(TeleVM teleVM) {
-        this.teleVM = teleVM;
+    public TeleInterpreter(TeleVM vm) {
+        this.vm = vm;
     }
 
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
      * Note that arguments must be dynamic types seen by the JavaPrototyper as legitimate VM classes.
      *
-     * @param teleVM the remote VM
+     * @param vm the remote VM
      * @param classMethodActor the method to be executed
      * @param args the arguments to passed to the method for execution
      * @return the result of the execution
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
-    public static Value execute(TeleVM teleVM, ClassMethodActor classMethodActor, Value... args) throws TeleInterpreterException {
-        return new TeleInterpreter(teleVM).run(classMethodActor, args);
+    public static Value execute(TeleVM vm, ClassMethodActor classMethodActor, Value... args) throws TeleInterpreterException {
+        return new TeleInterpreter(vm).run(classMethodActor, args);
     }
 
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
      *
-     * @param teleVM the remote VM
+     * @param vm the remote VM
      * @param declaringClassName the name of the class that declares the method to be executed
      * @param name the name of the method to be executed
      * @param signature the signature of the method to be executed
@@ -93,7 +93,7 @@ public final class TeleInterpreter {
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      * @throws NoSuchMethodError if the specified method cannot be found
      */
-    public static Value execute(TeleVM teleVM, String declaringClassName, String name, SignatureDescriptor signature, Value... args) throws TeleInterpreterException {
+    public static Value execute(TeleVM vm, String declaringClassName, String name, SignatureDescriptor signature, Value... args) throws TeleInterpreterException {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
@@ -104,13 +104,13 @@ public final class TeleInterpreter {
             throw new NoSuchMethodError(declaringClassName + "." + name + signature);
         }
 
-        return execute(teleVM, classMethodActor, args);
+        return execute(vm, classMethodActor, args);
     }
 
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
      *
-     * @param teleVM the remote VM
+     * @param vm the remote VM
      * @param declaringClass the class that declares the method to be executed
      * @param name the name of the method to be executed
      * @param signature the signature of the method to be executed
@@ -118,7 +118,7 @@ public final class TeleInterpreter {
      * @return the result of the execution
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
-    public static Value execute(TeleVM teleVM, Class declaringClass, String name, SignatureDescriptor signature, Value... args) throws TeleInterpreterException {
+    public static Value execute(TeleVM vm, Class declaringClass, String name, SignatureDescriptor signature, Value... args) throws TeleInterpreterException {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
@@ -129,7 +129,7 @@ public final class TeleInterpreter {
             throw new NoSuchMethodError(declaringClass.getName() + "." + name + signature);
         }
 
-        return execute(teleVM, classMethodActor, args);
+        return execute(vm, classMethodActor, args);
     }
 
     /**
@@ -193,7 +193,7 @@ public final class TeleInterpreter {
 
     public Value run(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
 
-        machine = new Machine(teleVM);
+        machine = new Machine(vm);
         machine.pushFrame(classMethodActor);
         int j = 0;
         for (int i = 0; i < arguments.length; i++, j++) {
@@ -243,7 +243,7 @@ public final class TeleInterpreter {
         }
 
         if (returnValue instanceof TeleReferenceValue) {
-            returnValue = TeleReferenceValue.from(teleVM, machine.makeLocalReference((TeleReference) returnValue.asReference()));
+            returnValue = TeleReferenceValue.from(vm, machine.makeLocalReference((TeleReference) returnValue.asReference()));
         }
 
         Kind resultKind = classMethodActor.resultKind();
@@ -314,7 +314,7 @@ public final class TeleInterpreter {
             Value offsetVal = pop();
             Offset off = offsetVal.kind() == Kind.INT ? Offset.fromInt(offsetVal.asInt()) : offsetVal.asWord().asOffset();
             Pointer ptr = pop().asWord().asPointer();
-            DataAccess dataAccess = teleVM.teleProcess().dataAccess();
+            DataAccess dataAccess = vm.teleProcess().dataAccess();
             switch (kind.asEnum) {
                 // Checkstyle: stop
                 case BYTE:      push(IntValue.from(dataAccess.readByte(ptr, off))); break;
@@ -325,7 +325,7 @@ public final class TeleInterpreter {
                 case FLOAT:     push(FloatValue.from(dataAccess.readFloat(ptr, off))); break;
                 case DOUBLE:    push(DoubleValue.from(dataAccess.readDouble(ptr, off))); break;
                 case WORD:      push(WordValue.from(dataAccess.readWord(ptr, off))); break;
-                case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.readWord(ptr, off)))); break;
+                case REFERENCE: push(machine.toReferenceValue(vm.referenceManager().makeReference(dataAccess.readWord(ptr, off).asAddress()))); break;
                 default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
                 // Checkstyle: resume
             }
@@ -339,7 +339,7 @@ public final class TeleInterpreter {
             int index = pop().asInt();
             int disp = pop().asInt();
             Pointer ptr = pop().asWord().asPointer();
-            DataAccess dataAccess = teleVM.teleProcess().dataAccess();
+            DataAccess dataAccess = vm.teleProcess().dataAccess();
             switch (kind.asEnum) {
                 // Checkstyle: stop
                 case BYTE:      push(IntValue.from(dataAccess.getByte(ptr, disp, index))); break;
@@ -350,7 +350,7 @@ public final class TeleInterpreter {
                 case FLOAT:     push(FloatValue.from(dataAccess.getFloat(ptr, disp, index))); break;
                 case DOUBLE:    push(DoubleValue.from(dataAccess.getDouble(ptr, disp, index))); break;
                 case WORD:      push(WordValue.from(dataAccess.getWord(ptr, disp, index))); break;
-                case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.getWord(ptr, disp, index)))); break;
+                case REFERENCE: push(machine.toReferenceValue(vm.referenceManager().makeReference(dataAccess.getWord(ptr, disp, index).asAddress()))); break;
                 default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
                 // Checkstyle: resume
             }

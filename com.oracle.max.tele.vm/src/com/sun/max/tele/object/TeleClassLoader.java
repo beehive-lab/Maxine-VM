@@ -31,12 +31,11 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a  {@link ClassLoader} in the {@link TeleVM}.
- *
  */
 public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvider {
 
-    protected TeleClassLoader(TeleVM teleVM, Reference classLoaderReference) {
-        super(teleVM, classLoaderReference);
+    protected TeleClassLoader(TeleVM vm, Reference classLoaderReference) {
+        super(vm, classLoaderReference);
         teleClassLoaders.add(this);
     }
 
@@ -45,7 +44,7 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
     @Override
     protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
-        // We map all tele VM classloaders down into one on the local host VM
+        // We map all VM classloaders down into one on the local host VM
         return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
     }
 

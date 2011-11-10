@@ -93,7 +93,7 @@ public class TeleTupleObject extends TeleObject {
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind.isReference) {
-            return TeleReferenceValue.from(vm(), vm().wordToReference(reference().readWord(fieldActor.offset())));
+            return TeleReferenceValue.from(vm(), referenceManager().makeReference(reference().readWord(fieldActor.offset()).asAddress()));
         }
         return fieldActor.readValue(reference());
     }
@@ -102,9 +102,9 @@ public class TeleTupleObject extends TeleObject {
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         final Class<?> javaClass = classActorForObjectType().toJava();
         if (TargetMethod.class.isAssignableFrom(javaClass)) {
-            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+            final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
             if (classMethodActorReference != null && !classMethodActorReference.isZero()) {
-                return (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+                return (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
             }
         }
         return null;

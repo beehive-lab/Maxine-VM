@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import com.sun.max.annotate.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -32,6 +33,7 @@ import com.sun.max.vm.stack.*;
  *
  * @see AMD64JVMSFrameLayout
  */
+@HOSTED_ONLY
 public class AMD64JVMSFrame extends JVMSFrame {
 
     private final Pointer localVariablesBase;

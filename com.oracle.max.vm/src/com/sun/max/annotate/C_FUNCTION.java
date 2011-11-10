@@ -32,9 +32,6 @@ import com.sun.max.vm.jni.*;
  * <ul>
  * <li>marshal only the parameters explicit in the Java signature for the native function call (i.e. the JniEnv and
  * jclass parameters are omitted)</li>
- * <li>if {@link #noLatch} is {@code} will not assume that the latch register is valid and, therefore,
- * will omit the code to record the last Java frame info (e.g. stack, frame and instruction pointer) to thread local
- * storage</li>
  * </ul>
  * <p>
  * No parameter type or return type of VM entry or exit points may refer to object references - only primitive Java
@@ -45,5 +42,4 @@ import com.sun.max.vm.jni.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface C_FUNCTION {
-    boolean noLatch() default false;
 }

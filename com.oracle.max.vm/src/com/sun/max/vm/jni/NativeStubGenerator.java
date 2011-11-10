@@ -37,6 +37,7 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -348,7 +349,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         ldc(nf);
         invokevirtual(link, 1, 1);
 
-        if (!classMethodActor.isCFunctionNoLatch()) {
+        if (classMethodActor != JVMTIFunctions.currentJniEnv) {
             ldc(nf);
             invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
         }
@@ -356,7 +357,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         // Invoke the native function
         callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
 
-        if (!classMethodActor.isCFunctionNoLatch()) {
+        if (classMethodActor != JVMTIFunctions.currentJniEnv) {
             invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
         }
 

@@ -22,21 +22,27 @@
  */
 package com.sun.max.tele.reference;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Non-GC safe.
- * Constant tele reference without canonicalization.
- * For temporary use only.
+ * An address in VM memory about which little is known, wrapped
+ * as if it were a legitimate object {@link Reference}, in violation
+ * of the invariant that a {@link Reference} refers to an object.
+ * <p>
+ * This instance is not canonicalized, not GC-safe, and
+ * is intended <strong>only for temporary use</strong>.
+ * <p>
+ * Its memory status is permanently {@link ObjectMemoryStatus#DEAD}.
  */
 public final class TemporaryTeleReference extends ConstantTeleReference {
 
-    TemporaryTeleReference(TeleReferenceScheme teleReferenceScheme, Address raw) {
-        super(teleReferenceScheme, raw);
+    TemporaryTeleReference(TeleVM vm, Address raw) {
+        super(vm, raw);
     }
 
     @Override
-    public TeleObjectMemory.State getTeleObjectMemoryState() {
-        return TeleObjectMemory.State.DEAD;
+    public ObjectMemoryStatus memoryStatus() {
+        return ObjectMemoryStatus.DEAD;
     }
 }

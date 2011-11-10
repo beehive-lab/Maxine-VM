@@ -97,12 +97,10 @@ class Env(ArgumentParser):
         self.parse_args(namespace=self)
 
         if self.java_home is None or self.java_home == '':
-            self.log('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
-            self.abort(1)
+            self.abort('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
 
         if self.user_home is None or self.user_home == '':
-            self.log('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
-            self.abort(1)
+            self.abort('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
 
         if self.os is None:
             self.remote = False
@@ -278,12 +276,11 @@ class Env(ArgumentParser):
                 self.abort(e.returncode)
 
         output = output.split()
-        assert output[0] == 'java'
+        assert output[0] == 'java' or output[0] == 'openjdk'
         assert output[1] == 'version'
         version = output[2]
         if not version.startswith('"1.6') and not version.startswith('"1.7'):
-            self.log('Requires Java version 1.6 or 1.7, got version ' + version)
-            self.abort(1)
+            self.abort('Requires Java version 1.6 or 1.7, got version ' + version)
 
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
@@ -304,6 +301,17 @@ class Env(ArgumentParser):
             elif exists('/usr/jdk/latest'):
                 javaHome = '/usr/jdk/latest'
         return javaHome
+
+    def gmake_cmd(self):
+        for a in ['make', 'gmake', 'gnumake']:
+            try:
+                output = subprocess.check_output([a, '--version'])
+                if 'GNU' in output:
+                    return a;
+            except:
+                pass
+        self.abort('Could not find a GNU make executable on the current path.')
+
            
     def abort(self, codeOrMessage):
         """
@@ -336,8 +344,7 @@ class Env(ArgumentParser):
                 if url.startswith('zip:') or url.startswith('jar:'):
                     i = url.find('!/')
                     if i == -1:
-                        self.log('Zip or jar URL does not contain "!/": ' + url)
-                        self.abort(1)
+                        self.abort('Zip or jar URL does not contain "!/": ' + url)
                     url, _, entry = url[len('zip:'):].partition('!/')
                     with contextlib.closing(url_open(url)) as f:
                         data = f.read()
