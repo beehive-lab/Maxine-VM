@@ -189,10 +189,12 @@ public class MaxRuntime implements GraalRuntime {
 
     @Override
     public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        final ClassMethodActor cmaCallee = asClassMethodActor(callee, "notifyInline()");
-        if (cmaCallee.isUsingTaggedLocals()) {
-            final CompilationInfo ci = compilationInfo.get();
-            ci.usesTagging = true;
+        if (callee instanceof ClassMethodActor) {
+            final ClassMethodActor cmaCallee = asClassMethodActor(callee, "notifyInline()");
+            if (cmaCallee.isUsingTaggedLocals()) {
+                final CompilationInfo ci = compilationInfo.get();
+                ci.usesTagging = true;
+            }
         }
     }
 

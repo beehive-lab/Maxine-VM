@@ -22,33 +22,24 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 /**
- * Load of a value from a location specified as an offset relative to an object.
+ * Cretes a memory barrier.
  */
-public class ExtendedUnsafeLoadNode extends ExtendedUnsafeNode implements Lowerable {
+public class MembarNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
 
-    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode index, CiKind kind) {
-        super(object, displacement, index, kind);
+    private final int barriers;
+
+    public MembarNode(int barriers) {
+        super(CiKind.Illegal);
+        this.barriers = barriers;
     }
 
     @Override
-    public void lower(CiLoweringTool tool) {
-        assert kind() != CiKind.Illegal;
-        LocationNode location = createLocation();
-        ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
-        if (object().kind() == CiKind.Object) {
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
-        }
-        FixedNode next = next();
-        setNext(null);
-        memoryRead.setNext(next);
-        replaceAndDelete(memoryRead);
+    public void generate(LIRGeneratorTool generator) {
+        generator.emitMembar(barriers);
     }
 }

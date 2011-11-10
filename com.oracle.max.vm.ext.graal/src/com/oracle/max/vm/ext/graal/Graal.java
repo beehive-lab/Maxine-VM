@@ -26,6 +26,8 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
@@ -106,6 +108,9 @@ public class Graal implements RuntimeCompiler {
     @HOSTED_ONLY
     public static boolean optionsRegistered;
 
+    @HOSTED_ONLY
+    public static Map<RiMethod, StructuredGraph> cache = new ConcurrentHashMap<RiMethod, StructuredGraph>();
+
     @Override
     public void initialize(Phase phase) {
         // TODO(ls) implementation of RiType.fields required to enable escape analysis
@@ -130,7 +135,7 @@ public class Graal implements RuntimeCompiler {
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
             compiler.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
             compiler.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase(runtime));
-            compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, null));
+            compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
         }

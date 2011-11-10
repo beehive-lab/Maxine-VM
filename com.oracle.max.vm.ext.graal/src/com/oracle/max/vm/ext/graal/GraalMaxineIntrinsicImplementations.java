@@ -22,15 +22,14 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
@@ -47,6 +46,14 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
+    private static class MembarIntrinsic implements GraalIntrinsicImpl {
+
+        @Override
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 1 && args.get(0).isConstant() && args.get(0).kind() == CiKind.Int;
+            return graph.add(new MembarNode(args.get(0).asConstant().asInt()));
+        }
+    }
 
     private static class NormalizeCompareIntrinsic implements GraalIntrinsicImpl {
 
@@ -54,15 +61,13 @@ public class GraalMaxineIntrinsicImplementations {
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             assert args.size() == 3 && args.get(0).isConstant() && args.get(0).kind() == CiKind.Int : target;
             int opcode = args.get(0).asConstant().asInt();
-            // TODO(cwi): Why the separation when both branches do the same?
             if (args.get(1).kind() == CiKind.Long || args.get(1).kind() == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
-                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
                 assert args.get(1).kind() == CiKind.Float;
-                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
+            return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
         }
     }
 
@@ -155,16 +160,7 @@ public class GraalMaxineIntrinsicImplementations {
             ValueNode pointer = args.get(0);
             ValueNode displacement = args.size() == 3 ? args.get(1) : null;
             ValueNode offsetOrIndex = offsetOrIndex(graph, args.size() == 3 ? args.get(2) : args.get(1));
-
-            if (displacement == null) {
-                return graph.add(new UnsafeLoadNode(pointer, offsetOrIndex, target.signature().returnKind(true)));
-            } else {
-                if (displacement.isConstant()) {
-                    return graph.add(new UnsafeLoadNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, target.signature().returnKind(true)));
-                } else {
-                    return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
-                }
-            }
+            return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
         }
     }
 
@@ -182,15 +178,7 @@ public class GraalMaxineIntrinsicImplementations {
 
             RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
-            if (displacement == null) {
-                return graph.add(new UnsafeStoreNode(pointer, offsetOrIndex, value, kind));
-            } else {
-                if (displacement.isConstant()) {
-                    return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, value, kind));
-                } else {
-                    return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
-                }
-            }
+            return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
         }
     }
 
@@ -304,6 +292,8 @@ public class GraalMaxineIntrinsicImplementations {
     }
 
     public static void initialize(IntrinsicImpl.Registry registry) {
+        registry.add(MEMBAR, new MembarIntrinsic());
+
         registry.add(UCMP_AE, new CompareIntrinsic(Condition.AE));
         registry.add(UCMP_AT, new CompareIntrinsic(Condition.AT));
         registry.add(UCMP_BE, new CompareIntrinsic(Condition.BE));
