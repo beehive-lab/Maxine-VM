@@ -30,7 +30,7 @@ import com.sun.cri.ci.CiAddress.Scale;
 
 public final class IndexedLocationNode extends LocationNode implements LIRLowerable, Canonicalizable {
     @Input private ValueNode index;
-    @Data private boolean indexScalingEnabled = true;
+    @Data private boolean indexScalingEnabled;
 
     public ValueNode index() {
         return index;
@@ -55,12 +55,17 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
     }
 
     public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph) {
-        return graph.unique(new IndexedLocationNode(identity, kind, index, displacement));
+        return create(identity, kind, displacement, index, graph);
     }
 
-    private IndexedLocationNode(Object identity, CiKind kind, ValueNode index, int displacement) {
+    public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph, boolean indexScalingEnabled) {
+        return graph.unique(new IndexedLocationNode(identity, kind, index, displacement, indexScalingEnabled));
+    }
+
+    private IndexedLocationNode(Object identity, CiKind kind, ValueNode index, int displacement, boolean indexScalingEnabled) {
         super(identity, kind, displacement);
         this.index = index;
+        this.indexScalingEnabled = indexScalingEnabled;
     }
 
     @Override
