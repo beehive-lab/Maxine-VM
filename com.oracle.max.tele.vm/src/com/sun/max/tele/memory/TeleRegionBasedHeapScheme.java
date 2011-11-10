@@ -26,7 +26,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
-public abstract class TeleRegionBasedHeapScheme extends AbstractTeleVMHolder  implements TeleHeapScheme {
+public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
 
     protected final TeleRegionTable teleRegionTable;
 
@@ -79,7 +79,7 @@ public abstract class TeleRegionBasedHeapScheme extends AbstractTeleVMHolder  im
                 if (regionID < 0) {
                     return null;
                 }
-                return heap().makeTeleObject(vm().originToReference(teleRegionTable.regionInfo(regionID).asPointer()));
+                return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
             }
         };
     }
