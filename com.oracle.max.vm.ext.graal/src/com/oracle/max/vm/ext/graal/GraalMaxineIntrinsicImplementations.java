@@ -47,6 +47,14 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
+    private static class MembarIntrinsic implements GraalIntrinsicImpl {
+
+        @Override
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 1 && args.get(0).isConstant() && args.get(0).kind() == CiKind.Int;
+            return graph.add(new MembarNode(args.get(0).asConstant().asInt()));
+        }
+    }
 
     private static class NormalizeCompareIntrinsic implements GraalIntrinsicImpl {
 
@@ -304,6 +312,8 @@ public class GraalMaxineIntrinsicImplementations {
     }
 
     public static void initialize(IntrinsicImpl.Registry registry) {
+        registry.add(MEMBAR, new MembarIntrinsic());
+
         registry.add(UCMP_AE, new CompareIntrinsic(Condition.AE));
         registry.add(UCMP_AT, new CompareIntrinsic(Condition.AT));
         registry.add(UCMP_BE, new CompareIntrinsic(Condition.BE));
