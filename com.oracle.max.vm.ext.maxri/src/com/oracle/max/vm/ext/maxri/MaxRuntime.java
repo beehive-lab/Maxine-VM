@@ -100,6 +100,10 @@ public class MaxRuntime implements GraalRuntime {
         intrinsicRegistry = registry;
     }
 
+    public IntrinsicImpl.Registry getIntrinsicRegistry() {
+        return intrinsicRegistry;
+    }
+
     @HOSTED_ONLY
     private boolean initialized;
 
@@ -508,39 +512,6 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
-        MethodActor maxMethod = (MethodActor) method;
-        if (maxMethod.intrinsic() != null) {
-            IntrinsicImpl impl = intrinsicRegistry.get(method);
-            if (impl != null) {
-                StructuredGraph graph = new StructuredGraph();
-                ValueNode[] args = new ValueNode[parameters.size()];
-                for (int i = 0; i < args.length; i++) {
-                    ValueNode valueNode = (ValueNode) parameters.get(i);
-                    if (valueNode.isConstant()) {
-                        args[i] = ConstantNode.forCiConstant(valueNode.asConstant(), this, graph);
-                    } else {
-                        args[i] = graph.unique(new LocalNode(valueNode.kind(), i));
-                    }
-                }
-                ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
-                if (node instanceof FixedNode) {
-                    if (node instanceof FixedWithNextNode) {
-                        graph.start().setNext((FixedNode) node);
-                        ((FixedWithNextNode) node).setNext(graph.add(new ReturnNode(node)));
-                    } else {
-                        graph.start().setNext((FixedNode) node);
-                    }
-                } else {
-                    graph.start().setNext(graph.add(new ReturnNode(node)));
-                }
-                return graph;
-            } else {
-                // TODO(ls) ignore these intrinsics for now...
-                if (!IntrinsicIDs.MEMBAR.equals(method.intrinsic())) {
-                    throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
-                }
-            }
-        }
         return null;
     }
 

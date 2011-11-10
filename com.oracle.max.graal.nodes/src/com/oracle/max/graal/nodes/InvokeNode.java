@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -97,5 +98,22 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
     public FrameState stateDuring() {
         FrameState stateAfter = stateAfter();
         return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.callTarget.targetMethod().signature().returnKind(false));
+    }
+
+    @Override
+    public void intrinsify(Node node) {
+        if (node instanceof FixedWithNextNode) {
+            FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
+            FixedNode next = this.next();
+            setNext(null);
+            fixedWithNextNode.setNext(next);
+            this.replaceAndDelete(node);
+        } else if (node instanceof FloatingNode) {
+            FixedNode next = this.next();
+            setNext(null);
+            this.replaceAtPredecessors(next);
+            this.replaceAtUsages(node);
+            this.delete();
+        }
     }
 }
