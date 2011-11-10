@@ -58,13 +58,14 @@ public class MustInlinePhase extends Phase {
                     if (inlineGraph == null) {
                         inlineGraph = new StructuredGraph();
                         new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                        new PhiSimplificationPhase().apply(inlineGraph);
                         RiResolvedType curAccessor = getAccessor(method, accessor);
                         if (curAccessor != null) {
                             new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
                         }
                         new FoldPhase(runtime).apply(inlineGraph);
                         new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
-                        new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph);
+                        new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
                         cache.put(method, inlineGraph);
                     }
                     InliningUtil.inline(invoke, inlineGraph, false);
