@@ -55,7 +55,7 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
     }
 
     public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph) {
-        return create(identity, kind, displacement, index, graph);
+        return create(identity, kind, displacement, index, graph, true);
     }
 
     public static IndexedLocationNode create(Object identity, CiKind kind, int displacement, ValueNode index, Graph graph, boolean indexScalingEnabled) {
