@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
+
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -36,9 +38,11 @@ public class MustInlinePhase extends Phase {
 
     private final MaxRuntime runtime;
     private final RiResolvedType accessor;
+    private final Map<RiMethod, StructuredGraph> cache;
 
-    public MustInlinePhase(MaxRuntime runtime, RiResolvedType accessor) {
+    public MustInlinePhase(MaxRuntime runtime, Map<RiMethod, StructuredGraph> cache, RiResolvedType accessor) {
         this.runtime = runtime;
+        this.cache = cache;
         this.accessor = accessor;
     }
 
@@ -50,7 +54,7 @@ public class MustInlinePhase extends Phase {
             if (invoke != null) {
                 assert ((MethodActor) method).intrinsic() == null : "Intrinsics must be resolved before this phase " + ((MethodActor) method).intrinsic();
                 if (runtime.mustInline(method)) {
-                    StructuredGraph inlineGraph = (StructuredGraph) method.compilerStorage().get(MustInlinePhase.class);
+                    StructuredGraph inlineGraph = cache.get(method);
                     if (inlineGraph == null) {
                         inlineGraph = new StructuredGraph();
                         new GraphBuilderPhase(runtime, method).apply(inlineGraph);
@@ -60,8 +64,8 @@ public class MustInlinePhase extends Phase {
                         }
                         new FoldPhase(runtime).apply(inlineGraph);
                         new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
-                        new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
-                        method.compilerStorage().put(MustInlinePhase.class, inlineGraph);
+                        new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph);
+                        cache.put(method, inlineGraph);
                     }
                     InliningUtil.inline(invoke, inlineGraph, false);
                 }
