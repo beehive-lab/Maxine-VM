@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.GraalCompiler.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -52,6 +53,8 @@ public class InliningPhase extends Phase {
     private final GraalRuntime runtime;
     private final CiTarget target;
 
+    private final GraalCompiler compiler;
+
     private int inliningSize;
     private final Collection<Invoke> hints;
 
@@ -61,7 +64,9 @@ public class InliningPhase extends Phase {
     private StructuredGraph graph;
     private CiAssumptions assumptions;
 
-    public InliningPhase(GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions) {
+    public InliningPhase(GraalCompiler compiler, GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions) {
+        // TODO passing in the compiler object is bad - but currently this is the only way to access the extension phases that must be run immediately after parsing.
+        this.compiler = compiler;
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
@@ -127,6 +132,9 @@ public class InliningPhase extends Phase {
                 }
                 graph = new StructuredGraph();
                 new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
+
+                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase().apply(graph, context, true, false);
                     new ComputeProbabilityPhase().apply(graph, context, true, false);
