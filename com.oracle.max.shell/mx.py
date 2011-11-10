@@ -77,6 +77,7 @@ class Env(ArgumentParser):
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
         self.add_argument('-d', action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
+        self.add_argument('--graalvm', help='path to GraalVM installation (default: $GRAALVM)', metavar='<path>')
         self.add_argument('--cp-pfx', dest='cp_prefix', help='class path prefix', metavar='<arg>')
         self.add_argument('--cp-sfx', dest='cp_suffix', help='class path suffix', metavar='<arg>')
         self.add_argument('--J', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
@@ -84,7 +85,7 @@ class Env(ArgumentParser):
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
         self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=self.default_java_home())
-        self.add_argument('--java', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
+        self.add_argument('--java', help='Java VM executable (default: bin/java under $JAVA_HOME)', metavar='<path>')
         self.add_argument('--trace', dest='java_trace', help='trace level for Java tools that use it', metavar='<n>', default=1)
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
         self.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
@@ -159,6 +160,37 @@ class Env(ArgumentParser):
     def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         return self.run(self.format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
     
+    def run_graalvm(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
+        if self.graalvm is None:
+            self.graalvm = os.getenv('GRAALVM')
+            if self.graalvm is None:
+                self.abort('Cannot find GraalVM - use --graalvm option or set GRAALVM variable')
+                
+        if self.os == 'windows':
+            graalvm_exe = join(self.graalvm, 'bin', 'java.exe')
+        else:
+            graalvm_exe = join(self.graalvm, 'bin', 'java')
+            
+        if not exists(graalvm_exe):
+            self.abort('GraalVM executable does not exist: ' + graalvm_exe)
+            
+        try:
+            version_cmd = [graalvm_exe, '-graal', '-XX:-BootstrapGraal', '-version']
+            output = subprocess.check_output(version_cmd, stderr=subprocess.STDOUT)
+            if 'Graal VM' not in output:
+                self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                            '\nReason: "Graal VM" was not in the output of the following command:\n\t' + ' '.join(version_cmd))
+        except:
+            self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd))
+            
+        graalvm_cmd = [graalvm_exe, '-graal']
+        
+        if self.java_dbg:
+            graalvm_cmd += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+        
+        return self.run(graalvm_cmd + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+
     def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
         Run a command in a subprocess, wait for it to complete and return the exit status of the process.
