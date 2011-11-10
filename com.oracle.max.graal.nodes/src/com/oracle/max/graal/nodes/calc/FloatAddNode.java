@@ -77,7 +77,7 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
 
     public static boolean livesLonger(ValueNode after, ValueNode value, LIRGeneratorTool gen) {
         for (Node usage : value.usages()) {
-            if (usage != after && gen.operand((ValueNode) usage) != null) {
+            if (usage != after && ((ValueNode) usage).operand() != null) {
                 return true;
             }
         }
