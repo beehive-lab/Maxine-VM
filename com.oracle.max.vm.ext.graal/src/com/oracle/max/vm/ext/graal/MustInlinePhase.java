@@ -87,11 +87,15 @@ public class MustInlinePhase extends Phase {
                 if (methodActor.intrinsic() != null) {
                     IntrinsificationPhase.tryIntrinsify(invoke, method, runtime);
                 } else if (mustInline) {
-                    StructuredGraph inlineGraph = new StructuredGraph();
-                    new GraphBuilderPhase(runtime, method).apply(inlineGraph);
-                    RiResolvedType curAccessor = getAccessor(invoke, accessor);
-                    new FoldPhase(runtime).apply(inlineGraph);
-                    new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
+                    StructuredGraph inlineGraph = (StructuredGraph) method.compilerStorage().get(MustInlinePhase.class);
+                    if (inlineGraph == null) {
+                        inlineGraph = new StructuredGraph();
+                        new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                        RiResolvedType curAccessor = getAccessor(invoke, accessor);
+                        new FoldPhase(runtime).apply(inlineGraph);
+                        new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
+                        method.compilerStorage().put(MustInlinePhase.class, inlineGraph);
+                    }
                     InliningUtil.inline(invoke, inlineGraph, false);
                 }
             }

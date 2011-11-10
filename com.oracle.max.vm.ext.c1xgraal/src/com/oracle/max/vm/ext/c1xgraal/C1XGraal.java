@@ -51,7 +51,6 @@ public class C1XGraal implements RuntimeCompiler {
     public void initialize(Phase phase) {
         c1x.initialize(phase);
         graal.initialize(phase);
-        GraalOptions.PrintCompilation = true;
     }
 
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
