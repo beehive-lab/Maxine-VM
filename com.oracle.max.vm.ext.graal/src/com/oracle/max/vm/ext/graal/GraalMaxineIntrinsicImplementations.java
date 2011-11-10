@@ -62,15 +62,13 @@ public class GraalMaxineIntrinsicImplementations {
         public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             assert args.size() == 3 && args.get(0).isConstant() && args.get(0).kind() == CiKind.Int : target;
             int opcode = args.get(0).asConstant().asInt();
-            // TODO(cwi): Why the separation when both branches do the same?
             if (args.get(1).kind() == CiKind.Long || args.get(1).kind() == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
-                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
                 assert args.get(1).kind() == CiKind.Float;
-                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
+            return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
         }
     }
 
@@ -165,14 +163,9 @@ public class GraalMaxineIntrinsicImplementations {
             ValueNode offsetOrIndex = offsetOrIndex(graph, args.size() == 3 ? args.get(2) : args.get(1));
 
             if (displacement == null) {
-                return graph.add(new UnsafeLoadNode(pointer, offsetOrIndex, target.signature().returnKind(true)));
-            } else {
-                if (displacement.isConstant()) {
-                    return graph.add(new UnsafeLoadNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, target.signature().returnKind(true)));
-                } else {
-                    return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
-                }
+                displacement = ConstantNode.forInt(0, graph);
             }
+            return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
         }
     }
 
@@ -190,15 +183,11 @@ public class GraalMaxineIntrinsicImplementations {
 
             RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
+
             if (displacement == null) {
-                return graph.add(new UnsafeStoreNode(pointer, offsetOrIndex, value, kind));
-            } else {
-                if (displacement.isConstant()) {
-                    return graph.add(new UnsafeStoreNode(pointer, displacement.asConstant().asInt(), offsetOrIndex, value, kind));
-                } else {
-                    return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
-                }
+                displacement = ConstantNode.forInt(0, graph);
             }
+            return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
         }
     }
 
