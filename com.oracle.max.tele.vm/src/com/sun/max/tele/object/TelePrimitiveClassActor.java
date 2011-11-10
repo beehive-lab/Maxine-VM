@@ -32,8 +32,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TelePrimitiveClassActor extends TeleClassActor implements ClassProvider {
 
-    protected TelePrimitiveClassActor(TeleVM teleVM, Reference primitiveClassActorReference) {
-        super(teleVM, primitiveClassActorReference);
+    protected TelePrimitiveClassActor(TeleVM vm, Reference primitiveClassActorReference) {
+        super(vm, primitiveClassActorReference);
     }
 
     public PrimitiveClassActor primitiveClassActor() {
@@ -46,7 +46,7 @@ public class TelePrimitiveClassActor extends TeleClassActor implements ClassProv
     }
 
     public ClassProvider getSuperClass() {
-        return (ClassProvider) vm().classRegistry().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
+        return (ClassProvider) classes().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
     }
 
 }

@@ -22,40 +22,22 @@
  */
 package com.sun.max.tele.reference;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * A remote {@link Address} in VM memory, wrapped as if it were a {@link Reference}
+ * so that it can be manipulated with standard VM code.
+ *
+ * @see Reference
+ * @see VmReferenceManager
  */
 public abstract class RemoteTeleReference extends TeleReference {
 
-    private final TeleReferenceScheme teleReferenceScheme;
-
-    protected TeleReferenceScheme teleReferenceScheme() {
-        return teleReferenceScheme;
-    }
-
-    protected RemoteTeleReference(TeleReferenceScheme teleReferenceScheme) {
-        this.teleReferenceScheme = teleReferenceScheme;
+    protected RemoteTeleReference(TeleVM vm) {
+        super(vm);
     }
 
     public abstract Address raw();
-
-    @Override
-    public int hashCode() {
-        return raw().toInt();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof RemoteTeleReference) {
-            RemoteTeleReference other = (RemoteTeleReference) obj;
-            if (raw().equals(other.raw())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
 
 }

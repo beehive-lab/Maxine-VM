@@ -53,7 +53,7 @@ public final class ClassID {
     private static final LinearIDMap<ClassActor> idToClassActor = new LinearIDMap<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
 
     /**
-     * A bit set keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily means a
+     * A bit set keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily mean a
      * non-null entry in {@link ClassID#idToClassActor} as class identifiers are reserved eagerly for array classes,
      * whereas the corresponding array class actors are created lazily.
      * Thus it is possible to encounter a null entry for a used class identifier.
@@ -202,6 +202,10 @@ public final class ClassID {
             }
             id = usedIDs.nextSetBit(id + 1);
         }
+    }
+
+    public static boolean isUsedID(int id) {
+        return usedIDs.get(id);
     }
 
     /**

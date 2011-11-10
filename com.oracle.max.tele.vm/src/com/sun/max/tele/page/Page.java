@@ -144,8 +144,9 @@ public class Page {
                 epoch = teleIO.epoch();
             } catch (DataIOError e) {
                 if (!(e instanceof ConcurrentDataIOError)) {
-                    System.err.println(e);
+                    TeleWarning.message(e);
                 }
+                throw e;
             }
         }
     }

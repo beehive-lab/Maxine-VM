@@ -251,6 +251,8 @@ public final class ClassfileReader {
             // interface fields must be public static final (i.e. constants), but may have ACC_SYNTHETIC set
             valid = (flags & ~ACC_SYNTHETIC) == (ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
         }
+        // fields referencing tagged values are currently disallowed
+        valid = valid && ((flags & TAGGED_FIELD) != TAGGED_FIELD);
         if (!valid) {
             throw classFormatError(name + ": invalid field flags 0x" + Integer.toHexString(flags));
         }
@@ -385,6 +387,9 @@ public final class ClassfileReader {
                 });
                 final int descriptorIndex = classfileStream.readUnsigned2();
                 final TypeDescriptor descriptor = parseTypeDescriptor(constantPool.utf8At(descriptorIndex, "field descriptor").toString());
+                if (descriptor.equals(CODE_POINTER)) {
+                    flags |= TAGGED_FIELD;
+                }
                 verifyFieldFlags(name.toString(), flags, isInterface);
 
                 char constantValueIndex = 0;
@@ -890,10 +895,6 @@ public final class ClassfileReader {
                             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
                             ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= C_FUNCTION;
-                            boolean noLatch = ((C_FUNCTION) annotation).noLatch();
-                            if (noLatch) {
-                                flags |= C_FUNCTION_NOLATCH;
-                            }
                         } else if (annotation.annotationType() == VM_ENTRY_POINT.class) {
                             ensureSignatureIsPrimitive(descriptor, VM_ENTRY_POINT.class);
                             ProgramError.check(isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-static method: " + memberString(name, descriptor));

@@ -180,7 +180,7 @@ public class BootImage {
     }
 
     static int getCriticalEntryPoint(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
-        return classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).asAddress().toInt();
+        return classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).toInt();
     }
 
     /**

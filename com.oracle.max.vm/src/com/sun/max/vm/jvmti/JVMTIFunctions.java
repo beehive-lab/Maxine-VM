@@ -74,15 +74,18 @@ public class JVMTIFunctions  {
      * there should be some way to cache the jni env value on the way down and use it on any nested
      * upcalls.
 
-     * TODO handle the (error) case of an upcall from an unattached thread, whihc will not
+     * TODO handle the (error) case of an upcall from an unattached thread, which will not
      * have a valid TLA in its native thread control control block.
      */
 
-    @C_FUNCTION(noLatch = true)
+    @C_FUNCTION
     private static native Pointer currentJniEnv();
 
+    public static final ClassMethodActor currentJniEnv;
+
     static {
-        new CriticalNativeMethod(JVMTIFunctions.class, "currentJniEnv");
+        CriticalNativeMethod cnm = new CriticalNativeMethod(JVMTIFunctions.class, "currentJniEnv");
+        currentJniEnv = cnm.classMethodActor;
     }
 
     @INLINE

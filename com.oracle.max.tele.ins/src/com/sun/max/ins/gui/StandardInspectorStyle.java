@@ -250,8 +250,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color vmStoppedBackgroundColor(boolean withInvalidReferences) {
         return withInvalidReferences ? InspectorStyle.SunBlue1 : InspectorStyle.SunBlue3;
     }
-    public Color vmStoppedinGCBackgroundColor(boolean withInvalidReferences) {
+    public Color vmStoppedInGCBackgroundColor(boolean withInvalidReferences) {
         return withInvalidReferences ? InspectorStyle.SunYellow1 : InspectorStyle.SunYellow3;
+    }
+    public Color vmStoppedInEvictionBackgroundColor() {
+        return InspectorStyle.SunYellow3;
     }
     public Color vmRunningBackgroundColor() {
         return InspectorStyle.SunGreen3;

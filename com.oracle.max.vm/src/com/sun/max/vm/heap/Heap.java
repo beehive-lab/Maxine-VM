@@ -721,6 +721,9 @@ public final class Heap {
         if (ref.isZero()) {
             return true;
         }
+        if (CodePointer.isCodePointer(ref)) {
+            return true;
+        }
         Pointer origin = ref.toOrigin();
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.contains(origin)) {
             return false;

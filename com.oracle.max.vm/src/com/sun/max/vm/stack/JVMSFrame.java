@@ -22,11 +22,11 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 
-/**
- */
+@HOSTED_ONLY
 public abstract class JVMSFrame extends VMStackFrame {
 
     public JVMSFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {

@@ -89,4 +89,9 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static int                      asInt(boolean value) { return value ? 1 : 0; }
     @INTRINSIC(UNSAFE_CAST) public static char                     asChar(short value) { return (char) value; }
     @INTRINSIC(UNSAFE_CAST) public static short                    asShort(char value) { return (short) value; }
+
+    @INTRINSIC(UNSAFE_CAST) public static CodePointer              asCodePointer(long value) { return CodePointer.from(value); }
+    @INTRINSIC(UNSAFE_CAST) public static CodePointer              asCodePointerTagged(long value) { return CodePointer.fromTaggedLong(value); }
+    @INTRINSIC(UNSAFE_CAST) public static long                     asLong(CodePointer cp) { return cp.toLong(); }
+    @INTRINSIC(UNSAFE_CAST) public static long                     asTaggedLong(CodePointer cp) { return cp.toTaggedLong(); }
 }

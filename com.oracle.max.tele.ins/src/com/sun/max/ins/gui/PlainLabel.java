@@ -74,7 +74,7 @@ public class PlainLabel extends InspectorLabel {
     }
 
     public void redisplay() {
-        setFont(style().defaultFont());
+        setFont(preference().style().defaultFont());
     }
 
 }

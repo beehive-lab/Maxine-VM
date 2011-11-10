@@ -116,11 +116,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     }
 
     @INLINE
-    public final boolean isCFunctionNoLatch() {
-        return isCFunctionNoLatch(flags());
-    }
-
-    @INLINE
     public final boolean isVmEntryPoint() {
         return isVmEntryPoint(flags());
     }
@@ -158,6 +153,11 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     @INLINE
     public final boolean noSafepointPolls() {
         return noSafepointPolls(flags()) || isTemplate();
+    }
+
+    @INLINE
+    public final boolean isUsingTaggedLocals() {
+        return isUsingTaggedValues(flags());
     }
 
     /**
@@ -545,6 +545,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     public RiSignature signature() {
         return descriptor();
     }
+
     public int invocationCount() {
         return -1;
     }
@@ -576,4 +577,9 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     public int compiledCodeSize() {
         return -1;
     }
+
+    public boolean canBePermanentlyLinked() {
+        return false;
+    }
+
 }

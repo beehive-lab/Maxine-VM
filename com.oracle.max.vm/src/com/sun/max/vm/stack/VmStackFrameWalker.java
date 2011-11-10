@@ -29,6 +29,9 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.thread.*;
 
+/**
+ * The standard stack walker used in the VM.
+ */
 public final class VmStackFrameWalker extends StackFrameWalker {
 
     private Pointer tla;
@@ -36,6 +39,7 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     private boolean dumpingFatalStackTrace;
 
     public VmStackFrameWalker(Pointer tla) {
+        super();
         this.tla = tla;
     }
 

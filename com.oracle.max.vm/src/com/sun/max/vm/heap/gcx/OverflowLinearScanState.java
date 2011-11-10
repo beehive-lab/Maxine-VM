@@ -47,11 +47,14 @@ final class OverflowLinearScanState extends OverflowScanState {
         shallowMarkStackFlusher = new BaseMarkingStackFlusher();
     }
 
-    @Override
-    public void visitGreyObjects() {
-        int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
-        int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
-        visitGreyObjects(bitmapWordIndex, rightmostBitmapWordIndex);
+    private void visitGreyObjects() {
+        if (regionsRanges != null) {
+            visitGreyObjects(regionsRanges);
+        } else {
+            int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
+            int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
+            visitGreyObjectsToEndOfScan(fingerBitmapWordIndex, rightmostBitmapWordIndex);
+        }
         // The overflow rescan may have ended with a finger before the end of scan position as the finger is updated only when
         // visiting grey cell. Before draining the marking stack, we set it to the end of scan position so draining
         // operates with the marking stack only.

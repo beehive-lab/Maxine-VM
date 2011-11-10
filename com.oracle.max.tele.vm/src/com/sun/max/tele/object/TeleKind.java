@@ -32,12 +32,12 @@ import com.sun.max.vm.type.*;
  */
 public class TeleKind extends TeleTupleObject {
 
-    protected TeleKind(TeleVM teleVM, Reference kindReference) {
-        super(teleVM, kindReference);
+    protected TeleKind(TeleVM vm, Reference kindReference) {
+        super(vm, kindReference);
     }
 
     public Kind toJava() {
-        return Kind.fromCharacter(vm().teleFields().Kind_character.readChar(reference()));
+        return Kind.fromCharacter(fields().Kind_character.readChar(reference()));
     }
 
     @Override

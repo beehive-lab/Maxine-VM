@@ -63,7 +63,7 @@ public class JavaNameLabel extends InspectorLabel {
     }
 
     public void redisplay() {
-        setFont(style().javaNameFont());
+        setFont(preference().style().javaNameFont());
         setText(name);
         setWrappedToolTipHtmlText(toolTipText);
     }

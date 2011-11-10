@@ -67,7 +67,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 final char[] chars = (char[]) teleArrayObject.shallowCopy();
-                final int length = Math.min(chars.length, style().maxStringFromCharArrayDisplayLength());
+                final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
             }
         });

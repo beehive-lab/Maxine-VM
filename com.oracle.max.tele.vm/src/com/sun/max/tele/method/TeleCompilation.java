@@ -41,12 +41,12 @@ import com.sun.max.vm.stack.*;
  * a surrogate for the corresponding instance of {@link TargetMethod}
  * in the VM.
  */
-public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCompilation {
+public final class TeleCompilation extends AbstractVmHolder implements MaxCompilation {
 
     /**
      * Description of a compiled code region allocated in a code cache.
      * <br>
-     * The parent of this region is the {@link MaxCompiledCodeRegion} in which it is created.
+     * The parent of this region is the {@link MaxCodeCacheRegion} in which it is created.
      * <br>
      * This region has no children, unless we decide later to subdivide and model the parts separately.
      *
@@ -57,19 +57,19 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
 
         private final TeleCompilation owner;
         private final boolean isBootCode;
-        private final TeleCodeCache teleCodeCache;
+        private final VmCodeCacheAccess codeCache;
 
-        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompilation owner, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
-            super(teleVM, teleTargetMethod);
+        private CompiledCodeMemoryRegion(MaxVM vm, TeleCompilation owner, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
+            super(vm, teleTargetMethod);
             this.owner = owner;
             this.isBootCode = isBootCode;
-            this.teleCodeCache = teleCodeCache;
+            this.codeCache = codeCache;
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
             // Evaluate this lazily, since this isn't known until the code's memory
             // region is actually allocated.
-            return teleCodeCache.findCompiledCodeRegion(start()).memoryRegion();
+            return codeCache.findCompiledCodeRegion(start()).memoryRegion();
         }
 
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
@@ -93,15 +93,15 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
     /**
      * Creates an object that describes a region of VM memory used to hold a single compiled method.
      *
-     * @param teleVM the VM
+     * @param vm the VM
      * @param teleTargetMethod surrogate for the compilation in the VM
-     * @param teleCodeCache the owner of all cached code in the VM
+     * @param codeCache the owner of all cached code in the VM
      * @param isBootCode is this code in the boot region?
      */
-    public TeleCompilation(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
-        super(teleVM);
+    public TeleCompilation(TeleVM vm, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
+        super(vm);
         this.teleTargetMethod = teleTargetMethod;
-        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
+        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(vm, this, teleTargetMethod, codeCache, isBootCode);
     }
 
     public String entityName() {
@@ -148,7 +148,7 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
     public CodeLocation getCodeStartLocation() {
         final Address codeStart = getCodeStart();
         if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "start location in code");
+            codeStartLocation = codeLocationFactory().createMachineCodeLocation(codeStart, "start location in code");
         }
         return codeStartLocation;
     }
@@ -162,11 +162,11 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
         if (callEntryPoint.isZero()) {
             return null;
         }
-        return codeManager().createMachineCodeLocation(callEntryPoint, "Code entry");
+        return codeLocationFactory().createMachineCodeLocation(callEntryPoint, "Code entry");
     }
 
-    public int compilationIndex() {
-        return teleTargetMethod.compilationIndex();
+    public boolean isBaseline() {
+        return teleTargetMethod.isBaseline();
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
@@ -185,6 +185,14 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
         return teleTargetMethod.classActorForObjectType();
     }
 
+    public boolean isValidCodeLocation(Address address) throws IllegalArgumentException {
+        return teleTargetMethod.isValidCodeLocation(address);
+    }
+
+    /**
+     * Returns the local surrogate for the {@link TargetMethod} that the
+     * VM uses to represent a method compilation.
+     */
     public TeleTargetMethod teleTargetMethod() {
         return teleTargetMethod;
     }

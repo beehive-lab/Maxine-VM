@@ -76,7 +76,7 @@ public final class TargetBundleLayout {
          * @return the offset from the start of the target bundle of the allocate cell. If {@code size.isZero()}, then
          *         no space is allocated and {@link TargetBundleLayout#INVALID_OFFSET} is returned.
          */
-        private Offset allocate(LinearAllocatorHeapRegion region, Size size) {
+        private Offset allocate(LinearAllocatorRegion region, Size size) {
             if (size.isZero()) {
                 return INVALID_OFFSET;
             }
@@ -93,7 +93,7 @@ public final class TargetBundleLayout {
          * @param targetBundleLayout the target bundle layout recording the field cell allocations
          * @param region an object used to do the allocation
          */
-        void update(int length, TargetBundleLayout targetBundleLayout, LinearAllocatorHeapRegion region) {
+        void update(int length, TargetBundleLayout targetBundleLayout, LinearAllocatorRegion region) {
             final int ordinal = ordinal();
             targetBundleLayout.lengths[ordinal] = length;
             final Size cellSize;
@@ -121,7 +121,7 @@ public final class TargetBundleLayout {
                               int numberOfReferenceLiterals,
                               int numberOfCodeBytes) {
 
-        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
+        final LinearAllocatorRegion region = new LinearAllocatorRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
         final int numberOfFields = ArrayField.VALUES.size();
         lengths = new int[numberOfFields];
@@ -248,7 +248,7 @@ public final class TargetBundleLayout {
         return bundleSize;
     }
 
-    private void initialize(ArrayField field, int length, LinearAllocatorHeapRegion region) {
+    private void initialize(ArrayField field, int length, LinearAllocatorRegion region) {
         field.update(length, this, region);
     }
 

@@ -29,20 +29,17 @@ package com.sun.max.tele;
 public abstract class MaxException extends Exception {
 
     /**
-     * {@inheritDoc}
-     * <br>
      * Creates a checked exception that can be
      * thrown when access to the VM fails for
      * some non-standard reason.
      *
      * @see Exception#Exception()
-     */    protected MaxException() {
+     */
+    protected MaxException() {
         super("");
     }
 
     /**
-     * {@inheritDoc}
-     * <br>
      * Creates a checked exception that can be
      * thrown when access to the VM fails for
      * some non-standard reason.
@@ -55,8 +52,6 @@ public abstract class MaxException extends Exception {
     }
 
     /**
-     * {@inheritDoc}
-     * <br>
      * Creates a checked exception that can be
      * thrown when access to the VM fails for
      * some non-standard reason.
@@ -70,8 +65,6 @@ public abstract class MaxException extends Exception {
     }
 
     /**
-     * {@inheritDoc}
-     * <br>
      * Creates a checked exception that can be
      * thrown when access to the VM fails for
      * some non-standard reason.

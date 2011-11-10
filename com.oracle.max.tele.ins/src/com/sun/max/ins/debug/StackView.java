@@ -151,10 +151,10 @@ public final class StackView extends AbstractView<StackView> {
             }
             if (modelIndex == 0) {
                 setToolTipPrefix("IP in frame " + modelIndex + " points at:<br>");
-                setForeground(style().wordCallEntryPointColor());
+                setForeground(preference().style().wordCallEntryPointColor());
             } else {
                 setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
-                setForeground(style().wordCallReturnPointColor());
+                setForeground(preference().style().wordCallReturnPointColor());
             }
             setText(Integer.toString(modelIndex) + ":  " + methodName);
             setWrappedToolTipHtmlText(toolTip);

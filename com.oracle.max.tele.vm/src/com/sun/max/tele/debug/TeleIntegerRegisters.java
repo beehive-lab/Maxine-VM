@@ -47,8 +47,8 @@ public final class TeleIntegerRegisters extends TeleRegisters {
         throw FatalError.unimplemented();
     }
 
-    public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, getIntegerRegisters());
+    public TeleIntegerRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet) {
+        super(vm, teleRegisterSet, getIntegerRegisters());
         if (platform().isa == ISA.AMD64) {
             indirectCallRegister = AMD64.rax;
             sp = AMD64.rsp;

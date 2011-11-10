@@ -34,14 +34,14 @@ public class InspectorButton extends JButton {
     public InspectorButton(Inspection inspection, String text, String toolTipText) {
         super(text);
         setOpaque(true);
-        setFont(inspection.style().textLabelFont());
+        setFont(inspection.preference().style().textLabelFont());
         setToolTipText(toolTipText);
     }
 
     public InspectorButton(Inspection inspection, Action action) {
         super(action);
         setOpaque(true);
-        setFont(inspection.style().textLabelFont());
+        setFont(inspection.preference().style().textLabelFont());
     }
 
 }

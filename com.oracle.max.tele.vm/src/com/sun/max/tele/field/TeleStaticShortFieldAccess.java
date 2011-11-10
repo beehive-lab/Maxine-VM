@@ -33,7 +33,7 @@ public class TeleStaticShortFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.SHORT);
     }
 
-    public short readShort(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readShort(fieldActor().offset());
+    public short readShort(MaxVM vm) {
+        return staticTupleReference(vm).readShort(fieldActor().offset());
     }
 }

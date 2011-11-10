@@ -22,6 +22,6 @@
  */
 
 /**
- * Facilities for remote debugging of the tele VM.
+ * Facilities for remote debugging of the VM.
  */
 package com.sun.max.tele.debug;

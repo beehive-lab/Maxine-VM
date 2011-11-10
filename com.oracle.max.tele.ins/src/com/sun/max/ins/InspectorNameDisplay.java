@@ -89,7 +89,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * Support for a standardized way to identify a heap object in the tele VM.
+     * Support for a standardized way to identify a heap object in the VM.
      *
      * @param prefix an optional string to precede everything else
      * @param teleObject an optional surrogate for the tele object being named, null if local
@@ -182,20 +182,34 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
+     * An identifier for a particular compilation that distinguishes it from other
+     * compilations of the same method.
+     *
      * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
      */
-    public String methodCompilationID(MaxCompilation compiledCode) {
+    public String shortMethodCompilationID(MaxCompilation compiledCode) {
         // Only have an index if a compiled method.
         if (compiledCode != null && compiledCode.getTeleClassMethodActor() != null) {
-            final int compilationIndex = compiledCode.compilationIndex();
-            if (compilationIndex >= 0) {
-                return "[" + compilationIndex + "]";
-            }
+            return "[" + (compiledCode.isBaseline() ? "B" : "O") + "]";
         }
         return "";
     }
 
     /**
+     * An identifier for a particular compilation that distinguishes it from other
+     * compilations of the same method.
+     *
+     * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
+     */
+    public String longMethodCompilationID(MaxCompilation compiledCode) {
+        // Only have an index if a compiled method.
+        if (compiledCode != null && compiledCode.getTeleClassMethodActor() != null) {
+            return "[" + (compiledCode.isBaseline() ? "BASELINE" : "OPTIMIZED") + "]";
+        }
+        return "";
+    }
+
+   /**
      * E.g. an asterisk when a method has been substituted.
      */
     public String methodSubstitutionShortAnnotation(TeleMethodActor teleMethodActor) {
@@ -242,7 +256,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         return compiledCode.classMethodActor() == null ?
                         compiledCode.entityName() :
-                            compiledCode.classMethodActor().format("%n()" + methodCompilationID(compiledCode));
+                            compiledCode.classMethodActor().format("%n()" + shortMethodCompilationID(compiledCode));
     }
 
     /**
@@ -254,7 +268,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         return compiledCode.classMethodActor() == null ?
                         compiledCode.entityName() :
-                            compiledCode.classMethodActor().format("%h.%n()" + methodCompilationID(compiledCode));
+                            compiledCode.classMethodActor().format("%h.%n()" + shortMethodCompilationID(compiledCode));
     }
 
 
@@ -267,7 +281,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             try {
                 return compiledCode.classMethodActor() == null ?
                                 compiledCode.entityName() :
-                                    compiledCode.classMethodActor().format("%n(%p)" + methodCompilationID(compiledCode));
+                                    compiledCode.classMethodActor().format("%n(%p)" + shortMethodCompilationID(compiledCode));
             } finally {
                 vm().releaseLegacyVMAccess();
             }
@@ -290,13 +304,13 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
         switch (returnTypeSpecification) {
             case ABSENT: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledCode));
+                return classMethodActor.format("%n(%p)" + shortMethodCompilationID(compiledCode));
             }
             case AS_PREFIX: {
-                return classMethodActor.format("%r %n(%p)" + methodCompilationID(compiledCode));
+                return classMethodActor.format("%r %n(%p)" + shortMethodCompilationID(compiledCode));
             }
             case AS_SUFFIX: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledCode) + " %r");
+                return classMethodActor.format("%n(%p)" + shortMethodCompilationID(compiledCode) + " %r");
             }
             default: {
                 throw InspectorError.unknownCase();
@@ -316,7 +330,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String longName(MaxCompilation compiledCode) {
         return compiledCode.classMethodActor() ==
             null ? compiledCode.entityDescription() :
-                compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + " in %H");
+                compiledCode.classMethodActor().format("%r %n(%p)" + shortMethodCompilationID(compiledCode) + " in %H");
     }
 
     /**
@@ -325,7 +339,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String veryShortName(MaxCompilation compiledCode, Address address) {
         return compiledCode.classMethodActor() ==
             null ? compiledCode.entityName() :
-                compiledCode.classMethodActor().format("%n()" + methodCompilationID(compiledCode) + positionString(compiledCode, address));
+                compiledCode.classMethodActor().format("%n()" + shortMethodCompilationID(compiledCode) + positionString(compiledCode, address));
     }
 
     /**
@@ -336,7 +350,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             return unavailableDataLongText();
         }
         if (compiledCode.classMethodActor() != null) {
-            return compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + positionString(compiledCode, address) + " in %H");
+            return compiledCode.classMethodActor().format("%r %n(%p)" + shortMethodCompilationID(compiledCode) + positionString(compiledCode, address) + " in %H");
         }
         return compiledCode.entityName();
     }
@@ -520,7 +534,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
             return "boot code region \"" + regionName + "\"";
         }
-        for (MaxCompiledCodeRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
+        for (MaxCodeCacheRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
             if (memoryRegion.sameAs(codeRegion.memoryRegion())) {
                 return "dynamic code region \"" + regionName + "\"";
             }
@@ -616,7 +630,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * Renderers for specific classes of objects in the heap in the {@teleVM}.
+     * Renderers for specific classes of objects in the heap in the VM.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.  All heap objects are
      * implemented as tuples, hubs. or arrays, so there should always be at least
@@ -713,15 +727,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final String suffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         String prefix = "";
-        switch (teleObject.getTeleObjectMemoryState()) {
-            case LIVE:
-                break;
-            case OBSOLETE:
-                prefix = TeleObjectMemory.State.OBSOLETE.label() + " ";
-                break;
-            case DEAD:
-                prefix = TeleObjectMemory.State.DEAD.label() + " ";
-                break;
+        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
+        if (!memoryStatus.isLive()) {
+            prefix = memoryStatus.label() + " ";
         }
         return prefix + name + suffix;
     }

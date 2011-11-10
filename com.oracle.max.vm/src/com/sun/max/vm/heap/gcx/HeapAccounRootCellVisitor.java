@@ -35,7 +35,7 @@ final public class HeapAccounRootCellVisitor extends RootCellVisitor {
     @Override
     void reset() {
         super.reset();
-        bottom = HeapRegionInfo.fromRegionID(owner.heapAccount().allocatedRegions().regionList.head()).regionStart();
+        bottom = HeapRegionInfo.fromRegionID(owner.heapAccount().committedRegions().head()).regionStart();
     }
     /**
      * Check if a non-null pointer is  within the area covered by root marking.

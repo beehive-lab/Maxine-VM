@@ -116,7 +116,7 @@ public final class BreakpointsTable extends InspectorTable {
      */
     @Override
     public Color cellForegroundColor(int row, int col) {
-        return (tableModel.get(row).triggerThread() == null) ? null : style().debugIPTagColor();
+        return (tableModel.get(row).triggerThread() == null) ? null : preference().style().debugIPTagColor();
     }
 
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
@@ -357,7 +357,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
-            setIcon((breakpointData.triggerThread() == null) ? null : style().debugIPTagIcon());
+            setIcon((breakpointData.triggerThread() == null) ? null : preference().style().debugIPTagIcon());
             setText(breakpointData.kindTag());
             setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             setWrappedToolTipHtmlText("<br>" + "Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
@@ -406,7 +406,7 @@ public final class BreakpointsTable extends InspectorTable {
     private final class ConditionCellRenderer extends DefaultTableCellRenderer implements Prober {
 
         ConditionCellRenderer() {
-            setFont(style().defaultFont());
+            setFont(preference().style().defaultFont());
             setOpaque(true);
         }
 
@@ -424,7 +424,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public void redisplay() {
-            setFont(style().defaultFont());
+            setFont(preference().style().defaultFont());
         }
 
         public void refresh(boolean force) {

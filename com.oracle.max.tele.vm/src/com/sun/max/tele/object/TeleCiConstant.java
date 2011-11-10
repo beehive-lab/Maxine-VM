@@ -28,12 +28,12 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link CiConstant} in the tele VM.
+ * Canonical surrogate for an object of type {@link CiConstant} in the VM.
  */
 public final class TeleCiConstant extends TeleTupleObject {
 
-    protected TeleCiConstant(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+    protected TeleCiConstant(TeleVM vm, Reference reference) {
+        super(vm, reference);
     }
 
     @Override
@@ -42,7 +42,7 @@ public final class TeleCiConstant extends TeleTupleObject {
         return new DeepCopier() {
             @Override
             protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
-                if (fieldActor.equals(vm().teleFields().CiConstant_object.fieldActor())) {
+                if (fieldActor.equals(fields().CiConstant_object.fieldActor())) {
                     if (teleObject == null) {
                         return null;
                     }

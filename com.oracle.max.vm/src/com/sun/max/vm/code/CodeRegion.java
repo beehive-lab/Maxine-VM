@@ -33,9 +33,36 @@ import com.sun.max.vm.heap.*;
  * A code region that encapsulates a contiguous, fixed-sized memory area in the VM
  * for storing code and data structures relating to code.
  */
-public final class CodeRegion extends LinearAllocatorHeapRegion {
+public class CodeRegion extends LinearAllocatorRegion {
 
     public static final int DEFAULT_CAPACITY = 10;
+
+    /**
+     * Inspectable counter of the number of code evictions in this region that have <strong>begun</strong>.
+     * It is intended that this counter increment just before eviction starts to modify the contents of the
+     * code cache, after any preliminary steps that do not modify the contents.
+     * <p>
+     * The count will remain 0 in any unmanaged code region.
+     * <p>
+     * Used by the Inspector to determine how many evictions have happened and whether an eviction
+     * is currently in progress.
+     * <p>
+     * {@code 0 <= codeEvictionCompletedCounter <= codeEvictionStartedCounter}
+     */
+    @INSPECTED
+    private long evictionStartedCount = 0;
+
+    /**
+     * Inspectable counter of the number of code cache evictions in this region that have <strong>completed</strong>.
+     * It is intended that this counter increment just after eviction finishes modifying the contents of the
+     * code cache, before any subsequent steps that do not modify the contents.
+     * <p>
+     * The count will remain 0 in any unmanaged code region.
+     * <p>
+     * Used by the Inspector to determine if the VM is performing a code eviction in this region.
+     */
+    @INSPECTED
+    private long evictionCompletedCount = 0;
 
     /**
      * Creates a code region that is not yet bound to any memory.
@@ -76,11 +103,40 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
+     * Gets the address at which the GC should start traversing this region.
+     * In case it is managed, this may be different from the value obtained from {@link #start()}.
+     */
+    public Address gcstart() {
+        return start();
+    }
+
+    /**
      * A sorted list of the target methods allocated within this code region.
      */
     @INSPECTED
-    private TargetMethod[] targetMethods;
+    protected TargetMethod[] targetMethods;
 
+    /**
+     * The number of target methods allocated within this code region.
+     */
+    @INSPECTED
+    protected int length;
+
+
+    /**
+     * The number of times that an addition to the array
+     * of target methods has been started.  During the addition
+     * the array may not be in a usefully inspectable state.
+     */
+    @INSPECTED
+    private int additionStartedCount = 0;
+
+    /**
+     * The number of times that an addition to the array
+     * of target methods has completed.
+     */
+    @INSPECTED
+    private int additionCompletedCount = 0;
 
     public static final int FIND_INDEX_ALIGN_SHIFT = 9;
     public static final int FIND_INDEX_ALIGN = 1 << FIND_INDEX_ALIGN_SHIFT;
@@ -92,13 +148,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * Since {@link #targetMethods} is sorted, a linear search with this starting point quickly finds the method
      * for an arbitrary address.
      */
-    private int[] findIndex;
-
-    /**
-     * Length of valid data in {@link #targetMethods}.
-     */
-    @INSPECTED
-    private int length;
+    protected int[] findIndex;
 
     /**
      * Gets a copy of the sorted target method list.
@@ -114,24 +164,25 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * Adds a target method to this sorted list of target methods.
      */
     public void add(TargetMethod targetMethod) {
-        int insertionPoint;
-        if (length == 0) {
-            insertionPoint = 0;
-        } else if (COMPARATOR.compare(targetMethods[length - 1], targetMethod) < 0) {
-            // 'targetMethod' comes after the last entry in 'targetMethods' so we can avoid the binary search
-            insertionPoint = length;
-        } else {
-            int index = Arrays.binarySearch(targetMethods, 0, length, targetMethod, COMPARATOR);
-            assert index < 0 : targetMethod + " overlaps " + targetMethods[index];
-            insertionPoint = -(index + 1);
-        }
+        additionStartedCount++;         // The array becomes not inspectable
         if (length == targetMethods.length) {
             int newCapacity = (targetMethods.length * 3) / 2 + 1;
             targetMethods = Arrays.copyOf(targetMethods, newCapacity);
         }
-        System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
+        int insertionPoint;
+        if (length == 0 || COMPARATOR.compare(targetMethods[length - 1], targetMethod) < 0) {
+            // follows any existing entries in the array so it can simply be appended.
+            insertionPoint = length;
+        } else {
+            // Out-of-order addition: create an open array entry for the insertion
+            int index = Arrays.binarySearch(targetMethods, 0, length, targetMethod, COMPARATOR);
+            assert index < 0 : targetMethod + " overlaps " + targetMethods[index];
+            insertionPoint = -(index + 1);
+            System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
+        }
         targetMethods[insertionPoint] = targetMethod;
         length++;
+        additionCompletedCount++;       // The array becomes once again inspectable
 
         assert start().alignUp(FIND_INDEX_ALIGN).equals(start());
         int startIdx = targetMethod.start().plus(FIND_INDEX_ALIGN - 1).minus(start()).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
@@ -148,27 +199,39 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     /**
      * Looks up the target method containing a particular address, using the index.
      *
-     * @param address the address to lookup in this region
+     * @param cp the address to lookup in this region
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
      */
-    public TargetMethod find(Address address) {
-        int pageIndex = address.minus(start()).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
-        if (pageIndex < 0 || pageIndex >= findIndex.length) {
+    public TargetMethod find(Address cp) {
+        return find0(cp, start(), findIndex, targetMethods);
+    }
+
+    protected final TargetMethod find0(Address cp, Address start, int[] index, TargetMethod[] tms) {
+        int pageIndex = cp.minus(start).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
+        if (pageIndex < 0 || pageIndex >= index.length) {
             return null;
         }
 
-        int methodIdx = findIndex[pageIndex];
+        int methodIdx = index[pageIndex];
         while (true) {
-            TargetMethod method = targetMethods[methodIdx];
+            TargetMethod method = tms[methodIdx];
             if (method == null) {
                 return null;
             }
-            assert method.start().lessEqual(address);
-            if (method.end().greaterThan(address)) {
+            assert validMethodStart(method, cp);
+            if (methodFound(method, cp)) {
                 return method;
             }
             methodIdx++;
         }
+    }
+
+    protected boolean validMethodStart(TargetMethod tm, Address address) {
+        return tm.start().lessEqual(address);
+    }
+
+    protected boolean methodFound(TargetMethod tm, Address address) {
+        return tm.end().greaterThan(address);
     }
 
     /**
@@ -188,6 +251,25 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         }
         return true;
     }
+
+    /**
+     * Receives notification that a code eviction in this region is just about to start.
+     * The intention is that the notification is received just before actual modifications
+     * to the contents of the region begin.
+     */
+    public void notifyEvictionStarted() {
+        evictionStartedCount++;
+    }
+
+    /**
+     * Receives notification that a code eviction in this region has just concluded.
+     * The intention is that the notification is received just after the last actual modifications
+     * to the contents of the region have ended.
+     */
+    public void notifyEvictionCompleted() {
+        evictionCompletedCount++;
+    }
+
 
     public static final Comparator<TargetMethod> COMPARATOR = new Comparator<TargetMethod>() {
         @Override

@@ -33,7 +33,7 @@ public class TeleStaticFloadFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.FLOAT);
     }
 
-    public float readFloat(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readFloat(fieldActor().offset());
+    public float readFloat(MaxVM vm) {
+        return staticTupleReference(vm).readFloat(fieldActor().offset());
     }
 }

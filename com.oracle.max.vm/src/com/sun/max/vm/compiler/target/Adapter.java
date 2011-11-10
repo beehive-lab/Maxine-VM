@@ -31,9 +31,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -127,36 +127,41 @@ public abstract class Adapter extends TargetMethod {
     public abstract int callSizeInPrologue();
 
     @Override
+    public Lifespan lifespan() {
+        return Lifespan.LONG;
+    }
+
+    @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
     }
 
     @Override
-    public boolean isPatchableCallSite(Address callSite) {
+    public boolean isPatchableCallSite(CodePointer callSite) {
         FatalError.unexpected("Adapter should never be patched");
         return false;
     }
 
     @Override
-    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override
-    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+    public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
         throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
-        return Address.zero();
+    public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+        return CodePointer.zero();
     }
 
     @Override
-    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
     }
 
     @Override
-    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         // Exceptions do not occur in adapters
     }
 }

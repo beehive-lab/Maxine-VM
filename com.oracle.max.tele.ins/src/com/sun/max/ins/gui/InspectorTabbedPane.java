@@ -53,10 +53,6 @@ public class InspectorTabbedPane extends JTabbedPane implements InspectionHolder
         return inspection.vm();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -67,6 +63,10 @@ public class InspectorTabbedPane extends JTabbedPane implements InspectionHolder
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     public InspectorGUI gui() {

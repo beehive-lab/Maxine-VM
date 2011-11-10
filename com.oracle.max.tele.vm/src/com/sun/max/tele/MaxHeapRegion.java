@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 /**
  * Access to an individual allocation area of the VM heap.
  */
@@ -32,4 +34,12 @@ public interface MaxHeapRegion extends MaxEntity<MaxHeapRegion> {
      */
     boolean isBootRegion();
 
+    /**
+     * Writes current statistics concerning inspection of the VM's heap.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 }

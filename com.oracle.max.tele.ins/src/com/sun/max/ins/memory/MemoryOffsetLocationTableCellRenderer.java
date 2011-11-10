@@ -61,7 +61,7 @@ public final class MemoryOffsetLocationTableCellRenderer extends InspectorTableC
         label.setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>Address = ");
         label.setValue(tableModel.getOffset(row), tableModel.getOrigin());
         if (inspectorTable.isBoundaryRow(row)) {
-            label.setBorder(style().defaultPaneTopBorder());
+            label.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             label.setBorder(null);
         }

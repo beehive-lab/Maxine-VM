@@ -261,7 +261,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      * @return default geometry for this view, to be used if no prior settings; null if no default specified.
      */
     protected Rectangle defaultGeometry() {
-        return inspection().geometry().preferredFrameGeometry(viewKind);
+        return preference().geometry().preferredFrameGeometry(viewKind);
     }
 
     /**
@@ -479,7 +479,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     }
 
     public void flash() {
-        frame.flash(style().frameBorderFlashColor());
+        frame.flash(preference().style().frameBorderFlashColor());
     }
 
     /**
@@ -499,7 +499,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.moveToFront();
         if (!isSelected()) {
             setSelected();
-            frame.flash(style().frameBorderFlashColor());
+            frame.flash(preference().style().frameBorderFlashColor());
         }
     }
 
