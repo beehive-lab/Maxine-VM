@@ -849,7 +849,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     @Override
-    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+    protected Pointer customAllocate(Pointer customAllocator, Size size) {
         // Default is to use the immortal heap.
         return ImmortalHeap.allocate(size, true);
     }
