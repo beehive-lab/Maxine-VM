@@ -42,7 +42,7 @@ import com.sun.max.platform.*;
 public class GraalMaxineIntrinsicImplementations {
     private static class NotImplementedIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
@@ -51,17 +51,17 @@ public class GraalMaxineIntrinsicImplementations {
     private static class NormalizeCompareIntrinsic implements GraalIntrinsicImpl {
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 3 && args[0].isConstant() && args[0].kind() == CiKind.Int : target;
-            int opcode = args[0].asConstant().asInt();
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 3 && args.get(0).isConstant() && args.get(0).kind() == CiKind.Int : target;
+            int opcode = args.get(0).asConstant().asInt();
             // TODO(cwi): Why the separation when both branches do the same?
-            if (args[1].kind() == CiKind.Long || args[1].kind() == CiKind.Double) {
+            if (args.get(1).kind() == CiKind.Long || args.get(1).kind() == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
-                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
+                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
-                assert args[1].kind() == CiKind.Float;
-                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
+                assert args.get(1).kind() == CiKind.Float;
+                return graph.unique(new NormalizeCompareNode(args.get(1), args.get(2), opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
         }
     }
@@ -75,12 +75,12 @@ public class GraalMaxineIntrinsicImplementations {
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 2 && args[0].kind() == args[1].kind() && (args[0].kind() == CiKind.Int || args[0].kind() == CiKind.Long);
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 2 && args.get(0).kind() == args.get(1).kind() && (args.get(0).kind() == CiKind.Int || args.get(0).kind() == CiKind.Long);
             if (remainder) {
-                return graph.unique(new IntegerURemNode(args[0].kind(), args[0], args[1]));
+                return graph.unique(new IntegerURemNode(args.get(0).kind(), args.get(0), args.get(1)));
             } else {
-                return graph.unique(new IntegerUDivNode(args[0].kind(), args[0], args[1]));
+                return graph.unique(new IntegerUDivNode(args.get(0).kind(), args.get(0), args.get(1)));
             }
         }
     }
@@ -94,10 +94,10 @@ public class GraalMaxineIntrinsicImplementations {
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 2;
-            assert args[0].kind() == CiKind.Int || args[0].kind() == CiKind.Long;
-            return MaterializeNode.create(graph.unique(new CompareNode(args[0], condition, args[1])), graph);
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 2;
+            assert args.get(0).kind() == CiKind.Int || args.get(0).kind() == CiKind.Long;
+            return MaterializeNode.create(graph.unique(new CompareNode(args.get(0), condition, args.get(1))), graph);
         }
     }
 
@@ -110,9 +110,9 @@ public class GraalMaxineIntrinsicImplementations {
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 1;
-            return graph.unique(new MaxineMathIntrinsicsNode(args[0], op));
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 1;
+            return graph.unique(new MaxineMathIntrinsicsNode(args.get(0), op));
         }
     }
 
@@ -123,13 +123,13 @@ public class GraalMaxineIntrinsicImplementations {
 
     private static class UnsafeCastIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             RiSignature signature = target.signature();
             int argCount = signature.argumentCount(false);
-            RiType accessingClass = caller.holder();
+            RiType accessingClass = target.holder();
             RiType fromType;
             RiType toType = signature.returnType(accessingClass);
-            assert args.length == 1 || (args.length == 2 && isTwoSlot(args[0].kind())) : "method with @UNSAFE_CAST must have exactly 1 argument";
+            assert args.size() == 1 || (args.size() == 2 && isTwoSlot(args.get(0).kind())) : "method with @UNSAFE_CAST must have exactly 1 argument";
             if (argCount == 1) {
                 fromType = signature.argumentTypeAt(0, accessingClass);
             } else {
@@ -144,17 +144,17 @@ public class GraalMaxineIntrinsicImplementations {
             if (Platform.target().sizeInBytes(from) != Platform.target().sizeInBytes(from) || from == CiKind.Float || from == CiKind.Double || to == CiKind.Float || to == CiKind.Double) {
                 throw new CiBailout("Unsupported unsafe cast from " + fromType + " to " + toType);
             }
-            return graph.unique(new MaxineUnsafeCastNode(args[0], (RiResolvedType) toType));
+            return graph.unique(new MaxineUnsafeCastNode(args.get(0), (RiResolvedType) toType));
         }
     }
 
     private static class PointerReadIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 2 || args.length == 3;
-            ValueNode pointer = args[0];
-            ValueNode displacement = args.length == 3 ? args[1] : null;
-            ValueNode offsetOrIndex = offsetOrIndex(graph, args.length == 3 ? args[2] : args[1]);
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 2 || args.size() == 3;
+            ValueNode pointer = args.get(0);
+            ValueNode displacement = args.size() == 3 ? args.get(1) : null;
+            ValueNode offsetOrIndex = offsetOrIndex(graph, args.size() == 3 ? args.get(2) : args.get(1));
 
             if (displacement == null) {
                 return graph.add(new UnsafeLoadNode(pointer, offsetOrIndex, target.signature().returnKind(true)));
@@ -170,15 +170,15 @@ public class GraalMaxineIntrinsicImplementations {
 
     private static class PointerWriteIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             // Last parameter can be a double word, in which case args ends with a null slot that must be ignored.
-            int numArgs = args[args.length - 1] == null ? args.length - 1 : args.length;
+            int numArgs = args.last() == null ? args.size() - 1 : args.size();
 
             assert numArgs == 3 || numArgs == 4;
-            ValueNode pointer = args[0];
-            ValueNode displacement = numArgs == 4 ? args[1] : null;
-            ValueNode offsetOrIndex = offsetOrIndex(graph, numArgs == 4 ? args[2] : args[1]);
-            ValueNode value = args[numArgs - 1];
+            ValueNode pointer = args.get(0);
+            ValueNode displacement = numArgs == 4 ? args.get(1) : null;
+            ValueNode offsetOrIndex = offsetOrIndex(graph, numArgs == 4 ? args.get(2) : args.get(1));
+            ValueNode value = args.get(numArgs - 1);
 
             RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
@@ -196,12 +196,12 @@ public class GraalMaxineIntrinsicImplementations {
 
     private static class PointerCompareAndSwapIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 4 || args.length == 6;
-            ValueNode pointer = args[0];
-            ValueNode offset = offsetOrIndex(graph, args[1]);
-            ValueNode expectedValue = args[2];
-            ValueNode newValue = args[args.length == 6 ? 4 : 3];
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 4 || args.size() == 6;
+            ValueNode pointer = args.get(0);
+            ValueNode offset = offsetOrIndex(graph, args.get(1));
+            ValueNode expectedValue = args.get(2);
+            ValueNode newValue = args.get(args.size() == 6 ? 4 : 3);
             return graph.add(new CompareAndSwapNode(pointer, offset, expectedValue, newValue, true));
         }
     }
@@ -225,9 +225,9 @@ public class GraalMaxineIntrinsicImplementations {
 
     private static class ReadRegisterIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 1;
-            int registerId = intConstant(args[0], target);
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 1;
+            int registerId = intConstant(args.get(0), target);
 
             CiRegister register = runtime.getRegisterConfig(target).getRegisterForRole(registerId);
             if (register == null) {
@@ -240,10 +240,10 @@ public class GraalMaxineIntrinsicImplementations {
 
     private static class WriteRegisterIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 2;
-            int registerId = intConstant(args[0], target);
-            ValueNode value = args[1];
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 2;
+            int registerId = intConstant(args.get(0), target);
+            ValueNode value = args.get(1);
 
             CiRegister register = runtime.getRegisterConfig(target).getRegisterForRole(registerId);
             if (register == null) {
@@ -268,37 +268,37 @@ public class GraalMaxineIntrinsicImplementations {
         }
 
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length == 0;
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            assert args.size() == 0;
             return graph.add(new SafepointNode(op));
         }
     }
 
     private static class UncommonTrapIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             return graph.add(new DeoptimizeNode(DeoptAction.InvalidateReprofile));
         }
     }
 
     private static class StackHandleIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
-//            return b.append(new StackHandle(args[0], target.signature().returnType(null)));
+//            return b.append(new StackHandle(args.get(0), target.signature().returnType(null)));
         }
     }
 
     private static class StackAllocateIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new StackAllocateNode(intConstant(args[0], target), (RiResolvedType) target.signature().returnType(null)));
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
+            return graph.add(new StackAllocateNode(intConstant(args.get(0), target), (RiResolvedType) target.signature().returnType(null)));
         }
     }
 
     private static class IfLatchBitReadIntrinsic implements GraalIntrinsicImpl {
         @Override
-        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
+        public ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod target, NodeList<ValueNode> args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
