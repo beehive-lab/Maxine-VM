@@ -39,7 +39,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
     @Input private ValueNode x;
     @Input private ValueNode y;
 
-    @Data private Condition condition;
+    @Data private final Condition condition;
     @Data private final boolean unorderedIsTrue;
 
     public ValueNode x() {
@@ -95,16 +95,6 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
      */
     public boolean unorderedIsTrue() {
         return unorderedIsTrue;
-    }
-
-    /**
-     * Swaps the operands to this if and mirrors the condition (e.g. > becomes <).
-     *
-     * @see Condition#mirror()
-     */
-    public void swapOperands() {
-        condition = condition.mirror();
-        throw new UnsupportedOperationException("swapOperands...");
     }
 
     @Override
