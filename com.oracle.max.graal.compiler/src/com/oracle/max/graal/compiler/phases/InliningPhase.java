@@ -217,7 +217,8 @@ public class InliningPhase extends Phase {
         inlineInfos = graph.createNodeMap();
 
         if (hints != null) {
-            scanInvokes((Iterable< ? extends Node>) hints, 0);
+            Iterable<? extends Node> hints = Util.uncheckedCast(this.hints);
+            scanInvokes(hints, 0);
         } else {
             scanInvokes(graph.getNodes(InvokeNode.class), 0);
             scanInvokes(graph.getNodes(InvokeWithExceptionNode.class), 0);
