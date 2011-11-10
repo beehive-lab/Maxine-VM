@@ -458,7 +458,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
-    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+    protected Pointer customAllocate(Pointer customAllocator, Size size) {
         // Default is to use the immortal heap.
         return ImmortalHeap.allocate(size, true);
     }

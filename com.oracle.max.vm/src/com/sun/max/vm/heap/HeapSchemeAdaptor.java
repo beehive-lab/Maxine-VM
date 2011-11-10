@@ -308,7 +308,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     /**
      * Release whatever reserved virtual space was left after CodeManager initialization. This is called during {@link MaxineVM.Phase#PRISTINE} initialization phase.
-     * This is must be overridden by HeapScheme implementations that either override {@link #createCodeManager()} or {@link #bootRegionMappingConstraint()},
+     * This <b>must</b> be overridden by HeapScheme implementations that either override {@link #createCodeManager()} or {@link #bootRegionMappingConstraint()},
      * or make use of the extra space reserved by default.
      */
     protected void releaseUnusedReservedVirtualSpace() {

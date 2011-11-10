@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx.mse;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -93,7 +92,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
      */
     private final FirstFitMarkSweepSpace<MSEHeapScheme> markSweepSpace;
 
-    private final Collect collect = new Collect();
+    private final MarkSweepCollection collect = new MarkSweepCollection();
 
     /**
      * An instance of an after mark sweep verifier to use for heap verification after a mark sweep.
@@ -326,12 +325,12 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
      * Class implementing the garbage collection routine.
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
-    final class Collect extends GCOperation {
+    final class MarkSweepCollection extends GCOperation {
         private TLABFiller tlabFiller = new TLABFiller();
 
 
-        public Collect() {
-            super("Collect");
+        public MarkSweepCollection() {
+            super("MarkSweepCollection");
         }
 
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
@@ -373,7 +372,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
 
         @Override
-        public void collect(int invocationCount) {
+        protected void collect(int invocationCount) {
             traceGCTimes = Heap.traceGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
@@ -508,13 +507,9 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         refillTLAB(etla, tlab, effectiveSize);
     }
 
-
-    @INTRINSIC(UNSAFE_CAST)
-    private static native BaseAtomicBumpPointerAllocator asBumpPointerAllocator(Object object);
-
     @Override
-    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
-        return asBumpPointerAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
+    protected Pointer customAllocate(Pointer customAllocator, Size size) {
+        return BaseAtomicBumpPointerAllocator.asBumpPointerAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
     }
 
     @Override
