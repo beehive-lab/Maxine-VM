@@ -36,7 +36,7 @@ import com.sun.cri.ci.*;
 public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowerable, Node.ValueNumberable {
 
     @Input private ValueNode object;
-    @Input private ValueNode offset;
+    @Input private ValueNode index;
     @Input private ValueNode displacement;
     @Data private final CiKind loadKind;
 
@@ -48,15 +48,15 @@ public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowera
         return displacement;
     }
 
-    public ValueNode offset() {
-        return offset;
+    public ValueNode index() {
+        return index;
     }
 
-    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode offset, CiKind kind) {
+    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode index, CiKind kind) {
         super(kind.stackKind());
         this.object = object;
         this.displacement = displacement;
-        this.offset = offset;
+        this.index = index;
         this.loadKind = kind;
     }
 
@@ -67,7 +67,12 @@ public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowera
     @Override
     public void lower(CiLoweringTool tool) {
         assert kind() != CiKind.Illegal;
-        LocationNode location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), displacement(), offset(), graph());
+        LocationNode location;
+        if (displacement.isConstant() && displacement.asConstant().asLong() == (int) displacement.asConstant().asLong()) {
+            location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), (int) displacement.asConstant().asLong(), index(), graph());
+        } else {
+            location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), displacement(), index(), graph());
+        }
         ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
         if (object().kind() == CiKind.Object) {
             memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));

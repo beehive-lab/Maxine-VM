@@ -35,16 +35,16 @@ import com.sun.cri.ci.*;
 public class ExtendedUnsafeStoreNode extends AbstractStateSplit implements Lowerable {
 
     @Input private ValueNode object;
-    @Input private ValueNode offset;
+    @Input private ValueNode index;
     @Input private ValueNode value;
     @Input private ValueNode displacement;
     @Data private final CiKind storeKind;
 
-    public ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode offset, ValueNode value, CiKind kind) {
+    public ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode index, ValueNode value, CiKind kind) {
         super(CiKind.Void);
         this.object = object;
         this.displacement = displacement;
-        this.offset = offset;
+        this.index = index;
         this.value = value;
         this.storeKind = kind;
     }
@@ -57,8 +57,8 @@ public class ExtendedUnsafeStoreNode extends AbstractStateSplit implements Lower
         return displacement;
     }
 
-    public ValueNode offset() {
-        return offset;
+    public ValueNode index() {
+        return index;
     }
 
     public ValueNode value() {
@@ -71,7 +71,12 @@ public class ExtendedUnsafeStoreNode extends AbstractStateSplit implements Lower
 
     @Override
     public void lower(CiLoweringTool tool) {
-        LocationNode location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, storeKind(), displacement(), offset(), graph());
+        LocationNode location;
+        if (displacement.isConstant() && displacement.asConstant().asLong() == (int) displacement.asConstant().asLong()) {
+            location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, storeKind(), (int) displacement.asConstant().asLong(), index(), graph());
+        } else {
+            location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, storeKind(), displacement(), index(), graph());
+        }
         WriteNode write = graph().add(new WriteNode(object(), value(), location));
         FixedNode next = next();
         setNext(null);
