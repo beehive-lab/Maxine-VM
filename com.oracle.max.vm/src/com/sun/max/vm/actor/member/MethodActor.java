@@ -28,6 +28,7 @@ import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import sun.reflect.*;
 
@@ -568,7 +569,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
 
     public Map<Object, Object> compilerStorage() {
         if (compilerStorage == null) {
-            compilerStorage = new HashMap<Object, Object>();
+            compilerStorage = new ConcurrentHashMap<Object, Object>();
         }
         return compilerStorage;
     }

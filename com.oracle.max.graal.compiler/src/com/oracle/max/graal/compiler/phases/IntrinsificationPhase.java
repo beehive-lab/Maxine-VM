@@ -59,6 +59,10 @@ public class IntrinsificationPhase extends Phase {
             intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method(), invoke.bci(), target, invoke.callTarget().arguments());
         }
         if (intrinsicGraph != null) {
+            // TODO (cwi): I disabled receiver null checks for intrinsics, because I believe that is the intended semantics.
+            // when an intrinsic really needs to do a null check, it should do it itself.
+            // This behavior is required at least for intrinsics that have also the @Inline annotation.
+            // TODO (tw): Find another way to fix the issue with Maxine intrinsics semantics.
             InliningUtil.inline(invoke, intrinsicGraph, true);
         }
     }
