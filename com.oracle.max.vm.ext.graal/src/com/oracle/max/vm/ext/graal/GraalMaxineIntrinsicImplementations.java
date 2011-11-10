@@ -160,10 +160,6 @@ public class GraalMaxineIntrinsicImplementations {
             ValueNode pointer = args.get(0);
             ValueNode displacement = args.size() == 3 ? args.get(1) : null;
             ValueNode offsetOrIndex = offsetOrIndex(graph, args.size() == 3 ? args.get(2) : args.get(1));
-
-            if (displacement == null) {
-                displacement = ConstantNode.forInt(0, graph);
-            }
             return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, offsetOrIndex, target.signature().returnKind(true)));
         }
     }
@@ -182,10 +178,6 @@ public class GraalMaxineIntrinsicImplementations {
 
             RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
-
-            if (displacement == null) {
-                displacement = ConstantNode.forInt(0, graph);
-            }
             return graph.add(new ExtendedUnsafeStoreNode(pointer, displacement, offsetOrIndex, value, kind));
         }
     }

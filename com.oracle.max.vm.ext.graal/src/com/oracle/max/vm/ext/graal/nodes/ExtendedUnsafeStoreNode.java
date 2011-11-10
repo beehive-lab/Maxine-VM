@@ -32,61 +32,32 @@ import com.sun.cri.ci.*;
 /**
  * Store of a value at a location specified as an offset relative to an object.
  */
-public class ExtendedUnsafeStoreNode extends AbstractStateSplit implements Lowerable {
+public class ExtendedUnsafeStoreNode extends ExtendedUnsafeNode implements Lowerable {
 
-    @Input private ValueNode object;
-    @Input private ValueNode index;
     @Input private ValueNode value;
-    @Input private ValueNode displacement;
-    @Data private final CiKind storeKind;
 
     public ExtendedUnsafeStoreNode(ValueNode object, ValueNode displacement, ValueNode index, ValueNode value, CiKind kind) {
-        super(CiKind.Void);
+        super(object, displacement, index, kind);
         this.object = object;
         this.displacement = displacement;
         this.index = index;
         this.value = value;
-        this.storeKind = kind;
-    }
-
-    public ValueNode object() {
-        return object;
-    }
-
-    public ValueNode displacement() {
-        return displacement;
-    }
-
-    public ValueNode index() {
-        return index;
     }
 
     public ValueNode value() {
         return value;
     }
 
-    public CiKind storeKind() {
-        return storeKind;
-    }
-
     @Override
     public void lower(CiLoweringTool tool) {
-        LocationNode location;
-        if (displacement.isConstant() && displacement.asConstant().asLong() == (int) displacement.asConstant().asLong()) {
-            location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, storeKind(), (int) displacement.asConstant().asLong(), index(), graph());
-        } else {
-            location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, storeKind(), displacement(), index(), graph());
-        }
+        LocationNode location = createLocation();
         WriteNode write = graph().add(new WriteNode(object(), value(), location));
         FixedNode next = next();
         setNext(null);
         if (object().kind() == CiKind.Object) {
             write.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));
         }
-        // TODO: add Maxine-specific write barrier
-//        FieldWriteBarrier barrier = graph.add(new FieldWriteBarrier(store.object()));
-//        barrier.setNext(next);
-//        write.setNext(barrier);
+        // TODO(tw): add Maxine-specific write barrier
         write.setNext(next);
         write.setStateAfter(stateAfter());
         replaceAtPredecessors(write);
