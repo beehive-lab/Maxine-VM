@@ -175,7 +175,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      * @param kind the kind of value being returned
      * @return the operand representing the ABI defined location used return a value of kind {@code kind}
      */
-    protected CiValue resultOperandFor(CiKind kind) {
+    public CiValue resultOperandFor(CiKind kind) {
         if (kind == CiKind.Void) {
             return IllegalValue;
         }
@@ -756,7 +756,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    private List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
+    public List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
         // for each argument, load it into the correct location
         List<CiValue> argList = new ArrayList<CiValue>();
         int j = 0;
