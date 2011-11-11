@@ -62,6 +62,8 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final VmCodeCacheAccess codeCache;
 
+    private final RemoteCodePointerManager codePointerManager;
+
     // TODO (mlvdv)  check for and handle out-of-order additions in CodeManager.add()
     /**
      * A mirror of the array of {@link TargetMethod}s that represents the method compilations managed
@@ -132,6 +134,8 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
         this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.objectReferenceManager = new SemispaceCodeCacheRemoteReferenceManager(vm, this);
+        // TODO (mlvdv) put in the right code pointer manager
+        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleSemiSpaceCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleSemiSpaceCodeRegion.getRegionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
@@ -266,4 +270,9 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
     public RemoteObjectReferenceManager objectReferenceManager() {
         return objectReferenceManager;
     }
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
+    }
+
 }

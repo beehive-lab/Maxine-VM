@@ -46,7 +46,8 @@ import com.sun.max.vm.compiler.target.*;
  * @see TargetMethod
  * @see VmCodeCacheAccess
  */
-public abstract class VmCodeCacheRegion extends AbstractVmHolder implements TeleVMCache, MaxCodeCacheRegion, ObjectHoldingRegion {
+public abstract class VmCodeCacheRegion extends AbstractVmHolder
+    implements TeleVMCache, MaxCodeCacheRegion, ObjectHoldingRegion, CodeHoldingRegion {
 
     private static final int TRACE_VALUE = 1;
 
@@ -191,6 +192,7 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder implements Tele
         final StringBuilder sb1 = new StringBuilder();
         sb1.append(entityName()).append(": size=" + formatter.format(memoryRegion().nBytes()));
         printStream.println(indentation + sb1.toString());
+        // Line 2
         final StringBuilder sb2 = new StringBuilder();
         sb2.append("compilations:  registered=").append(formatter.format(compilationCount()));
         sb2.append(", code loaded=").append(formatter.format(loadedCompilationCount()));
@@ -201,14 +203,22 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder implements Tele
             }
         }
         printStream.println(indentation + "     " + sb2.toString());
-        // Line 2
+        // Line 3
         final StringBuilder sb3 = new StringBuilder();
+        final int activePointerCount = codePointerManager().activePointerCount();
+        final int totalPointerCount = codePointerManager().totalPointerCount();
+        sb3.append("code pointers:  active=" + formatter.format(activePointerCount));
+        sb3.append(", inactive=" + formatter.format(totalPointerCount - activePointerCount));
+        sb3.append(", mgr=" + codePointerManager().getClass().getSimpleName());
+        printStream.println(indentation + "     " + sb3.toString());
+        // Line 4
+        final StringBuilder sb4 = new StringBuilder();
         final int activeReferenceCount = objectReferenceManager().activeReferenceCount();
         final int totalReferenceCount = objectReferenceManager().totalReferenceCount();
-        sb3.append("object refs:  active=" + formatter.format(activeReferenceCount));
-        sb3.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
-        sb3.append(", mgr=" + objectReferenceManager().getClass().getSimpleName());
-        printStream.println(indentation + "     " + sb3.toString());
+        sb4.append("object refs:  active=" + formatter.format(activeReferenceCount));
+        sb4.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
+        sb4.append(", mgr=" + objectReferenceManager().getClass().getSimpleName());
+        printStream.println(indentation + "     " + sb4.toString());
     }
 
     /**
