@@ -608,6 +608,21 @@ public abstract class TeleVM implements MaxVM {
     private final VmThreadAccess threadAccess;
 
     /**
+     * A collection of all known memory allocations, both those allocated by the VM and
+     * those discovered from the OS, for example thread allocation areas and loaded
+     * native libraries.
+     * <p>
+     * This collection is updated incrementally during the VM refresh cycle.  This means
+     * that it may be inconsistent (unlike the list of regions recorded in the current
+     * {@link MaxVMState}, which is not assigned until the conclusion of the refresh cycle.
+     * However, it always reflects the most current information available, which is necessary
+     * to have available <em>within</em> the refresh cycle.
+     * <p>
+     * Should never contain {@code null}
+     */
+    private final Set<MaxMemoryRegion> memoryAllocations = new HashSet<MaxMemoryRegion>();
+
+    /**
      * The immutable history of all VM states, as of the last state transition; thread safe
      * for access by client methods on any thread.
      */
@@ -810,38 +825,56 @@ public abstract class TeleVM implements MaxVM {
         try {
             updateTracer.begin("epoch=" + epoch);
             if (classAccess == null) {
-                /*
-                 * Must delay creation/initialization of the {@link VmClassAccess} until after
+                /**
+                 * Must delay creation/initialization of the {@linkplain VmClassAccess "class registry"} until after
                  * we hit the first execution breakpoint; otherwise addresses won't have been relocated.
-                 * This depends on the {@link VmHeap} already existing.
+                 * This depends on the {@link VmHeapAccess} already existing.
                  */
                 classAccess = VmClassAccess.make(this, epoch);
-                /*
-                 *  Can only fully initialize the {@link VmHeap} once
-                 *  the {@link VmClassRegistry} is fully created, otherwise there's a cycle.
+                /**
+                 *  Can only fully initialize the {@link VmHeapAccess} once
+                 *  the {@link VmClassAccess} is fully created, otherwise there's a cycle.
                  */
                 heapAccess.initialize(epoch);
+                // Now we have a legitimate representation for the boot heap
+                memoryAllocations.addAll(heapAccess.memoryAllocations());
 
-                // Now set up the map of the compiled code cache
+                // Now set up the initial map of the compiled code cache
                 codeCacheAccess = new VmCodeCacheAccess(this);
                 codeCacheAccess.initialize(epoch);
+                memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     classAccess.processAttachFixupList();
                 }
             }
-            // The standard update cycle follow; it is very sensitive to ordering.
-            // Update description of the regions that can contain objects, including GC status
+
+            // The standard update cycle follows; it is sensitive to ordering.
+
+            // Update status of the heap, including GC status and any new allocations.
             heapAccess.updateCache(epoch);
-            // Update description of the regions that can contain method compilations (and objects), including eviction status
+            memoryAllocations.addAll(heapAccess.memoryAllocations());
+
+            // Update status of the code cache, including eviction status and any new allocations.
             codeCacheAccess.updateStatus(epoch);
+            memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+
+            // A hook for any other memory regions that might be getting allocated for special platforms
+            memoryAllocations.addAll(platformMemoryRegions());
+
             // Update registry of loaded classes, so we can understand object types
             classAccess.updateCache(epoch);
+
             // Update every local surrogate for a VM object
             objectAccess.updateCache(epoch);
+
             // Update every local surrogate for a VM compilation
             codeCacheAccess.updateCache(epoch);
+
+            // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
+            // What's not done yet is updating the thread memory regions.
 
             updateTracer.end("epoch=" + epoch);
 
@@ -867,8 +900,14 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note that this implementation does not use the most current
+     * information if called during the VM refresh cycle.
+     */
     public final boolean contains(Address address) {
-        return findMemoryRegion(address) != null;
+        return teleVMState.findMemoryRegion(address) != null;
     }
 
     public final TeleObject representation() {
@@ -1004,17 +1043,20 @@ public abstract class TeleVM implements MaxVM {
         gcCompletedListeners.remove(listener);
     }
 
-    // TODO (mlvdv) use a current cache of memory regions, not the recorded state
-    // Perhaps eliminate this from the exported interface, require external clients to just go through the list
-    // or put a method on the state?
+
+    /**
+     * Gets the top level allocated memory region, if any, that includes the
+     * specified memory location in the VM.
+     * <p>
+     * This method relies on the collection of allocated regions that is
+     * updated incrementally during the update cycle.  It therefore has
+     * the latest information, but may not be consistent.  For example, during
+     * the update cycle the VM's direct allocations may have been refreshed, but
+     * the allocations corresponding to threads may have not yet been refreshed.
+     */
     public final MaxMemoryRegion findMemoryRegion(Address address) {
-        // Check the boot heap region specially because the general list
-        // of allocations doesn't exist yet during the startup phase.
-        if (heap().bootHeapRegion().contains(address)) {
-            return heap().bootHeapRegion().memoryRegion();
-        }
-        for (MaxMemoryRegion memoryRegion : state().memoryAllocations()) {
-            if (memoryRegion != null && memoryRegion.contains(address)) {
+        for (MaxMemoryRegion memoryRegion : memoryAllocations) {
+            if (memoryRegion.contains(address)) {
                 return memoryRegion;
             }
         }
@@ -1032,17 +1074,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public final void lock() {
         lock.lock();
-    }
-
-    /**
-     * Attempts to acquire a lock on the VM process and related cached state; returns
-     * immediately. The lock is reentrant, so that nested lock acquisition behaves with
-     * standard Java synchronization semantics.
-     *
-     * @return whether the lock was acquired
-     */
-    public final boolean tryLock() {
-        return lock.tryLock();
     }
 
     public final boolean tryLock(int maxTrials) {
@@ -1085,6 +1116,17 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private static final int DEFAULT_MAX_LOCK_TRIALS = 100;
+
+    /**
+     * Attempts to acquire a lock on the VM process and related cached state; returns
+     * immediately. The lock is reentrant, so that nested lock acquisition behaves with
+     * standard Java synchronization semantics.
+     *
+     * @return whether the lock was acquired
+     */
+    public final boolean tryLock() {
+        return lock.tryLock();
+    }
 
     public final void acquireLegacyVMAccess() throws MaxVMBusyException {
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
@@ -1193,30 +1235,20 @@ public abstract class TeleVM implements MaxVM {
                     List<TeleBreakpointEvent> breakpointEvents,
                     VmWatchpointEvent watchpointEvent) {
 
-        // Rebuild list of all allocated memory regions
-        final ArrayList<MaxMemoryRegion> memoryAllocations = new ArrayList<MaxMemoryRegion>(teleVMState.memoryAllocations().size());
-        for (MaxHeapRegion heapRegion : heapAccess.heapRegions()) {
-            addNonNull(memoryAllocations, heapRegion.memoryRegion());
+        // We've already updated the allocation information for the VM-allocated regions
+        // Now update it for the thread-allocated regions we've discovered.
+        for (TeleNativeThread thread : threadsDied) {
+            memoryAllocations.remove(thread.memoryAllocations());
         }
-        if (heapAccess.rootsMemoryRegion() != null) {
-            addNonNull(memoryAllocations, heapAccess.rootsMemoryRegion());
-        }
-        for (MaxThread thread : threads) {
-            addNonNull(memoryAllocations, thread.stack().memoryRegion());
-            addNonNull(memoryAllocations, thread.localsBlock().memoryRegion());
-        }
-        for (MaxCodeCacheRegion compiledCodeRegion : codeCacheAccess.compiledCodeRegions()) {
-            addNonNull(memoryAllocations, compiledCodeRegion.memoryRegion());
-        }
-        for (MaxMemoryRegion memoryRegion : platformMemoryRegions()) {
-            addNonNull(memoryAllocations, memoryRegion);
+        for (TeleNativeThread thread : threadsStarted) {
+            memoryAllocations.addAll(thread.memoryAllocations());
         }
 
         this.teleVMState = new TeleVMState(
             mode,
             processState,
             epoch,
-            memoryAllocations,
+            Collections.unmodifiableList(new ArrayList<MaxMemoryRegion>(memoryAllocations)),
             threads,
             singleStepThread,
             threadsStarted,
