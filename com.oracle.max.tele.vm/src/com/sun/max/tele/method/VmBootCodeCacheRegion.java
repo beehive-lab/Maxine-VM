@@ -60,6 +60,8 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final VmCodeCacheAccess codeCache;
 
+    private final RemoteCodePointerManager codePointerManager;
+
     /**
      * Known method compilations in the region, organized for efficient lookup by address.
      * Map:  Address --> TeleCompilation
@@ -87,6 +89,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
         this.entityDescription = "The allocation area for pre-compiled methods in the " + vm.entityName() + " boot image";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.remoteObjectReferenceManager = new UnmanagedCodeCacheRemoteReferenceManager(vm, this);
+        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
         this.localStatsPrinter = new UnmanagedCodeCacheRegionStatsPrinter();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleCodeRegion.getRegionName() + " with " + remoteObjectReferenceManager.getClass().getSimpleName());
@@ -177,6 +180,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
         return addressToCompilationMap.find(address);
     }
 
+
     @Override
     public void writeSummary(PrintStream printStream) {
         addressToCompilationMap.writeSummary(printStream);
@@ -184,5 +188,9 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
 
     public RemoteObjectReferenceManager objectReferenceManager() {
         return remoteObjectReferenceManager;
+    }
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
     }
 }

@@ -22,14 +22,16 @@
  */
 package com.sun.max.tele.method;
 
+import com.sun.max.unsafe.*;
 
-//TODO (mlvdv)  just a stub for now; will replace some older stuff
 
-public interface RemoteCodeLocationManager {
+/**
+ * Represents a machine code location in the VM.
+ * <p>
+ * The absolute location may change, or may become
+ * obsolete in a managed code region.
+ */
+public interface RemoteCodePointer {
 
-    /**
-     * Gets the region contain the code locations to be managed.
-     */
-    CodeHoldingRegion codeRegion();
-
+    Address getAddress();
 }
