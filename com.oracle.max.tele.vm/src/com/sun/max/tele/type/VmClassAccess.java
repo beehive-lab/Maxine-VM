@@ -63,7 +63,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClassReg
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String entityName = "Class Access";
+    private static final String entityName = "Classes";
 
     private static VmClassAccess vmClassAccess;
 

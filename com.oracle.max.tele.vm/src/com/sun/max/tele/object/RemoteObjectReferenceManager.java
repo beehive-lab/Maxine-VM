@@ -60,7 +60,7 @@ public interface RemoteObjectReferenceManager {
     TeleReference makeReference(Address origin) throws TeleError;
 
     /**
-     * Returns the number of remote object references being held by the manager that are in active use.
+     * Returns the total number of remote object references being held by the manager.
      */
     int activeReferenceCount();
 

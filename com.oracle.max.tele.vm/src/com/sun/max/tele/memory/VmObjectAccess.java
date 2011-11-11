@@ -34,40 +34,23 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
 import com.sun.max.tele.reference.*;
-import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
- * Singleton cache of information about objects in the VM.
+ * Singleton cache of information about objects in the VM, including a factory for creating
+ * local surrogates (instances of {@link TeleObject}) for objects in the VM, and methods for
+ * locating objects by various means.
  * <p>
- * Initialization between this class and {@link VmClassAccess} are mutually
- * dependent.  The cycle is broken by creating this class in a partially initialized
- * state that only considers the boot heap region; this class is only made fully functional
- * with a call to {@link #initialize()}, which requires that {@link VmClassAccess} be
- * fully initialized.
- * <p>
- * Interesting heap state includes the list of memory regions allocated.
- * <p>
- * This class also provides access to a special root table in the VM, active
- * only when being inspected.  The root table allows inspection references
- * to track object locations when they are relocated by GC.
- * <p>
- * This class needs to be specialized by a helper class that
- * implements the interface {@link TeleHeapScheme}, typically
- * a class that contains knowledge of the heap implementation
- * configured into the VM.
+ * Objects in the VM can appear in memory regions other than the heap proper.
  *
- * @see InspectableHeapInfo
- * @see TeleRoots
- * @see HeapScheme
- * @see TeleHeapScheme
+ * @see ObjectHoldingRegion
+ * @see VmHeapRegion
+ * @see VmCodeCacheRegion
  */
 public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCache, MaxObjects {
 
@@ -94,7 +77,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private long lastUpdateEpoch = -1L;
 
-    private final String entityName = "Object Manager";
+    private final String entityName = "Objects";
 
     private final String entityDescription;
 
@@ -340,7 +323,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM. Specific subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
@@ -372,14 +355,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
         return teleObjectFactory.make(forwardedObjectReference);
     }
-
-
-    /**
-     * Avoid potential circularity problems by handling heap queries specially when we
-     * know we are in a refresh cycle during which information about heap regions may not
-     * be well formed.  This variable is true during those periods.
-     */
-    private boolean updatingHeapMemoryRegions = false;
 
     /**
      * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
