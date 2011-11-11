@@ -540,11 +540,10 @@ def gcut(env, args):
 
     pkgRoot = 'com.oracle.max.graal.compiler.test'
     searchDir = join(env.maxine_home, 'com.oracle.max.graal.compiler', 'test')
-    testsDir = join(searchDir, pkgRoot.replace('.', os.sep))
-    print testsDir
     javaClassList = []
     find_test_classes(javaClassList, searchDir, pkgRoot)
     
+    os.environ['MAXINE'] = env.maxine_home
     env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + javaClassList)
 
 def graalvm(env, args):
