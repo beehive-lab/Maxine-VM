@@ -230,14 +230,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException;
 
     /**
-     * Finds the allocated region of memory in the VM, if any, that includes an address.
-     *
-     * @param address a memory location in the VM
-     * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
-     */
-    MaxMemoryRegion findMemoryRegion(Address address);
-
-    /**
      * Gets whatever information is known about the current state of memory management at a particular location in VM
      * memory. Always returns a non-null description, even if nothing is known.
      *

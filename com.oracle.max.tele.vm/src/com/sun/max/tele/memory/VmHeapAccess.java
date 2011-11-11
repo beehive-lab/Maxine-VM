@@ -68,7 +68,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap {
+public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap, AllocationHolder {
 
     private static final int STATS_NUM_TYPE_COUNTS = 10;
 
@@ -192,6 +192,11 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
     private List<MaxCodeLocation> inspectableMethods = null;
 
+    /**
+     * Keep track of memory regions allocated from the OS that are <em>owned</em> by the heap.
+     */
+    private List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>();
+
     private long gcStartedCount = -1;
     private long gcCompletedCount = -1;
 
@@ -301,6 +306,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
     /**
      * Lazy initialization; try to keep data reading out of constructor.
+     * Note that the representation of the boot heap is a fake until the completion of this initializer.
      */
     public void initialize(long epoch) {
         assert vm().lockHeldByCurrentThread();
@@ -317,6 +323,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
         this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion, true);
+        allocations.add(this.bootHeapRegion.memoryRegion());
         isInitialized = true;
 
         updateCache(epoch);
@@ -372,7 +379,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
             // Suspend checking for heap containment of object origin addresses.
             updatingHeapMemoryRegions = true;
 
-            // Starting from scratch, locate all known heap regions.
+            // Starting from scratch, locate all known heap regions; most of the time it won't change.
             final List<MaxHeapRegion> discoveredHeapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
 
             // We already know about the boot heap
@@ -444,6 +451,14 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
             // Resume checking for heap containment of object origin addresses.
             updatingHeapMemoryRegions = false;
+
+            allocations.clear();
+            for (MaxHeapRegion heapRegion : allHeapRegions) {
+                allocations.add(heapRegion.memoryRegion());
+            }
+            if (teleRootsRegion != null) {
+                allocations.add(rootsRegion);
+            }
 
             lastUpdateEpoch = epoch;
             updateTracer.end(statsPrinter);
@@ -531,6 +546,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         return teleHeapScheme.markBitInfo();
     }
 
+    public List<MaxMemoryRegion> memoryAllocations() {
+        return allocations;
+    }
+
     /**
      * Finds an object in the VM that has been located at a particular place in memory, but which
      * may have been relocated.
@@ -616,5 +635,6 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         }
         printStream.println(indentation + "Registered semispace roots: " + formatter.format(vm().referenceManager().registeredRootCount()));
     }
+
 
 }
