@@ -44,7 +44,7 @@ import com.sun.max.unsafe.*;
  *
  * @see RemoteObjectReferenceManager
  */
-public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, ObjectHoldingRegion {
+public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, ObjectHoldingRegion {
 
     private static final int TRACE_VALUE = 1;
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();
@@ -83,11 +83,11 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 
-    public final String entityName() {
+    public String entityName() {
         return memoryRegion().regionName();
     }
 
-    public final String entityDescription() {
+    public String entityDescription() {
         return entityDescription;
     }
 
@@ -95,7 +95,7 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         return memoryRegion;
     }
 
-    public final boolean contains(Address address) {
+    public boolean contains(Address address) {
         return memoryRegion().contains(address);
     }
 
@@ -103,7 +103,7 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         return teleRuntimeMemoryRegion;
     }
 
-    public final boolean isBootRegion() {
+    public boolean isBootRegion() {
         return memoryRegion().isBootRegion();
     }
 

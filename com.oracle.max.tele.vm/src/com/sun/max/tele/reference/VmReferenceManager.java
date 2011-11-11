@@ -39,10 +39,10 @@ import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv) this may eventually be eliminated
+// TODO (mlvdv) this should be eliminated, cleaned up and possibly folded into VMObjectAccess.
 // TODO (mlvdv) as of October 2011, only references to the dynamic heap are handled by the old mechanism,
-// which is specialized for the semi-space GC.  That mechanism must be encapsulated so that it is only
-// used when the VM is configured with that collector.
+// which is specialized for the semi-space GC.  That mechanism should first be folded into VmHeapAccess
+// and then encapsulated so that it is only used when the VM is configured with that collector.
 /**
  * The singleton manager for instances of {@link Reference} that point (or pretend to point) at
  * objects in the VM.
