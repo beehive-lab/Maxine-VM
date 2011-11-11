@@ -48,6 +48,7 @@ public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
 
     private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
 
+    @HOSTED_ONLY
     protected InflatedMonitorLockword64() {
     }
 
@@ -113,6 +114,7 @@ public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
      *
      * @return this lock word's bound monitor
      */
+    @INLINE
     public final Word getBoundMonitorReferenceAsWord() {
         return asAddress().and(MONITOR_MASK).asPointer();
     }

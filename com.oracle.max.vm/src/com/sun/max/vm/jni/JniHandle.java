@@ -46,6 +46,10 @@ public abstract class JniHandle extends Word {
         return Word.zero().asJniHandle();
     }
 
+    @HOSTED_ONLY
+    protected JniHandle() {
+    }
+
     /**
      * Dereferences this handle to "unhand" the Java object. This method will return {@code null}
      * if this handle {@link #isZero() is zero}.

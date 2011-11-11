@@ -46,6 +46,10 @@ public abstract class MemberID extends Word {
         return create(memberActor.holder().id, memberActor.memberIndex());
     }
 
+    @HOSTED_ONLY
+    protected MemberID() {
+    }
+
     @INLINE
     protected final ClassActor getHolder() {
         return ClassID.toClassActor(asAddress().unsignedShiftedRight(NUMBER_OF_MEMBER_BITS).toInt());

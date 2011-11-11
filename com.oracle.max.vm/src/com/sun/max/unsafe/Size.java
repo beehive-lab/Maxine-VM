@@ -38,6 +38,7 @@ import com.sun.max.lang.*;
  */
 public abstract class Size extends Address {
 
+    @HOSTED_ONLY
     protected Size() {
     }
 
@@ -66,6 +67,7 @@ public abstract class Size extends Address {
     }
 
     @Override
+    @HOSTED_ONLY
     public String toString() {
         return "#" + toUnsignedString(10);
     }
@@ -250,6 +252,7 @@ public abstract class Size extends Address {
         return asAddress().unsignedShiftedRight(nBits).asSize();
     }
 
+    @INLINE
     public static Size min(Size a, Size b) {
         if (a.lessThan(b)) {
             return a;
