@@ -721,6 +721,13 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 break;
         }
 
+        CiValue destinationAddress = null;
+        if (!target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently necessary for Maxine: since the invokeinterface-snippet uses a division, it
+            // destroys rdx, which is also used to pass a parameter.  Therefore, the snippet must be before the parameters are assigned to their locations.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, null);
+        }
+
         CiValue resultOperand = resultOperandFor(x.node().kind());
 
         CiKind[] signature = CiUtil.signatureToKinds(callTarget.targetMethod().signature(), callTarget.isStatic() ? null : callTarget.targetMethod().holder().kind(true));
@@ -729,9 +736,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, callTarget.arguments(), pointerSlots);
 
-        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
-        // implicit calling convention between the XirSnippet and the call.
-        CiValue destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        if (target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently active for HotSpot.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
