@@ -20,24 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele.memory;
+
+import java.util.*;
 
 import com.sun.max.tele.*;
 
+
+//TODO (mlvdv) decide whether to expose this in the VMI interfaces
+
 /**
- * A allocatable area in the VM that can contain objects.
+ * A VM entity that can <em>own</em> regions of memory allocated from the OS.
  */
-public interface ObjectHoldingRegion {
+public interface AllocationHolder {
 
     /**
-     * @return description of the VM memory allocated for this object region.
+     * Gets the regions of memory allocated from the OS that this entity
+     * <em>owns</em>, in the sense that this entity tracks its allocation
+     * and possible deallocation.
+     * <p>
+     * This includes both regions that are allocated directly by the VM,
+     * as well as those allocated implicitly, for example by the creation
+     * of threads and the loading of shared libraries.
      */
-    MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with remote references to objects allocated in this VM region.
-     */
-    RemoteObjectReferenceManager objectReferenceManager();
-
+    List<MaxMemoryRegion> memoryAllocations();
 }
-

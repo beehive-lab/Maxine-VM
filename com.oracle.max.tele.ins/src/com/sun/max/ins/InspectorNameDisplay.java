@@ -722,7 +722,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String longName(TeleObject teleObject) {
         final Pointer origin = teleObject.origin();
-        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(origin);
+        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(origin);
         final String name = "Object " + origin.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
         final String suffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());

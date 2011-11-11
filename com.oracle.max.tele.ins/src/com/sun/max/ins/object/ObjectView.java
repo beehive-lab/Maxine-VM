@@ -177,7 +177,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     public final String getTextForTitle() {
-        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(currentObjectOrigin);
+        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
         final String regionSuffix = " in "
             + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
