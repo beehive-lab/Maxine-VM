@@ -893,6 +893,7 @@ public final class ClassfileReader {
                             continue nextMethod;
                         } else if (annotation.annotationType() == C_FUNCTION.class) {
                             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
+                            ProgramError.check(isStatic(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-static method: " + memberString(name, descriptor));
                             ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= C_FUNCTION;
                         } else if (annotation.annotationType() == VM_ENTRY_POINT.class) {

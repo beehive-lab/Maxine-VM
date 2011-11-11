@@ -173,7 +173,13 @@ public class Graal implements RuntimeCompiler {
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL).targetMethod();
+            if (method.compilee().isNative()) {
+                NativeStubCompiler nsc = new NativeStubCompiler(compiler(), method);
+                compiledMethod = nsc.compile();
+            } else {
+                compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL).targetMethod();
+            }
+
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (GraalOptions.Time) {

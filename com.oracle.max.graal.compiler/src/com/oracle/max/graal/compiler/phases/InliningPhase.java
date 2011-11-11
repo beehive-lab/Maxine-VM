@@ -380,7 +380,7 @@ public class InliningPhase extends Phase {
     }
 
     private static String methodName(RiResolvedMethod method, Invoke invoke) {
-        if (invoke != null) {
+        if (invoke != null && invoke.stateAfter() != null) {
             RiMethod parent = invoke.stateAfter().method();
             return parent.name() + "@" + invoke.bci() + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
         } else {

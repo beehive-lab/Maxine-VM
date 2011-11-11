@@ -106,7 +106,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         this.rethrowException = rethrowException;
     }
 
-    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, ArrayList<ValueNode> locks, boolean rethrowException) {
+    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<ValueNode> locks, boolean rethrowException) {
         super(CiKind.Illegal);
         this.method = method;
         this.bci = bci;
