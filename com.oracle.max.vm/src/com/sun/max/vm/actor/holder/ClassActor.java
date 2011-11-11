@@ -370,6 +370,17 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                 ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
                 staticHub.initializeVTable(OBJECT.allVirtualMethodActors());
                 ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
+
+                if (MaxineVM.isHosted()) {
+                    if (ClassActor.this.kind.isWord) {
+                        for (VirtualMethodActor vma : OBJECT.allVirtualMethodActors()) {
+                            ClassMethodActor local = findLocalClassMethodActor(vma.name, vma.descriptor());
+                            if (local != null) {
+                                throw FatalError.unexpected("Word types cannot override methods in java.lang.Object: " + local);
+                            }
+                        }
+                    }
+                }
             }
         };
     }

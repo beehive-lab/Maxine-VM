@@ -48,6 +48,7 @@ public abstract class HashableLockword64 extends ModalLockword64 {
     protected static final int HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
     protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
+    @HOSTED_ONLY
     protected HashableLockword64() {
     }
 

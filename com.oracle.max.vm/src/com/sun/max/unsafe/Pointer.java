@@ -41,6 +41,7 @@ public abstract class Pointer extends Address implements Accessor {
     private static final int FLOAT_SIZE = 4;
     private static final int DOUBLE_SIZE = 8;
 
+    @HOSTED_ONLY
     protected Pointer() {
     }
 
@@ -73,6 +74,7 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @Override
+    @HOSTED_ONLY
     public final String toString() {
         return "^" + toHexString();
     }
@@ -801,6 +803,7 @@ public abstract class Pointer extends Address implements Accessor {
      *
      * @param bitIndex the index of the bit to set
      */
+    @INLINE
     public void setBit(int bitIndex) {
         final int byteIndex = UnsignedMath.divide(bitIndex, Bytes.WIDTH);
         byte byteValue = getByte(byteIndex);
@@ -820,6 +823,7 @@ public abstract class Pointer extends Address implements Accessor {
      * @param bitIndex the index of the first bit to set
      * @param bits a mask of 8 bits OR'ed with the 8 bits in this bit map starting at {@code bitIndex}
      */
+    @INLINE
     public void setBits(int bitIndex, byte bits) {
         // If we do not mask off the leading bits after a conversion to int right here,
         // then the arithmetic operations below will convert implicitly to int and may insert sign bits.
@@ -838,6 +842,7 @@ public abstract class Pointer extends Address implements Accessor {
         }
     }
 
+    @HOSTED_ONLY
     public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         Kind kind = Kind.fromJava(dst.getClass().getComponentType());
         switch (kind.asEnum) {

@@ -37,6 +37,7 @@ import com.sun.max.program.*;
  */
 public abstract class Address extends Word {
 
+    @HOSTED_ONLY
     protected Address() {
     }
 
@@ -105,11 +106,13 @@ public abstract class Address extends Word {
     }
 
     @Override
+    @HOSTED_ONLY
     public String toString() {
         return "@" + toHexString();
     }
 
-    public String toUnsignedString(int radix) {
+    @HOSTED_ONLY
+    public final String toUnsignedString(int radix) {
         if (radix == 16) {
             if (Word.width() == 64) {
                 return Long.toHexString(toLong());
@@ -146,6 +149,7 @@ public abstract class Address extends Word {
         return BigInteger.valueOf(high).shiftLeft(32).or(BigInteger.valueOf(low)).toString();
     }
 
+    @HOSTED_ONLY
     public static Address parse(String s, int radix) {
         Address result = Address.zero();
         for (int i = 0; i < s.length(); i++) {
@@ -180,6 +184,7 @@ public abstract class Address extends Word {
         return 0xffffffffL & UnsafeCast.asInt(this);
     }
 
+    @INLINE
     public final int compareTo(Address other) {
         if (greaterThan(other)) {
             return 1;
@@ -476,6 +481,7 @@ public abstract class Address extends Word {
         return 32 - Integer.numberOfLeadingZeros(toInt());
     }
 
+    @HOSTED_ONLY
     public final WordWidth effectiveWidth() {
         final int bit = numberOfEffectiveBits();
         for (WordWidth width : WordWidth.VALUES) {

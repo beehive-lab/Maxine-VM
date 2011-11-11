@@ -24,6 +24,7 @@ package com.sun.max.tele.data;
 
 import java.nio.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -355,6 +356,7 @@ public final class MemoryDataAccess implements DataAccess {
     }
 
     @Override
+    @HOSTED_ONLY
     public void copyElements(Address address, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         address.asPointer().copyElements(displacement, srcIndex, dst, dstIndex, length);
     }
