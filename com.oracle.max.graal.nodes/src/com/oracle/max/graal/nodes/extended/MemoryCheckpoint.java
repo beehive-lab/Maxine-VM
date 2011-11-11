@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.c1xgraal;
+package com.oracle.max.graal.nodes.extended;
 
-import java.util.*;
+import com.oracle.max.graal.graph.*;
 
-import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.*;
+public interface MemoryCheckpoint {
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        JavaPrototype.addObjectIdentityMapContributor(new C1XObjectMapContributor());
-    }
+    NodeInputList<Node> mergedNodes();
 
-    public static class C1XObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
-        @Override
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
-            objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
-                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
-            }
-        }
-    }
+    Node node();
 }

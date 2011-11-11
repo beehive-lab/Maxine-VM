@@ -20,9 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.graal;
+package com.sun.max.config.c1xgraal;
 
-import com.oracle.max.vm.ext.c1xgraal.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -30,15 +29,11 @@ import com.sun.max.vm.compiler.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.oracle.max.graal.compiler.**",
-              "com.oracle.max.graal.graph.**",
-              //"com.oracle.max.graal.graphviz.**",
-              "com.oracle.max.graal.nodes.**",
-              "com.oracle.max.graal.snippets.**");
+        super("com.oracle.max.vm.ext.c1xgraal.**");
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return C1XGraal.class.getName().equals(CompilationBroker.optName());
+        return CompilationBroker.optName().contains("C1XGraal");
     }
 }

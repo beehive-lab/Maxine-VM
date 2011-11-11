@@ -97,15 +97,42 @@ void log_task_info(task_t task) {
 }
 
 int task_read(task_t task, vm_address_t src, void *dst, size_t size) {
-  mach_vm_size_t bytesRead;
-  kern_return_t result = mach_vm_read_overwrite(task, src, size, (vm_address_t) dst, &bytesRead);
-  return result == KERN_SUCCESS ? (jint) bytesRead : -1;
+    mach_vm_size_t bytesRead;
+    kern_return_t result = mach_vm_read_overwrite(task, src, size, (vm_address_t) dst, &bytesRead);
+    return result == KERN_SUCCESS ? (jint) bytesRead : -1;
 }
 
 
 int task_write(task_t task, vm_address_t dst, void *src, size_t size) {
-  kern_return_t result = mach_vm_write(task, (vm_address_t) dst, (vm_offset_t) src, size);
-  return result == KERN_SUCCESS ? (int) size : -1;
+    // check writable (only really needed for setting breakpoints in native code)
+    vm_region_submap_short_info_data_64_t info;
+    mach_vm_address_t dst_base = dst;
+    mach_msg_type_number_t count;
+    mach_vm_size_t region_length;
+    natural_t region_depth;
+
+    // check for write protection
+    region_depth = 100000;
+    count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
+    kern_return_t result = mach_vm_region_recurse(task, &dst_base, &region_length, &region_depth,
+                                  (vm_region_recurse_info_t) &info, &count);
+    REPORT_MACH_ERROR("mach_vm_region_recurse", result);
+
+    // try to increase max protection if necessary
+    if (!(info.max_protection & VM_PROT_WRITE)) {
+        result = mach_vm_protect(task, dst, region_length, TRUE, info.max_protection | VM_PROT_WRITE | VM_PROT_COPY);
+        REPORT_MACH_ERROR("mach_vm_protect max", result);
+        if (result != KERN_SUCCESS) return -1;
+    }
+    // try to increase current protection
+    if (!(info.protection & VM_PROT_WRITE)) {
+        result = mach_vm_protect(task, dst, region_length, FALSE, info.protection | VM_PROT_WRITE);
+        REPORT_MACH_ERROR("mach_vm_protect", result);
+        if (result != KERN_SUCCESS) return -1;
+    }
+
+    result = mach_vm_write(task, (vm_address_t) dst, (vm_offset_t) src, size);
+    return result == KERN_SUCCESS ? (int) size : -1;
 }
 
 jint waitForSignal(jlong task, int signalnum) {

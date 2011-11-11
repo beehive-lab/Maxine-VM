@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.t1x.amd64;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
-import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
@@ -402,7 +401,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        asm.leaq(r15, new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), jumpTablePos - afterLea));
+        asm.leaq(r15, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -492,7 +491,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            asm.leaq(rbx, new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), lookupTablePos - afterLea));
+            asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLea));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -747,7 +746,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
     @HOSTED_ONLY
     public static int findDataPatchPos(MaxTargetMethod source, int dispFromCodeStart) {
         for (int pos = 0; pos < source.codeLength(); pos++) {
-            for (CiRegister reg : AMD64.allRegisters) {
+            for (CiRegister reg : AMD64.cpuxmmRegisters) {
                 // Compute displacement operand position for a movq at 'pos'
                 AMD64Assembler asm = new AMD64Assembler(target(), null);
                 asm.movq(reg, CiAddress.Placeholder);
@@ -756,7 +755,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.codeBuffer.reset();
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
-                CiAddress src = new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), disp);
+                CiAddress src = new CiAddress(WordUtil.archKind(), rip.asValue(), disp);
                 asm.movq(reg, src);
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);

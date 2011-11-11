@@ -830,7 +830,7 @@ public final class GraphBuilder {
             constantValue = ((RiResolvedField) field).constantValue(null);
         }
         if (constantValue != null) {
-            push(field.kind(false).stackKind(), appendWithBCI(new Constant(field.kind(false), constantValue), bci(), false));
+            push(field.kind(false).stackKind(), appendWithBCI(new Constant(constantValue), bci(), false));
         } else {
             Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
             LoadField load = new LoadField(container, field, true, null, isInitialized);
@@ -1743,7 +1743,7 @@ public final class GraphBuilder {
             }
 
             CiKind returnKind = target.signature().returnKind(false);
-            pushReturn(returnKind, append(new Constant(returnKind, result)));
+            pushReturn(returnKind, append(new Constant(result)));
             return true;
         }
         return false;

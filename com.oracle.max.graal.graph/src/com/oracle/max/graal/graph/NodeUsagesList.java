@@ -93,19 +93,6 @@ public final class NodeUsagesList implements Iterable<Node> {
         }
     }
 
-    public Node remove(int index) {
-        assert index >= 0 && index < size;
-        Node oldValue = nodes[index];
-        int i = index + 1;
-        incModCount();
-        while (i < size) {
-            nodes[i - 1] = nodes[i];
-            i++;
-        }
-        nodes[--size] = null;
-        return oldValue;
-    }
-
     boolean replaceFirst(Node node, Node other) {
         for (int i = 0; i < size; i++) {
             if (nodes[i] == node) {

@@ -89,6 +89,7 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType, L
     }
 
     public Collection<InductionVariableNode> inductionVariables() {
+        // TODO (gd) produces useless garbage
         List<InductionVariableNode> list = new LinkedList<InductionVariableNode>();
         collectInductionVariables(this, list);
         return list;
@@ -118,7 +119,7 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType, L
 
     public LoopCounterNode loopCounter(CiKind kind) {
         for (Node usage : usages()) {
-            if (usage instanceof LoopCounterNode && ((LoopCounterNode) usage).kind == kind) {
+            if (usage instanceof LoopCounterNode && ((LoopCounterNode) usage).kind() == kind) {
                 return (LoopCounterNode) usage;
             }
         }

@@ -31,13 +31,14 @@ import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
@@ -51,9 +52,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
@@ -99,7 +98,7 @@ public class Graal implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    protected Graal(RiXirGenerator xirGenerator, CiTarget target) {
+    public Graal(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
     }
@@ -113,6 +112,8 @@ public class Graal implements RuntimeCompiler {
         GraalOptions.EscapeAnalysis = false;
 
         if (isHosted() && !optionsRegistered) {
+            runtime.initialize();
+
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
@@ -122,24 +123,15 @@ public class Graal implements RuntimeCompiler {
 
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             Registry intrinsicRegistry = new IntrinsicImpl.Registry();
-            MaxineIntrinsicImplementations.initialize(intrinsicRegistry);
+            GraalMaxineIntrinsicImplementations.initialize(intrinsicRegistry);
             runtime.setIntrinsicRegistry(intrinsicRegistry);
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
-
-            // search for the runtime call and register critical methods
-            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
-                int flags = m.getModifiers();
-                if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
-                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
-                }
-            }
-
-            // The direct call made from compiled code for the UNCOMMON_TRAP intrinisic
-            // must go through a stub that saves the register state before calling the deopt routine.
-            CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
-            uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
+            compiler.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
+            compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, null));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {

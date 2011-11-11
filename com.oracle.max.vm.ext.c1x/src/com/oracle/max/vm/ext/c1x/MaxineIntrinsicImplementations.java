@@ -174,7 +174,7 @@ public class MaxineIntrinsicImplementations {
 
     private static int intConstant(Value value) {
         if (!value.isConstant() || value.kind != CiKind.Int) {
-            throw new CiBailout("instrinc parameter must be compile time integer constant");
+            throw new CiBailout("instrinc parameter must be compile time integer constant but is " + value);
         }
         return value.asConstant().asInt();
     }

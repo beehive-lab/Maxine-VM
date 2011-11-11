@@ -39,7 +39,7 @@ import com.sun.max.vm.stack.*;
 
 /**
  * This class contains the implementation of runtime calls that are called by
- * code emitted by the C1X compiler.
+ * code emitted by the CRI compilers.
  */
 public class MaxRuntimeCalls {
 

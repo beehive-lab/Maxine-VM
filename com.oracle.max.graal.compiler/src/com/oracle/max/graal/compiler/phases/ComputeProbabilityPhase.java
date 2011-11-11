@@ -48,13 +48,9 @@ public class ComputeProbabilityPhase extends Phase {
      *   TODO: add exception probability information to Invokes
      */
 
-    public ComputeProbabilityPhase(GraalContext context) {
-        super(context);
-    }
-
     @Override
     protected void run(StructuredGraph graph) {
-        new PropagateProbability(graph.start().next()).apply();
+        new PropagateProbability(graph.start()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));
         }
@@ -62,7 +58,7 @@ public class ComputeProbabilityPhase extends Phase {
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After computeLoopFactors", graph, true, false));
         }
-        new PropagateLoopFrequency(graph.start().next()).apply();
+        new PropagateLoopFrequency(graph.start()).apply();
     }
 
     private void computeLoopFactors() {
@@ -201,8 +197,8 @@ public class ComputeProbabilityPhase extends Phase {
         public void afterSplit(FixedNode node) {
             assert node.predecessor() != null;
             Node pred = node.predecessor();
-            if (pred instanceof InvokeNode) {
-                InvokeNode x = (InvokeNode) pred;
+            if (pred instanceof Invoke) {
+                Invoke x = (Invoke) pred;
                 if (x.next() != node) {
                     probability = 0;
                 }

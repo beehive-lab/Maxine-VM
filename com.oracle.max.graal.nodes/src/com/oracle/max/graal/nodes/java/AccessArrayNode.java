@@ -28,7 +28,7 @@ import com.sun.cri.ci.*;
 /**
  * This the base class of all array operations.
  */
-public abstract class AccessArrayNode extends StateSplit {
+public abstract class AccessArrayNode extends AbstractStateSplit {
 
     @Input private ValueNode array;
 

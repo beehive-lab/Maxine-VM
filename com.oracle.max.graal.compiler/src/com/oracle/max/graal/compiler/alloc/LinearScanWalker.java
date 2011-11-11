@@ -817,9 +817,9 @@ final class LinearScanWalker extends IntervalWalker {
     void initVarsForAlloc(Interval interval) {
         EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = allocator.compilation.registerConfig.getCategorizedAllocatableRegisters();
         if (allocator.operands.mustBeByteRegister(interval.operand)) {
-            assert interval.kind() != CiKind.Float && interval.kind() != CiKind.Double : "cpu regs only";
+            assert interval.kind()  != CiKind.Float && interval.kind()  != CiKind.Double : "cpu regs only";
             availableRegs = categorizedRegs.get(RegisterFlag.Byte);
-        } else if (interval.kind() == CiKind.Float || interval.kind() == CiKind.Double) {
+        } else if (interval.kind()  == CiKind.Float || interval.kind()  == CiKind.Double) {
             availableRegs = categorizedRegs.get(RegisterFlag.FPU);
         } else {
             availableRegs = categorizedRegs.get(RegisterFlag.CPU);

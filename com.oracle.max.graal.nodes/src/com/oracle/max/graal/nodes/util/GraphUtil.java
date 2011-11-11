@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.util;
+package com.oracle.max.graal.nodes.util;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -63,20 +63,48 @@ public class GraphUtil {
                 }
             }
         }
-        killNonCFG(node, null);
+        propagateKill(node, null);
     }
 
-    public static void killNonCFG(Node node, Node input) {
+    private static void replacePhis(MergeNode merge) {
+        for (Node usage : merge.usages().snapshot()) {
+            assert usage instanceof PhiNode;
+            usage.replaceAndDelete(((PhiNode) usage).valueAt(0));
+        }
+    }
+
+    // TODO(tw): Factor this code with other branch deletion code.
+    private static void propagateKill(Node node, Node input) {
+        if (node instanceof LoopEndNode) {
+            LoopBeginNode loop = ((LoopEndNode) node).loopBegin();
+            ((LoopEndNode) node).setLoopBegin(null);
+            EndNode endNode = loop.endAt(0);
+            assert endNode.predecessor() != null;
+            replacePhis(loop);
+            loop.removeEnd(endNode);
+
+            FixedNode next = loop.next();
+            loop.setNext(null);
+            endNode.replaceAndDelete(next);
+            loop.delete();
+        }
         if (node instanceof PhiNode) {
             node.replaceFirstInput(input, null);
         } else {
             for (Node usage : node.usages().snapshot()) {
                 if (usage instanceof FloatingNode && !usage.isDeleted()) {
-                    killNonCFG(usage, node);
+                    propagateKill(usage, node);
                 }
             }
             // null out remaining usages
             node.replaceAtUsages(null);
+            node.delete();
+        }
+    }
+
+    public static void killFloating(FloatingNode node) {
+        if (node.usages().size() == 0) {
+            node.clearInputs();
             node.delete();
         }
     }

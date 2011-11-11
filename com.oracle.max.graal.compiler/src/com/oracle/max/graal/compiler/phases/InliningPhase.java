@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.GraalCompiler.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -52,8 +53,10 @@ public class InliningPhase extends Phase {
     private final GraalRuntime runtime;
     private final CiTarget target;
 
+    private final GraalCompiler compiler;
+
     private int inliningSize;
-    private final Collection<InvokeNode> hints;
+    private final Collection<Invoke> hints;
 
     private final PriorityQueue<InlineInfo> inlineCandidates = new PriorityQueue<InlineInfo>();
     private NodeMap<InlineInfo> inlineInfos;
@@ -61,8 +64,9 @@ public class InliningPhase extends Phase {
     private StructuredGraph graph;
     private CiAssumptions assumptions;
 
-    public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints, CiAssumptions assumptions) {
-        super(context);
+    public InliningPhase(GraalCompiler compiler, GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions) {
+        // TODO passing in the compiler object is bad - but currently this is the only way to access the extension phases that must be run immediately after parsing.
+        this.compiler = compiler;
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
@@ -70,11 +74,11 @@ public class InliningPhase extends Phase {
     }
 
     private abstract static class InlineInfo implements Comparable<InlineInfo> {
-        public final InvokeNode invoke;
+        public final Invoke invoke;
         public final double weight;
         public final int level;
 
-        public InlineInfo(InvokeNode invoke, double weight, int level) {
+        public InlineInfo(Invoke invoke, double weight, int level) {
             this.invoke = invoke;
             this.weight = weight;
             this.level = level;
@@ -91,14 +95,14 @@ public class InliningPhase extends Phase {
     private class IntrinsicInlineInfo extends InlineInfo {
         public final StructuredGraph intrinsicGraph;
 
-        public IntrinsicInlineInfo(InvokeNode invoke, StructuredGraph intrinsicGraph) {
+        public IntrinsicInlineInfo(Invoke invoke, StructuredGraph intrinsicGraph) {
             super(invoke, 0, 0);
             this.intrinsicGraph = graph;
         }
 
         @Override
         public void inline(StructuredGraph compilerGraph) {
-            InliningUtil.inline(invoke, intrinsicGraph, null);
+            InliningUtil.inline(invoke, intrinsicGraph, true);
         }
 
         @Override
@@ -110,7 +114,7 @@ public class InliningPhase extends Phase {
     private class StaticInlineInfo extends InlineInfo {
         public final RiResolvedMethod concrete;
 
-        public StaticInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete) {
+        public StaticInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
             super(invoke, weight, level);
             this.concrete = concrete;
         }
@@ -127,12 +131,15 @@ public class InliningPhase extends Phase {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
                 graph = new StructuredGraph();
-                new GraphBuilderPhase(context, runtime, concrete, null).apply(graph, true, false);
+                new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
+
+                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+
                 if (GraalOptions.ProbabilityAnalysis) {
-                    new DeadCodeEliminationPhase(context).apply(graph, true, false);
-                    new ComputeProbabilityPhase(context).apply(graph, true, false);
+                    new DeadCodeEliminationPhase().apply(graph, context, true, false);
+                    new ComputeProbabilityPhase().apply(graph, context, true, false);
                 }
-                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
 
                 if (GraalOptions.ParseBeforeInlining && !parsedMethods.containsKey(concrete)) {
                     parsedMethods.put(concrete, graphComplexity(graph));
@@ -140,7 +147,7 @@ public class InliningPhase extends Phase {
             }
 
             runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
-            InliningUtil.inline(invoke, graph, null);
+            InliningUtil.inline(invoke, graph, true);
         }
 
         @Override
@@ -154,7 +161,7 @@ public class InliningPhase extends Phase {
         public final RiResolvedType type;
         public final double probability;
 
-        public TypeGuardInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete, RiResolvedType type, double probability) {
+        public TypeGuardInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete, RiResolvedType type, double probability) {
             super(invoke, weight, level, concrete);
             this.type = type;
             this.probability = probability;
@@ -165,8 +172,8 @@ public class InliningPhase extends Phase {
             IsTypeNode isType = graph.unique(new IsTypeNode(invoke.callTarget().receiver(), type));
             FixedGuardNode guard = graph.add(new FixedGuardNode(isType));
             assert invoke.predecessor() != null;
-            invoke.predecessor().replaceFirstSuccessor(invoke, guard);
-            guard.setNext(invoke);
+            invoke.predecessor().replaceFirstSuccessor(invoke.node(), guard);
+            guard.setNext(invoke.node());
 
             if (GraalOptions.TraceInlining) {
                 TTY.println("inlining with type check, type probability: %5.3f", probability);
@@ -182,7 +189,7 @@ public class InliningPhase extends Phase {
 
     private class AssumptionInlineInfo extends StaticInlineInfo {
 
-        public AssumptionInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete) {
+        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
             super(invoke, weight, level, concrete);
         }
 
@@ -203,15 +210,18 @@ public class InliningPhase extends Phase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void run(StructuredGraph graph) {
         this.graph = graph;
         inlineInfos = graph.createNodeMap();
 
         if (hints != null) {
+            Iterable<? extends Node> hints = Util.uncheckedCast(this.hints);
             scanInvokes(hints, 0);
         } else {
             scanInvokes(graph.getNodes(InvokeNode.class), 0);
+            scanInvokes(graph.getNodes(InvokeWithExceptionNode.class), 0);
         }
 
         while (!inlineCandidates.isEmpty()) {
@@ -228,7 +238,7 @@ public class InliningPhase extends Phase {
                 return;
             }
             Iterable<Node> newNodes = null;
-            if (info.invoke.isAlive()) {
+            if (info.invoke.node().isAlive()) {
                 try {
                     info.inline(this.graph);
                     if (GraalOptions.TraceInlining) {
@@ -239,10 +249,10 @@ public class InliningPhase extends Phase {
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
-                new CanonicalizerPhase(context, target, runtime, true, assumptions).apply(graph);
-                    new PhiSimplificationPhase(context).apply(graph);
+                new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    new PhiSimplificationPhase().apply(graph, context);
                     if (GraalOptions.Intrinsify) {
-                        new IntrinsificationPhase(context, runtime).apply(graph);
+                        new IntrinsificationPhase(runtime).apply(graph, context);
                     }
                     if (GraalOptions.Meter) {
                         context.metrics.InlinePerformed++;
@@ -268,13 +278,13 @@ public class InliningPhase extends Phase {
         graph.mark();
         for (Node node : newNodes) {
             if (node != null) {
-                if (node instanceof InvokeNode) {
-                    InvokeNode invoke = (InvokeNode) node;
+                if (node instanceof Invoke) {
+                    Invoke invoke = (Invoke) node;
                     scanInvoke(invoke, level);
                 }
                 for (Node usage : node.usages().snapshot()) {
-                    if (usage instanceof InvokeNode) {
-                        InvokeNode invoke = (InvokeNode) usage;
+                    if (usage instanceof Invoke) {
+                        Invoke invoke = (Invoke) usage;
                         scanInvoke(invoke, level);
                     }
                 }
@@ -282,7 +292,7 @@ public class InliningPhase extends Phase {
         }
     }
 
-    private void scanInvoke(InvokeNode invoke, int level) {
+    private void scanInvoke(Invoke invoke, int level) {
         InlineInfo info = inlineInvoke(invoke, level);
         if (info != null) {
             if (GraalOptions.Meter) {
@@ -293,7 +303,7 @@ public class InliningPhase extends Phase {
         }
     }
 
-    private InlineInfo inlineInvoke(InvokeNode invoke, int level) {
+    private InlineInfo inlineInvoke(Invoke invoke, int level) {
         if (!checkInvokeConditions(invoke)) {
             return null;
         }
@@ -369,7 +379,7 @@ public class InliningPhase extends Phase {
         return CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
     }
 
-    private static String methodName(RiResolvedMethod method, InvokeNode invoke) {
+    private static String methodName(RiResolvedMethod method, Invoke invoke) {
         if (invoke != null) {
             RiMethod parent = invoke.stateAfter().method();
             return parent.name() + "@" + invoke.bci() + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
@@ -378,7 +388,7 @@ public class InliningPhase extends Phase {
         }
     }
 
-    private boolean checkInvokeConditions(InvokeNode invoke) {
+    private boolean checkInvokeConditions(Invoke invoke) {
         if (!invoke.canInline()) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because the invoke is manually set to be non-inlinable", methodName(invoke.callTarget().targetMethod(), invoke));
@@ -419,6 +429,12 @@ public class InliningPhase extends Phase {
             return false;
         }
         RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
+        if (runtime.mustNotInline(resolvedMethod)) {
+            if (GraalOptions.TraceInlining) {
+                TTY.println("not inlining %s because the CRI set it to be non-inlinable", methodName(resolvedMethod));
+            }
+            return false;
+        }
         if (Modifier.isNative(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is a native method", methodName(resolvedMethod));
@@ -442,13 +458,13 @@ public class InliningPhase extends Phase {
 
     public static final Map<RiMethod, Integer> parsedMethods = new HashMap<RiMethod, Integer>();
 
-    private double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, InvokeNode invoke) {
+    private double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, Invoke invoke) {
         double ratio;
         if (hints != null && hints.contains(invoke)) {
             ratio = 1000000;
         } else {
             if (GraalOptions.ProbabilityAnalysis) {
-                ratio = invoke.probability();
+                ratio = invoke.node().probability();
             } else {
                 RiTypeProfile profile = caller.typeProfile(invoke.bci());
                 if (profile != null && profile.count > 0) {
@@ -481,8 +497,8 @@ public class InliningPhase extends Phase {
         if (GraalOptions.ParseBeforeInlining) {
             if (!parsedMethods.containsKey(method)) {
                 StructuredGraph graph = new StructuredGraph();
-                new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                new CanonicalizerPhase(context, target, runtime, assumptions).apply(graph, true, false);
+                new GraphBuilderPhase(runtime, method, null).apply(graph, context, true, false);
+                new CanonicalizerPhase(target, runtime, assumptions).apply(graph, context, true, false);
                 count = graphComplexity(graph);
                 parsedMethods.put(method, count);
             } else {
@@ -502,7 +518,7 @@ public class InliningPhase extends Phase {
                 result += 0;
             } else if (node instanceof PhiNode) {
                 result += 5;
-            } else if (node instanceof MergeNode || node instanceof InvokeNode || node instanceof LoopEndNode || node instanceof EndNode) {
+            } else if (node instanceof MergeNode || node instanceof Invoke || node instanceof LoopEndNode || node instanceof EndNode) {
                 result += 0;
             } else if (node instanceof ControlSplitNode) {
                 result += ((ControlSplitNode) node).blockSuccessorCount();
@@ -512,7 +528,7 @@ public class InliningPhase extends Phase {
         }
 //        ReturnNode ret = graph.getReturn();
 //        if (ret != null && ret.result() != null) {
-//            if (ret.result().kind == CiKind.Object && ret.result().exactType() != null) {
+//            if (ret.result().kind() == CiKind.Object && ret.result().exactType() != null) {
 //                result -= 5;
 //            }
 //        }

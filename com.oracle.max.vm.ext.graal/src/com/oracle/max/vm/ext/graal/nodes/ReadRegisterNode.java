@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * Reads a value from the given register.
  */
-public final class ReadRegisterNode extends StateSplit implements LIRLowerable {
+public final class ReadRegisterNode extends AbstractStateSplit implements LIRLowerable {
 
     @Data public final CiRegister register;
 
@@ -40,6 +40,6 @@ public final class ReadRegisterNode extends StateSplit implements LIRLowerable {
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.setResult(this, gen.emitMove(register.asValue(kind)));
+        gen.setResult(this, gen.emitMove(register.asValue(kind())));
     }
 }

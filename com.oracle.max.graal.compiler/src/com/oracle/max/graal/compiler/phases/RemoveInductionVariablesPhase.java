@@ -25,7 +25,6 @@ package com.oracle.max.graal.compiler.phases;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.loop.*;
@@ -36,10 +35,6 @@ import com.oracle.max.graal.nodes.loop.*;
 public class RemoveInductionVariablesPhase extends Phase {
 
     private NodeMap<ValueNode> loweredIV;
-
-    public RemoveInductionVariablesPhase(GraalContext context) {
-        super(context);
-    }
 
     @Override
     protected void run(StructuredGraph graph) {

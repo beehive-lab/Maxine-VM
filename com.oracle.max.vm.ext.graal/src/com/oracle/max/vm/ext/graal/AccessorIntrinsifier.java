@@ -30,7 +30,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
@@ -50,7 +50,7 @@ public class AccessorIntrinsifier implements Intrinsifier {
                 if (accessor != null) {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
 
-                    // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
+                    // TODO (gd) move this to a graph buidling utility when GraphBuilderPhase is moved to its own project
                     StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
                         StructuredGraph duplicate = new StructuredGraph();
@@ -60,16 +60,16 @@ public class AccessorIntrinsifier implements Intrinsifier {
                         graph = duplicate;
                     } else {
                         graph = new StructuredGraph();
-                        new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
+                        new GraphBuilderPhase(runtime, accessorMethod, null).apply(graph, true, false);
                         if (GraalOptions.ProbabilityAnalysis) {
-                            new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
-                            new ComputeProbabilityPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
+                            new DeadCodeEliminationPhase().apply(graph, true, false);
+                            new ComputeProbabilityPhase().apply(graph, true, false);
                         }
                     }
 
                     for (LocalNode l : graph.getNodes(LocalNode.class)) {
                         if (l.index() == 0) {
-                            UnsafeCastNode cast = graph.add(new UnsafeCastNode(l, accessor));
+                            MaxineUnsafeCastNode cast = graph.add(new MaxineUnsafeCastNode(l, accessor));
                             l.replaceAtUsages(cast);
                             break;
                         }

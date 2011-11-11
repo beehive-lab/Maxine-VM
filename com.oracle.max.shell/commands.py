@@ -520,6 +520,15 @@ def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
 
+def gcut(env, args):
+    """runs the Graal Compiler Unit Tests in the GraalVM"""
+    # (ds) The boot class path must be used for some reason I don't quite understand
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + args)
+
+def graalvm(env, args):
+    """runs the GraalVM"""
+    env.run_graalvm(args)
+
 def hcfdis(env, args):
     """disassembles HexCodeFiles embedded in text files
 
@@ -708,6 +717,19 @@ def inspect(env, args):
         env.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
     else:
         env.run(cmd)
+
+def javap(env, args):
+    """launch javap with a -classpath option denoting all the Maxine classes
+
+    Run the JDK javap class file disassembler with the following prepended options:
+
+        -private -verbose -classpath <path to Maxine classes>"""
+        
+    javap = join(env.java_home, 'bin', 'javap')
+    if not exists(javap):
+        env.abort('The javap executable does not exists: ' + javap)
+    else:
+        env.run([javap, '-private', '-verbose', '-classpath', env.pdb().classpath()] + args)
 
 def jnigen(env, args):
     """(re)generate content in JniFunctions.java from JniFunctionsSource.java
@@ -906,6 +928,15 @@ def verify(env, args):
 
     env.run_java(['-cp', env.pdb().classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
             
+def view(env, args):
+    """browse the boot image under the Inspector
+
+    Browse a Maxine boot image under the Inspector.
+
+    Use "mx view -help" to see what the Inspector options are."""
+
+    env.run_java(['-cp', env.pdb().classpath(), 'com.sun.max.ins.MaxineInspector', '-vmdir=' + env.vmdir, '-mode=image'] + args)
+            
 def vm(env, args):
     """launch the Maxine VM
 
@@ -975,11 +1006,14 @@ table = {
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
+    'gcut': [gcut, 'patterns...'],
+    'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],
     'help': [help_, '[command]'],
     'image': [image, '[options] classes|packages...'],
     'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
+    'javap': [javap, ''],
     'jnigen': [jnigen, ''],
     'jttgen': [jttgen, ''],
     'makejdk': [makejdk, '[<destination directory>]'],
@@ -992,5 +1026,6 @@ table = {
     't1xgen': [t1xgen, ''],
     'test': [test, '[options]'],
     'verify': [verify, '[options] patterns...', _patternHelp],
+    'view': [view, '[options]'],
     'vm': [vm, '[options] [class | -jar jarfile]  [args...]']
 }

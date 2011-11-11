@@ -39,6 +39,7 @@ public final class BytecodeStream {
      * @param code the array of bytes that contains the bytecode
      */
     public BytecodeStream(byte[] code) {
+        assert code != null;
         this.code = code;
         setBCI(0);
     }

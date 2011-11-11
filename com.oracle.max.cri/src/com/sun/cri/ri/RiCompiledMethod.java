@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.sun.cri.ri;
 
-import java.util.*;
+/**
+ * Represents a compiled instance of a method. It may have been invalidated or removed in the meantime.
+ */
+public interface RiCompiledMethod {
 
-import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.*;
-
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        JavaPrototype.addObjectIdentityMapContributor(new ObjectMapContributor());
-    }
-
-    public static class ObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
-        @Override
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
-            objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (GraalOptions.PrintCFGToFile) {
-                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
-            }
-        }
-    }
+    /**
+     * Returns the method to which the compiled code belongs.
+     * @return the method to which the compiled code belongs.
+     */
+    RiResolvedMethod method();
 }

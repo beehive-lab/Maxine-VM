@@ -58,6 +58,7 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
 
     protected LocationNode(Object identity, CiKind kind, int displacement) {
         super(CiKind.Illegal);
+        assert kind != CiKind.Illegal && kind != CiKind.Void;
         this.displacement = displacement;
         this.valueKind = kind;
         this.locationIdentity = identity;
