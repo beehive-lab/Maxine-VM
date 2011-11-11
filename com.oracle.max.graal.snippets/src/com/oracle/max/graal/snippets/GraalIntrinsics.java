@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.hotspot;
+package com.oracle.max.graal.snippets;
 
+import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.cri.*;
 import com.sun.cri.ci.*;
 
 /**
- * HotSpot-specific CiTarget that provides the correct stack frame size alignment.
+ * Definition of the snippets that are VM-independent and can be intrinsified by Graal in any VM.
  */
-public class HotSpotTarget extends CiTarget {
-
-    public HotSpotTarget(CiArchitecture arch, boolean isMP, int spillSlotSize, int stackAlignment, int pageSize, int cacheAlignment, boolean inlineObjects) {
-        super(arch, isMP, spillSlotSize, stackAlignment, pageSize, cacheAlignment, inlineObjects, true, true);
-    }
-
-    @Override
-    public int alignFrameSize(int frameSize) {
-        // account for the stored rbp value
-        return super.alignFrameSize(frameSize + wordSize) - wordSize;
+public class GraalIntrinsics {
+    public static void installIntrinsics(GraalCompiler compiler, GraalRuntime runtime, CiTarget target) {
+        if (GraalOptions.Intrinsify) {
+            Snippets.install(compiler, runtime, target, new MathSnippetsX86(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new DoubleSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new FloatSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new NodeClassSnippets(), GraalOptions.PlotSnippets);
+        }
     }
 }
