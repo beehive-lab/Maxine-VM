@@ -40,6 +40,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.snippets.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
@@ -138,6 +139,8 @@ public class Graal implements RuntimeCompiler {
             compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
+
+            GraalIntrinsics.installIntrinsics(compiler, runtime, target);
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
