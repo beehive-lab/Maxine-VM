@@ -486,7 +486,7 @@ public class WordValueLabel extends ValueLabel {
                     toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                     toolTipSB.append("<br>Reference to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                     toolTipSB.append("<br>In ");
-                    final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                     if (memoryRegion == null) {
                         toolTipSB.append(htmlify("<unknown memory region>"));
                     } else {
@@ -515,7 +515,7 @@ public class WordValueLabel extends ValueLabel {
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                         toolTipSB.append("<br>Reference to ").append(htmlify(toolTipText));
                         toolTipSB.append("<br>In ");
-                        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
                             toolTipSB.append(htmlify("<unknown memory region>"));
                         } else {
@@ -935,7 +935,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().findMemoryRegion(address) != null) {
+                    if (vm().state().findMemoryRegion(address) != null) {
                         action = views().memory().makeViewAction(address, null);
                     }
                     break;
@@ -951,7 +951,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
+            final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(address);
             if (memoryRegion != null) {
                 action = actions().selectMemoryRegion(memoryRegion);
             }
@@ -985,7 +985,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().findMemoryRegion(address) != null) {
+                    if (vm().state().findMemoryRegion(address) != null) {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }
                     break;

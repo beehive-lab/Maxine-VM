@@ -211,6 +211,7 @@ public class HomArrayLayout extends HomGeneralLayout implements ArrayLayout {
         mirror.writeElement(elementKind, index, value);
     }
 
+    @HOSTED_ONLY
     public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
         src.copyElements(0, srcIndex, dst, dstIndex, length);
     }

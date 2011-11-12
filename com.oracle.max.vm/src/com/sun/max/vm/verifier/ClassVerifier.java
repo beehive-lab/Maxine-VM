@@ -58,7 +58,11 @@ public abstract class ClassVerifier extends Verifier {
         for (MethodActor methodActor : methodActors) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                verifyMethod(classMethodActor);
+                if (classMethodActor.compilee() == classMethodActor) {
+                    verifyMethod(classMethodActor);
+                } else {
+                    // Cannot verify substituted methods as the receiver and holder type will not match
+                }
             }
         }
     }

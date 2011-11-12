@@ -127,7 +127,7 @@ public final class CodeCacheValidation extends VmOperation {
 
         @Override
         public boolean doTargetMethod(TargetMethod targetMethod) {
-            assert targetMethod.start().greaterThan(lastAddress) : "method order violation: " + targetMethod.start().toString() + " must be greater than " + lastAddress.toString();
+            assert targetMethod.start().greaterThan(lastAddress) : "method order violation: " + targetMethod.start().to0xHexString() + " must be greater than " + lastAddress.to0xHexString();
             lastAddress = targetMethod.start();
             final Address tmStart = targetMethod.start();
             final Address tmRefLits = Reference.fromJava(targetMethod.referenceLiterals()).toOrigin().asAddress();
