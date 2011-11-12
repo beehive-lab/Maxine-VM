@@ -53,6 +53,7 @@ public abstract class ModalLockword64 extends Word {
     protected static final int SHAPE_BIT_INDEX = 0;
     protected static final int MISC_BIT_INDEX = 1;
 
+    @HOSTED_ONLY
     protected ModalLockword64() {
     }
 

@@ -59,6 +59,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
     static final int EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
     static final int EPOCH_SHIFT = UTIL_SHIFT;
 
+    @HOSTED_ONLY
     protected BiasedLockword64() {
     }
 

@@ -313,6 +313,11 @@ public class CompiledPrototype extends Prototype {
         addMethods(targetMethod, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(targetMethod, interfaceCalls, Relationship.INTERFACE_CALL);
 
+        checkInliningCorrect(directCalls, null, false, true);
+        checkInliningCorrect(virtualCalls, null, false, true);
+        checkInliningCorrect(interfaceCalls, null, false, true);
+        checkInliningCorrect(inlinedMethods, classMethodActor, true, false);
+
         // if this method (or any that it inlines) contains anonymous classes, add them:
         if (classMethodActor != null) {
             inlinedMethods.add(classMethodActor);
@@ -326,6 +331,25 @@ public class CompiledPrototype extends Prototype {
                         getInfo(classActor);
                     }
                 }
+            }
+        }
+    }
+
+    private void checkInliningCorrect(Set<MethodActor> methods, MethodActor ignore, boolean inlined, boolean called) {
+        for (MethodActor ma : methods) {
+            if (ma == ignore) {
+                continue;
+            }
+
+            boolean mustInline = ma.isInline() || (ma.holder().kind == Kind.WORD && !ma.isStatic());
+            boolean mustCall = ma.isNeverInline();
+            assert !mustInline || !mustCall;
+
+            if (mustInline && called) {
+                throw FatalError.unexpected("Method must be inlined: " + ma);
+            }
+            if (mustCall && inlined) {
+                throw FatalError.unexpected("Method must be called: " + ma);
             }
         }
     }

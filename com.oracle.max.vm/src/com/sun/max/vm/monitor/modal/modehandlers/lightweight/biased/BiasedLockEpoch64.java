@@ -38,6 +38,7 @@ public abstract class BiasedLockEpoch64 extends Word {
     private static final BiasedLockEpoch64 MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     private static final BiasedLockEpoch64 MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
 
+    @HOSTED_ONLY
     protected BiasedLockEpoch64() {
     }
 
@@ -70,10 +71,12 @@ public abstract class BiasedLockEpoch64 extends Word {
         return asAddress().unsignedShiftedRight(BiasedLockword64.EPOCH_SHIFT).toInt();
     }
 
+    @INLINE
     public int toInt() {
         return toIntInternal();
     }
 
+    @INLINE
     public static BiasedLockEpoch64 init() {
         return MIN;
     }

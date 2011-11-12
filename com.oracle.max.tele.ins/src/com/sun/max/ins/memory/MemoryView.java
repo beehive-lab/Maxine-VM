@@ -624,8 +624,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
         // Locate the first and last memory locations with respect to regions
         // allocated by the VM, and build a description of the memory range
-        final MaxMemoryRegion startRegion = vm().findMemoryRegion(memoryWordRegion.start());
-        final MaxMemoryRegion lastRegion = vm().findMemoryRegion(memoryWordRegion.end().minus(1));
+        final MaxMemoryRegion startRegion = vm().state().findMemoryRegion(memoryWordRegion.start());
+        final MaxMemoryRegion lastRegion = vm().state().findMemoryRegion(memoryWordRegion.end().minus(1));
         final String startRegionName = startRegion == null ? UNKNOWN_REGION_NAME : startRegion.regionName();
         final String lastRegionName = lastRegion == null ? UNKNOWN_REGION_NAME : lastRegion.regionName();
         final String regionDescription = " in "

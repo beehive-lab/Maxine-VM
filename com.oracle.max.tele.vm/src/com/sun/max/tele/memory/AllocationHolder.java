@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.tele.memory;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import java.util.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
+import com.sun.max.tele.*;
+
+
+//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
 /**
- * JNI field IDs.
+ * A VM entity that can <em>own</em> regions of memory allocated from the OS.
  */
-public abstract class FieldID extends MemberID {
+public interface AllocationHolder {
 
-    @HOSTED_ONLY
-    protected FieldID() {
-    }
-
-    @INTRINSIC(UNSAFE_CAST)
-    public static FieldID fromWord(Word word) {
-        return new BoxedFieldID(word);
-    }
-
-    public static FieldID fromFieldActor(FieldActor fieldActor) {
-        return fromWord(MemberID.create(fieldActor));
-    }
-
-    public static FieldActor toFieldActor(FieldID fieldID) {
-        return fieldID.getHolder().getLocalFieldActor(fieldID.getMemberIndex());
-    }
+    /**
+     * Gets the regions of memory allocated from the OS that this entity
+     * <em>owns</em>, in the sense that this entity tracks its allocation
+     * and possible deallocation.
+     * <p>
+     * This includes both regions that are allocated directly by the VM,
+     * as well as those allocated implicitly, for example by the creation
+     * of threads and the loading of shared libraries.
+     */
+    List<MaxMemoryRegion> memoryAllocations();
 }

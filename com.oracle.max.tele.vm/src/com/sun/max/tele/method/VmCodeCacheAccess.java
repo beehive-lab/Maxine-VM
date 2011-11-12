@@ -63,7 +63,7 @@ import com.sun.max.vm.value.*;
  * @see com.sun.max.vm.code.CodeManager
  * @see TeleTargetMethod
  */
-public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMCache, MaxCodeCache {
+public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMCache, MaxCodeCache, AllocationHolder {
 
     private static final int TRACE_VALUE = 1;
 
@@ -122,6 +122,10 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
      */
     private List<VmCodeCacheRegion> codeCacheRegions = Collections.emptyList();
 
+    /**
+     * Keep track of memory regions allocated from the OS that are <em>owned</em> by the code cache.
+     */
+    private List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>();
 
     /**
      * A collection of {@link TeleTargetMethod} instances that
@@ -174,6 +178,10 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
 
         codeCacheRegions = Arrays.asList(bootCodeCacheRegion, dynamicBaselineCodeCacheRegion, dynamicOptCodeCacheRegion);
         maxCompiledCodeRegions = Collections.unmodifiableList(new ArrayList<MaxCodeCacheRegion>(codeCacheRegions));
+
+        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+            allocations.add(codeCacheRegion.memoryRegion());
+        }
 
         lastUpdateEpoch = epoch;
         tracer.end(null);
@@ -356,6 +364,15 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         } finally {
             vm().unlock();
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note that this implementation does nothing about externally registered code.
+     */
+    public List<MaxMemoryRegion> memoryAllocations() {
+        return allocations;
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {

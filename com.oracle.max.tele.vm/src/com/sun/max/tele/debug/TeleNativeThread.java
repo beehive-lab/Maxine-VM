@@ -51,7 +51,8 @@ import com.sun.max.vm.value.*;
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  */
-public abstract class TeleNativeThread extends AbstractVmHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
+public abstract class TeleNativeThread extends AbstractVmHolder
+    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, AllocationHolder, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
@@ -182,6 +183,17 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
     public final MaxEntityMemoryRegion<MaxThread> memoryRegion() {
         // The thread has no VM memory allocated for itself; it allocates stack and locals spaces from the OS.
         return null;
+    }
+
+    public final List<MaxMemoryRegion> memoryAllocations() {
+        final List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>(2);
+        if (teleStack.memoryRegion() != null) {
+            allocations.add(teleStack.memoryRegion());
+        }
+        if (threadLocalsBlock.memoryRegion() != null) {
+            allocations.add(threadLocalsBlock.memoryRegion());
+        }
+        return allocations;
     }
 
     public boolean contains(Address address) {
