@@ -295,7 +295,9 @@ public final class JavaPrototype extends Prototype {
         }
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-        VmThreadLocal.completeInitialization();
+        if (complete) {
+            VmThreadLocal.completeInitialization();
+        }
     }
 
     /**
