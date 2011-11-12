@@ -183,20 +183,51 @@ public class MaxineIntrinsicIDs {
      * <p>
      * The method definition must have one of the following signatures:
      * <pre>
-     *
      *     T (int offset)
      *     T (Offset offset)
+     *
+     * where T is any Java type (primitive type, Object, or Word)
+     *
+     * this: The base of the address to read.
+     * offset: The offset of the address to read.
+     *     The accessed address is computed as 'base + offset'.
+     * </pre>
+     */
+    public static final String PREAD_OFF = p + "PREAD_OFF";
+
+    /**
+     * Reads a value from memory.
+     * <p>
+     * The method definition must have the following signature:
+     * <pre>
      *     T (int displacement, int index)
      *
      * where T is any Java type (primitive type, Object, or Word)
      *
      * this: The base of the address to read.
-     * offset: The offset of the address to read (when the 'base + offset' addressing mode is used).
-     * displacement, index: The displacement and index of the address to read (when the 'base + displacement + index * n
-     *     addressing mode is used; n is the size of type T).
+     * displacement, index: The displacement and index of the address to read
+     *     The accessed address is computed as 'base + displacement + index * n', where n is the size of type T.
      * </pre>
      */
-    public static final String PREAD = p + "PREAD";
+    public static final String PREAD_IDX = p + "PREAD_IDX";
+
+    /**
+     * Writes a value to memory.
+     * <p>
+     * The method definition must have one of the following signatures:
+     * <pre>
+     *     void (int offset, T value)
+     *     void (Offset offset, T value)
+     *
+     * where T is any Java type (primitive type, Object, or Word)
+     *
+     * this: The base of the address to write.
+     * offset: The offset of the address to write.
+     *     The accessed address is computed as 'base + offset'.
+     * value: The value to write.
+     * </pre>
+     */
+    public static final String PWRITE_OFF = p + "PWRITE_OFF";
 
     /**
      * Writes a value to memory.
@@ -211,14 +242,13 @@ public class MaxineIntrinsicIDs {
      *
      * where T is any Java type (primitive type, Object, or Word)
      *
-     * this: The base of the address to read.
-     * offset: The offset of the address to read (when the 'base + offset' addressing mode is used).
-     * displacement, index: The displacement and index of the address to read (when the 'base + displacement + index * n
-     *     addressing mode is used; n is the size of type T).
+     * this: The base of the address to write.
+     * displacement, index: The displacement and index of the address to write.
+     *     The accessed address is computed as 'base + displacement + index * n', where n is the size of type T.
      * value: The value to write.
      * </pre>
      */
-    public static final String PWRITE = p + "PWRITE";
+    public static final String PWRITE_IDX = p + "PWRITE_IDX";
 
     /**
      * Atomic update of a value in memory.
