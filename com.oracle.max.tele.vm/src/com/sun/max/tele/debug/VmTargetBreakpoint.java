@@ -613,7 +613,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         }
 
         private String describeLocation(VmTargetBreakpoint targetBreakpoint) {
-            final MaxMachineCodeRoutine maxMachineCode = vm().codeCache().findMachineCode(targetBreakpoint.address());
+            final MaxMachineCodeRoutine maxMachineCode = vm().machineCode().findMachineCode(targetBreakpoint.address());
             if (maxMachineCode != null) {
                 return " in " + maxMachineCode.entityName();
             }

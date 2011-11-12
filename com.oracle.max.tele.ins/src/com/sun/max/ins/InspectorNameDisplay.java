@@ -458,7 +458,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+                final MaxCompilation compiledCode = vm().machineCode().findCompilation(address);
                 if (compiledCode != null) {
                     name.append(",  ").append(longName(compiledCode, address));
                 }
@@ -488,7 +488,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append(address.to0xHexString()).append(" ");
-            final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+            final MaxCompilation compiledCode = vm().machineCode().findCompilation(address);
             if (compiledCode != null) {
                 name.append(extremelyShortName(compiledCode)).append(" ");
             }
@@ -534,7 +534,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
             return "boot code region \"" + regionName + "\"";
         }
-        for (MaxCodeCacheRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
+        for (MaxCodeCacheRegion codeRegion : vm().codeCache().codeCacheRegions()) {
             if (memoryRegion.sameAs(codeRegion.memoryRegion())) {
                 return "dynamic code region \"" + regionName + "\"";
             }

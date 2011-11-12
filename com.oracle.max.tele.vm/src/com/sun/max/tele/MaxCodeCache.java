@@ -25,8 +25,9 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * Access to the cache of compiled machine code in the VM.
@@ -51,68 +52,18 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      *
      * @return descriptions for all code cache regions in the VM.
      */
-    List<MaxCodeCacheRegion> compiledCodeRegions();
+    List<MaxCodeCacheRegion> codeCacheRegions();
 
     /**
      * Finds a code cache region by location, where the location could be anywhere in the code
      * cache's memory allocation, whether that location is actually allocated to a compilation
-     * or is unallocated.  In particular, finding such a region does not guarantee that the
-     * location is a valid code pointer.
+     * or is unallocated.  Even if an allocation, finding such a region does not guarantee that the
+     * location contains machine code.
      *
      * @param address a memory location in the VM.
      * @return the code cache region, if any, that contains the specified location
      */
-    MaxCodeCacheRegion findCompiledCodeRegion(Address address);
-
-    /**
-     * Gets the existing machine code, if known, that contains a given address in the VM;
-     * the result could be either a compiled method or a block of external native code about
-     * which little is known.
-     * <p>
-     * A result is returned <em>only</em> if there is machine code at the location.  If the
-     * memory location falls within the code cache memory allocated to a method compilation,
-     * but does <em>not</em> point to machine code in that allocation, then {@code null} is
-     * returned.
-     *
-     * @param address a memory location in the VM
-     * @return the machine code, if any is known, that includes the address
-     */
-    MaxMachineCodeRoutine< ? extends MaxMachineCodeRoutine> findMachineCode(Address address);
-
-    /**
-     * Get the method compilation, if any, whose code cache allocation includes
-     * a given address in the VM, whether or not there is target code at the
-     * specific location.
-     *
-     * @param address memory location in the VM
-     * @return a  method compilation whose code cache allocation includes the address, null if none
-     */
-    MaxCompilation findCompilation(Address address);
-
-    /**
-     * Get the method compilation, if any, whose memory containing machine code includes
-     * a given address in the VM.
-     * <p>
-     * A result is returned <em>only</em> if there is machine code at the location.  A
-     * memory location might fall within the code cache memory allocated to a method compilation,
-     * but if there is <em>not</em> point machine code at the memory location, then {@code null} is
-     * returned.
-     *
-     * @param address memory location in the VM
-     * @return a compiled method whose code includes the address, null if none
-     */
-    MaxCompilation findCompiledCode(Address address);
-
-    /**
-     * @return gets all compilations of a method in the VM, empty if none
-     */
-    List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor);
-
-    /**
-     * Gets the most recent compilation of a method in the VM, null if none.
-     * @throws MaxVMBusyException  if the VM is unavailable
-     */
-    MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
+    MaxCodeCacheRegion findCodeCacheRegion(Address address);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.

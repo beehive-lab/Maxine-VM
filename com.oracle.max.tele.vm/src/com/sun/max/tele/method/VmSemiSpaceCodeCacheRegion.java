@@ -171,7 +171,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                 while (index < targetMethodCount) {
                     Reference targetMethodReference = teleSemiSpaceCodeRegion.getTargetMethodReference(index++);
                     // Have we seen this compilation before, independent of its location in the region?
-                    TeleCompilation compilation = findCompilation(targetMethodReference);
+                    TeleCompilation compilation = getCompilation(targetMethodReference);
                     if (compilation == null) {
                         // This element in the target method array refers to a compilation net yet seen.
                         TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
@@ -183,7 +183,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                         // Creating a new {@link TeleTargetMethod} causes it to be registered by
                         // a call to register().
                         // It should now be in the map.
-                        compilation = findCompilation(targetMethodReference);
+                        compilation = getCompilation(targetMethodReference);
                     } else {
                         // This is a reference to a previously seen compilation.
                         // This compilation has likely been relocated by eviction.
@@ -243,7 +243,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
     }
 
     @Override
-    public TeleCompilation find(Address address) {
+    public TeleCompilation findCompilation(Address address) {
         return addressToCompilationMap.find(address);
     }
 
@@ -259,12 +259,9 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
      * @param teleTargetMethod local surrogate for a {@link TargetMethod} in the VM.
      * @return the existing instance of {@link TeleCompilation} that wraps the target method, null if none.
      */
-    private TeleCompilation findCompilation(Reference reference) {
+    private TeleCompilation getCompilation(Reference reference) {
         final WeakReference<TeleCompilation> weakReference = referenceToCompilationMap.get(reference);
-        if (weakReference != null) {
-            return weakReference.get();
-        }
-        return null;
+        return (weakReference != null) ? weakReference.get() : null;
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {

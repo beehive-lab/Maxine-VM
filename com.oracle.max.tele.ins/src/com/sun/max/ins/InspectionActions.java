@@ -1414,7 +1414,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            final List<MaxCompilation> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            final List<MaxCompilation> compilations = vm().machineCode().compilations(teleClassMethodActor);
             if (getMenuComponentCount() < compilations.size()) {
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompilation compiledCode = compilations.get(index);
@@ -1494,7 +1494,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public String validateInput(Address address) {
-                    if (vm().codeCache().findMachineCode(address) != null) {
+                    if (vm().machineCode().findMachineCode(address) != null) {
                         return null;
                     }
                     return "There is no method containing the address " + address.toHexString();
@@ -1828,7 +1828,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            final List<MaxCompilation> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            final List<MaxCompilation> compilations = vm().machineCode().compilations(teleClassMethodActor);
             if (getMenuComponentCount() < compilations.size()) {
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompilation compiledCode = compilations.get(index);
@@ -2744,7 +2744,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             if (virtualMethodActor.name == SymbolTable.INIT) {
                                 final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                                 if (teleClassMethodActor != null) {
-                                    for (MaxCompilation compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
+                                    for (MaxCompilation compiledCode : vm().machineCode().compilations(teleClassMethodActor)) {
                                         final MaxCodeLocation callEntryLocation = compiledCode.getCallEntryLocation();
                                         breakpoint = vm().breakpointManager().makeBreakpoint(callEntryLocation);
                                     }
@@ -3934,7 +3934,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
-                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
+                final MaxCompilation compiledCode = vm().machineCode().findCompilation(maxCodeLocation.address());
                 if (compiledCode != null) {
                     final InstructionMap instructionMap = compiledCode.getInstructionMap();
                     final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
@@ -3986,7 +3986,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
-                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
+                final MaxCompilation compiledCode = vm().machineCode().findCompilation(maxCodeLocation.address());
                 if (compiledCode != null) {
                     final InstructionMap instructionMap = compiledCode.getInstructionMap();
                     final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());

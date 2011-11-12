@@ -2000,7 +2000,7 @@ public abstract class TeleVM implements MaxVM {
         public TargetMethodAccess[] findTargetMethods(long[] addresses) {
             final TargetMethodAccess[] result = new TargetMethodAccess[addresses.length];
             for (int i = 0; i < addresses.length; i++) {
-                result[i] = TeleVM.this.codeCache().findCompiledCode(Address.fromLong(addresses[i])).teleTargetMethod();
+                result[i] = TeleVM.this.machineCode().findCompilation(Address.fromLong(addresses[i])).teleTargetMethod();
             }
             return result;
         }

@@ -92,7 +92,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
-        final TeleCompilation compilation = codeCacheRegion.find(origin);
+        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {
@@ -115,7 +115,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     public TeleReference makeReference(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
-        final TeleCompilation compilation = codeCacheRegion.find(origin);
+        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {

@@ -115,7 +115,7 @@ public class FileCommands {
                 found = true;
                 final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
                 if (teleTargetMethod != null) {
-                    final MaxCompilation compiledCode = vm.codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
+                    final MaxCompilation compiledCode = vm.machineCode().findCompilation(teleTargetMethod.callEntryPoint());
                     if (compiledCode != null) {
                         try {
                             vm.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());

@@ -94,7 +94,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      */
     private static MethodView make(final Inspection inspection, Address address, boolean interactive) throws MaxVMBusyException {
         MethodView methodView = null;
-        final MaxCompilation compiledCode = inspection.vm().codeCache().findCompiledCode(address);
+        final MaxCompilation compiledCode = inspection.vm().machineCode().findCompilation(address);
         if (compiledCode != null) {
             // Java method
             methodView = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
@@ -190,7 +190,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     private static JavaMethodView make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
         // If there are compilations, then inspect in association with the most recent
-        final MaxCompilation compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
+        final MaxCompilation compiledCode = inspection.vm().machineCode().latestCompilation(teleClassMethodActor);
         if (compiledCode != null) {
             return make(inspection, compiledCode, codeKind);
         }

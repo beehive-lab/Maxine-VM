@@ -671,7 +671,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+                TeleCompilation compiledCode = vm().machineCode().findCompilation(address);
                 if (compiledCode == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
@@ -684,7 +684,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                         TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().toAddress());
+                    compiledCode = vm().machineCode().findCompilation(targetMethod.codeStart().toAddress());
                     if (compiledCode == null) {
                         TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;

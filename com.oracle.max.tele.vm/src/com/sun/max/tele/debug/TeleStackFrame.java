@@ -206,7 +206,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
             this.stackFrameMemoryRegion = new StackFrameMemoryRegion(vm, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
-            this.teleCompiledCode = vm.codeCache().findCompiledCode(stackFrame.ip);
+            this.teleCompiledCode = vm.machineCode().findCompilation(stackFrame.ip);
         }
 
         public String entityName() {
@@ -231,7 +231,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public TeleCompilation compiledCode() {
             if (teleCompiledCode == null) {
-                teleCompiledCode = vm().codeCache().findCompiledCode(stackFrame.ip);
+                teleCompiledCode = vm().machineCode().findCompilation(stackFrame.ip);
             }
             return teleCompiledCode;
         }

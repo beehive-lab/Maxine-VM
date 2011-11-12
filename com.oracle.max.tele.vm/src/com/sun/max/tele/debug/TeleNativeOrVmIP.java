@@ -56,7 +56,7 @@ public final class TeleNativeOrVmIP extends NativeOrVmIP {
      */
     @Override
     protected TargetMethod targetMethodFor(Pointer pointer) {
-        final TeleCompilation compiledCode = vm.codeCache().findCompiledCode(pointer);
+        final TeleCompilation compiledCode = vm.machineCode().findCompilation(pointer);
         if (compiledCode != null) {
             return compiledCode.teleTargetMethod().targetMethod();
         }

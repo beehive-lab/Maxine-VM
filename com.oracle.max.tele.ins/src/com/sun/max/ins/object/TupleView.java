@@ -39,7 +39,7 @@ public class TupleView extends ObjectView<TupleView> {
         super(inspection, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-        final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(teleObject.origin());
+        final MaxCompilation compiledCode = vm().machineCode().findCompilation(teleObject.origin());
         if (compiledCode != null) {
             frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compiledCode));
         }

@@ -27,11 +27,14 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The singleton manager for representations of machine code locations in the VM.
@@ -119,8 +122,89 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
     }
 
     public TeleObject representation() {
-        // No distinguished object in VM runtime represents the heap.
+        // No distinguished object in VM runtime represents this.
         return null;
+    }
+
+    public MaxMachineCodeRoutine<? extends MaxMachineCodeRoutine> findMachineCode(Address address) {
+        TeleCompilation compilation = findCompilation(address);
+        return (compilation != null) ? compilation : findExternalCode(address);
+    }
+
+    /**
+     * Get the method compilation, if any, whose code cache allocation includes
+     * a given address in the VM, whether or not there is target code at the
+     * specific location.
+     *
+     * @param address memory location in the VM
+     * @return a  method compilation whose code cache allocation includes the address, null if none
+     */
+    private TeleCompilation findCompilationByAllocaton(Address address) {
+        TeleCompilation teleCompilation = null;
+        for (VmCodeCacheRegion codeCacheRegion : vm().codeCache().vmCodeCacheRegions()) {
+            teleCompilation = codeCacheRegion.findCompilation(address);
+            if (teleCompilation != null) {
+                break;
+            }
+        }
+        if (teleCompilation == null) {
+            // Not a known method compilation.
+            if (!vm().codeCache().contains(address)) {
+                // The address is not in the code cache.
+                return null;
+            }
+            // Not a known method compilation, but in a code cache region.
+            // Use the interpreter to see if the code manager in the VM knows about it.
+            try {
+                final Reference targetMethodReference = vm().methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
+                // Possible that the address points to an unallocated area of a code region.
+                if (targetMethodReference != null && !targetMethodReference.isZero()) {
+                    objects().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
+                }
+            } catch (MaxVMBusyException maxVMBusyException) {
+            } catch (TeleInterpreterException e) {
+                // This sometimes happens when the VM process terminates; ignore in those cases
+                if (vm().state().processState() != MaxProcessState.TERMINATED) {
+                    throw TeleError.unexpected(e);
+                }
+            }
+            // If a new method was discovered, the cache will now know about it
+            for (VmCodeCacheRegion codeCacheRegion : vm().codeCache().vmCodeCacheRegions()) {
+                teleCompilation = codeCacheRegion.findCompilation(address);
+                if (teleCompilation != null) {
+                    break;
+                }
+            }
+        }
+        return teleCompilation;
+    }
+
+    public TeleCompilation findCompilation(Address address) {
+        TeleCompilation teleCompilation = findCompilationByAllocaton(address);
+        if (teleCompilation != null && teleCompilation.isValidCodeLocation(address)) {
+            return teleCompilation;
+        }
+        return null;
+    }
+
+    public List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final List<MaxCompilation> compilations = new ArrayList<MaxCompilation>(teleClassMethodActor.compilationCount());
+        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
+            compilations.add(findCompilationByAllocaton(teleTargetMethod.getRegionStart()));
+        }
+        return Collections.unmodifiableList(compilations);
+    }
+
+    public TeleCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException {
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
+            return teleTargetMethod == null ? null : vm().machineCode().findCompilation(teleTargetMethod.getRegionStart());
+        } finally {
+            vm().unlock();
+        }
     }
 
     public TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {

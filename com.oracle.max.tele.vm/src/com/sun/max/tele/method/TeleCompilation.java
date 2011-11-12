@@ -69,7 +69,7 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
             // Evaluate this lazily, since this isn't known until the code's memory
             // region is actually allocated.
-            return codeCache.findCompiledCodeRegion(start()).memoryRegion();
+            return codeCache.findCodeCacheRegion(start()).memoryRegion();
         }
 
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {

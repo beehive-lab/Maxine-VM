@@ -189,7 +189,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
     protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
         if (vm().tryLock()) {
             try {
-                final TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+                final TeleCompilation compiledCode = vm().machineCode().findCompilation(address);
                 if (compiledCode != null) {
                     return compiledCode.getTeleClassMethodActor();
                 }
@@ -202,7 +202,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
     protected TeleCompilation addressToCompiledCode(Address address) {
         if (address != null && !address.isZero()) {
-            return vm().codeCache().findCompiledCode(address);
+            return vm().machineCode().findCompilation(address);
         }
         return null;
     }

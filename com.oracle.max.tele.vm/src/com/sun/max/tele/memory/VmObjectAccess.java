@@ -166,7 +166,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             return immortalHeapRegion.objectReferenceManager().isObjectOrigin(address);
         }
 
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCompiledCodeRegion(address);
+        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
         if (compiledCodeRegion != null) {
             return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
         }
