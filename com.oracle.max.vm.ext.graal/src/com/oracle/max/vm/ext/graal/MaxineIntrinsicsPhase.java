@@ -57,7 +57,7 @@ public class MaxineIntrinsicsPhase extends Phase {
         IntrinsicImpl impl = runtime.getIntrinsicRegistry().get(method);
         assert impl != null : method.intrinsic();
         if (impl != null) {
-            ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(runtime, invoke.callTarget().graph(), method, invoke.callTarget().arguments());
+            ValueNode node = ((GraalIntrinsicImpl) impl).createGraph(invoke.callTarget().graph(), method, runtime, invoke.callTarget().arguments());
             invoke.intrinsify(node);
         }
     }
