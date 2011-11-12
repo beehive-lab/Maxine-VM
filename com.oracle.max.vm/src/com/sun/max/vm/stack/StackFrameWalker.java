@@ -171,7 +171,7 @@ public abstract class StackFrameWalker {
                 }
             } else {
                 // did not find target method => in native code
-                if (purpose == INSPECTING) {
+                if (MaxineVM.isHosted() && purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                     if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, current.nativeIP(), current.fp, current.sp))) {
                         break;
@@ -253,7 +253,7 @@ public abstract class StackFrameWalker {
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
             targetMethod.catchException(current, callee, throwable);
-        } else if (purpose == Purpose.INSPECTING) {
+        } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
             proceed = targetMethod.acceptStackFrameVisitor(current, visitor);
