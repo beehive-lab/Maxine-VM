@@ -146,7 +146,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
         // Assumes no code eviction; no movement; allocated linearly.
         if (compilations.size() < teleTargetMethods.size()) {
             for (int index = compilations.size(); index < teleTargetMethods.size(); index++) {
-                compilations.add(find(teleTargetMethods.get(index).getRegionStart()));
+                compilations.add(findCompilation(teleTargetMethods.get(index).getRegionStart()));
             }
         }
         return Collections.unmodifiableList(compilations);
@@ -176,7 +176,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
     }
 
     @Override
-    public TeleCompilation find(Address address) {
+    public TeleCompilation findCompilation(Address address) {
         return addressToCompilationMap.find(address);
     }
 

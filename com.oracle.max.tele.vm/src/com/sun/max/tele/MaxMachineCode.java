@@ -23,11 +23,53 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
 public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
+
+    /**
+     * Gets the existing machine code, if known, that contains a given address in the VM;
+     * the result could be either a VM method compilation or a block of external native code about
+     * which little is known.
+     * <p>
+     * A result is returned <em>only</em> if there is machine code at the location.  If the
+     * memory location falls within the code cache memory allocated to a method compilation,
+     * but does <em>not</em> point to machine code in that allocation, then {@code null} is
+     * returned.
+     *
+     * @param address a memory location in the VM
+     * @return the machine code, if any is known, that includes the address
+     */
+    MaxMachineCodeRoutine< ? extends MaxMachineCodeRoutine> findMachineCode(Address address);
+
+    /**
+     * Get the method compilation, if any, whose memory containing machine code includes
+     * a given address in the VM.
+     * <p>
+     * A result is returned <em>only</em> if there is machine code at the location.  A
+     * memory location might fall within the code cache memory allocated to a method compilation,
+     * but if there is <em>not</em> point machine code at the memory location, then {@code null} is
+     * returned.
+     *
+     * @param address memory location in the VM
+     * @return a compiled method whose code includes the address, null if none
+     */
+    MaxCompilation findCompilation(Address address);
+
+    /**
+     * @return gets all compilations of a method in the VM, empty if none
+     */
+    List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor);
+
+    /**
+     * Gets the most recent compilation of a method in the VM, null if none.
+     * @throws MaxVMBusyException  if the VM is unavailable
+     */
+    MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
 
     /**
      * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been registered,
@@ -51,9 +93,6 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
      * @return known external native code that includes the address, null if none
      */
     MaxExternalCodeRoutine findExternalCode(Address address);
-
-
-
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.

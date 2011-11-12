@@ -29,15 +29,12 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Singleton access to compiled code in the VM.
@@ -99,12 +96,12 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     /**
      * Unmodifiable list of all regions in which compiled methods are stored.
      */
-    private List<MaxCodeCacheRegion> maxCompiledCodeRegions = Collections.emptyList();
+    private List<MaxCodeCacheRegion> maxCodeCacheRegions = Collections.emptyList();
 
     /**
      * Regions in which compiled methods are stored, held as the implementation type.
      */
-    private List<VmCodeCacheRegion> codeCacheRegions = Collections.emptyList();
+    private List<VmCodeCacheRegion> vmCodeCacheRegions = Collections.emptyList();
 
     /**
      * Keep track of memory regions allocated from the OS that are <em>owned</em> by the code cache.
@@ -160,10 +157,10 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         dynamicBaselineCodeCacheRegion = new VmSemiSpaceCodeCacheRegion(vm(), teleCodeManager.teleRuntimeBaselineCodeRegion(), this);
         dynamicOptCodeCacheRegion = new VmUnmanagedCodeCacheRegion(vm(), teleCodeManager.teleRuntimeOptCodeRegion(), this);
 
-        codeCacheRegions = Arrays.asList(bootCodeCacheRegion, dynamicBaselineCodeCacheRegion, dynamicOptCodeCacheRegion);
-        maxCompiledCodeRegions = Collections.unmodifiableList(new ArrayList<MaxCodeCacheRegion>(codeCacheRegions));
+        vmCodeCacheRegions = Arrays.asList(bootCodeCacheRegion, dynamicBaselineCodeCacheRegion, dynamicOptCodeCacheRegion);
+        maxCodeCacheRegions = Collections.unmodifiableList(new ArrayList<MaxCodeCacheRegion>(vmCodeCacheRegions));
 
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             allocations.add(codeCacheRegion.memoryRegion());
         }
 
@@ -189,7 +186,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
                     register(teleTargetMethod);
                 }
             }
-            for (VmCodeCacheRegion region : codeCacheRegions) {
+            for (VmCodeCacheRegion region : vmCodeCacheRegions) {
                 region.updateCache(epoch);
             }
             lastUpdateEpoch = epoch;
@@ -215,7 +212,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     }
 
     public boolean contains(Address address) {
-        return findCompiledCodeRegion(address) != null;
+        return findCodeCacheRegion(address) != null;
     }
 
     public TeleObject representation() {
@@ -226,12 +223,12 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         return bootCodeCacheRegion;
     }
 
-    public List<MaxCodeCacheRegion> compiledCodeRegions() {
-        return maxCompiledCodeRegions;
+    public List<MaxCodeCacheRegion> codeCacheRegions() {
+        return maxCodeCacheRegions;
     }
 
-    public VmCodeCacheRegion findCompiledCodeRegion(Address address) {
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+    public VmCodeCacheRegion findCodeCacheRegion(Address address) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             if (codeCacheRegion.memoryRegion().contains(address)) {
                 return codeCacheRegion;
             }
@@ -239,86 +236,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         return null;
     }
 
-    public MaxMachineCodeRoutine<? extends MaxMachineCodeRoutine> findMachineCode(Address address) {
-        TeleCompilation compilation = findCompiledCode(address);
-        if (compilation != null) {
-            return compilation;
-        }
-        return vm().machineCode().findExternalCode(address);
-    }
-
-    private TeleCompilation findRegisteredCompilation(Address address) {
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
-            final TeleCompilation teleCompilation = codeCacheRegion.find(address);
-            if (teleCompilation != null) {
-                return teleCompilation;
-            }
-        }
-        return null;
-    }
-
-    public TeleCompilation findCompilation(Address address) {
-        TeleCompilation teleCompilation = findRegisteredCompilation(address);
-        if (teleCompilation == null) {
-            // Not a known Java method.
-            if (!contains(address)) {
-                // The address is not in a method code allocation region; no use looking further.
-                return null;
-            }
-            // Not a known compiled method, and not some other kind of known target code, but in a code region
-            // Use the interpreter to see if the code manager in the VM knows about it.
-            try {
-                final Reference targetMethodReference = vm().methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
-                // Possible that the address points to an unallocated area of a code region.
-                if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                    objects().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
-                }
-            } catch (MaxVMBusyException maxVMBusyException) {
-            } catch (TeleInterpreterException e) {
-                // This sometimes happens when the VM process terminates; ignore in those cases
-                if (vm().state().processState() != MaxProcessState.TERMINATED) {
-                    throw TeleError.unexpected(e);
-                }
-            }
-            // If a new method was discovered, then it will have been added to the registry.
-            teleCompilation = findRegisteredCompilation(address);
-        }
-        return teleCompilation;
-    }
-
-    public TeleCompilation findCompiledCode(Address address) {
-        TeleCompilation teleCompilation = findCompilation(address);
-        if (teleCompilation != null && teleCompilation.isValidCodeLocation(address)) {
-            return teleCompilation;
-        }
-        return null;
-    }
-
-    public List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final List<MaxCompilation> compilations = new ArrayList<MaxCompilation>(teleClassMethodActor.compilationCount());
-        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-            compilations.add(findCompilation(teleTargetMethod.getRegionStart()));
-        }
-        return Collections.unmodifiableList(compilations);
-    }
-
-    public TeleCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException {
-        if (!vm().tryLock()) {
-            throw new MaxVMBusyException();
-        }
-        try {
-            final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
-            return teleTargetMethod == null ? null : findCompiledCode(teleTargetMethod.getRegionStart());
-        } finally {
-            vm().unlock();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Note that this implementation does nothing about externally registered code.
-     */
     public List<MaxMemoryRegion> memoryAllocations() {
         return allocations;
     }
@@ -328,7 +245,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         final NumberFormat formatter = NumberFormat.getInstance();
         int compilationCount = 0;
         int loadedCompilationCount = 0;
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             compilationCount += codeCacheRegion.compilationCount();
             loadedCompilationCount += codeCacheRegion.loadedCompilationCount();
         }
@@ -338,13 +255,13 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         }
         printStream.print(" (code loaded: " + formatter.format(loadedCompilationCount) + ")\n");
         printStream.print(indentation + "Regions: \n");
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             codeCacheRegion.printSessionStats(printStream, indent + 4, verbose);
         }
     }
 
     public void writeSummary(PrintStream printStream) {
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             codeCacheRegion.writeSummary(printStream);
         }
     }
@@ -377,11 +294,15 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         } else {
             // Find the code cache region in which the compilation has been allocated, and add it to
             // the registry we keep for that code region.
-            final VmCodeCacheRegion codeCacheRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
+            final VmCodeCacheRegion codeCacheRegion = findCodeCacheRegion(teleTargetMethod.getRegionStart());
             assert codeCacheRegion != null;
             teleTargetMethod.setCodeCacheRegion(codeCacheRegion);
             codeCacheRegion.register(teleTargetMethod);
         }
+    }
+
+    public List<VmCodeCacheRegion> vmCodeCacheRegions() {
+        return vmCodeCacheRegions;
     }
 
     /**
@@ -395,7 +316,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
      */
     public void updateStatus(long epoch) {
         updateStatusTracer.begin();
-        for (VmCodeCacheRegion region : codeCacheRegions) {
+        for (VmCodeCacheRegion region : vmCodeCacheRegions) {
             region.updateStatus(epoch);
         }
         updateStatusTracer.end();
@@ -405,7 +326,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
      * @return whether eviction is underway in any part of the code cache
      */
     public boolean isInEviction() {
-        for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             if (codeCacheRegion.isInEviction()) {
                 return true;
             }

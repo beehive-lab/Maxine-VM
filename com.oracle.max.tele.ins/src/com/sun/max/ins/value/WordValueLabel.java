@@ -369,7 +369,7 @@ public class WordValueLabel extends ValueLabel {
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     } else {
-                        compiledCode = vm().codeCache().findCompiledCode(address);
+                        compiledCode = vm().machineCode().findCompilation(address);
                         if (compiledCode != null) {
                             final Address codeStart = compiledCode.getCodeStart();
                             final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());

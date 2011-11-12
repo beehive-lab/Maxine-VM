@@ -170,10 +170,7 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
      */
     public abstract void register(TeleTargetMethod teleTargetMethod);
 
-    /**
-     * @return the compilation in this region that contains an address, null if none.
-     */
-    public abstract TeleCompilation find(Address address);
+    public abstract TeleCompilation findCompilation(Address address);
 
     /**
      * @return the number of method compilations that have been copied from

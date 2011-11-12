@@ -407,7 +407,7 @@ public final class StackView extends AbstractView<StackView> {
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+        final MaxCompilation compiledCode = vm().machineCode().findCompilation(address);
         String name;
         if (compiledCode != null) {
             name = inspection().nameDisplay().veryShortName(compiledCode);

@@ -339,7 +339,7 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
             return immortalHeapRegion.objectReferenceManager().makeReference(address);
         }
 
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCompiledCodeRegion(address);
+        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
         if (compiledCodeRegion != null) {
             return compiledCodeRegion.objectReferenceManager().makeReference(address);
         }

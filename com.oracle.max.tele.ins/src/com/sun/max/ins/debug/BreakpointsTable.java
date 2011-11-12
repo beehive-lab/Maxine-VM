@@ -631,7 +631,7 @@ public final class BreakpointsTable extends InspectorTable {
         MachineCodeBreakpointData(MaxBreakpoint machineCodeBreakpoint) {
             super(machineCodeBreakpoint);
             final Address address = codeLocation().address();
-            final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
+            final MaxCompilation compiledCode = vm().machineCode().findCompilation(address);
             if (compiledCode != null) {
                 shortName = inspection().nameDisplay().shortName(compiledCode);
                 final StringBuilder sb = new StringBuilder();

@@ -63,7 +63,7 @@ public class UnmanagedRemoteCodePointerManager extends AbstractVmHolder implemen
 
     public boolean isValidCodePointer(Address address) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(address), "Location is outside region");
-        final TeleCompilation compilation = codeCacheRegion.find(address);
+        final TeleCompilation compilation = codeCacheRegion.findCompilation(address);
         if (compilation != null) {
             return compilation.isValidCodeLocation(address);
         }

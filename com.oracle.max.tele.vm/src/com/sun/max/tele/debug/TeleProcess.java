@@ -906,12 +906,12 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
             // Executed a return
             return null;
         }
-        final TeleCompilation oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
+        final TeleCompilation oldCompiledCode = vm().machineCode().findCompilation(oldInstructionPointer);
         if (oldCompiledCode == null) {
             // Stepped from external native code:
             return null;
         }
-        final TeleCompilation newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
+        final TeleCompilation newCompiledCode = vm().machineCode().findCompilation(newInstructionPointer);
         if (newCompiledCode == null) {
             // Stepped into external native code:
             return null;

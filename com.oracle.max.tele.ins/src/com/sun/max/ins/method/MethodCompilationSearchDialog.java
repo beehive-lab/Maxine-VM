@@ -90,7 +90,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                     if (filterLowerCase.isEmpty() ||
                                     (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                                     methodNameLowerCase.contains(filterLowerCase)) {
-                        for (MaxCompilation compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
+                        for (MaxCompilation compiledCode : vm().machineCode().compilations(teleClassMethodActor)) {
                             final String name = inspection().nameDisplay().shortName(compiledCode, ReturnTypeSpecification.AS_SUFFIX);
                             namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
                         }
@@ -98,7 +98,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                 }
             }
         } else {
-            for (MaxCodeCacheRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
+            for (MaxCodeCacheRegion teleCompiledCodeRegion : inspection().vm().codeCache().codeCacheRegions()) {
                 for (MaxCompilation compiledCode : teleCompiledCodeRegion.compilations()) {
                     ClassMethodActor methodActor = compiledCode.classMethodActor();
                     String methodCompilationType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
