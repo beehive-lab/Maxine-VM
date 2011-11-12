@@ -25,20 +25,17 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
- * Access to the cache of compiled machine code in the VM.
+ * Access to the cache in which the VM stores method compilations, described by one more more instances of
+ * {@link MaxCodeCacheRegion}.
  * <p>
- * The code cache consists of a single {@linkplain MaxCodeCacheRegion code cache region} in the boot image,
- * together with one or more dynamically allocated {@linkplain MaxCodeCacheRegion code cache regions}.
+ * The code cache consists of a single region in the boot image (the <em>boot code cache</em>), in which the VM's
+ * pre-compiled methods reside, together with one or more runtime regions that are allocated dynamically. Different
+ * regions may be managed differently, for example some may be managed and some not.
  * <p>
- * Each {@linkplain MaxCodeCacheRegion Code cache region}, managed by a (heap) instance of {@link CodeLocationFactory},
- * allocates an area of memory for each
- * compilation in the code cache.  Each allocation is described, along with other information
- * related to the compilation, by a (heap) instance of {@link TargetMethod}.
+ * An area of memory is allocated within a code regions to store the results of each compilation.
  */
 public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
 
@@ -48,7 +45,8 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCodeCacheRegion bootCodeRegion();
 
     /**
-     * Gets descriptions all currently allocated code cache regions in the VM's compiled code cache, including the boot code cache.
+     * Gets descriptions all currently allocated code cache regions in the VM's compiled code cache, including the boot
+     * code cache.
      *
      * @return descriptions for all code cache regions in the VM.
      */
@@ -56,19 +54,12 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
 
     /**
      * Finds a code cache region by location, where the location could be anywhere in the code
-     * cache's memory allocation, whether that location is actually allocated to a compilation
-     * or is unallocated.  Even if an allocation, finding such a region does not guarantee that the
-     * location contains machine code.
+     * cache's memory, even if unallocated or not pointing at machine code.
      *
      * @param address a memory location in the VM.
      * @return the code cache region, if any, that contains the specified location
      */
     MaxCodeCacheRegion findCodeCacheRegion(Address address);
-
-    /**
-     * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.
-     */
-    void writeSummary(PrintStream printStream);
 
     /**
      * Writes current statistics concerning inspection of VM's code cache.

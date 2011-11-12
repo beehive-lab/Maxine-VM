@@ -839,7 +839,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
         // superclass constructors.
-        vm.codeCache().register(this);
+        vm.machineCode().registerCompilation(this);
     }
 
     /**
