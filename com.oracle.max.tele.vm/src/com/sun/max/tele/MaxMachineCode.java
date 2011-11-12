@@ -28,18 +28,20 @@ import java.util.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
-
+/**
+ * Access to machine code in the VM, consisting of either {@linkplain MaxCompilation method compilations} in the
+ * {@linkplain MaxCodeCache code cache} or {@linkplain MaxExternalCodeRoutine external code} that has been identified by
+ * various means.
+ */
 public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
 
     /**
-     * Gets the existing machine code, if known, that contains a given address in the VM;
-     * the result could be either a VM method compilation or a block of external native code about
-     * which little is known.
+     * Gets the existing machine code, if known, that contains a given address in the VM; the result could be either a
+     * VM method compilation or a block of external native code about which little is known.
      * <p>
-     * A result is returned <em>only</em> if there is machine code at the location.  If the
-     * memory location falls within the code cache memory allocated to a method compilation,
-     * but does <em>not</em> point to machine code in that allocation, then {@code null} is
-     * returned.
+     * A result is returned <em>only</em> if there is machine code at the location. If the memory location falls within
+     * the code cache memory allocated to a method compilation, but does <em>not</em> point to machine code in that
+     * allocation, then {@code null} is returned.
      *
      * @param address a memory location in the VM
      * @return the machine code, if any is known, that includes the address
@@ -47,13 +49,11 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
     MaxMachineCodeRoutine< ? extends MaxMachineCodeRoutine> findMachineCode(Address address);
 
     /**
-     * Get the method compilation, if any, whose memory containing machine code includes
-     * a given address in the VM.
+     * Get the method compilation, if any, whose memory containing machine code includes a given address in the VM.
      * <p>
-     * A result is returned <em>only</em> if there is machine code at the location.  A
-     * memory location might fall within the code cache memory allocated to a method compilation,
-     * but if there is <em>not</em> point machine code at the memory location, then {@code null} is
-     * returned.
+     * A result is returned <em>only</em> if there is machine code at the location. A memory location might fall within
+     * the code cache memory allocated to a method compilation, but if there is <em>not</em> point machine code at the
+     * memory location, then {@code null} is returned.
      *
      * @param address memory location in the VM
      * @return a compiled method whose code includes the address, null if none
@@ -67,21 +67,22 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
 
     /**
      * Gets the most recent compilation of a method in the VM, null if none.
-     * @throws MaxVMBusyException  if the VM is unavailable
+     *
+     * @throws MaxVMBusyException if the VM is unavailable
      */
     MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
 
     /**
-     * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been registered,
-     * and keep information about it in a registry for subsequent reference.
+     * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been
+     * registered, and keep information about it in a registry for subsequent reference.
      *
      * @param codeStart starting address of the machine code in VM memory, not in any VM allocated memory
      * @param nBytes presumed size of the code in bytes
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleExternalCode
      * @throws MaxVMBusyException if the VM is unavailable
-     * @throws IllegalArgumentException if the range of memory overlaps in any way with a region already registered, or is in
-     * a VM-allocated code region.
+     * @throws IllegalArgumentException if the range of memory overlaps in any way with a region already registered, or
+     *             is in a VM-allocated code region.
      * @throws MaxInvalidAddressException if he address cannot be read
      */
     MaxExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
@@ -95,7 +96,8 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
     MaxExternalCodeRoutine findExternalCode(Address address);
 
     /**
-     * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.
+     * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM, including
+     * compilations created by the VM and external blocks of native code about which less is known.
      */
     void writeSummary(PrintStream printStream);
 

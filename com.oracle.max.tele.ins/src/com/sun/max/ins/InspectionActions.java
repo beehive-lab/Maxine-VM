@@ -4280,39 +4280,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link MaxCodeCache}.
+     * Action:  lists to the console all method compilations and external routines.
      */
-    final class ListCodeRegistryAction extends InspectorAction {
+    final class ListMachineCodeAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List code registry contents";
+        private static final String DEFAULT_TITLE = "List compilations & external routines";
 
-        ListCodeRegistryAction(String actionTitle) {
+        ListMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            vm().codeCache().writeSummary(System.out);
+            vm().machineCode().writeSummary(System.out);
         }
     }
 
-    private InspectorAction listCodeRegistry = new ListCodeRegistryAction(null);
+    private InspectorAction listMachineCode = new ListMachineCodeAction(null);
 
     /**
      * @return an Action that will list to the console the entries in the {@link MaxCodeCache}.
      */
-    public final InspectorAction listCodeRegistry() {
-        return listCodeRegistry;
+    public final InspectorAction listMachineCode() {
+        return listMachineCode;
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link MaxCodeCache} to an interactively specified file.
+     * Action:  lists all method compilations and external routines to an interactively specified file.
      */
-    final class ListCodeRegistryToFileAction extends InspectorAction {
+    final class ListMachineCodeToFileAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List code registry contents to a file...";
+        private static final String DEFAULT_TITLE = "List compilations & external routines to a file...";
 
-        ListCodeRegistryToFileAction(String actionTitle) {
+        ListMachineCodeToFileAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -4321,7 +4321,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             //Create a file chooser
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-            fileChooser.setDialogTitle("Save code registry summary to file:");
+            fileChooser.setDialogTitle("Save machine code summary to file:");
             final int returnVal = fileChooser.showSaveDialog(gui().frame());
             if (returnVal != JFileChooser.APPROVE_OPTION) {
                 return;
@@ -4332,20 +4332,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                vm().codeCache().writeSummary(printStream);
+                vm().machineCode().writeSummary(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
         }
     }
 
-    private InspectorAction listCodeRegistryToFile = new ListCodeRegistryToFileAction(null);
+    private InspectorAction listMachineCodeToFile = new ListMachineCodeToFileAction(null);
 
     /**
      * @return an interactive Action that will list to a specified file the entries in the {@link MaxCodeCache}.
      */
-    public final InspectorAction listCodeRegistryToFile() {
-        return listCodeRegistryToFile;
+    public final InspectorAction listMachineCodeToFile() {
+        return listMachineCodeToFile;
     }
 
     /**

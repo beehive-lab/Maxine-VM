@@ -23,11 +23,9 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
-import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
@@ -74,11 +72,11 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     }
 
     private final TimedTrace updateTracer;
-    private final TimedTrace updateStatusTracer;
 
     private long lastUpdateEpoch = -1L;
 
     private final String entityName = "Code Cache";
+
     private final String entityDescription;
 
     /**
@@ -109,14 +107,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     private List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>();
 
     /**
-     * A collection of {@link TeleTargetMethod} instances that
-     * have been created for inspection (and registered here) before having been
-     * allocated memory in the VM.  The registration of these will be completed during the
-     * next update cycle after their location and size become known.
-     */
-    private final Set<TeleTargetMethod> unallocatedTeleTargetMethods = new HashSet<TeleTargetMethod>();
-
-    /**
      * Creates the object that models the cache of machine code in the VM.
      * <p>
      * A subsequent call to {@link #initialize()} is required before this object is functional.
@@ -129,7 +119,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         this.entityDescription = "Storage managment in the " + vm().entityName() + " for method compilations";
         this.bootCodeCacheRegionName = vm().getString(fields().Code_CODE_BOOT_NAME.readReference(vm()));
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
-        this.updateStatusTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating code cache status");
         tracer.end(null);
     }
 
@@ -168,32 +157,23 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         tracer.end(null);
     }
 
-    /** {@inheritDoc}
+    /**
+     * {@inheritDoc}
      * <p>
-     * Updates the representation of every <strong>method compilation</strong> surrogate
-     * (represented as instances of subclasses of {@link TeleTargetMethod},
-     * in case any of the information in the VM's representation has changed since the previous update.  This should not be
-     * attempted until all information about allocated regions that might contain objects has been updated.
+     * Refresh enough state to understand the state of the code cache, for example whether
+     * new code cache regions have been created and whether
+     * eviction is underway; this all gets done without necessarily doing any other cache updates.
+     * <p>
+     * This must be done before heap objects are refreshed, in particular so that the
+     * code cache region status can be used to determine refresh behavior in instances of
+     * {@link TargetMethod}.
      */
     public void updateCache(long epoch) {
-        if (epoch > lastUpdateEpoch) {
-            updateTracer.begin();
-            assert vm().lockHeldByCurrentThread();
-            for (TeleTargetMethod teleTargetMethod : unallocatedTeleTargetMethods) {
-                if (!teleTargetMethod.getRegionStart().isZero() && teleTargetMethod.getRegionNBytes() != 0) {
-                    // The compilation has been allocated memory in the VM since the last time we looked; complete its registration.
-                    unallocatedTeleTargetMethods.remove(teleTargetMethod);
-                    register(teleTargetMethod);
-                }
-            }
-            for (VmCodeCacheRegion region : vmCodeCacheRegions) {
-                region.updateCache(epoch);
-            }
-            lastUpdateEpoch = epoch;
-            updateTracer.end(null);
-        } else {
-            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch);
+        updateTracer.begin();
+        for (VmCodeCacheRegion region : vmCodeCacheRegions) {
+            region.updateStatus(epoch);
         }
+        updateTracer.end();
     }
 
     public String entityName() {
@@ -242,27 +222,9 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
-        final NumberFormat formatter = NumberFormat.getInstance();
-        int compilationCount = 0;
-        int loadedCompilationCount = 0;
-        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
-            compilationCount += codeCacheRegion.compilationCount();
-            loadedCompilationCount += codeCacheRegion.loadedCompilationCount();
-        }
-        printStream.print(indentation + "Total compilations registered: " + formatter.format(compilationCount));
-        if (!unallocatedTeleTargetMethods.isEmpty()) {
-            printStream.print(" (" + formatter.format(unallocatedTeleTargetMethods.size()) + " unallocated");
-        }
-        printStream.print(" (code loaded: " + formatter.format(loadedCompilationCount) + ")\n");
         printStream.print(indentation + "Regions: \n");
         for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             codeCacheRegion.printSessionStats(printStream, indent + 4, verbose);
-        }
-    }
-
-    public void writeSummary(PrintStream printStream) {
-        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
-            codeCacheRegion.writeSummary(printStream);
         }
     }
 
@@ -278,48 +240,8 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         return bootCodeCacheRegionName;
     }
 
-    /**
-     * Adds a {@link MaxCompilation} entry to the code registry, indexed by code address.
-     * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
-     *
-     * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
-     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
-     */
-    public void register(TeleTargetMethod teleTargetMethod) {
-        if (teleTargetMethod.getRegionStart().isZero() || teleTargetMethod.getRegionNBytes() == 0) {
-            // The compilation is being constructed, which is to say it exists in the VM but has not
-            // had an allocation of memory assigned to it.
-            unallocatedTeleTargetMethods.add(teleTargetMethod);
-            TeleWarning.message(tracePrefix() + " unallocated TargetMethod registered");
-        } else {
-            // Find the code cache region in which the compilation has been allocated, and add it to
-            // the registry we keep for that code region.
-            final VmCodeCacheRegion codeCacheRegion = findCodeCacheRegion(teleTargetMethod.getRegionStart());
-            assert codeCacheRegion != null;
-            teleTargetMethod.setCodeCacheRegion(codeCacheRegion);
-            codeCacheRegion.register(teleTargetMethod);
-        }
-    }
-
     public List<VmCodeCacheRegion> vmCodeCacheRegions() {
         return vmCodeCacheRegions;
-    }
-
-    /**
-     * Refresh enough state to understand the state of the code cache, for example whether
-     * new code cache regions have been created and whether
-     * eviction is underway; this all gets done without necessarily doing any other cache updates.
-     * <p>
-     * This must be done before heap objects are refreshed, in particular so that the
-     * code cache region status can be used to determine refresh behavior in instances of
-     * {@link TargetMethod}.
-     */
-    public void updateStatus(long epoch) {
-        updateStatusTracer.begin();
-        for (VmCodeCacheRegion region : vmCodeCacheRegions) {
-            region.updateStatus(epoch);
-        }
-        updateStatusTracer.end();
     }
 
     /**

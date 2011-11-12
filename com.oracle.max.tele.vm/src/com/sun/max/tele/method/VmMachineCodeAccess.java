@@ -23,9 +23,11 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.memory.*;
@@ -37,9 +39,8 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
- * The singleton manager for representations of machine code locations in the VM.
- * <p>
- * This implementation is incomplete.
+ * The singleton manager for representations of machine code locations, both VM method
+ * compilations and blocks of external native code about which less is known.
  */
 public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineCode, TeleVMCache {
 
@@ -77,6 +78,13 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
      */
     private final List<TeleExternalCodeRoutine> externalCodeRegions = new ArrayList<TeleExternalCodeRoutine>();
 
+    /**
+     * A collection of {@link TeleTargetMethod} instances that
+     * have been created for inspection (and registered here) before having been
+     * allocated memory in the VM.  The registration of these will be completed during the
+     * next update cycle after their location and size become known.
+     */
+    private final Set<TeleTargetMethod> unallocatedTeleTargetMethods = new HashSet<TeleTargetMethod>();
 
     private final Object statsPrinter = new Object() {
         @Override
@@ -91,16 +99,37 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-
         this.entityDescription = "Remote code pointer creation and management for the " + vm.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
-
-
         tracer.end(statsPrinter);
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * Updates the representation of every <strong>method compilation</strong> surrogate
+     * (represented as instances of subclasses of {@link TeleTargetMethod},
+     * in case any of the information in the VM's representation has changed since the previous update.  This should not be
+     * attempted until all information about allocated regions that might contain objects has been updated.
+     */
     public void updateCache(long epoch) {
-        lastUpdateEpoch = epoch;
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            for (TeleTargetMethod teleTargetMethod : unallocatedTeleTargetMethods) {
+                if (!teleTargetMethod.getRegionStart().isZero() && teleTargetMethod.getRegionNBytes() != 0) {
+                    // The compilation has been allocated memory in the VM since the last time we looked; complete its registration.
+                    unallocatedTeleTargetMethods.remove(teleTargetMethod);
+                    registerCompilation(teleTargetMethod);
+                }
+            }
+            for (VmCodeCacheRegion region : codeCache().vmCodeCacheRegions()) {
+                region.updateCache(epoch);
+            }
+            lastUpdateEpoch = epoch;
+            updateTracer.end(null);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch);
+        }
     }
 
     public String entityName() {
@@ -141,7 +170,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
      */
     private TeleCompilation findCompilationByAllocaton(Address address) {
         TeleCompilation teleCompilation = null;
-        for (VmCodeCacheRegion codeCacheRegion : vm().codeCache().vmCodeCacheRegions()) {
+        for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
             teleCompilation = codeCacheRegion.findCompilation(address);
             if (teleCompilation != null) {
                 break;
@@ -149,7 +178,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         }
         if (teleCompilation == null) {
             // Not a known method compilation.
-            if (!vm().codeCache().contains(address)) {
+            if (!codeCache().contains(address)) {
                 // The address is not in the code cache.
                 return null;
             }
@@ -169,7 +198,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
                 }
             }
             // If a new method was discovered, the cache will now know about it
-            for (VmCodeCacheRegion codeCacheRegion : vm().codeCache().vmCodeCacheRegions()) {
+            for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
                 teleCompilation = codeCacheRegion.findCompilation(address);
                 if (teleCompilation != null) {
                     break;
@@ -201,7 +230,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         }
         try {
             final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
-            return teleTargetMethod == null ? null : vm().machineCode().findCompilation(teleTargetMethod.getRegionStart());
+            return teleTargetMethod == null ? null : findCompilation(teleTargetMethod.getRegionStart());
         } finally {
             vm().unlock();
         }
@@ -243,15 +272,58 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         return null;
     }
 
+    /**
+     * Adds a {@link MaxCompilation} entry to the code registry, indexed by code address.
+     * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
+     *
+     * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
+     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
+     */
+    public void registerCompilation(TeleTargetMethod teleTargetMethod) {
+        if (teleTargetMethod.getRegionStart().isZero() || teleTargetMethod.getRegionNBytes() == 0) {
+            // The compilation is being constructed, which is to say it exists in the VM but has not
+            // had an allocation of memory assigned to it.
+            unallocatedTeleTargetMethods.add(teleTargetMethod);
+            TeleWarning.message(tracePrefix() + " unallocated TargetMethod registered");
+        } else {
+            // Find the code cache region in which the compilation has been allocated, and add it to
+            // the registry we keep for that code region.
+            final VmCodeCacheRegion codeCacheRegion = vm().codeCache().findCodeCacheRegion(teleTargetMethod.getRegionStart());
+            assert codeCacheRegion != null;
+            teleTargetMethod.setCodeCacheRegion(codeCacheRegion);
+            codeCacheRegion.register(teleTargetMethod);
+        }
+    }
+
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
-        //final NumberFormat formatter = NumberFormat.getInstance();
-
-        printStream.print(indentation + "External machine code regions registered: " + externalCodeRegions.size() + "\n");
+        final NumberFormat formatter = NumberFormat.getInstance();
+        int compilationCount = 0;
+        int loadedCompilationCount = 0;
+        for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
+            compilationCount += codeCacheRegion.compilationCount();
+            loadedCompilationCount += codeCacheRegion.loadedCompilationCount();
+        }
+        printStream.print(indentation + "Total compilations registered: " + formatter.format(compilationCount));
+        if (!unallocatedTeleTargetMethods.isEmpty()) {
+            printStream.print(" (" + formatter.format(unallocatedTeleTargetMethods.size()) + " unallocated");
+        }
+        printStream.print(" (code loaded: " + formatter.format(loadedCompilationCount) + ")\n");
+        printStream.println(indentation + "By region:");
+        for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
+            final StringBuffer sb = new StringBuffer();
+            sb.append(codeCacheRegion.entityName() + ": ");
+            sb.append("Compilations=" + formatter.format(codeCacheRegion.compilationCount()));
+            sb.append(", code loaded=" + formatter.format(codeCacheRegion.loadedCompilationCount()));
+            printStream.println(indentation + "    " + sb.toString());
+        }
+        printStream.print(indentation + "    " + "External machine code regions registered: " + externalCodeRegions.size() + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
-
+        for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
+            codeCacheRegion.writeSummary(printStream);
+        }
         Address lastEndAddress = null;
         for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
             final String name = registeredCode.entityDescription();
