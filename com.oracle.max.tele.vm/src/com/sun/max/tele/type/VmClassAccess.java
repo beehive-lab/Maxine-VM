@@ -59,7 +59,7 @@ import com.sun.max.vm.type.*;
  * The registry is necessarily constructed using information obtained by low level data reading and knowledge of the VM
  * implementation, because the registry is itself required before type-based access can be supported.
  */
-public final class VmClassAccess extends AbstractVmHolder implements MaxClassRegistry, TeleVMCache {
+public final class VmClassAccess extends AbstractVmHolder implements MaxClasses, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
@@ -237,7 +237,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClassReg
         return entityDescription;
     }
 
-    public MaxEntityMemoryRegion<MaxClassRegistry> memoryRegion() {
+    public MaxEntityMemoryRegion<MaxClasses> memoryRegion() {
         // The class registry has no VM memory allocated, other than for its constituent objects
         return null;
     }

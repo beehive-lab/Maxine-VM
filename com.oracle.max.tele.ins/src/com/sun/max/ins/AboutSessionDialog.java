@@ -124,7 +124,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         }
 
         stream.println();
-        final MaxClassRegistry classRegistry = vm().classes();
+        final MaxClasses classRegistry = vm().classes();
         stream.print(classRegistry.entityName().toString().toUpperCase() + ":\n");
         classRegistry.printSessionStats(stream, indent, verbose);
 

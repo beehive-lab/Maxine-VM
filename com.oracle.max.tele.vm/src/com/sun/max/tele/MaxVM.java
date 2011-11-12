@@ -84,7 +84,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return access to the VM's class registry and related information.
      */
-    MaxClassRegistry classes();
+    MaxClasses classes();
 
     /**
      * @return access to low level memory reading from the VM.
