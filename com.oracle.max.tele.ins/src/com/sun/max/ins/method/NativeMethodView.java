@@ -33,12 +33,12 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodView extends MethodView<NativeMethodView> {
 
-    private final MaxExternalCode externalCode;
+    private final MaxExternalCodeRoutine externalCode;
     private MachineCodeViewer machineCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxExternalCode externalCode) {
+    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxExternalCodeRoutine externalCode) {
         super(inspection, container);
         this.externalCode = externalCode;
         shortName = inspection().nameDisplay().shortName(externalCode);
@@ -47,7 +47,7 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
     }
 
     @Override
-    public MaxExternalCode machineCode() {
+    public MaxExternalCodeRoutine machineCode() {
         return externalCode;
     }
 

@@ -27,7 +27,7 @@ package com.sun.max.tele;
  * Data describing a single block of external machine code representing a native routine
  * about which little is known.
  */
-public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
+public interface MaxExternalCodeRoutine extends MaxMachineCodeRoutine<MaxExternalCodeRoutine> {
 
     long DEFAULT_NATIVE_CODE_LENGTH = 200;
 

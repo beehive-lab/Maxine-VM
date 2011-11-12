@@ -139,7 +139,7 @@ public final class StackView extends AbstractView<StackView> {
             } else {
                 InspectorWarning.check(inspection(), stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
-                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+                final MaxExternalCodeRoutine externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
                     // native that we know something about
                     methodName += inspection().nameDisplay().shortName(externalCode);
@@ -446,7 +446,7 @@ public final class StackView extends AbstractView<StackView> {
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
-            final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+            final MaxExternalCodeRoutine externalCode = vm().codeCache().findExternalCode(instructionPointer);
             if (externalCode == null) {
                 menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
                     @Override

@@ -594,7 +594,7 @@ public abstract class TeleVM implements MaxVM {
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
 
-    private final VmCodeLocationManager codeLocationManager;
+    private final VmMachineCodeAccess codeLocationManager;
 
     /**
      * Breakpoint manager, for both target and bytecode breakpoints.
@@ -753,7 +753,7 @@ public abstract class TeleVM implements MaxVM {
 
         this.threadAccess = VmThreadAccess.make(this);
         this.codeLocationFactory = CodeLocationFactory.make(this);
-        this.codeLocationManager = VmCodeLocationManager.make(this);
+        this.codeLocationManager = VmMachineCodeAccess.make(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");

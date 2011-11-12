@@ -225,7 +225,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return stackFrameMemoryRegion.contains(address);
         }
 
-        public MaxMachineCode machineCode() {
+        public MaxMachineCodeRoutine machineCode() {
             return compiledCode();
         }
 
@@ -261,7 +261,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
 
-        private MaxExternalCode externalMachineCode = null;
+        private MaxExternalCodeRoutine externalMachineCode = null;
 
         private NativeFrame(TeleVM vm, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
             super(vm, teleStack, position, nativeStackFrame);
@@ -289,7 +289,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         @Override
-        public MaxMachineCode machineCode() {
+        public MaxMachineCodeRoutine machineCode() {
             if (externalMachineCode == null) {
                 externalMachineCode = vm().codeCache().findExternalCode(stackFrame.ip);
             }
@@ -335,7 +335,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return Pointer.zero();
         }
 
-        public MaxMachineCode machineCode() {
+        public MaxMachineCodeRoutine machineCode() {
             return null;
         }
 

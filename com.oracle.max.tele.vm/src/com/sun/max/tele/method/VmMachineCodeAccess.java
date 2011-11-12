@@ -27,21 +27,20 @@ import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
-// TODO (mlvdv)  just a stub for now; will replace some older stuff
 /**
- * The singleton manager for representations of code locations in the VM.
+ * The singleton manager for representations of machine code locations in the VM.
  * <p>
  * This implementation is incomplete.
  */
-public class VmCodeLocationManager extends AbstractVmHolder implements TeleVMCache {
+public class VmMachineCodeAccess extends AbstractVmHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
-    private static VmCodeLocationManager vmCodeLocationManager;
+    private static VmMachineCodeAccess vmCodeLocationManager;
 
-    public static VmCodeLocationManager make(TeleVM vm) {
+    public static VmMachineCodeAccess make(TeleVM vm) {
         if (vmCodeLocationManager == null) {
-            vmCodeLocationManager = new VmCodeLocationManager(vm);
+            vmCodeLocationManager = new VmMachineCodeAccess(vm);
         }
         return vmCodeLocationManager;
     }
@@ -49,7 +48,7 @@ public class VmCodeLocationManager extends AbstractVmHolder implements TeleVMCac
     private long lastUpdateEpoch = -1L;
 
 
-    public VmCodeLocationManager(TeleVM vm) {
+    public VmMachineCodeAccess(TeleVM vm) {
         super(vm);
     }
 

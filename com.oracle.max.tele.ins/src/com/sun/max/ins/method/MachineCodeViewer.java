@@ -28,7 +28,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -39,12 +39,12 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class MachineCodeViewer extends CodeViewer {
 
-    private final MaxMachineCode machineCode;
+    private final MaxMachineCodeRoutine machineCode;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
     private String[] rowToTagText;
 
-    protected MachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
+    protected MachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCodeRoutine machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
         updateMachineCodeInfo();
@@ -125,7 +125,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
         final MaxMemoryRegion machineCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
-            final MaxMachineCode machineCode = frame.machineCode();
+            final MaxMachineCodeRoutine machineCode = frame.machineCode();
             if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
@@ -147,7 +147,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
     /**
      * @return surrogate for the machine in the VM for the method being viewed.
      */
-    protected MaxMachineCode machineCode() {
+    protected MaxMachineCodeRoutine machineCode() {
         return machineCode;
     }
 
