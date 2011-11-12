@@ -30,8 +30,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -42,17 +40,17 @@ import com.sun.max.vm.value.*;
  * The singleton manager for representations of machine code locations, both VM method
  * compilations and blocks of external native code about which less is known.
  */
-public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineCode, TeleVMCache {
+public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineCode, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
-    private static VmMachineCodeAccess vmCodeLocationManager;
+    private static VmMachineCodeAccess vmMachineCodeAccess;
 
     public static VmMachineCodeAccess make(TeleVM vm) {
-        if (vmCodeLocationManager == null) {
-            vmCodeLocationManager = new VmMachineCodeAccess(vm);
+        if (vmMachineCodeAccess == null) {
+            vmMachineCodeAccess = new VmMachineCodeAccess(vm);
         }
-        return vmCodeLocationManager;
+        return vmMachineCodeAccess;
     }
 
     private final TimedTrace updateTracer;
@@ -63,20 +61,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
 
     private final String entityDescription;
 
-    /**
-     * Contains regions of machine code discovered in the VM process that
-     * do not belong to the VM.
-     *
-     * Information about external machine code regions discovered in the VM process.
-     * Presumed invariants:
-     * <ul>
-     * <li>The external code regions do not intersect any memory regions allocated by the VM.</li>
-     * <li>The external code regions do not intersect any other registered external code regions.</li>
-     * <li>The number of transactions against the collection is small.</li>
-     * <li>The number of registered regions is small, so linear lookup suffices</li>
-     * <ul>
-     */
-    private final List<TeleExternalCodeRoutine> externalCodeRegions = new ArrayList<TeleExternalCodeRoutine>();
+    private final ExternalMachineCodeAccess externalMachineCodeAccess;
 
     /**
      * A collection of {@link TeleTargetMethod} instances that
@@ -90,7 +75,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         @Override
         public String toString() {
             final StringBuilder msg = new StringBuilder();
-
+            // TODO (mlvdv) add some stats?
             return msg.toString();
         }
     };
@@ -100,6 +85,7 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.entityDescription = "Remote code pointer creation and management for the " + vm.entityName();
+        this.externalMachineCodeAccess = new ExternalMachineCodeAccess(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(statsPrinter);
     }
@@ -237,39 +223,11 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
     }
 
     public TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
-        if (codeStart == null || codeStart.isZero()) {
-            throw new MaxInvalidAddressException(codeStart, "Null or zero address");
-        }
-        final TeleFixedMemoryRegion newCodeRegion = new TeleFixedMemoryRegion(vm(), "temp", codeStart, nBytes);
-        for (MaxMemoryRegion vmAllocation : vm().state().memoryAllocations()) {
-            if (newCodeRegion.overlaps(vmAllocation)) {
-                throw new IllegalArgumentException("proposed external code region overlaps VM region: " + vmAllocation.regionName());
-            }
-        }
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (newCodeRegion.overlaps(registeredCode.memoryRegion())) {
-                throw new IllegalArgumentException("proposed external code region overlaps one already registered");
-            }
-        }
-        if (!vm().tryLock()) {
-            throw new MaxVMBusyException();
-        }
-        try {
-            final TeleExternalCodeRoutine teleExternalCode = new TeleExternalCodeRoutine(vm(), codeStart, nBytes, name);
-            externalCodeRegions.add(teleExternalCode);
-            return teleExternalCode;
-        } finally {
-            vm().unlock();
-        }
+        return externalMachineCodeAccess.registerExternalCode(codeStart, nBytes, name);
     }
 
     public MaxExternalCodeRoutine findExternalCode(Address address) {
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (registeredCode.memoryRegion().contains(address)) {
-                return registeredCode;
-            }
-        }
-        return null;
+        return externalMachineCodeAccess.findExternalCode(address);
     }
 
     /**
@@ -317,58 +275,14 @@ public class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineC
             sb.append(", code loaded=" + formatter.format(codeCacheRegion.loadedCompilationCount()));
             printStream.println(indentation + "    " + sb.toString());
         }
-        printStream.print(indentation + "    " + "External machine code regions registered: " + externalCodeRegions.size() + "\n");
+        externalMachineCodeAccess.printSessionStats(printStream, indent, verbose);
     }
 
     public void writeSummary(PrintStream printStream) {
         for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
             codeCacheRegion.writeSummary(printStream);
         }
-        Address lastEndAddress = null;
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            final String name = registeredCode.entityDescription();
-            final MaxEntityMemoryRegion<MaxExternalCodeRoutine> externalCodeMemoryRegion = registeredCode.memoryRegion();
-            if (lastEndAddress != null && !lastEndAddress.equals(externalCodeMemoryRegion.start())) {
-                printStream.println(lastEndAddress.toHexString() + "--" + externalCodeMemoryRegion.start().minus(1).toHexString() + ": ");
-            }
-            lastEndAddress = externalCodeMemoryRegion.end();
-            printStream.println(externalCodeMemoryRegion.start().toHexString() + "--" + externalCodeMemoryRegion.end().minus(1).toHexString() + ":  " + name);
-        }
+        externalMachineCodeAccess.writeSummary(printStream);
     }
-
-
-
-
-
-
-
-
-
-    // TODO (mlvdv)  Can we now enforce the precondition that we know about the region containing the address?
-    // this might be an issue of startup timing, or more likely about native code.
-    /**
-     * Creates a code location in VM specified as the memory address of a compiled machine code instruction.
-     * <p>
-     * Thread-safe
-     *
-     * @param address a non-zero address in VM memory that represents the beginning of a compiled machine code instruction
-     * @param description a human-readable description, suitable for a menu or for debugging
-     * @return a newly created location
-     * @throws TeleError if the address is null or zero
-     */
-    public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError {
-//        if (vm().codeCache() != null) {
-//            final VmCodeCacheRegion codeCacheRegion = vm().codeCache().findCompiledCodeRegion(address);
-//            if (codeCacheRegion != null) {
-//
-//            }
-//        }
-
-        return null;
-    }
-
-
-
-
 
 }
