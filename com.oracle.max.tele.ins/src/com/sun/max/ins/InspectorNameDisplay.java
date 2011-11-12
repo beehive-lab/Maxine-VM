@@ -400,7 +400,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
-    public String shortName(MaxExternalCode externalCode) {
+    public String shortName(MaxExternalCodeRoutine externalCode) {
         final String title = externalCode.entityName();
         return title == null ? "@0x" + externalCode.getCodeStart().toHexString() : title;
     }
@@ -408,7 +408,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
-    public String longName(MaxExternalCode externalCode) {
+    public String longName(MaxExternalCodeRoutine externalCode) {
         final String title = externalCode.entityName();
         return title == null ? "Native code @" + externalCode.getCodeStart().to0xHexString() : "Native code: " + title;
     }

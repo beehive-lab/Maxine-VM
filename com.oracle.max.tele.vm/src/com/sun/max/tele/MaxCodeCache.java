@@ -77,7 +77,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address a memory location in the VM
      * @return the machine code, if any is known, that includes the address
      */
-    MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address);
+    MaxMachineCodeRoutine< ? extends MaxMachineCodeRoutine> findMachineCode(Address address);
 
     /**
      * Get the method compilation, if any, whose code cache allocation includes
@@ -109,7 +109,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address memory location in the VM
      * @return known external native code that includes the address, null if none
      */
-    MaxExternalCode findExternalCode(Address address);
+    MaxExternalCodeRoutine findExternalCode(Address address);
 
     /**
      * @return gets all compilations of a method in the VM, empty if none
@@ -135,10 +135,10 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * a VM-allocated code region.
      * @throws MaxInvalidAddressException if he address cannot be read
      */
-    MaxExternalCode registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
+    MaxExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
-     * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.
+     * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.
      */
     void writeSummary(PrintStream printStream);
 

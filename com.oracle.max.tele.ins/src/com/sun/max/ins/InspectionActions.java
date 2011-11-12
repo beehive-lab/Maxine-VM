@@ -42,7 +42,7 @@ import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
 import com.sun.max.tele.object.*;

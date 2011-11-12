@@ -43,7 +43,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;

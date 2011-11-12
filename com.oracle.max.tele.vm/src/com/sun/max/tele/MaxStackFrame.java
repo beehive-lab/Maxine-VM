@@ -98,7 +98,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      *
      * @see VmCodeCacheAccess#register(TeleExternalCode)
      */
-    MaxMachineCode machineCode();
+    MaxMachineCodeRoutine machineCode();
 
     /**
      * Get's the conceptual location in code for each frame, independent of underlying

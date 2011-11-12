@@ -36,7 +36,7 @@ import com.sun.max.unsafe.*;
  * <br>
  * Note that machine code can get patched (changed) at runtime, so any caching of these results should be avoided.
  */
-public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends MaxEntity<MachineCode_Type> {
+public interface MaxMachineCodeRoutine<MachineCode_Type extends MaxMachineCodeRoutine> extends MaxEntity<MachineCode_Type> {
 
     /**
      * @return VM address of the first instruction in the machine code represented by this routine. Note that this
