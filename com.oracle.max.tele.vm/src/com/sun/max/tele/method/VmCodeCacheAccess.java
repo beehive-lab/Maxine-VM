@@ -123,16 +123,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     }
 
     /**
-     * Check whether the code cache is prepared to start registering entries, in particular
-     * whether it knows about the code regions in the VM.
-     *
-     * @return whether the code cache is fully initialized and operational.
-     */
-    public boolean isInitialized() {
-        return bootCodeCacheRegion != null;
-    }
-
-    /**
      * Completes the initialization of this object:  identifies the VM's code regions, and preloads
      * the cache of information about method compilations in the boot code region.
      */
