@@ -137,6 +137,12 @@ public class Graal implements RuntimeCompiler {
             compiler.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
             compiler.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase(runtime));
             compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
+
+            // Run forced inlining again because high-level optimizations (such as replacing a final field read by a constant) can open up new opportunities.
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new FoldPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MaxineIntrinsicsPhase(runtime));
+            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime, cache, null));
+
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
             compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
 
