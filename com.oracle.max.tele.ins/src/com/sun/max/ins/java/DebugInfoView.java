@@ -125,7 +125,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
             sb.append(teleClassMethodActor.classMethodActor().holder().simpleName()).append(".");
             sb.append(inspection().nameDisplay().veryShortName(teleClassMethodActor));
         } else if (codeLocation.hasAddress()) {
-            MaxExternalCodeRoutine externalCode = vm().codeCache().findExternalCode(codeLocation.address());
+            MaxExternalCodeRoutine externalCode = vm().machineCode().findExternalCode(codeLocation.address());
             if (externalCode == null) {
                 sb.append("<native>");
             } else {

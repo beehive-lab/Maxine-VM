@@ -99,7 +99,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             // Java method
             methodView = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
         } else {
-            final MaxExternalCodeRoutine externalCode = inspection.vm().codeCache().findExternalCode(address);
+            final MaxExternalCodeRoutine externalCode = inspection.vm().machineCode().findExternalCode(address);
             if (externalCode != null) {
                 // Some other kind of known external machine code
                 methodView = make(inspection, externalCode);
@@ -110,7 +110,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
                 if (nativeCodeInfo != null) {
                     try {
-                        final MaxExternalCodeRoutine nativeCode = inspection.vm().codeCache().registerExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
+                        final MaxExternalCodeRoutine nativeCode = inspection.vm().machineCode().registerExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
                         methodView = MethodView.make(inspection, nativeCode);
                     } catch (MaxInvalidAddressException e) {
                         inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
@@ -128,7 +128,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                                 if (name == null || name.equals("")) {
                                     name = defaultDescription;
                                 }
-                                final MaxExternalCodeRoutine externalCode = vm().codeCache().registerExternalCode(nativeAddress, nBytes, name);
+                                final MaxExternalCodeRoutine externalCode = vm().machineCode().registerExternalCode(nativeAddress, nBytes, name);
                                 result.setValue(MethodView.make(inspection, externalCode));
                                 // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {

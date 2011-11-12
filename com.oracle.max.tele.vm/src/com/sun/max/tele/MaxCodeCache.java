@@ -104,14 +104,6 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompilation findCompiledCode(Address address);
 
     /**
-     * Get the block of known external native code, if any, that contains a given address in the VM.
-     *
-     * @param address memory location in the VM
-     * @return known external native code that includes the address, null if none
-     */
-    MaxExternalCodeRoutine findExternalCode(Address address);
-
-    /**
      * @return gets all compilations of a method in the VM, empty if none
      */
     List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor);
@@ -121,21 +113,6 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @throws MaxVMBusyException  if the VM is unavailable
      */
     MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
-
-    /**
-     * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been registered,
-     * and keep information about it in a registry for subsequent reference.
-     *
-     * @param codeStart starting address of the machine code in VM memory, not in any VM allocated memory
-     * @param nBytes presumed size of the code in bytes
-     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
-     * @return a newly created TeleExternalCode
-     * @throws MaxVMBusyException if the VM is unavailable
-     * @throws IllegalArgumentException if the range of memory overlaps in any way with a region already registered, or is in
-     * a VM-allocated code region.
-     * @throws MaxInvalidAddressException if he address cannot be read
-     */
-    MaxExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM.
