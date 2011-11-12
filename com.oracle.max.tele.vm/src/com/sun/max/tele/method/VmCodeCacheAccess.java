@@ -89,21 +89,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
      */
     private TeleCodeManager teleCodeManager;
 
-    /**
-     * Contains regions of machine code discovered in the VM process that
-     * do not belong to the VM.
-     *
-     * Information about external machine code regions discovered in the VM process.
-     * Presumed invariants:
-     * <ul>
-     * <li>The external code regions do not intersect any memory regions allocated by the VM.</li>
-     * <li>The external code regions do not intersect any other registered external code regions.</li>
-     * <li>The number of transactions against the collection is small.</li>
-     * <li>The number of registered regions is small, so linear lookup suffices</li>
-     * <ul>
-     */
-    private final List<TeleExternalCodeRoutine> externalCodeRegions = new ArrayList<TeleExternalCodeRoutine>();
-
     private final String bootCodeCacheRegionName;
 
     // The three code cache regions known to be allocated by the VM
@@ -259,7 +244,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         if (compilation != null) {
             return compilation;
         }
-        return findExternalCode(address);
+        return vm().machineCode().findExternalCode(address);
     }
 
     private TeleCompilation findRegisteredCompilation(Address address) {
@@ -329,42 +314,6 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         }
     }
 
-    public MaxExternalCodeRoutine findExternalCode(Address address) {
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (registeredCode.memoryRegion().contains(address)) {
-                return registeredCode;
-            }
-        }
-        return null;
-    }
-
-    public TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
-        if (codeStart == null || codeStart.isZero()) {
-            throw new MaxInvalidAddressException(codeStart, "Null or zero address");
-        }
-        final TeleFixedMemoryRegion newCodeRegion = new TeleFixedMemoryRegion(vm(), "temp", codeStart, nBytes);
-        for (MaxMemoryRegion vmAllocation : vm().state().memoryAllocations()) {
-            if (newCodeRegion.overlaps(vmAllocation)) {
-                throw new IllegalArgumentException("proposed external code region overlaps VM region: " + vmAllocation.regionName());
-            }
-        }
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (newCodeRegion.overlaps(registeredCode.memoryRegion())) {
-                throw new IllegalArgumentException("proposed external code region overlaps one already registered");
-            }
-        }
-        if (!vm().tryLock()) {
-            throw new MaxVMBusyException();
-        }
-        try {
-            final TeleExternalCodeRoutine teleExternalCode = new TeleExternalCodeRoutine(vm(), codeStart, nBytes, name);
-            externalCodeRegions.add(teleExternalCode);
-            return teleExternalCode;
-        } finally {
-            vm().unlock();
-        }
-    }
-
     /**
      * {@inheritDoc}
      * <p>
@@ -392,22 +341,11 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
             codeCacheRegion.printSessionStats(printStream, indent + 4, verbose);
         }
-        printStream.print(indentation + "External machine code regions registered: " + externalCodeRegions.size() + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
         for (VmCodeCacheRegion codeCacheRegion : codeCacheRegions) {
             codeCacheRegion.writeSummary(printStream);
-        }
-        Address lastEndAddress = null;
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            final String name = registeredCode.entityDescription();
-            final MaxEntityMemoryRegion<MaxExternalCodeRoutine> externalCodeMemoryRegion = registeredCode.memoryRegion();
-            if (lastEndAddress != null && !lastEndAddress.equals(externalCodeMemoryRegion.start())) {
-                printStream.println(lastEndAddress.toHexString() + "--" + externalCodeMemoryRegion.start().minus(1).toHexString() + ": ");
-            }
-            lastEndAddress = externalCodeMemoryRegion.end();
-            printStream.println(externalCodeMemoryRegion.start().toHexString() + "--" + externalCodeMemoryRegion.end().minus(1).toHexString() + ":  " + name);
         }
     }
 

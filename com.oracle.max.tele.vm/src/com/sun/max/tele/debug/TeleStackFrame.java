@@ -291,7 +291,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         @Override
         public MaxMachineCodeRoutine machineCode() {
             if (externalMachineCode == null) {
-                externalMachineCode = vm().codeCache().findExternalCode(stackFrame.ip);
+                externalMachineCode = vm().machineCode().findExternalCode(stackFrame.ip);
             }
             return externalMachineCode;
         }

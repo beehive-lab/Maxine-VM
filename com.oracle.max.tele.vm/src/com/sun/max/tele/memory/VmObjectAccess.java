@@ -100,7 +100,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         tracer.begin();
 
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
-        this.entityDescription = "Object creation and management for the " + vm().entityName();
+        this.entityDescription = "Object creation and management for the " + vm.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(statsPrinter);
@@ -115,6 +115,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     public void updateCache(long epoch) {
         teleObjectFactory.updateCache(epoch);
+        lastUpdateEpoch = epoch;
     }
 
     public String entityName() {
