@@ -1005,6 +1005,12 @@ public final class GraphBuilder {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType klass = resolvedTarget.holder();
 
+            if (compilation.runtime.mustInline(resolvedTarget)) {
+                boolean result = tryInline(resolvedTarget, args);
+                assert result : "Inlining must succeed";
+                return;
+            }
+
             // 0. check for trivial cases
             if (resolvedTarget.canBeStaticallyBound() && !isAbstract(resolvedTarget.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
