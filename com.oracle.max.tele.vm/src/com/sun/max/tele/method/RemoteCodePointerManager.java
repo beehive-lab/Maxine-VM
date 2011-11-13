@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.method;
 
+import java.io.*;
+
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -70,5 +72,10 @@ public interface RemoteCodePointerManager {
      * Returns the number of remote code pointers being held that are no longer inactive use.
      */
     int activePointerCount();
+
+    /**
+     * Prints a summary of information about code pointers being managed.
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }

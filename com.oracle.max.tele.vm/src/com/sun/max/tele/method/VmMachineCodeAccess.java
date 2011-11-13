@@ -253,6 +253,17 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
     }
 
+    /**
+     * @see RemoteCodePointerManager#makeCodePointer(Address)
+     */
+    public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
+        final VmCodeCacheRegion codeCacheRegion = codeCache().findCodeCacheRegion(address);
+        if (codeCacheRegion != null) {
+            return codeCacheRegion.codePointerManager().makeCodePointer(address);
+        }
+        return externalMachineCodeAccess.codePointerManager().makeCodePointer(address);
+    }
+
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
@@ -275,7 +286,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             sb.append(", code loaded=" + formatter.format(codeCacheRegion.loadedCompilationCount()));
             printStream.println(indentation + "    " + sb.toString());
         }
-        externalMachineCodeAccess.printSessionStats(printStream, indent, verbose);
+        externalMachineCodeAccess.printSessionStats(printStream, indent + 4, verbose);
     }
 
     public void writeSummary(PrintStream printStream) {

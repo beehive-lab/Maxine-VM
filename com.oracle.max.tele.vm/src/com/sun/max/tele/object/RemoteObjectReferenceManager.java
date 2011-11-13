@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.object;
 
+import java.io.*;
+
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -68,5 +70,14 @@ public interface RemoteObjectReferenceManager {
      * Returns the number of remote object references being held that are no longer inactive use.
      */
     int totalReferenceCount();
+
+    /**
+     * Writes current statistics concerning references to objects in VM memory.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }

@@ -29,16 +29,14 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
-/**s
+/**
  * A manager for pointers to machine code in a region of VM memory where:
  * <ul>
  * <li>The region is assumed not to move during its lifetime; and</li>
  * <li>Code, once created, never moves and is never collected/evicted.</li>
  * </ul>
  */
-public class UnmanagedRemoteCodePointerManager extends AbstractVmHolder implements RemoteCodePointerManager {
-
-    private static final int TRACE_VALUE = 1;
+public class UnmanagedRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
     private final VmCodeCacheRegion codeCacheRegion;
 
@@ -96,26 +94,6 @@ public class UnmanagedRemoteCodePointerManager extends AbstractVmHolder implemen
 
     public int totalPointerCount() {
         return addressToCodePointer.size();
-    }
-
-    /**
-     * A fixed location in VM memory that contains machine code, to
-     * be used for machine code locations that are known not to
-     * move or be evicted.
-     */
-    private class ConstantRemoteCodePointer implements RemoteCodePointer {
-
-        private final Address address;
-
-        public ConstantRemoteCodePointer(Address address) {
-            this.address = address;
-        }
-
-        @Override
-        public Address getAddress() {
-            return address;
-        }
-
     }
 
 }

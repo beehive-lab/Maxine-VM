@@ -23,6 +23,7 @@
 package com.sun.max.tele.memory;
 
 import java.io.*;
+import java.lang.management.*;
 import java.text.*;
 import java.util.*;
 
@@ -115,18 +116,18 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         // Line 1
-        final StringBuilder sb1 = new StringBuilder();
-        sb1.append(entityName());
-        sb1.append(": size=" + formatter.format(memoryRegion().nBytes()));
-        printStream.println(indentation + sb1.toString());
+        printStream.println(indentation + entityName());
         // Line 2
         final StringBuilder sb2 = new StringBuilder();
-        final int activeReferenceCount = objectReferenceManager.activeReferenceCount();
-        final int totalReferenceCount = objectReferenceManager.totalReferenceCount();
-        sb2.append("object refs:  active=" + formatter.format(activeReferenceCount));
-        sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
-        sb2.append(", mgr=" + objectReferenceManager.getClass().getSimpleName());
-        printStream.println(indentation + "      " + sb2.toString());
+        sb2.append("region: ");
+        sb2.append("size=" + formatter.format(memoryRegion().nBytes()));
+        final MemoryUsage usage = memoryRegion.getUsage();
+        final long size = usage.getCommitted();
+        final long used = usage.getUsed();
+        sb2.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        printStream.println(indentation + "    " + sb2.toString());
+        // Line 3
+        objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
     }
 
     public void updateStatus(long epoch) {

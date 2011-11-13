@@ -49,7 +49,7 @@ import com.sun.max.vm.compiler.target.*;
  * @see VmCodeCacheRegion
  * @see TeleTargetMethod
  */
-final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
+final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteReferenceManager {
 
     /**
      * The code cache region whose objects are being managed.
@@ -91,7 +91,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * We don't need a heuristic for objects in a code cache region; if they are present, then they are
      * pointed at by one of the fields in a {@link TargetMethod}.
      */
-    @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
@@ -122,7 +121,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * If the location is an origin of such an object, return an object reference
      * that indirects through the {@link TargetMethod} that points at the object.
      */
-    @Override
     public TeleReference makeReference(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
@@ -144,7 +142,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return null;
     }
 
-    @Override
     public int activeReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
@@ -161,7 +158,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return count;
     }
 
-    @Override
     public int totalReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {

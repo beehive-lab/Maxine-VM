@@ -23,6 +23,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.text.*;
 import java.util.*;
 
@@ -68,6 +69,8 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
      */
     private final List<TeleExternalCodeRoutine> externalCodeRegions = new ArrayList<TeleExternalCodeRoutine>();
 
+    private final RemoteCodePointerManager codePointerManager;
+
     private final Object statsPrinter = new Object() {
         @Override
         public String toString() {
@@ -81,6 +84,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
+        this.codePointerManager = new FakeRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(statsPrinter);
     }
@@ -112,6 +116,11 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
         }
     }
 
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
+    }
+
     MaxExternalCodeRoutine findExternalCode(Address address) {
         for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
             if (registeredCode.memoryRegion().contains(address)) {
@@ -124,7 +133,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "    " + "External machine code regions registered: " + formatter.format(externalCodeRegions.size()) + "\n");
+        printStream.print(indentation + "External machine code regions registered: " + formatter.format(externalCodeRegions.size()) + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
@@ -139,4 +148,62 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
             printStream.println(externalCodeMemoryRegion.start().toHexString() + "--" + externalCodeMemoryRegion.end().minus(1).toHexString() + ":  " + name);
         }
     }
+
+    /**
+     * A manager for pointers to machine code not in any known region, presumed to be constant.
+     */
+    private class FakeRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
+
+        /**
+         * Map:  address in VM --> a {@link RemoteCodePointer} that refers to the machine code at that location.
+         */
+        private Map<Long, WeakReference<RemoteCodePointer>> addressToCodePointer = new HashMap<Long, WeakReference<RemoteCodePointer>>();
+
+        public FakeRemoteCodePointerManager(TeleVM vm) {
+            super(vm);
+        }
+
+        public CodeHoldingRegion codeRegion() {
+            return null;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Since we don't know anything about this code, all we can ensure is that it is really
+         * external to anything else we know about.
+         */
+        public boolean isValidCodePointer(Address address) throws TeleError {
+            return vm().findMemoryRegion(address) == null;
+        }
+
+        public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
+            TeleError.check(isValidCodePointer(address), "Location is in a VM allocation");
+            RemoteCodePointer codePointer = null;
+            final WeakReference<RemoteCodePointer> existingRef = addressToCodePointer.get(address.toLong());
+            if (existingRef != null) {
+                codePointer = existingRef.get();
+            }
+            if (codePointer == null && isValidCodePointer(address)) {
+                codePointer = new ConstantRemoteCodePointer(address);
+                addressToCodePointer.put(address.toLong(), new WeakReference<RemoteCodePointer>(codePointer));
+            }
+            return codePointer;
+        }
+
+        public int activePointerCount() {
+            int count = 0;
+            for (WeakReference<RemoteCodePointer> weakRef : addressToCodePointer.values()) {
+                if (weakRef.get() != null) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public int totalPointerCount() {
+            return addressToCodePointer.size();
+        }
+    }
+
 }

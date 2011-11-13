@@ -37,7 +37,7 @@ import com.sun.max.unsafe.*;
  * <li>Objects, once created never move and are never collected/evicted.</li>
  * </ul>
  */
-public class FixedObjectRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
+public final class FixedObjectRemoteReferenceManager extends AbstractRemoteReferenceManager {
 
     private static final int TRACE_VALUE = 1;
 
