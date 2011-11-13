@@ -171,7 +171,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             // Not a known method compilation, but in a code cache region.
             // Use the interpreter to see if the code manager in the VM knows about it.
             try {
-                final Reference targetMethodReference = vm().methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
+                final Reference targetMethodReference = methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
                 if (targetMethodReference != null && !targetMethodReference.isZero()) {
                     objects().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
@@ -231,7 +231,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
     }
 
     /**
-     * Adds a {@link MaxCompilation} entry to the code registry, indexed by code address.
+     * Adds a {@link MaxCompilation} to the registration of compilations for the code region containing it.
      * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
      *
      * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
@@ -246,7 +246,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         } else {
             // Find the code cache region in which the compilation has been allocated, and add it to
             // the registry we keep for that code region.
-            final VmCodeCacheRegion codeCacheRegion = vm().codeCache().findCodeCacheRegion(teleTargetMethod.getRegionStart());
+            final VmCodeCacheRegion codeCacheRegion = codeCache().findCodeCacheRegion(teleTargetMethod.getRegionStart());
             assert codeCacheRegion != null;
             teleTargetMethod.setCodeCacheRegion(codeCacheRegion);
             codeCacheRegion.register(teleTargetMethod);

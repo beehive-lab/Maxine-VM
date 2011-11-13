@@ -74,6 +74,12 @@ public interface TeleVMAccess {
     VmFieldAccess fields();
 
     /**
+     * Gets access to predefined accessors for specific methods
+     * in specific classes.
+     */
+    VmMethodAccess methods();
+
+    /**
      * Gets the manager for information about objects in the VM.
      *
      * @return the singleton manager for object information.
@@ -118,4 +124,5 @@ public interface TeleVMAccess {
      * null if watchpoints not supported.
      */
     VmWatchpoint.WatchpointManager watchpointManager();
+
 }
