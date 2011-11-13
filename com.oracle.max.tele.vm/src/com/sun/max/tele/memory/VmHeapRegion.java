@@ -120,11 +120,13 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         // Line 2
         final StringBuilder sb2 = new StringBuilder();
         sb2.append("region: ");
-        sb2.append("size=" + formatter.format(memoryRegion().nBytes()));
-        final MemoryUsage usage = memoryRegion.getUsage();
+        final MemoryUsage usage = memoryRegion().getUsage();
         final long size = usage.getCommitted();
-        final long used = usage.getUsed();
-        sb2.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        sb2.append("size=" + formatter.format(size));
+        if (size > 0) {
+            final long used = usage.getUsed();
+            sb2.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        }
         printStream.println(indentation + "    " + sb2.toString());
         // Line 3
         objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
