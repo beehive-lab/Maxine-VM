@@ -23,6 +23,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
@@ -212,7 +213,13 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
-        printStream.print(indentation + "Regions: \n");
+        final NumberFormat formatter = NumberFormat.getInstance();
+        long totalSize = 0;
+        for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
+            totalSize += codeCacheRegion.memoryRegion().nBytes();
+        }
+        printStream.println(indentation + "Total size: " + formatter.format(totalSize) + " bytes");
+        printStream.print(indentation + "By region: \n");
         for (VmCodeCacheRegion codeCacheRegion : vmCodeCacheRegions) {
             codeCacheRegion.printSessionStats(printStream, indent + 4, verbose);
         }

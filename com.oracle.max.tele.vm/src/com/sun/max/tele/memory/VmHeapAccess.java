@@ -629,7 +629,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         } else if (gcCompletedCount >= 0) {
             printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
         }
-        printStream.print(indentation + "Regions: \n");
+        printStream.print(indentation + "By region: \n");
         for (MaxHeapRegion region : allHeapRegions) {
             region.printSessionStats(printStream, indent + 5, verbose);
         }
