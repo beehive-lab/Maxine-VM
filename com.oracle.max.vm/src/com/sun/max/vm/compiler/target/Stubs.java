@@ -718,7 +718,7 @@ public class Stubs {
     }
 
     /**
-     * Generates a stub to deoptimize an method upon returning to it.
+     * Generates a stub to deoptimize a method upon returning to it.
      *
      * @param kind the return value kind
      */
@@ -900,9 +900,13 @@ public class Stubs {
             CiRegister arg2 = args[2].asRegister();
             asm.movq(arg2, AMD64.rbp);
 
-            // Copy callee save area into arg4 (i.e. 'csa')
+            // Copy callee save area into arg3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
             asm.movq(arg3, AMD64.rsp);
+
+            // Patch return address of deopt stub frame to look
+            // like it was called by frame being deopt'ed.
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize), arg0);
 
             // Call runtime routine
             asm.alignForPatchableDirectCall();
@@ -957,11 +961,11 @@ public class Stubs {
             CiRegister arg1 = args[1].asRegister();
             asm.movq(arg1, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize));
 
-            // Copy stack pointer into arg 1 (i.e. 'sp')
+            // Copy stack pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
             asm.leaq(arg2, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize + 8));
 
-            // Copy original frame pointer into arg 2 (i.e. 'fp')
+            // Copy original frame pointer into arg 3 (i.e. 'fp')
             CiRegister arg3 = args[3].asRegister();
             asm.movq(arg3, AMD64.rbp);
 
