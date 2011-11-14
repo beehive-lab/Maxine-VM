@@ -520,10 +520,7 @@ def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
 
-def gcut(env, args):
-    """runs the Graal Compiler Unit Tests in the GraalVM"""
-    # (ds) The boot class path must be used for some reason I don't quite understand
-    
+def _find_graal_compiler_unit_tests_classes(env):
     def find_test_classes(testClassList, searchDir, pkgRoot):
         for root, _, files in os.walk(searchDir):
             for name in files:
@@ -538,13 +535,23 @@ def gcut(env, args):
                         pkg = root[len(searchDir) + 1:].replace(os.sep, '.')
                         testClassList.append(pkg + '.' + name[:-len('.java')])
 
+    project = 'com.oracle.max.graal.compiler.tests'
     pkgRoot = 'com.oracle.max.graal.compiler.test'
-    searchDir = join(env.maxine_home, 'com.oracle.max.graal.compiler', 'test')
-    javaClassList = []
-    find_test_classes(javaClassList, searchDir, pkgRoot)
+    searchDir = join(env.maxine_home, project, 'src')
+    compilerUnitTestClasses = []
+    find_test_classes(compilerUnitTestClasses, searchDir, pkgRoot)
+    return compilerUnitTestClasses
+    
+def gcut(env, args):
+    """runs the Graal Compiler Unit Tests in the GraalVM"""
+    # (ds) The boot class path must be used for some reason I don't quite understand
     
     os.environ['MAXINE'] = env.maxine_home
-    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + javaClassList)
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
+
+def gcutmax(env, args):
+    """runs the Graal Compiler Unit Tests in a hosted Maxine environment"""
+    env.run_java(['-Dgraal.vm=Maxine', '-ea', '-cp', env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
 
 def graalvm(env, args):
     """runs the GraalVM"""
@@ -1027,7 +1034,8 @@ table = {
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
-    'gcut': [gcut, 'patterns...'],
+    'gcut': [gcut, ''],
+    'gcutmax': [gcutmax, ''],
     'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],
