@@ -42,23 +42,19 @@ public class FoldPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        // Apply folding.
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            RiResolvedMethod method = callTarget.targetMethod();
-            Invoke invoke = callTarget.invoke();
-            if (invoke != null) {
-                if (runtime.isFoldable(method)) {
-                    NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
-                    CiConstant[] constantArgs = new CiConstant[arguments.size()];
-                    for (int i = 0; i < constantArgs.length; ++i) {
-                        constantArgs[i] = arguments.get(i).asConstant();
-                    }
-                    CiConstant foldResult = runtime.fold(method, constantArgs);
-                    if (foldResult != null) {
-                        StructuredGraph foldGraph = new StructuredGraph();
-                        foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-                        InliningUtil.inline(invoke, foldGraph, false);
-                    }
+        for (Invoke invoke : graph.getInvokes()) {
+            RiResolvedMethod method = invoke.callTarget().targetMethod();
+            if (runtime.isFoldable(method)) {
+                NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
+                CiConstant[] constantArgs = new CiConstant[arguments.size()];
+                for (int i = 0; i < constantArgs.length; ++i) {
+                    constantArgs[i] = arguments.get(i).asConstant();
+                }
+                CiConstant foldResult = runtime.fold(method, constantArgs);
+                if (foldResult != null) {
+                    StructuredGraph foldGraph = new StructuredGraph();
+                    foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
+                    InliningUtil.inline(invoke, foldGraph, false);
                 }
             }
         }

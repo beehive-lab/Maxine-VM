@@ -48,28 +48,25 @@ public class MustInlinePhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            Invoke invoke = callTarget.invoke();
-            RiResolvedMethod method = callTarget.targetMethod();
-            if (invoke != null) {
-                assert ((MethodActor) method).intrinsic() == null : "Intrinsics must be resolved before this phase " + ((MethodActor) method).intrinsic();
-                if (runtime.mustInline(method)) {
-                    StructuredGraph inlineGraph = cache.get(method);
-                    if (inlineGraph == null) {
-                        inlineGraph = new StructuredGraph();
-                        new GraphBuilderPhase(runtime, method).apply(inlineGraph);
-                        new PhiSimplificationPhase().apply(inlineGraph);
-                        RiResolvedType curAccessor = getAccessor(method, accessor);
-                        if (curAccessor != null) {
-                            new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
-                        }
-                        new FoldPhase(runtime).apply(inlineGraph);
-                        new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
-                        new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
-                        cache.put(method, inlineGraph);
+        for (Invoke invoke : graph.getInvokes()) {
+            RiResolvedMethod method = invoke.callTarget().targetMethod();
+            assert ((MethodActor) method).intrinsic() == null : "Intrinsics must be resolved before this phase " + ((MethodActor) method).intrinsic();
+            if (runtime.mustInline(method)) {
+                StructuredGraph inlineGraph = cache.get(method);
+                if (inlineGraph == null) {
+                    inlineGraph = new StructuredGraph();
+                    new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                    new PhiSimplificationPhase().apply(inlineGraph);
+                    RiResolvedType curAccessor = getAccessor(method, accessor);
+                    if (curAccessor != null) {
+                        new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
                     }
-                    InliningUtil.inline(invoke, inlineGraph, false);
+                    new FoldPhase(runtime).apply(inlineGraph);
+                    new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
+                    new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
+                    cache.put(method, inlineGraph);
                 }
+                InliningUtil.inline(invoke, inlineGraph, false);
             }
         }
     }
