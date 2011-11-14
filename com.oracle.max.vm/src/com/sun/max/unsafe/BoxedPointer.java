@@ -34,11 +34,6 @@ import com.sun.max.vm.reference.*;
 @HOSTED_ONLY
 public final class BoxedPointer extends Pointer implements Boxed {
 
-    static {
-        // Ensure the native code is loaded
-        Prototype.loadHostedLibrary();
-    }
-
     // ATTENTION: this field name must match the corresponding declaration in "pointer.c"!
     private long nativeWord;
 
@@ -84,6 +79,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public byte readByte(Offset offset) {
+        Prototype.loadHostedLibrary();
         return nativeReadByte(nativeWord, offset.toLong());
     }
 
@@ -91,11 +87,13 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public short readShort(Offset offset) {
+        Prototype.loadHostedLibrary();
         return nativeReadShort(nativeWord, offset.toLong());
     }
 
     @Override
     public char readChar(Offset offset) {
+        Prototype.loadHostedLibrary();
         return (char) nativeReadShort(nativeWord, offset.toLong());
     }
 
@@ -103,6 +101,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public int readInt(Offset offset) {
+        Prototype.loadHostedLibrary();
         return nativeReadInt(nativeWord, offset.toLong());
     }
 
@@ -115,6 +114,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public long readLong(Offset offset) {
+        Prototype.loadHostedLibrary();
         return nativeReadLong(nativeWord, offset.toLong());
     }
 
@@ -142,6 +142,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeByte(Offset offset, byte value) {
+        Prototype.loadHostedLibrary();
         nativeWriteByte(nativeWord, offset.toLong(), value);
     }
 
@@ -149,6 +150,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeShort(Offset offset, short value) {
+        Prototype.loadHostedLibrary();
         nativeWriteShort(nativeWord, offset.toLong(), value);
     }
 
@@ -156,6 +158,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeInt(Offset offset, int value) {
+        Prototype.loadHostedLibrary();
         nativeWriteInt(nativeWord, offset.toLong(), value);
     }
 
@@ -168,6 +171,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeLong(Offset offset, long value) {
+        Prototype.loadHostedLibrary();
         nativeWriteLong(nativeWord, offset.toLong(), value);
     }
 
@@ -189,6 +193,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeReference(Offset offset, Reference value) {
+        Prototype.loadHostedLibrary();
         nativeWriteObject(nativeWord, offset.toLong(), value.toJava());
     }
 }
