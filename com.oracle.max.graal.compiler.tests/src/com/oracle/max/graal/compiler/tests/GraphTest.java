@@ -31,6 +31,7 @@ import junit.framework.Assert;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
 
@@ -44,7 +45,7 @@ import com.sun.cri.ri.*;
  * <li>Assert that the transformed graph is equal to an expected graph.</li>
  * </ol>
  * <p>
- * See {@link IfCanonicalizerTest} as an example.
+ * See {@link InvokeTest} as an example.
  * <p>
  * The tests can be run in Eclipse with the "Compiler Unit Test" Eclipse
  * launch configuration found in the top level of this project or by
@@ -76,7 +77,7 @@ public abstract class GraphTest {
         }
     }
 
-    protected RiRuntime runtime() {
+    protected GraalRuntime runtime() {
         return graalCompiler.runtime;
     }
 
