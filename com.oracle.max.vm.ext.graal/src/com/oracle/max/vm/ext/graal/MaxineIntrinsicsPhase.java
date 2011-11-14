@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.graal;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.member.*;

@@ -32,7 +32,6 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
 import com.oracle.max.graal.nodes.util.*;
-import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
