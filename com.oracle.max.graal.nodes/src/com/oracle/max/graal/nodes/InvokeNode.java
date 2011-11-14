@@ -102,6 +102,10 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
 
     @Override
     public void intrinsify(Node node) {
+        if (node instanceof StateSplit) {
+            StateSplit stateSplit = (StateSplit) node;
+            stateSplit.setStateAfter(stateAfter());
+        }
         if (node instanceof FixedWithNextNode) {
             FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
             FixedNode next = this.next();
