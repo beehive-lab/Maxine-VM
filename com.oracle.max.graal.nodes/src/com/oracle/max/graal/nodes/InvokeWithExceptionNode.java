@@ -169,6 +169,10 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     @Override
     public void intrinsify(Node node) {
         killExceptionEdge();
+        if (node instanceof StateSplit) {
+            StateSplit stateSplit = (StateSplit) node;
+            stateSplit.setStateAfter(stateAfter());
+        }
         if (node instanceof FixedWithNextNode) {
             FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
             FixedNode next = this.next();
