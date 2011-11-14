@@ -843,14 +843,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-
-
-    protected CompilerStub stubFor(CiRuntimeCall runtimeCall) {
-        CompilerStub stub = compilation.compiler.lookupStub(runtimeCall);
-        compilation.frameMap().usesStub(stub);
-        return stub;
-    }
-
     protected CompilerStub stubFor(CompilerStub.Id id) {
         CompilerStub stub = compilation.compiler.lookupStub(id);
         compilation.frameMap().usesStub(stub);

@@ -222,12 +222,12 @@ public class HotSpotRuntime implements GraalRuntime {
 
     @Override
     public Class<?> asJavaClass(CiConstant c) {
-        return null;
+        return (Class<?>) c.asObject();
     }
 
     @Override
     public Object asJavaObject(CiConstant c) {
-        return null;
+        return c.asObject();
     }
 
     @Override
