@@ -23,6 +23,7 @@
 package com.oracle.max.graal.hotspot;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.cri.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -33,7 +34,7 @@ public interface Compiler {
     GraalCompiler getCompiler();
     RiType lookupType(String returnType, HotSpotTypeResolved accessingClass);
     HotSpotVMConfig getConfig();
-    RiRuntime getRuntime();
+    GraalRuntime getRuntime();
     CiTarget getTarget();
 
 }

@@ -33,6 +33,7 @@ import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -749,6 +750,48 @@ public class CompilationBroker {
                 return true;
             }
             throw FatalError.unimplemented();
+        }
+    }
+
+    /**
+     * Compiler that can be used to create a functional Maxine runtime (albeit without compilation)
+     * when a specified compiler can't be found on the class path.
+     */
+    @HOSTED_ONLY
+    public static class NullCompiler implements RuntimeCompiler {
+
+        public final Nature nature;
+
+        public NullCompiler(Nature nature) {
+            this.nature = nature;
+        }
+
+        public void initialize(Phase phase) {
+        }
+        public TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
+            return null;
+        }
+        public Nature nature() {
+            return nature;
+        }
+        public boolean matches(String compilerName) {
+            return true;
+        }
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "[" + nature + "]";
+        }
+    }
+
+    public static class NullOptCompiler extends NullCompiler {
+        public NullOptCompiler() {
+            super(Nature.OPT);
+        }
+    }
+
+    public static class NullBaselineCompiler extends NullCompiler {
+        public NullBaselineCompiler() {
+            super(Nature.BASELINE);
         }
     }
 }

@@ -24,17 +24,14 @@ package com.oracle.max.vm.ext.c1xgraal;
 
 import static com.sun.max.vm.MaxineVM.*;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 
 /**
  * Integration of the C1X + Graal compiler into Maxine's compilation framework.
@@ -83,17 +80,5 @@ public class C1XGraal implements RuntimeCompiler {
 
     public boolean matches(String compilerName) {
         return compilerName.equals("C1X") || compilerName.equals("Graal");
-    }
-
-    /**
-     * Factory method for getting a Graal compiler instance. This method is called via reflection.
-     */
-    public static GraalCompiler getGraalCompiler() {
-        if (MaxineVM.isHosted() && vm() == null) {
-            RuntimeCompiler.optimizingCompilerOption.setValue(C1XGraal.class.getName());
-            VMConfigurator.installStandard(BuildLevel.PRODUCT);
-            JavaPrototype.initialize(false);
-        }
-        return ((C1XGraal) vm().compilationBroker.optimizingCompiler).graal.compiler();
     }
 }

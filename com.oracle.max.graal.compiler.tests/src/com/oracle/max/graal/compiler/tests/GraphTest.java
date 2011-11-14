@@ -53,11 +53,11 @@ import com.sun.cri.ri.*;
  */
 public abstract class GraphTest {
 
-    private GraalCompiler graalCompiler;
+    protected final GraalRuntime runtime;
     private static IdealGraphPrinterObserver observer;
 
     public GraphTest() {
-        this.graalCompiler = GraalCompilerAccess.getGraalCompiler();
+        this.runtime = GraalRuntimeAccess.getGraalRuntime();
     }
 
     @BeforeClass
@@ -66,8 +66,7 @@ public abstract class GraphTest {
         if (o.networkAvailable()) {
             observer = o;
         }
-        System.out.println("constructor called");
-
+        //System.out.println("constructor called");
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {
@@ -78,7 +77,7 @@ public abstract class GraphTest {
     }
 
     protected GraalRuntime runtime() {
-        return graalCompiler.runtime;
+        return runtime;
     }
 
     /**
@@ -101,7 +100,6 @@ public abstract class GraphTest {
      * Parses a Java method to produce a graph.
      */
     protected StructuredGraph parse(Method m) {
-        RiRuntime runtime = graalCompiler.runtime;
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
         StructuredGraph graph = new StructuredGraph();
         new GraphBuilderPhase(runtime, riMethod).apply(graph);
