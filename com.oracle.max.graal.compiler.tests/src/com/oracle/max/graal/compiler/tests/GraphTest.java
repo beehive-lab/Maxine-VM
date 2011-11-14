@@ -24,7 +24,9 @@ package com.oracle.max.graal.compiler.tests;
 
 import java.lang.reflect.*;
 
-import junit.framework.*;
+import org.junit.*;
+
+import junit.framework.Assert;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
@@ -51,9 +53,20 @@ import com.sun.cri.ri.*;
 public abstract class GraphTest {
 
     private GraalCompiler graalCompiler;
+    private static IdealGraphPrinterObserver observer;
 
     public GraphTest() {
         this.graalCompiler = GraalCompilerAccess.getGraalCompiler();
+    }
+
+    @BeforeClass
+    public static void init() {
+        IdealGraphPrinterObserver o = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+        if (o.networkAvailable()) {
+            observer = o;
+        }
+        System.out.println("constructor called");
+
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {
@@ -95,12 +108,14 @@ public abstract class GraphTest {
     }
 
     protected void print(String title, StructuredGraph... graphs) {
-        IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-        observer.printGraphs(getClass().getSimpleName() + ": " + title, graphs);
+        if (observer != null) {
+            observer.printGraphs(getClass().getSimpleName() + ": " + title, graphs);
+        }
     }
 
     protected void print(StructuredGraph graph) {
-        IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-        observer.printSingleGraph(getClass().getSimpleName(), graph);
+        if (observer != null) {
+            observer.printSingleGraph(getClass().getSimpleName(), graph);
+        }
     }
 }

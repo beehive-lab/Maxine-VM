@@ -118,6 +118,17 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
+    public boolean networkAvailable() {
+        try {
+            Socket s = new Socket(host, port);
+            s.setSoTimeout(10);
+            s.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     private void openNetworkPrinter(String title, RiResolvedMethod method) {
         try {
             socket = new Socket(host, port);
