@@ -583,4 +583,8 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return false;
     }
 
+    @Override
+    public RiConstantPool getConstantPool() {
+        return null;
+    }
 }

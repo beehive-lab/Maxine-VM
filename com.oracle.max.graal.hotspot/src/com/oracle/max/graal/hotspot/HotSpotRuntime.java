@@ -133,11 +133,6 @@ public class HotSpotRuntime implements GraalRuntime {
         return "No disassembler available";
     }
 
-    @Override
-    public RiConstantPool getConstantPool(RiResolvedMethod method) {
-        return ((HotSpotTypeResolved) method.holder()).constantPool();
-    }
-
     public Class<?> getJavaClass(CiConstant c) {
         return null;
     }

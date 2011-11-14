@@ -193,4 +193,10 @@ public interface RiResolvedMethod extends RiMethod {
      * @return Size of compiled method or -1 if this method has not been compiled or this information is not available.
      */
     int compiledCodeSize();
+
+    /**
+     * Returns a pointer to the method's constant pool.
+     * @return the constant pool
+     */
+    RiConstantPool getConstantPool();
 }

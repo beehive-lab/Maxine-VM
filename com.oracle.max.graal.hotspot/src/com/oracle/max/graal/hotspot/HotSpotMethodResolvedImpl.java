@@ -213,6 +213,11 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         return compilerStorage;
     }
 
+    @Override
+    public RiConstantPool getConstantPool() {
+        return ((HotSpotTypeResolvedImpl) holder()).constantPool();
+    }
+
     public void dumpProfile() {
         TTY.println("profile info for %s", this);
         TTY.println("canBeStaticallyBound: " + canBeStaticallyBound());

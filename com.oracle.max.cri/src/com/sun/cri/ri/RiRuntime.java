@@ -34,13 +34,6 @@ s */
 public interface RiRuntime {
 
     /**
-     * Gets the constant pool for a method.
-     * @param method the method
-     * @return the constant pool for the method
-     */
-    RiConstantPool getConstantPool(RiResolvedMethod method);
-
-    /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
      * If this method returns true, then the null-check of the receiver emitted during
      * inlining is omitted.

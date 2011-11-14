@@ -128,15 +128,6 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     /**
-     * Gets the constant pool for a specified method.
-     * @param method the compiler interface method
-     * @return the compiler interface constant pool for the specified method
-     */
-    public RiConstantPool getConstantPool(RiResolvedMethod method) {
-        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
-    }
-
-    /**
      * Checks whether the runtime requires inlining of the specified method.
      * @param method the method to inline
      * @return {@code true} if the method must be inlined; {@code false}
@@ -146,7 +137,7 @@ public class MaxRuntime implements GraalRuntime {
         if (!(method instanceof ClassMethodActor)) {
             return false;
         }
-        ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
+        ClassMethodActor methodActor = (ClassMethodActor) method;
         if (methodActor.isInline()) {
             return true;
         }
@@ -168,7 +159,7 @@ public class MaxRuntime implements GraalRuntime {
      * {@code false} to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(RiResolvedMethod method) {
-        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        final ClassMethodActor classMethodActor = (ClassMethodActor) method;
         if (classMethodActor.isNative()) {
             // Native stubs must not be inlined as there is a 1:1 relationship between
             // a NativeFunction and the TargetMethod from which it is called. This
@@ -190,7 +181,7 @@ public class MaxRuntime implements GraalRuntime {
     @Override
     public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
         if (callee instanceof ClassMethodActor) {
-            final ClassMethodActor cmaCallee = asClassMethodActor(callee, "notifyInline()");
+            final ClassMethodActor cmaCallee = (ClassMethodActor) callee;
             if (cmaCallee.isUsingTaggedLocals()) {
                 final CompilationInfo ci = compilationInfo.get();
                 ci.usesTagging = true;
@@ -206,10 +197,6 @@ public class MaxRuntime implements GraalRuntime {
      */
     public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
-    }
-
-    static ClassMethodActor asClassMethodActor(RiResolvedMethod method, String operation) {
-        return (ClassMethodActor) method;
     }
 
     public int basicObjectLockOffsetInBytes() {
@@ -228,7 +215,7 @@ public class MaxRuntime implements GraalRuntime {
 
     @Override
     public String disassemble(RiResolvedMethod method) {
-        ClassMethodActor classMethodActor = asClassMethodActor(method, "disassemble()");
+        ClassMethodActor classMethodActor = (ClassMethodActor) method;
         return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
     }
 

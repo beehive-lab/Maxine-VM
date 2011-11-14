@@ -242,7 +242,7 @@ public final class GraphBuilder {
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
         BytecodeStream stream = new BytecodeStream(scope.method.code());
-        RiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
+        RiConstantPool constantPool = scope.method.getConstantPool();
         scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         scope.setStoresInLoops(blockMap.getStoresInLoops());
         curBlock = start;
@@ -1494,7 +1494,7 @@ public final class GraphBuilder {
         // prepare callee state
         curState = curState.pushScope(calleeScope);
         BytecodeStream stream = new BytecodeStream(target.code());
-        RiConstantPool constantPool = compilation.runtime.getConstantPool(target);
+        RiConstantPool constantPool = target.getConstantPool();
         ScopeData data = new ScopeData(scopeData, calleeScope, blockMap, stream, constantPool);
         data.setContinuation(continuation);
         scopeData = data;
