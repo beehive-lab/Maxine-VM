@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -29,7 +30,7 @@ import com.sun.cri.ci.*;
 /**
  * Cretes a memory barrier.
  */
-public class MembarNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
+public class MembarNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
     private final int barriers;
 

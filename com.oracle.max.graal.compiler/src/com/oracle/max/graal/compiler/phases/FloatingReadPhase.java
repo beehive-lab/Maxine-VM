@@ -144,7 +144,7 @@ public class FloatingReadPhase extends Phase {
 
         public void processCheckpoint(MemoryCheckpoint checkpoint) {
             map.clear();
-            map.put(LocationNode.ANY_LOCATION, checkpoint.node());
+            map.put(LocationNode.ANY_LOCATION, (Node) checkpoint);
         }
 
         public void processWrite(WriteNode writeNode) {

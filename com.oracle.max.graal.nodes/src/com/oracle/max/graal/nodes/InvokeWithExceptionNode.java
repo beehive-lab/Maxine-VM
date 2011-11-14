@@ -38,7 +38,6 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
 
     @Input private MethodCallTargetNode callTarget;
     @Input private FrameState stateAfter;
-    @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
     private boolean canInline = true;
     private final int bci;
 
@@ -139,11 +138,6 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
         Map<Object, Object> debugProperties = super.getDebugProperties();
         debugProperties.put("memoryCheckpoint", "true");
         return debugProperties;
-    }
-
-    @Override
-    public NodeInputList<Node> mergedNodes() {
-        return mergedNodes;
     }
 
     public void killExceptionEdge() {

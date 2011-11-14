@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, Invoke, LIRLowerable  {
+public final class InvokeNode extends AbstractStateSplit implements Node.IterableNodeType, Invoke, LIRLowerable, MemoryCheckpoint  {
 
     @Input private MethodCallTargetNode callTarget;
     private boolean canInline = true;

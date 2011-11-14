@@ -22,11 +22,12 @@
  */
 package com.oracle.max.graal.nodes.extended;
 
+import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 
-public final class WriteMemoryCheckpointNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
+public final class WriteMemoryCheckpointNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
     public WriteMemoryCheckpointNode() {
         this(CiKind.Illegal);

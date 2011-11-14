@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code AccessMonitorNode} is the base class of both monitor acquisition and release.
  */
-public abstract class AccessMonitorNode extends AbstractMemoryCheckpointNode {
+public abstract class AccessMonitorNode extends AbstractStateSplit implements MemoryCheckpoint {
 
     @Input private ValueNode object;
     @Data private int monitorIndex;
