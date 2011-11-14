@@ -201,11 +201,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public int compiledCodeSize() {
-        return compiler.getVMEntries().RiMethod_compiledCodeSize(this);
-    }
-
-    @Override
     public Map<Object, Object> compilerStorage() {
         if (compilerStorage == null) {
             compilerStorage = new HashMap<Object, Object>();

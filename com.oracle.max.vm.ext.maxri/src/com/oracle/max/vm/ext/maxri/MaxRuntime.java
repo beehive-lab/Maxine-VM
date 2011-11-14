@@ -455,10 +455,6 @@ public class MaxRuntime implements GraalRuntime {
         return STACK_SLOT_SIZE;
     }
 
-    public boolean supportsArrayIntrinsics() {
-        return false;
-    }
-
     public int getArrayLength(CiConstant array) {
         return Array.getLength(array.asObject());
     }

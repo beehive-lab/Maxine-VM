@@ -107,8 +107,6 @@ public interface VMEntries {
 
     boolean RiMethod_hasCompiledCode(HotSpotMethodResolved method);
 
-    int RiMethod_compiledCodeSize(HotSpotMethodResolved method);
-
     RiMethod getRiMethod(Method reflectionMethod);
 
     long getMaxCallTargetOffset(CiRuntimeCall rtcall);

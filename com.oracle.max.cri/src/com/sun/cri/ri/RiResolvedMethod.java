@@ -188,13 +188,6 @@ public interface RiResolvedMethod extends RiMethod {
     Map<Object, Object> compilerStorage();
 
     /**
-     * Provides the size of this method's compiled code (if any). Constitutes a possible metric for inlining decisions.
-     *
-     * @return Size of compiled method or -1 if this method has not been compiled or this information is not available.
-     */
-    int compiledCodeSize();
-
-    /**
      * Returns a pointer to the method's constant pool.
      * @return the constant pool
      */
