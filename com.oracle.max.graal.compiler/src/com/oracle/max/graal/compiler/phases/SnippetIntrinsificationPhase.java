@@ -25,8 +25,6 @@ package com.oracle.max.graal.compiler.phases;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
-import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.Node.ConstantNodeParameter;
 import com.oracle.max.graal.graph.Node.NodeIntrinsic;
@@ -46,164 +44,169 @@ public class SnippetIntrinsificationPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            tryIntrinsify(invoke);
-        }
-        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
-            tryIntrinsify(invoke);
+        for (Invoke i : graph.getInvokes()) {
+            tryIntrinsify(i);
         }
     }
 
     private void tryIntrinsify(Invoke invoke) {
-        if (invoke == null) {
-            return;
-        }
-
         RiResolvedMethod target = invoke.callTarget().targetMethod();
-        if (Modifier.isStatic(target.accessFlags())) {
-            Class< ? > c = target.holder().toJava();
-            if ((c != null && !Modifier.isPrivate(target.accessFlags()) && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
-                try {
-                    Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
-                    Method m = c.getMethod(target.name(), parameterTypes);
-                    if (m != null) {
-                        NodeIntrinsic intrinsic = m.getAnnotation(Node.NodeIntrinsic.class);
-                        if (intrinsic != null) {
-                            if (intrinsic.value() != NodeIntrinsic.class) {
-                                c = intrinsic.value();
-                            }
-                            int z = 0;
-                            Object[] initArgs = new Object[parameterTypes.length];
-                            ValueNode[] arguments = InliningUtil.simplifyParameters(invoke);
-                            for (Annotation[] annotations : m.getParameterAnnotations()) {
-                                Object currentValue = null;
-                                for (Annotation a : annotations) {
-                                    if (a instanceof ConstantNodeParameter) {
-                                        Node n = arguments[z];
-                                        assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
-                                        ConstantNode constantNode = (ConstantNode) n;
-                                        currentValue = constantNode.asConstant().asObject();
-                                        if (currentValue instanceof Class<?>) {
-                                            currentValue = runtime.getType((Class< ? >) currentValue);
-                                            parameterTypes[z] = RiResolvedType.class;
-                                        }
-                                        break;
+        Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
+        Method m = findMethod(target, parameterTypes);
+        if (m != null) {
+            NodeIntrinsic intrinsic = m.getAnnotation(Node.NodeIntrinsic.class);
+            if (intrinsic != null) {
+                // Prepare the arguments for the reflective constructor call on the node class.
+                Object[] nodeConstructorArguments = prepareArguments(invoke, parameterTypes, m);
+
+                // Create the new node instance.
+                Class< ? > c = getNodeClass(target, intrinsic);
+                Node newInstance = createNodeInstance(c, parameterTypes, nodeConstructorArguments);
+
+                // Replace the invoke with the new node.
+                invoke.node().graph().add(newInstance);
+                invoke.intrinsify(newInstance);
+
+                // Clean up checkcast instructions inserted by javac if the return type is generic.
+                cleanUpReturnCheckCast(newInstance);
+            }
+        }
+    }
+
+    private Object[] prepareArguments(Invoke invoke, Class< ? >[] parameterTypes, Method m) {
+        NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
+        Object[] nodeConstructorArguments = new Object[arguments.size()];
+        for (int i = 0; i < nodeConstructorArguments.length; ++i) {
+            int parameterIndex = i;
+            if (!invoke.callTarget().isStatic()) {
+                parameterIndex--;
+            }
+            ValueNode argument = tryBoxingElimination(parameterIndex, m, arguments.get(i));
+            ConstantNodeParameter param = findConstantParameterAnnotation(parameterIndex, m.getParameterAnnotations());
+            if (param != null) {
+                assert argument instanceof ConstantNode : "parameter " + parameterIndex + " must be compile time constant for " + invoke.callTarget().targetMethod();
+                ConstantNode constantNode = (ConstantNode) argument;
+                Object o = constantNode.asConstant().asObject();
+                if (o instanceof Class< ? >) {
+                    nodeConstructorArguments[i] = runtime.getType((Class< ? >) o);
+                    parameterTypes[i] = RiResolvedType.class;
+                } else {
+                    nodeConstructorArguments[i] = o;
+                }
+            } else {
+                nodeConstructorArguments[i] = argument;
+                parameterTypes[i] = ValueNode.class;
+            }
+        }
+        return nodeConstructorArguments;
+    }
+
+    private Method findMethod(RiResolvedMethod target, Class< ? >[] parameterTypes) {
+        Class< ? > c = target.holder().toJava();
+        if (c != null) {
+            try {
+                return c.getDeclaredMethod(target.name(), parameterTypes);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    private Class< ? > getNodeClass(RiResolvedMethod target, NodeIntrinsic intrinsic) {
+        Class< ? > result = intrinsic.value();
+        if (result == NodeIntrinsic.class) {
+            result = target.holder().toJava();
+        }
+        assert Node.class.isAssignableFrom(result);
+        return result;
+    }
+
+    private ConstantNodeParameter findConstantParameterAnnotation(int parameterIndex, Annotation[][] parameterAnnotations) {
+        if (parameterIndex >= 0) {
+            for (Annotation a : parameterAnnotations[parameterIndex]) {
+                if (a instanceof ConstantNodeParameter) {
+                    return (ConstantNodeParameter) a;
+                }
+            }
+        }
+        return null;
+    }
+
+    private ValueNode tryBoxingElimination(int parameterIndex, Method m, ValueNode node) {
+        if (parameterIndex >= 0) {
+            Type type = m.getGenericParameterTypes()[parameterIndex];
+            if (type instanceof TypeVariable) {
+                TypeVariable typeVariable = (TypeVariable) type;
+                if (typeVariable.getBounds().length == 1) {
+                    Type boundType = typeVariable.getBounds()[0];
+                    if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
+                        // Unbound generic => try boxing elimination
+                        if (node.usages().size() == 2) {
+                            if (node instanceof Invoke) {
+                                Invoke invokeNode = (Invoke) node;
+                                MethodCallTargetNode callTarget = invokeNode.callTarget();
+                                if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
+                                    if (invokeNode instanceof InvokeWithExceptionNode) {
+                                        // Destroy exception edge & clear stateAfter.
+                                        InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                        invokeWithExceptionNode.killExceptionEdge();
                                     }
+                                    invokeNode.node().replaceAndDelete(invokeNode.next());
+                                    return callTarget.arguments().get(0);
                                 }
-
-                                if (currentValue == null) {
-                                    currentValue = arguments[z];
-                                    parameterTypes[z] = ValueNode.class;
-                                    Type type = m.getGenericParameterTypes()[z];
-                                    if (type instanceof TypeVariable) {
-                                        TypeVariable typeVariable = (TypeVariable) type;
-                                        if (typeVariable.getBounds().length == 1) {
-                                            Type boundType = typeVariable.getBounds()[0];
-                                            if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
-                                                // Unbound generic => try boxing elimination
-                                                ValueNode node = arguments[z];
-                                                if (node.usages().size() == 2) {
-                                                    if (node instanceof Invoke) {
-                                                        Invoke invokeNode = (Invoke) node;
-                                                        MethodCallTargetNode callTarget = invokeNode.callTarget();
-                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
-                                                            currentValue = callTarget.arguments().get(0);
-                                                            if (invokeNode instanceof InvokeWithExceptionNode) {
-                                                                // Destroy exception edge & clear stateAfter.
-                                                                InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
-                                                                invokeWithExceptionNode.killExceptionEdge();
-                                                            }
-                                                            invokeNode.node().replaceAndDelete(invokeNode.next());
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                initArgs[z] = currentValue;
-                                z++;
-                            }
-                            Constructor<?> constructor = c.getConstructor(parameterTypes);
-                            try {
-                                ValueNode newInstance = (ValueNode) constructor.newInstance(initArgs);
-                                invoke.node().graph().add(newInstance);
-
-                                if (newInstance instanceof StateSplit) {
-                                    StateSplit stateSplit = (StateSplit) newInstance;
-                                    stateSplit.setStateAfter(invoke.stateAfter());
-                                }
-
-                                FixedNode next = invoke.next();
-
-                                if (invoke instanceof InvokeWithExceptionNode) {
-                                    // Destroy exception edge.
-                                    ((InvokeWithExceptionNode) invoke).killExceptionEdge();
-                                }
-                                invoke.setNext(null);
-
-                                if (newInstance instanceof FixedWithNextNode) {
-                                    FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) newInstance;
-                                    fixedWithNextNode.setNext(next);
-                                } else {
-                                    invoke.node().replaceAtPredecessors(next);
-                                }
-
-                                // Replace invoke with new node.
-                                invoke.node().replaceAndDelete(newInstance);
-
-                                // Replace with boxing or un-boxing calls if return types to not match, boxing elimination can later take care of it
-                                if (newInstance.kind() != CiKind.Object) {
-                                    for (Node usage : newInstance.usages().snapshot()) {
-                                        if (usage instanceof CheckCastNode) {
-                                            CheckCastNode checkCastNode = (CheckCastNode) usage;
-                                            for (Node checkCastUsage : checkCastNode.usages().snapshot()) {
-                                                if (checkCastUsage instanceof ValueAnchorNode) {
-                                                    ValueAnchorNode valueAnchorNode = (ValueAnchorNode) checkCastUsage;
-                                                    valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
-                                                } else if (checkCastUsage instanceof MethodCallTargetNode) {
-                                                    MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
-                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
-                                                    for (Invoke invokeNode : checkCastCallTarget.invokes()) {
-                                                        if (invokeNode instanceof InvokeWithExceptionNode) {
-                                                            // Destroy exception edge & clear stateAfter.
-                                                            InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
-                                                            invokeWithExceptionNode.killExceptionEdge();
-                                                        }
-                                                        invokeNode.node().replaceAtUsages(newInstance);
-                                                        invokeNode.node().replaceAndDelete(invokeNode.next());
-                                                    }
-                                                    checkCastCallTarget.delete();
-                                                } else if (checkCastUsage instanceof FrameState) {
-                                                    checkCastUsage.replaceFirstInput(checkCastNode, null);
-                                                } else {
-                                                    assert false : "unexpected checkcast usage: " + checkCastUsage;
-                                                }
-                                            }
-                                            checkCastNode.delete();
-                                        }
-                                    }
-                                }
-
-                            } catch (IllegalArgumentException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (InstantiationException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (IllegalAccessException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
                             }
                         }
                     }
-                } catch (SecurityException e) {
-                    throw new RuntimeException(e);
-                } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return node;
+    }
+
+    private Node createNodeInstance(Class< ? > nodeClass, Class< ? >[] parameterTypes, Object[] nodeConstructorArguments) {
+
+        Constructor< ? > constructor;
+        try {
+            constructor = nodeClass.getDeclaredConstructor(parameterTypes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            return (ValueNode) constructor.newInstance(nodeConstructorArguments);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void cleanUpReturnCheckCast(Node newInstance) {
+        if (newInstance instanceof ValueNode && ((ValueNode) newInstance).kind() != CiKind.Object) {
+            for (Node usage : newInstance.usages().snapshot()) {
+                if (usage instanceof CheckCastNode) {
+                    CheckCastNode checkCastNode = (CheckCastNode) usage;
+                    for (Node checkCastUsage : checkCastNode.usages().snapshot()) {
+                        if (checkCastUsage instanceof ValueAnchorNode) {
+                            ValueAnchorNode valueAnchorNode = (ValueAnchorNode) checkCastUsage;
+                            valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
+                        } else if (checkCastUsage instanceof MethodCallTargetNode) {
+                            MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
+                            assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
+                            Invoke invokeNode = checkCastCallTarget.invoke();
+                            if (invokeNode instanceof InvokeWithExceptionNode) {
+                                // Destroy exception edge & clear stateAfter.
+                                InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
+                                invokeWithExceptionNode.killExceptionEdge();
+                            }
+                            invokeNode.node().replaceAtUsages(newInstance);
+                            invokeNode.node().replaceAndDelete(invokeNode.next());
+                            checkCastCallTarget.delete();
+                        } else if (checkCastUsage instanceof FrameState) {
+                            checkCastUsage.replaceFirstInput(checkCastNode, null);
+                        } else {
+                            assert false : "unexpected checkcast usage: " + checkCastUsage;
+                        }
+                    }
+                    checkCastNode.delete();
                 }
             }
         }

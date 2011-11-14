@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes.java;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -72,6 +70,10 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         this.invokeKind = kind;
     }
 
+    public void setTargetMethod(RiResolvedMethod method) {
+        targetMethod = method;
+    }
+
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
      * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
@@ -93,16 +95,6 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
     @Override
     public CiKind returnKind() {
         return targetMethod().signature().returnKind(false);
-    }
-
-    public Collection<Invoke> invokes() {
-        ArrayList<Invoke> invokes = new ArrayList<Invoke>();
-        for (Node node : usages()) {
-            if (node instanceof Invoke) {
-                invokes.add((Invoke) node);
-            }
-        }
-        return invokes;
     }
 
     public Invoke invoke() {

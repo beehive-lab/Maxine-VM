@@ -22,15 +22,19 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.vm.stack.VMFrameLayout.*;
+
 import java.lang.ref.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * JNI handles are allocated for one of the following reasons:
@@ -424,5 +428,53 @@ public final class JniHandles {
             return JniHandle.zero();
         }
         return jniHandles.popFrame(result);
+    }
+
+
+    /**
+     * The offset in the frame of a native method stub where the base address
+     * of the on-stack handles array is saved once it has been initialized.
+     * This is the same slot used by deoptimization for saving the
+     * original return address of a callee being deoptimized.
+     * This is safe as the callee of a native method stub (i.e. the native function)
+     * will never be deoptimized.
+     */
+    public static final int STACK_HANDLES_ADDRESS_OFFSET = Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+
+    /**
+     * Computes the stack space reserved for the on-stack handles array.
+     * The computed result is one slot per object parameter in a given signature
+     * plus one extra slot for the receiver or class of the native method.
+     *
+     * This method is compile-time evaluated so that the parameter to
+     * {@link Intrinsics#stackAllocate(int)} is a compile-time constant.
+     */
+    @FOLD
+    public static int stackHandlesSize(SignatureDescriptor sig) {
+        int res = STACK_SLOT_SIZE; // slot for receiver/class
+        for (int i = 0; i < sig.numberOfParameters(); i++) {
+            if (sig.parameterDescriptorAt(i).toKind().isReference) {
+                res += STACK_SLOT_SIZE;
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Writes an object into the on-stack handles array.
+     *
+     * @param stackHandles the address of the handles array
+     * @param offset the offset of the array element to update
+     * @param value the object value being handlized
+     * @return if {@code value == null} then {@code 0} else the address of the object handles element to which
+     *         {@code value} was written
+     */
+    @INLINE
+    public static Pointer createStackHandle(Pointer stackHandles, int offset, Object value) {
+        stackHandles.writeReference(offset, Reference.fromJava(value));
+        if (value == null) {
+            return Pointer.zero();
+        }
+        return stackHandles.plus(offset);
     }
 }

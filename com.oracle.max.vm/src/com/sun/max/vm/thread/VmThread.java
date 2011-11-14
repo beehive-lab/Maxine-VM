@@ -460,6 +460,7 @@ public class VmThread {
      *
      * @return a value of C type JNIEnv*
      */
+    @INLINE
     public static Pointer jniEnv() {
         if (MaxineVM.isHosted()) {
             return Pointer.zero();

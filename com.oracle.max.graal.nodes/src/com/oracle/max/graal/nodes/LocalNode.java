@@ -35,19 +35,20 @@ import com.sun.cri.ri.*;
  */
 
 public final class LocalNode extends FloatingNode implements Node.IterableNodeType {
+
     @Data private final int index;
 
     // TODO(tw): Create a class representing information about a value.
     @Data private RiResolvedType declaredType;
     @Data private boolean canBeNull;
 
-    public LocalNode(CiKind kind, int javaIndex) {
-        this(kind, javaIndex, true);
+    public LocalNode(CiKind kind, int index) {
+        this(kind, index, true);
     }
 
-    public LocalNode(CiKind kind, int javaIndex, boolean canBeNull) {
+    public LocalNode(CiKind kind, int index, boolean canBeNull) {
         super(kind);
-        this.index = javaIndex;
+        this.index = index;
         this.canBeNull = canBeNull;
     }
 

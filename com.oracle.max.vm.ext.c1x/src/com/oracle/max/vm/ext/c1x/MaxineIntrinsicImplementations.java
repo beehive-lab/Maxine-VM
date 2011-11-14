@@ -268,8 +268,10 @@ public class MaxineIntrinsicImplementations {
         registry.add(WRITEREG, new WriteRegisterIntrinsic());
         registry.add(IFLATCHBITREAD, new IfLatchBitReadIntrinsic());
 
-        registry.add(PREAD, new PointerReadIntrinsic());
-        registry.add(PWRITE, new PointerWriteIntrinsic());
+        registry.add(PREAD_OFF, new PointerReadIntrinsic());
+        registry.add(PREAD_IDX, new PointerReadIntrinsic());
+        registry.add(PWRITE_OFF, new PointerWriteIntrinsic());
+        registry.add(PWRITE_IDX, new PointerWriteIntrinsic());
         registry.add(PCMPSWP, new PointerCompareAndSwapIntrinsic());
 
         registry.add(SAFEPOINT_POLL, new InfopointIntrinsic(Infopoint.Op.SAFEPOINT_POLL));

@@ -96,7 +96,7 @@ public class Graph {
 
     @Override
     public String toString() {
-        return name == null ? "Graph" : "Graph " + name;
+        return name == null ? super.toString() : "Graph " + name;
     }
 
     /**
