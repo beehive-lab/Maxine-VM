@@ -41,14 +41,11 @@ public class MaxineIntrinsicsPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            Invoke invoke = callTarget.invoke();
-            RiResolvedMethod method = callTarget.targetMethod();
-            if (invoke != null) {
-                MethodActor methodActor = (MethodActor) method;
-                if (methodActor.intrinsic() != null) {
-                    intrinsify(invoke, methodActor);
-                }
+        for (Invoke invoke : graph.getInvokes()) {
+            RiResolvedMethod method = invoke.callTarget().targetMethod();
+            MethodActor methodActor = (MethodActor) method;
+            if (methodActor.intrinsic() != null) {
+                intrinsify(invoke, methodActor);
             }
         }
     }

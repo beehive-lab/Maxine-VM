@@ -44,14 +44,12 @@ public class AccessorPhase extends Phase {
     @Override
     protected void run(StructuredGraph graph) {
         RiResolvedType accessorType = runtime.getType(Accessor.class);
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            Invoke invoke = callTarget.invoke();
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.callTarget();
             RiResolvedMethod method = callTarget.targetMethod();
-            if (invoke != null) {
-                if (method.holder().equals(accessorType)) {
-                    callTarget.setTargetMethod(accessor.resolveMethodImpl(method));
-                    callTarget.setInvokeKind(InvokeKind.Special);
-                }
+            if (method.holder().equals(accessorType)) {
+                callTarget.setTargetMethod(accessor.resolveMethodImpl(method));
+                callTarget.setInvokeKind(InvokeKind.Special);
             }
         }
     }
