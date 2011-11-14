@@ -57,19 +57,15 @@ public interface VMEntries {
 
     RiType RiSignature_lookupType(String returnType, HotSpotTypeResolved accessingClass);
 
-    Object RiConstantPool_lookupConstant(long vmId, int cpi);
+    Object RiConstantPool_lookupConstant(HotSpotTypeResolved pool, int cpi);
 
-    RiMethod RiConstantPool_lookupMethod(long vmId, int cpi, byte byteCode);
+    RiMethod RiConstantPool_lookupMethod(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
-    RiSignature RiConstantPool_lookupSignature(long vmId, int cpi);
+    RiType RiConstantPool_lookupType(HotSpotTypeResolved pool, int cpi);
 
-    RiType RiConstantPool_lookupType(long vmId, int cpi);
+    RiField RiConstantPool_lookupField(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
-    RiField RiConstantPool_lookupField(long vmId, int cpi, byte byteCode);
-
-    void RiConstantPool_loadReferencedType(long vmId, int cpi, byte byteCode);
-
-    RiConstantPool RiType_constantPool(HotSpotTypeResolved klass);
+    void RiConstantPool_loadReferencedType(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
     long installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
 
