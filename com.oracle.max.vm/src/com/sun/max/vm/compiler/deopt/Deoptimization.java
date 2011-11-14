@@ -851,9 +851,9 @@ public class Deoptimization extends VmOperation {
      * @param fp the trap frame pointer
      * @param csa the callee save area
      */
-    public static void deoptimizeAtSafepoint(CodePointer ip, Pointer sp, Pointer fp, Pointer csa) {
+    public static void deoptimizeAtSafepoint(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
         FatalError.check(!csa.isZero(), "callee save area expected for deopt at safepoint");
-        deoptimize(ip, sp, fp, csa, vm().registerConfigs.trapStub.csl, null);
+        deoptimize(CodePointer.from(ip), sp, fp, csa, vm().registerConfigs.trapStub.csl, null);
     }
 
     /**
