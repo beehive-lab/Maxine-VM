@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
 public final class GuardNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
     @Input private BooleanNode condition;
-    @Input private FixedNode anchor;
+    @Input(notDataflow = true) private FixedNode anchor;
 
     public FixedNode anchor() {
         return anchor;
