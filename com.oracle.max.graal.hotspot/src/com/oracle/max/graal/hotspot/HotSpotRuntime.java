@@ -38,7 +38,6 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.calc.ConditionalNode.ConditionalStructure;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.max.graal.snippets.nodes.*;
 import com.oracle.max.graal.snippets.nodes.MathIntrinsicNode.Operation;
 import com.sun.cri.ci.*;
@@ -458,121 +457,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/System;")) {
-                if (fullName.equals("arraycopy(Ljava/lang/Object;ILjava/lang/Object;II)V")) {
-                    StructuredGraph graph = new StructuredGraph();
-                    LocalNode src = graph.unique(new LocalNode(CiKind.Object, 0));
-                    LocalNode srcPos = graph.unique(new LocalNode(CiKind.Int, 1));
-                    LocalNode dest = graph.unique(new LocalNode(CiKind.Object, 2));
-                    LocalNode destPos = graph.unique(new LocalNode(CiKind.Int, 3));
-                    ValueNode length = graph.unique(new LocalNode(CiKind.Int, 4));
-                    src.setDeclaredType(((ValueNode) parameters.get(0)).declaredType());
-                    dest.setDeclaredType(((ValueNode) parameters.get(2)).declaredType());
-
-                    if (src.declaredType() == null || dest.declaredType() == null) {
-                        return null;
-                    }
-
-                    if (src.declaredType() != dest.declaredType()) {
-                        return null;
-                    }
-
-                    if (!src.declaredType().isArrayClass()) {
-                        return null;
-                    }
-
-                    CiKind componentType = src.declaredType().componentType().kind(true);
-                    if (componentType == CiKind.Object) {
-                        return null;
-                    }
-
-                    FrameState stateBefore = graph.add(new FrameState(method, FrameState.BEFORE_BCI, 0, 0, 0, false));
-                    FrameState stateAfter = graph.add(new FrameState(method, FrameState.AFTER_BCI, 0, 0, 0, false));
-
-                    // Add preconditions.
-                    ArrayLengthNode srcLength = graph.add(new ArrayLengthNode(src));
-                    graph.start().setNext(srcLength);
-                    ArrayLengthNode destLength = graph.add(new ArrayLengthNode(dest));
-                    srcLength.setNext(destLength);
-                    FixedGuardNode guard = graph.add(new FixedGuardNode());
-                    destLength.setNext(guard);
-
-                    IntegerAddNode upperLimitSrc = graph.unique(new IntegerAddNode(CiKind.Int, srcPos, length));
-                    IntegerAddNode upperLimitDest = graph.unique(new IntegerAddNode(CiKind.Int, destPos, length));
-                    guard.addCondition(graph.unique(new CompareNode(srcPos, Condition.BE, srcLength)));
-                    guard.addCondition(graph.unique(new CompareNode(destPos, Condition.BE, destLength)));
-                    guard.addCondition(graph.unique(new CompareNode(length, Condition.GE, ConstantNode.forInt(0, graph))));
-                    guard.addCondition(graph.unique(new CompareNode(upperLimitSrc, Condition.LE, srcLength)));
-                    guard.addCondition(graph.unique(new CompareNode(upperLimitDest, Condition.LE, destLength)));
-
-
-                    LocationNode location = LocationNode.create(LocationNode.FINAL_LOCATION, componentType, config.getArrayOffset(componentType), graph);
-
-                    // Build normal vector instruction.
-                    CreateVectorNode normalVector = graph.add(new CreateVectorNode(false, length));
-                    ReadVectorNode values = graph.add(new ReadVectorNode(graph.add(new IntegerAddVectorNode(normalVector, srcPos)), src, location));
-                    graph.add(new WriteVectorNode(graph.add(new IntegerAddVectorNode(normalVector, destPos)), dest, location, values));
-                    normalVector.setStateAfter(stateAfter);
-
-                    // Build reverse vector instruction.
-                    CreateVectorNode reverseVector = graph.add(new CreateVectorNode(true, length));
-                    ReadVectorNode reverseValues = graph.add(new ReadVectorNode(graph.add(new IntegerAddVectorNode(reverseVector, srcPos)), src, location));
-                    graph.add(new WriteVectorNode(graph.add(new IntegerAddVectorNode(reverseVector, destPos)), dest, location, reverseValues));
-                    reverseVector.setStateAfter(stateAfter);
-
-                    IfNode ifNode = graph.add(new IfNode(graph.unique(new CompareNode(src, Condition.EQ, dest)), 0.5));
-                    guard.setNext(ifNode);
-
-                    IfNode secondIf = graph.add(new IfNode(graph.unique(new CompareNode(srcPos, Condition.LT, destPos)), 0.5));
-                    ifNode.setTrueSuccessor(BeginNode.begin(secondIf));
-
-                    secondIf.setTrueSuccessor(BeginNode.begin(reverseVector));
-
-                    MergeNode merge1 = graph.add(new MergeNode());
-                    merge1.addEnd(graph.add(new EndNode()));
-                    merge1.addEnd(graph.add(new EndNode()));
-                    merge1.setStateAfter(stateBefore);
-
-
-                    InvokeNode newInvoke = null;
-                    if (componentType == CiKind.Object) {
-                        AnchorNode anchor = graph.add(new AnchorNode());
-                        SafeReadNode srcClass = graph.add(new SafeReadNode(CiKind.Object, src, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.hubOffset, graph)));
-                        anchor.setNext(srcClass);
-                        SafeReadNode destClass = graph.add(new SafeReadNode(CiKind.Object, dest, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.hubOffset, graph)));
-                        srcClass.setNext(destClass);
-                        IfNode elementClassIf = graph.add(new IfNode(graph.unique(new CompareNode(srcClass, Condition.EQ, destClass)), 0.5));
-                        destClass.setNext(elementClassIf);
-                        ifNode.setFalseSuccessor(BeginNode.begin(anchor));
-                        MethodCallTargetNode target = graph.add(new MethodCallTargetNode(InvokeKind.Static, method, new ValueNode[]{src, srcPos, dest, destPos, length}, method.signature().returnType(holder)));
-                        newInvoke = graph.add(new InvokeNode(target, FrameState.BEFORE_BCI));
-                        newInvoke.setCanInline(false);
-                        newInvoke.setStateAfter(stateAfter);
-                        elementClassIf.setFalseSuccessor(BeginNode.begin(newInvoke));
-                        elementClassIf.setTrueSuccessor(BeginNode.begin(merge1.endAt(0)));
-                    } else {
-                        ifNode.setFalseSuccessor(BeginNode.begin(merge1.endAt(0)));
-                    }
-
-                    secondIf.setFalseSuccessor(BeginNode.begin(merge1.endAt(1)));
-                    merge1.setNext(normalVector);
-
-                    MergeNode merge2 = graph.add(new MergeNode());
-                    merge2.addEnd(graph.add(new EndNode()));
-                    merge2.addEnd(graph.add(new EndNode()));
-                    merge2.setStateAfter(stateAfter);
-
-                    normalVector.setNext(merge2.endAt(0));
-                    reverseVector.setNext(merge2.endAt(1));
-
-                    if (newInvoke != null) {
-                        merge2.addEnd(graph.add(new EndNode()));
-                        newInvoke.setNext(merge2.endAt(2));
-                    }
-
-                    ReturnNode ret = graph.add(new ReturnNode(null));
-                    merge2.setNext(ret);
-                    return graph;
-                } else if (fullName.equals("currentTimeMillis()J")) {
+                if (fullName.equals("currentTimeMillis()J")) {
                     StructuredGraph graph = new StructuredGraph();
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeMillis));
                     ReturnNode ret = graph.add(new ReturnNode(call));

@@ -53,7 +53,9 @@ public abstract class Node implements Cloneable {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public static @interface Input {}
+    public static @interface Input {
+        boolean notDataflow() default false;
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
