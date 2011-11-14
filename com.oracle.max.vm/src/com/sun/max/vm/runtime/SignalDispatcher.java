@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.util.*;
@@ -31,7 +32,6 @@ import sun.misc.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -53,7 +53,7 @@ public final class SignalDispatcher extends Thread {
     /**
      * A set of counters, one per supported signal, used to post and consume signals.
      */
-    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(Platform.numberOfSignals() + 1);
+    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(platform().nsig + 1);
 
     /**
      * The special signal used to terminate the signal dispatcher thread.
