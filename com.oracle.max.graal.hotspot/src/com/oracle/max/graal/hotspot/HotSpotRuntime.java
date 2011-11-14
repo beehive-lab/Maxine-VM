@@ -211,11 +211,6 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public boolean supportsArrayIntrinsics() {
-        return true;
-    }
-
-    @Override
     public int getArrayLength(CiConstant array) {
         return compiler.getVMEntries().getArrayLength(array);
     }

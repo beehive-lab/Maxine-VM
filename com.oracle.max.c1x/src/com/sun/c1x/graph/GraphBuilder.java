@@ -1560,24 +1560,13 @@ public final class GraphBuilder {
 
         // handle intrinsics differently
         switch (intrinsic) {
-
-            case java_lang_System$arraycopy:
-                if (compilation.runtime.supportsArrayIntrinsics()) {
-                    break;
-                } else {
-                    return false;
-                }
             case java_lang_Object$getClass:
                 canTrap = true;
                 break;
             case java_lang_Thread$currentThread:
                 break;
-            case java_util_Arrays$copyOf:
-                if (args[0].declaredType() != null && args[0].declaredType().isArrayClass() && compilation.runtime.supportsArrayIntrinsics()) {
-                    break;
-                } else {
-                    return false;
-                }
+            case java_util_Arrays$copyOf: // fall through
+            case java_lang_System$arraycopy: // fall through
             case java_lang_Object$init: // fall through
             case java_lang_String$equals: // fall through
             case java_lang_String$compareTo: // fall through
