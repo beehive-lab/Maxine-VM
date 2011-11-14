@@ -335,7 +335,7 @@ else
 endif
 
 ifeq "$(JNI_H_PATH)" ""
-    $(error Could not find path to jni.h)
+    $(error Could not find path to jni.h in $(JAVA_HOME))
 endif
 
 C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=\"$(JNI_H_PATH)\"

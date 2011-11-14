@@ -106,7 +106,9 @@ public class Compile {
     }
 
     public static void main(String[] args) throws IOException {
-        // set the default optimization level before parsing options
+
+        args = VMOption.extractVMArgs(args);
+
         VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 

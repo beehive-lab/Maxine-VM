@@ -45,14 +45,13 @@ import com.sun.max.vm.thread.*;
 public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     static abstract class ThreadNameGenerator {
-        @INLINE
         abstract String getThreadName();
     }
 
     protected static class CurrentThreadNameGenerator extends ThreadNameGenerator {
-        @INLINE(override = true)
+        @INLINE
         @Override
-        String getThreadName() {
+        final String getThreadName() {
             return VmThread.current().getName();
         }
     }

@@ -143,7 +143,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         regionName = "";
         String toolTipText = "Points into no known memory region";
         if (value() != null && value() != VoidValue.VOID) {
-            memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+            memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
             if (memoryRegion != null) {
                 regionName = inspection().nameDisplay().shortName(memoryRegion);
                 toolTipText = "Points into " + inspection().nameDisplay().longName(memoryRegion);

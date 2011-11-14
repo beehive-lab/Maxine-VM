@@ -116,10 +116,8 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         assert predIndex != -1;
         ends.remove(predIndex);
 
-        for (Node usage : usages()) {
-            if (usage instanceof PhiNode) {
-                ((PhiNode) usage).removeInput(predIndex);
-            }
+        for (PhiNode phi : phis()) {
+            phi.removeInput(predIndex);
         }
     }
 

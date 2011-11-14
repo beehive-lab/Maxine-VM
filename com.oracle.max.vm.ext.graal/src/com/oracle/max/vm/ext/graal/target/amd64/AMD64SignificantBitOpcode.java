@@ -50,7 +50,7 @@ public enum AMD64SignificantBitOpcode implements LIROpcode {
     }
 
     private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue result, CiValue input) {
-        CiRegister dst = tasm.asLongReg(result);
+        CiRegister dst = tasm.asIntReg(result);
 
         masm.xorq(dst, dst);
         masm.notq(dst);

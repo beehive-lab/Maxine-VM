@@ -477,7 +477,7 @@ public class T1X implements RuntimeCompiler {
         UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE,
         UDIV, UREM,
         LSB, MSB,
-        PREAD, PWRITE, PCMPSWP,
+        PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP,
         HERE,
         PAUSE
     ));

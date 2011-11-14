@@ -84,6 +84,10 @@ public class CFGPrinterObserver implements CompilationObserver {
             return;
         }
         Observation o = observations.get().peek();
+        if (o == null) {
+            return;
+        }
+
         String label = event.getLabel();
 
         boolean cfgprinted = false;

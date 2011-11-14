@@ -112,6 +112,7 @@ public abstract class Word {
         return classes;
     }
 
+    @HOSTED_ONLY
     protected Word() {
     }
 
@@ -193,6 +194,7 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
+    @INLINE
     public final int leastSignificantBitSet() {
         return Intrinsics.leastSignificantBit(this);
     }
@@ -200,6 +202,7 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
+    @INLINE
     public final int mostSignificantBitSet() {
         return Intrinsics.mostSignificantBit(this);
     }
@@ -243,8 +246,13 @@ public abstract class Word {
      *
      * @return an unpadded string representation in hex, without "0x" prefix
      */
+    @INLINE
     public final String toHexString() {
-        String result = Long.toHexString(asAddress().toLong());
+        return toHexString(this);
+    }
+
+    public static String toHexString(Word value) {
+        String result = Long.toHexString(value.asAddress().toLong());
         if (width() == 32 && result.length() > 8) {
             result = result.substring(result.length() - 8);
         }
@@ -256,8 +264,13 @@ public abstract class Word {
      *
      * @return an unpadded string representation in hex, with "0x" prefix
      */
+    @INLINE
     public final String to0xHexString() {
-        String result = Long.toHexString(asAddress().toLong());
+        return to0xHexString(this);
+    }
+
+    public static String to0xHexString(Word value) {
+        String result = Long.toHexString(value.asAddress().toLong());
         if (width() == 32 && result.length() > 8) {
             result = result.substring(result.length() - 8);
         }
@@ -270,11 +283,16 @@ public abstract class Word {
      * @param pad padding character
      * @return a padded string representation in hex, without "0x" prefix
      */
+    @INLINE
     public final String toPaddedHexString(char pad) {
+        return toPaddedHexString(this, pad);
+    }
+
+    public static String toPaddedHexString(Word value, char pad) {
         if (Word.width() == 64) {
-            return Longs.toPaddedHexString(asAddress().toLong(), pad);
+            return Longs.toPaddedHexString(value.asAddress().toLong(), pad);
         }
-        return Ints.toPaddedHexString(asAddress().toInt(), pad);
+        return Ints.toPaddedHexString(value.asAddress().toInt(), pad);
     }
 
     /**
@@ -283,19 +301,26 @@ public abstract class Word {
      * @param pad padding character
      * @return a padded string representation in hex, with "0x" prefix
      */
+    @INLINE
     public final String toPadded0xHexString(char pad) {
+        return toPadded0xHexString(this, pad);
+    }
+
+    public static String toPadded0xHexString(Word value, char pad) {
         if (Word.width() == 64) {
-            return "0x" + Longs.toPaddedHexString(asAddress().toLong(), pad);
+            return "0x" + Longs.toPaddedHexString(value.asAddress().toLong(), pad);
         }
-        return "0x" + Ints.toPaddedHexString(asAddress().toInt(), pad);
+        return "0x" + Ints.toPaddedHexString(value.asAddress().toInt(), pad);
     }
 
     @Override
+    @HOSTED_ONLY
     public String toString() {
         return "$" + toHexString();
     }
 
     @Override
+    @HOSTED_ONLY
     public final int hashCode() {
         return asOffset().toInt();
     }
@@ -349,6 +374,7 @@ public abstract class Word {
     }
 
     @Override
+    @HOSTED_ONLY
     public final boolean equals(Object other) {
         throw ProgramError.unexpected("must not call equals(Object) with Word argument");
     }
@@ -356,6 +382,7 @@ public abstract class Word {
     /**
      * Reads an address from a given data input stream.
      */
+    @INLINE
     public static Word read(DataInput stream) throws IOException {
         if (width() == 64) {
             return Address.fromLong(stream.readLong());
@@ -378,6 +405,7 @@ public abstract class Word {
     /**
      * Reads an address from a given input stream using a given endianness.
      */
+    @INLINE
     public static Word read(InputStream inputStream, Endianness endianness) throws IOException {
         if (width() == 64) {
             return Address.fromLong(endianness.readLong(inputStream));
