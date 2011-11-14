@@ -551,7 +551,8 @@ def gcut(env, args):
 
 def gcutmax(env, args):
     """runs the Graal Compiler Unit Tests in a hosted Maxine environment"""
-    env.run_java(['-Dgraal.vm=Maxine', '-ea', '-cp', env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
+    deps = ['com.oracle.max.graal.compiler.tests', 'com.oracle.max.vm.ext.maxri']
+    env.run_java(['-Dgraal.runtime=Maxine', '-ea', '-cp', env.pdb().classpath(deps), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
 
 def graalvm(env, args):
     """runs the GraalVM"""

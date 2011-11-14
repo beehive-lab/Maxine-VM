@@ -39,7 +39,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -56,7 +56,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationBroker.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -92,6 +94,20 @@ public class MaxRuntime implements GraalRuntime {
     public static MaxRuntime getInstance() {
         return instance;
     }
+
+    /**
+     * Factory method for getting a Graal runtime instance. This method is called via reflection.
+     */
+    public static GraalRuntime getGraalRuntime() {
+        if (MaxineVM.isHosted() && vm() == null) {
+            RuntimeCompiler.optimizingCompilerOption.setValue(NullOptCompiler.class.getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(NullBaselineCompiler.class.getName());
+            VMConfigurator.installStandard(BuildLevel.PRODUCT);
+            JavaPrototype.initialize(false);
+        }
+        return getInstance();
+    }
+
 
     private MaxRuntime() {
     }
