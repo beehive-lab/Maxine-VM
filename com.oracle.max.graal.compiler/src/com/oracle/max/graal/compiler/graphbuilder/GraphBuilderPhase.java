@@ -132,10 +132,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         this.method = method;
         this.stats = stats;
         this.log = GraalOptions.TraceBytecodeParserLevel > 0 ? new LogStream(TTY.out()) : null;
-        assert method.code() != null : method;
+        assert method.code() != null : "method must contain bytecodes: " + method;
         this.stream = new BytecodeStream(method.code());
-
-        this.constantPool = runtime.getConstantPool(method);
+        this.constantPool = method.getConstantPool();
     }
 
     @Override

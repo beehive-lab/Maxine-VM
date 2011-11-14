@@ -48,6 +48,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private RiResolvedType superType;
     private boolean superTypeSet;
     private RiField[] fields;
+    private RiConstantPool constantPool;
 
     private HotSpotTypeResolvedImpl() {
         super(null);
@@ -178,8 +179,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public RiConstantPool constantPool() {
-        // TODO: Implement constant pool without the need for VmId and cache the constant pool.
-        return compiler.getVMEntries().RiType_constantPool(this);
+        if (constantPool == null) {
+            constantPool = new HotSpotConstantPool(compiler, this);
+        }
+        return constantPool;
     }
 
     @Override
