@@ -24,7 +24,7 @@ package com.oracle.max.graal.compiler.tests;
 
 import java.lang.reflect.*;
 
-import junit.framework.Assert;
+import junit.framework.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
@@ -32,31 +32,28 @@ import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
 
+/**
+ * Base class for Graal compiler unit tests. These are white box tests
+ * for Graal compiler transformations. The general pattern for a test is:
+ * <ol>
+ * <li>Create a graph by {@linkplain #parse(String) parsing} a method.</li>
+ * <li>Manually modify the graph (e.g. replace a paramter node with a constant).</li>
+ * <li>Apply a transformation to the graph.</li>
+ * <li>Assert that the transformed graph is equal to an expected graph.</li>
+ * </ol>
+ * <p>
+ * See {@link IfCanonicalizerTest} as an example.
+ * <p>
+ * The tests can be run in Eclipse with the "Compiler Unit Test" Eclipse
+ * launch configuration found in the top level of this project or by
+ * running {@code mx gcut} on the command line.
+ */
 public abstract class GraphTest {
-
-    private static String[] graalCompilerFactoryClasses = {
-        "com.oracle.max.graal.hotspot.CompilerImpl",
-        "com.oracle.max.vm.ext.c1xgraal.C1XGraal"
-    };
-
-    private static GraalCompiler getGraalCompiler() {
-        for (String className : graalCompilerFactoryClasses) {
-            Class<?> c = null;
-            try {
-                c = Class.forName(className);
-                Method m = c.getDeclaredMethod("getGraalCompiler");
-                return (GraalCompiler) m.invoke(null);
-            } catch (Exception e) {
-                System.err.println(e);
-            }
-        }
-        throw new InternalError("Could not create a GraalCompiler instance");
-    }
 
     private GraalCompiler graalCompiler;
 
     public GraphTest() {
-        this.graalCompiler = getGraalCompiler();
+        this.graalCompiler = GraalCompilerAccess.getGraalCompiler();
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {
@@ -70,6 +67,11 @@ public abstract class GraphTest {
         return graalCompiler.runtime;
     }
 
+    /**
+     * Parses a Java method to produce a graph.
+     *
+     * @param methodName the name of the method in {@code this.getClass()} to be parsed
+     */
     protected StructuredGraph parse(String methodName) {
         Method found = null;
         for (Method m : this.getClass().getMethods()) {
@@ -81,6 +83,9 @@ public abstract class GraphTest {
         return parse(found);
     }
 
+    /**
+     * Parses a Java method to produce a graph.
+     */
     protected StructuredGraph parse(Method m) {
         RiRuntime runtime = graalCompiler.runtime;
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
