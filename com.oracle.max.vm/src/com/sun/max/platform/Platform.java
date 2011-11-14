@@ -114,6 +114,11 @@ public final class Platform {
     public final OS os;
 
     /**
+     * The number of signals.
+     */
+    public final int nsig;
+
+    /**
      * The number of bytes in a virtual page.
      */
     public final int pageSize;
@@ -236,16 +241,17 @@ public final class Platform {
         return true;
     }
 
-    public Platform(CPU cpu, OS os, int pageSize) {
-        this(cpu, cpu.isa, cpu.defaultDataModel, os, pageSize);
+    public Platform(CPU cpu, OS os, int pageSize, int nsig) {
+        this(cpu, cpu.isa, cpu.defaultDataModel, os, pageSize, nsig);
     }
 
-    public Platform(CPU cpu, ISA isa, DataModel dataModel, OS os, int pageSize) {
+    public Platform(CPU cpu, ISA isa, DataModel dataModel, OS os, int pageSize, int nsig) {
         this.isa = isa;
         this.cpu = cpu;
         this.os = os;
         this.dataModel = dataModel;
         this.pageSize = pageSize;
+        this.nsig = nsig;
 
         if (cpu == CPU.SPARCV9 && os == OS.SOLARIS) {
             this.stackBias = 2047;
@@ -292,7 +298,7 @@ public final class Platform {
             cpu = CPU.defaultForInstructionSet(isa);
             dataModel = cpu.defaultDataModel;
         }
-        return new Platform(cpu, isa, dataModel, os, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
 
     @Override
@@ -317,7 +323,8 @@ public final class Platform {
      *
      * @return a string representing the name of the instruction set on which this VM is running
      */
-    public static String getInstructionSet() {
+    @HOSTED_ONLY
+    private static String getInstructionSet() {
         Prototype.loadHostedLibrary();
         return nativeGetISA();
     }
@@ -375,7 +382,8 @@ public final class Platform {
      *
      * @return the width of the native word in bits
      */
-    public static int getWordWidth() {
+    @HOSTED_ONLY
+    private static int getWordWidth() {
         Prototype.loadHostedLibrary();
         return nativeGetWordWidth();
     }
@@ -387,7 +395,8 @@ public final class Platform {
      *
      * @return a string representing the name of the OS on which this VM is running
      */
-    public static String getOS() {
+    @HOSTED_ONLY
+    private static String getOS() {
         Prototype.loadHostedLibrary();
         return nativeGetOS();
     }
@@ -399,7 +408,8 @@ public final class Platform {
      *
      * @return the page size in bytes
      */
-    public static int getPageSize() {
+    @HOSTED_ONLY
+    private static int getPageSize() {
         Prototype.loadHostedLibrary();
         return nativeGetPageSize();
     }
@@ -413,11 +423,8 @@ public final class Platform {
      * This checks the property {@value NUMBER_OF_SIGNALS_PROPERTY} first and only calls
      * {@link #nativeNumberOfSignals()} if there is no value set for the property.
      */
-    public static int numberOfSignals() {
-        final String prop = System.getProperty(NUMBER_OF_SIGNALS_PROPERTY);
-        if (prop != null) {
-            return Integer.parseInt(prop);
-        }
+    @HOSTED_ONLY
+    private static int getNumberOfSignals() {
         Prototype.loadHostedLibrary();
         return nativeNumberOfSignals();
     }
@@ -429,11 +436,20 @@ public final class Platform {
      */
     private static native int nativeNumberOfSignals();
 
+    private static Platform createDefaultPlatform() {
+        try {
+            return createDefaultPlatform0();
+        } catch (UnsatisfiedLinkError e) {
+            ProgramWarning.message("Could not create platform from native properties - using default platform instead: " + Default);
+            return Default;
+        }
+    }
+
     /**
      * Creates a default {@code Platform} derived from system properties and native code in the
      * case where the relevant system properties are {@code null}.
      */
-    public static Platform createDefaultPlatform() {
+    private static Platform createDefaultPlatform0() {
         String platformSpec = System.getProperty(PLATFORM_PROPERTY);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
@@ -472,9 +488,15 @@ public final class Platform {
         String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
+        final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
 
-        return new Platform(cpu, isa, dataModel, os, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
+
+    /**
+     * The platform that will be used if the platform cannot be created from native properties.
+     */
+    public static final Platform Default;
 
     /**
      * A map from platform strings to correlated {@link Platform} objects.
@@ -482,12 +504,13 @@ public final class Platform {
     public static final Map<String, Platform> Supported;
     static {
         Map<String, Platform> map = new TreeMap<String, Platform>();
-        map.put("solaris-amd64", new Platform(CPU.AMD64, OS.SOLARIS, Ints.K * 8));
-        map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8));
-        map.put("linux-amd64", new Platform(CPU.AMD64, OS.LINUX, Ints.K * 8));
-        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8));
-        map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8));
+        map.put("linux-amd64", new Platform(CPU.AMD64, OS.LINUX, Ints.K * 8, 32));
+        map.put("solaris-amd64", new Platform(CPU.AMD64, OS.SOLARIS, Ints.K * 8, 32));
+        map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8, 32));
+        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8, 32));
+        map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
+        Default = map.get("linux-amd64");
     }
 
     /**
@@ -518,7 +541,7 @@ public final class Platform {
         if (pageSizeString != null) {
             long pageSize = Longs.parseScaledValue(pageSizeString);
             assert pageSize == (int) pageSize;
-            platform = new Platform(platform.cpu, platform.isa, platform.dataModel, platform.os, (int) pageSize);
+            platform = new Platform(platform.cpu, platform.isa, platform.dataModel, platform.os, (int) pageSize, 32);
         }
         return platform;
     }
