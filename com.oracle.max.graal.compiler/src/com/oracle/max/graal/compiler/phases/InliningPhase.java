@@ -133,7 +133,9 @@ public class InliningPhase extends Phase {
                 graph = new StructuredGraph();
                 new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
 
-                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+                if (compiler != null) {
+                    compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+                }
 
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase().apply(graph, context, true, false);
