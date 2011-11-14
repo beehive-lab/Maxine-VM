@@ -96,6 +96,7 @@ public class MustInlinePhase extends Phase {
                         new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
                         method.compilerStorage().put(MustInlinePhase.class, inlineGraph);
                     }
+                    runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
                     InliningUtil.inline(invoke, inlineGraph, false);
                 }
             }

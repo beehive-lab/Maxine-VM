@@ -425,6 +425,7 @@ public class BootImage {
             CPU(CPU.class),
             ISA(ISA.class),
             OS(OS.class),
+            NSIG(String.class),
             REFERENCE(BootImagePackage.class),
             LAYOUT(BootImagePackage.class),
             HEAP(BootImagePackage.class),
@@ -463,6 +464,10 @@ public class BootImage {
 
         public OS os() {
             return OS.valueOf(values.get(Key.OS.name()));
+        }
+
+        public int nsig() {
+            return Integer.valueOf(values.get(Key.OS.name()));
         }
 
         public BootImagePackage bootImagePackage(Key key) {
@@ -668,7 +673,7 @@ public class BootImage {
                 BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
-                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize);
+                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize, stringInfo.nsig());
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,

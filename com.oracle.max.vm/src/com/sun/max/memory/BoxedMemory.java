@@ -32,17 +32,13 @@ import com.sun.max.vm.hosted.*;
 @HOSTED_ONLY
 public final class BoxedMemory {
 
-    static {
-        // Ensure the native code is loaded
-        Prototype.loadHostedLibrary();
-    }
-
     private BoxedMemory() {
     }
 
     private static native long nativeAllocate(long size);
 
     public static Pointer allocate(Size size) {
+        Prototype.loadHostedLibrary();
         final Boxed box = (Boxed) size;
         return BoxedPointer.from(nativeAllocate(box.value()));
     }
@@ -50,6 +46,7 @@ public final class BoxedMemory {
     private static native long nativeReallocate(long block, long size);
 
     public static Pointer reallocate(Pointer block, Size size) {
+        Prototype.loadHostedLibrary();
         final Boxed blockBox = (Boxed) block;
         final Boxed sizeBox = (Boxed) size;
         return BoxedPointer.from(nativeReallocate(blockBox.value(), sizeBox.value()));
@@ -58,6 +55,7 @@ public final class BoxedMemory {
     private static native int nativeDeallocate(long pointer);
 
     public static int deallocate(Address block) {
+        Prototype.loadHostedLibrary();
         final Boxed box = (Boxed) block;
         return nativeDeallocate(box.value());
     }
@@ -65,6 +63,7 @@ public final class BoxedMemory {
     private static native void nativeWriteBytes(byte[] fromArray, int startIndex, int numberOfBytes, long toPointer);
 
     public static void writeBytes(byte[] fromArray, int startIndex, int numberOfBytes, Pointer toPointer) {
+        Prototype.loadHostedLibrary();
         nativeWriteBytes(fromArray, startIndex, numberOfBytes, toPointer.toLong());
     }
 
