@@ -463,7 +463,7 @@ public abstract class Reference implements Accessor {
         return referenceScheme().compareAndSwapReference(this, offset, expectedValue, newValue);
     }
 
-    @INLINE
+    @HOSTED_ONLY
     public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         referenceScheme().copyElements(displacement, this, displacement, dst, dstIndex, length);
     }

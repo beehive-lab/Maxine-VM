@@ -285,10 +285,6 @@ class Env(ArgumentParser):
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
             
-        if self.os == 'windows':
-            self.log('[pretending to be Linux-AMD64 - remove when Windows is fully supported]')
-            self.java_args += ['-Dmax.platform=linux-amd64', '-Dmax.nsig=32']
-            
         self.java_initialized = True
     
     def default_java_home(self):

@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.verifier.*;
 
 /**
  * Construction of a virtual machine image begins here by running on a host virtual
@@ -239,6 +240,7 @@ public final class BootImageGenerator {
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
+            verifyBootClasses();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {
@@ -298,6 +300,17 @@ public final class BootImageGenerator {
         Trace.begin(1, "writing boot image jar file: " + file);
         ClassfileReader.writeClassfilesToJar(file);
         Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
+    }
+
+    private void verifyBootClasses() {
+        Trace.begin(1, "verifying boot image classes");
+        long start = System.currentTimeMillis();
+        for (ClassActor ca : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            if (!ca.kind.isWord) {
+                Verifier.verifierFor(ca).verify();
+            }
+        }
+        Trace.end(1, "verifying boot image classes", start);
     }
 
     /**

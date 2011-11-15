@@ -727,8 +727,6 @@ public class CompilationBroker {
                         final int dcIndex = directCalleePosition(tm, callSite);
                         assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                         logStaticCallPatch(current, callSite, dcIndex, to);
-                        Object[] directCallees = tm.directCallees();
-                        directCallees[dcIndex] = newMethod;
                         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
@@ -739,8 +737,6 @@ public class CompilationBroker {
                         final int dcIndex = directCalleePosition(tm, callSite);
                         assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                         logStaticCallPatch(current, callSite, dcIndex, to);
-                        Object[] directCallees = tm.directCallees();
-                        directCallees[dcIndex] = newMethod;
                         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
