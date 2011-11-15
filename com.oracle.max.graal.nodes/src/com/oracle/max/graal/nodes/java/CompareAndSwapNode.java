@@ -31,7 +31,7 @@ import com.sun.cri.ci.*;
  * Represents an atomic compare-and-swap operation. If {@link #directResult} is true then the value read from the memory location is produced.
  * Otherwise the result is a boolean that contains whether the value matched the expected value.
  */
-public class CompareAndSwapNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
+public class CompareAndSwapNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;

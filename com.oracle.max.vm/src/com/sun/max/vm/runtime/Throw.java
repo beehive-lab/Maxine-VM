@@ -152,11 +152,12 @@ public final class Throw {
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
      */
+    @INLINE
     public static void raise(Object throwable) {
         if (throwable == null || throwable instanceof Throwable) {
-            raise((Throwable) throwable);
+            raise(UnsafeCast.asThrowable(throwable));
         } else {
-            raise(FatalError.unexpected("Object thrown not a throwable: " + throwable));
+            FatalError.unexpected("Object thrown not a throwable");
         }
     }
 
@@ -166,14 +167,20 @@ public final class Throw {
      * @param throwable the object to be passed to the exception handler. If this value is null, then a
      *            {@link NullPointerException} is instantiated and raised instead.
      */
+    @INLINE
     public static void raise(Throwable throwable) {
+        convertAndRaise(throwable, getCpuStackPointer(), getCpuFramePointer(), CodePointer.from(here()));
+    }
+
+    @NEVER_INLINE
+    public static void convertAndRaise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         if (throwable == null) {
             throwable = new NullPointerException();
         }
 
         convertAssertionToFatalError(throwable);
         traceThrow(throwable);
-        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), CodePointer.from(here()));
+        raise(throwable, sp, fp, ip);
     }
 
     public static void traceThrow(Throwable throwable) {

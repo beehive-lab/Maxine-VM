@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
@@ -214,11 +215,11 @@ final class ControlFlowOptimizer {
 
     private boolean verify(List<LIRBlock> code) {
         for (LIRBlock block : code) {
-            for (LIRBlock sux : block.blockSuccessors()) {
+            for (Block sux : block.getSuccessors()) {
                 assert code.contains(sux) : "missing successor from: " + block + "to: " + sux;
             }
 
-            for (LIRBlock pred : block.blockPredecessors()) {
+            for (Block pred : block.getPredecessors()) {
                 assert code.contains(pred) : "missing predecessor from: " + block + "to: " + pred;
             }
         }

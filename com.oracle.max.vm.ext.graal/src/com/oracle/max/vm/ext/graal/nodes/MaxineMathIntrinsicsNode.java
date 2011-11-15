@@ -38,7 +38,7 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements AMD6
     }
 
     public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
-        super(value.kind() == CiKind.Object ? CiKind.Long : value.kind());
+        super(CiKind.Int);
         this.value = value;
         this.op = op;
     }

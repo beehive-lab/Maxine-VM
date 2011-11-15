@@ -37,6 +37,13 @@ import com.oracle.max.graal.nodes.virtual.*;
 
 public class IdentifyBlocksPhase extends Phase {
 
+    public static class BlockFactory {
+        public Block createBlock(int blockID) {
+            return new Block(blockID);
+        }
+    }
+
+    private final BlockFactory blockFactory;
     private final List<Block> blocks = new ArrayList<Block>();
     private NodeMap<Block> nodeToBlock;
     private NodeMap<Block> earliestCache;
@@ -46,7 +53,12 @@ public class IdentifyBlocksPhase extends Phase {
     private int loopCount;
 
     public IdentifyBlocksPhase(boolean scheduleAllNodes) {
+        this(scheduleAllNodes, new BlockFactory());
+    }
+
+    public IdentifyBlocksPhase(boolean scheduleAllNodes, BlockFactory blockFactory) {
         super(scheduleAllNodes ? "FullSchedule" : "PartSchedule", false);
+        this.blockFactory = blockFactory;
         this.scheduleAllNodes = scheduleAllNodes;
     }
 
@@ -146,7 +158,7 @@ public class IdentifyBlocksPhase extends Phase {
     }
 
     private Block createBlock() {
-        Block b = new Block(blocks.size());
+        Block b = blockFactory.createBlock(blocks.size());
         blocks.add(b);
         return b;
     }

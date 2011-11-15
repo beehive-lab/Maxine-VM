@@ -67,9 +67,11 @@ public class NodeClass {
     private final int directInputCount;
     private final long[] inputOffsets;
     private final Class<?>[] inputTypes;
+    private final String[] inputNames;
     private final int directSuccessorCount;
     private final long[] successorOffsets;
     private final Class<?>[] successorTypes;
+    private final String[] successorNames;
     private final long[] dataOffsets;
     private final Class<?>[] dataTypes;
     private final String[] dataNames;
@@ -103,8 +105,10 @@ public class NodeClass {
         }
         dataTypes = scanner.dataTypes.toArray(new Class[0]);
         dataNames = scanner.dataNames.toArray(new String[0]);
-        inputTypes = arrayUsingSortedOffsets(scanner.inputTypesMap, inputOffsets);
-        successorTypes = arrayUsingSortedOffsets(scanner.successorTypesMap, successorOffsets);
+        inputTypes = arrayUsingSortedOffsets(scanner.inputTypesMap, inputOffsets, new Class<?>[inputOffsets.length]);
+        inputNames = arrayUsingSortedOffsets(scanner.inputNamesMap, inputOffsets, new String[inputOffsets.length]);
+        successorTypes = arrayUsingSortedOffsets(scanner.successorTypesMap, successorOffsets, new Class<?>[successorOffsets.length]);
+        successorNames = arrayUsingSortedOffsets(scanner.successorNamesMap, successorOffsets, new String[successorOffsets.length]);
 
         canGVN = Node.ValueNumberable.class.isAssignableFrom(clazz);
         startGVNNumber = clazz.hashCode();
@@ -154,8 +158,10 @@ public class NodeClass {
         copyInto(dataTypes, scanner.dataTypes);
         copyInto(dataNames, scanner.dataNames);
 
-        copyInto(inputTypes, arrayUsingSortedOffsets(scanner.inputTypesMap, this.inputOffsets));
-        copyInto(successorTypes, arrayUsingSortedOffsets(scanner.successorTypesMap, this.successorOffsets));
+        copyInto(inputTypes, arrayUsingSortedOffsets(scanner.inputTypesMap, this.inputOffsets, new Class<?>[this.inputOffsets.length]));
+        copyInto(inputNames, arrayUsingSortedOffsets(scanner.inputNamesMap, this.inputOffsets, new String[this.inputNames.length]));
+        copyInto(successorTypes, arrayUsingSortedOffsets(scanner.successorTypesMap, this.successorOffsets, new Class<?>[this.successorOffsets.length]));
+        copyInto(successorNames, arrayUsingSortedOffsets(scanner.successorNamesMap, this.successorOffsets, new String[this.successorNames.length]));
     }
 
     private static void copyInto(long[] dest, long[] src) {
@@ -212,9 +218,11 @@ public class NodeClass {
         public final ArrayList<Long> inputOffsets = new ArrayList<Long>();
         public final ArrayList<Long> inputListOffsets = new ArrayList<Long>();
         public final Map<Long, Class< ? >> inputTypesMap = new HashMap<Long, Class<?>>();
+        public final Map<Long, String> inputNamesMap = new HashMap<Long, String>();
         public final ArrayList<Long> successorOffsets = new ArrayList<Long>();
         public final ArrayList<Long> successorListOffsets = new ArrayList<Long>();
         public final Map<Long, Class< ? >> successorTypesMap = new HashMap<Long, Class<?>>();
+        public final Map<Long, String> successorNamesMap = new HashMap<Long, String>();
         public final ArrayList<Long> dataOffsets = new ArrayList<Long>();
         public final ArrayList<Class< ? >> dataTypes = new ArrayList<Class<?>>();
         public final ArrayList<String> dataNames = new ArrayList<String>();
@@ -239,6 +247,7 @@ public class NodeClass {
                                 inputOffsets.add(offset);
                                 inputTypesMap.put(offset, type);
                             }
+                            inputNamesMap.put(offset, field.getName());
                         } else if (field.isAnnotationPresent(Node.Successor.class)) {
                             if (SUCCESSOR_LIST_CLASS.isAssignableFrom(type)) {
                                 successorListOffsets.add(offset);
@@ -247,6 +256,7 @@ public class NodeClass {
                                 successorOffsets.add(offset);
                                 successorTypesMap.put(offset, type);
                             }
+                            successorNamesMap.put(offset, field.getName());
                         } else if (field.isAnnotationPresent(Node.Data.class)) {
                             dataOffsets.add(offset);
                             dataTypes.add(type);
@@ -263,8 +273,7 @@ public class NodeClass {
         }
     }
 
-    private static Class<?>[] arrayUsingSortedOffsets(Map<Long, Class<?>> map, long[] sortedOffsets) {
-        Class<?>[] result = new Class<?>[sortedOffsets.length];
+    private static <T> T[] arrayUsingSortedOffsets(Map<Long, T> map, long[] sortedOffsets, T[] result) {
         for (int i = 0; i < sortedOffsets.length; i++) {
             result[i] = map.get(sortedOffsets[i]);
         }
@@ -521,13 +530,17 @@ public class NodeClass {
         return true;
     }
 
-    private Node get(Node node, Position pos) {
+    public Node get(Node node, Position pos) {
         long offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
         if (pos.subIndex == NOT_ITERABLE) {
             return getNode(node, offset);
         } else {
             return getNodeList(node, offset).get(pos.subIndex);
         }
+    }
+
+    public String getName(Position pos) {
+        return pos.input ? inputNames[pos.index] : successorNames[pos.index];
     }
 
     private void set(Node node, Position pos, Node x) {

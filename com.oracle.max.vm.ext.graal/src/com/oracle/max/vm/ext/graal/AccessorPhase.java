@@ -20,29 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.vm.ext.graal;
 
-import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
+import com.oracle.max.vm.ext.maxri.*;
+import com.sun.cri.ri.*;
+import com.sun.max.unsafe.*;
 
-public abstract class AccessVectorNode extends AbstractVectorNode {
 
-    @Input private ValueNode object;
-    @Input private LocationNode location;
-    @Input private final NodeInputList<Node> dependencies = new NodeInputList<Node>(this);
+public class AccessorPhase extends Phase {
 
-    public ValueNode object() {
-        return object;
+    private final MaxRuntime runtime;
+    private final RiResolvedType accessor;
+
+    public AccessorPhase(MaxRuntime runtime, RiResolvedType accessor) {
+        this.runtime = runtime;
+        this.accessor = accessor;
     }
 
-    public LocationNode location() {
-        return location;
-    }
-
-    public AccessVectorNode(CiKind kind, AbstractVectorNode vector, ValueNode object, LocationNode location) {
-        super(kind, vector);
-        this.object = object;
-        this.location = location;
+    @Override
+    protected void run(StructuredGraph graph) {
+        RiResolvedType accessorType = runtime.getType(Accessor.class);
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.callTarget();
+            RiResolvedMethod method = callTarget.targetMethod();
+            if (method.holder().equals(accessorType)) {
+                callTarget.setTargetMethod(accessor.resolveMethodImpl(method));
+                callTarget.setInvokeKind(InvokeKind.Special);
+            }
+        }
     }
 }

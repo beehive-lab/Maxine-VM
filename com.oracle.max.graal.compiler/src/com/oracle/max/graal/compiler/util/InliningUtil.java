@@ -32,12 +32,11 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
 import com.oracle.max.graal.nodes.util.*;
-import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
     public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
-        ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
+        NodeInputList<ValueNode> parameters = invoke.callTarget().arguments();
         StructuredGraph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
@@ -53,7 +52,7 @@ public class InliningUtil {
             if (node == entryPointNode || node == entryPointNode.stateAfter()) {
                 // Do nothing.
             } else if (node instanceof LocalNode) {
-                replacements.put(node, parameters[((LocalNode) node).index()]);
+                replacements.put(node, parameters.get(((LocalNode) node).index()));
             } else {
                 nodes.add(node);
                 if (node instanceof ReturnNode) {
@@ -74,10 +73,10 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || !receiverNullCheck || parameters[0].kind() != CiKind.Object) {
+        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
-            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
+            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters.get(0), false))));
             guard.setNext(firstCFGNodeDuplicate);
             invokeReplacement = guard;
         }
@@ -96,7 +95,7 @@ public class InliningUtil {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters);
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters.toArray(new ValueNode[parameters.size()]));
                     }
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
@@ -175,24 +174,5 @@ public class InliningUtil {
             stateAfter.delete();
         }
 
-    }
-
-    public static ValueNode[] simplifyParameters(Invoke invoke) {
-        MethodCallTargetNode target = invoke.callTarget();
-        RiMethod method = target.targetMethod();
-        NodeInputList<ValueNode> arguments = target.arguments();
-
-        boolean withReceiver = !target.isStatic();
-        int argumentCount = method.signature().argumentCount(false);
-        ValueNode[] parameters = new ValueNode[argumentCount + (withReceiver ? 1 : 0)];
-        int param = withReceiver ? 1 : 0;
-        for (int i = 0; i < argumentCount; i++) {
-            parameters[param] = arguments.get(param);
-            param++;
-        }
-        if (withReceiver) {
-            parameters[0] = arguments.get(0);
-        }
-        return parameters;
     }
 }

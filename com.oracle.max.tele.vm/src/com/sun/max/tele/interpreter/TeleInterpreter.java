@@ -1340,9 +1340,9 @@ public final class TeleInterpreter {
                 push(LongValue.from(UnsignedMath.remainder(value1.asLong(), value2.asLong())));
             }
 
-        } else if (intrinsic == PREAD) {
+        } else if (intrinsic == PREAD_OFF || intrinsic == PREAD_IDX) {
             pointerLoad(method);
-        } else if (intrinsic == PWRITE || intrinsic == PCMPSWP) {
+        } else if (intrinsic == PWRITE_OFF || intrinsic == PWRITE_IDX || intrinsic == PCMPSWP) {
             throw TeleError.unexpected("Cannot interpret pointer writes remotely");
         } else if (intrinsic == MEMBAR) {
             throw TeleError.unexpected("Unsupported intrinsic: " + intrinsic);

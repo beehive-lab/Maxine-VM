@@ -34,7 +34,6 @@ import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -132,10 +131,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         this.method = method;
         this.stats = stats;
         this.log = GraalOptions.TraceBytecodeParserLevel > 0 ? new LogStream(TTY.out()) : null;
-        assert method.code() != null : method;
+        assert method.code() != null : "method must contain bytecodes: " + method;
         this.stream = new BytecodeStream(method.code());
-
-        this.constantPool = runtime.getConstantPool(method);
+        this.constantPool = method.getConstantPool();
     }
 
     @Override
@@ -160,7 +158,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
         if (context.isObserved()) {
             String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method);
-            context.observable.fireCompilationEvent(new CompilationEvent(null, label, map, method.code().length));
+            context.observable.fireCompilationEvent(label, map);
         }
         return map;
     }

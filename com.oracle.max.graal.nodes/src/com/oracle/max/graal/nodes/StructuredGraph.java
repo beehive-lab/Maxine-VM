@@ -22,7 +22,10 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.java.*;
 
 
 /**
@@ -38,5 +41,48 @@ public class StructuredGraph extends Graph {
 
     public BeginNode start() {
         return start;
+    }
+
+    public Iterable<Invoke> getInvokes() {
+        final Iterator<MethodCallTargetNode> callTargets = getNodes(MethodCallTargetNode.class).iterator();
+        return new Iterable<Invoke>() {
+            private Invoke next;
+
+            @Override
+            public Iterator<Invoke> iterator() {
+                return new Iterator<Invoke>() {
+
+                    @Override
+                    public boolean hasNext() {
+                        if (next == null) {
+                            while (callTargets.hasNext()) {
+                                Invoke i = callTargets.next().invoke();
+                                if (i != null) {
+                                    next = i;
+                                    return true;
+                                }
+                            }
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
+
+                    @Override
+                    public Invoke next() {
+                        try {
+                            return next;
+                        } finally {
+                            next = null;
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.snippets;
 
-import java.util.*;
-
-import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.cri.*;
 import com.sun.cri.ci.*;
 
-public abstract class AbstractMemoryCheckpointNode extends AbstractStateSplit implements MemoryCheckpoint {
-
-    @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
-
-    public AbstractMemoryCheckpointNode() {
-        this(CiKind.Illegal);
-    }
-
-    public AbstractMemoryCheckpointNode(CiKind result) {
-        super(result);
-    }
-
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> debugProperties = super.getDebugProperties();
-        debugProperties.put("memoryCheckpoint", "true");
-        return debugProperties;
-    }
-
-    @Override
-    public NodeInputList<Node> mergedNodes() {
-        return mergedNodes;
-    }
-
-    @Override
-    public Node node() {
-        return this;
+/**
+ * Definition of the snippets that are VM-independent and can be intrinsified by Graal in any VM.
+ */
+public class GraalIntrinsics {
+    public static void installIntrinsics(GraalCompiler compiler, GraalRuntime runtime, CiTarget target) {
+        if (GraalOptions.Intrinsify) {
+            Snippets.install(compiler, runtime, target, new MathSnippetsX86(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new DoubleSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new FloatSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(compiler, runtime, target, new NodeClassSnippets(), GraalOptions.PlotSnippets);
+        }
     }
 }

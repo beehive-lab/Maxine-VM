@@ -26,13 +26,17 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
+import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.Interval.UsePosList;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.graph.NodeClass.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -41,36 +45,85 @@ import com.sun.cri.ri.*;
  */
 public class CFGPrinter extends CompilationPrinter {
 
-    private final CiTarget target;
+    public final ByteArrayOutputStream buffer;
+    public final GraalCompilation compilation;
+    public final CiTarget target;
     public final RiRuntime runtime;
 
     /**
      * Creates a control flow graph printer.
      *
-     * @param os where the output generated via this printer shown be written
+     * @param buffer where the output generated via this printer shown be written
      * @param target the target architecture description
      */
-    public CFGPrinter(OutputStream os, CiTarget target, RiRuntime runtime) {
-        super(os);
-        this.target = target;
-        this.runtime = runtime;
+    public CFGPrinter(ByteArrayOutputStream buffer, GraalCompilation compilation) {
+        super(buffer);
+        this.buffer = buffer;
+        this.compilation = compilation;
+        this.target = compilation.compiler.target;
+        this.runtime = compilation.compiler.runtime;
     }
 
+
     /**
-     * Print the details of a given control flow graph block.
+     * Prints the control flow graph denoted by a given block map.
      *
-     * @param block the block to print
-     * @param successors the successor blocks of {@code block}
-     * @param handlers the exception handler blocks of {@code block}
-     * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
-     * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
+     * @param label A label describing the compilation phase that produced the control flow graph.
+     * @param blockMap A data structure describing the blocks in a method and how they are connected.
      */
-    void printBlock(Block block, List<Block> successors, Block handler, RiResolvedMethod method, boolean printHIR, boolean printLIR) {
+    public void printCFG(String label, BlockMap blockMap) {
+        begin("cfg");
+        out.print("name \"").print(label).println('"');
+        for (BlockMap.Block block : blockMap.blocks) {
+            begin("block");
+            printBlock(block);
+            end("block");
+        }
+        end("cfg");
+    }
+
+
+    private void printBlock(BlockMap.Block block) {
+        out.print("name \"B").print(block.startBci).println('"');
+        out.print("from_bci ").println(block.startBci);
+        out.print("to_bci ").println(block.endBci);
+
+        out.println("predecessors ");
+
+        out.print("successors ");
+        for (BlockMap.Block succ : block.successors) {
+            if (!succ.isExceptionEntry) {
+                out.print("\"B").print(succ.startBci).print("\" ");
+            }
+        }
+        out.println();
+
+        out.print("xhandlers");
+        for (BlockMap.Block succ : block.successors) {
+            if (succ.isExceptionEntry) {
+                out.print("\"B").print(succ.startBci).print("\" ");
+            }
+        }
+        out.println();
+
+        out.print("flags ");
+        if (block.isExceptionEntry) {
+            out.print("\"ex\" ");
+        }
+        if (block.isLoopHeader) {
+            out.print("\"plh\" ");
+        }
+        out.println();
+
+        out.print("loop_depth ").println(Long.bitCount(block.loops));
+    }
+
+    private void printBlock(Block block, boolean printHIR) {
         begin("block");
 
         out.print("name \"B").print(block.blockID()).println('"');
-        out.print("from_bci -1");
-        out.print("to_bci -1");
+        out.println("from_bci -1");
+        out.println("to_bci -1");
 
         out.print("predecessors ");
         for (Block pred : block.getPredecessors()) {
@@ -79,69 +132,42 @@ public class CFGPrinter extends CompilationPrinter {
         out.println();
 
         out.print("successors ");
-        for (Block succ : successors) {
-            out.print("\"B").print(succ.blockID()).print("\" ");
+        for (Block succ : block.getSuccessors()) {
+            if (!succ.isExceptionBlock()) {
+                out.print("\"B").print(succ.blockID()).print("\" ");
+            }
         }
         out.println();
 
         out.print("xhandlers");
-        if (handler != null) {
-            out.print("\"B").print(handler.blockID()).print("\" ");
+        for (Block succ : block.getSuccessors()) {
+            if (succ.isExceptionBlock()) {
+                out.print("\"B").print(succ.blockID()).print("\" ");
+            }
         }
         out.println();
 
         out.print("flags ");
-        out.println();
-
-        out.print("loop_index ").println(-1);
-        out.print("loop_depth ").println(-1);
-
-        if (printHIR) {
-            printHIR(block, method);
+        if (block.isLoopHeader()) {
+            out.print("\"llh\" ");
         }
-
-        // TODO(tw): Add possibility to print LIR.
-        //if (printLIR) {
-        //    printLIR(block.lirBlock());
-        //}
-
-        end("block");
-    }
-
-    private void printBlock(LIRBlock block, RiResolvedMethod method, boolean printHIR, boolean printLIR) {
-        begin("block");
-
-        out.print("name \"B").print(block.blockID()).println('"');
-        out.println("from_bci -1");
-        out.println("to_bci -1");
-
-        out.print("predecessors ");
-        for (LIRBlock pred : block.blockPredecessors()) {
-            out.print("\"B").print(pred.blockID()).print("\" ");
+        if (block.isLoopEnd()) {
+            out.print("\"llh\" ");
         }
-        out.println();
-
-        out.print("successors ");
-        for (LIRBlock succ : block.blockSuccessors()) {
-            out.print("\"B").print(succ.blockID()).print("\" ");
+        if (block.isExceptionBlock()) {
+            out.print("\"ex\" ");
         }
-        out.println();
-
-        out.print("xhandlers");
-        out.println();
-
-        out.print("flags ");
         out.println();
 
         out.print("loop_index ").println(block.loopIndex());
         out.print("loop_depth ").println(block.loopDepth());
 
         if (printHIR) {
-            printHIR(block.schedulerBlock(), method);
+            printHIR(block);
         }
 
-        if (printLIR) {
-            printLIR(block, method);
+        if (block instanceof LIRBlock) {
+            printLIR((LIRBlock) block);
         }
 
         end("block");
@@ -288,14 +314,12 @@ public class CFGPrinter extends CompilationPrinter {
      * @param block
      * @param method
      */
-    private void printHIR(Block block, RiResolvedMethod method) {
+    private void printHIR(Block block) {
         begin("IR");
         out.println("HIR");
         out.disableIndentation();
-        for (Node i : block.getInstructions()) {
-            if (i instanceof FixedWithNextNode) {
-                printInstructionHIR((FixedWithNextNode) i, method);
-            }
+        for (Node node : block.getInstructions()) {
+            printInstructionHIR((ValueNode) node);
         }
         out.enableIndentation();
         end("IR");
@@ -306,7 +330,7 @@ public class CFGPrinter extends CompilationPrinter {
      *
      * @param block the block to print
      */
-    private void printLIR(LIRBlock block, RiResolvedMethod method) {
+    private void printLIR(LIRBlock block) {
         List<LIRInstruction> lir = block.lir();
         if (lir != null) {
             begin("IR");
@@ -323,7 +347,7 @@ public class CFGPrinter extends CompilationPrinter {
                         // Use register-allocator output if available
                         state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
                     } else {
-                        state = stateToString(inst.info.state, new OperandFormatter(false), method);
+                        state = stateToString(inst.info.state, new OperandFormatter(false), compilation.method);
                     }
                     if (state != null) {
                         out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);
@@ -344,58 +368,81 @@ public class CFGPrinter extends CompilationPrinter {
         }
     }
 
+
     /**
      * Prints the HIR for a given instruction.
      *
      * @param i the instruction for which HIR will be printed
      * @param method
      */
-    private void printInstructionHIR(FixedWithNextNode i, RiResolvedMethod method) {
-        out.print("bci ").print(-1).println(COLUMN_END);
+    private void printInstructionHIR(ValueNode i) {
+        if (i instanceof FixedWithNextNode) {
+            out.print("f ").print(HOVER_START).print("#").print(HOVER_SEP).print("fixed with next").print(HOVER_END).println(COLUMN_END);
+        } else if (i instanceof FixedNode) {
+            out.print("f ").print(HOVER_START).print("*").print(HOVER_SEP).print("fixed").print(HOVER_END).println(COLUMN_END);
+        } else if (i instanceof FloatingNode) {
+            out.print("f ").print(HOVER_START).print("~").print(HOVER_SEP).print("floating").print(HOVER_END).println(COLUMN_END);
+        }
         if (i.operand().isLegal()) {
             out.print("result ").print(new OperandFormatter(false).format(i.operand())).println(COLUMN_END);
         }
-        out.print("tid ").print(ValueUtil.valueString(i)).println(COLUMN_END);
+        out.print("tid ").print(node(i)).println(COLUMN_END);
 
         if (i instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) i;
-            String state = stateToString(stateSplit.stateAfter(), null, method);
+            String state = stateToString(stateSplit.stateAfter(), null, compilation.method);
             if (state != null) {
                 out.print("st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).println(COLUMN_END);
             }
         }
 
+        Map<Object, Object> props = i.getDebugProperties();
+        out.print("d ").print(HOVER_START).print("d").print(HOVER_SEP);
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+            out.print(entry.getKey().toString()).print(": ").print(entry.getValue().toString()).println();
+        }
+        out.print(HOVER_END).println(COLUMN_END);
+
         out.print("instruction ");
-        out.print(i.toString());
+        out.print(HOVER_START).print(i.getNodeClass().shortName()).print(HOVER_SEP).print(i.getClass().getName()).print(HOVER_END).print(" ");
+        int lastIndex = -1;
+        for (NodeClassIterator iter = i.inputs().iterator(); iter.hasNext();) {
+            Position pos = iter.nextPosition();
+            if (pos.index != lastIndex) {
+                if (pos.input) {
+                    out.print(i.getNodeClass().getName(pos)).print(": ");
+                } else {
+                    out.print("#").print(i.getNodeClass().getName(pos)).print(": ");
+                }
+            }
+            lastIndex = pos.index;
+            out.print(node(i.getNodeClass().get(i, pos))).print(" ");
+        }
+
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+            String key = entry.getKey().toString();
+            if (key.startsWith("data.") && !key.equals("data.kind")) {
+                out.print(key.substring("data.".length())).print(": ").print(entry.getValue().toString()).print(" ");
+            }
+        }
+
         out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 
-    /**
-     * Prints the control flow graph denoted by a given block map.
-     *
-     * @param blockMap a data structure describing the blocks in a method and how they are connected
-     * @param codeSize the bytecode size of the method from which {@code blockMap} was produced
-     * @param label a label describing the compilation phase that produced the control flow graph
-     */
-    public void printCFG(BlockMap blockMap, String label) {
-        begin("cfg");
-        out.print("name \"").print(label).println('"');
-        for (BlockMap.Block block : blockMap.blocks) {
-            begin("block");
-            blockMap.printBlock(block, out);
-            end("block");
+    public static String node(Node node) {
+        if (node == null) {
+            return "-";
+        } else if (!(node instanceof ValueNode)) {
+            return "?";
         }
-        end("cfg");
+        ValueNode value = (ValueNode) node;
+        if (value.kind() == CiKind.Illegal) {
+            return "v" + value.toString(Verbosity.Id);
+        } else {
+            return String.valueOf(value.kind().typeChar) + value.toString(Verbosity.Id);
+        }
     }
 
-    public void printCFG(RiResolvedMethod method, String label, LIR lir, boolean printHIR, boolean printLIR) {
-        begin("cfg");
-        out.print("name \"").print(label).println('"');
-        for (LIRBlock block : lir.linearScanOrder()) {
-            printBlock(block, method, printHIR, printLIR);
-        }
-        end("cfg");
-    }
     /**
      * Prints the control flow graph rooted at a given block.
      *
@@ -404,21 +451,19 @@ public class CFGPrinter extends CompilationPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(Block startBlock, String label, final RiResolvedMethod method, final boolean printHIR, final boolean printLIR) {
+    public void printCFG(String label, List<? extends Block> blocks, boolean printHIR) {
         begin("cfg");
         out.print("name \"").print(label).println('"');
-        startBlock.iteratePreOrder(new BlockClosure() {
-            public void apply(Block block) {
-                List<Block> successors = block.getSuccessors();
-                printBlock(block, successors, null, method, printHIR, printLIR);
-            }
-        });
+        for (Block block : blocks) {
+            printBlock(block, printHIR);
+        }
         end("cfg");
     }
 
-    public void printIntervals(LinearScan allocator, Interval[] intervals, String name) {
+
+    public void printIntervals(String label, LinearScan allocator, Interval[] intervals) {
         begin("intervals");
-        out.println(String.format("name \"%s\"", name));
+        out.println(String.format("name \"%s\"", label));
 
         for (Interval interval : intervals) {
             if (interval != null) {

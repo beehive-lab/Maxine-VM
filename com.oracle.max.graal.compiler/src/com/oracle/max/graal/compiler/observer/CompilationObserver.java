@@ -33,9 +33,9 @@ public interface CompilationObserver {
      * Called when compilation of a method has started. This is always the first event raised for a particular
      * {@link GraalCompilation}.
      *
-     * @param event Information associated with the event and current state of the compilation.
+     * @param compilation Current state of the compilation.
      */
-    void compilationStarted(CompilationEvent event);
+    void compilationStarted(GraalCompilation compilation);
 
     /**
      * Called when an event has occurred, for example that a particular phase in the compilation has been entered.
@@ -48,8 +48,8 @@ public interface CompilationObserver {
      * Called when compilation of a method has completed (successfully or not). This is always the last event raised for
      * a particular {@link GraalCompilation}.
      *
-     * @param event Information associated with the event and current state of the compilation.
+     * @param compilation Current state of the compilation.
      */
-    void compilationFinished(CompilationEvent event);
+    void compilationFinished(GraalCompilation compilation);
 
 }

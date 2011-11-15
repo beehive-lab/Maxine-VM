@@ -46,4 +46,6 @@ public interface Invoke extends StateSplit {
     FrameState stateAfter();
 
     Node predecessor();
+
+    void intrinsify(Node node);
 }
