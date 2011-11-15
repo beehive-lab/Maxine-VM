@@ -948,11 +948,11 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont, Throwable exception) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont, Throwable exception, boolean reexecute) {
         int bci = frame.bci;
         ClassMethodActor method = classMethodActor;
         assert classMethodActor == frame.method : classMethodActor + " != " + frame.method;
-        CodePointer ip = findContinuationIP(exception, bci);
+        CodePointer ip = findContinuationIP(exception, bci, reexecute);
 
         // record continuation instruction pointer
         cont.setIP(info, ip.toPointer());
@@ -1050,12 +1050,18 @@ public final class T1XTargetMethod extends TargetMethod {
      *
      * @param exception if non-null, then the returned address will be for the handler of this exception
      * @param bci the BCI specified by a debug info {@linkplain CiFrame frame}
+     * @param reexecute specifies if the instruction at {@code bci} is to be re-executed
      */
-    private CodePointer findContinuationIP(Throwable exception, int bci) throws FatalError {
+    private CodePointer findContinuationIP(Throwable exception, int bci, boolean reexecute) throws FatalError {
         CodePointer ip;
         if (exception == null) {
             RiMethod callee = classMethodActor.codeAttribute().calleeAt(bci);
-            ip = findTemplateCallReturnAddress(bci, callee);
+            if (reexecute) {
+                int curPos = bciToPos[bci];
+                ip = codeAt(curPos);
+            } else {
+                ip = findTemplateCallReturnAddress(bci, callee);
+            }
         } else {
             // Unwinding to deoptimized frame containing the handler for 'exception'
             int curPos = bciToPos[bci];
