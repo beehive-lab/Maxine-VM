@@ -164,7 +164,7 @@ public final class ComputeLinearScanOrder {
 
         // loop end blocks (blocks that end with a backward branch) are added
         // after all other blocks of the loop.
-        if (!cur.isLinearScanLoopEnd()) {
+        if (!cur.isLoopEnd()) {
             weight |= 1 << curBit;
         }
         curBit--;
@@ -261,18 +261,19 @@ public final class ComputeLinearScanOrder {
         cur.setLinearScanNumber(linearScanOrder.size());
         linearScanOrder.add(cur);
 
-        if (cur.isLinearScanLoopEnd() && cur.isLinearScanLoopHeader()) {
+        if (cur.isLoopEnd() && cur.isLoopHeader()) {
             codeEmittingOrder.add(cur);
         } else {
-            if (!cur.isLinearScanLoopHeader() || !GraalOptions.OptReorderLoops) {
+            if (!cur.isLoopHeader() || !GraalOptions.OptReorderLoops) {
                 codeEmittingOrder.add(cur);
 
-                if (cur.isLinearScanLoopEnd() && GraalOptions.OptReorderLoops) {
+                if (cur.isLoopEnd() && GraalOptions.OptReorderLoops) {
                     LIRBlock loopHeader = loopHeaders[cur.loopIndex()];
                     assert loopHeader != null;
                     codeEmittingOrder.add(loopHeader);
 
-                    for (LIRBlock succ : loopHeader.blockSuccessors()) {
+                    for (int i = 0; i < loopHeader.numberOfSux(); i++) {
+                        LIRBlock succ = loopHeader.suxAt(i);
                         if (succ.loopDepth() == loopHeader.loopDepth()) {
                             succ.setAlign(true);
                         }
@@ -330,8 +331,8 @@ public final class ComputeLinearScanOrder {
             for (LIRBlock cur : linearScanOrder) {
                 TTY.print(String.format("%4d: B%02d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID(), cur.loopIndex(), cur.loopDepth()));
 
-                TTY.print(cur.isLinearScanLoopHeader() ? " lh" : "   ");
-                TTY.print(cur.isLinearScanLoopEnd() ? " le" : "   ");
+                TTY.print(cur.isLoopHeader() ? " lh" : "   ");
+                TTY.print(cur.isLoopEnd() ? " le" : "   ");
 
                 TTY.print("    dom: null ");
 

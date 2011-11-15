@@ -191,10 +191,10 @@ public class LIR {
         TTY.print("B%d ", x.blockID());
 
         // print flags
-        if (x.isLinearScanLoopHeader()) {
+        if (x.isLoopHeader()) {
             TTY.print("lh ");
         }
-        if (x.isLinearScanLoopEnd()) {
+        if (x.isLoopEnd()) {
             TTY.print("le ");
         }
 

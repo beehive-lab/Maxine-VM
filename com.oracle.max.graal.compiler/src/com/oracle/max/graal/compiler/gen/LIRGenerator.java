@@ -36,6 +36,7 @@ import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
@@ -151,7 +152,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     protected LabelRef getLIRBlock(FixedNode b) {
         LIRBlock result = lir.valueToBlock().get(b);
-        int suxIndex = currentBlock.blockSuccessors().indexOf(result);
+        int suxIndex = currentBlock.getSuccessors().indexOf(result);
         assert suxIndex != -1 : "Block not in successor list of current block";
 
         return LabelRef.forSuccessor(currentBlock, suxIndex);
@@ -218,9 +219,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 emitXir(prologue, null, null, null, false);
             }
             setOperandsForParameters();
-        } else if (block.blockPredecessors().size() > 0) {
+        } else if (block.getPredecessors().size() > 0) {
             FrameState fs = null;
-            for (LIRBlock pred : block.blockPredecessors()) {
+            for (Block p : block.getPredecessors()) {
+                LIRBlock pred = (LIRBlock) p;
                 if (fs == null) {
                     fs = pred.lastState();
                 } else if (fs != pred.lastState()) {
@@ -284,9 +286,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 }
             }
         }
-        if (block.blockSuccessors().size() >= 1 && !block.endsWithJump()) {
-            NodeSuccessorsIterable successors = block.lastInstruction().successors();
-            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastInstruction();
+        if (block.numberOfSux() >= 1 && !block.endsWithJump()) {
+            NodeSuccessorsIterable successors = block.lastNode().successors();
+            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastNode();
 
             emitJump(getLIRBlock((FixedNode) successors.first()), null);
         }
