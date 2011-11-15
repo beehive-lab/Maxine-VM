@@ -7,6 +7,9 @@
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="2"/>
 </listAttribute>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="MAXINE" value="${workspace_loc}"/>
+</mapAttribute>
 <stringAttribute key="org.eclipse.jdt.junit.CONTAINER" value="=com.oracle.max.graal.compiler.tests/src"/>
 <booleanAttribute key="org.eclipse.jdt.junit.KEEPRUNNING_ATTR" value="false"/>
 <stringAttribute key="org.eclipse.jdt.junit.TESTNAME" value=""/>

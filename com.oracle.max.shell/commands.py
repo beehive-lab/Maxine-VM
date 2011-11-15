@@ -545,8 +545,6 @@ def _find_graal_compiler_unit_tests_classes(env):
 def gcut(env, args):
     """runs the Graal Compiler Unit Tests in the GraalVM"""
     # (ds) The boot class path must be used for some reason I don't quite understand
-    
-    os.environ['MAXINE'] = env.maxine_home
     env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
 
 def gcutmax(env, args):
