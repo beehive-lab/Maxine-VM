@@ -22,25 +22,30 @@
  */
 package com.sun.max.tele.reference;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
+// TODO (mlvdv) this will eventually be replaced.
+
 /**
- * Canonicalized constant tele reference, for locations known not to change under GC.
+ * Canonicalized constant remote {@link Reference}, for addresses of VM objects
+ * that do not move and will not be collected.
  */
 public class CanonicalConstantTeleReference extends ConstantTeleReference {
 
-    CanonicalConstantTeleReference(TeleReferenceScheme teleReferenceScheme, Address raw) {
-        super(teleReferenceScheme, raw);
+    CanonicalConstantTeleReference(TeleVM vm, Address raw) {
+        super(vm, raw);
     }
 
+    // TODO (mlvdv) review whether this is necessary.
     @Override
     public void finalize() throws Throwable {
-        teleReferenceScheme().finalizeCanonicalConstantTeleReference(this);
+        vm().referenceManager().finalizeCanonicalConstantTeleReference(this);
         super.finalize();
     }
 
     @Override
-    public TeleObjectMemory.State getTeleObjectMemoryState() {
-        return TeleObjectMemory.State.LIVE;
+    public ObjectMemoryStatus memoryStatus() {
+        return ObjectMemoryStatus.LIVE;
     }
 }

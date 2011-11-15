@@ -33,11 +33,11 @@ public class TeleStaticLongFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.LONG);
     }
 
-    public long readLong(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readLong(fieldActor().offset());
+    public long readLong(MaxVM vm) {
+        return staticTupleReference(vm).readLong(fieldActor().offset());
     }
 
-    public void writeLong(TeleVM teleVM, long value) {
-        staticTupleReference(teleVM).writeLong(fieldActor().offset(), value);
+    public void writeLong(MaxVM vm, long value) {
+        staticTupleReference(vm).writeLong(fieldActor().offset(), value);
     }
 }

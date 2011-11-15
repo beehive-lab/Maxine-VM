@@ -27,6 +27,8 @@ package jtt.hotspot;
  * @bug 6959129
  * @summary COMPARISON WITH INTEGER.MAX_INT DOES NOT WORK CORRECTLY IN THE CLIENT VM.
  *
+ * This test will not run properly without assertions
+ *
  * @run main/othervm -ea Test6959129
  * @Harness: java
  * @Runs: 0 = 95

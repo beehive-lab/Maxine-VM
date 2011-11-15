@@ -47,12 +47,12 @@ public final class TeleConstantPool extends TeleTupleObject{
 
     private Reference constantsArrayReference() {
         if (constantsArrayReference == null) {
-            constantsArrayReference = vm().teleFields().ConstantPool_constants.readReference(reference());
+            constantsArrayReference = fields().ConstantPool_constants.readReference(reference());
         }
         return constantsArrayReference;
     }
 
-    // TODO (mlvdv) fix this up when intefaces aded
+    // TODO (mlvdv) fix this up when interfaces added
     /**
      * @param index specifies an entry in this pool
      * @return surrogate for the entry in the VM  of this pool
@@ -63,8 +63,8 @@ public final class TeleConstantPool extends TeleTupleObject{
             throw new MaxVMBusyException();
         }
         try {
-            final Reference poolConstantReference = vm().getElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
-            final TeleObject teleObject = heap().makeTeleObject(poolConstantReference);
+            final Reference poolConstantReference = memory().readArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
+            final TeleObject teleObject = objects().makeTeleObject(poolConstantReference);
             if (!(teleObject instanceof TelePoolConstant)) {
                 return null;
             }
@@ -78,8 +78,8 @@ public final class TeleConstantPool extends TeleTupleObject{
      * @return surrogate for the {@link ClassActor} object in the VM  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
-        final Reference classActorReference = vm().teleFields().ConstantPool_holder.readReference(reference());
-        return (TeleClassActor) heap().makeTeleObject(classActorReference);
+        final Reference classActorReference = fields().ConstantPool_holder.readReference(reference());
+        return (TeleClassActor) objects().makeTeleObject(classActorReference);
     }
 
     @Override

@@ -38,7 +38,7 @@ import com.sun.max.vm.thread.*;
  * pointers of an execution point in a Java frame. Each anchor also points to the anchor further
  * (logically) down the stack of the closest caller that made a thread state transition.
  *
- * The head of the list of anchors for a thread is maintained in {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR}.
+ * The head of the list of frame anchors for a thread is maintained in {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR}.
  */
 public enum JavaFrameAnchor {
 
@@ -133,11 +133,11 @@ public enum JavaFrameAnchor {
      * Creates an anchor in the frame of the caller (hence the {@link INLINE} annotation).
      */
     @INLINE
-    public static Pointer create(Word stackPointer, Word framePointer, Word instructionPointer, Word previousAnchor) {
+    public static Pointer create(Word stackPointer, Word framePointer, CodePointer instructionPointer, Word previousAnchor) {
         Pointer anchor = Intrinsics.stackAllocate(size());
         FP.set(anchor, framePointer);
         SP.set(anchor, stackPointer);
-        PC.set(anchor, instructionPointer);
+        PC.set(anchor, instructionPointer.toAddress());
         PREVIOUS.set(anchor, previousAnchor);
         return anchor;
     }

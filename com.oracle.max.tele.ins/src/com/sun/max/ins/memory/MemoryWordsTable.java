@@ -137,7 +137,7 @@ public final class MemoryWordsTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -150,7 +150,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     public boolean isBoundaryRow(int row) {
         // TODO (mlvdv)  this doesn't work when origin != cell
-        return vm().isValidOrigin(tableModel.getMemoryRegion(row).start().asPointer());
+        return vm().objects().isValidOrigin(tableModel.getMemoryRegion(row).start());
     }
 
     /**
@@ -318,7 +318,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
-                final ValueMode labelValueMode = vm().isValidOrigin(address.asPointer()) ? ValueMode.REFERENCE : ValueMode.WORD;
+                final ValueMode labelValueMode = vm().objects().isValidOrigin(address) ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection, labelValueMode, address, MemoryWordsTable.this);
                 label.setToolTipPrefix("Memory word location<br>Address=");
                 label.setOpaque(true);
@@ -326,7 +326,7 @@ public final class MemoryWordsTable extends InspectorTable {
             }
             label.setBackground(cellBackgroundColor(isSelected));
             if (isBoundaryRow(row)) {
-                label.setBorder(style().defaultPaneTopBorder());
+                label.setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 label.setBorder(null);
             }
@@ -391,13 +391,13 @@ public final class MemoryWordsTable extends InspectorTable {
             label.setText(labelText);
             label.setWrappedToolTipHtmlText(toolTipText);
             if (isBoundaryRow(row)) {
-                label.setBorder(style().defaultPaneTopBorder());
+                label.setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 label.setBorder(null);
             }
             label.setBackground(cellBackgroundColor(isSelected));
             label.setForeground(cellForegroundColor(row, column));
-            label.setFont(style().defaultFont());
+            label.setFont(preference().style().defaultFont());
             return label;
         }
 
@@ -420,7 +420,7 @@ public final class MemoryWordsTable extends InspectorTable {
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
             if (isBoundaryRow(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }
@@ -447,7 +447,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.WORD, MemoryWordsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return vm().readWordValue(address);
+                        return vm().memory().readWordValue(address);
                     }
                 };
                 label.setOpaque(true);
@@ -456,7 +456,7 @@ public final class MemoryWordsTable extends InspectorTable {
             }
             label.setBackground(cellBackgroundColor(isSelected));
             if (isBoundaryRow(row)) {
-                label.setBorder(style().defaultPaneTopBorder());
+                label.setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 label.setBorder(null);
             }
@@ -490,9 +490,9 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as chars = ");
             final byte[] bytes = new byte[vm().platform().nBytesInWord()];
-            vm().readBytes(address, bytes);
+            vm().memory().readBytes(address, bytes);
             if (isBoundaryRow(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }
@@ -513,9 +513,9 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as Unicode = ");
             final byte[] bytes = new byte[vm().platform().nBytesInWord()];
-            vm().readBytes(address, bytes);
+            vm().memory().readBytes(address, bytes);
             if (isBoundaryRow(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }
@@ -535,11 +535,11 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as float = ");
-            final Value wordValue = vm().readWordValue(address);
+            final Value wordValue = vm().memory().readWordValue(address);
             final float f = Float.intBitsToFloat((int) (wordValue.toLong() & 0xffffffffL));
             setValue(f);
             if (isBoundaryRow(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }
@@ -558,11 +558,11 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as double = ");
-            final Value wordValue = vm().readWordValue(address);
+            final Value wordValue = vm().memory().readWordValue(address);
             final double f = Double.longBitsToDouble(wordValue.toLong());
             setValue(f);
             if (isBoundaryRow(row)) {
-                setBorder(style().defaultPaneTopBorder());
+                setBorder(preference().style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
             }

@@ -58,7 +58,7 @@ public final class BytecodeOperandLabel extends InspectorLabel {
 
     public void redisplay() {
         setWrappedToolTipHtmlText(toolTipText);
-        setFont(style().bytecodeOperandFont());
+        setFont(preference().style().bytecodeOperandFont());
     }
 
 }

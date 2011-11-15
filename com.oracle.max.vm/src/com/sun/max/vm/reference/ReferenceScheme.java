@@ -29,9 +29,7 @@ import com.sun.max.vm.*;
 /**
  * Reference-based object access methods for mutator use.
  *
- * A "reference" is a runtime value of type 'java.lang.Object'.
- * It can be stored in fields and array elements of other objects.
- * The mutator refers to objects and parts thereof by using references.
+ * @see Reference
  */
 public interface ReferenceScheme extends VMScheme {
 
@@ -52,6 +50,8 @@ public interface ReferenceScheme extends VMScheme {
     boolean isAllOnes(Reference ref);
 
     boolean isMarked(Reference ref);
+
+    boolean isTagged(Reference ref);
 
     Reference marked(Reference ref);
 

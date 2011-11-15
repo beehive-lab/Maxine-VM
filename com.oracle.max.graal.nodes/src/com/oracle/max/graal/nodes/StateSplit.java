@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,45 +22,12 @@
  */
 package com.oracle.max.graal.nodes;
 
-import com.sun.cri.ci.*;
+public interface StateSplit {
 
-/**
- * The {@code StateSplit} class is the abstract base class of all instructions
- * that store an immutable copy of the frame state.
- */
-public abstract class StateSplit extends FixedWithNextNode {
+    FrameState stateAfter();
 
-    @Input private FrameState stateAfter;
+    void setStateAfter(FrameState x);
 
-    public FrameState stateAfter() {
-        return stateAfter;
-    }
+    boolean needsStateAfter();
 
-    public void setStateAfter(FrameState x) {
-        updateUsages(stateAfter, x);
-        stateAfter = x;
-    }
-
-    /**
-     * Creates a new state split with the specified value type.
-     * @param kind the type of the value that this instruction produces
-     */
-    public StateSplit(CiKind kind) {
-        super(kind);
-    }
-
-    public boolean needsStateAfter() {
-        return true;
-    }
-
-    @Override
-    public void delete() {
-        FrameState stateAfter = stateAfter();
-        super.delete();
-        if (stateAfter != null) {
-            if (stateAfter.usages().isEmpty()) {
-                stateAfter.delete();
-            }
-        }
-    }
 }

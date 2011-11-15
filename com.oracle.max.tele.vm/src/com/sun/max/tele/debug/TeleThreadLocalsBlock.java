@@ -41,7 +41,7 @@ import com.sun.max.vm.thread.*;
  *
  * @see VmThreadLocal
  */
-public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsBlock {
+public final class TeleThreadLocalsBlock extends AbstractVmHolder implements TeleVMCache, MaxThreadLocalsBlock {
 
     private static final int TRACE_VALUE = 2;
 
@@ -61,7 +61,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
 
         private final TeleThreadLocalsBlock teleThreadLocalsBlock;
 
-        private ThreadLocalsBlockMemoryRegion(TeleVM vm, TeleThreadLocalsBlock owner, String regionName, Address start, long nBytes) {
+        private ThreadLocalsBlockMemoryRegion(MaxVM vm, TeleThreadLocalsBlock owner, String regionName, Address start, long nBytes) {
             super(vm, regionName, start, nBytes);
             this.teleThreadLocalsBlock = owner;
         }
@@ -99,7 +99,11 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
     private final TeleNativeThread teleNativeThread;
 
     /**
-     * The region of VM memory occupied by this block, null if this is a dummy for which there are no locals (as for a native thread).
+     * The region of VM memory occupied by this block, null if this is a dummy
+     * for which there are no locals (as for a native thread).
+     * <p>
+     * Don't null this field out when the thread is known to have died;
+     * we'll need to keep track of it to update update information about memory allocations.
      */
     private final ThreadLocalsBlockMemoryRegion threadLocalsBlockMemoryRegion;
 
@@ -188,8 +192,8 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
                     if (!threadLocalValue.isZero()) {
-                        final Reference vmThreadReference = vm().wordToReference(threadLocalValue);
-                        teleVmThread = (TeleVmThread) heap().makeTeleObject(vmThreadReference);
+                        final Reference vmThreadReference = referenceManager().makeReference(threadLocalValue.asAddress());
+                        teleVmThread = (TeleVmThread) objects().makeTeleObject(vmThreadReference);
                     }
                 }
                 updatingCache = false;

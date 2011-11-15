@@ -85,11 +85,12 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
         }
 
         // Add a border and some tooltip text if any watchpoints exist in this region
+        final InspectorStyle style = preference().style();
         if (!watchpointsInRegion.isEmpty()) {
             // Set an appropriate border showing the presence of watchpoints, with a different
             // border style, depending on whether any of them are currently enabled.
             // Assume all are disabled until discovered otherwise.
-            label.setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
+            label.setBorder(style.debugDisabledMachineCodeBreakpointTagBorder());
             for (MaxWatchpoint watchpoint : watchpointsInRegion) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("<br>Watchpoint set @ ").append(watchpoint.memoryRegion().start().to0xHexString());
@@ -97,14 +98,14 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
                 sb.append(watchpoint.isEnabled() ? "enabled" : "disabled");
                 toolTipText += sb.toString();
                 if (watchpoint.isEnabled()) {
-                    label.setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
+                    label.setBorder(style.debugEnabledMachineCodeBreakpointTagBorder());
                 }
             }
         } else {
             // If no special watchpoint border, then see if we need to set a boundary border;
             // it isn't to handy to try doing both.
             if (inspectorTable.isBoundaryRow(row)) {
-                label.setBorder(style().defaultPaneTopBorder());
+                label.setBorder(style.defaultPaneTopBorder());
             } else {
                 label.setBorder(null);
             }
@@ -115,8 +116,8 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
         if (watchpointEvent != null) {
             if (memoryRegionForRow.contains(watchpointEvent.address())) {
                 toolTipText += "<br>Watchpoint triggered here @ :" + watchpointEvent.address().to0xHexString();
-                label.setIcon(style().debugIPTagIcon());
-                label.setForeground(style().debugIPTagColor());
+                label.setIcon(style.debugIPTagIcon());
+                label.setForeground(style.debugIPTagColor());
             } else {
                 label.setIcon(null);
                 label.setForeground(null);
@@ -126,7 +127,7 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
         label.setWrappedToolTipHtmlText(toolTipText);
         label.setBackground(inspectorTable.cellBackgroundColor(isSelected));
         label.setForeground(inspectorTable.cellForegroundColor(row, column));
-        label.setFont(style().defaultFont());
+        label.setFont(style.defaultFont());
         return label;
     }
 

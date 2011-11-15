@@ -494,7 +494,7 @@ public final class DebugInfo {
                 value = CiConstant.forDouble(d);
             } else {
                 Word w = fa.csa.readWord(offset);
-                value = WordUtil.constant(w);
+                value = WordUtil.archConstant(w);
             }
         } else if (value.isStackSlot()) {
             CiStackSlot ss = (CiStackSlot) value;
@@ -510,7 +510,7 @@ public final class DebugInfo {
                 value = CiConstant.forDouble(d);
             } else {
                 Word w = base.readWord(ss.index() * Word.size());
-                value = WordUtil.constant(w);
+                value = WordUtil.archConstant(w);
             }
         } else if (value.isIllegal()) {
             value = WordUtil.ZERO;

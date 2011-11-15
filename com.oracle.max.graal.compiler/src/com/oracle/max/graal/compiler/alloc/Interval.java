@@ -511,7 +511,7 @@ public final class Interval {
     }
 
     void setKind(CiKind kind) {
-        assert operand.isRegister() || this.kind == CiKind.Illegal || this.kind == kind : "overwriting existing type";
+        assert operand.isRegister() || this.kind() == CiKind.Illegal || this.kind() == kind : "overwriting existing type";
         assert kind == kind.stackKind() || kind == CiKind.Short : "these kinds should have int type registers";
         this.kind = kind;
     }
@@ -699,7 +699,7 @@ public final class Interval {
                 Interval i1 = splitChildren.get(i);
 
                 assert i1.splitParent() == this : "not a split child of this interval";
-                assert i1.kind() == kind() : "must be equal for all split children";
+                assert i1.kind()  == kind() : "must be equal for all split children";
                 assert i1.spillSlot() == spillSlot() : "must be equal for all split children";
 
                 for (int j = i + 1; j < splitChildren.size(); j++) {

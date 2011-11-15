@@ -44,7 +44,7 @@ import com.sun.max.vm.stack.*;
  * corresponds to no VM frame type, but is rather used to as a marker by the stack walker for
  * communicating truncated stack walks.
  */
-public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends AbstractTeleVMHolder implements MaxStackFrame {
+public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends AbstractVmHolder implements MaxStackFrame {
 
     private static final int TRACE_LEVEL = 2;
 
@@ -60,8 +60,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
         private final TeleStackFrame teleStackFrame;
 
-        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, long nBytes) {
-            super(teleVM, regionName, start, nBytes);
+        private StackFrameMemoryRegion(MaxVM vm, TeleStackFrame teleStackFrame, String regionName, Address start, long nBytes) {
+            super(vm, regionName, start, nBytes);
             this.teleStackFrame = teleStackFrame;
         }
 
@@ -86,24 +86,24 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
      * Factory method for wrapping VM (and synthetic) stack frames with additional information, in a type
      * hierarchy that partially mirrors the types of frames.
      *
-     * @param teleVM the VM
+     * @param vm the VM
      * @param teleStack the stack containing the frame
      * @param position the position in the stack of the frame; position 0 is the top
      * @param stackFrame the frame to be wrapped
      * @return a newly created instance of {@link TeleStackFrame}
      */
-    public static TeleStackFrame createFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame stackFrame) {
+    public static TeleStackFrame createFrame(TeleVM vm, TeleStack teleStack, int position, StackFrame stackFrame) {
         if (stackFrame instanceof VMStackFrame) {
             final VMStackFrame compiledStackFrame = (VMStackFrame) stackFrame;
-            return new TeleVMFrame(teleVM, teleStack, position, compiledStackFrame);
+            return new TeleVMFrame(vm, teleStack, position, compiledStackFrame);
         }
         if (stackFrame instanceof NativeStackFrame) {
             final NativeStackFrame nativeStackFrame = (NativeStackFrame) stackFrame;
-            return new NativeFrame(teleVM, teleStack, position, nativeStackFrame);
+            return new NativeFrame(vm, teleStack, position, nativeStackFrame);
         }
         if (stackFrame instanceof TruncatedStackFrame) {
             final TruncatedStackFrame errorStackFrame = (TruncatedStackFrame) stackFrame;
-            return new TruncatedFrame(teleVM, teleStack, position, errorStackFrame);
+            return new TruncatedFrame(vm, teleStack, position, errorStackFrame);
         }
         TeleError.unexpected("Unknown stack frame kind");
         return null;
@@ -114,8 +114,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final int position;
     private final CodeLocation codeLocation;
 
-    protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
-        super(teleVM);
+    protected TeleStackFrame(TeleVM vm, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
+        super(vm);
         this.stackFrame = stackFrame;
         this.teleStack = teleStack;
         this.position = position;
@@ -126,7 +126,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final StackFrame callee = stackFrame.calleeFrame();
             if (callee == null) {
                 // Top frame, not a call return so no adjustment.
-                location = teleVM.codeManager().createMachineCodeLocation(instructionPointer, "top stack frame IP");
+                location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer, "top stack frame IP");
             } else {
                 // A call frame; record the return location, the next to be executed upon return.
                 // Add a platform-specific offset from the stored code address to the actual call return site.
@@ -134,13 +134,13 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
                 if (calleeTargetMethod != null) {
                     if (calleeTargetMethod.is(TrapStub)) {
                         // Special case, where the IP caused a trap; no adjustment.
-                        location = teleVM.codeManager().createMachineCodeLocation(instructionPointer, "stack frame return");
+                        location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer, "stack frame return");
                     }
                 }
                 if (location == null) {
                     // An ordinary call; apply a platform-specific adjustment to get the real return address.
                     final int offsetToReturnPC = platform().isa.offsetToReturnPC;
-                    location = teleVM.codeManager().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
+                    location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
                 }
             }
         }
@@ -201,12 +201,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         private TeleCompilation teleCompiledCode;
 
 
-        protected TeleVMFrame(TeleVM teleVM, TeleStack teleStack, int position, VMStackFrame compiledStackFrame) {
-            super(teleVM, teleStack, position, compiledStackFrame);
+        protected TeleVMFrame(TeleVM vm, TeleStack teleStack, int position, VMStackFrame compiledStackFrame) {
+            super(vm, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
-            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
+            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(vm, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
-            this.teleCompiledCode = teleVM.codeCache().findCompiledCode(stackFrame.ip);
+            this.teleCompiledCode = vm.codeCache().findCompiledCode(stackFrame.ip);
         }
 
         public String entityName() {
@@ -263,8 +263,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         private MaxExternalCode externalMachineCode = null;
 
-        private NativeFrame(TeleVM teleVM, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
-            super(teleVM, teleStack, position, nativeStackFrame);
+        private NativeFrame(TeleVM vm, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
+            super(vm, teleStack, position, nativeStackFrame);
         }
 
         public String entityName() {
@@ -300,8 +300,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
     static final class TruncatedFrame extends TeleStackFrame<TruncatedStackFrame> implements MaxStackFrame.Truncated {
 
-        private TruncatedFrame(TeleVM teleVM, TeleStack teleStack, int position, TruncatedStackFrame pseudoStackFrame) {
-            super(teleVM, teleStack, position, pseudoStackFrame);
+        private TruncatedFrame(TeleVM vm, TeleStack teleStack, int position, TruncatedStackFrame pseudoStackFrame) {
+            super(vm, teleStack, position, pseudoStackFrame);
         }
 
         public String entityName() {

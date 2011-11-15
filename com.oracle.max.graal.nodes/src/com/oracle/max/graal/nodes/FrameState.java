@@ -63,6 +63,14 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         this.outerFrameState = x;
     }
 
+    public FrameState outermostFrameState() {
+        FrameState fs = this;
+        while (fs.outerFrameState() != null) {
+            fs = fs.outerFrameState();
+        }
+        return fs;
+    }
+
     @Override
     public void setValueAt(int i, ValueNode x) {
         values.set(i, x);
@@ -623,7 +631,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        // Nothing to do, frame states are processed as part of the handling of StateSplit nodes.
+        // Nothing to do, frame states are processed as part of the handling of AbstractStateSplit nodes.
     }
 
     @Override
@@ -707,7 +715,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     @Override
     public boolean verify() {
         for (ValueNode value : values) {
-            assert assertTrue(value == null || (value.kind != CiKind.Void && value.kind != CiKind.Illegal), "unexpected value: %s", value);
+            assert assertTrue(value == null || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
         }
         return super.verify();
     }

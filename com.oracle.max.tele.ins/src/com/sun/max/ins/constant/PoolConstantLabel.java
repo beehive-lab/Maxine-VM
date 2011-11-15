@@ -241,7 +241,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (isResolved()) {
                 setForeground(null);
             } else {
-                setForeground(style().javaUnresolvedNameColor());
+                setForeground(preference().style().javaUnresolvedNameColor());
             }
         }
 
@@ -284,7 +284,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (isResolved()) {
                 setForeground(null);
             } else {
-                setForeground(style().javaUnresolvedNameColor());
+                setForeground(preference().style().javaUnresolvedNameColor());
             }
         }
 
@@ -341,10 +341,10 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("ClassMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
             if (teleClassMethodActor == null) {
-                setForeground(style().javaUnresolvedNameColor());
+                setForeground(preference().style().javaUnresolvedNameColor());
             } else {
                 if (teleClassMethodActor.hasCodeAttribute()) {
-                    setForeground(style().bytecodeMethodEntryColor());
+                    setForeground(preference().style().bytecodeMethodEntryColor());
                 } else {
                     setForeground(null);
                 }
@@ -403,7 +403,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (isResolved()) {
                 setForeground(null);
             } else {
-                setForeground(style().javaUnresolvedNameColor());
+                setForeground(preference().style().javaUnresolvedNameColor());
             }
         }
 
@@ -429,8 +429,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         @Override
         public void updateText() {
             final String fullText = localPoolConstant().valueString(localConstantPool());
-            final String shortText =  (fullText.length() > style().maxBytecodeOperandDisplayLength() + 2) ?
-                            fullText.substring(0, style().maxBytecodeOperandDisplayLength()) + "...\"" : fullText;
+            final String shortText =  (fullText.length() > preference().style().maxBytecodeOperandDisplayLength() + 2) ?
+                            fullText.substring(0, preference().style().maxBytecodeOperandDisplayLength()) + "...\"" : fullText;
             switch (mode()) {
                 case JAVAP:
                     setJavapText("", shortText);
@@ -455,8 +455,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         @Override
         public void updateText() {
             final String fullText = localPoolConstant().valueString(localConstantPool());
-            final String shortText =  (fullText.length() > style().maxBytecodeOperandDisplayLength() + 2) ?
-                            fullText.substring(0, style().maxBytecodeOperandDisplayLength()) + "...\"" : fullText;
+            final String shortText =  (fullText.length() > preference().style().maxBytecodeOperandDisplayLength() + 2) ?
+                            fullText.substring(0, preference().style().maxBytecodeOperandDisplayLength()) + "...\"" : fullText;
             switch (mode()) {
                 case JAVAP:
                     setJavapText("", shortText);
@@ -508,8 +508,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         public void updateText() {
             final String text = "Error: null";
             setJavapToolTipText("", text);
-            setForeground(style().defaultErrorTextColor());
-            setBackground(style().defaultErrorTextBackgroundColor());
+            setForeground(preference().style().defaultErrorTextColor());
+            setBackground(preference().style().defaultErrorTextBackgroundColor());
         }
 
     }

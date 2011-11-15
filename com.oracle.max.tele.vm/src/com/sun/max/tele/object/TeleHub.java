@@ -48,8 +48,8 @@ public abstract class TeleHub extends TeleHybridObject {
      */
     public TeleClassActor getTeleClassActor() {
         if (teleClassActor == null) {
-            final Reference classActorReference = vm().teleFields().Hub_classActor.readReference(reference());
-            teleClassActor = (TeleClassActor) heap().makeTeleObject(classActorReference);
+            final Reference classActorReference = fields().Hub_classActor.readReference(reference());
+            teleClassActor = (TeleClassActor) objects().makeTeleObject(classActorReference);
         }
         return teleClassActor;
     }
@@ -152,7 +152,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return index into the object (viewed as an array of integers) of the beginning of the mTable.
      */
     public int mTableStartIndex() {
-        return vm().teleFields().Hub_mTableStartIndex.readInt(reference());
+        return fields().Hub_mTableStartIndex.readInt(reference());
     }
 
     /**
@@ -166,7 +166,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return the number of elements in the mTable array.
      */
     public int mTableLength() {
-        return vm().teleFields().Hub_mTableLength.readInt(reference());
+        return fields().Hub_mTableLength.readInt(reference());
     }
 
     // The fifth and final region of memory is the reference Map: used as an array of integers
@@ -189,7 +189,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return index into the object (viewed as an array of integers) of the beginning of the reference map.
      */
     public int referenceMapStartIndex() {
-        return vm().teleFields().Hub_referenceMapStartIndex.readInt(reference());
+        return fields().Hub_referenceMapStartIndex.readInt(reference());
     }
 
     /**
@@ -203,7 +203,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return the number of elements in the reference map.
      */
     public int referenceMapLength() {
-        return vm().teleFields().Hub_referenceMapLength.readInt(reference());
+        return fields().Hub_referenceMapLength.readInt(reference());
     }
 
     @Override

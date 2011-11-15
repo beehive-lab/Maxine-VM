@@ -269,7 +269,7 @@ public abstract class Hub extends Hybrid {
         if (!MaxineVM.isHosted()) {
             final TargetMethod current = virtualMethodActor.currentTargetMethod();
             if (current != null) {
-                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).asAddress();
+                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).toAddress();
             }
         }
         return Address.zero();
@@ -285,10 +285,26 @@ public abstract class Hub extends Hybrid {
 
             vTableEntry = checkCompiled(virtualMethodActor);
             if (vTableEntry.isZero()) {
-                vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
+                vTableEntry = vm().stubs.virtualTrampoline(vTableIndex).toAddress();
             }
             setWord(vTableIndex, vTableEntry);
         }
+    }
+
+    /**
+     * Make a given vtable entry point to the trampoline again.
+     * @param index the offset into the vtable as answered by {@linkplain VirtualMethodActor.vTableIndex()}
+     */
+    public void resetVTableEntry(int index) {
+        setWord(index, vm().stubs.virtualTrampoline(index).toAddress());
+    }
+
+    /**
+     * Make a given itable entry point to the trampoline again.
+     * @param index the offset into the itable
+     */
+    public void resetITableEntry(int index) {
+        setWord(index, vm().stubs.interfaceTrampoline(index - iTableStartIndex).toAddress());
     }
 
     /**
@@ -327,4 +343,14 @@ public abstract class Hub extends Hybrid {
     public String toString() {
         return getClass().getSimpleName() + "[" + classActor + "]";
     }
+
+    public static boolean validItableEntry(CodePointer p) {
+        final long pvalue = p.toLong();
+        if (pvalue < 0 || pvalue > Integer.MAX_VALUE) {
+            return false;
+        }
+        final int id = (int) pvalue;
+        return ClassID.toClassActor(id) != null || ClassID.isUsedID(id);
+    }
+
 }

@@ -46,7 +46,7 @@ import com.sun.max.vm.thread.*;
  * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
  * Used for testing region-based support.
  */
-public class MSEHeapScheme extends HeapSchemeWithTLAB {
+public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccountOwner {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -86,15 +86,19 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Marking algorithm used to trace the heap.
      */
-    final TricolorHeapMarker heapMarker;
+    private final TricolorHeapMarker heapMarker;
 
     /**
      * Space where objects are allocated from by default.
      */
-    final FirstFitMarkSweepHeap theHeap;
+    private final FirstFitMarkSweepSpace<MSEHeapScheme> markSweepSpace;
 
     private final Collect collect = new Collect();
 
+    /**
+     * An instance of an after mark sweep verifier to use for heap verification after a mark sweep.
+     * @see Sweeper
+     */
     final AfterMarkSweepVerifier afterGCVerifier;
 
     // For debugging purposes only.
@@ -108,9 +112,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     @HOSTED_ONLY
     public MSEHeapScheme() {
-        theHeap = new FirstFitMarkSweepHeap();
-        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(theHeap));
-        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, theHeap));
+        final HeapAccount<MSEHeapScheme> heapAccount = new HeapAccount<MSEHeapScheme>(this);
+        markSweepSpace = new FirstFitMarkSweepSpace<MSEHeapScheme>(heapAccount);
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
+        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, markSweepSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, this));
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
         pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
@@ -121,7 +126,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            AtomicBumpPointerAllocator.hostInitialize();
+            BaseAtomicBumpPointerAllocator.hostInitialize();
             if (MaxineVM.isDebug()) {
                 AtomicPinnedCounter.hostInitialize();
             }
@@ -148,7 +153,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
             "Boot heap region must be mapped at start of reserved virtual space");
 
-        final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
+        final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
         // Initialize the heap region manager.
@@ -173,7 +178,11 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 MaxineVM.reportPristineMemoryFailure("heap marker data", "reserve", heapMarkerDatasize);
             }
 
-            theHeap.initialize(initSize, applicationHeapMaxSize);
+            if (!markSweepSpace.heapAccount().open(HeapRegionConstants.numberOfRegions(applicationHeapMaxSize))) {
+                FatalError.unexpected("Failed to create application heap");
+            }
+
+            markSweepSpace.initialize(initSize, applicationHeapMaxSize);
             // FIXME (ld) We should uncommit what hasn't been committed yet!
 
             // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
@@ -184,7 +193,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
 
             if (DumpFragStatsAfterGC || DumpFragStatsAtGCFailure) {
-                fragmentationStats = new HeapRegionStatistics(theHeap.minReclaimableSpace());
+                fragmentationStats = new HeapRegionStatistics(markSweepSpace.minReclaimableSpace());
             }
             // Free reserved space we will not be using.
             Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
@@ -212,7 +221,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     private void reportFragmentationStats(boolean reclaimedEnoughSpace) {
         if (DumpFragStatsAfterGC || (!reclaimedEnoughSpace && DumpFragStatsAtGCFailure)) {
-            fragmentationStats.reportStats(theHeap.heapAccount());
+            fragmentationStats.reportStats(heapAccount());
         }
     }
 
@@ -224,7 +233,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     private long usedSpaceAfterLastGC;
 
     public boolean collectGarbage(Size requestedFreeSpace) {
-        final Size usedSpaceBefore = theHeap.usedSpace();
+        final Size usedSpaceBefore = markSweepSpace.usedSpace();
         if (MaxineVM.isDebug()) {
             final int logCursor = (int) (collectionCount % 16);
             allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
@@ -245,9 +254,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         }
         collect.submit();
         if (MaxineVM.isDebug()) {
-            usedSpaceAfterLastGC = theHeap.usedSpace().toLong();
+            usedSpaceAfterLastGC = markSweepSpace.usedSpace().toLong();
         }
-        boolean result =  theHeap.usedSpace().minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
+        boolean result =  markSweepSpace.usedSpace().minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
         reportFragmentationStats(result);
         return result;
     }
@@ -261,11 +270,11 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportFreeSpace() {
-        return theHeap.freeSpace();
+        return markSweepSpace.freeSpace();
     }
 
     public Size reportUsedSpace() {
-        return theHeap.usedSpace();
+        return markSweepSpace.usedSpace();
     }
 
     @INLINE(override = true)
@@ -296,7 +305,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     static class TLABFiller extends ResetTLAB {
         @Override
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
-            if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+            if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepSpace.DebuggedRegion) {
                 TLABLog.doOnRetireTLAB(etla);
             }
             if (tlabMark.greaterThan(tlabTop)) {
@@ -372,7 +381,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             HeapScheme.Inspect.notifyGCStarted();
 
             vmConfig().monitorScheme().beforeGarbageCollection();
-            theHeap.doBeforeGC();
+            markSweepSpace.doBeforeGC();
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
                 Log.print("Begin mark-sweep #");
@@ -381,23 +390,23 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
             theHeapRegionManager().checkOutgoingReferences();
 
-            theHeap.mark(heapMarker);
+            markSweepSpace.mark(heapMarker);
             startTimer(reclaimTimer);
-            theHeap.sweep(heapMarker);
-            Size freeSpaceAfterGC = theHeap.freeSpace();
+            markSweepSpace.sweep(heapMarker);
+            Size freeSpaceAfterGC = markSweepSpace.freeSpace();
             stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
-            heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, theHeap);
+            heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, markSweepSpace);
 
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
-            theHeap.doAfterGC();
+            markSweepSpace.doAfterGC();
             HeapScheme.Inspect.notifyGCCompleted();
             stopTimer(totalPauseTime);
 
@@ -409,7 +418,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     private Size setNextTLABChunk(Pointer chunk) {
         if (MaxineVM.isDebug()) {
-            if (FirstFitMarkSweepHeap.DebugMSE) {
+            if (FirstFitMarkSweepSpace.DebugMSE) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("setNextTLABChunk(");
                 Log.print(chunk);
@@ -422,7 +431,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 Log.unlock(lockDisabledSafepoints);
             }
             FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
-            FatalError.check(HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(theHeap.minReclaimableSpace()), "TLAB chunk must be greater than min reclaimable space");
+            FatalError.check(HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(markSweepSpace.minReclaimableSpace()), "TLAB chunk must be greater than min reclaimable space");
         }
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
@@ -455,7 +464,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
         if (size.greaterThan(chunkSize.minus(MIN_OBJECT_SIZE)))  {
             // Don't bother with searching another TLAB chunk that fits. Allocate directly in the heap.
-            return theHeap.allocate(size);
+            return markSweepSpace.allocate(size);
         }
         // Otherwise, the chunk can accommodate the request AND
         // we'll have enough room left in the chunk to format a dead object or to store the next chunk pointer.
@@ -475,8 +484,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
-        Pointer tlab = theHeap.allocateTLAB(tlabSize);
-        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlab) == FirstFitMarkSweepHeap.DebuggedRegion) {
+        Pointer tlab = markSweepSpace.allocateTLAB(tlabSize);
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlab) == FirstFitMarkSweepSpace.DebuggedRegion) {
             TLABLog.doOnRefillTLAB(etla, tlabSize, true);
         }
         Size effectiveSize = setNextTLABChunk(tlab);
@@ -509,6 +518,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
+    @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {      // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
         if (refillPolicy == null) {
@@ -517,7 +527,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(etla, NEVER_REFILL_TLAB);
-                return theHeap.allocate(size);
+                return markSweepSpace.allocate(size);
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
@@ -533,7 +543,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
-            return theHeap.allocate(size);
+            return markSweepSpace.allocate(size);
         }
         // TLAB may have been wiped out by a previous direct allocation routine.
         if (!tlabEnd.isZero()) {
@@ -560,10 +570,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
             if (!refillPolicy.shouldRefill(size, tlabMark)) {
                 // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
-                return theHeap.allocate(size);
+                return markSweepSpace.allocate(size);
             }
         }
-        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepSpace.DebuggedRegion) {
             TLABLog.doOnRetireTLAB(etla);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
@@ -580,6 +590,11 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     @Override
     protected void releaseUnusedReservedVirtualSpace() {
         // Do nothing. This heap scheme has its own way of doing this.
+    }
+
+    @Override
+    public HeapAccount<MSEHeapScheme> heapAccount() {
+        return markSweepSpace.heapAccount();
     }
 }
 

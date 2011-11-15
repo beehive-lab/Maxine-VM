@@ -411,7 +411,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
         return toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
-    @INLINE
+    @HOSTED_ONLY
     public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
         toOrigin(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
     }
@@ -443,6 +443,11 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
 
     @Override
     public boolean isMarked(Reference ref) {
+        return toOrigin(ref).isBitSet(0);
+    }
+
+    @Override
+    public boolean isTagged(Reference ref) {
         return toOrigin(ref).isBitSet(0);
     }
 

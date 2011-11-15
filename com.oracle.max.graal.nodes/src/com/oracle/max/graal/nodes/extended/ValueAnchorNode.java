@@ -58,7 +58,7 @@ public final class ValueAnchorNode extends FixedWithNextNode implements Canonica
         if (object instanceof IntegerDivNode || object instanceof IntegerRemNode) {
             if (((ArithmeticNode) object).y().isConstant()) {
                 CiConstant  constant = ((ArithmeticNode) object).y().asConstant();
-                assert constant.kind == object.kind : constant.kind + " != " + object.kind;
+                assert constant.kind == object.kind() : constant.kind + " != " + object.kind();
                 if (constant.asLong() != 0) {
                     return null;
                 }

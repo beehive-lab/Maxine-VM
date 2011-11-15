@@ -99,10 +99,6 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return inspection.gui();
     }
 
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
     public final InspectionFocus focus() {
         return inspection.focus();
     }
@@ -113,6 +109,10 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
 
     public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    public final InspectionPreferences preference() {
+        return inspection.preference();
     }
 
     public void redisplay() {

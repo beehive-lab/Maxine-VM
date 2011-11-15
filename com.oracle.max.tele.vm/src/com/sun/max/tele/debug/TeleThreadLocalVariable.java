@@ -35,7 +35,7 @@ import com.sun.max.vm.value.*;
 /**
  * Access to an individual thread local variable in the VM.
  */
-public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements MaxThreadLocalVariable {
+public class TeleThreadLocalVariable extends AbstractVmHolder implements MaxThreadLocalVariable {
 
     private static final int TRACE_LEVEL = 2;
 
@@ -52,8 +52,8 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
         private final MaxThreadLocalVariable owner;
 
-        protected ThreadLocalVariableMemoryRegion(TeleVM teleVM, MaxThreadLocalVariable owner, String regionName, Address start, int nBytes) {
-            super(teleVM, regionName, start, nBytes);
+        protected ThreadLocalVariableMemoryRegion(MaxVM vm, MaxThreadLocalVariable owner, String regionName, Address start, int nBytes) {
+            super(vm, regionName, start, nBytes);
             this.owner = owner;
         }
 

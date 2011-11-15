@@ -116,7 +116,7 @@ public final class AllocationsTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -256,6 +256,9 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
                 label = new MemoryRegionNameLabel(inspection(), memoryRegion);
@@ -287,6 +290,9 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
                 label = new WordValueLabel(inspection(), ValueMode.WORD, AllocationsTable.this) {
@@ -325,6 +331,9 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
                 label = new WordValueLabel(inspection(), ValueMode.WORD, AllocationsTable.this) {
@@ -361,6 +370,9 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
                 label = new MemoryAllocationsSizeLabel(inspection(), memoryRegion);
@@ -393,6 +405,9 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
                 label = new MemoryRegionAllocationLabel(inspection(), memoryRegion, AllocationsTable.this);

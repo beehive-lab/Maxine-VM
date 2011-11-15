@@ -256,9 +256,9 @@ public class ObjectRecord {
     public long getLifeTime(long lastTime) {
         long result =  ((removalRecord == null) ? lastTime : removalRecord.time)
                 - endCreationRecord.time;
-        if (result < 0) {
-            System.console();
-        }
+//        if (result < 0) {
+//            System.console();
+//        }
         return result;
     }
 

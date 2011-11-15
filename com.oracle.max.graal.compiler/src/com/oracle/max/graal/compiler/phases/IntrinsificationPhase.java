@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -33,28 +32,38 @@ public class IntrinsificationPhase extends Phase {
 
     private final GraalRuntime runtime;
 
-    public IntrinsificationPhase(GraalContext context, GraalRuntime runtime) {
-        super(context);
+    public IntrinsificationPhase(GraalRuntime runtime) {
         this.runtime = runtime;
     }
 
     @Override
     protected void run(StructuredGraph graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            tryIntrinsify(invoke);
+            tryIntrinsify(invoke, runtime);
+        }
+        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
+            tryIntrinsify(invoke, runtime);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void tryIntrinsify(InvokeNode invoke) {
+    public static void tryIntrinsify(Invoke invoke, GraalRuntime runtime) {
         RiResolvedMethod target = invoke.callTarget().targetMethod();
+        tryIntrinsify(invoke, target, runtime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void tryIntrinsify(Invoke invoke, RiResolvedMethod target, GraalRuntime runtime) {
         StructuredGraph intrinsicGraph = (StructuredGraph) target.compilerStorage().get(Graph.class);
         if (intrinsicGraph == null) {
             // TODO (ph) remove once all intrinsics are available via RiMethod
             intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method(), invoke.bci(), target, invoke.callTarget().arguments());
         }
         if (intrinsicGraph != null) {
-            InliningUtil.inline(invoke, intrinsicGraph, null);
+            // TODO (cwi): I disabled receiver null checks for intrinsics, because I believe that is the intended semantics.
+            // when an intrinsic really needs to do a null check, it should do it itself.
+            // This behavior is required at least for intrinsics that have also the @Inline annotation.
+            // TODO (tw): Find another way to fix the issue with Maxine intrinsics semantics.
+            InliningUtil.inline(invoke, intrinsicGraph, true);
         }
     }
 }

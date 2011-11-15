@@ -28,19 +28,19 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for an object of type {@link ObjectReferenceValue} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link ObjectReferenceValue} in the VM.
  */
 public class TeleObjectReferenceValue extends TeleTupleObject {
 
-    protected TeleObjectReferenceValue(TeleVM teleVM, Reference teleObjectReferenceValueReference) {
-        super(teleVM, teleObjectReferenceValueReference);
+    protected TeleObjectReferenceValue(TeleVM vm, Reference teleObjectReferenceValueReference) {
+        super(vm, teleObjectReferenceValueReference);
     }
 
     /**
-     * @return a local wrapper for the {@link ReferenceValue} in the tele VM.
+     * @return a local wrapper for the {@link ReferenceValue} in the VM.
      */
     public TeleReferenceValue getTeleReferenceValue() {
-        return TeleReferenceValue.from(vm(), vm().teleFields().ObjectReferenceValue_value.readReference(reference()));
+        return TeleReferenceValue.from(vm(), fields().ObjectReferenceValue_value.readReference(reference()));
     }
 
     @Override

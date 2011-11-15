@@ -229,7 +229,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case Long:   append(LSUB.create(result, loadNonConst(b))); break;
             case Float:  append(FSUB.create(result, loadNonConst(b))); break;
             case Double: append(DSUB.create(result, loadNonConst(b))); break;
-            default:     throw Util.shouldNotReachHere();
+            default:     throw Util.shouldNotReachHere("kind=" + a.kind);
         }
         return result;
     }
@@ -493,8 +493,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     // * The actual compare-and-swap
     @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
-        CiKind kind = node.newValue().kind;
-        assert kind == node.expected().kind;
+        CiKind kind = node.newValue().kind();
+        assert kind == node.expected().kind();
 
         CiValue expected = loadNonConst(operand(node.expected()));
         CiVariable newValue = load(operand(node.newValue()));
@@ -514,7 +514,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         append(MOVE.create(rax, expected));
         append(CAS.create(rax, addrBase, addrIndex, CiAddress.Scale.Times1, 0, rax, newValue));
 
-        CiVariable result = newVariable(node.kind);
+        CiVariable result = newVariable(node.kind());
         if (node.directResult()) {
             append(MOVE.create(result, rax));
         } else {
@@ -539,8 +539,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
         emitCompare(operand(x.x()), operand(x.y()));
-        CiVariable result = newVariable(x.kind);
-        switch (x.x().kind){
+        CiVariable result = newVariable(x.kind());
+        switch (x.x().kind()){
             case Float:
             case Double:
                 if (x.isUnorderedLess) {

@@ -58,6 +58,7 @@ public abstract class LightweightLockword64 extends HashableLockword64 {
 
     protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
 
+    @HOSTED_ONLY
     protected LightweightLockword64() {
     }
 

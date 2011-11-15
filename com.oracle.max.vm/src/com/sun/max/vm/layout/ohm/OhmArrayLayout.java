@@ -200,6 +200,7 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
         mirror.writeElement(kind, index, value);
     }
 
+    @HOSTED_ONLY
     public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
         src.copyElements(originDisplacement(), srcIndex, dst, dstIndex, length);
     }

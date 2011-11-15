@@ -42,7 +42,7 @@ public final class InspectorCheckBox extends JCheckBoxMenuItem {
         super(text, selected);
         setToolTipText(toolTipText);
         setOpaque(false);
-        setFont(inspection.style().textLabelFont());
+        setFont(inspection.preference().style().textLabelFont());
     }
 
 }

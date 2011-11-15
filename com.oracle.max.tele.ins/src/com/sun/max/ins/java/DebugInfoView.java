@@ -92,7 +92,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
-        frameBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor());
+        frameBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, inspection.preference().style().defaultBorderColor());
 
 
         nullPanel = new InspectorPanel(inspection, new BorderLayout());

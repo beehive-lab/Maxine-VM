@@ -64,8 +64,8 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
     }
 
     public static boolean isIntegerAddition(ValueNode result, ValueNode a, ValueNode b) {
-        CiKind kind = result.kind;
-        if (kind != a.kind || kind != b.kind || !(kind.isInt() || kind.isLong())) {
+        CiKind kind = result.kind();
+        if (kind != a.kind() || kind != b.kind() || !(kind.isInt() || kind.isLong())) {
             return false;
         }
         if (result.isConstant() && a.isConstant() && b.isConstant()) {

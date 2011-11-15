@@ -145,7 +145,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     public Color cellForegroundColor(int row, int col) {
         final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
+            return preference().style().debugIPTagColor();
         }
         return null;
     }
@@ -360,10 +360,10 @@ public class CompiledStackFrameTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
-                label = new WordValueLabel(inspection, ValueMode.INTEGER_REGISTER, CompiledStackFrameTable.this) {
+                label = new WordValueLabel(inspection, ValueMode.WORD, CompiledStackFrameTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return vm().readWordValue(address);
+                        return vm().memory().readWordValue(address);
                     }
                 };
                 label.setOpaque(true);

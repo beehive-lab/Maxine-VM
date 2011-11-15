@@ -45,11 +45,11 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     protected ELFHeader header;
     protected ELFProgramHeaderTable programHeaderTable;
     protected ELFSymbolLookup symbolLookup;
-    protected TeleVM teleVM;
+    protected MaxVM teleVM;
     protected static final String HEAP_SYMBOL_NAME = "theHeap";  // defined in image.c, holds the base address of the boot heap
 
 
-    protected ELFDumpTeleChannelProtocolAdaptor(TeleVM teleVM, File vm, File dump) {
+    protected ELFDumpTeleChannelProtocolAdaptor(MaxVM teleVM, File vm, File dump) {
         this.teleVM = teleVM;
         try {
             // We actually do need the tele library because we use it to access the OS-specific structs
@@ -185,7 +185,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     @Override
     public long getBootHeapStart() {
         // Check if an option has specified the heap address.
-        final long heapAddress = TeleHeap.heapAddressOption();
+        final long heapAddress = VmHeapAccess.heapAddressOption();
         if (heapAddress != 0) {
             return heapAddress;
         }

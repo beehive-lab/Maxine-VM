@@ -36,11 +36,20 @@ public class MethodInstrumentation {
     public static int initialEntryCount = 5000;
     public static final int DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES = 3;
 
+    /**
+     * Methods whose invocation count (entry count) is within 90 % of the recompilation threshold
+     * (see {@link #initialEntryCount}), are protected from {@linkplain CodeEviction code eviction}.
+     */
+    public static final double PROTECTION_PERCENTAGE = 0.9;
+
+    public static int protectionThreshold = (int) (1 - PROTECTION_PERCENTAGE) * initialEntryCount;
+
     private static boolean enabled;
 
     public static void enable(int initialEntryCount) {
         enabled = true;
         MethodInstrumentation.initialEntryCount = initialEntryCount;
+        MethodInstrumentation.protectionThreshold = (int) (1 - PROTECTION_PERCENTAGE) * initialEntryCount;
     }
 
     public static MethodProfile.Builder createMethodProfile(ClassMethodActor classMethodActor) {

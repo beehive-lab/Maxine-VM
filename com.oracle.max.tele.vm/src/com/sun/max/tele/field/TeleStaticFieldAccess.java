@@ -40,8 +40,8 @@ public class TeleStaticFieldAccess extends TeleFieldAccess {
     /**
      * Gets a reference to the static tuple holding the value of this field.
      */
-    public Reference staticTupleReference(TeleVM teleVM) {
-        final TeleClassActor teleClassActor = teleVM.classRegistry().findTeleClassActor(fieldActor().holder().typeDescriptor);
+    public Reference staticTupleReference(MaxVM vm) {
+        final TeleClassActor teleClassActor = vm.classes().findTeleClassActor(fieldActor().holder().typeDescriptor);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
         return teleStaticTuple.reference();
     }

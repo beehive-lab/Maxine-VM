@@ -33,7 +33,7 @@ public class TeleStaticCharFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.CHAR);
     }
 
-    public char readChar(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readChar(fieldActor().offset());
+    public char readChar(MaxVM vm) {
+        return staticTupleReference(vm).readChar(fieldActor().offset());
     }
 }

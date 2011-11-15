@@ -37,7 +37,7 @@ public enum AMD64CompareOpcode implements LIROpcode {
             || (name().startsWith("L") && left.kind == CiKind.Long && right.kind == CiKind.Long)
             || (name().startsWith("A") && left.kind == CiKind.Object && right.kind == CiKind.Object)
             || (name().startsWith("F") && left.kind == CiKind.Float && right.kind == CiKind.Float)
-            || (name().startsWith("D") && left.kind == CiKind.Double && right.kind == CiKind.Double);
+            || (name().startsWith("D") && left.kind == CiKind.Double && right.kind == CiKind.Double) : "left.kind=" + left.kind + ", right.kind=" + right.kind;
         CiValue[] inputs = new CiValue[] {left, right};
 
         return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs) {

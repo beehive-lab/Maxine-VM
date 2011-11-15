@@ -28,14 +28,14 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link Enum} in the tele VM.
+ * Canonical surrogate for an object of type {@link Enum} in the VM.
  */
 public final class TeleEnum extends TeleTupleObject {
 
     private Enum enumCopy;
 
-    protected TeleEnum(TeleVM teleVM, Reference enumReference) {
-        super(teleVM, enumReference);
+    protected TeleEnum(TeleVM vm, Reference enumReference) {
+        super(vm, enumReference);
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class TeleEnum extends TeleTupleObject {
                     throw TeleError.unexpected(classActor + " is not a valid enum class");
                 }
             }
-            enumCopy = (Enum) enumClass.getEnumConstants()[vm().teleFields().Enum_ordinal.readInt(reference())];
+            enumCopy = (Enum) enumClass.getEnumConstants()[fields().Enum_ordinal.readInt(reference())];
         }
         return enumCopy;
     }

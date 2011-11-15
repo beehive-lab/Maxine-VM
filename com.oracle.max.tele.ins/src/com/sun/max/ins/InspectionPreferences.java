@@ -41,7 +41,7 @@ import com.sun.max.program.option.*;
 /**
  * Manages persistent general preferences for inspection sessions.
  */
-final class InspectionPreferences extends AbstractSaveSettingsListener {
+public final class InspectionPreferences extends AbstractSaveSettingsListener {
 
     private static final int TRACE_VALUE = 2;
 
@@ -115,6 +115,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
     private static final String TOOLTIP_DELAY_POLICY = "toolTipDelay";
     private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
+    private static final String FORCE_TEXTUAL_WORD_VALUE_DISPLAY = "forceTextualWordValueDisplay";
     private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
 
     private final Inspection inspection;
@@ -125,6 +126,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private final int defaultToolTipDismissDelay;
     private InspectorGeometry geometry;
     private boolean investigateWordValues = true;
+    private boolean forceTextualWordValueDisplay = false;
 
     private ExternalViewerType externalViewerType = ExternalViewerType.SOCKET;
     private final Map<ExternalViewerType, String> externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
@@ -178,6 +180,8 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             }
 
             investigateWordValues = settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+
+            forceTextualWordValueDisplay = settings.get(this, FORCE_TEXTUAL_WORD_VALUE_DISPLAY, OptionTypes.BOOLEAN_TYPE, false);
 
             setToolTipDismissDelay(settings.get(this, TOOLTIP_DELAY_POLICY, new OptionTypes.EnumType<ToolTipDismissDelayPolicy>(ToolTipDismissDelayPolicy.class), ToolTipDismissDelayPolicy.DEFAULT));
 
@@ -236,6 +240,13 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         return investigateWordValues;
     }
 
+    /**
+     * @return Force all Word value labels to display initially in textual format when possible?
+     */
+    public boolean forceTextualWordValueDisplay() {
+        return forceTextualWordValueDisplay;
+    }
+
     public ExternalViewerType externalViewerType() {
         return externalViewerType;
     }
@@ -292,6 +303,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
         saveSettingsEvent.save(TOOLTIP_DELAY_POLICY, toolTipDismissDelayPolicy.name());
         saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, investigateWordValues);
+        saveSettingsEvent.save(FORCE_TEXTUAL_WORD_VALUE_DISPLAY, forceTextualWordValueDisplay);
         saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, externalViewerType.name());
         for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
             final String config = externalViewerConfig.get(externalViewerType);
@@ -310,14 +322,17 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
         final JPanel keyBindingsPanel = getUIPanel();
         final JPanel debugPanel = getDebugPanel();
+        final JPanel wordValueDisplayPanel = getWordValueDisplayPanel();
         final JPanel externalViewerPanel = getExternalViewerPanel();
 
         keyBindingsPanel.setBorder(BorderFactory.createEtchedBorder());
         debugPanel.setBorder(BorderFactory.createEtchedBorder());
+        wordValueDisplayPanel.setBorder(BorderFactory.createEtchedBorder());
         externalViewerPanel.setBorder(BorderFactory.createEtchedBorder());
 
         panel.add(keyBindingsPanel);
         panel.add(debugPanel);
+        panel.add(wordValueDisplayPanel);
         panel.add(externalViewerPanel);
 
         return panel;
@@ -404,6 +419,36 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
          */
 
         interiorPanel.add(wordValueCheckBox);
+        panel.add(interiorPanel, BorderLayout.WEST);
+
+        return panel;
+    }
+
+    /**
+     * @return a GUI panel for setting word value display preferences
+     */
+    private JPanel getWordValueDisplayPanel() {
+
+        final InspectorCheckBox wordValueDisplayCheckBox =
+            new InspectorCheckBox(inspection,
+                            "Force textual word value display",
+                            "Should displayed memory words be displayed initially in textual format when possible",
+                            forceTextualWordValueDisplay);
+        wordValueDisplayCheckBox.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent actionEvent) {
+                final InspectorCheckBox checkBox = (InspectorCheckBox) actionEvent.getSource();
+                forceTextualWordValueDisplay = checkBox.isSelected();
+                inspection.updateViewConfiguration();
+            }
+        });
+
+        final JPanel panel = new InspectorPanel(inspection, new BorderLayout());
+
+        final JPanel interiorPanel = new InspectorPanel(inspection);
+        interiorPanel.add(new TextLabel(inspection, "Word Value display:  "));
+
+        interiorPanel.add(wordValueDisplayCheckBox);
         panel.add(interiorPanel, BorderLayout.WEST);
 
         return panel;

@@ -37,8 +37,8 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -339,6 +339,27 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public final TargetMethod currentTargetMethod() {
         return Compilations.currentTargetMethod(compiledState, null);
+    }
+
+    /**
+     * Records if this object returned {@code true} for a call to {@link #hasCompiledCode()} during
+     * boot image building.
+     */
+    @HOSTED_ONLY
+    public boolean mustCompileInImage;
+
+    @Override
+    public boolean canBePermanentlyLinked() {
+        if (MaxineVM.isHosted()) {
+            if (!isAbstract() && !isIntrinsic()) {
+                mustCompileInImage = true;
+                return true;
+            }
+            return false;
+        }
+        // All run time generated code is potentially relocatable (baseline methods) or
+        // subject to invalidation (optimized methods).
+        return false;
     }
 
     /**

@@ -33,7 +33,7 @@ public class TeleStaticDoubleFieldAccess extends TeleStaticFieldAccess {
         super(holder, name, Kind.DOUBLE);
     }
 
-    public double readDouble(TeleVM teleVM) {
-        return staticTupleReference(teleVM).readDouble(fieldActor().offset());
+    public double readDouble(MaxVM vm) {
+        return staticTupleReference(vm).readDouble(fieldActor().offset());
     }
 }

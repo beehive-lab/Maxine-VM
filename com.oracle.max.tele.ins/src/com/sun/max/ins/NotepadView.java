@@ -284,7 +284,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
      * @param textArea the text editing pane for notepad contents
      */
     private void setDisplayStyle(JTextArea textArea) {
-        textArea.setFont(style().defaultFont());
+        textArea.setFont(preference().style().defaultFont());
     }
 
     /**
@@ -395,7 +395,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            this.memoryRegion = vm().findMemoryRegion(address);
+            this.memoryRegion = vm().state().findMemoryRegion(address);
             setEnabled(memoryRegion != null);
         }
     }
@@ -422,7 +422,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            this.object = vm().heap().findObjectAt(address);
+            this.object = vm().objects().findObjectAt(address);
             setEnabled(object != null);
         }
     }
