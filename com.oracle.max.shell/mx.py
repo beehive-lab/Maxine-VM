@@ -41,6 +41,7 @@
 import sys
 import os
 import subprocess
+import exceptions
 from threading import Thread
 from argparse import ArgumentParser, REMAINDER
 from os.path import join, dirname, abspath, exists, getmtime
@@ -172,15 +173,20 @@ class Env(ArgumentParser):
         if not exists(graalvm_exe):
             self.abort('GraalVM executable does not exist: ' + graalvm_exe)
             
+        os.environ['MAXINE'] = self.maxine_home
         try:
             version_cmd = [graalvm_exe, '-graal', '-XX:-BootstrapGraal', '-version']
+            #print str(os.environ).replace(', ', '\n')
             output = subprocess.check_output(version_cmd, stderr=subprocess.STDOUT)
             if 'Graal VM' not in output:
                 self.abort('Invalid GraalVM executable: ' + graalvm_exe +
                             '\nReason: "Graal VM" was not in the output of the following command:\n\t' + ' '.join(version_cmd))
-        except:
+        except subprocess.CalledProcessError as e:
             self.abort('Invalid GraalVM executable: ' + graalvm_exe +
-                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd))
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd) + '\nOutput:\n' + e.output)
+        except exceptions.OSError as e:
+            self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd) + '\nError Message: ' + e.strerror)
             
         graalvm_cmd = [graalvm_exe, '-graal']
         
