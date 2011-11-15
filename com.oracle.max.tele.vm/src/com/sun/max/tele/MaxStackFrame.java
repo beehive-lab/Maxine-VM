@@ -120,7 +120,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      *
      * @return compiled code for this frame, null if an external function or other special frame not associated with a method
      */
-    MaxCompilation compiledCode();
+    MaxCompilation compilation();
 
     /**
      * Determines if this frame and another refer to the same frame.
