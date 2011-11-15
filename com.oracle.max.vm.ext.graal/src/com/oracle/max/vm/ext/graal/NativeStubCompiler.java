@@ -29,6 +29,7 @@ import static com.sun.max.vm.type.ClassRegistry.*;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
@@ -116,8 +117,9 @@ public class NativeStubCompiler {
 
     /**
      * Compiles a native method stub.
+     * @param plan
      */
-    public CiTargetMethod compile() {
+    public CiTargetMethod compile(PhasePlan plan) {
 
         SignatureDescriptor sig = method.descriptor();
         boolean isCFunction = method.isCFunction();
@@ -259,7 +261,7 @@ public class NativeStubCompiler {
 
         // Compile and print disassembly.
         graph.verify();
-        CiResult result = graal.compileMethod(method, graph);
+        CiResult result = graal.compileMethod(method, graph, plan);
         System.out.println(runtime.disassemble(result.targetMethod()));
 
         return result.targetMethod();

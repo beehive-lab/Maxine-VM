@@ -23,6 +23,7 @@
 package com.oracle.max.graal.snippets;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.cri.*;
 import com.sun.cri.ci.*;
 
@@ -30,12 +31,12 @@ import com.sun.cri.ci.*;
  * Definition of the snippets that are VM-independent and can be intrinsified by Graal in any VM.
  */
 public class GraalIntrinsics {
-    public static void installIntrinsics(GraalCompiler compiler, GraalRuntime runtime, CiTarget target) {
+    public static void installIntrinsics(GraalRuntime runtime, CiTarget target, PhasePlan plan) {
         if (GraalOptions.Intrinsify) {
-            Snippets.install(compiler, runtime, target, new MathSnippetsX86(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, target, new DoubleSnippets(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, target, new FloatSnippets(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, target, new NodeClassSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(runtime, target, new MathSnippetsX86(), GraalOptions.PlotSnippets, plan);
+            Snippets.install(runtime, target, new DoubleSnippets(), GraalOptions.PlotSnippets, plan);
+            Snippets.install(runtime, target, new FloatSnippets(), GraalOptions.PlotSnippets, plan);
+            Snippets.install(runtime, target, new NodeClassSnippets(), GraalOptions.PlotSnippets, plan);
         }
     }
 }
