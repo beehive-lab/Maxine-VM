@@ -39,9 +39,8 @@ public abstract class AbstractRemoteCodePointerManager extends AbstractVmHolder 
         final NumberFormat formatter = NumberFormat.getInstance();
         final StringBuilder sb3 = new StringBuilder();
         final int activePointerCount = activePointerCount();
-        final int totalPointerCount = totalPointerCount();
         sb3.append("code pointers:  active=" + formatter.format(activePointerCount));
-        sb3.append(", inactive=" + formatter.format(totalPointerCount - activePointerCount));
+        sb3.append(", inactive=" + formatter.format(totalPointerCount() - activePointerCount));
         sb3.append(", mgr=" + getClass().getSimpleName());
         printStream.println(indentation + sb3.toString());
     }

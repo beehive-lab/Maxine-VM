@@ -31,7 +31,9 @@ import com.sun.max.unsafe.*;
 /**
  * A manager for pointers to machine code in a VM memory region.
  * Each implementation will likely need to take into account
- * specific code management implementations in the VM.
+ * specific code management implementations in the VM, for
+ * example whether a code cache region is managed, or whether
+ * the code is external to the VM.
  */
 public interface RemoteCodePointerManager {
 

@@ -154,7 +154,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
      * @param address memory location in the VM
      * @return a  method compilation whose code cache allocation includes the address, null if none
      */
-    private TeleCompilation findCompilationByAllocaton(Address address) {
+    private TeleCompilation findCompilationByAllocation(Address address) {
         TeleCompilation teleCompilation = null;
         for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
             teleCompilation = codeCacheRegion.findCompilation(address);
@@ -195,7 +195,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
     }
 
     public TeleCompilation findCompilation(Address address) {
-        TeleCompilation teleCompilation = findCompilationByAllocaton(address);
+        TeleCompilation teleCompilation = findCompilationByAllocation(address);
         if (teleCompilation != null && teleCompilation.isValidCodeLocation(address)) {
             return teleCompilation;
         }
@@ -205,7 +205,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
     public List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor) {
         final List<MaxCompilation> compilations = new ArrayList<MaxCompilation>(teleClassMethodActor.compilationCount());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-            compilations.add(findCompilationByAllocaton(teleTargetMethod.getRegionStart()));
+            compilations.add(findCompilationByAllocation(teleTargetMethod.getRegionStart()));
         }
         return Collections.unmodifiableList(compilations);
     }
@@ -216,7 +216,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
         try {
             final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
-            return teleTargetMethod == null ? null : findCompilation(teleTargetMethod.getRegionStart());
+            return teleTargetMethod == null ? null : findCompilationByAllocation(teleTargetMethod.getRegionStart());
         } finally {
             vm().unlock();
         }
@@ -264,6 +264,11 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         return externalMachineCodeAccess.codePointerManager().makeCodePointer(address);
     }
 
+
+    public TeleCompilation findCompilation(RemoteCodePointer codePointer) {
+        return findCompilation(codePointer.getAddress());
+    }
+
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
@@ -273,7 +278,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             compilationCount += codeCacheRegion.compilationCount();
             loadedCompilationCount += codeCacheRegion.loadedCompilationCount();
         }
-        printStream.print(indentation + "Total compilations registered: " + formatter.format(compilationCount));
+        printStream.print(indentation + "Total compilations: " + formatter.format(compilationCount));
         if (!unallocatedTeleTargetMethods.isEmpty()) {
             printStream.print(" (" + formatter.format(unallocatedTeleTargetMethods.size()) + " unallocated");
         }
