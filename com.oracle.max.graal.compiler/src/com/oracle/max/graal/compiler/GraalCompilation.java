@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.GraalCompiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
@@ -36,6 +35,7 @@ import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
+import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
@@ -128,11 +128,11 @@ public final class GraalCompilation {
         return tasm;
     }
 
-    public CiResult compile() {
+    public CiResult compile(PhasePlan plan) {
         CiTargetMethod targetMethod;
         try {
             try {
-                emitHIR();
+                emitHIR(plan);
                 emitLIR();
                 targetMethod = emitCode();
 
@@ -171,7 +171,7 @@ public final class GraalCompilation {
     /**
      * Builds the graph, optimizes it.
      */
-    public void emitHIR() {
+    public void emitHIR(PhasePlan plan) {
         try {
             context().timers.startScope("HIR");
 
@@ -180,7 +180,7 @@ public final class GraalCompilation {
                 graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
                 graphBuilderPhase.apply(graph, context());
 
-                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+                plan.runPhases(PhasePosition.AFTER_PARSING, graph, context());
 
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
@@ -194,7 +194,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.Inline) {
-                new InliningPhase(compiler, compiler.runtime, compiler.target, null, assumptions).apply(graph, context());
+                new InliningPhase(compiler.runtime, compiler.target, null, assumptions, plan).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
@@ -202,7 +202,7 @@ public final class GraalCompilation {
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
-            compiler.runPhases(PhasePosition.HIGH_LEVEL, graph);
+            plan.runPhases(PhasePosition.HIGH_LEVEL, graph, context());
 
             if (GraalOptions.Extend) {
                 extensionOptimizations(graph);
@@ -218,7 +218,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.EscapeAnalysis) {
-                new EscapeAnalysisPhase(this).apply(graph, context());
+                new EscapeAnalysisPhase(this, plan).apply(graph, context());
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
@@ -247,9 +247,9 @@ public final class GraalCompilation {
             new RemovePlaceholderPhase().apply(graph, context());
             new DeadCodeEliminationPhase().apply(graph, context());
 
-            compiler.runPhases(PhasePosition.MID_LEVEL, graph);
+            plan.runPhases(PhasePosition.MID_LEVEL, graph, context());
 
-            compiler.runPhases(PhasePosition.LOW_LEVEL, graph);
+            plan.runPhases(PhasePosition.LOW_LEVEL, graph, context());
 
             IdentifyBlocksPhase.BlockFactory blockFactory = new IdentifyBlocksPhase.BlockFactory() {
                 @Override

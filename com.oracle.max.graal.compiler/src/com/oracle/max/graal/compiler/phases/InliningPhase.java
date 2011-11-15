@@ -27,8 +27,8 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.extensions.*;
@@ -52,8 +52,6 @@ public class InliningPhase extends Phase {
     private final GraalRuntime runtime;
     private final CiTarget target;
 
-    private final GraalCompiler compiler;
-
     private int inliningSize;
     private final Collection<Invoke> hints;
 
@@ -63,13 +61,14 @@ public class InliningPhase extends Phase {
     private StructuredGraph graph;
     private CiAssumptions assumptions;
 
-    public InliningPhase(GraalCompiler compiler, GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions) {
-        // TODO passing in the compiler object is bad - but currently this is the only way to access the extension phases that must be run immediately after parsing.
-        this.compiler = compiler;
+    private final PhasePlan plan;
+
+    public InliningPhase(GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions, PhasePlan plan) {
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
         this.assumptions = assumptions;
+        this.plan = plan;
     }
 
     private abstract static class InlineInfo implements Comparable<InlineInfo> {
@@ -133,9 +132,7 @@ public class InliningPhase extends Phase {
                 graph = new StructuredGraph();
                 new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
 
-                if (compiler != null) {
-                    compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
-                }
+                plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);
 
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase().apply(graph, context, true, false);

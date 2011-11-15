@@ -37,47 +37,6 @@ import com.sun.cri.xir.*;
 
 public class GraalCompiler implements CiCompiler  {
 
-    /**
-     * The compilation is split into the following sections:
-     * ========================================================================
-     * Period 1: High-level nodes. (Graph building)
-     * ========================================================================
-     * Runtime-specific lowering.
-     * ========================================================================
-     * Period 2: Mid-level nodes. (Memory dependence graph)
-     * ========================================================================
-     * Target-specific lowering, de-SSA.
-     * ========================================================================
-     * Period 3: Low-level nodes. (Register allocation, code generation)
-     * ========================================================================
-     *
-     * A compiler extension phase can chose to run at the end of periods 1-3.
-     */
-    public static enum PhasePosition {
-        AFTER_PARSING,
-        HIGH_LEVEL,
-        MID_LEVEL,
-        LOW_LEVEL
-    }
-
-    @SuppressWarnings("unchecked")
-    public final ArrayList<Phase>[] phases = new ArrayList[PhasePosition.values().length];
-
-    public void addPhase(PhasePosition pos, Phase phase) {
-        if (phases[pos.ordinal()] == null) {
-            phases[pos.ordinal()] = new ArrayList<Phase>();
-        }
-        phases[pos.ordinal()].add(phase);
-    }
-
-    public void runPhases(PhasePosition pos, StructuredGraph graph) {
-        if (phases[pos.ordinal()] != null) {
-            for (Phase p : phases[pos.ordinal()]) {
-                p.apply(graph, context);
-            }
-        }
-    }
-
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
     public final GraalContext context;
@@ -120,6 +79,10 @@ public class GraalCompiler implements CiCompiler  {
 
     @Override
     public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+        return compileMethod(method, osrBCI, stats, debugInfoLevel, PhasePlan.DEFAULT);
+    }
+
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel, PhasePlan plan) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
@@ -133,7 +96,7 @@ public class GraalCompiler implements CiCompiler  {
             TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             try {
-                result = compilation.compile();
+                result = compilation.compile(plan);
             } finally {
                 filter.remove();
                 if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
@@ -148,10 +111,10 @@ public class GraalCompiler implements CiCompiler  {
         }
     }
 
-    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph) {
+    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph, PhasePlan plan) {
         assert graph.verify();
         GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
-        return compilation.compile();
+        return compilation.compile(plan);
     }
 
     private void init() {
