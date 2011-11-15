@@ -74,6 +74,46 @@ public class NativeStubCompiler {
     private int stackHandleOffset;
     private ValueNode synchronizedObject;
 
+
+    /**
+     * Template for a native method stub.
+     *
+     * (ds) what about synchronized methods? what about non-void methods?
+     *
+     * @param nativeMethod
+     * @param traceName
+     */
+    public static void call(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+        Address address = nativeMethod.nativeFunction.link();
+        VmThread thread = VmThread.current();
+
+        if (JniFunctions.TraceJNI) {
+            Log.print("[Thread \"");
+            Log.print(thread.getName());
+            Log.print(" --> JNI: ");
+            Log.print(traceName);
+            Log.println(']');
+        }
+
+        int jniHandlesTop = thread.jniHandlesTop();
+
+        Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
+        NativeFunctionCallNode.call(address, nativeMethod);
+        Snippets.nativeCallEpilogue();
+
+        thread.resetJniHandlesTop(jniHandlesTop);
+
+        if (JniFunctions.TraceJNI) {
+            Log.print("[Thread \"");
+            Log.print(thread.getName());
+            Log.print(" <-- JNI: ");
+            Log.print(traceName);
+            Log.println(']');
+        }
+
+        thread.throwJniException();
+    }
+
     /**
      * Compiles a native method stub.
      */
