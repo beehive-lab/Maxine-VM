@@ -251,7 +251,13 @@ public final class GraalCompilation {
 
             compiler.runPhases(PhasePosition.LOW_LEVEL, graph);
 
-            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true);
+            IdentifyBlocksPhase.BlockFactory blockFactory = new IdentifyBlocksPhase.BlockFactory() {
+                @Override
+                public Block createBlock(int blockID) {
+                    return new LIRBlock(blockID);
+                }
+            };
+            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true, blockFactory);
             schedule.apply(graph, context());
             if (stats != null) {
                 stats.loopCount = schedule.loopCount();
@@ -262,38 +268,20 @@ public final class GraalCompilation {
             }
 
             List<Block> blocks = schedule.getBlocks();
-            List<LIRBlock> lirBlocks = new ArrayList<LIRBlock>();
-            Map<Block, LIRBlock> map = new HashMap<Block, LIRBlock>();
-            for (Block b : blocks) {
-                LIRBlock block = new LIRBlock(b);
-                map.put(b, block);
-                lirBlocks.add(block);
-            }
-
-            for (Block b : blocks) {
-                for (Block succ : b.getSuccessors()) {
-                    map.get(b).blockSuccessors().add(map.get(succ));
-                }
-
-                for (Block pred : b.getPredecessors()) {
-                    map.get(b).blockPredecessors().add(map.get(pred));
-                }
-            }
-
             NodeMap<LIRBlock> valueToBlock = new NodeMap<LIRBlock>(graph);
-            for (LIRBlock b : lirBlocks) {
+            for (Block b : blocks) {
                 for (Node i : b.getInstructions()) {
-                    valueToBlock.set(i, b);
+                    valueToBlock.set(i, (LIRBlock) b);
                 }
             }
             LIRBlock startBlock = valueToBlock.get(graph.start());
             assert startBlock != null;
-            assert startBlock.blockPredecessors().size() == 0;
+            assert startBlock.numberOfPreds() == 0;
 
 
             context().timers.startScope("Compute Linear Scan Order");
             try {
-                ComputeLinearScanOrder clso = new ComputeLinearScanOrder(lirBlocks.size(), stats.loopCount, startBlock);
+                ComputeLinearScanOrder clso = new ComputeLinearScanOrder(blocks.size(), stats.loopCount, startBlock);
                 List<LIRBlock> linearScanOrder = clso.linearScanOrder();
                 List<LIRBlock> codeEmittingOrder = clso.codeEmittingOrder();
 

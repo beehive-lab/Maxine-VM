@@ -31,7 +31,9 @@ import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.observer.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -75,6 +77,7 @@ public class CFGPrinterObserver implements CompilationObserver {
         RiRuntime runtime = cfgPrinter.runtime;
         BlockMap blockMap = event.debugObject(BlockMap.class);
         Graph graph = event.debugObject(Graph.class);
+        IdentifyBlocksPhase schedule = event.debugObject(IdentifyBlocksPhase.class);
         LIR lir = event.debugObject(LIR.class);
         LinearScan allocator = event.debugObject(LinearScan.class);
         Interval[] intervals = event.debugObject(Interval[].class);
@@ -85,10 +88,20 @@ public class CFGPrinterObserver implements CompilationObserver {
             cfgPrinter.printBytecodes(runtime.disassemble(blockMap.method));
         }
         if (lir != null) {
-            cfgPrinter.printCFG(event.label, lir, graph != null, true);
+            cfgPrinter.printCFG(event.label, lir.codeEmittingOrder(), graph != null);
             if (targetMethod != null) {
                 cfgPrinter.printMachineCode(runtime.disassemble(targetMethod), null);
             }
+        } else if (graph != null) {
+            if (schedule == null) {
+                try {
+                    schedule = new IdentifyBlocksPhase(true);
+                    schedule.apply((StructuredGraph) graph, false, false);
+                } catch (Throwable t) {
+                    // nothing to do here...
+                }
+            }
+            cfgPrinter.printCFG(event.label, schedule.getBlocks(), true);
         }
         if (allocator != null && intervals != null) {
             cfgPrinter.printIntervals(event.label, allocator, intervals);
