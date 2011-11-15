@@ -101,15 +101,15 @@ public final class StackView extends AbstractView<StackView> {
             String methodName = "";
             String toolTip = null;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final MaxCompilation compiledCode = stackFrame.compiledCode();
-                methodName += inspection().nameDisplay().veryShortName(compiledCode);
-                toolTip = htmlify(inspection().nameDisplay().longName(compiledCode, stackFrame.ip()));
-                if (compiledCode != null) {
+                final MaxCompilation compilation = stackFrame.compilation();
+                methodName += inspection().nameDisplay().veryShortName(compilation);
+                toolTip = htmlify(inspection().nameDisplay().longName(compilation, stackFrame.ip()));
+                if (compilation != null) {
 
                     try {
                         vm().acquireLegacyVMAccess();
                         try {
-                            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                            final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
                             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                                 methodName += inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                                 try {
@@ -407,16 +407,16 @@ public final class StackView extends AbstractView<StackView> {
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final MaxCompilation compiledCode = vm().machineCode().findCompilation(address);
+        final MaxCompilation compilation = vm().machineCode().findCompilation(address);
         String name;
-        if (compiledCode != null) {
-            name = inspection().nameDisplay().veryShortName(compiledCode);
-            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+        if (compilation != null) {
+            name = inspection().nameDisplay().veryShortName(compilation);
+            final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                 name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
             }
         } else {
-            final MethodActor classMethodActor = javaStackFrame.compiledCode().classMethodActor();
+            final MethodActor classMethodActor = javaStackFrame.compilation().classMethodActor();
             name = classMethodActor.format("%h.%n");
         }
         return name;

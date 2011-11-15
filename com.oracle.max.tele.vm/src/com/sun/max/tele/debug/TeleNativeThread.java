@@ -671,8 +671,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompilation compiledCode = vm().machineCode().findCompilation(address);
-                if (compiledCode == null) {
+                TeleCompilation compilation = vm().machineCode().findCompilation(address);
+                if (compilation == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
                         continue;
@@ -684,8 +684,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                         TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    compiledCode = vm().machineCode().findCompilation(targetMethod.codeStart().toAddress());
-                    if (compiledCode == null) {
+                    compilation = vm().machineCode().findCompilation(targetMethod.codeStart().toAddress());
+                    if (compilation == null) {
                         TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
                     }
@@ -699,15 +699,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    CiFrame frames = compiledCode.teleTargetMethod().getDebugInfoAtSafepointIndex(stopIndex).frame();
+                    CiFrame frames = compilation.teleTargetMethod().getDebugInfoAtSafepointIndex(stopIndex).frame();
 
                     if (frames == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);
 
-                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
+                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compilation.classMethodActor()) == null) {
                             LOGGER.warning("Could not find tele method!");
                         } else {
-                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                            result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, null, compilation.classMethodActor(), 0));
                         }
                     } else {
 
@@ -715,16 +715,16 @@ public abstract class TeleNativeThread extends AbstractVmHolder
                             final TeleClassMethodActor curTma = vm().findTeleMethodActor(TeleClassMethodActor.class, (ClassMethodActor) frames.method);
 
                             LOGGER.info("Found part frame " + frames + " tele method actor: " + curTma);
-                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, frames));
+                            result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, frames));
                             frames = frames.caller();
                         }
                     }
                 } else {
                     LOGGER.info("Not at Java stop!");
-                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
+                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compilation.classMethodActor()) == null) {
                         LOGGER.warning("Could not find tele method!");
                     } else {
-                        result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                        result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, null, compilation.classMethodActor(), 0));
                     }
                 }
             }

@@ -63,8 +63,8 @@ public abstract class MachineCodeViewer extends CodeViewer {
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
         if (this.machineCode instanceof MaxCompilation) {
-            final MaxCompilation compiledCode = (MaxCompilation) this.machineCode;
-            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+            final MaxCompilation compilation = (MaxCompilation) this.machineCode;
+            final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
                 if (teleCodeAttribute != null) {

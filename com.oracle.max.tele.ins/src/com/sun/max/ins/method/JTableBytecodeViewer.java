@@ -60,8 +60,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final BytecodeTableModel tableModel;
     private final BytecodeViewPreferences instanceViewPreferences;
 
-    public JTableBytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compiledCode) {
-        super(inspection, parent, teleClassMethodActor, compiledCode);
+    public JTableBytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compilation) {
+        super(inspection, parent, teleClassMethodActor, compilation);
         this.inspection = inspection;
         tableModel = new BytecodeTableModel(inspection, bytecodeInstructions());
         instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
@@ -293,7 +293,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     focusRow = model.findRowAtBCI(0);
                 }
             } else if (codeLocation.hasAddress()) {
-                if (compiledCode() != null && compiledCode().contains(codeLocation.address())) {
+                if (compilation() != null && compilation().contains(codeLocation.address())) {
                     focusRow = model.findRow(codeLocation.address());
                 }
             }

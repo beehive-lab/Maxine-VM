@@ -78,7 +78,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
     }
 
     private MaxCodeLocation codeLocation = null;
-    private MaxCompilation compiledCode = null;
+    private MaxCompilation compilation = null;
     private CiDebugInfo debugInfo = null;
 
     private final MatteBorder frameBorder;
@@ -182,7 +182,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
         if (codeLocation != null) {
-            compiledCode = codeLocation.compiledCode();
+            compilation = codeLocation.compilation();
             debugInfo = codeLocation.debugInfo();
         }
     }
@@ -211,7 +211,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         if (info.hasStackRefMap()) {
             CiBitMap bm = info.frameRefMap;
             for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
-                VMFrameLayout layout = compiledCode.frameLayout();
+                VMFrameLayout layout = compilation.frameLayout();
                 CiRegister fp = layout.framePointerReg();
                 int refMapOffset = i * VMFrameLayout.STACK_SLOT_SIZE;
                 int fpOffset = refMapOffset + layout.frameReferenceMapOffset();

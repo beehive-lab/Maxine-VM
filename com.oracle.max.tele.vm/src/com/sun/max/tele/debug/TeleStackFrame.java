@@ -226,10 +226,10 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public MaxMachineCodeRoutine machineCode() {
-            return compiledCode();
+            return compilation();
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             if (teleCompiledCode == null) {
                 teleCompiledCode = vm().machineCode().findCompilation(stackFrame.ip);
             }
@@ -253,8 +253,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String sourceVariableName(int slot) {
-            final TeleCompilation compiledCode = compiledCode();
-            return compiledCode == null ? null : compiledCode.sourceVariableName(this, slot);
+            final TeleCompilation compilation = compilation();
+            return compilation == null ? null : compilation.sourceVariableName(this, slot);
         }
 
     }
@@ -284,7 +284,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return false;
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             return null;
         }
 
@@ -339,7 +339,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return null;
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             return null;
         }
 
