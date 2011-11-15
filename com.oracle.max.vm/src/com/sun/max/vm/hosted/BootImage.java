@@ -467,7 +467,7 @@ public class BootImage {
         }
 
         public int nsig() {
-            return Integer.valueOf(values.get(Key.OS.name()));
+            return Integer.valueOf(values.get(Key.NSIG.name()));
         }
 
         public BootImagePackage bootImagePackage(Key key) {
@@ -506,6 +506,7 @@ public class BootImage {
             put(Key.CPU, platform().cpu);
             put(Key.ISA, platform().isa);
             put(Key.OS, platform().os);
+            put(Key.NSIG, platform().nsig);
             put(Key.REFERENCE, vmConfig.referencePackage);
             put(Key.LAYOUT, vmConfig.layoutPackage);
             put(Key.HEAP, vmConfig.heapPackage);
@@ -553,7 +554,7 @@ public class BootImage {
                         }
                         BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                     } else {
-                        assert key.valueType == BootImagePackage.class;
+                        assert key.valueType == BootImagePackage.class || key == Key.NSIG : e;
                     }
                 } else {
                     // must be a system property for one of the schemes
