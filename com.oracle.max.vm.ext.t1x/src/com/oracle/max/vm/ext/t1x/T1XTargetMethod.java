@@ -46,7 +46,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -366,9 +365,24 @@ public final class T1XTargetMethod extends TargetMethod {
     @HOSTED_ONLY
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
-        final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(classMethodActor, directCalls, virtualCalls, interfaceCalls);
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
-        bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));
+        for (int i = 0; i < safepoints.size(); ++i) {
+            int bci = bciForPos(safepoints.posAt(i));
+            if (bci != -1) {
+                RiMethod callee = codeAttribute.calleeAt(bci);
+                if (callee instanceof MethodActor) {
+                    MethodActor ma = (MethodActor) callee;
+                    int opcode = codeAttribute.code()[bci] & 0xff;
+                    if (opcode == INVOKEVIRTUAL) {
+                        virtualCalls.add(ma);
+                    } else if (opcode == INVOKESTATIC || opcode == INVOKESPECIAL) {
+                        directCalls.add(ma);
+                    } else {
+                        assert opcode == INVOKEINTERFACE;
+                        interfaceCalls.add(ma);
+                    }
+                }
+            }
+        }
     }
 
     @Override
