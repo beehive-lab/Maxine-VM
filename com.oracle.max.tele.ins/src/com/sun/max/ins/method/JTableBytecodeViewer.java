@@ -566,6 +566,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final BytecodeTable bytecodeTable = (BytecodeTable) table;
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final int opcode = (Integer) value;
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setValue(opcode);
@@ -597,6 +600,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 }
                 renderer.setToolTipPrefix(tableModel.getRowDescription(row) + " operand:<br>Constant pool reference = ");
                 renderer.setFont(preference().style().bytecodeOperandFont());
+            } else if (tableValue == null) {
+                return gui().getUnavailableDataTableCellRenderer();
             } else {
                 InspectorError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }
