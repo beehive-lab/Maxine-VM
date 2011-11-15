@@ -29,6 +29,7 @@ import java.util.regex.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.observer.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
@@ -64,27 +65,22 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     }
 
     @Override
-    public void compilationStarted(CompilationEvent event) {
-        openPrinter(event);
+    public void compilationStarted(GraalCompilation compilation) {
+        openPrinter(compilation, false);
     }
 
-    private void openPrinter(CompilationEvent event) {
+    private void openPrinter(GraalCompilation compilation, boolean error) {
         assert (stream == null && printer == null);
-
-        if ((!TTY.isSuppressed() && GraalOptions.Plot) || (GraalOptions.PlotOnError && event.isErrorEvent())) {
+        if ((!TTY.isSuppressed() && GraalOptions.Plot) || (GraalOptions.PlotOnError && error)) {
             String name = null;
-            if (event.getCompilation() == null) {
-                name = event.getLabel();
-            } else {
-                name = event.getMethod().holder().name();
-                name = name.substring(1, name.length() - 1).replace('/', '.');
-                name = name + "." + event.getMethod().name();
-            }
+            name = compilation.method.holder().name();
+            name = name.substring(1, name.length() - 1).replace('/', '.');
+            name = name + "." + compilation.method.name();
 
             if (host != null) {
-                openNetworkPrinter(name, event.getMethod());
+                openNetworkPrinter(name, compilation.method);
             } else {
-                openFilePrinter(name, event.getMethod());
+                openFilePrinter(name, compilation.method);
             }
         }
     }
@@ -173,21 +169,21 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     @Override
     public void compilationEvent(CompilationEvent event) {
         boolean lazyStart = false;
-        if (printer == null && event.isErrorEvent()) {
-            this.compilationStarted(event);
+        if (printer == null && event.hasDebugObject(CompilationEvent.ERROR)) {
+            openPrinter(event.debugObject(GraalCompilation.class), true);
             lazyStart = true;
         }
-        if (printer != null && event.getGraph() != null && event.isHIRValid()) {
-            Graph graph = event.getGraph();
-            printer.print(graph, event.getLabel(), true, event.getDebugObjects());
+        Graph graph = event.debugObject(Graph.class);
+        if (printer != null && graph != null) {
+            printer.print(graph, event.label, true, event.debugObject(IdentifyBlocksPhase.class));
         }
         if (lazyStart) {
-            this.compilationFinished(event);
+            closePrinter();
         }
     }
 
     @Override
-    public void compilationFinished(CompilationEvent event) {
+    public void compilationFinished(GraalCompilation compilation) {
         if (printer != null) {
             closePrinter();
         }

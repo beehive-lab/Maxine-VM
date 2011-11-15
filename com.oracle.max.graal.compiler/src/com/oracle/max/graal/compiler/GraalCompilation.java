@@ -86,7 +86,7 @@ public final class GraalCompilation {
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new FrameState(method, 0, 0, 0, 0, false) : null;
 
         if (context().isObserved() && method != null) {
-            context().observable.fireCompilationStarted(new CompilationEvent(this));
+            context().observable.fireCompilationStarted(this);
         }
     }
 
@@ -153,15 +153,15 @@ public final class GraalCompilation {
         } catch (VerificationError error) {
             if (context().isObserved()) {
                 if (error.node() != null) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    context().observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, this, error.node().graph());
                 } else if (error.graph() != null) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    context().observable.fireCompilationEvent("VerificationError on Graph " + error.graph(), CompilationEvent.ERROR, this, error.graph());
                 }
             }
             throw error;
         } finally {
             if (context().isObserved()) {
-                context().observable.fireCompilationFinished(new CompilationEvent(this));
+                context().observable.fireCompilationFinished(this);
             }
         }
 
@@ -258,9 +258,7 @@ public final class GraalCompilation {
             }
 
             if (context().isObserved()) {
-                Map<String, Object> debug = new HashMap<String, Object>();
-                debug.put("schedule", schedule);
-                context().observable.fireCompilationEvent(new CompilationEvent(this, "After IdentifyBlocksPhase", graph, true, false, debug));
+                context().observable.fireCompilationEvent("After IdentifyBlocksPhase", this, graph, schedule);
             }
 
             List<Block> blocks = schedule.getBlocks();
@@ -307,13 +305,13 @@ public final class GraalCompilation {
                 lir = new LIR(startBlock, linearScanOrder, codeEmittingOrder, valueToBlock);
 
                 if (context().isObserved()) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After linear scan order", graph, true, false));
+                    context().observable.fireCompilationEvent("After linear scan order", this, graph);
                 }
             } catch (AssertionError t) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "AssertionError in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent("AssertionError in ComputeLinearScanOrder", CompilationEvent.ERROR, this, graph);
                 throw t;
             } catch (RuntimeException t) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "RuntimeException in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent("RuntimeException in ComputeLinearScanOrder", CompilationEvent.ERROR, this, graph);
                 throw t;
             } finally {
                 context().timers.endScope();
@@ -394,12 +392,12 @@ public final class GraalCompilation {
             }
         } catch (Error e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
-                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+                context().observable.fireCompilationEvent(e.getClass().getSimpleName() + " in emitLIR", CompilationEvent.ERROR, this, graph);
             }
             throw e;
         } catch (RuntimeException e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
-                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+                context().observable.fireCompilationEvent(e.getClass().getSimpleName() + " in emitLIR", CompilationEvent.ERROR, this, graph);
             }
             throw e;
         } finally {
@@ -420,7 +418,7 @@ public final class GraalCompilation {
                 }
 
                 if (context().isObserved()) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After code generation", graph, false, true, targetMethod));
+                    context().observable.fireCompilationEvent("After code generation", this, lir, targetMethod);
                 }
                 return targetMethod;
             } finally {
@@ -456,7 +454,7 @@ public final class GraalCompilation {
 
     public void printGraph(String phase, Graph graph) {
         if (context().isObserved()) {
-            context().observable.fireCompilationEvent(new CompilationEvent(this, phase, graph, true, false));
+            context().observable.fireCompilationEvent(phase, this, graph);
         }
     }
 }

@@ -41,42 +41,47 @@ public class GraphvizPrinterObserver implements CompilationObserver {
     private static final Pattern INVALID_CHAR = Pattern.compile("[^A-Za-z0-9_.-]");
 
     private final boolean pdf;
+    private String methodName;
     private int n;
 
     public GraphvizPrinterObserver(boolean pdf) {
         this.pdf = pdf;
     }
 
-    public void compilationStarted(CompilationEvent event) {
+    public void compilationStarted(GraalCompilation compilation) {
+        String name = compilation.method.holder().name();
+        name = name.substring(1, name.length() - 1).replace('/', '.');
+        name = name + "." + compilation.method.name();
+
+        methodName = name;
         n = 0;
     }
 
-    public void compilationFinished(CompilationEvent event) {
+    public void compilationFinished(GraalCompilation compilation) {
     }
 
     public void compilationEvent(CompilationEvent event) {
-        if (event.getGraph() != null && !TTY.isSuppressed()) {
-            Graph graph = event.getGraph();
+        if (TTY.isSuppressed()) {
+            return;
+        }
 
-            String name = event.getMethod().holder().name();
-            name = name.substring(1, name.length() - 1).replace('/', '.');
-            name = name + "." + event.getMethod().name();
-
-            String filename = name + "_" + (n++) + "_" + event.getLabel();
+        Graph graph = event.debugObject(Graph.class);
+        if (graph != null) {
+            String filename = methodName + "_" + (n++) + "_" + event.label;
             filename = INVALID_CHAR.matcher(filename).replaceAll("_");
 
             OutputStream out = null;
             try {
                 if (pdf) {
                     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                    printGraph(graph, name, buffer);
+                    printGraph(graph, methodName, buffer);
 
                     out = new FileOutputStream(filename + ".pdf");
                     GraphvizRunner.process(GraphvizRunner.DOT_LAYOUT, new ByteArrayInputStream(buffer.toByteArray()), out, "pdf");
                 } else {
                     out = new FileOutputStream(filename + ".gv");
 
-                    printGraph(graph, name, out);
+                    printGraph(graph, methodName, out);
                 }
             } catch (IOException e) {
                 e.printStackTrace();

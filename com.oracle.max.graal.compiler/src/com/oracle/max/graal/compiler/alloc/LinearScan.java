@@ -36,7 +36,6 @@ import com.oracle.max.graal.compiler.alloc.Interval.SpillState;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.lir.LIRInstruction.OperandMode;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
@@ -2159,7 +2158,7 @@ public final class LinearScan {
         }
 
         if (context.isObserved()) {
-            context.observable.fireCompilationEvent(new CompilationEvent(compilation, label, this, intervals, intervalsSize));
+            context.observable.fireCompilationEvent(label, compilation, this, Arrays.copyOf(intervals, intervalsSize));
         }
     }
 
@@ -2172,7 +2171,7 @@ public final class LinearScan {
         }
 
         if (context.isObserved()) {
-            context.observable.fireCompilationEvent(new CompilationEvent(compilation, label, /*compilation.graph*/ null, hirValid, true));
+            context.observable.fireCompilationEvent(label, compilation, hirValid ? compilation.graph : null, compilation.lir());
         }
     }
 

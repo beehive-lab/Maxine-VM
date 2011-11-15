@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -362,7 +361,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (invokes.size() == 0) {
 
                 if (context.isObserved()) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(compilation, "Before escape " + node, graph, true, false));
+                    context.observable.fireCompilationEvent("Before escape " + node, compilation, graph);
                 }
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                     TTY.println("%n!!!!!!!! non-escaping object: %s (%s) in %s", node, node.exactType(), compilation.method);
@@ -374,7 +373,7 @@ public class EscapeAnalysisPhase extends Phase {
                     context.timers.endScope();
                 }
                 if (context.isObserved()) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(compilation, "After escape", graph, true, false));
+                    context.observable.fireCompilationEvent("After escape", compilation, graph);
                 }
                 new PhiSimplificationPhase().apply(graph, context);
 

@@ -27,9 +27,8 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.GraalCompiler.*;
+import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.graphbuilder.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.extensions.*;
@@ -248,7 +247,7 @@ public class InliningPhase extends Phase {
                         TTY.println("inlining %f: %s", info.weight, info);
                     }
                     if (GraalOptions.TraceInlining) {
-                        context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
+                        context.observable.fireCompilationEvent("after inlining " + info, graph);
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
