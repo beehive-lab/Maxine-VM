@@ -596,12 +596,12 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             assert compilationStartedBreakpoint == null;
             assert compilationCompletedBreakpoint == null;
             if (usePrecompilationBreakpoints) {
-                compilationStartedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(vm().methods().compilationStarted(), null);
+                compilationStartedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationStarted(), null);
                 compilationStartedBreakpoint.setDescription("System trap for compilation start");
                 compilationStartedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(true));
                 Trace.line(TRACE_VALUE, tracePrefix + "creating compilation started breakpoint=" + compilationStartedBreakpoint);
             }
-            compilationCompletedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(vm().methods().compilationCompleted(), null);
+            compilationCompletedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationCompleted(), null);
             compilationCompletedBreakpoint.setDescription("System trap for compilation end");
             compilationCompletedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(false));
             Trace.line(TRACE_VALUE, tracePrefix + "creating compilation completed breakpoint=" + compilationCompletedBreakpoint);

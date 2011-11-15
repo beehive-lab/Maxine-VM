@@ -140,8 +140,8 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
             sb.append(inspection().nameDisplay().unavailableDataShortText());
         } else {
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final MaxCompilation compiledCode = stackFrame.compiledCode();
-                sb.append(inspection().nameDisplay().veryShortName(compiledCode));
+                final MaxCompilation compilation = stackFrame.compilation();
+                sb.append(inspection().nameDisplay().veryShortName(compilation));
             } else if (stackFrame instanceof MaxStackFrame.Native) {
                 sb.append("<native>");
             }

@@ -44,7 +44,7 @@ import com.sun.max.unsafe.*;
  * No attempt is made to check for changes to the code during
  * a session, unlike VM target methods.
  */
-public final class TeleExternalCode extends AbstractVmHolder implements MaxExternalCode {
+public final class TeleExternalCodeRoutine extends AbstractVmHolder implements MaxExternalCodeRoutine {
 
     /**
      * Description of a region of external native code discovered in the VM's process.
@@ -53,13 +53,13 @@ public final class TeleExternalCode extends AbstractVmHolder implements MaxExter
      * <p>
      * This region has no children.
      */
-    private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCode> {
+    private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCodeRoutine> {
 
         private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
-        private MaxExternalCode owner;
+        private MaxExternalCodeRoutine owner;
 
-        private ExternalCodeMemoryRegion(MaxVM vm, MaxExternalCode owner, String name, Address start, long nBytes) {
+        private ExternalCodeMemoryRegion(MaxVM vm, MaxExternalCodeRoutine owner, String name, Address start, long nBytes) {
             super(vm, name, start, nBytes);
             this.owner = owner;
         }
@@ -72,7 +72,7 @@ public final class TeleExternalCode extends AbstractVmHolder implements MaxExter
             return EMPTY;
         }
 
-        public MaxExternalCode owner() {
+        public MaxExternalCodeRoutine owner() {
             return owner;
         }
 
@@ -221,7 +221,7 @@ public final class TeleExternalCode extends AbstractVmHolder implements MaxExter
      * @throws IllegalArgumentException if the range overlaps one already in the registry
      * @throws MaxInvalidAddressException if unable to read memory.
      */
-    public TeleExternalCode(TeleVM vm, Address start, long nBytes, String name) throws MaxInvalidAddressException {
+    public TeleExternalCodeRoutine(TeleVM vm, Address start, long nBytes, String name) throws MaxInvalidAddressException {
         super(vm);
         this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(vm, this, name, start, nBytes);
         this.instructionMap = new ExternalCodeInstructionMap();
@@ -255,7 +255,7 @@ public final class TeleExternalCode extends AbstractVmHolder implements MaxExter
         return "A discovered block of native code not managed by the VM";
     }
 
-    public MaxEntityMemoryRegion<MaxExternalCode> memoryRegion() {
+    public MaxEntityMemoryRegion<MaxExternalCodeRoutine> memoryRegion() {
         return externalCodeMemoryRegion;
     }
 

@@ -595,8 +595,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(vm().methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(vm().methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
+            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
+            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
             locations.addAll(teleHeapScheme.inspectableMethods());
             inspectableMethods = Collections.unmodifiableList(locations);
@@ -629,7 +629,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         } else if (gcCompletedCount >= 0) {
             printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
         }
-        printStream.print(indentation + "Regions: \n");
+        printStream.print(indentation + "By region: \n");
         for (MaxHeapRegion region : allHeapRegions) {
             region.printSessionStats(printStream, indent + 5, verbose);
         }

@@ -23,6 +23,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.lang.management.*;
 import java.text.*;
 import java.util.*;
 
@@ -46,7 +47,8 @@ import com.sun.max.vm.compiler.target.*;
  * @see TargetMethod
  * @see VmCodeCacheAccess
  */
-public abstract class VmCodeCacheRegion extends AbstractVmHolder implements TeleVMCache, MaxCodeCacheRegion, ObjectHoldingRegion {
+public abstract class VmCodeCacheRegion extends AbstractVmHolder
+    implements TeleVMCache, MaxCodeCacheRegion, ObjectHoldingRegion, CodeHoldingRegion {
 
     private static final int TRACE_VALUE = 1;
 
@@ -169,10 +171,7 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder implements Tele
      */
     public abstract void register(TeleTargetMethod teleTargetMethod);
 
-    /**
-     * @return the compilation in this region that contains an address, null if none.
-     */
-    public abstract TeleCompilation find(Address address);
+    public abstract TeleCompilation findCompilation(Address address);
 
     /**
      * @return the number of method compilations that have been copied from
@@ -188,27 +187,33 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder implements Tele
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         // Line 1
-        final StringBuilder sb1 = new StringBuilder();
-        sb1.append(entityName()).append(": size=" + formatter.format(memoryRegion().nBytes()));
-        printStream.println(indentation + sb1.toString());
+        printStream.println(indentation + entityName());
+        // Line 2
         final StringBuilder sb2 = new StringBuilder();
-        sb2.append("compilations:  registered=").append(formatter.format(compilationCount()));
-        sb2.append(", code loaded=").append(formatter.format(loadedCompilationCount()));
+        sb2.append("region: ");
+        final MemoryUsage usage = memoryRegion().getUsage();
+        final long size = usage.getCommitted();
+        sb2.append("size=" + formatter.format(size));
+        if (size > 0) {
+            final long used = usage.getUsed();
+            sb2.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        }
+        printStream.println(indentation + "    " + sb2.toString());
+        // Line 3
+        final StringBuilder sb3 = new StringBuilder();
+        sb3.append("compilations:  registered=").append(formatter.format(compilationCount()));
+        sb3.append(", code loaded=").append(formatter.format(loadedCompilationCount()));
         if (teleCodeRegion.isManaged()) {
-            sb2.append(", evictions=").append(formatter.format(teleCodeRegion.evictionCount()));
+            sb3.append(", evictions=").append(formatter.format(teleCodeRegion.evictionCount()));
             if (isInEviction()) {
-                sb1.append(" IN EVICTION");
+                sb2.append(" IN EVICTION");
             }
         }
-        printStream.println(indentation + "     " + sb2.toString());
-        // Line 2
-        final StringBuilder sb3 = new StringBuilder();
-        final int activeReferenceCount = objectReferenceManager().activeReferenceCount();
-        final int totalReferenceCount = objectReferenceManager().totalReferenceCount();
-        sb3.append("object refs:  active=" + formatter.format(activeReferenceCount));
-        sb3.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
-        sb3.append(", mgr=" + objectReferenceManager().getClass().getSimpleName());
-        printStream.println(indentation + "     " + sb3.toString());
+        printStream.println(indentation + "    " + sb3.toString());
+        // Line 4
+        codePointerManager().printSessionStats(printStream, indent + 4, verbose);
+        // Line 5
+        objectReferenceManager().printSessionStats(printStream, indent + 4, verbose);
     }
 
     /**
