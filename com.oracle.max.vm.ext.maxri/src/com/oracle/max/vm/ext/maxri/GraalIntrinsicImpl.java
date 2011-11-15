@@ -22,25 +22,100 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
+import java.lang.reflect.*;
+
 import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 
 /**
- * Interface for intrinsic implementations targeting C1X. The intrinsic has access to the {@link RiRuntime} so that
+ * Base class for intrinsic implementations targeting Graal. The intrinsic has access to the graph so that
  * it can append new instructions to the instruction stream.
  */
-public interface GraalIntrinsicImpl extends IntrinsicImpl {
+public class GraalIntrinsicImpl implements IntrinsicImpl {
     /**
-     * Creates the HIR instructions necessary for the implementation of the intrinsic and appends them using the
-     * supplied {@link GraphBuilder} object.
-     * @param runtime The RiRuntime, used to get information about types, etc.
-     * @param caller The method that calls the intrinsified method.
-     * @param target The intrinsic method, i.e., the method that has the {@link INTRINSIC} annotation.
-     * @param graph the graph that the intrinsic will be created into
-     * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
-     * @return The instruction that should be returned by the intrinsic, or null if no result should be returned.
+     * The name of the method called to actually create the graph.  This method is found using reflection.
      */
-    ValueNode createHIR(RiRuntime runtime, StructuredGraph graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args);
+    public final String CREATE_NAME = "create";
+
+    private Method createMethod;
+
+    /**
+     * Creates the graph nodes necessary for the implementation of the intrinsic and appends them to the supplied {@link StructuredGraph}.
+     * <br>
+     * This default implementation searches for a method with the name "create" and the following parameter list:
+     * <pre>
+     *     ValueNode create([StructureGraph], [RiResolvedMethod], [RiRuntime], { ValueNode | any_type })
+     * </pre>
+     * This means that that the graph, method, and runtime parameters are optionally given to the called method.  The args parameter
+     * is flattened from the NodeList to individual ValueNode parameters.  If the parameter has any other type, then the
+     * node must be a constant, and the constant value is passed instead of the node.
+     * <br>
+     * Subclasses can also override this method if they want to avoid the reflective method invocation done in this implementation.
+     *
+     * @param graph The graph that the intrinsic will be created into.
+     * @param method The intrinsic method, i.e., the method that has the {@link INTRINSIC} annotation.
+     * @param runtime The RiRuntime, used to get information about types, etc.
+     * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
+     * @return The instruction that should substitute the original method call that is intrinsified.
+     */
+    public ValueNode createGraph(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, NodeList<ValueNode> args) {
+        if (createMethod == null) {
+            initialize();
+        }
+
+        Class[] formalParams = createMethod.getParameterTypes();
+        Object[] actualParams = new Object[formalParams.length];
+
+        int offset = 0;
+        offset = assignParam(offset, formalParams, actualParams, StructuredGraph.class, graph);
+        offset = assignParam(offset, formalParams, actualParams, RiResolvedMethod.class, method);
+        offset = assignParam(offset, formalParams, actualParams, RiRuntime.class, runtime);
+
+        if (offset + args.size() != actualParams.length) {
+            throw new CiBailout("intrinsic has wrong number of parameters for invoke " + method);
+        }
+
+        for (int i = offset; i < actualParams.length; i++) {
+            ValueNode node = args.get(i - offset);
+            if (formalParams[i] != ValueNode.class) {
+                if (!node.isConstant()) {
+                    throw new CiBailout("intrinsic parameter " + (i - offset) + " must be compile time constant for invoke " + method);
+                }
+                actualParams[i] = node.asConstant().boxedValue();
+            } else {
+                actualParams[i] = node;
+            }
+        }
+
+        try {
+            return (ValueNode) createMethod.invoke(this, actualParams);
+        } catch (Exception ex) {
+            throw new CiBailout("intrinsic exception for invoke " + method, ex);
+        }
+    }
+
+    private int assignParam(int offset, Class[] formalParams, Object[] actualParams, Class paramClass, Object paramValue) {
+        if (offset < formalParams.length && formalParams[offset] == paramClass) {
+            actualParams[offset] = paramValue;
+            offset++;
+        }
+        return offset;
+    }
+
+    private void initialize() {
+        int count = 0;
+        for (Method m : getClass().getMethods()) {
+            if (CREATE_NAME.equals(m.getName()) && m.getReturnType() == ValueNode.class) {
+                createMethod = m;
+                count++;
+            }
+        }
+        if (count != 1) {
+            throw new CiBailout("Expected one create method, but found " + count);
+        }
+    }
 }

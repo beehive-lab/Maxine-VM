@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
  */
 public final class PhiNode extends FloatingNode implements Canonicalizable, Node.IterableNodeType {
 
-    @Input private MergeNode merge;
+    @Input(notDataflow = true) private MergeNode merge;
 
     @Input private final NodeInputList<ValueNode> values = new NodeInputList<ValueNode>(this);
 

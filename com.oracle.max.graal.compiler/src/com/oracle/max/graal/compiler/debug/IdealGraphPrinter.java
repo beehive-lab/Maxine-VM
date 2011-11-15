@@ -23,7 +23,6 @@
 package com.oracle.max.graal.compiler.debug;
 
 import java.io.*;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -132,24 +131,16 @@ public class IdealGraphPrinter {
     }
 
     public void print(Graph graph, String title, boolean shortNames) {
-        print(graph, title, shortNames, Collections.<String, Object>emptyMap());
+        print(graph, title, shortNames, null);
     }
 
     /**
      * Prints an entire {@link Graph} with the specified title, optionally using short names for nodes.
      */
     @SuppressWarnings("unchecked")
-    public void print(Graph graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
+    public void print(Graph graph, String title, boolean shortNames, IdentifyBlocksPhase schedule) {
         stream.printf(" <graph name='%s'>%n", escape(title));
         noBlockNodes.clear();
-        IdentifyBlocksPhase schedule = null;
-        if (debugObjects != null) {
-            for (Object obj : debugObjects.values()) {
-                if (obj instanceof IdentifyBlocksPhase) {
-                    schedule = (IdentifyBlocksPhase) obj;
-                }
-            }
-        }
         if (schedule == null) {
             try {
                 schedule = new IdentifyBlocksPhase(true);
@@ -173,7 +164,7 @@ public class IdealGraphPrinter {
         }
 
         stream.println("  <nodes>");
-        List<Edge> edges = printNodes(graph, shortNames, schedule == null ? null : schedule.getNodeToBlock(), loops, debugObjects);
+        List<Edge> edges = printNodes(graph, shortNames, schedule == null ? null : schedule.getNodeToBlock(), loops);
         stream.println("  </nodes>");
 
         stream.println("  <edges>");
@@ -195,7 +186,7 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    private List<Edge> printNodes(Graph graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
+    private List<Edge> printNodes(Graph graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         NodeBitMap loopExits = graph.createNodeBitMap();
         if (loops != null) {
@@ -207,48 +198,51 @@ public class IdealGraphPrinter {
         Map<Node, Set<Entry<String, Integer>>> colors = new IdentityHashMap<Node, Set<Entry<String, Integer>>>();
         Map<Node, Set<Entry<String, String>>> colorsToString = new IdentityHashMap<Node, Set<Entry<String, String>>>();
         Map<Node, Set<String>> bits = new IdentityHashMap<Node, Set<String>>();
-        if (debugObjects != null) {
-            for (Entry<String, Object> entry : debugObjects.entrySet()) {
-                String name = entry.getKey();
-                Object obj = entry.getValue();
-                if (obj instanceof NodeMap) {
-                    Map<Object, Integer> colorNumbers = new HashMap<Object, Integer>();
-                    int nextColor = 0;
-                    NodeMap<?> map = (NodeMap<?>) obj;
-                    for (Entry<Node, ?> mapEntry : map.entries()) {
-                        Node node = mapEntry.getKey();
-                        Object color = mapEntry.getValue();
-                        Integer colorNumber = colorNumbers.get(color);
-                        if (colorNumber == null) {
-                            colorNumber = nextColor++;
-                            colorNumbers.put(color, colorNumber);
-                        }
-                        Set<Entry<String, Integer>> nodeColors = colors.get(node);
-                        if (nodeColors == null) {
-                            nodeColors = new HashSet<Entry<String, Integer>>();
-                            colors.put(node, nodeColors);
-                        }
-                        nodeColors.add(new SimpleImmutableEntry<String, Integer>(name + "Color", colorNumber));
-                        Set<Entry<String, String>> nodeColorStrings = colorsToString.get(node);
-                        if (nodeColorStrings == null) {
-                            nodeColorStrings = new HashSet<Entry<String, String>>();
-                            colorsToString.put(node, nodeColorStrings);
-                        }
-                        nodeColorStrings.add(new SimpleImmutableEntry<String, String>(name, color.toString()));
-                    }
-                } else if (obj instanceof NodeBitMap) {
-                    NodeBitMap bitmap = (NodeBitMap) obj;
-                    for (Node node : bitmap) {
-                        Set<String> nodeBits = bits.get(node);
-                        if (nodeBits == null) {
-                            nodeBits = new HashSet<String>();
-                            bits.put(node, nodeBits);
-                        }
-                        nodeBits.add(name);
-                    }
-                }
-            }
-        }
+// TODO This code was never reachable, since there was no code putting a NodeMap or NodeBitMap into the debugObjects.
+// If you need to reactivate this code, put the mapping from names to values into a helper object and register it in the new debugObjects array.
+//
+//        if (debugObjects != null) {
+//            for (Entry<String, Object> entry : debugObjects.entrySet()) {
+//                String name = entry.getKey();
+//                Object obj = entry.getValue();
+//                if (obj instanceof NodeMap) {
+//                    Map<Object, Integer> colorNumbers = new HashMap<Object, Integer>();
+//                    int nextColor = 0;
+//                    NodeMap<?> map = (NodeMap<?>) obj;
+//                    for (Entry<Node, ?> mapEntry : map.entries()) {
+//                        Node node = mapEntry.getKey();
+//                        Object color = mapEntry.getValue();
+//                        Integer colorNumber = colorNumbers.get(color);
+//                        if (colorNumber == null) {
+//                            colorNumber = nextColor++;
+//                            colorNumbers.put(color, colorNumber);
+//                        }
+//                        Set<Entry<String, Integer>> nodeColors = colors.get(node);
+//                        if (nodeColors == null) {
+//                            nodeColors = new HashSet<Entry<String, Integer>>();
+//                            colors.put(node, nodeColors);
+//                        }
+//                        nodeColors.add(new SimpleImmutableEntry<String, Integer>(name + "Color", colorNumber));
+//                        Set<Entry<String, String>> nodeColorStrings = colorsToString.get(node);
+//                        if (nodeColorStrings == null) {
+//                            nodeColorStrings = new HashSet<Entry<String, String>>();
+//                            colorsToString.put(node, nodeColorStrings);
+//                        }
+//                        nodeColorStrings.add(new SimpleImmutableEntry<String, String>(name, color.toString()));
+//                    }
+//                } else if (obj instanceof NodeBitMap) {
+//                    NodeBitMap bitmap = (NodeBitMap) obj;
+//                    for (Node node : bitmap) {
+//                        Set<String> nodeBits = bits.get(node);
+//                        if (nodeBits == null) {
+//                            nodeBits = new HashSet<String>();
+//                            bits.put(node, nodeBits);
+//                        }
+//                        nodeBits.add(name);
+//                    }
+//                }
+//            }
+//        }
 
         for (Node node : graph.getNodes()) {
             if (omittedClasses.contains(node.getClass())) {

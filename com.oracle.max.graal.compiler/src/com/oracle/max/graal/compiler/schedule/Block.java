@@ -32,8 +32,8 @@ import com.oracle.max.graal.nodes.java.*;
 public class Block {
 
     private int blockID;
-    private final List<Block> successors = new ArrayList<Block>();
-    private final List<Block> predecessors = new ArrayList<Block>();
+    protected final List<Block> successors = new ArrayList<Block>();
+    protected final List<Block> predecessors = new ArrayList<Block>();
     private final List<Block> dominated = new ArrayList<Block>();
     private List<Node> instructions = new ArrayList<Node>();
     private Block alwaysReachedBlock;

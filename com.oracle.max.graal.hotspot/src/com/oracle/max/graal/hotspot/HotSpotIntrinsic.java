@@ -46,11 +46,8 @@ public enum HotSpotIntrinsic {
         assert CompilerImpl.getInstance() != null : "compiler must exist before installing intrinsics";
         if (GraalOptions.Intrinsify) {
             GraalCompiler compiler = runtime.getCompiler().getCompiler();
-            Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new MathSnippetsX86(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new DoubleSnippets(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new FloatSnippets(), GraalOptions.PlotSnippets);
+            GraalIntrinsics.installIntrinsics(compiler, runtime, runtime.getCompiler().getTarget());
             Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new SystemSnippets(), GraalOptions.PlotSnippets);
-            Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new NodeClassSnippets(), GraalOptions.PlotSnippets);
             Snippets.install(compiler, runtime, runtime.getCompiler().getTarget(), new UnsafeSnippets(), GraalOptions.PlotSnippets);
         }
     }

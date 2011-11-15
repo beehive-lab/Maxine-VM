@@ -20,36 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
-
-import java.util.*;
+package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
+/**
+ * Cretes a memory barrier.
+ */
+public class MembarNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
-public final class WriteVectorNode extends AccessVectorNode {
+    private final int barriers;
 
-    @Input private AbstractVectorNode values;
-
-    public AbstractVectorNode values() {
-        return values;
-    }
-
-    public WriteVectorNode(AbstractVectorNode vector, ValueNode object, LocationNode location, AbstractVectorNode values) {
-        super(CiKind.Illegal, vector, object, location);
-        this.values = values;
+    public MembarNode(int barriers) {
+        super(CiKind.Illegal);
+        this.barriers = barriers;
     }
 
     @Override
-    public void addToLoop(LoopBeginNode loop, IdentityHashMap<AbstractVectorNode, ValueNode> nodes) {
-        ValueNode index = nodes.get(vector());
-        LocationNode newLocation = IndexedLocationNode.create(LocationNode.getArrayLocation(location().getValueKind()), location().getValueKind(), location().displacement(), index, graph());
-        ValueNode value = nodes.get(values());
-        assert index != null;
-        assert value != null;
-        WriteNode writeNode = graph().add(new WriteNode(object(), value, newLocation));
-        loop.loopEnd().replaceAtPredecessors(writeNode);
-        writeNode.setNext(loop.loopEnd());
+    public void generate(LIRGeneratorTool generator) {
+        generator.emitMembar(barriers);
     }
 }

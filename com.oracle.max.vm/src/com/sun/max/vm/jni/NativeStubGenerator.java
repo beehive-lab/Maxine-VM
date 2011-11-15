@@ -24,7 +24,7 @@ package com.sun.max.vm.jni;
 
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
-import static com.sun.max.vm.stack.VMFrameLayout.*;
+import static com.sun.max.vm.jni.JniHandles.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
@@ -36,9 +36,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.jvmti.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -112,10 +110,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant jniEnv = createClassMethodConstant(VmThread.class, makeSymbol("jniEnv"));
     private static final ClassMethodRefConstant currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
     private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
-    private static final ClassMethodRefConstant objectHandlesSize = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("objectHandlesSize"), SignatureDescriptor.class);
+    private static final ClassMethodRefConstant stackHandlesSize = createClassMethodConstant(JniHandles.class, makeSymbol("stackHandlesSize"), SignatureDescriptor.class);
     private static final ClassMethodRefConstant throwJniException = createClassMethodConstant(VmThread.class, makeSymbol("throwJniException"));
-    private static final ClassMethodRefConstant createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Object.class);
-    private static final ClassMethodRefConstant handlize = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("handlize"), Pointer.class, int.class, Object.class);
+    private static final ClassMethodRefConstant createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Pointer.class, int.class, Object.class);
     private static final ClassMethodRefConstant stackAllocate = createClassMethodConstant(Intrinsics.class, makeSymbol("stackAllocate"), int.class);
     private static final ClassMethodRefConstant unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
     private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(VmThread.class, makeSymbol("jniHandlesTop"));
@@ -134,62 +131,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant writeWord = createClassMethodConstant(Pointer.class, makeSymbol("writeWord"), int.class, Word.class);
     private static final ClassMethodRefConstant getCpuStackPointer = createClassMethodConstant(VMRegister.class, makeSymbol("getCpuStackPointer"));
 
-    /**
-     * The fixed offset in a method's frame where the base address of the on-stack object handles array
-     * is saved once it has been initialized. It reuses the slot otherwise used by deoptimization as the
-     * callee of a native stub (i.e. the native function) cannot be deoptimized.
-     */
-    public static final int OBJECT_HANDLES_BASE_OFFSET = Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
-
-    /**
-     * Computes the stack space reserved for the on-stack object handles array.
-     * The computed result is one slot per object parameter in a given signature
-     * plus one extra slot for the receiver or class of the native method.
-     *
-     * This method is compile-time evaluated so that the parameter to
-     * {@link Intrinsics#stackAllocate(int)} is a compile-time constant.
-     */
-    @FOLD
-    public static int objectHandlesSize(SignatureDescriptor sig) {
-        int res = STACK_SLOT_SIZE; // slot for receiver/class
-        for (int i = 0; i < sig.numberOfParameters(); i++) {
-            if (sig.parameterDescriptorAt(i).toKind().isReference) {
-                res += STACK_SLOT_SIZE;
-            }
-        }
-        return res;
-    }
-
-    /**
-     * Assigns an object into the on-stack object handles array.
-     *
-     * @param objectHandlesBase the base address of the object handles array
-     * @param offset the offset of the array element to update
-     * @param value the object value being handlized
-     * @return if {@code value == null} then {@code 0} else the address of the object handles element to which
-     *         {@code value} was written
-     */
-    @INLINE
-    private static Pointer handlize(Pointer objectHandlesBase, int offset, Object value) {
-        objectHandlesBase.writeReference(offset, Reference.fromJava(value));
-        if (value == null) {
-            return Pointer.zero();
-        }
-        return objectHandlesBase.plus(offset);
-    }
-
-    /**
-     * Determines how object arguments to a native method are to handlized.
-     * If true, then the {@link Intrinsics#stackHandle(Reference)} intrinsic
-     * is used. Otherwise, an on-stack object array (without header) is
-     * allocated using {@link Intrinsics#stackAllocate(int)} and a dynamic
-     * value is used to communicate to the GC where the initialized object array is.
-     * This value is at offset {@link #OBJECT_HANDLES_BASE_OFFSET} in the frame
-     * of the native method stub.
-     * The latter mechanism requires that the initialization of the object
-     * handles array and writing of the marker value is atomic with respect to GC.
-     */
-    public static final boolean USE_STACK_HANDLE_INTRINSIC = false;
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor sig) {
         final TypeDescriptor resultDescriptor = sig.resultDescriptor();
@@ -204,20 +145,18 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
         int parameterLocalIndex = 0;
 
-        int objectHandlesBase = -1;
-        int objectHandleOffset = 0;
+        int stackHandles = -1;
+        int stackHandleOffset = 0;
 
         if (!isCFunction) {
 
-            if (!USE_STACK_HANDLE_INTRINSIC) {
-                // Zero out the slot at sp+OBJECT_HANDLES_BASE_OFFSET
-                // so that the GC doesn't scan the object handles array.
-                // There must not be a safepoint in the stub before this point.
-                invokestatic(getCpuStackPointer, 0, 1);
-                iconst(OBJECT_HANDLES_BASE_OFFSET);
-                invokestatic(zero, 0, 1);
-                invokevirtual(writeWord, 3, 0);
-            }
+            // Zero out the slot at sp+OBJECT_HANDLES_BASE_OFFSET
+            // so that the GC doesn't scan the object handles array.
+            // There must not be a safepoint in the stub before this point.
+            invokestatic(getCpuStackPointer, 0, 1);
+            iconst(STACK_HANDLES_ADDRESS_OFFSET);
+            invokestatic(zero, 0, 1);
+            invokevirtual(writeWord, 3, 0);
 
             // Cache current thread in a local variable
             invokestatic(NativeStubGenerator.currentThread, 0, 1);
@@ -239,38 +178,28 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             nativeFunctionDescriptor.append(jniEnvDescriptor);
             nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots;
 
-            if (!USE_STACK_HANDLE_INTRINSIC) {
-                ldc(createObjectConstant(sig));
-                invokestatic(objectHandlesSize, 1, 1);
-                objectHandlesBase = allocateLocal(Kind.WORD);
+            ldc(createObjectConstant(sig));
+            invokestatic(stackHandlesSize, 1, 1);
+            stackHandles = allocateLocal(Kind.WORD);
 
-                invokestatic(stackAllocate, 1, 1);
-                astore(objectHandlesBase);
+            invokestatic(stackAllocate, 1, 1);
+            astore(stackHandles);
 
-                aload(objectHandlesBase);
-                iconst(objectHandleOffset);
-                if (isStatic) {
-                    // Push the class for a static method
-                    ldc(createClassConstant(holder.toJava()));
-                } else {
-                    // Push the receiver for a non-static method
-                    aload(parameterLocalIndex++);
-                }
-                // There must not be a safepoint in the stub between this point and the update
-                // to sp+OBJECT_HANDLES_BASE_OFFSET below.
-                invokestatic(handlize, 3, 1);
-
-                objectHandleOffset += Word.size();
+            aload(stackHandles);
+            iconst(stackHandleOffset);
+            if (isStatic) {
+                // Push the class for a static method
+                ldc(createClassConstant(holder.toJava()));
             } else {
-                if (isStatic) {
-                    // Push the class for a static method
-                    ldc(createClassConstant(holder.toJava()));
-                } else {
-                    // Push the receiver for a non-static method
-                    aload(parameterLocalIndex++);
-                }
-                invokestatic(createStackHandle, 1, 1);
+                // Push the receiver for a non-static method
+                aload(parameterLocalIndex++);
             }
+            // There must not be a safepoint in the stub between this point and the update
+            // to sp+OBJECT_HANDLES_BASE_OFFSET below.
+            invokestatic(createStackHandle, 3, 1);
+
+            stackHandleOffset += Word.size();
+
             nativeFunctionDescriptor.append(JavaTypeDescriptor.WORD);
             nativeFunctionArgSlots += Kind.WORD.stackSlots;
 
@@ -312,16 +241,12 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                 case REFERENCE: {
                     assert !isCFunction;
 
-                    if (!USE_STACK_HANDLE_INTRINSIC) {
-                        aload(objectHandlesBase);
-                        iconst(objectHandleOffset);
-                        aload(parameterLocalIndex);
-                        invokestatic(handlize, 3, 1);
-                        objectHandleOffset += Word.size();
-                    } else {
-                        aload(parameterLocalIndex);
-                        invokestatic(createStackHandle, 1, 1);
-                    }
+                    aload(stackHandles);
+                    iconst(stackHandleOffset);
+                    aload(parameterLocalIndex);
+                    invokestatic(createStackHandle, 3, 1);
+                    stackHandleOffset += Word.size();
+
                     nativeParameterDescriptor = JavaTypeDescriptor.JNI_HANDLE;
 
                     break;
@@ -335,12 +260,12 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             ++parameterLocalIndex;
         }
 
-        if (objectHandleOffset > 1) {
+        if (stackHandleOffset > 1) {
             // Write the address of the object handles array to sp+OBJECT_HANDLES_BASE_OFFSET
             // to communicate to the GC where the initialized array is.
             invokestatic(getCpuStackPointer, 0, 1);
-            iconst(OBJECT_HANDLES_BASE_OFFSET);
-            aload(objectHandlesBase);
+            iconst(STACK_HANDLES_ADDRESS_OFFSET);
+            aload(stackHandles);
             invokevirtual(writeWord, 3, 0);
         }
 
@@ -363,10 +288,10 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
         if (!isCFunction) {
 
-            if (objectHandleOffset > 1) {
+            if (stackHandleOffset > 1) {
                 // The object handles array is no longer alive so zero out the slot at sp+OBJECT_HANDLES_BASE_OFFSET
                 invokestatic(getCpuStackPointer, 0, 1);
-                iconst(OBJECT_HANDLES_BASE_OFFSET);
+                iconst(STACK_HANDLES_ADDRESS_OFFSET);
                 invokestatic(zero, 0, 1);
                 invokevirtual(writeWord, 3, 0);
             }

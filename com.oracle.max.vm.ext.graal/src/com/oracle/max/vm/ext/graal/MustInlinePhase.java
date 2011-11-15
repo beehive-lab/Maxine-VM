@@ -22,16 +22,14 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import java.util.*;
+
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
 
@@ -39,85 +37,43 @@ public class MustInlinePhase extends Phase {
 
     private final MaxRuntime runtime;
     private final RiResolvedType accessor;
+    private final Map<RiMethod, StructuredGraph> cache;
 
-    public MustInlinePhase(MaxRuntime runtime, RiResolvedType accessor) {
+    public MustInlinePhase(MaxRuntime runtime, Map<RiMethod, StructuredGraph> cache, RiResolvedType accessor) {
         this.runtime = runtime;
+        this.cache = cache;
         this.accessor = accessor;
     }
 
     @Override
     protected void run(StructuredGraph graph) {
-        // Apply folding.
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            RiResolvedMethod method = callTarget.targetMethod();
-            Invoke invoke = callTarget.invoke();
-            if (invoke != null) {
-                if (runtime.isFoldable(method)) {
-                    NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
-                    CiConstant[] constantArgs = new CiConstant[arguments.size()];
-                    for (int i = 0; i < constantArgs.length; ++i) {
-                        constantArgs[i] = arguments.get(i).asConstant();
+        for (Invoke invoke : graph.getInvokes()) {
+            RiResolvedMethod method = invoke.callTarget().targetMethod();
+            assert ((MethodActor) method).intrinsic() == null : "Intrinsics must be resolved before this phase " + ((MethodActor) method).intrinsic();
+            if (runtime.mustInline(method)) {
+                StructuredGraph inlineGraph = cache.get(method);
+                if (inlineGraph == null) {
+                    inlineGraph = new StructuredGraph();
+                    new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                    new PhiSimplificationPhase().apply(inlineGraph);
+                    RiResolvedType curAccessor = getAccessor(method, accessor);
+                    if (curAccessor != null) {
+                        new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
                     }
-                    CiConstant foldResult = runtime.fold(method, constantArgs);
-                    if (foldResult != null) {
-                        StructuredGraph foldGraph = new StructuredGraph();
-                        foldGraph.start().setNext(foldGraph.add(new ReturnNode(ConstantNode.forCiConstant(foldResult, runtime, foldGraph))));
-                        InliningUtil.inline(invoke, foldGraph, false);
-                    }
+                    new FoldPhase(runtime).apply(inlineGraph);
+                    new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
+                    new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
+                    cache.put(method, inlineGraph);
                 }
+                runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
+                InliningUtil.inline(invoke, inlineGraph, false);
             }
         }
-
-        // Canonicalize.
-        new CanonicalizerPhase(null, runtime, null).apply(graph);
-
-        // Inline all necessary methods.
-        for (MethodCallTargetNode callTarget : graph.getNodes(MethodCallTargetNode.class)) {
-            Invoke invoke = callTarget.invoke();
-            RiResolvedMethod method = callTarget.targetMethod();
-            if (invoke != null) {
-                boolean mustInline = runtime.mustInline(method);
-                if (method.holder().equals(runtime.getType(Accessor.class))) {
-                    RiResolvedType curAccessor = getAccessor(invoke, accessor);
-                    assert curAccessor != null;
-                    method = curAccessor.resolveMethodImpl(method);
-                    mustInline = true;
-                }
-                MethodActor methodActor = (MethodActor) method;
-                if (methodActor.intrinsic() != null) {
-                    IntrinsificationPhase.tryIntrinsify(invoke, method, runtime);
-                } else if (mustInline) {
-                    StructuredGraph inlineGraph = (StructuredGraph) method.compilerStorage().get(MustInlinePhase.class);
-                    if (inlineGraph == null) {
-                        inlineGraph = new StructuredGraph();
-                        new GraphBuilderPhase(runtime, method).apply(inlineGraph);
-                        RiResolvedType curAccessor = getAccessor(invoke, accessor);
-                        new FoldPhase(runtime).apply(inlineGraph);
-                        new MustInlinePhase(runtime, curAccessor).apply(inlineGraph);
-                        method.compilerStorage().put(MustInlinePhase.class, inlineGraph);
-                    }
-                    runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
-                    InliningUtil.inline(invoke, inlineGraph, false);
-                }
-            }
-        }
-
-        // Intrinsification.
-        new IntrinsificationPhase(runtime).apply(graph);
-
-        // Canonicalize.
-        new CanonicalizerPhase(null, runtime, null).apply(graph);
     }
 
-    private RiResolvedType getAccessor(Invoke invoke, RiResolvedType accessor) {
-        CiCodePos pos = invoke.stateAfter().toCodePos();
-        while (pos != null) {
-            RiResolvedType result = pos.method.accessor();
-            if (result != null) {
-                // Found accessor.
-                return result;
-            }
-            pos = pos.caller;
+    private RiResolvedType getAccessor(RiResolvedMethod method, RiResolvedType accessor) {
+        if (method.accessor() != null) {
+            return method.accessor();
         }
         return accessor;
     }

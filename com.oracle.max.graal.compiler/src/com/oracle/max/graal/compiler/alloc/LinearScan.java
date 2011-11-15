@@ -36,7 +36,6 @@ import com.oracle.max.graal.compiler.alloc.Interval.SpillState;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.lir.LIRInstruction.OperandMode;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
@@ -807,7 +806,7 @@ public final class LinearScan {
                 reportFailure(numBlocks);
             }
 
-            TTY.println("preds=" + startBlock.blockPredecessors().size() + ", succs=" + startBlock.blockSuccessors().size());
+            TTY.println("preds=" + startBlock.getPredecessors().size() + ", succs=" + startBlock.getSuccessors().size());
             TTY.println("startBlock-ID: " + startBlock.blockID());
 
             // bailout of if this occurs in product mode.
@@ -1135,7 +1134,7 @@ public final class LinearScan {
                 // interval is used anywhere inside this loop. It's possible
                 // that the block was part of a non-natural loop, so it might
                 // have an invalid loop index.
-                if (block.isLinearScanLoopEnd() && block.loopIndex() != -1 && isIntervalInLoop(operandNum, block.loopIndex())) {
+                if (block.isLoopEnd() && block.loopIndex() != -1 && isIntervalInLoop(operandNum, block.loopIndex())) {
                     intervalFor(operand).addUsePos(blockTo + 1, RegisterPriority.LiveAtLoopEnd);
                 }
             }
@@ -2159,7 +2158,7 @@ public final class LinearScan {
         }
 
         if (context.isObserved()) {
-            context.observable.fireCompilationEvent(new CompilationEvent(compilation, label, this, intervals, intervalsSize));
+            context.observable.fireCompilationEvent(label, compilation, this, Arrays.copyOf(intervals, intervalsSize));
         }
     }
 
@@ -2172,7 +2171,7 @@ public final class LinearScan {
         }
 
         if (context.isObserved()) {
-            context.observable.fireCompilationEvent(new CompilationEvent(compilation, label, /*compilation.graph*/ null, hirValid, true));
+            context.observable.fireCompilationEvent(label, compilation, hirValid ? compilation.graph : null, compilation.lir());
         }
     }
 

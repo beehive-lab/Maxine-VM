@@ -86,7 +86,7 @@ public final class GraalCompilation {
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new FrameState(method, 0, 0, 0, 0, false) : null;
 
         if (context().isObserved() && method != null) {
-            context().observable.fireCompilationStarted(new CompilationEvent(this));
+            context().observable.fireCompilationStarted(this);
         }
     }
 
@@ -153,15 +153,15 @@ public final class GraalCompilation {
         } catch (VerificationError error) {
             if (context().isObserved()) {
                 if (error.node() != null) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    context().observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, this, error.node().graph());
                 } else if (error.graph() != null) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    context().observable.fireCompilationEvent("VerificationError on Graph " + error.graph(), CompilationEvent.ERROR, this, error.graph());
                 }
             }
             throw error;
         } finally {
             if (context().isObserved()) {
-                context().observable.fireCompilationFinished(new CompilationEvent(this));
+                context().observable.fireCompilationFinished(this);
             }
         }
 
@@ -251,51 +251,37 @@ public final class GraalCompilation {
 
             compiler.runPhases(PhasePosition.LOW_LEVEL, graph);
 
-            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true);
+            IdentifyBlocksPhase.BlockFactory blockFactory = new IdentifyBlocksPhase.BlockFactory() {
+                @Override
+                public Block createBlock(int blockID) {
+                    return new LIRBlock(blockID);
+                }
+            };
+            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true, blockFactory);
             schedule.apply(graph, context());
             if (stats != null) {
                 stats.loopCount = schedule.loopCount();
             }
 
             if (context().isObserved()) {
-                Map<String, Object> debug = new HashMap<String, Object>();
-                debug.put("schedule", schedule);
-                context().observable.fireCompilationEvent(new CompilationEvent(this, "After IdentifyBlocksPhase", graph, true, false, debug));
+                context().observable.fireCompilationEvent("After IdentifyBlocksPhase", this, graph, schedule);
             }
 
             List<Block> blocks = schedule.getBlocks();
-            List<LIRBlock> lirBlocks = new ArrayList<LIRBlock>();
-            Map<Block, LIRBlock> map = new HashMap<Block, LIRBlock>();
-            for (Block b : blocks) {
-                LIRBlock block = new LIRBlock(b);
-                map.put(b, block);
-                lirBlocks.add(block);
-            }
-
-            for (Block b : blocks) {
-                for (Block succ : b.getSuccessors()) {
-                    map.get(b).blockSuccessors().add(map.get(succ));
-                }
-
-                for (Block pred : b.getPredecessors()) {
-                    map.get(b).blockPredecessors().add(map.get(pred));
-                }
-            }
-
             NodeMap<LIRBlock> valueToBlock = new NodeMap<LIRBlock>(graph);
-            for (LIRBlock b : lirBlocks) {
+            for (Block b : blocks) {
                 for (Node i : b.getInstructions()) {
-                    valueToBlock.set(i, b);
+                    valueToBlock.set(i, (LIRBlock) b);
                 }
             }
             LIRBlock startBlock = valueToBlock.get(graph.start());
             assert startBlock != null;
-            assert startBlock.blockPredecessors().size() == 0;
+            assert startBlock.numberOfPreds() == 0;
 
 
             context().timers.startScope("Compute Linear Scan Order");
             try {
-                ComputeLinearScanOrder clso = new ComputeLinearScanOrder(lirBlocks.size(), stats.loopCount, startBlock);
+                ComputeLinearScanOrder clso = new ComputeLinearScanOrder(blocks.size(), stats.loopCount, startBlock);
                 List<LIRBlock> linearScanOrder = clso.linearScanOrder();
                 List<LIRBlock> codeEmittingOrder = clso.codeEmittingOrder();
 
@@ -307,13 +293,13 @@ public final class GraalCompilation {
                 lir = new LIR(startBlock, linearScanOrder, codeEmittingOrder, valueToBlock);
 
                 if (context().isObserved()) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After linear scan order", graph, true, false));
+                    context().observable.fireCompilationEvent("After linear scan order", this, graph);
                 }
             } catch (AssertionError t) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "AssertionError in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent("AssertionError in ComputeLinearScanOrder", CompilationEvent.ERROR, this, graph);
                 throw t;
             } catch (RuntimeException t) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "RuntimeException in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent("RuntimeException in ComputeLinearScanOrder", CompilationEvent.ERROR, this, graph);
                 throw t;
             } finally {
                 context().timers.endScope();
@@ -394,12 +380,12 @@ public final class GraalCompilation {
             }
         } catch (Error e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
-                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+                context().observable.fireCompilationEvent(e.getClass().getSimpleName() + " in emitLIR", CompilationEvent.ERROR, this, graph);
             }
             throw e;
         } catch (RuntimeException e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
-                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+                context().observable.fireCompilationEvent(e.getClass().getSimpleName() + " in emitLIR", CompilationEvent.ERROR, this, graph);
             }
             throw e;
         } finally {
@@ -420,7 +406,7 @@ public final class GraalCompilation {
                 }
 
                 if (context().isObserved()) {
-                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After code generation", graph, false, true, targetMethod));
+                    context().observable.fireCompilationEvent("After code generation", this, lir, targetMethod);
                 }
                 return targetMethod;
             } finally {
@@ -456,7 +442,7 @@ public final class GraalCompilation {
 
     public void printGraph(String phase, Graph graph) {
         if (context().isObserved()) {
-            context().observable.fireCompilationEvent(new CompilationEvent(this, phase, graph, true, false));
+            context().observable.fireCompilationEvent(phase, this, graph);
         }
     }
 }

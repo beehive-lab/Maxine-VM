@@ -23,9 +23,8 @@
 
 package com.oracle.max.vm.ext.vma.runtime;
 
-import com.sun.max.annotate.INLINE;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Abstracts the implementation of state used for object tracking, in particular,
@@ -65,14 +64,12 @@ public abstract class ObjectStateHandler {
      * @param obj
      * @return
      */
-    @INLINE
     public abstract long readId(Object obj);
 
     /**
      * Increment the lifetime of the object denoted by <code>cell</code>.
      * @param cell
      */
-    @INLINE
     public abstract void incrementLifetime(Pointer cell);
 
     /**

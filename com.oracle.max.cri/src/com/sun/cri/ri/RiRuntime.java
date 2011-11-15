@@ -23,7 +23,6 @@
 package com.sun.cri.ri;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.sun.cri.ci.*;
 
@@ -32,13 +31,6 @@ import com.sun.cri.ci.*;
  * to constant pools, OSR frames, inlining requirements, and runtime calls such as checkcast.
 s */
 public interface RiRuntime {
-
-    /**
-     * Gets the constant pool for a method.
-     * @param method the method
-     * @return the constant pool for the method
-     */
-    RiConstantPool getConstantPool(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -188,11 +180,6 @@ public interface RiRuntime {
      * @return the size of the custom area in bytes
      */
     int getCustomStackAreaSize();
-
-    /**
-     * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
-     */
-    boolean supportsArrayIntrinsics();
 
     /**
      * Gets the length of the array that is wrapped in a CiConstant object.

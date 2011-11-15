@@ -520,10 +520,37 @@ def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
 
+def _find_graal_compiler_unit_tests_classes(env):
+    def find_test_classes(testClassList, searchDir, pkgRoot):
+        for root, _, files in os.walk(searchDir):
+            for name in files:
+                if name.endswith('.java') and name != 'package-info.java':
+                    isTest = False
+                    with open(join(root, name)) as f:
+                        for line in f:
+                            if line.strip() == '@Test':
+                                isTest = True
+                                break
+                    if isTest:
+                        pkg = root[len(searchDir) + 1:].replace(os.sep, '.')
+                        testClassList.append(pkg + '.' + name[:-len('.java')])
+
+    project = 'com.oracle.max.graal.compiler.tests'
+    pkgRoot = 'com.oracle.max.graal.compiler.test'
+    searchDir = join(env.maxine_home, project, 'src')
+    compilerUnitTestClasses = []
+    find_test_classes(compilerUnitTestClasses, searchDir, pkgRoot)
+    return compilerUnitTestClasses
+    
 def gcut(env, args):
     """runs the Graal Compiler Unit Tests in the GraalVM"""
     # (ds) The boot class path must be used for some reason I don't quite understand
-    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + args)
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
+
+def gcutmax(env, args):
+    """runs the Graal Compiler Unit Tests in a hosted Maxine environment"""
+    deps = ['com.oracle.max.graal.compiler.tests', 'com.oracle.max.vm.ext.maxri']
+    env.run_java(['-Dgraal.runtime=Maxine', '-ea', '-cp', env.pdb().classpath(deps), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
 
 def graalvm(env, args):
     """runs the GraalVM"""
@@ -1006,7 +1033,8 @@ table = {
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
-    'gcut': [gcut, 'patterns...'],
+    'gcut': [gcut, ''],
+    'gcutmax': [gcutmax, ''],
     'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],

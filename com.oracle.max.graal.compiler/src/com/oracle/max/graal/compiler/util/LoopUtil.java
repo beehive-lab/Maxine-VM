@@ -27,10 +27,9 @@ import java.util.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.graph.Node.Verbosity;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
-import com.oracle.max.graal.nodes.extended.*;
 
 public class LoopUtil {
 
@@ -297,11 +296,6 @@ public class LoopUtil {
                         if (!(usage instanceof LoopEndNode)) {
                             work.add(usage);
                         }
-                    }
-                }
-                if (n instanceof AbstractVectorNode) {
-                    for (Node usage : n.usages()) {
-                        work.add(usage);
                     }
                 }
             }
