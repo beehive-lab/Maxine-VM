@@ -94,10 +94,10 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      */
     private static MethodView make(final Inspection inspection, Address address, boolean interactive) throws MaxVMBusyException {
         MethodView methodView = null;
-        final MaxCompilation compiledCode = inspection.vm().machineCode().findCompilation(address);
-        if (compiledCode != null) {
+        final MaxCompilation compilation = inspection.vm().machineCode().findCompilation(address);
+        if (compilation != null) {
             // Java method
-            methodView = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
+            methodView = make(inspection, compilation, MethodCodeKind.MACHINE_CODE);
         } else {
             final MaxExternalCodeRoutine externalCode = inspection.vm().machineCode().findExternalCode(address);
             if (externalCode != null) {
@@ -190,9 +190,9 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     private static JavaMethodView make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
         // If there are compilations, then inspect in association with the most recent
-        final MaxCompilation compiledCode = inspection.vm().machineCode().latestCompilation(teleClassMethodActor);
-        if (compiledCode != null) {
-            return make(inspection, compiledCode, codeKind);
+        final MaxCompilation compilation = inspection.vm().machineCode().latestCompilation(teleClassMethodActor);
+        if (compilation != null) {
+            return make(inspection, compilation, codeKind);
         }
         final MethodView methodView = teleClassMethodActorToMethodView.get(teleClassMethodActor);
         if (methodView == null) {
@@ -220,17 +220,17 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return a possibly new view with the specified code visible.
      * @throws MaxVMBusyException if can't create a new method view because the VM is unavailable
      */
-    private static JavaMethodView make(Inspection inspection, MaxCompilation compiledCode, MethodCodeKind codeKind) throws MaxVMBusyException {
+    private static JavaMethodView make(Inspection inspection, MaxCompilation compilation, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
 
         // Is there already a view open that is bound to this compilation?
-        MethodView methodView = machineCodeToMethodView.get(compiledCode);
+        MethodView methodView = machineCodeToMethodView.get(compilation);
         if (methodView == null) {
             // No existing view is bound to this compilation; see if there is a view for this method that is
             // unbound
             inspection.vm().acquireLegacyVMAccess();
             try {
-                TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
                 if (teleClassMethodActor != null) {
                     methodView = teleClassMethodActorToMethodView.get(teleClassMethodActor);
                 }
@@ -238,15 +238,15 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 final MethodViewContainer container = methodViewManager.activateView();
                 if (methodView == null) {
                     // No existing view exists for this method; create new one bound to this compilation
-                    javaMethodView = new JavaMethodView(inspection, container, compiledCode, codeKind);
+                    javaMethodView = new JavaMethodView(inspection, container, compilation, codeKind);
                 } else {
                     // A view exists for the method, but not bound to any compilation; bind it to this compilation
                     // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                    javaMethodView = new JavaMethodView(inspection, container, compiledCode, codeKind);
+                    javaMethodView = new JavaMethodView(inspection, container, compilation, codeKind);
                 }
                 if (javaMethodView != null) {
                     container.add(javaMethodView);
-                    machineCodeToMethodView.put(compiledCode, javaMethodView);
+                    machineCodeToMethodView.put(compilation, javaMethodView);
                 }
             } finally {
                 inspection.vm().releaseLegacyVMAccess();
@@ -301,7 +301,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
         frame.makeMenu(EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        final MaxMachineCodeRoutine machineCode = machineCode();
+        final MaxMachineCodeRoutine machineCode = compilation();
         if (machineCode != null) {
             memoryMenu.add(views().memory().makeViewAction(machineCode.memoryRegion(), machineCode.entityName(), "View memory for machine code"));
         }
@@ -344,7 +344,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     /**
      * @return Local {@link MaxMachineCodeRoutine} for the method in the VM; null if not bound to compiled code yet.
      */
-    public abstract MaxMachineCodeRoutine machineCode();
+    public abstract MaxMachineCodeRoutine compilation();
 
     /**
      * @return Java method information; null if not known to be associated with a Java method.
@@ -369,7 +369,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
 
     @Override
     public void viewClosing() {
-        machineCodeToMethodView.remove(machineCode());
+        machineCodeToMethodView.remove(compilation());
         teleClassMethodActorToMethodView.remove(teleClassMethodActor());
         super.viewClosing();
     }

@@ -47,7 +47,7 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
     }
 
     @Override
-    public MaxExternalCodeRoutine machineCode() {
+    public MaxExternalCodeRoutine compilation() {
         return externalCode;
     }
 

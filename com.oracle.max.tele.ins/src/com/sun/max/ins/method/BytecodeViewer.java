@@ -80,13 +80,13 @@ public abstract class BytecodeViewer extends CodeViewer {
         return methodKey;
     }
 
-    private final MaxCompilation compiledCode;
+    private final MaxCompilation compilation;
 
     /**
      * The compilation associated with this view, if exists.
      */
-    protected MaxCompilation compiledCode() {
-        return compiledCode;
+    protected MaxCompilation compilation() {
+        return compilation;
     }
 
     private final byte[] methodBytes;
@@ -133,10 +133,10 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Base class for bytecode viewers. Machine code is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
-    protected BytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compiledCode) {
+    protected BytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compilation) {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.compiledCode = compiledCode;
+        this.compilation = compilation;
         methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
@@ -151,8 +151,8 @@ public abstract class BytecodeViewer extends CodeViewer {
     private void buildView() {
         int[] bciToMachineCodePositionMap = null;
         InstructionMap instructionMap = null;
-        if (compiledCode != null) {
-            instructionMap = compiledCode.getInstructionMap();
+        if (compilation != null) {
+            instructionMap = compilation.getInstructionMap();
             bciToMachineCodePositionMap = instructionMap.bciToMachineCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT machine code so far
             if (bciToMachineCodePositionMap != null) {
@@ -203,7 +203,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 return address.lessThan(bytecodeInstructions.get(row + 1).machineCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the machine code
-            final InstructionMap instructionMap = compiledCode.getInstructionMap();
+            final InstructionMap instructionMap = compilation.getInstructionMap();
             final TargetCodeInstruction lastMachineCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
             return address.lessThan(lastMachineCodeInstruction.address.plus(lastMachineCodeInstruction.bytes.length));
         }
