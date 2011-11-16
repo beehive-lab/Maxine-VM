@@ -33,12 +33,6 @@ import com.oracle.max.graal.nodes.PhiNode.PhiType;
 
 public class LoopUtil {
 
-    private GraalContext context;
-
-    public LoopUtil(GraalContext context) {
-        this.context = context;
-    }
-
     public static class Loop {
         private final LoopBeginNode loopBegin;
         private NodeBitMap cfgNodes;
@@ -198,8 +192,7 @@ public class LoopUtil {
                     MergeNode merge = phi.merge();
                     if (merge instanceof LoopBeginNode) {
                         LoopBeginNode phiLoop = (LoopBeginNode) merge;
-                        int backIndex = phiLoop.phiPredecessorIndex(phiLoop.loopEnd());
-                        if (phi.valueAt(backIndex) == n) {
+                        if (phi.valueAt(phiLoop.loopEnd()) == n) {
                             continue;
                         }
                     }
