@@ -42,7 +42,7 @@ import com.sun.max.vm.runtime.*;
  *  +--------------------------------------------+--------+--+--+--+--+
  *                                                    ^    ^  ^  ^  ^
  *                                                    |    |  |  |  |
- *                                                    |    |  |  |  +---- NATIVE_FUNCTION_CALL
+ *                                                    |    |  |  |  +---- NATIVE_CALL
  *                                                    |    |  |  +------- INDIRECT_CALL
  *                                                    |    |  +---------- DIRECT_CALL
  *                                                    |    +------------- TEMPLATE_CALL

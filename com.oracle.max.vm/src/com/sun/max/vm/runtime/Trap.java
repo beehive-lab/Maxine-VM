@@ -24,6 +24,7 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -76,11 +77,10 @@ public abstract class Trap {
         public static final int MEMORY_FAULT = 0;
         public static final int STACK_FAULT = 1;
         public static final int STACK_FATAL = 2;
-        public static final int ILLEGAL_INSTRUCTION = 3;
-        public static final int ARITHMETIC_EXCEPTION = 4;
-        public static final int ASYNC_INTERRUPT = 5;
-        public static final int NULL_POINTER_EXCEPTION = 6;
-        public static final int SAFEPOINT = 7;
+        public static final int ARITHMETIC_EXCEPTION = 3;
+        public static final int ASYNC_INTERRUPT = 4;
+        public static final int NULL_POINTER_EXCEPTION = 5;
+        public static final int SAFEPOINT = 6;
 
         public static String toExceptionName(int trapNumber) {
             switch (trapNumber) {
@@ -88,8 +88,6 @@ public abstract class Trap {
                     return "MEMORY_FAULT";
                 case STACK_FAULT:
                     return "STACK_FAULT";
-                case ILLEGAL_INSTRUCTION:
-                    return "ILLEGAL_INSTRUCTION";
                 case ARITHMETIC_EXCEPTION:
                     return "ARITHMETIC_EXCEPTION";
                 case ASYNC_INTERRUPT:
@@ -226,16 +224,11 @@ public abstract class Trap {
                     // propagate this to the thread object
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
 
-                    raiseImplicitException(trapFrame, targetMethod, new StackOverflowError(), sp, fp, vmIP);
+                    raiseImplicitException(trapFrame, targetMethod, StackOverflowError.class, sp, fp, vmIP);
                     break; // unreachable, except when returning to a local exception handler
-                case ILLEGAL_INSTRUCTION:
-                    // deoptimization
-                    // TODO: deoptimization
-                    FatalError.unexpected("illegal instruction", false, null, trapFrame);
-                    break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-                    raiseImplicitException(trapFrame, targetMethod, new ArithmeticException(), sp, fp, vmIP);
+                    raiseImplicitException(trapFrame, targetMethod, ArithmeticException.class, sp, fp, vmIP);
                     break; // unreachable
                 case STACK_FATAL:
                     // fatal stack overflow
@@ -376,11 +369,16 @@ public abstract class Trap {
         } else if (inJava(dtla)) {
             tfa.setTrapNumber(trapFrame, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            raiseImplicitException(trapFrame, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
+            raiseImplicitException(trapFrame, targetMethod, NullPointerException.class, stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             FatalError.unexpected("Trap in native code", true, null, trapFrame);
         }
+    }
+
+    public static boolean DeoptOnImplicitException;
+    static {
+        VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", "Deoptimize on implicit exception occuring in optimized code.");
     }
 
     /**
@@ -396,20 +394,47 @@ public abstract class Trap {
      * exception is used.
      *
      * @param trapFrame a pointer to the trap frame
-     * @param targetMethod the target method containing the trap address
-     * @param throwable the throwable to raise
+     * @param tm the target method containing the trap address
+     * @param throwableClass the throwable class to instantiate and raise
      * @param sp the stack pointer at the time of the trap
      * @param fp the frame pointer at the time of the trap
      * @param ip the instruction pointer which caused the trap
      */
-    private static void raiseImplicitException(Pointer trapFrame, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
+    private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
+        if (DeoptOnImplicitException && !tm.isBaseline()) {
+            Stub stub = vm().stubs.deoptStubForSafepointPoll();
+            CodePointer to = stub.codeStart();
+            final TrapFrameAccess tfa = vm().trapFrameAccess;
+            Pointer save = tfa.getSP(trapFrame).plus(DEOPT_RETURN_ADDRESS_OFFSET);
+            Pointer patch = tfa.getPCPointer(trapFrame);
+            CodePointer from = CodePointer.from(patch.readWord(0));
+            assert !to.equals(from);
+            logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
+            patch.writeWord(0, to.toAddress());
+            save.writeWord(0, from.toAddress());
+            return;
+        }
+
+        Throwable throwable = null;
+        if (throwableClass == NullPointerException.class) {
+            throwable = new NullPointerException();
+        } else if (throwableClass == ArithmeticException.class) {
+            throwable = new ArithmeticException();
+        } else if (throwableClass == StackOverflowError.class) {
+            throwable = new StackOverflowError();
+        } else {
+            throw FatalError.unexpected("illegal implicit exception class");
+        }
+
         Throw.traceThrow(throwable);
-        assert targetMethod.invalidated() == null : "invalidated methods should not be executing";
-        if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
-            final CodePointer catchAddress = targetMethod.throwAddressToCatchAddress(ip, throwable);
+        assert tm.invalidated() == null : "invalidated methods should not be executing";
+
+
+        if (tm.preserveRegistersForLocalExceptionHandler()) {
+            final CodePointer catchAddress = tm.throwAddressToCatchAddress(ip, throwable);
             if (!catchAddress.isZero()) {
                 // Store the exception so that the handler can find it.
-                VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
+                VmThread.current().storeExceptionForHandler(throwable, tm, tm.posFor(catchAddress));
 
                 final TrapFrameAccess tfa = vm().trapFrameAccess;
                 tfa.setPC(trapFrame, catchAddress.toPointer());
