@@ -29,6 +29,7 @@ import java.security.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.monitor.*;
@@ -109,10 +110,10 @@ public final class JDK_java_lang_Thread {
         JDK_java_lang_Thread thisThread = asThis(javaThread);
         thisThread.priority = Thread.NORM_PRIORITY;
         vmThread.suspendMonitor.init();
-        vmThread.setJavaThread(javaThread, name);
         if (name == null) {
-            name = String.valueOf(nextThreadNum());
+            name = "Thread-" + String.valueOf(nextThreadNum());
         }
+        vmThread.setJavaThread(javaThread, name);
         if (Platform.platform().os == OS.DARWIN) {
             // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
             // which indicates if the priority should be explicitly set. For all calls to init() this
@@ -138,15 +139,6 @@ public final class JDK_java_lang_Thread {
     @SUBSTITUTE
     public static Thread currentThread() {
         return VmThread.current().javaThread();
-    }
-
-    /**
-     * We substitute this because {@link Thread} holds the name as a {@code char} array.
-     * @return
-     */
-    @SUBSTITUTE
-    public String getName() {
-        return VmThread.fromJava(thisThread()).getName();
     }
 
     /**
@@ -321,6 +313,32 @@ public final class JDK_java_lang_Thread {
     private Thread.State getState() {
         VmThread vmThread = thisVMThread();
         return vmThread == null ? Thread.State.NEW : vmThread.state();
+    }
+
+    /**
+     * Gets the name directly out of the {@link Thread}.
+     * @param thread
+     * @return
+     */
+    public static String getName(Thread thread) {
+        if (MaxineVM.isHosted()) {
+            return thread.getName();
+        } else {
+            JDK_java_lang_Thread thisThread = asThis(thread);
+            return String.valueOf(thisThread.name);
+        }
+    }
+
+    /**
+     * We substitute this because {@link Thread} holds the name as a {@code char} array,
+     * and we have cached it as a {@link String} in the {@link VmThread}.
+     * @return
+     */
+    @SUBSTITUTE
+    public String getName() {
+        VmThread vmThread = thisVMThread();
+        String name = vmThread.getName();
+        return name;
     }
 
     /**
