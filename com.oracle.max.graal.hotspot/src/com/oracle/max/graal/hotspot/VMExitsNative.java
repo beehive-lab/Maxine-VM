@@ -140,7 +140,7 @@ public class VMExitsNative implements VMExits, Remote {
     private void enqueue(Method m) throws Throwable {
         RiMethod riMethod = compiler.getRuntime().getRiMethod(m);
         assert !Modifier.isAbstract(((HotSpotMethodResolved) riMethod).accessFlags()) && !Modifier.isNative(((HotSpotMethodResolved) riMethod).accessFlags()) : riMethod;
-        compileMethod((HotSpotMethodResolved) riMethod, 0);
+        compileMethod((HotSpotMethodResolved) riMethod, 0, true);
     }
 
     public void shutdownCompiler() throws Throwable {
@@ -149,9 +149,9 @@ public class VMExitsNative implements VMExits, Remote {
     }
 
     @Override
-    public void compileMethod(final HotSpotMethodResolved method, final int entryBCI) throws Throwable {
+    public void compileMethod(final HotSpotMethodResolved method, final int entryBCI, boolean blocking) throws Throwable {
         try {
-            compileQueue.execute(new Runnable() {
+            Runnable runnable = new Runnable() {
 
                 public void run() {
                     CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
@@ -187,7 +187,13 @@ public class VMExitsNative implements VMExits, Remote {
                         HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
                     }
                 }
-            });
+            };
+
+            if (blocking) {
+                runnable.run();
+            } else {
+                compileQueue.execute(runnable);
+            }
         } catch (RejectedExecutionException e) {
             // The compile queue was already shut down.
             return;
