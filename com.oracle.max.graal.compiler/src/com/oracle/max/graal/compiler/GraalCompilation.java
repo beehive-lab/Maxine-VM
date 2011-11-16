@@ -251,13 +251,7 @@ public final class GraalCompilation {
 
             plan.runPhases(PhasePosition.LOW_LEVEL, graph, context());
 
-            IdentifyBlocksPhase.BlockFactory blockFactory = new IdentifyBlocksPhase.BlockFactory() {
-                @Override
-                public Block createBlock(int blockID) {
-                    return new LIRBlock(blockID);
-                }
-            };
-            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true, blockFactory);
+            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(true, LIRBlock.FACTORY);
             schedule.apply(graph, context());
             if (stats != null) {
                 stats.loopCount = schedule.loopCount();
