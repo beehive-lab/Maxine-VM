@@ -277,6 +277,11 @@ public class VmThread {
     public final OSMonitor.SuspendMonitor suspendMonitor = new OSMonitor.SuspendMonitor();
 
     /**
+     * Marks this as a JVMTI agent thread. These are not visible to calls like {@link Thread#getThreads}.
+     */
+    private boolean jvmtiAgent;
+
+    /**
      * Holds the exception object for the exception currently being raised. This value will only be
      * non-null during the unwinding process between calls to {@link #storeExceptionForHandler(Throwable, TargetMethod, int)}
      * and {@link #loadExceptionForHandler()}.
@@ -404,8 +409,6 @@ public class VmThread {
      * The pool of JNI local references allocated for this thread.
      */
     private JniHandles jniHandles;
-
-    private boolean isGCThread;
 
     /**
      * Next thread waiting on the same monitor this thread is {@linkplain Object#wait() waiting} on.
@@ -946,7 +949,7 @@ public class VmThread {
      */
     public VmThread(Thread javaThread) {
         if (javaThread != null) {
-            setJavaThread(javaThread, javaThread.getName());
+            setJavaThread(javaThread, JDK_java_lang_Thread.getName(javaThread));
         }
     }
 
@@ -1101,11 +1104,12 @@ public class VmThread {
         return vmOperationThread == this;
     }
 
-    /**
-     * Determines if this thread is owned by the garbage collector.
-     */
-    public final boolean isGCThread() {
-        return isGCThread;
+    public final boolean isJVMTIAgentThread() {
+        return jvmtiAgent;
+    }
+
+    public final void setAsJVMTIAgentThread() {
+        jvmtiAgent = true;
     }
 
     /**
@@ -1114,7 +1118,6 @@ public class VmThread {
      * @param name the name of the thread
      */
     public final VmThread setJavaThread(Thread javaThread, String name) {
-        this.isGCThread = Heap.isGcThread(javaThread);
         this.javaThread = javaThread;
         this.name = name;
         return this;

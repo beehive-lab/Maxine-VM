@@ -435,17 +435,20 @@ public final class VmThreadMap {
 
     /**
      * Gets a snapshot of the currently executing threads.
+     * JVMTI agent threads can be included optionally.
+     * The VMOperation thread is never included.
      *
-     * @param includeGCThreads specifies whether {@linkplain VmThread#isVmOperationThread() GC threads}
+     *
+     * @param includeJVMTIAgentThreads specifies whether {@linkplain VmThread#isJVMTIAgentThread() JVMTI agent threads}
      *        are to be included in the snapshot
      * @return a snapshot of the currently executing threads
      */
-    public static Thread[] getThreads(final boolean includeGCThreads) {
+    public static Thread[] getThreads(final boolean includeJVMTIAgentThreads) {
         final ArrayList<Thread> threads = new ArrayList<Thread>();
         Pointer.Procedure proc = new Pointer.Procedure() {
             public void run(Pointer tla) {
                 VmThread vmThread = VmThread.fromTLA(tla);
-                if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isVmOperationThread())) {
+                if (vmThread.javaThread() != null && !vmThread.isVmOperationThread() && (includeJVMTIAgentThreads || !vmThread.isJVMTIAgentThread())) {
                     threads.add(vmThread.javaThread());
                 }
             }
