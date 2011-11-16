@@ -163,6 +163,7 @@ public final class GraalOptions {
 
     public static boolean SupportJsrBytecodes                = true;
 
+    public static boolean OptAssumptions                     = true;
     public static boolean OptReadElimination                 = true;
     public static boolean OptGVN                             = true;
     public static boolean OptCanonicalizer                   = true;

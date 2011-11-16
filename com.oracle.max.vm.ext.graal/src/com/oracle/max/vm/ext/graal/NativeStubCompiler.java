@@ -84,7 +84,7 @@ public class NativeStubCompiler {
      * @param nativeMethod
      * @param traceName
      */
-    public static void call(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+    public static Object call(ClassMethodActor nativeMethod, String traceName) throws Throwable {
         Address address = nativeMethod.nativeFunction.link();
         VmThread thread = VmThread.current();
 
@@ -99,7 +99,7 @@ public class NativeStubCompiler {
         int jniHandlesTop = thread.jniHandlesTop();
 
         Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
-        NativeFunctionCallNode.call(address, nativeMethod);
+        Object result = NativeFunctionCallNode.call(address, nativeMethod);
         Snippets.nativeCallEpilogue();
 
         thread.resetJniHandlesTop(jniHandlesTop);
@@ -113,6 +113,11 @@ public class NativeStubCompiler {
         }
 
         thread.throwJniException();
+        return result;
+    }
+
+    public static synchronized Object synchronizedCall(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+        return call(nativeMethod, traceName);
     }
 
     /**
