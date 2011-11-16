@@ -192,6 +192,12 @@ public class CFGPrinter extends CompilationPrinter {
         out.println("HIR");
         out.disableIndentation();
 
+        if (block.getPredecessors().size() == 0) {
+            // Currently method parameters are not in the schedule, so print them separately here.
+            for (ValueNode param : block.firstNode().graph().getNodes(LocalNode.class)) {
+                printNode(param);
+            }
+        }
         if (block.firstNode() instanceof MergeNode) {
             // Currently phi functions are not in the schedule, so print them separately here.
             for (ValueNode phi : ((MergeNode) block.firstNode()).phis()) {
