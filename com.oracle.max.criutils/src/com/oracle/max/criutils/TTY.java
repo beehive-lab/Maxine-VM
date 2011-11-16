@@ -81,9 +81,14 @@ public class TTY {
 
     public static final String MAX_TTY_LOG_FILE_PROPERTY = "max.tty.file";
 
-    private static final LogStream log;
-    static {
-        PrintStream out = System.out;
+    public static PrintStream cachedOut;
+
+    public static void initialize() {
+        cachedOut = System.out;
+    }
+
+    private static LogStream createLog() {
+        PrintStream out = cachedOut;
         String value = System.getProperty(MAX_TTY_LOG_FILE_PROPERTY);
         if (value != null) {
             try {
@@ -92,13 +97,13 @@ public class TTY {
                 System.err.println("Could not open log file " + value + ": " + e);
             }
         }
-        log = new LogStream(out);
+        return new LogStream(out);
     }
 
     private static final ThreadLocal<LogStream> out = new ThreadLocal<LogStream>() {
         @Override
         protected LogStream initialValue() {
-            return log;
+            return createLog();
         }
     };
 
@@ -290,5 +295,9 @@ public class TTY {
 
     private static void printField(String fieldName, double value) {
         TTY.print("    " + fieldName + " = " + value + "\n");
+    }
+
+    public static void flush() {
+        out().flush();
     }
 }
