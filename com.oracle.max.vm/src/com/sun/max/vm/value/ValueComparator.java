@@ -24,9 +24,6 @@ package com.sun.max.vm.value;
 
 import java.util.*;
 
-import com.sun.max.program.*;
-import com.sun.max.vm.bytecode.*;
-
 /**
  * Constants denoting comparison operations that can be performed between pairs of {@linkplain Value values} of the same
  * {@linkplain Value#kind() kind}. The comparison operations fall into one of these categories:
@@ -179,25 +176,6 @@ public enum ValueComparator {
         return compare(left, right);
     }
     abstract boolean compare(Value left, Value right);
-
-    public static ValueComparator fromBranchCondition(BranchCondition condition) {
-        switch (condition) {
-            case EQ:
-                return EQUAL;
-            case GE:
-                return GREATER_EQUAL;
-            case GT:
-                return GREATER_THAN;
-            case LE:
-                return LESS_EQUAL;
-            case LT:
-                return LESS_THAN;
-            case NE:
-                return NOT_EQUAL;
-            default:
-                throw ProgramError.unknownCase();
-        }
-    }
 
     public String symbol() {
         switch (this) {

@@ -141,6 +141,15 @@ public final class JDK_java_lang_Thread {
     }
 
     /**
+     * We substitute this because {@link Thread} holds the name as a {@code char} array.
+     * @return
+     */
+    @SUBSTITUTE
+    public String getName() {
+        return VmThread.current().getName();
+    }
+
+    /**
      * Yield execution to other threads, if possible.
      * @see java.lang.Thread#yield()
      */
