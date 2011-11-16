@@ -692,7 +692,7 @@ public class Deoptimization extends VmOperation {
      * @param csa the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
      * @param returnValue the value being returned (will be {@code null} if returning from a void method)
      */
-    public static void deoptimizeOnReturn(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiConstant returnValue) {
+    private static void deoptimizeOnReturn(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiConstant returnValue) {
         deoptimize(ip, sp, fp, csa, csa.isZero() ? null : vm().registerConfigs.compilerStub.csl, returnValue);
     }
 
@@ -761,7 +761,11 @@ public class Deoptimization extends VmOperation {
             TargetMethod compiledMethod = vm().compilationBroker.compile(method, Nature.BASELINE);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
-            cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException);
+            boolean reexecute = false;
+            if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {
+                reexecute = true;
+            }
+            cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException, reexecute);
 
             // The exception (if any) must be handled in the top frame
             pendingException = null;
@@ -883,7 +887,7 @@ public class Deoptimization extends VmOperation {
     }
 
     @NEVER_INLINE // makes inspecting easier
-    static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
+    public static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
         if (TraceDeopt) {
             Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +

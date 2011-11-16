@@ -1025,9 +1025,10 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param frame debug info from which the slots of the deoptimized are initialized
      * @param callee used to notify callee of the execution state the deoptimized frame when it is returned to
      * @param exception if non-null, this is an in-flight exception that must be handled by the deoptimized frame
+     * @param reexecute specifies if the instruction at {@code frame.bci} is to be re-executed (ignored if {@code exception != null})
      * @return object for notifying the deoptimized frame's caller of continuation state
      */
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception, boolean reexecute) {
         throw FatalError.unexpected("Cannot create deoptimized frame for " + getClass().getSimpleName() + " " + this);
     }
 
