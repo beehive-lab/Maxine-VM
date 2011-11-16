@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -33,7 +34,7 @@ import com.sun.max.vm.compiler.*;
 /**
  * Represents a call to a native function from within a native method stub.
  */
-public final class NativeFunctionCallNode extends AbstractCallNode implements LIRLowerable {
+public final class NativeFunctionCallNode extends AbstractCallNode implements LIRLowerable, Lowerable {
 
     /**
      * The instruction that produces the native function address for this native call.
@@ -57,7 +58,13 @@ public final class NativeFunctionCallNode extends AbstractCallNode implements LI
     }
 
     @NodeIntrinsic
-    public static void call(@ConstantNodeParameter Address address, @ConstantNodeParameter ClassMethodActor nativeMethod) {
+    public static Object call(@ConstantNodeParameter Address address, @ConstantNodeParameter ClassMethodActor nativeMethod) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
+    }
+
+    @Override
+    public void lower(CiLoweringTool tool) {
+        // TODO Auto-generated method stub
+
     }
 }
