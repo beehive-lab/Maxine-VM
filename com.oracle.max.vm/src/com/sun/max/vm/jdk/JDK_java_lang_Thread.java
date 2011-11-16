@@ -146,7 +146,7 @@ public final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     public String getName() {
-        return VmThread.current().getName();
+        return VmThread.fromJava(thisThread()).getName();
     }
 
     /**
