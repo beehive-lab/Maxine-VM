@@ -29,13 +29,13 @@ import com.sun.max.vm.type.*;
 
 /**
  *
- * Class that implements a mapping of fixed size region in a contiguous range of virtual memory to bytes in a table.
+ * Class that implements a mapping of fixed size region in a contiguous range of virtual memory to entry of a byte  table.
  * Regions have a size that is a power of two and are aligned on that power of 2.
  */
 public class Power2RegionToByteMapTable {
     final int log2RangeSize;
-    Address coveredAreaStart;
-    Address coveredAreaEnd;
+    private Address coveredAreaStart;
+    private Address coveredAreaEnd;
 
     /**
      * Table containing a single byte of information per region.
@@ -92,6 +92,9 @@ public class Power2RegionToByteMapTable {
         return coveredAddress.minus(coveredAreaStart).unsignedShiftedRight(log2RangeSize).toInt();
     }
 
+    boolean atBoundary(Address address) {
+        return address.isAligned(1 << log2RangeSize);
+    }
     /**
      * Start of the region covered by the entry of the table at the specified index.
      * @param index an valid index to an element of the table

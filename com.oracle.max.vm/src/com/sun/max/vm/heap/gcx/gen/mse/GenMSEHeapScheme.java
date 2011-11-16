@@ -69,6 +69,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     private final NoAgingNursery youngSpace;
     private final FirstFitMarkSweepSpace<GenMSEHeapScheme> oldSpace;
     private GenHeapSizingPolicy heapResizingPolicy;
+    private CardTableRSet cardTableRSet;
 
     /**
      * Marking algorithm used to trace the heap.

@@ -27,18 +27,7 @@ import com.sun.max.vm.heap.*;
 
 
 public class CardTableRSet {
-    /**
-     * Power of 2 of a card size in bytes.
-     */
-    private static final int LOG2_CARD_SIZE = 9;
-    /**
-     * Number of bytes per card.
-     */
-    private static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
-
-    private static final int INVALID_CARD_INDEX = -1;
-
-    final Power2RegionToByteMapTable cardTable;
+   final CardTable cardTable;
 
     public void  recordWrite(Address referenceLocation) {
 
@@ -50,10 +39,11 @@ public class CardTableRSet {
 
 
     public CardTableRSet() {
-        cardTable = new Power2RegionToByteMapTable(LOG2_CARD_SIZE);
+        cardTable = new CardTable();
     }
 
-    public void initialized(Address coveredAreaStart, Size coveredAreaSize) {
+    public void initialize(Address coveredAreaStart, Size coveredAreaSize) {
+        cardTable.initialize(coveredAreaStart, coveredAreaSize);
 
     }
 
