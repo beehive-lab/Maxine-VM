@@ -107,7 +107,7 @@ public abstract class Phase {
 
             boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
             if (shouldFireCompilationEvents && context.timers.currentLevel() < GraalOptions.PlotLevel) {
-                context.observable.fireCompilationEvent("After " + getDetailedName(), graph);
+                context.observable.fireCompilationEvent("After " + getName(), graph);
             }
         }
 

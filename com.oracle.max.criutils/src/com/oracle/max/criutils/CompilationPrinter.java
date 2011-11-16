@@ -111,7 +111,6 @@ public class CompilationPrinter {
         }
         StringBuilder sb = new StringBuilder();
 
-
         if (info.hasRegisterRefMap()) {
             sb.append("reg-ref-map:");
             for (int reg = info.registerRefMap.nextSetBit(0); reg >= 0; reg = info.registerRefMap.nextSetBit(reg + 1)) {
@@ -119,6 +118,7 @@ public class CompilationPrinter {
             }
             sb.append("\n");
         }
+
         if (info.hasStackRefMap()) {
             sb.append("frame-ref-map:");
             CiBitMap bm = info.frameRefMap;
@@ -127,66 +127,42 @@ public class CompilationPrinter {
             }
             sb.append("\n");
         }
+
         if (info.codePos != null) {
-            sb.append(toString(info.codePos, fmt));
+            CiCodePos codePos = info.codePos;
+            do {
+                sb.append(CiUtil.toLocation(codePos.method, codePos.bci));
+                sb.append('\n');
+                if (codePos instanceof CiFrame) {
+                    CiFrame frame = (CiFrame) codePos;
+                    if (frame.numStack > 0) {
+                        sb.append("stack: ");
+                        for (int i = 0; i < frame.numStack; i++) {
+                            sb.append(valueToString(frame.getStackValue(i), fmt)).append(' ');
+                        }
+                        sb.append("\n");
+                    }
+
+                    if (frame.numLocks > 0) {
+                        sb.append("locks: ");
+                        for (int i = 0; i < frame.numLocks; ++i) {
+                            sb.append(valueToString(frame.getLockValue(i), fmt)).append(' ');
+                        }
+                        sb.append("\n");
+                    }
+
+                    sb.append("locals: ");
+                    for (int i = 0; i < frame.numLocals; i++) {
+                        sb.append(valueToString(frame.getLocalValue(i), fmt)).append(' ');
+                    }
+                    sb.append("\n");
+                }
+                codePos = codePos.caller;
+            } while (codePos != null);
         }
         return sb.toString();
     }
 
-    protected String toString(CiCodePos codePos, OperandFormatter operandFmt) {
-        if (codePos == null) {
-            return null;
-        }
-
-        StringBuilder buf = new StringBuilder();
-
-        do {
-            buf.append(CiUtil.toLocation(codePos.method, codePos.bci));
-            buf.append('\n');
-            if (codePos instanceof CiFrame) {
-                CiFrame frame = (CiFrame) codePos;
-                if (frame.numStack > 0) {
-                    int i = 0;
-                    buf.append("stack: ");
-                    while (i < frame.numStack) {
-                        if (i == 0) {
-                            buf.append(' ');
-                        }
-                        CiValue value = frame.getStackValue(i);
-                        buf.append(valueToString(value, operandFmt)).append(' ');
-                        i++;
-                    }
-                    buf.append("\n");
-                }
-
-                if (frame.numLocks > 0) {
-                    buf.append("locks: ");
-                    for (int i = 0; i < frame.numLocks; ++i) {
-                        if (i == 0) {
-                            buf.append(' ');
-                        }
-                        CiValue value = frame.getLockValue(i);
-                        buf.append(valueToString(value, operandFmt)).append(' ');
-                    }
-                    buf.append("\n");
-                }
-
-                buf.append("locals: ");
-                int i = 0;
-                while (i < frame.numLocals) {
-                    if (i == 0) {
-                        buf.append(' ');
-                    }
-                    CiValue value = frame.getLocalValue(i);
-                    buf.append(valueToString(value, operandFmt)).append(' ');
-                    i++;
-                }
-                buf.append("\n");
-            }
-            codePos = codePos.caller;
-        } while (codePos != null);
-        return buf.toString();
-    }
 
     protected String valueToString(CiValue value, Formatter operandFmt) {
         if (value == null) {

@@ -33,10 +33,10 @@ import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
+import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
@@ -93,6 +93,8 @@ public class Graal implements RuntimeCompiler {
      */
     private GraalCompiler compiler;
 
+    private PhasePlan plan;
+
     private static final int DEFAULT_OPT_LEVEL = 3;
 
     @HOSTED_ONLY
@@ -134,19 +136,20 @@ public class Graal implements RuntimeCompiler {
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
-            compiler.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
-            compiler.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase(runtime));
-            compiler.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
+            plan = new PhasePlan();
+            plan.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
+            plan.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase(runtime));
+            plan.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
 
             // Run forced inlining again because high-level optimizations (such as replacing a final field read by a constant) can open up new opportunities.
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new FoldPhase(runtime));
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MaxineIntrinsicsPhase(runtime));
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime, cache, null));
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new FoldPhase(runtime));
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new MaxineIntrinsicsPhase(runtime));
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime, cache, null));
 
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
-            compiler.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
 
-            GraalIntrinsics.installIntrinsics(compiler, runtime, target);
+            GraalIntrinsics.installIntrinsics(runtime, target, plan);
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
@@ -181,9 +184,9 @@ public class Graal implements RuntimeCompiler {
         do {
             if (method.compilee().isNative()) {
                 NativeStubCompiler nsc = new NativeStubCompiler(compiler(), method);
-                compiledMethod = nsc.compile();
+                compiledMethod = nsc.compile(plan);
             } else {
-                compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL).targetMethod();
+                compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
             }
 
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
