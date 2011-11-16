@@ -56,7 +56,7 @@ public final class GraalCompilation {
     public final FrameState placeholderState;
 
     public final StructuredGraph graph;
-    public final CiAssumptions assumptions = new CiAssumptions();
+    public final CiAssumptions assumptions = GraalOptions.OptAssumptions ? new CiAssumptions() : null;
 
     private FrameMap frameMap;
 
@@ -395,7 +395,7 @@ public final class GraalCompilation {
                 lir.emitCode(tasm);
 
                 CiTargetMethod targetMethod = tasm.finishTargetMethod(method, compiler.runtime, false);
-                if (!assumptions.isEmpty()) {
+                if (assumptions != null && !assumptions.isEmpty()) {
                     targetMethod.setAssumptions(assumptions);
                 }
 
