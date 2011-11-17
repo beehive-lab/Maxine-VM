@@ -65,6 +65,22 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.setResult(this, gen.emitAdd(gen.operand(x()), gen.operand(y())));
+        CiValue op1 = gen.operand(x());
+        CiValue op2 = gen.operand(y());
+        if (!livesLonger(this, y(), gen)) {
+            CiValue op = op1;
+            op1 = op2;
+            op2 = op;
+        }
+        gen.setResult(this, gen.emitAdd(op1, op2));
+    }
+
+    public static boolean livesLonger(ValueNode after, ValueNode value, LIRGeneratorTool gen) {
+        for (Node usage : value.usages()) {
+            if (usage != after && ((ValueNode) usage).operand() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 }

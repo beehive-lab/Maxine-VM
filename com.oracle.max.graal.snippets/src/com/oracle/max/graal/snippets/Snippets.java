@@ -98,9 +98,9 @@ public class Snippets {
             } catch (VerificationError error) {
                 if (context.isObserved()) {
                     if (error.node() != null) {
-                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                        context.observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, error.node().graph());
                     } else if (error.graph() != null) {
-                        context.observable.fireCompilationEvent(new CompilationEvent(null, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                        context.observable.fireCompilationEvent("VerificationError on Graph " + error.graph(), CompilationEvent.ERROR, error.graph());
                     }
                 }
                 throw error;

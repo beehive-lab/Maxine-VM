@@ -23,7 +23,6 @@
 package com.oracle.max.graal.compiler.phases;
 
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -108,7 +107,7 @@ public abstract class Phase {
 
             boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
             if (shouldFireCompilationEvents && context.timers.currentLevel() < GraalOptions.PlotLevel) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "After " + getDetailedName(), graph, true, false));
+                context.observable.fireCompilationEvent("After " + getDetailedName(), graph);
             }
         }
 

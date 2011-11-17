@@ -36,6 +36,7 @@ import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
@@ -151,7 +152,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     protected LabelRef getLIRBlock(FixedNode b) {
         LIRBlock result = lir.valueToBlock().get(b);
-        int suxIndex = currentBlock.blockSuccessors().indexOf(result);
+        int suxIndex = currentBlock.getSuccessors().indexOf(result);
         assert suxIndex != -1 : "Block not in successor list of current block";
 
         return LabelRef.forSuccessor(currentBlock, suxIndex);
@@ -175,7 +176,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      * @param kind the kind of value being returned
      * @return the operand representing the ABI defined location used return a value of kind {@code kind}
      */
-    protected CiValue resultOperandFor(CiKind kind) {
+    public CiValue resultOperandFor(CiKind kind) {
         if (kind == CiKind.Void) {
             return IllegalValue;
         }
@@ -218,9 +219,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 emitXir(prologue, null, null, null, false);
             }
             setOperandsForParameters();
-        } else if (block.blockPredecessors().size() > 0) {
+        } else if (block.getPredecessors().size() > 0) {
             FrameState fs = null;
-            for (LIRBlock pred : block.blockPredecessors()) {
+            for (Block p : block.getPredecessors()) {
+                LIRBlock pred = (LIRBlock) p;
                 if (fs == null) {
                     fs = pred.lastState();
                 } else if (fs != pred.lastState()) {
@@ -284,9 +286,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 }
             }
         }
-        if (block.blockSuccessors().size() >= 1 && !block.endsWithJump()) {
-            NodeSuccessorsIterable successors = block.lastInstruction().successors();
-            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastInstruction();
+        if (block.numberOfSux() >= 1 && !block.endsWithJump()) {
+            NodeSuccessorsIterable successors = block.lastNode().successors();
+            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastNode();
 
             emitJump(getLIRBlock((FixedNode) successors.first()), null);
         }
@@ -518,7 +520,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
-        if (GraalOptions.GenLoopSafepoints) {
+        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPooling()) {
             emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
@@ -721,6 +723,13 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 break;
         }
 
+        CiValue destinationAddress = null;
+        if (!target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently necessary for Maxine: since the invokeinterface-snippet uses a division, it
+            // destroys rdx, which is also used to pass a parameter.  Therefore, the snippet must be before the parameters are assigned to their locations.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, null);
+        }
+
         CiValue resultOperand = resultOperandFor(x.node().kind());
 
         CiKind[] signature = CiUtil.signatureToKinds(callTarget.targetMethod().signature(), callTarget.isStatic() ? null : callTarget.targetMethod().holder().kind(true));
@@ -729,9 +738,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, callTarget.arguments(), pointerSlots);
 
-        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
-        // implicit calling convention between the XirSnippet and the call.
-        CiValue destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        if (target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently active for HotSpot.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -748,7 +758,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    private List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
+    public List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
         // for each argument, load it into the correct location
         List<CiValue> argList = new ArrayList<CiValue>();
         int j = 0;
@@ -833,14 +843,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         if (resultOperand.isLegal()) {
             setResult(x, emitMove(resultOperand));
         }
-    }
-
-
-
-    protected CompilerStub stubFor(CiRuntimeCall runtimeCall) {
-        CompilerStub stub = compilation.compiler.lookupStub(runtimeCall);
-        compilation.frameMap().usesStub(stub);
-        return stub;
     }
 
     protected CompilerStub stubFor(CompilerStub.Id id) {

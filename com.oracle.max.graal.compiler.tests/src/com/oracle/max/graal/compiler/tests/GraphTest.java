@@ -20,43 +20,53 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.test;
+package com.oracle.max.graal.compiler.tests;
 
 import java.lang.reflect.*;
+
+import org.junit.*;
 
 import junit.framework.Assert;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
 
+/**
+ * Base class for Graal compiler unit tests. These are white box tests
+ * for Graal compiler transformations. The general pattern for a test is:
+ * <ol>
+ * <li>Create a graph by {@linkplain #parse(String) parsing} a method.</li>
+ * <li>Manually modify the graph (e.g. replace a paramter node with a constant).</li>
+ * <li>Apply a transformation to the graph.</li>
+ * <li>Assert that the transformed graph is equal to an expected graph.</li>
+ * </ol>
+ * <p>
+ * See {@link InvokeTest} as an example.
+ * <p>
+ * The tests can be run in Eclipse with the "Compiler Unit Test" Eclipse
+ * launch configuration found in the top level of this project or by
+ * running {@code mx gcut} on the command line.
+ */
 public abstract class GraphTest {
 
-    private static String[] graalCompilerFactoryClasses = {
-        "com.oracle.max.graal.hotspot.CompilerImpl",
-        "com.oracle.max.vm.ext.c1xgraal.C1XGraal"
-    };
-
-    private static GraalCompiler getGraalCompiler() {
-        for (String className : graalCompilerFactoryClasses) {
-            Class<?> c = null;
-            try {
-                c = Class.forName(className);
-                Method m = c.getDeclaredMethod("getGraalCompiler");
-                return (GraalCompiler) m.invoke(null);
-            } catch (Exception e) {
-                System.err.println(e);
-            }
-        }
-        throw new InternalError("Could not create a GraalCompiler instance");
-    }
-
-    private GraalCompiler graalCompiler;
+    protected final GraalRuntime runtime;
+    private static IdealGraphPrinterObserver observer;
 
     public GraphTest() {
-        this.graalCompiler = getGraalCompiler();
+        this.runtime = GraalRuntimeAccess.getGraalRuntime();
+    }
+
+    @BeforeClass
+    public static void init() {
+        IdealGraphPrinterObserver o = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+        if (o.networkAvailable()) {
+            observer = o;
+        }
+        //System.out.println("constructor called");
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {
@@ -66,10 +76,15 @@ public abstract class GraphTest {
         }
     }
 
-    protected RiRuntime runtime() {
-        return graalCompiler.runtime;
+    protected GraalRuntime runtime() {
+        return runtime;
     }
 
+    /**
+     * Parses a Java method to produce a graph.
+     *
+     * @param methodName the name of the method in {@code this.getClass()} to be parsed
+     */
     protected StructuredGraph parse(String methodName) {
         Method found = null;
         for (Method m : this.getClass().getMethods()) {
@@ -81,8 +96,10 @@ public abstract class GraphTest {
         return parse(found);
     }
 
+    /**
+     * Parses a Java method to produce a graph.
+     */
     protected StructuredGraph parse(Method m) {
-        RiRuntime runtime = graalCompiler.runtime;
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
         StructuredGraph graph = new StructuredGraph();
         new GraphBuilderPhase(runtime, riMethod).apply(graph);
@@ -90,12 +107,14 @@ public abstract class GraphTest {
     }
 
     protected void print(String title, StructuredGraph... graphs) {
-        IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-        observer.printGraphs(getClass().getSimpleName() + ": " + title, graphs);
+        if (observer != null) {
+            observer.printGraphs(getClass().getSimpleName() + ": " + title, graphs);
+        }
     }
 
     protected void print(StructuredGraph graph) {
-        IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-        observer.printSingleGraph(getClass().getSimpleName(), graph);
+        if (observer != null) {
+            observer.printSingleGraph(getClass().getSimpleName(), graph);
+        }
     }
 }

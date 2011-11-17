@@ -147,7 +147,7 @@ public class VMExitsNative implements VMExits, Remote {
     }
 
     @Override
-    public RiType createRiType(long vmId, String name) {
+    public RiType createRiType(HotSpotConstantPool pool, String name) {
         throw new RuntimeException("not implemented");
     }
 
@@ -180,11 +180,6 @@ public class VMExitsNative implements VMExits, Remote {
     @Override
     public RiType createRiTypeUnresolved(String name) {
         return new HotSpotTypeUnresolved(compiler, name);
-    }
-
-    @Override
-    public RiConstantPool createRiConstantPool(long vmId) {
-        return new HotSpotConstantPool(compiler, vmId);
     }
 
     @Override

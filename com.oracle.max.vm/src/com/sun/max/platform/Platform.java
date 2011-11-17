@@ -169,6 +169,7 @@ public final class Platform {
                         pageSize,
                         cacheAlignment,
                         inlineObjects,
+                        false,
                         false);
     }
 

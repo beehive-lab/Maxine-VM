@@ -109,6 +109,9 @@ public class NodeWorkList implements Iterable<Node> {
 
     public void replaced(Node newNode, Node oldNode, boolean add, EdgeType... edges) {
         worklist.remove(oldNode);
+        if (newNode == null) {
+            return;
+        }
         if (add) {
             this.add(newNode);
         }

@@ -27,9 +27,8 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.GraalCompiler.*;
+import com.oracle.max.graal.compiler.GraalCompiler.PhasePosition;
 import com.oracle.max.graal.compiler.graphbuilder.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.extensions.*;
@@ -134,7 +133,9 @@ public class InliningPhase extends Phase {
                 graph = new StructuredGraph();
                 new GraphBuilderPhase(runtime, concrete).apply(graph, context, true, false);
 
-                compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+                if (compiler != null) {
+                    compiler.runPhases(PhasePosition.AFTER_PARSING, graph);
+                }
 
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase().apply(graph, context, true, false);
@@ -147,7 +148,7 @@ public class InliningPhase extends Phase {
                 }
             }
 
-            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
+            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), concrete);
             InliningUtil.inline(invoke, graph, true);
         }
 
@@ -246,7 +247,7 @@ public class InliningPhase extends Phase {
                         TTY.println("inlining %f: %s", info.weight, info);
                     }
                     if (GraalOptions.TraceInlining) {
-                        context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
+                        context.observable.fireCompilationEvent("after inlining " + info, graph);
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
@@ -381,7 +382,7 @@ public class InliningPhase extends Phase {
     }
 
     private static String methodName(RiResolvedMethod method, Invoke invoke) {
-        if (invoke != null) {
+        if (invoke != null && invoke.stateAfter() != null) {
             RiMethod parent = invoke.stateAfter().method();
             return parent.name() + "@" + invoke.bci() + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
         } else {

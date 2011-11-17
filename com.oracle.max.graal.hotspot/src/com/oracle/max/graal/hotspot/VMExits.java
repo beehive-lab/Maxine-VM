@@ -39,13 +39,11 @@ public interface VMExits {
 
     RiField createRiField(RiType holder, String name, RiType type, int offset, int flags);
 
-    RiType createRiType(long vmId, String name);
+    RiType createRiType(HotSpotConstantPool pool, String name);
 
     RiType createRiTypePrimitive(int basicType);
 
     RiType createRiTypeUnresolved(String name);
-
-    RiConstantPool createRiConstantPool(long vmId);
 
     CiConstant createCiConstant(CiKind kind, long value);
 

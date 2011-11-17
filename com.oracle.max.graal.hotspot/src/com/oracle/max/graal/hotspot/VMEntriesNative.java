@@ -73,25 +73,19 @@ public class VMEntriesNative implements VMEntries, Remote {
     public native RiType RiSignature_lookupType(String returnType, HotSpotTypeResolved accessingClass);
 
     @Override
-    public native Object RiConstantPool_lookupConstant(long vmId, int cpi);
+    public native Object RiConstantPool_lookupConstant(HotSpotTypeResolved pool, int cpi);
 
     @Override
-    public native RiMethod RiConstantPool_lookupMethod(long vmId, int cpi, byte byteCode);
+    public native RiMethod RiConstantPool_lookupMethod(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
     @Override
-    public native RiSignature RiConstantPool_lookupSignature(long vmId, int cpi);
+    public native RiType RiConstantPool_lookupType(HotSpotTypeResolved pool, int cpi);
 
     @Override
-    public native RiType RiConstantPool_lookupType(long vmId, int cpi);
+    public native void RiConstantPool_loadReferencedType(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
     @Override
-    public native void RiConstantPool_loadReferencedType(long vmId, int cpi, byte byteCode);
-
-    @Override
-    public native RiField RiConstantPool_lookupField(long vmId, int cpi, byte byteCode);
-
-    @Override
-    public native RiConstantPool RiType_constantPool(HotSpotTypeResolved klass);
+    public native RiField RiConstantPool_lookupField(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
     @Override
     public native long installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
@@ -156,9 +150,6 @@ public class VMEntriesNative implements VMEntries, Remote {
 
     @Override
     public native boolean RiMethod_hasCompiledCode(HotSpotMethodResolved method);
-
-    @Override
-    public native int RiMethod_compiledCodeSize(HotSpotMethodResolved method);
 
     @Override
     public native long getMaxCallTargetOffset(CiRuntimeCall rtcall);

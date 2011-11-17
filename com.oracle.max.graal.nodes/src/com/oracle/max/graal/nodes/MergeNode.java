@@ -32,7 +32,7 @@ import com.oracle.max.graal.nodes.spi.*;
  */
 public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLowerable {
 
-    @Input private final NodeInputList<EndNode> ends = new NodeInputList<EndNode>(this);
+    @Input(notDataflow = true) private final NodeInputList<EndNode> ends = new NodeInputList<EndNode>(this);
 
     @Override
     public boolean needsStateAfter() {
@@ -116,10 +116,8 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         assert predIndex != -1;
         ends.remove(predIndex);
 
-        for (Node usage : usages()) {
-            if (usage instanceof PhiNode) {
-                ((PhiNode) usage).removeInput(predIndex);
-            }
+        for (PhiNode phi : phis()) {
+            phi.removeInput(predIndex);
         }
     }
 

@@ -574,13 +574,12 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return compilerStorage;
     }
 
-    @Override
-    public int compiledCodeSize() {
-        return -1;
-    }
-
     public boolean canBePermanentlyLinked() {
         return false;
     }
 
+    @Override
+    public RiConstantPool getConstantPool() {
+        return null;
+    }
 }

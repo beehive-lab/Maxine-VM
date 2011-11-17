@@ -126,7 +126,8 @@ final class RegisterVerifier {
         processOperations(block.lir(), inputState);
 
         // iterate all successors
-        for (LIRBlock succ : block.blockSuccessors()) {
+        for (int i = 0; i < block.numberOfSux(); i++) {
+            LIRBlock succ = block.suxAt(i);
             processSuccessor(succ, inputState);
         }
     }

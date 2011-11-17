@@ -29,6 +29,7 @@ import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -444,5 +445,10 @@ public abstract class ClassMethodActor extends MethodActor {
         }
 
         return newCodeAttribute;
+    }
+
+    @Override
+    public RiConstantPool getConstantPool() {
+        return compilee().codeAttribute().cp;
     }
 }

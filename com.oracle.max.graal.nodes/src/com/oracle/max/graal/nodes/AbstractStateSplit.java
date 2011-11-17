@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
  */
 public abstract class AbstractStateSplit extends FixedWithNextNode implements StateSplit {
 
-    @Input private FrameState stateAfter;
+    @Input(notDataflow = true) private FrameState stateAfter;
 
     @Override
     public FrameState stateAfter() {
