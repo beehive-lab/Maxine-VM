@@ -45,14 +45,14 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table-based viewer for an (immutable) section of {@link MaxMachineCode} in the VM.
+ * A table-based viewer for an (immutable) section of {@link MaxMachineCodeRoutine} in the VM.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint).
  */
@@ -71,7 +71,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     private final Color defaultBackgroundColor;
     private final Color safepointBackgroundColor;
 
-    public JTableMachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
+    public JTableMachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCodeRoutine machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
         //inspection.vm().bootImage().header.
@@ -339,9 +339,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
      */
     private final class MachineCodeTableModel extends InspectorTableModel {
 
-        final MaxMachineCode machineCode;
+        final MaxMachineCodeRoutine machineCode;
 
-        public MachineCodeTableModel(Inspection inspection, MaxMachineCode machineCode) {
+        public MachineCodeTableModel(Inspection inspection, MaxMachineCodeRoutine machineCode) {
             super(inspection);
             assert machineCode != null;
             this.machineCode = machineCode;

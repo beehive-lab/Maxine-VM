@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,152 +25,88 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
- * <br>
- * Note that machine code can get patched (changed) at runtime, so any caching of these results should be avoided.
+ * Access to machine code in the VM, consisting of either {@linkplain MaxCompilation method compilations} in the
+ * {@linkplain MaxCodeCache code cache} or {@linkplain MaxExternalCodeRoutine external code} that has been identified by
+ * various means.
  */
-public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends MaxEntity<MachineCode_Type> {
+public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
 
     /**
-     * @return VM address of the first instruction in the machine code represented by this routine. Note that this
-     * may differ from the designated {@linkplain #getCallEntryLocation() entry point} of the code.
-     */
-    Address getCodeStart();
-
-    /**
-     * @return VM location of the first instruction in the machine code represented by this routine. Note that this
-     *         may differ from the designated {@linkplain #getCallEntryLocation() call entry location} of the code.
-     */
-    CodeLocation getCodeStartLocation();
-
-    /**
-     * Gets the compiled entry point location for this code, which in the case of a compiled method is the
-     * entry specified by the ABI in use when compiled.
-     *
-     * @return {@link Address#zero()} if not yet been compiled
-     */
-    CodeLocation getCallEntryLocation();
-
-    /**
-     * Gets a map describing various characteristics of the current machine code.
-     *
-     * @return meta-information about the current machine code instructions
-     */
-    InstructionMap getInstructionMap();
-
-    /**
-     * Gets the count of the times the code has been observed to have changed in the VM,
-     * starting with 0, the initial state of the code the first time it was observed.
+     * Gets the existing machine code, if known, that contains a given address in the VM; the result could be either a
+     * VM method compilation or a block of external native code about which little is known.
      * <p>
-     * Any client of this interface should reloaded any cached information whenever the
-     * generation is observed to have changed.
+     * A result is returned <em>only</em> if there is machine code at the location. If the memory location falls within
+     * the code cache memory allocated to a method compilation, but does <em>not</em> point to machine code in that
+     * allocation, then {@code null} is returned.
      *
-     * @return generation count of most recent observed code change in the VM.
+     * @param address a memory location in the VM
+     * @return the machine code, if any is known, that includes the address
      */
-    int vmCodeGeneration();
+    MaxMachineCodeRoutine< ? extends MaxMachineCodeRoutine> findMachineCode(Address address);
 
     /**
-     * Writes a textual disassembly of the machine code instructions.
+     * Get the method compilation, if any, whose memory containing machine code includes a given address in the VM.
+     * <p>
+     * A result is returned <em>only</em> if there is machine code at the location. A memory location might fall within
+     * the code cache memory allocated to a method compilation, but if there is <em>not</em> point machine code at the
+     * memory location, then {@code null} is returned.
+     *
+     * @param address memory location in the VM
+     * @return a compiled method whose code includes the address, null if none
+     */
+    MaxCompilation findCompilation(Address address);
+
+    /**
+     * @return gets all compilations of a method in the VM, empty if none
+     */
+    List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor);
+
+    /**
+     * Gets the most recent compilation of a method in the VM, null if none.
+     *
+     * @throws MaxVMBusyException if the VM is unavailable
+     */
+    MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
+
+    /**
+     * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been
+     * registered, and keep information about it in a registry for subsequent reference.
+     *
+     * @param codeStart starting address of the machine code in VM memory, not in any VM allocated memory
+     * @param nBytes presumed size of the code in bytes
+     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
+     * @return a newly created TeleExternalCode
+     * @throws MaxVMBusyException if the VM is unavailable
+     * @throws IllegalArgumentException if the range of memory overlaps in any way with a region already registered, or
+     *             is in a VM-allocated code region.
+     * @throws MaxInvalidAddressException if he address cannot be read
+     */
+    MaxExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
+
+    /**
+     * Get the block of known external native code, if any, that contains a given address in the VM.
+     *
+     * @param address memory location in the VM
+     * @return known external native code that includes the address, null if none
+     */
+    MaxExternalCodeRoutine findExternalCode(Address address);
+
+    /**
+     * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM, including
+     * compilations created by the VM and external blocks of native code about which less is known.
      */
     void writeSummary(PrintStream printStream);
 
-    public interface InstructionMap {
-
-        /**
-         * @return the number of machine instructions in this map
-         */
-        int length();
-
-        /**
-         * @return the instruction at a specified index in this sequence
-         * of instructions.
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        TargetCodeInstruction instruction(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the index of the instruction whose machine code location includes
-         * a specific memory location, -1 if none.
-         */
-        int findInstructionIndex(Address address);
-
-        /**
-         * @return the location of the instruction at a specified index
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        MachineCodeLocation instructionLocation(int index);
-
-        /**
-         * @return whether the instruction is a safepoint
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isSafepoint(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is a call
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isCall(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is a native call
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isNativeCall(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is at the beginning of a sequence
-         * of instructions known precisely to implement a bytecode
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the debug info corresponding to the machine code instruction at the beginning
-         * of a sequence of machine code instructions that implement a bytecode, if known, else null
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        CiDebugInfo debugInfoAt(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the opcode corresponding to the instruction at the beginning
-         * of a sequence of instructions that implement a bytecode, if known, else -1.
-         * The special value of {@link Integer#MAX_VALUE} is returned to indicate
-         * that the instruction is the first one in the epilogue of the method
-         *
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        int opcode(int index) throws IllegalArgumentException;
-
-        /**
-         * @return if the instruction is a call, the RiMethod denoting the callee; else -1.
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        RiMethod calleeAt(int index) throws IllegalArgumentException;
-
-        /**
-         * Gets the instruction indexes of all labels synthesized by disassembly of this method.
-         *
-         * @return the index of instructions with labels, empty if none.
-         */
-        List<Integer> labelIndexes();
-
-        // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
-        /**
-         * Builds a map from the beginning of byte code instruction to the beginning of the
-         * machine code instructions generated from it.
-         *
-         * @return Map: bci (byte index in bytecode) -> byte positions in machine code, null if information not available
-         */
-        int[] bciToMachineCodePositionMap();
-
-    }
-
+    /**
+     * Writes current statistics concerning inspection of VM's code cache.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 }

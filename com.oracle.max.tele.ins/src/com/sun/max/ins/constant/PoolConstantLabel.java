@@ -367,12 +367,14 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
                 final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
                 if (teleTargetMethod != null) {
-                    final MaxCompilation compiledCode =
-                        vm().codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
-                    if (compiledCode != null) {
-                        focus().setCodeLocation(compiledCode.getCallEntryLocation());
+                    final MaxCompilation compilation = vm().machineCode().findCompilation(teleTargetMethod.callEntryPoint());
+                    if (compilation != null) {
+                        focus().setCodeLocation(compilation.getCallEntryLocation());
+                        return;
                     }
                 }
+                final MaxCodeLocation bytecodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, -1, "Pool constant bytecode operand");
+                focus().setCodeLocation(bytecodeLocation);
             }
         }
     }

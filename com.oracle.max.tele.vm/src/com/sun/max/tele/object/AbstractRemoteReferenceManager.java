@@ -20,25 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele.object;
 
+import java.io.*;
+import java.text.*;
+
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
+public abstract class AbstractRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
 
-/**
- * A allocatable area in the VM that can contain machine code.
- */
-public interface CodeHoldingRegion {
+    public AbstractRemoteReferenceManager(TeleVM vm) {
+        super(vm);
+    }
 
-    /**
-     * @return description of the VM memory allocated for this region, null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with pointers to machine code in this memory region.
-     */
-    RemoteCodePointerManager codePointerManager();
+    public final void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        final StringBuilder sb2 = new StringBuilder();
+        final int activeReferenceCount = activeReferenceCount();
+        final int totalReferenceCount = totalReferenceCount();
+        sb2.append("object refs:  active=" + formatter.format(activeReferenceCount));
+        sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
+        sb2.append(", mgr=" + getClass().getSimpleName());
+        printStream.println(indentation + sb2.toString());
+    }
 
 }

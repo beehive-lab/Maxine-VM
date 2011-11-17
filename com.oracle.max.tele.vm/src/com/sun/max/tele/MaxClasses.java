@@ -32,9 +32,9 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * Access to the class registry and related information in the VM.
+ * Access to the classes loaded in the VM, along with related information.
  */
-public interface MaxClassRegistry extends MaxEntity<MaxClassRegistry> {
+public interface MaxClasses extends MaxEntity<MaxClasses> {
 
 
     /**
