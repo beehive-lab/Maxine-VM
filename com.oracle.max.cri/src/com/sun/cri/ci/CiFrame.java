@@ -71,24 +71,13 @@ public class CiFrame extends CiCodePos implements Serializable {
      * @param caller the caller frame (which may be {@code null})
      * @param method the method
      * @param bci a BCI within the method
+     * @param rethrowException specifies if the VM should re-throw the pending exception when deopt'ing using this frame
      * @param values the frame state {@link #values}
      * @param numLocals the number of local variables
      * @param numStack the depth of the stack
      * @param numLocks the number of locked objects
      */
     public CiFrame(CiFrame caller, RiResolvedMethod method, int bci, boolean rethrowException, CiValue[] values, int numLocals, int numStack, int numLocks) {
-
-    /**
-     * Creates a new frame object.
-     *
-     * @param caller the caller frame (which may be {@code null})
-     * @param method the method
-     * @param bci a BCI within the method
-     * @param values the frame state {@link #values}
-     * @param numLocals the number of local variables
-     * @param numStack the depth of the stack
-     * @param numLocks the number of locked objects
-     */
         super(caller, method, bci);
         assert values != null;
         this.rethrowException = rethrowException;
