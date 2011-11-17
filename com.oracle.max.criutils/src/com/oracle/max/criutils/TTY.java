@@ -88,6 +88,10 @@ public class TTY {
     }
 
     private static LogStream createLog() {
+        if (cachedOut == null) {
+            // In case initialize() was not called.
+            cachedOut = System.out;
+        }
         PrintStream out = cachedOut;
         String value = System.getProperty(MAX_TTY_LOG_FILE_PROPERTY);
         if (value != null) {
