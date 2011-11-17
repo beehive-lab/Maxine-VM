@@ -22,11 +22,14 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -63,6 +66,13 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
 
     public MethodCallTargetNode callTarget() {
         return callTarget;
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("targetMethod", CiUtil.format("%h.%n(%p)", callTarget.targetMethod()));
+        return debugProperties;
     }
 
     @Override

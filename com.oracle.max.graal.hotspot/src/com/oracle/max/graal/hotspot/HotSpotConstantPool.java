@@ -51,7 +51,7 @@ public class HotSpotConstantPool extends CompilerObject implements RiConstantPoo
             return (T) objects[index];
         }
 
-        public T get(int key) {
+        public synchronized T get(int key) {
             if (key == lastKey) {
                 return lastObject;
             } else if (count > 1) {
@@ -66,7 +66,7 @@ public class HotSpotConstantPool extends CompilerObject implements RiConstantPoo
             return null;
         }
 
-        public void add(int key, T object) {
+        public synchronized void add(int key, T object) {
             count++;
             if (count == 1) {
                 lastKey = key;

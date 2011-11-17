@@ -222,13 +222,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
-            // Create duplicate graph.
-            StructuredGraph duplicate = new StructuredGraph();
-            Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
-            replacements.put(graph.start(), duplicate.start());
-            duplicate.addDuplicate(graph.getNodes(), replacements);
-
-            cachedGraphs.put(method, duplicate);
+            cachedGraphs.put(method, graph.copy());
         }
     }
 

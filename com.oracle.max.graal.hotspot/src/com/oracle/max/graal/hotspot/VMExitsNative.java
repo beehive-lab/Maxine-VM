@@ -24,7 +24,9 @@
 package com.oracle.max.graal.hotspot;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
@@ -41,7 +43,6 @@ import com.sun.cri.ri.*;
 public class VMExitsNative implements VMExits, Remote {
 
     public static final boolean LogCompiledMethods = false;
-    public static boolean compileMethods = true;
     private boolean installedIntrinsics;
 
     private final Compiler compiler;
@@ -55,6 +56,16 @@ public class VMExitsNative implements VMExits, Remote {
     public final HotSpotTypePrimitive typeInt;
     public final HotSpotTypePrimitive typeLong;
     public final HotSpotTypePrimitive typeVoid;
+
+    ThreadFactory daemonThreadFactory = new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    };
+    private ThreadPoolExecutor compileQueue;
 
     public VMExitsNative(Compiler compiler) {
         this.compiler = compiler;
@@ -72,58 +83,120 @@ public class VMExitsNative implements VMExits, Remote {
 
     private static Set<String> compiledMethods = new HashSet<String>();
 
-    public void startCompiler() {
+    public void startCompiler() throws Throwable {
         // Make sure TTY is initialized here such that the correct System.out is used for TTY.
-        TTY.isSuppressed();
+        TTY.initialize();
+
+        // Install intrinsics.
+        HotSpotIntrinsic.installIntrinsics((HotSpotRuntime) compiler.getCompiler().runtime);
+
+        // Create compilation queue.
+        compileQueue = new ThreadPoolExecutor(GraalOptions.Threads, GraalOptions.Threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), daemonThreadFactory);
+
+        // Create queue status printing thread.
+        if (GraalOptions.PrintQueue) {
+            Thread t = new Thread() {
+                @Override
+                public void run() {
+                    while (true) {
+                        TTY.println(compileQueue.toString());
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+            };
+            t.setDaemon(true);
+            t.start();
+        }
+    }
+
+    public void bootstrap() throws Throwable {
+        TTY.print("Bootstrapping Graal");
+        TTY.flush();
+
+        // Initialize compile queue with a selected set of methods.
+        Class<Object> objectKlass = Object.class;
+        enqueue(objectKlass.getDeclaredMethod("equals", Object.class));
+        enqueue(objectKlass.getDeclaredMethod("toString"));
+
+        // Compile until the queue is empty.
+        long startTime = System.currentTimeMillis();
+        int z = 0;
+        while (compileQueue.getCompletedTaskCount() < compileQueue.getTaskCount()) {
+            Thread.sleep(100);
+            while (z < compileQueue.getCompletedTaskCount() / 100) {
+                ++z;
+                TTY.print(".");
+                TTY.flush();
+            }
+        }
+
+        TTY.println(" in %d ms", System.currentTimeMillis() - startTime);
+        System.gc();
+    }
+
+    private void enqueue(Method m) throws Throwable {
+        RiMethod riMethod = compiler.getRuntime().getRiMethod(m);
+        assert !Modifier.isAbstract(((HotSpotMethodResolved) riMethod).accessFlags()) && !Modifier.isNative(((HotSpotMethodResolved) riMethod).accessFlags()) : riMethod;
+        compileMethod((HotSpotMethodResolved) riMethod, 0, true);
     }
 
     public void shutdownCompiler() throws Throwable {
-        compileMethods = false;
         compiler.getCompiler().context.print();
+        compileQueue.shutdown();
     }
 
     @Override
-    public void compileMethod(final HotSpotMethodResolved method, final int entryBCI) throws Throwable {
-        if (!compileMethods) {
-            return;
-        }
+    public void compileMethod(final HotSpotMethodResolved method, final int entryBCI, boolean blocking) throws Throwable {
+        try {
+            Runnable runnable = new Runnable() {
 
-        if (!installedIntrinsics) {
-            HotSpotIntrinsic.installIntrinsics((HotSpotRuntime) compiler.getCompiler().runtime);
-            installedIntrinsics = true;
-        }
+                public void run() {
+                    CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
+                    if (LogCompiledMethods) {
+                        String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
+                        compiledMethods.add(qualifiedName);
+                    }
 
-        CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
-        if (LogCompiledMethods) {
-            String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
-            compiledMethods.add(qualifiedName);
-        }
-
-        if (result.bailout() != null) {
-            Throwable cause = result.bailout().getCause();
-            if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JSRNotSupportedBailout)) {
-                StringWriter out = new StringWriter();
-                result.bailout().printStackTrace(new PrintWriter(out));
-                TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
-                if (cause != null) {
-                    Logger.info("Trace for cause: ");
-                    for (StackTraceElement e : cause.getStackTrace()) {
-                        String current = e.getClassName() + "::" + e.getMethodName();
-                        String type = "";
-                        if (compiledMethods.contains(current)) {
-                            type = "compiled";
+                    if (result.bailout() != null) {
+                        Throwable cause = result.bailout().getCause();
+                        if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JSRNotSupportedBailout)) {
+                            StringWriter out = new StringWriter();
+                            result.bailout().printStackTrace(new PrintWriter(out));
+                            TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
+                            if (cause != null) {
+                                Logger.info("Trace for cause: ");
+                                for (StackTraceElement e : cause.getStackTrace()) {
+                                    String current = e.getClassName() + "::" + e.getMethodName();
+                                    String type = "";
+                                    if (compiledMethods.contains(current)) {
+                                        type = "compiled";
+                                    }
+                                    Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
+                                }
+                            }
                         }
-                        Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
+                        String s = result.bailout().getMessage();
+                        if (cause != null) {
+                            s = cause.getMessage();
+                        }
+                        compiler.getVMEntries().recordBailout(s);
+                    } else {
+                        HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
                     }
                 }
+            };
+
+            if (blocking) {
+                runnable.run();
+            } else {
+                compileQueue.execute(runnable);
             }
-            String s = result.bailout().getMessage();
-            if (cause != null) {
-                s = cause.getMessage();
-            }
-            compiler.getVMEntries().recordBailout(s);
-        } else {
-            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
+        } catch (RejectedExecutionException e) {
+            // The compile queue was already shut down.
+            return;
         }
     }
 
