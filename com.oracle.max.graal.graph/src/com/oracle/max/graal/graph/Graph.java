@@ -32,7 +32,7 @@ import com.oracle.max.graal.graph.Node.ValueNumberable;
  */
 public class Graph {
 
-    private final String name;
+    protected final String name;
 
     private final ArrayList<Node> nodes;
 
@@ -98,6 +98,15 @@ public class Graph {
      * Creates a copy of this graph.
      */
     public Graph copy() {
+        return copy(name);
+    }
+
+    /**
+     * Creates a copy of this graph.
+     *
+     * @param name the name of the copy, used for debugging purposes (can be null)
+     */
+    public Graph copy(String name) {
         Graph copy = new Graph(name);
         copy.addDuplicates(getNodes(), null);
         return copy;
