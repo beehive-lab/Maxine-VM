@@ -30,6 +30,7 @@ import static com.sun.max.vm.thread.VmThread.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.CiKind.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.program.*;
@@ -100,7 +101,7 @@ import com.sun.max.vm.stack.*;
  * The thread local block layout for each thread is traced when a thread starts up if
  * the {@link VmThread#TraceThreads -XX:+TraceThreads} VM option is used.
  */
-public class VmThreadLocal {
+public class VmThreadLocal implements FormatWithToString {
 
     /**
      * Constants describing the read and write protocol for a thread local.
