@@ -392,7 +392,7 @@ public class InliningUtil {
         assert invoke.node().successors().first() != null : invoke;
         assert invoke.node().predecessor() != null;
 
-        Map<Node, Node> duplicates = graph.addDuplicate(nodes, replacements);
+        Map<Node, Node> duplicates = graph.addDuplicates(nodes, replacements);
 
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
