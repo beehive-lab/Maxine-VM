@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**

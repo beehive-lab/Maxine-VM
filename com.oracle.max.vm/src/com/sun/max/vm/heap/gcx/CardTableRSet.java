@@ -25,9 +25,14 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
-
-public class CardTableRSet {
-   final CardTable cardTable;
+/**
+ * A pure card-table based remembered set.
+ * @author ldayne
+ *
+ */
+public class CardTableRSet implements HeapManagementMemoryRequirement {
+    final CardTable cardTable;
+    final CardFirstObjectTable cfoTable;
 
     public void  recordWrite(Address referenceLocation) {
 
@@ -40,11 +45,13 @@ public class CardTableRSet {
 
     public CardTableRSet() {
         cardTable = new CardTable();
+        cfoTable = new CardFirstObjectTable();
     }
 
-    public void initialize(Address coveredAreaStart, Size coveredAreaSize) {
-        cardTable.initialize(coveredAreaStart, coveredAreaSize);
-
+    public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
+        cardTable.initialize(coveredAreaStart, coveredAreaSize, cardTableDataStart);
+        final Address cfoTableStart = cardTableDataStart.plus(cardTable.tableSize(coveredAreaSize).wordAligned());
+        cfoTable.initialize(coveredAreaStart, coveredAreaSize, cfoTableStart);
     }
 
     public void iterateDirtyCards(CellVisitor visitor) {
@@ -62,10 +69,15 @@ public class CardTableRSet {
      */
     void iterate(Address start, Address end, CellVisitor visitor) {
         final int endOfRange = cardTable.tableEntryIndex(end);
-        int cardIndex = cardTable.firstNonZero(cardTable.tableEntryIndex(start), endOfRange);
+        int cardIndex = cardTable.firstDirty(cardTable.tableEntryIndex(start), endOfRange);
         while (cardIndex < endOfRange) {
             visitCard(cardIndex, visitor);
-            cardIndex = cardTable.firstNonZero(cardIndex, endOfRange);
+            cardIndex = cardTable.firstDirty(cardIndex, endOfRange);
         }
+    }
+
+    @Override
+    public Size memoryRequirement(Size maxCoveredAreaSize) {
+        return cardTable.tableSize(maxCoveredAreaSize).plus(cfoTable.tableSize(maxCoveredAreaSize));
     }
 }

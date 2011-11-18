@@ -31,46 +31,71 @@ import static com.sun.max.vm.heap.gcx.CardTable.*;
  * Walking arbitrary cards requires that the contiguous range of virtual address is formatted to allow walking it linearly.
  * It also requires that the header of any object overlapping with the first word of any card
  * can be quickly retrieved (in order to figure out the layout of the object, its size, and its references locations).
- * The CardFirstObjectTable encodes per-card information allowing to find the
+ * The CardFirstObjectTable (or FOT for short) encodes per-card information allowing to find the
  * address of the object overlapping with the first word of a card.
  * Because the table only has 1 byte per entry, objects that overlaps many card will have load multiple entries to find the amount of space
  * to remove to the start of a card to find the start of the object that overlaps with the first word of the card.
- * The value stored in an the entry E of {@link CardFirstObjectTable} is either a negative number of words to add to the address of the first word of card E,
- * or a power of 2 of a number of card to subtract to the index of card E.
+ * The value stored in an entry E of {@link CardFirstObjectTable} is either a negative number of words to add to the address of the first word of card E,
+ * or an encoding of the number of card to subtract to  E's index to obtain the index to the next  entry to read to find information about the start of the object.
+ * The number of card to subtract is either a positive number of card to subtract, or the power of 2 of the number of cards to subtract.
  *
- * Let C be a card whose first word overlaps with an object that starts at address s, such that s is in card c0.
+ * More formally, let C be a card whose first word overlaps with an object that starts at address s, such that s points into card c0.
  * Let d be the distance in number of cards between c0 and C.
- * The value stored in the entry of {@link CardFirstObjectTable}
- * is the negative number of words from the end of card C to the start of the object s if d = 1, otherwise, it is a positive k, such that
- * 2^k < d < 2^(k+1).
+ * The value stored in the entry of {@link CardFirstObjectTable} is:
+ * - the negative number of words from the end of card C to the start of the object s if d = 1,
+ * - a positive number of cards n such that  0 < n < 8 if   1 < d <= 8
+ * - a value l >= 8 such that  k = 1 << (2+l), if  2^k < d < 2^(k+1).
  *
- *  For example, let assume that s points to a 270 Kb object, and O[d] is the entry of {@link CardFirstObjectTable} for the card C
- * at distance d from c0.
- * If d = 1, O[d] = number of words from the end of c0 to s, and is a value between 0 and -127
- * if d > 1,  O[d] = k, the power of 2 of the number of cards to subtract to C's index to retrieve further information related to where s is.
- *
+ *  For example, let assume that s points to a 270 Kb object that starts at card with index c0 and covers 540 512-bytes cards.
+ *  If O[x] is the entry of {@link CardFirstObjectTable} for the card x, then
+ * O[c0 + 1] = number of words from the end of c0 to s, and is a value between 0 and -127. One load to compute s.
+ * O[c0 + i] / i : [2..8]  = i -1. Two loads to find s.
+ * O[c0+9] = 8. Two loads to find s.
+ * O[c0 + i] / i : [9..16] = 8.   Three loads to find s.
+ * O[c0 + i] / i : [17..32] = 9.   Four loads to find s.
+ * etc...
+ * In general, this encoding allow to find the start of an object overlapping with a card C at a distance d from the card c0 in n hops,
+ * where  n = k - 1 and  2^k < d <= 2^(k+1).
  *
  * A heap implementation using a card table is responsible for updating the information tracked by the table.
  * Update of the information simply requires calling {@link CardFirstObjectTable#set(Address, Size)} with the
  * address and size of an object crossing a card boundary.
  *
- * A heap component is responsible for updating the table with information.
- *
- *
- *
  */
-public class CardFirstObjectTable extends Power2RegionToByteMapTable {
+public class CardFirstObjectTable extends Log2RegionToByteMapTable {
     static final int LOG2_NUM_WORD_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
     static final int NUM_WORD_PER_CARD = 1 << LOG2_NUM_WORD_PER_CARD;
     static final byte ZERO = 0;
+    /**
+     * Bias to subtract to encoded power of two stored in FOT.
+     */
+    static private final byte LOG2_BIAS = 5;
+    /**
+     * Positive values stored in entries of a FOT strictly above this value denotes a biased power of 2.
+     * Positive values stored in entries of a FOT less or equal to this value denotes a number of cards.
+     */
+    static private final byte LOG2_ENCODING_THRESHOLD = 7;
 
     CardFirstObjectTable() {
         super(LOG2_CARD_SIZE);
     }
 
+    @Override
+    void initialize(Address coveredAreaStart, Size coveredAreaSize) {
+        super.initialize(coveredAreaStart, coveredAreaSize);
+        fill(ZERO);
+    }
+
+    @Override
+    void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
+        super.initialize(coveredAreaStart, coveredAreaSize, storageArea);
+        fill(ZERO);
+    }
+
     /**
-     * Update the table information to record the position of the start of the specified objects for the cards that this objects overlap.
-     * If the object fit within a single card, no update take place.
+     * Set FOT entries corresponding to the cards overlapped by the specified cell.
+     * If the object fit within a single card and doesn't overlap with its first word, no update take place.
+     * This method must be used only to
      *
      * @param cell address of an object
      * @param size size of the object
@@ -79,6 +104,7 @@ public class CardFirstObjectTable extends Power2RegionToByteMapTable {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);
         int lastCard = tableEntryIndex(cell.plus(size));
+        // This is the number of cards, excluding the cards where the cell start.
         int numCards = lastCard  - firstCard;
         if (numCards == 0) {
             if (atBoundary(cell)) {
@@ -87,34 +113,57 @@ public class CardFirstObjectTable extends Power2RegionToByteMapTable {
             }
             // Otherwise, the cell doesn't cross a card boundary, so nothing to update.
         }
+        // FOT entry next to that for the card that contains the start of the cell always encode a negative offset.
         int nextCard = firstCard + 1;
         final byte numWords = (byte) rangeStart(nextCard).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         set(nextCard, numWords);
-
-        int k = 1;
-        int distance = 1 << k;
-        while (distance <= numCards) {
-
+        int remainingCards = numCards - 1;
+        if (remainingCards == 0) {
+            return;
         }
-        while (numCards > 1) {
-            byte log2 =  (byte) Address.fromInt(numCards).mostSignificantBitSet();
-            int prevCard = lastCard - (1 << (log2 -1));
-            while (lastCard > prevCard) {
-                set(lastCard--, log2);
+        // Subsequent LOG2_ENCODING_THRESHOLD entries encode a distance (in number of cards) to the cards holding the offset information.
+        int numNonLogEncodedCards = remainingCards >= LOG2_ENCODING_THRESHOLD ? LOG2_ENCODING_THRESHOLD : remainingCards;
+
+        for (byte i = 1; i <= numNonLogEncodedCards; i++) {
+            set(nextCard + i, i);
+        }
+        nextCard += numNonLogEncodedCards;
+
+        // All subsequent entries, if any, encode the distance to a previous entry as a biased power of two.
+        int log2 = 3;
+        while (nextCard <= lastCard) {
+            // get the range of FOT entries that will store  the encoded current log2.
+            int c = nextCard;
+            int endOfCardRange  = 1 << (log2 + 1);
+            nextCard = firstCard + (numCards > endOfCardRange ? endOfCardRange : numCards);
+            byte biasedLog2 = (byte) (log2 + LOG2_BIAS);
+            while (c <= nextCard) {
+                set(c, biasedLog2);
             }
-            numCards = lastCard - firstCard;
+            log2++;
         }
     }
 
+    /**
+     * Return the address of the cell that overlaps the first word of the card specified by the card index.
+     * @param cardIndex the index of a card
+     * @return an address in the contiguous range of virtual memory covered by the card table associated with this FOT.
+     */
     Address cellStart(int cardIndex) {
         int nextCardIndex = cardIndex;
         byte startInfo = get(nextCardIndex);
-        while (startInfo > ZERO) {
-            int distanceToNextCard = 1 << startInfo;
-            nextCardIndex -= distanceToNextCard;
-            startInfo = get(nextCardIndex);
+        if (startInfo > ZERO) {
+            while (startInfo > LOG2_ENCODING_THRESHOLD) {
+                int distanceToNextCard = 1 << (startInfo - LOG2_BIAS);
+                nextCardIndex -= distanceToNextCard;
+                startInfo = get(nextCardIndex);
+            }
+            if (startInfo > ZERO) {
+                startInfo = get(nextCardIndex);
+            }
         }
         int offset = startInfo << Word.widthValue().log2numberOfBytes;
-        return rangeStart(cardIndex).minus(offset);
+        assert offset <= 0 : "offset encoded in FOT entries must be negative";
+        return rangeStart(cardIndex).plus(offset);
     }
 }

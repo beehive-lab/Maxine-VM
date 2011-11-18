@@ -22,9 +22,14 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import java.util.*;
+
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -32,7 +37,7 @@ import com.sun.max.vm.type.*;
  * Class that implements a mapping of fixed size region in a contiguous range of virtual memory to entry of a byte  table.
  * Regions have a size that is a power of two and are aligned on that power of 2.
  */
-public class Power2RegionToByteMapTable {
+public class Log2RegionToByteMapTable {
     final int log2RangeSize;
     private Address coveredAreaStart;
     private Address coveredAreaEnd;
@@ -50,9 +55,17 @@ public class Power2RegionToByteMapTable {
      */
     Pointer biasedTableAddress;
 
-    Power2RegionToByteMapTable(int log2RangeSize) {
+    Log2RegionToByteMapTable(int log2RangeSize) {
         assert log2RangeSize < 32 : "size of contiguous range too large";
         this.log2RangeSize = log2RangeSize;
+    }
+
+    private Size tableSize(int tableLength) {
+        return Layout.byteArrayLayout().getArraySize(Kind.BYTE, tableLength);
+    }
+
+    final protected Size tableHeaderSize() {
+        return  tableSize(0);
     }
 
     /**
@@ -64,8 +77,17 @@ public class Power2RegionToByteMapTable {
         return coveredAreaSize.unsignedShiftedRight(log2RangeSize).toInt();
     }
 
+    final Size tableSize(Size coveredAreaSize) {
+        return tableSize(tableLength(coveredAreaSize));
+    }
+
     void initialize(Address coveredAreaStart, Size coveredAreaSize) {
         initialize(coveredAreaStart, coveredAreaSize, new byte[tableLength(coveredAreaSize)]);
+    }
+
+    void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
+        final byte [] table =  (byte[]) Cell.plantArray(storageArea.asPointer(), ClassRegistry.BYTE_ARRAY.dynamicHub(), tableLength(coveredAreaSize));
+        initialize(coveredAreaStart, coveredAreaSize, table);
     }
 
     void initialize(Address coveredAreaStart, Size coveredAreaSize, byte [] table) {
@@ -74,9 +96,9 @@ public class Power2RegionToByteMapTable {
         assert coveredAreaStart.isAligned(1 << log2RangeSize) : "start of covered area must be aligned to specified power of 2";
         assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
         this.table = table;
-        tableAddress = Reference.fromJava(table).toOrigin().plus(Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0));
+        tableAddress = Reference.fromJava(table).toOrigin().plus(tableHeaderSize());
         biasedTableAddress = tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
-        assert tableEntryAddress(coveredAreaStart).equals(tableAddress);
+        assert byteAddressFor(coveredAreaStart).equals(tableAddress);
     }
 
     /**
@@ -86,6 +108,18 @@ public class Power2RegionToByteMapTable {
      */
     final public boolean isCovered(Address address) {
         return address.greaterEqual(coveredAreaStart) && address.lessThan(coveredAreaEnd);
+    }
+
+    private void checkCoverage(Address address) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(isCovered(address), "must not pass an uncovered address to an unsafe method");
+        }
+    }
+
+    private void checkIndex(int index) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(index >= 0 && index < table.length, "must not pass an uncovered index to an unsafe method");
+        }
     }
 
     final int tableEntryIndex(Address coveredAddress) {
@@ -104,53 +138,67 @@ public class Power2RegionToByteMapTable {
         return coveredAreaStart.plus(Address.fromLong(1L).shiftedLeft(log2RangeSize));
     }
 
-    private Pointer tableEntryAddress(Address coveredAddress) {
+    /**
+     * Returns the address of the entry holding the byte corresponding to the region that contains the specified address.
+     * @param coveredAddress an address in the contiguous range of virtual memory covered by the table.
+     * @return
+     */
+    private Pointer byteAddressFor(Address coveredAddress) {
+        checkCoverage(coveredAddress);
         return biasedTableAddress.plus(coveredAddress.unsignedShiftedRight(log2RangeSize));
     }
 
-    final void set(Address address, byte value) {
-        tableEntryAddress(address).setByte(value);
+    /**
+     * Set the byte in the table corresponding to an address that the caller guarantees is covered by the table.
+     * Passing an uncovered address here may result in memory corruption.
+     * @param coveredAddress an address guaranteed to be covered by the table
+     * @param value a byte value
+     */
+    final void unsafeSet(Address coveredAddress, byte value) {
+        byteAddressFor(coveredAddress).setByte(value);
     }
 
     /**
-     * Find the first entry set to non-zero in the specified range of entries in the table.
-     * @param start
-     * @param end
-    * @return
+     * Get the byte in the table corresponding to an address that the caller guarantees is covered by the table.
+     * Passing an uncovered address here result in returning an random value or a memory access violation.
+     * @param coveredAddress an address guaranteed to be covered by the table
+     * @return a byte value
      */
-    final int firstNonZero(int start, int end) {
-        // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
-        // We may also get rid of the limit test by making the end of the range looking like a marked card.
-        // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
-        final Pointer first = tableAddress.plus(start);
-        final Pointer limit = tableAddress.plus(end);
-        Pointer cursor = first;
-        while (cursor.getByte() != 0) {
-            cursor = cursor.plus(1);
-            if (cursor.greaterEqual(limit)) {
-                return -1;
-            }
-        }
-        return cursor.minus(first).toInt();
+    final byte unsafeGet(Address address) {
+        return byteAddressFor(address).getByte();
     }
 
-    final byte get(Address address) {
-        return tableEntryAddress(address).getByte();
+    final byte unsafeGet(int index) {
+        return tableAddress.getByte(index);
     }
 
-    final byte unsafeGet(int regionNum) {
-        return tableAddress.getByte(regionNum);
+    final void unsafeSet(int index, byte value) {
+        tableAddress.setByte(index, value);
     }
 
-    final void unsafeSet(int regionNum, byte value) {
-        tableAddress.setByte(regionNum, value);
+    final public byte get(int index) {
+        return table[index];
     }
 
-    final public byte get(int regionNum) {
-        return table[regionNum];
+    final  public byte set(int index, byte value) {
+        return table[index] = value;
     }
 
-    final  public byte set(int regionNum, byte value) {
-        return table[regionNum] = value;
+    /**
+     * Set all the entries of the table to the specified value.
+     * @param value the value to set all entrie to.
+     */
+    void fill(byte value) {
+        Arrays.fill(table, value);
+    }
+
+    /**
+     * Set all the entries of the table in the specified range of indexes to the specified value.
+     * @param fromIndex first entry of the range (inclusive)
+     * @param toIndex index to the last entry of the range (exclusive)
+     * @param value
+     */
+    void fill(int fromIndex, int toIndex, byte value) {
+        Arrays.fill(table, fromIndex, toIndex, value);
     }
 }

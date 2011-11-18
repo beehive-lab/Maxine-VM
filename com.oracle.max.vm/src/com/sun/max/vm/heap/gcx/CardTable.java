@@ -22,13 +22,16 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.CardTable.CardValue.*;
+
+import com.sun.max.unsafe.*;
 /**
  *
  *
  */
-class CardTable extends  Power2RegionToByteMapTable {
+class CardTable extends  Log2RegionToByteMapTable {
     /**
-     * Power of 2 of a card size in bytes.
+     * Log2 of a card size in bytes.
      */
     static final int LOG2_CARD_SIZE = 9;
     /**
@@ -36,10 +39,82 @@ class CardTable extends  Power2RegionToByteMapTable {
      */
     static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
 
-    private static final int INVALID_CARD_INDEX = -1;
+    static final int NO_CARD_INDEX = -1;
 
+    static enum CardValue {
+        CLEAN_CARD(0xff),
+        DIRTY_CARD(0);
+        byte value;
+        CardValue(int value) {
+            this.value = (byte) value;
+        }
+        byte value() {
+            return value;
+        }
+    }
 
     CardTable() {
         super(LOG2_CARD_SIZE);
+    }
+
+    @Override
+    void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
+        super.initialize(coveredAreaStart, coveredAreaSize, storageArea);
+        cleanAll();
+    }
+
+    @Override
+    void initialize(Address coveredAreaStart, Size coveredAreaSize) {
+        super.initialize(coveredAreaStart, coveredAreaSize);
+        cleanAll();
+    }
+
+    /**
+     * Set all cards of the table to the {@link CardValue#CLEAN_CARD} value.
+     */
+    void cleanAll() {
+        fill(CLEAN_CARD.value());
+    }
+
+    void clear(int fromIndex, int toIndex) {
+        fill(fromIndex, toIndex, CLEAN_CARD.value());
+    }
+
+    void dirty(int fromIndex, int toIndex) {
+        fill(fromIndex, toIndex, DIRTY_CARD.value());
+    }
+
+    void clear(int index) {
+        set(index, CLEAN_CARD.value());
+    }
+
+    void dirty(int index) {
+        set(index, DIRTY_CARD.value());
+    }
+
+    void dirtyCovered(Address coveredAddress) {
+        unsafeSet(coveredAddress, DIRTY_CARD.value());
+    }
+
+    /**
+     * Find the first dirty card specified range of entries in the table.
+     * @param start index of the first card in the range (inclusive)
+     * @param end index of the last card of the range (exclusive
+    * @return {@link #NO_CARD_INDEX} if all the cards in the range are clean, the index to the first dirty card otherwise.
+    */
+    final int firstDirty(int start, int end) {
+        // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
+        // We may also get rid of the limit test by making the end of the range looking like a marked card.
+        // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
+        final Pointer first = tableAddress.plus(start);
+        final Pointer limit = tableAddress.plus(end);
+        Pointer cursor = first;
+        while (cursor.getByte() != 0) {
+            cursor = cursor.plus(1);
+            if (cursor.greaterEqual(limit)) {
+                return -1;
+            }
+        }
+        return cursor.minus(first).toInt();
     }
 }
