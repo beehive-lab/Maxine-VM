@@ -48,8 +48,8 @@ public class InliningPhase extends Phase implements InliningCallback {
 
     private static final int MAX_ITERATIONS = 1000;
 
-    private final GraalRuntime runtime;
     private final CiTarget target;
+    private final GraalRuntime runtime;
 
     private int inliningSize;
     private final Collection<Invoke> hints;
@@ -62,9 +62,9 @@ public class InliningPhase extends Phase implements InliningCallback {
 
     private final PhasePlan plan;
 
-    public InliningPhase(GraalRuntime runtime, CiTarget target, Collection<Invoke> hints, CiAssumptions assumptions, PhasePlan plan) {
-        this.runtime = runtime;
+    public InliningPhase(CiTarget target, GraalRuntime runtime, Collection<Invoke> hints, CiAssumptions assumptions, PhasePlan plan) {
         this.target = target;
+        this.runtime = runtime;
         this.hints = hints;
         this.assumptions = assumptions;
         this.plan = plan;
