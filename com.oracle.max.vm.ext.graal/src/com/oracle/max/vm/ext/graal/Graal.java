@@ -41,6 +41,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.snippets.*;
+import com.oracle.max.vm.ext.graal.stubs.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
@@ -183,8 +184,9 @@ public class Graal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             if (method.compilee().isNative()) {
-                NativeStubCompiler nsc = new NativeStubCompiler(method);
-                compiledMethod = nsc.compile(compiler(), plan);
+                NativeStubGraphBuilder nativeStubCompiler = new NativeStubGraphBuilder(method);
+                compiledMethod = compiler.compileMethod(method, nativeStubCompiler.build(), plan).targetMethod();
+                //System.out.println(runtime.disassemble(compiledMethod));
             } else {
                 compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
             }
