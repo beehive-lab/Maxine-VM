@@ -185,7 +185,7 @@ public final class GraalCompilation {
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
-            if (GraalOptions.ProbabilityAnalysis) {
+            if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
 
