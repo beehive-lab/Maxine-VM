@@ -388,6 +388,9 @@ public class CFGPrinter extends CompilationPrinter {
     }
 
     private static String blockToString(Block block) {
+        if (block instanceof LIRBlock) {
+            return "B" + block.blockID();
+        }
         return "B" + block.firstNode().toString(Verbosity.Id);
     }
 
