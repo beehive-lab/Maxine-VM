@@ -331,14 +331,16 @@ public final class JDK_java_lang_Thread {
 
     /**
      * We substitute this because {@link Thread} holds the name as a {@code char} array,
-     * and we have cached it as a {@link String} in the {@link VmThread}.
+     * and we have cached it as a {@link String} in the {@link VmThread} after the thread was started.
      * @return
      */
     @SUBSTITUTE
     public String getName() {
-        VmThread vmThread = thisVMThread();
-        String name = vmThread.getName();
-        return name;
+        if (thisVMThread() != null) {
+            return thisVMThread().getName();
+        } else {
+            return String.valueOf(name);
+        }
     }
 
     /**
