@@ -673,10 +673,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
-    public HotSpotCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
-        Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, true);
-        return new HotSpotCompiledMethod(compilerInstance, (HotSpotMethodResolved) method, nmethod);
+    public void installMethod(RiMethod method, CiTargetMethod code) {
+        HotSpotTargetMethod.installMethod(CompilerImpl.getInstance(), (HotSpotMethodResolved) method, code, true);
     }
 
     @Override
@@ -700,8 +698,7 @@ public class HotSpotRuntime implements GraalRuntime {
     @Override
     public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
         Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
-        return new HotSpotCompiledMethod(compilerInstance, method, nmethod);
+        return HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
     }
 
     @Override
