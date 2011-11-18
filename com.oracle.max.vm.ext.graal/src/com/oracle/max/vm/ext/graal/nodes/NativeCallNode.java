@@ -74,6 +74,13 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
         lir.compilation.frameMap().adjustOutgoingStackSize(cc, NativeCall);
 
         List<CiValue> argList = lir.visitInvokeArguments(cc, arguments, null);
+
+        // The callAddress is a possibly long-living virtual register used at the call site.  The register allocator does not like this
+        // because all virtual registers must be spilled at a call site (we don't have callee-saved registers). Therefore, make a
+        // short-lived temporary virtual register where the lifetime is guaranteed to end at the call site.
+        // TODO(cwi) Revisit this when doing SSA-based register allocation, see if there is a way the register allocator can handle it.
+        callAddress = lir.emitMove(callAddress);
+
         argList.add(callAddress);
 
         String target = this.nativeMethod.jniSymbol();
