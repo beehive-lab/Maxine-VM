@@ -221,9 +221,8 @@ public interface RiRuntime {
      *
      * @param method a method whose executable code is being modified
      * @param code the code to be executed when {@code method} is called
-     * @return a reference to the compiled and ready-to-run code
      */
-    RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code);
+    void installMethod(RiMethod method, CiTargetMethod code);
 
     /**
      * Adds the given machine code as an implementation of the given method without making it the default implementation.

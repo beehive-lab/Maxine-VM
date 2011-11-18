@@ -525,13 +525,12 @@ public class MaxRuntime implements GraalRuntime {
         return MethodActor.fromJava(reflectionMethod);
     }
 
-    public RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
+    public void installMethod(RiMethod method, CiTargetMethod code) {
         ClassMethodActor cma = (ClassMethodActor) method;
         synchronized (cma) {
             MaxTargetMethod tm = new MaxTargetMethod(cma, code, true);
             cma.compiledState = new Compilations(null, tm);
         }
-        return null;
     }
 
     @Override
