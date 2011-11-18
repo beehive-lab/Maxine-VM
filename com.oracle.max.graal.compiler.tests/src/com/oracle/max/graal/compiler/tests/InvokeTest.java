@@ -67,7 +67,7 @@ public class InvokeTest extends GraphTest {
         }
         print(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
-        new InliningPhase(runtime(), null, null, null, PhasePlan.DEFAULT).apply(graph);
+        new InliningPhase(null, runtime(), null, null, PhasePlan.DEFAULT).apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }
