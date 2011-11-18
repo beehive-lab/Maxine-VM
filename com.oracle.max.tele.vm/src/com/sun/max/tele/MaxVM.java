@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -84,7 +85,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return access to the VM's class registry and related information.
      */
-    MaxClassRegistry classes();
+    MaxClasses classes();
 
     /**
      * @return access to low level memory reading from the VM.
@@ -114,6 +115,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the singleton manager for information about code in the VM.
      */
     MaxCodeLocationFactory codeLocationFactory();
+
+    /**
+     * @returns access to information about machine code in the VM.
+     */
+    VmMachineCodeAccess machineCode();
 
     /**
      * Gets the manager for creating and managing VM breakpoints.

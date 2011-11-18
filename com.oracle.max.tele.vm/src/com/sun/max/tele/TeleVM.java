@@ -594,7 +594,7 @@ public abstract class TeleVM implements MaxVM {
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
 
-    private final VmCodeLocationManager codeLocationManager;
+    private final VmMachineCodeAccess machineCodeAccess;
 
     /**
      * Breakpoint manager, for both target and bytecode breakpoints.
@@ -753,7 +753,7 @@ public abstract class TeleVM implements MaxVM {
 
         this.threadAccess = VmThreadAccess.make(this);
         this.codeLocationFactory = CodeLocationFactory.make(this);
-        this.codeLocationManager = VmCodeLocationManager.make(this);
+        this.machineCodeAccess = VmMachineCodeAccess.make(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");
@@ -858,7 +858,7 @@ public abstract class TeleVM implements MaxVM {
             memoryAllocations.addAll(heapAccess.memoryAllocations());
 
             // Update status of the code cache, including eviction status and any new allocations.
-            codeCacheAccess.updateStatus(epoch);
+            codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
             // A hook for any other memory regions that might be getting allocated for special platforms
@@ -871,7 +871,7 @@ public abstract class TeleVM implements MaxVM {
             objectAccess.updateCache(epoch);
 
             // Update every local surrogate for a VM compilation
-            codeCacheAccess.updateCache(epoch);
+            machineCodeAccess.updateCache(epoch);
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
             // What's not done yet is updating the thread memory regions.
@@ -973,6 +973,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final CodeLocationFactory codeLocationFactory() {
         return codeLocationFactory;
+    }
+
+    public final VmMachineCodeAccess machineCode() {
+        return machineCodeAccess;
     }
 
     public final VmBreakpointManager breakpointManager() {
@@ -1996,7 +2000,7 @@ public abstract class TeleVM implements MaxVM {
         public TargetMethodAccess[] findTargetMethods(long[] addresses) {
             final TargetMethodAccess[] result = new TargetMethodAccess[addresses.length];
             for (int i = 0; i < addresses.length; i++) {
-                result[i] = TeleVM.this.codeCache().findCompiledCode(Address.fromLong(addresses[i])).teleTargetMethod();
+                result[i] = TeleVM.this.machineCode().findCompilation(Address.fromLong(addresses[i])).teleTargetMethod();
             }
             return result;
         }

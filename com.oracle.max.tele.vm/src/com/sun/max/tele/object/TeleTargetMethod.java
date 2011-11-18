@@ -43,7 +43,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
@@ -839,7 +839,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
         // superclass constructors.
-        vm.codeCache().register(this);
+        vm.machineCode().registerCompilation(this);
     }
 
     /**
@@ -887,7 +887,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * in the VM.
      */
     private boolean isCurrent() {
-        return !targetMethodCache.codeStart.isZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
+        return targetMethodCache.codeStart.isNotZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
     }
 
     private void setEvicted() {
@@ -995,7 +995,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
         // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
         // last check, assuming that the last check wasn't *in* an eviction cycle.
-        if (!codeWipedSentinelAddress.isZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
+        if (codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
             setEvicted();
             return true;
         }

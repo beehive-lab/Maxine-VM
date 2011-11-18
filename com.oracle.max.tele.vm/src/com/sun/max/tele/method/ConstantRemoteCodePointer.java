@@ -20,15 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.method;
 
+import com.sun.max.unsafe.*;
 
 /**
- * Data describing a single block of external machine code representing a native routine
- * about which little is known.
+ * A fixed location in VM memory that contains machine code, to be used for machine code locations that are presumed not
+ * to move or be evicted.
  */
-public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
+class ConstantRemoteCodePointer implements RemoteCodePointer {
 
-    long DEFAULT_NATIVE_CODE_LENGTH = 200;
+    private final Address address;
+
+    public ConstantRemoteCodePointer(Address address) {
+        this.address = address;
+    }
+
+    @Override
+    public Address getAddress() {
+        return address;
+    }
 
 }
