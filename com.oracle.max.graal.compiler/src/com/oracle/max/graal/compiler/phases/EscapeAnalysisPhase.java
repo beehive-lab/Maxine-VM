@@ -328,7 +328,7 @@ public class EscapeAnalysisPhase extends Phase {
                 if (op != null && op.canAnalyze(fixedNode)) {
                     try {
                         performAnalysis(graph, fixedNode, op);
-                    } catch (VerificationError e) {
+                    } catch (GraalInternalError e) {
                         throw e.addContext("escape analysis of node", node);
                     }
                 }
