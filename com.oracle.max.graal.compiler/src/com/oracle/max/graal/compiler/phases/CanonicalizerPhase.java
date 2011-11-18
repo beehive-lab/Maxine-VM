@@ -75,9 +75,9 @@ public class CanonicalizerPhase extends Phase {
 //     cases:                                           original node:
 //                                         |Floating|Fixed-unconnected|Fixed-connected|
 //                                         --------------------------------------------
-//                                     null|   1    |        X        |       2       |
+//                                     null|   1    |        X        |       3       |
 //                                         --------------------------------------------
-//                                 Floating|   1    |        X        |       2       |
+//                                 Floating|   1    |        X        |       3       |
 //       canonical node:                   --------------------------------------------
 //                        Fixed-unconnected|   X    |        X        |       2       |
 //                                         --------------------------------------------
