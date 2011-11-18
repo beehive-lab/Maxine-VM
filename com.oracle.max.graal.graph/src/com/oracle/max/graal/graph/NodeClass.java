@@ -789,6 +789,9 @@ public class NodeClass {
     }
 
     static Map<Node, Node> addGraphDuplicate(Graph graph, Iterable<Node> nodes, Map<Node, Node> replacements) {
+        if (replacements == null) {
+            replacements = Collections.emptyMap();
+        }
         Map<Node, Node> newNodes = new IdentityHashMap<Node, Node>();
         // create node duplicates
         for (Node node : nodes) {

@@ -39,6 +39,7 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
 
     @Override
     public void setStateAfter(FrameState x) {
+        assert x.isAlive() : "frame state must be in a graph";
         updateUsages(stateAfter, x);
         stateAfter = x;
     }

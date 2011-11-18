@@ -222,6 +222,16 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
+    public void compilationStarted(String groupTitle) {
+        openPrinter(groupTitle);
+    }
+
+    public void printGraph(String graphTitle, Graph graph) {
+        if (printer != null) {
+            printer.print(graph, graphTitle, true);
+        }
+    }
+
     public void printSingleGraph(String title, Graph graph) {
         printSingleGraph(title, title, graph);
     }
