@@ -23,23 +23,31 @@
 package com.sun.max.vm.bytecode;
 
 /**
- * Extends the notion of a {@linkplain BCIRange BCI range} to refer to a specific underlying
- * {@linkplain #code() code array}.
+ * A block of bytecode.
  */
-public class BytecodeBlock extends BCIRange {
+public class BytecodeBlock {
+
+    /**
+     * The lowest bci regarded as within this range.
+     */
+    public final int start;
+
+    /**
+     * The highest bci regarded as within this range.
+     */
+    public final int end;
 
     private final byte[] code;
 
     public BytecodeBlock(byte[] bytecode, int startBCI, int endBCI) {
-        super(startBCI, endBCI);
+        this.start = startBCI;
+        this.end = endBCI;
         code = bytecode;
         assert check();
     }
 
     public BytecodeBlock(byte[] bytecode) {
-        super(0, bytecode.length - 1);
-        code = bytecode;
-        assert check();
+        this(bytecode, 0, bytecode.length - 1);
     }
 
     private boolean check() {
@@ -63,5 +71,10 @@ public class BytecodeBlock extends BCIRange {
      */
     public int size() {
         return end - start + 1;
+    }
+
+    @Override
+    public String toString() {
+        return start + "-" + end;
     }
 }
