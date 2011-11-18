@@ -61,6 +61,8 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
     private IdentityHashMap<RiMethod, StructuredGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, StructuredGraph>();
+    // TODO(ls) this is not a permanent solution - there should be a more sophisticated compiler oracle
+    private HashSet<RiResolvedMethod> notInlineableMethods = new HashSet<RiResolvedMethod>();
 
     private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
 
@@ -164,7 +166,14 @@ public class HotSpotRuntime implements GraalRuntime {
 
     @Override
     public boolean mustNotInline(RiResolvedMethod method) {
+        if (notInlineableMethods.contains(method)) {
+            return true;
+        }
         return Modifier.isNative(method.accessFlags());
+    }
+
+    public void makeNotInlineable(RiResolvedMethod method) {
+        notInlineableMethods.add(method);
     }
 
     @Override
