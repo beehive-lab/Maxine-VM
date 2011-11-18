@@ -65,7 +65,7 @@ final class AddressToCompilationMap {
      */
     void add(TeleCompilation teleCompilation) {
         final MaxEntityMemoryRegion<MaxCompilation> memoryRegion = teleCompilation.memoryRegion();
-        assert !memoryRegion.start().isZero();
+        assert memoryRegion.start().isNotZero();
         compilationMemoryRegions.add(memoryRegion);
     }
 

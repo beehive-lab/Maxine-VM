@@ -887,7 +887,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * in the VM.
      */
     private boolean isCurrent() {
-        return !targetMethodCache.codeStart.isZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
+        return targetMethodCache.codeStart.isNotZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
     }
 
     private void setEvicted() {
@@ -995,7 +995,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
         // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
         // last check, assuming that the last check wasn't *in* an eviction cycle.
-        if (!codeWipedSentinelAddress.isZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
+        if (codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
             setEvicted();
             return true;
         }

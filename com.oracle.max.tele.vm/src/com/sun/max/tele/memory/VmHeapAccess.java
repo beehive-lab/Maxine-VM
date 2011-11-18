@@ -283,7 +283,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
         final Word fieldValue = memory().readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
 
-        if (!fieldValue.isZero()) {
+        if (fieldValue.isNotZero()) {
             // Assert that this points to an array of references, read as words
             final RemoteTeleReference wordArrayRef = referenceManager().makeTemporaryRemoteReference(fieldValue.asAddress());
             final int wordArrayLength = Layout.readArrayLength(wordArrayRef);

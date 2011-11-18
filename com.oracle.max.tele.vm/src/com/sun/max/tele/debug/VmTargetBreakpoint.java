@@ -441,7 +441,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             vm().lock();
             assert codeLocation.hasAddress();
             final Address address = codeLocation.address();
-            TeleError.check(!address.isZero());
+            TeleError.check(address.isNotZero());
 
             SystemTargetBreakpoint systemBreakpoint;
             try {
@@ -476,7 +476,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         VmTargetBreakpoint makeTransientBreakpoint(CodeLocation codeLocation) throws MaxVMBusyException {
             assert codeLocation.hasAddress();
             final Address address = codeLocation.address();
-            TeleError.check(!address.isZero());
+            TeleError.check(address.isNotZero());
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }

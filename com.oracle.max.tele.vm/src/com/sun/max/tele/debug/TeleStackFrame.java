@@ -122,7 +122,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
-        if (!instructionPointer.isZero()) {
+        if (instructionPointer.isNotZero()) {
             final StackFrame callee = stackFrame.calleeFrame();
             if (callee == null) {
                 // Top frame, not a call return so no adjustment.

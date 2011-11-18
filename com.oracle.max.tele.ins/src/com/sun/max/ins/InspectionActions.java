@@ -2405,7 +2405,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MaxCodeLocation toggleCodeLocation = (codeLocation != null) ? codeLocation : focus().codeLocation();
-            if (toggleCodeLocation.hasAddress() && !toggleCodeLocation.address().isZero()) {
+            if (toggleCodeLocation.hasAddress() && toggleCodeLocation.address().isNotZero()) {
                 MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(toggleCodeLocation);
                 try {
                     if (breakpoint == null) {
@@ -2475,7 +2475,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new NativeLocationInputDialog(inspection(), "Break at machine code address...", vm().bootImageStart(), "") {
                 @Override
                 public void entered(Address address, String description) {
-                    if (!address.isZero()) {
+                    if (address.isNotZero()) {
                         try {
                             final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
                             if (breakpoint == null) {
@@ -3823,7 +3823,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MaxCodeLocation machineCodeLocation = (codeLocation != null) ? codeLocation : focus().codeLocation();
-            if (!machineCodeLocation.address().isZero()) {
+            if (machineCodeLocation.address().isNotZero()) {
                 try {
                     vm().runToInstruction(machineCodeLocation, false, false);
                 } catch (Exception exception) {

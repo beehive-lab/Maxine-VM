@@ -102,7 +102,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
             for (TeleTargetMethod teleTargetMethod : unallocatedTeleTargetMethods) {
-                if (!teleTargetMethod.getRegionStart().isZero() && teleTargetMethod.getRegionNBytes() != 0) {
+                if (teleTargetMethod.getRegionStart().isNotZero() && teleTargetMethod.getRegionNBytes() != 0) {
                     // The compilation has been allocated memory in the VM since the last time we looked; complete its registration.
                     unallocatedTeleTargetMethods.remove(teleTargetMethod);
                     registerCompilation(teleTargetMethod);
