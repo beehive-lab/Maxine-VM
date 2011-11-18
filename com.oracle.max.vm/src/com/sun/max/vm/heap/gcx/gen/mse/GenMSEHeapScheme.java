@@ -82,6 +82,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
         youngSpace = new NoAgingNursery(heapAccount);
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
+        cardTableRSet = new CardTableRSet();
     }
 
     @Override
@@ -95,6 +96,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
             allocateHeapAndGCStorage();
         }
     }
+
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
@@ -114,7 +116,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
 
-        theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
@@ -126,28 +128,28 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
 
             // Heap Marker Data are allocated at end of the space reserved to the heap regions.
             final Address heapMarkerDataStart = heapBounds.end().roundedUpBy(pageSize);
+
+            // Card Table Data are allocated at end of the space reserved to the heap regions.
+            final Address cardTableDataStart =  heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
+            final Size cardTableDataSize = cardTableRSet.memoryRequirement(heapBounds.size());
+
             // Address to the first reserved byte unused by the heap scheme.
-            final Address unusedReservedSpaceStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
+            Address unusedReservedSpaceStart = cardTableDataStart.plus(cardTableDataSize).roundedUpBy(pageSize);
 
             if (!unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace())) {
-                MaxineVM.reportPristineMemoryFailure("heap marker data", "reserve", heapMarkerDatasize);
-            }
-            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2RegionSizeInBytes);
-
-            if (!heapAccount().open(numberOfRegions(applicationHeapMaxSize))) {
-                FatalError.unexpected("Failed to create application heap");
+                MaxineVM.reportPristineMemoryFailure("out of heap data (heap marker + card table", "reserve", heapMarkerDatasize.plus(cardTableDataSize));
             }
 
-            youngSpace.initialize(heapResizingPolicy);
-            oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
-
-            // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-            if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
+            // Initialize card table as early as possible since bootstrapping code may modify reference.
+            if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("card table space", "commit", heapMarkerDatasize);
             }
+            cardTableRSet.initialize(heapBounds.start(), heapBounds.size(), cardTableDataStart, cardTableDataSize);
 
+            if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("heap marker space", "commit", heapMarkerDatasize);
+            }
             heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
-
             // Free reserved space we will not be using.
             Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
 
@@ -159,6 +161,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
+
+            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2RegionSizeInBytes);
+
+            if (!heapAccount().open(numberOfRegions(applicationHeapMaxSize))) {
+                FatalError.unexpected("Failed to create application heap");
+            }
+
+            youngSpace.initialize(heapResizingPolicy);
+            oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
+
         } finally {
             disableCustomAllocation();
         }
