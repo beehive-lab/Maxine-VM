@@ -193,8 +193,8 @@ public final class GraalCompilation {
                 new IntrinsificationPhase(compiler.runtime).apply(graph, context());
             }
 
-            if (GraalOptions.Inline) {
-                new InliningPhase(compiler.runtime, compiler.target, null, assumptions, plan).apply(graph, context());
+            if (GraalOptions.Inline && !plan.isPhaseDisabled(InliningPhase.class)) {
+                new InliningPhase(compiler.target, compiler.runtime, null, assumptions, plan).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
