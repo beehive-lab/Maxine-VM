@@ -158,7 +158,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
 
-        theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+        // All reserved space (but the one used by the heap region manager) is now uncommitted.
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
@@ -182,26 +183,16 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
             }
 
             markSweepSpace.initialize(initSize, applicationHeapMaxSize);
-            // FIXME (ld) We should uncommit what hasn't been committed yet!
-
-            // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-            if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
+            if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("heapMarkerDataStart", "commit", heapMarkerDatasize);
             }
-
             heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
 
             if (DumpFragStatsAfterGC || DumpFragStatsAtGCFailure) {
                 fragmentationStats = new HeapRegionStatistics(markSweepSpace.minReclaimableSpace());
             }
-            // Free reserved space we will not be using.
+            // Free leftover of reserved space we will not be using.
             Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
-
-            // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
-            if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
-            }
-
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
