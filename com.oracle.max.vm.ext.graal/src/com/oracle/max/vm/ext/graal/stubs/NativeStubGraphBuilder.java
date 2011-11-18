@@ -63,8 +63,8 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         if (MaxineVM.isHosted()) {
             init();
         }
-        StructuredGraph tmpl = nativeMethod.isSynchronized() ? syncTemplate : template;
-        setGraph(tmpl.copy(nativeMethod.name()));
+        StructuredGraph template = nativeMethod.isSynchronized() ? synchronizedTemplate : normalTemplate;
+        setGraph(template.copy(nativeMethod.name()));
     }
 
     /**
@@ -131,38 +131,47 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         return template(nativeFunction, traceName);
     }
 
-    static StructuredGraph template;
-    static StructuredGraph syncTemplate;
-//    static StructuredGraph templateWithTracing;
-//    static StructuredGraph syncTemplateWithTracing;
+    static StructuredGraph normalTemplate;
+    static StructuredGraph synchronizedTemplate;
 
     /**
      * Builds the graph for the native method stub.
      */
     public StructuredGraph build() {
+        SignatureDescriptor sig = nativeMethod.descriptor();
+
         if (observer != null) {
             observer.compilationStarted(NativeStubGraphBuilder.class.getSimpleName() + ":" + nativeMethod.format("%h.%n(%p)"));
             observer.printGraph("CopyTemplate", graph);
         }
+
         Iterator<LocalNode> locals = graph.getNodes(LocalNode.class).iterator();
+        LocalNode local0 = locals.next();
+        LocalNode local1 = locals.next();
+        assert !locals.hasNext() : "template should have exactly two arguments";
+        assert local0.kind().isObject();
+        assert local1.kind().isObject();
 
-        // Replace parameters of template with constants
-        LocalNode arg1 = locals.next();
-        LocalNode arg2 = locals.next();
-        assert !locals.hasNext();
+        // Replace template parameters with constants
+        local0.replaceAtUsages(oconst(nativeMethod.nativeFunction));
+        local1.replaceAtUsages(JniFunctions.TraceJNI ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
+        local0.delete();
+        local1.delete();
 
-        arg1.replaceAtUsages(oconst(nativeMethod.nativeFunction));
-        arg2.replaceAtUsages(JniFunctions.TraceJNI ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
-
-        arg1.delete();
-        arg2.delete();
+        ReturnNode returnNode = null;
+        for (Node n : graph.getNodes()) {
+            if (n instanceof ReturnNode) {
+                returnNode = (ReturnNode) n;
+                break;
+            }
+        }
+        assert returnNode != null;
 
         if (observer != null) {
             observer.printGraph("SpecializeLocals", graph);
         }
 
         // Add parameters of native method
-        SignatureDescriptor sig = nativeMethod.descriptor();
         boolean isStatic = nativeMethod.isStatic();
         List<LocalNode> inArgs = createLocals(0, sig, isStatic);
 
@@ -187,6 +196,11 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 break;
             }
         }
+
+        // Fixed the return node to be of the correct kind
+        ReturnNode fixedReturnNode = graph.add(new ReturnNode(returnNode.result()));
+        returnNode.replaceAndDelete(fixedReturnNode);
+
         if (observer != null) {
             observer.printGraph("Inlined", graph);
             apply(new DeadCodeEliminationPhase(), graph);
@@ -199,7 +213,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
     @HOSTED_ONLY
     private static void init() {
-        if (template == null) {
+        if (normalTemplate == null) {
             if (GraalOptions.PrintIdealGraphLevel != 0 || GraalOptions.Plot || GraalOptions.PlotOnError) {
                 if (GraalOptions.PrintIdealGraphFile) {
                     observer = new IdealGraphPrinterObserver();
@@ -213,8 +227,8 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             if (o.networkAvailable()) {
                 observer = o;
             }
-            template = createTemplate("template");
-            syncTemplate = createTemplate("syncTemplate");
+            normalTemplate = createTemplate("template");
+            synchronizedTemplate = createTemplate("syncTemplate");
         }
     }
 
@@ -229,13 +243,13 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     private static StructuredGraph createTemplate(String name) {
         MaxRuntime runtime = runtime();
         StructuredGraph graph = new StructuredGraph();
-        MethodActor template = findMethod(NativeStubGraphBuilder.class, name, NativeFunction.class, String.class);
+        MethodActor method = findMethod(NativeStubGraphBuilder.class, name, NativeFunction.class, String.class);
 
         if (observer != null) {
             observer.compilationStarted(NativeStubGraphBuilder.class.getSimpleName() + ":" + name);
         }
 
-        apply(new GraphBuilderPhase(runtime, template, null, false, true), graph);
+        apply(new GraphBuilderPhase(runtime, method, null, false, true), graph);
         apply(new PhiSimplificationPhase(), graph);
         apply(new DeadCodeEliminationPhase(), graph);
         int nodeCount;

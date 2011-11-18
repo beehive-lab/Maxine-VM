@@ -65,7 +65,6 @@ public class StructuredGraph extends Graph {
         HashMap<Node, Node> replacements = new HashMap<Node, Node>();
         replacements.put(start, copy.start);
         copy.addDuplicates(getNodes(), replacements);
-        copy.verify();
         return copy;
     }
 
