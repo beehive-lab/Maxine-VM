@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.java;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
@@ -84,5 +85,12 @@ public abstract class AccessFieldNode extends AbstractStateSplit implements Lowe
     @Override
     public void lower(CiLoweringTool tool) {
         tool.getRuntime().lower(this, tool);
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("field", CiUtil.format("%h.%n", field));
+        return debugProperties;
     }
 }

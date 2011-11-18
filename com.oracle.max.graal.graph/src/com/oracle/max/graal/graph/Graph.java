@@ -24,7 +24,8 @@ package com.oracle.max.graal.graph;
 
 import java.util.*;
 
-import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.graph.Node.IterableNodeType;
+import com.oracle.max.graal.graph.Node.ValueNumberable;
 
 /**
  * This class is a graph container, it contains the set of nodes that belong to this graph.
@@ -75,23 +76,31 @@ public class Graph {
     }
 
     /**
-     * Creates a new Graph containing only one node : the provided {@code start} node.
-     * @param start the node to use as the {@link #start() start} node
+     * Creates an empty Graph with no name.
      */
     public Graph() {
         this(null);
     }
 
     /**
-     * Creates a new Graph containing only one node : the provided {@code start} node.
+     * Creates an empty Graph with a given name.
+     *
      * @param name the name of the graph, used for debugging purposes
-     * @param start the node to use as the {@link #start() start} node
      */
     public Graph(String name) {
         nodes = new ArrayList<Node>(32);
         nodeCacheFirst = new ArrayList<Node>(NodeClass.cacheSize());
         nodeCacheLast = new ArrayList<Node>(NodeClass.cacheSize());
         this.name = name;
+    }
+
+    /**
+     * Creates a copy of this graph.
+     */
+    public Graph copy() {
+        Graph copy = new Graph(name);
+        copy.addDuplicates(getNodes(), null);
+        return copy;
     }
 
     @Override
@@ -428,15 +437,17 @@ public class Graph {
     }
 
     /**
-     * Adds duplicates of the nodes found in {@code nodes} to this graph.
-     * This will recreate any edges between the duplicate nodes. The {@code replacement} map can be used to replace a node from the source graph by a given node (which should already be in this graph).
-     * Edges between the duplicate an replacement nodes will also be recreated so care should be taken regarding the matching of node types in the replacement map.
-     * This method returns a map which associates the duplicated nodes to their duplicate.
-     * @param nodes an iterator containing the nodes to be duplicated
-     * @param replacements the replacement map
-     * @return a map which associates the duplicated nodes to their duplicate
+     * Adds duplicates of the nodes in {@code nodes} to this graph.
+     * This will recreate any edges between the duplicate nodes. The {@code replacement} map can be used to
+     * replace a node from the source graph by a given node (which must already be in this graph).
+     * Edges between duplicate and replacement nodes will also be recreated so care should be taken
+     * regarding the matching of node types in the replacement map.
+     *
+     * @param nodes the nodes to be duplicated
+     * @param replacements the replacement map (can be null if no replacement is to be performed)
+     * @return a map which associates the original nodes from {@code nodes} to their duplicates
      */
-    public Map<Node, Node> addDuplicate(Iterable<Node> nodes, Map<Node, Node> replacements) {
+    public Map<Node, Node> addDuplicates(Iterable<Node> nodes, Map<Node, Node> replacements) {
         return NodeClass.addGraphDuplicate(this, nodes, replacements);
     }
 }

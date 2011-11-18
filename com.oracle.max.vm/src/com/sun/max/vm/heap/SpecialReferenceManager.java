@@ -478,7 +478,7 @@ public class SpecialReferenceManager {
      */
     private static void startReferenceHandlerThread() {
         // The thread was built into the boot image. We simply need to start it:
-        VmThread.referenceHandlerThread.start0();
+        VmThread.referenceHandlerThread.startVmSystemThread();
     }
 
     /**
@@ -487,7 +487,7 @@ public class SpecialReferenceManager {
     private static void startFinalizerThread() {
         if (FINALIZERS_SUPPORTED) {
             // The thread was built into the boot image. We simply need to start it:
-            VmThread.finalizerThread.start0();
+            VmThread.finalizerThread.startVmSystemThread();
         }
     }
 }

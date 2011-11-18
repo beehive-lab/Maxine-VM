@@ -109,8 +109,6 @@ public class LogStream {
         if (ps != null) {
             if (withNewline) {
                 lineBuffer.append(LINE_SEPARATOR);
-            } else {
-                assert lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1;
             }
             ps.print(lineBuffer.toString());
             ps.flush();
@@ -126,7 +124,7 @@ public class LogStream {
     public void flush() {
         if (ps != null) {
             if (lineBuffer.length() != 0) {
-                flushLine(true);
+                flushLine(false);
             }
             ps.flush();
         }

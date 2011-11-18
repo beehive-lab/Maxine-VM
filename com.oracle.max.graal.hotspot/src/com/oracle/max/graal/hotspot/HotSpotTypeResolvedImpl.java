@@ -49,6 +49,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private boolean superTypeSet;
     private RiField[] fields;
     private RiConstantPool constantPool;
+    private boolean isInitialized;
 
     private HotSpotTypeResolvedImpl() {
         super(null);
@@ -134,7 +135,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public boolean isInitialized() {
-        return compiler.getVMEntries().RiType_isInitialized(this);
+        if (!isInitialized) {
+            isInitialized = compiler.getVMEntries().RiType_isInitialized(this);
+        }
+        return isInitialized;
     }
 
     @Override
@@ -191,7 +195,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
+    public synchronized RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
         RiResolvedField result = null;
 
         long id = offset + ((long) flags << 32);

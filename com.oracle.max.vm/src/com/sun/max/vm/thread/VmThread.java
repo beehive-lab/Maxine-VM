@@ -26,6 +26,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
@@ -648,9 +649,9 @@ public class VmThread {
             vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
 
             // We can now start the other system threads.
-            VmThread.vmOperationThread.start0();
+            VmThread.vmOperationThread.startVmSystemThread();
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
-            VmThread.signalDispatcherThread.start0();
+            VmThread.signalDispatcherThread.startVmSystemThread();
 
         }
 
@@ -1304,6 +1305,23 @@ public class VmThread {
     public void decrementPendingOperations() {
         --pendingOperations;
         FatalError.check(pendingOperations >= 0, "pendingOperations should never be negative");
+    }
+
+    private static class ThreadGroupAlias {
+        @INTRINSIC(UNSAFE_CAST) public static native ThreadGroupAlias asThreadGroupAlias(Object object);
+        @ALIAS(declaringClass = ThreadGroup.class)
+        private native void add(Thread t);
+    }
+
+    /**
+     * Start a VM boot image system group thread.
+     * System threads created in this class are {@code ThreadGroup.addUnstarted} when created in the boot image.
+     * This method causes them to actually be added to the thread group data structure.
+     */
+    public final void startVmSystemThread() {
+        ThreadGroupAlias threadGroupAlias = ThreadGroupAlias.asThreadGroupAlias(systemThreadGroup);
+        threadGroupAlias.add(javaThread);
+        start0();
     }
 
     /**
