@@ -72,7 +72,6 @@ public abstract class CiValue implements Serializable {
     }
 
     public CiRegister asRegister() {
-        System.out.println(this.getClass());
         throw new InternalError("Not a register: " + this);
     }
 
