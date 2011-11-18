@@ -102,7 +102,7 @@ public class IdealGraphPrinter {
         stream.printf(" <method name='%s' shortName='%s' bci='%d'>%n", escape(name), escape(shortName), bci);
         if (GraalOptions.PrintIdealGraphBytecodes && method != null) {
             StringBuilder sb = new StringBuilder(40);
-            stream.println("<bytecodes>\n&lt;![CDATA[");
+            stream.println("<bytecodes>\n<![CDATA[");
             BytecodeStream bytecodes = new BytecodeStream(method.code());
             while (bytecodes.currentBC() != Bytecodes.END) {
                 sb.setLength(0);
@@ -114,7 +114,7 @@ public class IdealGraphPrinter {
                 stream.println(sb.toString());
                 bytecodes.next();
             }
-            stream.println("]]&gt;</bytecodes>");
+            stream.println("]]></bytecodes>");
         }
         stream.println("</method>");
     }
