@@ -673,7 +673,11 @@ public abstract class TargetMethod extends MemoryRegion {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
                     } else if (CallTarget.isSymbol(call.target)) {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, NATIVE_CALL);
-                        ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
+                        // ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
+                        // (ds) cannot rely on debug info at call since Graal uses templates to produce
+                        // native method stubs and the debug info with be in the context of the template
+                        // source code, not the native method.
+                        ClassMethodActor caller = classMethodActor;
                         assert caller.isNative();
                         caller.nativeFunction.setCallSite(this, safepointPos);
                     } else {

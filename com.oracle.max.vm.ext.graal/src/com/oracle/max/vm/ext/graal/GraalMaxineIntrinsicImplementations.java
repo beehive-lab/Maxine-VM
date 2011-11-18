@@ -175,11 +175,17 @@ public class GraalMaxineIntrinsicImplementations {
 
     protected static class ReadRegisterIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, int registerId) {
-            CiRegister register = runtime.getRegisterConfig(method).getRegisterForRole(registerId);
+            RiRegisterConfig registerConfig = runtime.getRegisterConfig(method);
+            CiRegister register = registerConfig.getRegisterForRole(registerId);
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            return graph.add(new ReadRegisterNode(register, method.signature().returnKind(true)));
+            ReadRegisterNode readRegister = graph.add(new ReadRegisterNode(register, method.signature().returnKind(true)));
+            RiRegisterAttributes regAttr = registerConfig.getAttributesMap()[register.number];
+            if (regAttr.isNonZero) {
+                // TODO: (ds) propagate the info that this register is always non-zero in compiled code.
+            }
+            return readRegister;
         }
     }
 
