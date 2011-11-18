@@ -198,7 +198,7 @@ public abstract class Word {
     }
 
     /**
-     * @return bit index of the least significant bit set, or -1 if zero.
+     * @return bit index of the most significant bit set, or -1 if zero.
      */
     public final int mostSignificantBitSet() {
         return Intrinsics.mostSignificantBit(this);
