@@ -217,8 +217,8 @@ public final class GraalCompilation {
                 }
             }
 
-            if (GraalOptions.EscapeAnalysis) {
-                new EscapeAnalysisPhase(this, plan).apply(graph, context());
+            if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {
+                new EscapeAnalysisPhase(compiler.target, compiler.runtime, assumptions, plan).apply(graph, context());
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 

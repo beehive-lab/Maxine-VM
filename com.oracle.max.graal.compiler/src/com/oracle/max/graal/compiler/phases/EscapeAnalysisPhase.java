@@ -28,6 +28,7 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
 import com.oracle.max.graal.compiler.schedule.*;
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
@@ -212,11 +213,15 @@ public class EscapeAnalysisPhase extends Phase {
         }
     }
 
-    private final GraalCompilation compilation;
+    private final CiTarget target;
+    private final GraalRuntime runtime;
+    private final CiAssumptions assumptions;
     private final PhasePlan plan;
 
-    public EscapeAnalysisPhase(GraalCompilation compilation, PhasePlan plan) {
-        this.compilation = compilation;
+    public EscapeAnalysisPhase(CiTarget target, GraalRuntime runtime, CiAssumptions assumptions, PhasePlan plan) {
+        this.runtime = runtime;
+        this.target = target;
+        this.assumptions = assumptions;
         this.plan = plan;
     }
 
@@ -337,16 +342,19 @@ public class EscapeAnalysisPhase extends Phase {
     }
 
     private void performAnalysis(StructuredGraph graph, FixedWithNextNode node, EscapeOp op) {
+        if (!shouldAnalyze(node)) {
+            return;
+        }
         Set<Node> exits = new HashSet<Node>();
         Set<Invoke> invokes = new HashSet<Invoke>();
         int iterations = 0;
 
-        int minimumWeight = GraalOptions.ForcedInlineEscapeWeight;
+        int minimumWeight = getMinimumWeight(node);
         do {
             double weight = analyze(op, node, exits, invokes);
             if (exits.size() != 0) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n####### escaping object: %s (%s) in %s", node, node.exactType(), compilation.method);
+                    TTY.println("%n####### escaping object: %s (%s)", node, node.exactType());
                     if (GraalOptions.TraceEscapeAnalysis) {
                         TTY.print("%d: new value: %s, weight %f, escapes at ", iterations, node, weight);
                         for (Node n : exits) {
@@ -363,10 +371,10 @@ public class EscapeAnalysisPhase extends Phase {
             if (invokes.size() == 0) {
 
                 if (context.isObserved()) {
-                    context.observable.fireCompilationEvent("Before escape " + node, compilation, graph);
+                    context.observable.fireCompilationEvent("Before escape " + node, graph);
                 }
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n!!!!!!!! non-escaping object: %s (%s) in %s", node, node.exactType(), compilation.method);
+                    TTY.println("%n!!!!!!!! non-escaping object: %s (%s)", node, node.exactType());
                 }
                 try {
                     context.timers.startScope("Escape Analysis Fixup");
@@ -375,7 +383,7 @@ public class EscapeAnalysisPhase extends Phase {
                     context.timers.endScope();
                 }
                 if (context.isObserved()) {
-                    context.observable.fireCompilationEvent("After escape", compilation, graph);
+                    context.observable.fireCompilationEvent("After escape", graph);
                 }
                 new PhiSimplificationPhase().apply(graph, context);
 
@@ -383,7 +391,7 @@ public class EscapeAnalysisPhase extends Phase {
             }
             if (weight < minimumWeight) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n####### possibly escaping object: %s in %s (insufficient weight for inlining)", node, compilation.method);
+                    TTY.println("%n####### possibly escaping object: %s (insufficient weight for inlining)", node);
                 }
                 break;
             }
@@ -397,13 +405,21 @@ public class EscapeAnalysisPhase extends Phase {
             new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n!!!!!!!! object died while performing escape analysis: %s (%s) in %s", node, node.exactType(), compilation.method);
+                    TTY.println("%n!!!!!!!! object died while performing escape analysis: %s (%s)", node, node.exactType());
                 }
                 break;
             }
             exits.clear();
             invokes.clear();
         } while (iterations++ < 3);
+    }
+
+    protected boolean shouldAnalyze(FixedWithNextNode node) {
+        return true;
+    }
+
+    protected int getMinimumWeight(FixedWithNextNode node) {
+        return GraalOptions.ForcedInlineEscapeWeight;
     }
 
     private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<Invoke> invokes) {
