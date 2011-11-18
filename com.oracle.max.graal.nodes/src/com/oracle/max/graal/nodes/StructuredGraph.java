@@ -35,12 +35,25 @@ import com.oracle.max.graal.nodes.java.*;
 public class StructuredGraph extends Graph {
     private final BeginNode start;
 
+    /**
+     * Creates a new Graph containing a single {@link BeginNode} as the {@link #start() start} node.
+     */
     public StructuredGraph() {
         this.start = add(new BeginNode());
     }
 
     public BeginNode start() {
         return start;
+    }
+
+    @Override
+    public StructuredGraph copy() {
+        StructuredGraph copy = new StructuredGraph();
+        HashMap<Node, Node> replacements = new HashMap<Node, Node>();
+        replacements.put(start, copy.start);
+        copy.addDuplicates(getNodes(), replacements);
+        copy.verify();
+        return copy;
     }
 
     public Iterable<Invoke> getInvokes() {

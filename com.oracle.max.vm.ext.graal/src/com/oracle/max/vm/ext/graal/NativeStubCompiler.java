@@ -23,12 +23,15 @@
 package com.oracle.max.vm.ext.graal;
 
 import static com.oracle.max.graal.nodes.FrameState.*;
+import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
 import static com.sun.max.vm.jni.JniHandles.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.debug.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
@@ -38,14 +41,12 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.ri.RiType.Representation;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -57,124 +58,166 @@ import com.sun.max.vm.type.*;
  */
 public class NativeStubCompiler {
 
-    public NativeStubCompiler(GraalCompiler graal, ClassMethodActor method) {
-        this.method = method;
-        this.graph = new StructuredGraph();
-        this.graal = graal;
-        this.runtime = MaxRuntime.getInstance();
-        lastFixedNode = graph.start();
+    /**
+     * Creates a native stub compiler instance for a specific native method.
+     */
+    public NativeStubCompiler(ClassMethodActor nativeMethod) {
+        assert nativeMethod.isNative();
+        if (MaxineVM.isHosted() && template == null) {
+            // Initalize the templates
+            IdealGraphPrinterObserver o = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            if (o.networkAvailable()) {
+                observer = o;
+            }
+            template = createTemplate("template");
+            syncTemplate = createTemplate("syncTemplate");
+        }
+
+        StructuredGraph tmpl = nativeMethod.isSynchronized() ? syncTemplate : template;
+        this.nativeMethod = nativeMethod;
+        this.graph = tmpl.copy();
     }
 
-    final ClassMethodActor method;
+    final ClassMethodActor nativeMethod;
     final StructuredGraph graph;
-    final GraalCompiler graal;
-    final MaxRuntime runtime;
 
     private FixedWithNextNode lastFixedNode;
     private InvokeNode stackHandles;
     private int stackHandleOffset;
-    private ValueNode synchronizedObject;
 
+    /**
+     * Placeholder for the real native function call in a template native method stub.
+     */
+    private static native Object nativeFunctionCall(Address address);
+    private static final MethodActor nativeFunctionCall = findMethod(NativeStubCompiler.class, "nativeFunctionCall", Address.class);
 
     /**
      * Template for a native method stub.
      *
-     * (ds) what about synchronized methods? what about non-void methods?
-     *
      * @param nativeMethod
      * @param traceName
      */
-    public static void call(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+    public static Object template(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+
+        // Zero out the slot at STACK_HANDLES_ADDRESS_OFFSET
+        // so that the GC doesn't scan the object handles array.
+        // There must not be a safepoint in the stub before this point.
+        VMRegister.getCpuStackPointer().writeWord(STACK_HANDLES_ADDRESS_OFFSET, Address.zero());
+
         Address address = nativeMethod.nativeFunction.link();
         VmThread thread = VmThread.current();
 
-        if (JniFunctions.TraceJNI) {
-            Log.print("[Thread \"");
-            Log.print(thread.getName());
-            Log.print(" --> JNI: ");
-            Log.print(traceName);
-            Log.println(']');
-        }
+//        if (traceName != null) {
+//            Log.print("[Thread \"");
+//            Log.print(thread.getName());
+//            Log.print(" --> JNI: ");
+//            Log.print(traceName);
+//            Log.println(']');
+//        }
 
         int jniHandlesTop = thread.jniHandlesTop();
 
         Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
-        NativeFunctionCallNode.call(address, nativeMethod);
+        Object result = nativeFunctionCall(address);
         Snippets.nativeCallEpilogue();
+
+        VMRegister.getCpuStackPointer().writeWord(STACK_HANDLES_ADDRESS_OFFSET, Address.zero());
 
         thread.resetJniHandlesTop(jniHandlesTop);
 
-        if (JniFunctions.TraceJNI) {
-            Log.print("[Thread \"");
-            Log.print(thread.getName());
-            Log.print(" <-- JNI: ");
-            Log.print(traceName);
-            Log.println(']');
-        }
+//        if (traceName != null) {
+//            Log.print("[Thread \"");
+//            Log.print(thread.getName());
+//            Log.print(" <-- JNI: ");
+//            Log.print(traceName);
+//            Log.println(']');
+//        }
 
         thread.throwJniException();
+
+        return result;
     }
 
     /**
-     * Compiles a native method stub.
-     * @param plan
+     * Template for a synchronized native method stub.
+     *
+     * @param nativeMethod
+     * @param traceName
      */
-    public CiTargetMethod compile(PhasePlan plan) {
+    public static synchronized Object syncTemplate(ClassMethodActor nativeMethod, String traceName) throws Throwable {
+        return template(nativeMethod, traceName);
+    }
 
-        SignatureDescriptor sig = method.descriptor();
-        boolean isCFunction = method.isCFunction();
+    static StructuredGraph template;
+    static StructuredGraph syncTemplate;
+//    static StructuredGraph templateWithTracing;
+//    static StructuredGraph syncTemplateWithTracing;
 
-        final TypeDescriptor resultDescriptor = sig.resultDescriptor();
-        final Kind resultKind = resultDescriptor.toKind();
+    public CiTargetMethod compile(GraalCompiler graal, PhasePlan plan) {
+        Iterator<LocalNode> args = graph.getNodes(LocalNode.class).iterator();
 
+        // Replace parameters of template with constants
+        LocalNode arg1 = args.next();
+        LocalNode arg2 = args.next();
+        assert !args.hasNext();
+
+        arg1.replaceAtUsages(oconst(this.nativeMethod));
+        arg2.replaceAtUsages(JniFunctions.TraceJNI ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
+
+        arg1.delete();
+        arg2.delete();
+
+        // Add parameters of native method
+        SignatureDescriptor sig = nativeMethod.descriptor();
         List<LocalNode> inArgs = makeArgs(sig);
-        LocalNode receiver = method.isStatic() ? null : inArgs.get(0);
-        Iterator<LocalNode> inArg = inArgs.iterator();
 
+        ValueNode retValue = null;
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.callTarget();
+            RiResolvedMethod method = callTarget.targetMethod();
+            if (method == nativeFunctionCall) {
+                // replace call with native function sequence
+                ValueNode function = callTarget.arguments().get(0);
+                retValue = intrinsifyNativeFunctionCall(invoke, inArgs, sig, function);
+                break;
+            }
+        }
+        assert retValue != null;
+        if (observer != null) {
+            observer.printSingleGraph(nativeMethod.name(), graph);
+            new DeadCodeEliminationPhase().apply(graph);
+            observer.printSingleGraph(nativeMethod.name(), graph);
+        }
+
+        // Compile and print disassembly.
+        graph.verify();
+        CiResult result = graal.compileMethod(nativeMethod, graph, plan);
+        System.out.println(runtime().disassemble(result.targetMethod()));
+
+        return result.targetMethod();
+    }
+
+    private ValueNode intrinsifyNativeFunctionCall(Invoke nativeFunctionCall, List<LocalNode> inArgs, SignatureDescriptor sig, ValueNode function) {
+
+        Iterator<LocalNode> inArg = inArgs.iterator();
         List<ValueNode> outArgs = new ArrayList<ValueNode>(inArgs.size() + 1);
         InvokeNode frame = null;
 
-        InvokeNode currentThread = null;
-        InvokeNode jniHandlesTop = null;
+        assert lastFixedNode == null;
+        lastFixedNode = (FixedWithNextNode) nativeFunctionCall.predecessor();
 
-        ConstantNode zero = ConstantNode.forIntegerKind(WordUtil.archKind(), 0, graph);
+        stackHandles = append(invoke(Intrinsics_stackAllocate, iconst(stackHandlesSize(sig))));
+        stackHandleOffset = 0;
 
-        if (!isCFunction) {
+        // Load the JNI environment variable
+        outArgs.add(append(invoke(VmThread_jniEnv)));
 
-            // Zero out the slot at STACK_HANDLES_ADDRESS_OFFSET
-            // so that the GC doesn't scan the object handles array.
-            // There must not be a safepoint in the stub before this point.
-            frame = append(invoke(VMRegister_getCpuStackPointer));
-            append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), zero));
-
-            if (method.isSynchronized()) {
-                acquireMethodLock(receiver);
-            }
-
-
-            traceEntryOrExit(true);
-
-            // Save current JNI frame.
-            currentThread = append(invoke(VmThread_current));
-            jniHandlesTop = append(invoke(VmThread_jniHandlesTop, currentThread));
-
-            stackHandles = append(invoke(Intrinsics_stackAllocate, iconst(stackHandlesSize(sig))));
-            stackHandleOffset = 0;
-
-            // Load the JNI environment variable
-            outArgs.add(append(invoke(VmThread_jniEnv)));
-            if (method.isStatic()) {
-                // Load the class for a static method
-                outArgs.add(handlize(oconst(method.holder().toJava())));
-            } else {
-                // Load the receiver for a non-static method
-                outArgs.add(handlize(inArg.next()));
-            }
+        if (nativeMethod.isStatic()) {
+            // Load the class for a static method
+            outArgs.add(handlize(oconst(nativeMethod.holder().toJava())));
         } else {
-            assert method.isStatic();
-            assert !method.isSynchronized();
-            stackHandles = null;
-            stackHandleOffset = 0;
+            // Load the receiver for a non-static method
+            outArgs.add(handlize(inArg.next()));
         }
 
         // Load the remaining parameters, handlizing object parameters
@@ -194,22 +237,18 @@ public class NativeStubCompiler {
             append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), stackHandles));
         }
 
-        // Link native function
-        InvokeNode function = append(invoke(NativeFunction_link, oconst(method.nativeFunction)));
-
-        if (method != JVMTIFunctions.currentJniEnv) {
-            append(invoke(isCFunction ?  Snippets_nativeCallPrologue : Snippets_nativeCallPrologueForC, oconst(method.nativeFunction)));
-        }
-
         // Invoke the native function
+        final Kind resultKind = sig.resultDescriptor().toKind();
         ValueNode[] jniArgs = outArgs.toArray(new ValueNode[outArgs.size()]);
-        NativeCallNode nativeCall = append(graph.add(new NativeCallNode(function, jniArgs, WordUtil.ciKind(resultKind, true), method)));
+        NativeCallNode nativeCall = append(graph.add(new NativeCallNode(function, jniArgs, WordUtil.ciKind(resultKind, true), nativeMethod)));
         FrameState stateAfter = stateAfterCall(nativeCall, resultKind);
         nativeCall.setStateAfter(stateAfter);
 
         // Sign extend or zero the upper bits of a return value smaller than an int to
         // preserve the invariant that all such values are represented by an int
         // in the VM. We cannot rely on the native C compiler doing this for us.
+        // Alternatively, an object return value must be un-handlized
+        // *before* the JNI frame is restored.
         ValueNode retValue = nativeCall;
         switch (sig.returnKind(false)) {
             case Boolean:
@@ -225,70 +264,20 @@ public class NativeStubCompiler {
                 retValue = graph.unique(new ConvertNode(ConvertNode.Op.I2C, retValue));
                 break;
             }
-        }
-
-        if (method != JVMTIFunctions.currentJniEnv) {
-            append(invoke(isCFunction ?  Snippets_nativeCallEpilogue : Snippets_nativeCallEpilogueForC));
-        }
-
-        if (!isCFunction) {
-
-            if (stackHandleOffset > 1) {
-                // The object handles array is no longer alive so zero out the slot at sp+OBJECT_HANDLES_BASE_OFFSET
-                append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), zero));
+            case Object: {
+                retValue = append(invoke(JniHandle_unhand, retValue));
             }
-
-            // Unwrap a reference result from its enclosing JNI handle. This must be done
-            // *before* the JNI frame is restored.
-            if (resultKind.isReference) {
-                append(invoke(JniHandle_unhand, retValue));
-            }
-
-            // Restore JNI frame.
-            append(invoke(VmThread_resetJniHandlesTop, currentThread, jniHandlesTop));
-
-            traceEntryOrExit(false);
-
-            if (method.isSynchronized()) {
-                releaseMethodLock();
-            }
-
-            // throw (and clear) any pending exception
-            append(invoke(VmThread_throwJniException, currentThread));
         }
 
-        append(graph.add(new ReturnNode(retValue)));
+        nativeFunctionCall.node().replaceAndDelete(retValue);
 
-        // Compile and print disassembly.
-        graph.verify();
-        CiResult result = graal.compileMethod(method, graph, plan);
-        System.out.println(runtime.disassemble(result.targetMethod()));
-
-        return result.targetMethod();
-    }
-
-    private void acquireMethodLock(ValueNode receiver) {
-        if (method.isStatic()) {
-            synchronizedObject = oconst(method.holder().toJava());
-        } else {
-            synchronizedObject = receiver;
-        }
-        int lockNumber = 0;
-        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(synchronizedObject, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
-        append(monitorEnter);
-        FrameState stateAfter = new FrameState(method, 0, 0, 0, 1, false);
-        monitorEnter.setStateAfter(stateAfter);
-    }
-
-    private void releaseMethodLock() {
-        int lockNumber = 0;
-        append(graph.add(new MonitorExitNode(synchronizedObject, lockNumber, runtime.sizeOfBasicObjectLock() > 0)));
+        return retValue;
     }
 
     private List<LocalNode> makeArgs(SignatureDescriptor sig) {
-        List<LocalNode> args = new ArrayList<LocalNode>(sig.argumentCount(!method.isStatic()));
+        List<LocalNode> args = new ArrayList<LocalNode>(sig.argumentCount(!nativeMethod.isStatic()));
         int argIndex = 0;
-        if (!method.isStatic()) {
+        if (!nativeMethod.isStatic()) {
             args.add(graph.unique(new LocalNode(CiKind.Object, 0)));
         }
         for (int i = 0; i < sig.numberOfParameters(); i++) {
@@ -311,37 +300,6 @@ public class NativeStubCompiler {
         }
         Log.print(name);
         Log.println(']');
-    }
-
-    /**
-     * Creates a subgraph for tracing the entry or exit of a call to the native method.
-     */
-    private void traceEntryOrExit(boolean entry) {
-        if (JniFunctions.TraceJNI) {
-            if (MaxineVM.isHosted()) {
-                // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-                ValueNode statics = oconst(JNIFunctions_TraceJNI.holder().getEncoding(Representation.StaticFields));
-                assert statics != null;
-                LoadFieldNode traceJNI = append(graph.add(new LoadFieldNode(statics, JNIFunctions_TraceJNI)));
-
-                EndNode fromTrue = graph.add(new EndNode());
-                EndNode fromFalse = graph.add(new EndNode());
-
-                double probabilityOfTrue = 0.1d;
-                IfNode ifNode = append(graph.add(new IfNode(graph.unique(new CompareNode(traceJNI, Condition.EQ, zconst(true))), probabilityOfTrue)));
-                InvokeNode trace = append(invoke(traceTransition, oconst(method.format("%H.%n(%P)")), zconst(entry)));
-                append(fromTrue);
-                ifNode.setTrueSuccessor(BeginNode.begin(trace));
-                ifNode.setFalseSuccessor(BeginNode.begin(fromFalse));
-
-                MergeNode merge = append(graph.add(new MergeNode()));
-                merge.addEnd(fromTrue);
-                merge.addEnd(fromFalse);
-
-            } else {
-                append(invoke(traceTransition, oconst(method.format("%H.%n(%P)")), zconst(entry)));
-            }
-        }
     }
 
     private <T extends FixedNode> T append(T node) {
@@ -384,7 +342,7 @@ public class NativeStubCompiler {
             }
         }
 
-        RiType returnType = target.descriptor().returnType(method.holder());
+        RiType returnType = target.descriptor().returnType(nativeMethod.holder());
         MethodCallTargetNode targetNode = graph.add(new MethodCallTargetNode(invokeKind, target, args, returnType));
         InvokeNode invokeNode = graph.add(new InvokeNode(targetNode, FrameState.BEFORE_BCI));
         FrameState stateAfter = stateAfterCall(invokeNode, target.descriptor().resultKind());
@@ -408,7 +366,7 @@ public class NativeStubCompiler {
         }
 
         List<ValueNode> locks = Collections.emptyList();
-        return graph.add(new FrameState(method, AFTER_BCI, locals, stack, stackSize, locks, false));
+        return graph.add(new FrameState(nativeMethod, AFTER_BCI, locals, stack, stackSize, locks, false));
     }
 
     /**
@@ -429,7 +387,7 @@ public class NativeStubCompiler {
      * Creates a constant node for an object constant.
      */
     ConstantNode oconst(Object value) {
-        return ConstantNode.forObject(value, runtime, graph);
+        return ConstantNode.forObject(value, runtime(), graph);
     }
 
     static final MethodActor VMRegister_getCpuStackPointer = findMethod(VMRegister.class, "getCpuStackPointer");
@@ -446,8 +404,49 @@ public class NativeStubCompiler {
     static final MethodActor Snippets_nativeCallEpilogue = findMethod(Snippets.class, "nativeCallEpilogue");
     static final MethodActor Snippets_nativeCallEpilogueForC = findMethod(Snippets.class, "nativeCallEpilogueForC");
     static final MethodActor JniHandle_unhand = findMethod(JniHandle.class, "unhand");
-    static final MethodActor Log_println = findMethod(Log.class, "println", String.class);
     static final MethodActor JniHandles_createStackHandle = findMethod(JniHandles.class, "createStackHandle", Pointer.class, int.class, Object.class);
-    static final MethodActor traceTransition = findMethod(NativeStubCompiler.class, "traceTransition", String.class, boolean.class);
-    static final FieldActor JNIFunctions_TraceJNI = findField(JniFunctions.class, "TraceJNI");
+
+    @HOSTED_ONLY
+    private static void apply(Phase phase, String name, StructuredGraph graph) {
+        phase.apply(graph);
+        if (observer != null) {
+            observer.printGraph(phase.getClass().getSimpleName(), graph);
+        }
+    }
+
+    @HOSTED_ONLY
+    private static StructuredGraph createTemplate(String name) {
+        MaxRuntime runtime = runtime();
+        StructuredGraph graph = new StructuredGraph();
+        MethodActor template = findMethod(NativeStubCompiler.class, name, ClassMethodActor.class, String.class);
+
+        if (observer != null) {
+            observer.compilationStarted(name);
+        }
+
+        apply(new GraphBuilderPhase(runtime, template, null, false, true), name, graph);
+        apply(new PhiSimplificationPhase(), name, graph);
+        apply(new DeadCodeEliminationPhase(), name, graph);
+        int nodeCount;
+        do {
+            nodeCount = graph.getNodeCount();
+            apply(new FoldPhase(runtime), name, graph);
+            apply(new CanonicalizerPhase(null, runtime, null), name, graph);
+            apply(new MaxineIntrinsicsPhase(runtime), name, graph);
+            apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null), name, graph);
+            apply(new DeadCodeEliminationPhase(), name, graph);
+            apply(new WordTypeRewriterPhase(), name, graph);
+            apply(new CanonicalizerPhase(null, runtime, null), name, graph);
+            apply(new DeadCodeEliminationPhase(), name, graph);
+        } while (graph.getNodeCount() != nodeCount);
+
+        if (observer != null) {
+            observer.compilationFinished(null);
+        }
+
+        return graph;
+    }
+
+    @HOSTED_ONLY
+    private static IdealGraphPrinterObserver observer;
 }

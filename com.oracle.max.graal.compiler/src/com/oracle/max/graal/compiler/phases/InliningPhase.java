@@ -153,7 +153,7 @@ public class InliningPhase extends Phase implements InliningCallback {
     }
 
     private void scanInvoke(Invoke invoke, int level) {
-        InlineInfo info = InliningUtil.getInlineInfo(invoke, level, runtime, this);
+        InlineInfo info = InliningUtil.getInlineInfo(invoke, level, runtime, assumptions, this);
         if (info != null) {
             if (GraalOptions.Meter) {
                 context.metrics.InlineConsidered++;

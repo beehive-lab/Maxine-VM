@@ -65,7 +65,7 @@ public class Graal implements RuntimeCompiler {
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by Graal.
      */
-    public final MaxRuntime runtime = MaxRuntime.getInstance();
+    public final MaxRuntime runtime = MaxRuntime.runtime();
 
     public final ExtendedBytecodeHandler extendedBytecodeHandler = new ExtendedBytecodeHandler() {
         @Override
@@ -183,8 +183,8 @@ public class Graal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             if (method.compilee().isNative()) {
-                NativeStubCompiler nsc = new NativeStubCompiler(compiler(), method);
-                compiledMethod = nsc.compile(plan);
+                NativeStubCompiler nsc = new NativeStubCompiler(method);
+                compiledMethod = nsc.compile(compiler(), plan);
             } else {
                 compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
             }

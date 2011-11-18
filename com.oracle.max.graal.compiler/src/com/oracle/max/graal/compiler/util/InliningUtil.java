@@ -211,7 +211,7 @@ public class InliningUtil {
      * @param callback a callback that is used to determine the weight of a specific inlining
      * @return an instance of InlineInfo, or null if no inlining is possible at the given invoke
      */
-    public static InlineInfo getInlineInfo(Invoke invoke, int level, GraalRuntime runtime, InliningCallback callback) {
+    public static InlineInfo getInlineInfo(Invoke invoke, int level, GraalRuntime runtime, CiAssumptions assumptions, InliningCallback callback) {
         if (!checkInvokeConditions(invoke)) {
             return null;
         }
@@ -249,7 +249,10 @@ public class InliningUtil {
                 holder = (RiResolvedType) declared;
             }
         }
-
+        // TODO (tw) fix this
+        if (assumptions == null) {
+            return null;
+        }
         RiResolvedMethod concrete = holder.uniqueConcreteMethod(callTarget.targetMethod());
         if (concrete != null) {
             if (checkTargetConditions(concrete, runtime)) {
@@ -389,7 +392,7 @@ public class InliningUtil {
         assert invoke.node().successors().first() != null : invoke;
         assert invoke.node().predecessor() != null;
 
-        Map<Node, Node> duplicates = graph.addDuplicate(nodes, replacements);
+        Map<Node, Node> duplicates = graph.addDuplicates(nodes, replacements);
 
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
