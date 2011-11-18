@@ -177,6 +177,12 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 if (observer != null) {
                     observer.printGraph("NativeFunctionCall", nativeFunctionCallGraph);
                 }
+
+                apply(new FoldPhase(runtime()), nativeFunctionCallGraph);
+                apply(new MaxineIntrinsicsPhase(runtime()), nativeFunctionCallGraph);
+                apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), nativeFunctionCallGraph);
+                apply(new CanonicalizerPhase(null, runtime(), null), nativeFunctionCallGraph);
+
                 InliningUtil.inline(invoke, nativeFunctionCallGraph, false);
                 break;
             }
@@ -236,7 +242,6 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         do {
             nodeCount = graph.getNodeCount();
             apply(new FoldPhase(runtime), graph);
-            apply(new CanonicalizerPhase(null, runtime, null), graph);
             apply(new MaxineIntrinsicsPhase(runtime), graph);
             apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null), graph);
             apply(new DeadCodeEliminationPhase(), graph);
