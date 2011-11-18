@@ -179,7 +179,12 @@ public class VmThread {
         mainThreadGroup = new ThreadGroup(systemThreadGroup, hostMainThreadGroup.getName());
 
         mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
-        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
+        Thread vmOperationJavaThread = new VmOperationThread(systemThreadGroup);
+        vmOperationThread = initVmThread(vmOperationJavaThread);
+        // the VmOperationThread thread is completely hidden; we could, with more complexity,
+        // put it in a hidden group, but since the external world never sees it, it suffices to detach it.
+        // N.B. at this point it is unstarted so not actually a child of systemThreadGroup
+        WithoutAccessCheck.setInstanceField(vmOperationJavaThread, "group", null);
         signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
 
         try {
@@ -1314,6 +1319,8 @@ public class VmThread {
         @INTRINSIC(UNSAFE_CAST) public static native ThreadGroupAlias asThreadGroupAlias(Object object);
         @ALIAS(declaringClass = ThreadGroup.class)
         private native void add(Thread t);
+        @ALIAS(declaringClass = ThreadGroup.class)
+        int nUnstartedThreads;
     }
 
     /**
@@ -1323,7 +1330,12 @@ public class VmThread {
      */
     public final void startVmSystemThread() {
         ThreadGroupAlias threadGroupAlias = ThreadGroupAlias.asThreadGroupAlias(systemThreadGroup);
-        threadGroupAlias.add(javaThread);
+        if (this == vmOperationThread) {
+            // hidden
+            threadGroupAlias.nUnstartedThreads--;
+        } else {
+            threadGroupAlias.add(javaThread);
+        }
         start0();
     }
 
