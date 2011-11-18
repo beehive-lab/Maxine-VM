@@ -168,6 +168,11 @@ public final class GraalCompilation {
         return new CiResult(targetMethod, null, stats);
     }
 
+    public static final int SCALE = 20;
+    public static int[] methodSizes = new int[20000 / SCALE];
+    public static String[] methodNames = new String[20000 / SCALE];
+    public static int methodCount = 0;
+
     /**
      * Builds the graph, optimizes it.
      */
@@ -271,7 +276,22 @@ public final class GraalCompilation {
             LIRBlock startBlock = valueToBlock.get(graph.start());
             assert startBlock != null;
             assert startBlock.numberOfPreds() == 0;
-
+/*
+            methodSizes[graph.getNodeCount() / SCALE]++;
+            methodNames[graph.getNodeCount() / SCALE] = InliningUtil.methodName(method);
+            if ((methodCount++ % 100) == 0) {
+                for (int i = 0; i < methodSizes.length; i++) {
+                    if (i < 30 || methodSizes[i] != 0) {
+                        System.out.print((i * SCALE) + ": ");
+                        int s = methodSizes[i];
+                        s = s > 80 ? 80 : s;
+                        for (int i2 = 0; i2 < s; i2++) {
+                            System.out.print('X');
+                        }
+                        System.out.println("  (" + methodSizes[i] + ") " + methodNames[i]);
+                    }
+                }
+            }*/
 
             context().timers.startScope("Compute Linear Scan Order");
             try {
