@@ -540,7 +540,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                 Trace.line(TRACE_VALUE + 1, "    "  + thread + " STARTED");
             }
             final Pointer instructionPointer = thread.registers().instructionPointer();
-            if (!instructionPointer.isZero()) {
+            if (instructionPointer.isNotZero()) {
                 newInstructionPointers.add(instructionPointer.toLong());
             }
         }

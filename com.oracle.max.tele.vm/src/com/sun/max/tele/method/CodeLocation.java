@@ -457,7 +457,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
                         final TeleTargetMethod javaTargetMethod = teleClassMethodActor().getCurrentCompilation();
                         if (javaTargetMethod != null) {
                             final Address callEntryPoint = javaTargetMethod.callEntryPoint();
-                            if (callEntryPoint != null && !callEntryPoint.isZero()) {
+                            if (callEntryPoint != null && callEntryPoint.isNotZero()) {
                                 codePointer = vm().machineCode().makeCodePointer(callEntryPoint);
                             }
                         }

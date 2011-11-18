@@ -64,7 +64,7 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
 
         @Override
         public MemoryUsage getUsage() {
-            if (!start().isZero() && nBytes() != 0L) {
+            if (start().isNotZero() && nBytes() != 0L) {
                 try {
                     return new MemoryUsage(-1L, end().minus(teleStack.thread().registers().stackPointer()).toLong(), nBytes(), -1L);
                 } catch (IllegalArgumentException e) {
