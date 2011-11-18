@@ -49,16 +49,10 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
      */
     public final RiResolvedMethod nativeMethod;
 
-    public final CiKind[] signature;
-
     public NativeCallNode(ValueNode address, ValueNode[] arguments, CiKind returnKind, RiResolvedMethod nativeMethod) {
         super(returnKind, arguments);
         this.nativeMethod = nativeMethod;
         this.address = address;
-        this.signature = new CiKind[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            signature[i] = arguments[i].kind();
-        }
     }
 
     public ValueNode address() {
@@ -68,16 +62,20 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     @Override
     public void generate(LIRGeneratorTool gen) {
         LIRGenerator lir = (LIRGenerator) gen;
-        LIRDebugInfo info = new LIRDebugInfo(this.stateAfter());
+        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+        LIRDebugInfo info = new LIRDebugInfo(stateDuring);
         CiValue resultOperand = lir.resultOperandFor(this.kind());
         CiValue callAddress = lir.operand(this.address());
+        CiKind[] signature = new CiKind[arguments.size()];
+        for (int i = 0; i < arguments.size(); i++) {
+            signature[i] = arguments.get(i).kind();
+        }
         CiCallingConvention cc = lir.compilation.registerConfig.getCallingConvention(NativeCall, signature, lir.target(), false);
         lir.compilation.frameMap().adjustOutgoingStackSize(cc, NativeCall);
 
-        List<CiValue> argList = lir.visitInvokeArguments(cc, this.arguments(), null);
+        List<CiValue> argList = lir.visitInvokeArguments(cc, arguments, null);
         argList.add(callAddress);
 
-            // Indirect call
         String target = this.nativeMethod.jniSymbol();
         lir.append(StandardOpcode.INDIRECT_CALL.create(target, resultOperand, argList, callAddress, info, null, null));
 
