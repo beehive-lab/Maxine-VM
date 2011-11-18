@@ -1113,6 +1113,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
            XirOperand hub = asm.createConstantInputParameter("hub", CiKind.Object);
 
            XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
+           XirOperand checkHub = asm.createTemp("checkHub", CiKind.Object);
 
            XirLabel slowPath = asm.createOutOfLineLabel("deopt");
 
@@ -1121,8 +1122,9 @@ public class HotSpotXirGenerator implements RiXirGenerator {
            }
 
            asm.pload(CiKind.Object, objHub, object, asm.i(config.hubOffset), false);
+           asm.mov(checkHub, hub);
            // if we get an exact match: continue
-           asm.jneq(slowPath, objHub, hub);
+           asm.jneq(slowPath, objHub, checkHub);
 
            // -- out of line -------------------------------------------------------
            asm.bindOutOfLine(slowPath);
