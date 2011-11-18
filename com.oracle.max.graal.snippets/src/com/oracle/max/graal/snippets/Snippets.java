@@ -95,7 +95,7 @@ public class Snippets {
                 targetRiMethod.compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("Could not resolve method to substitute with: " + snippet.getName(), e);
-            } catch (VerificationError error) {
+            } catch (GraalInternalError error) {
                 if (context.isObserved()) {
                     if (error.node() != null) {
                         context.observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, error.node().graph());

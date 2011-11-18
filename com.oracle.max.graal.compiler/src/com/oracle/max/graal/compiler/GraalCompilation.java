@@ -141,7 +141,7 @@ public final class GraalCompilation {
                 }
             } catch (CiBailout b) {
                 return new CiResult(null, b, stats);
-            } catch (VerificationError e) {
+            } catch (GraalInternalError e) {
                 throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
             } catch (Throwable t) {
                 if (GraalOptions.BailoutOnException) {
@@ -150,7 +150,7 @@ public final class GraalCompilation {
                     throw new RuntimeException("Exception while compiling: " + method, t);
                 }
             }
-        } catch (VerificationError error) {
+        } catch (GraalInternalError error) {
             if (context().isObserved()) {
                 if (error.node() != null) {
                     context().observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, this, error.node().graph());

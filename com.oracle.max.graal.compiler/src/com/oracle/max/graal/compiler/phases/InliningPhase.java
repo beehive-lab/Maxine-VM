@@ -121,10 +121,10 @@ public class InliningPhase extends Phase implements InliningCallback {
                     // TODO determine if we should really bail out of the whole compilation.
                     throw bailout;
                 } catch (AssertionError e) {
-                    throw new VerificationError(e).addContext(info.toString());
+                    throw new GraalInternalError(e).addContext(info.toString());
                 } catch (RuntimeException e) {
-                    throw new VerificationError(e).addContext(info.toString());
-                } catch (VerificationError e) {
+                    throw new GraalInternalError(e).addContext(info.toString());
+                } catch (GraalInternalError e) {
                     throw e.addContext(info.toString());
                 }
             }
