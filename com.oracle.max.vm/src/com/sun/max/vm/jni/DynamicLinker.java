@@ -193,7 +193,7 @@ public final class DynamicLinker {
             addr = dlsym(h, symbolAsCString);
             if (addr.isZero()) {
                 int longNameSuffixLength = symbol.length() - (delim + 1);
-                i = CString.writePartialUtf8(symbol, delim + 1, longNameSuffixLength, symbolAsCString, STACK_BUFFER_SIZE);
+                i = CString.writePartialUtf8(symbol, delim + 1, longNameSuffixLength, symbolAsCString.plus(shortNameLength), STACK_BUFFER_SIZE - shortNameLength);
                 FatalError.check(i == longNameSuffixLength + 1, "Symbol name is too long for buffer");
                 addr = dlsym(h, symbolAsCString);
             }
