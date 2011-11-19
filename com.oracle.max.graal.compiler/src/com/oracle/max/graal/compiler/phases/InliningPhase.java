@@ -101,7 +101,6 @@ public class InliningPhase extends Phase {
 
         @Override
         public void inline(StructuredGraph compilerGraph) {
-            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
             InliningUtil.inline(invoke, intrinsicGraph, true);
         }
 
@@ -148,7 +147,6 @@ public class InliningPhase extends Phase {
                 }
             }
 
-            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), concrete);
             InliningUtil.inline(invoke, graph, true);
         }
 
