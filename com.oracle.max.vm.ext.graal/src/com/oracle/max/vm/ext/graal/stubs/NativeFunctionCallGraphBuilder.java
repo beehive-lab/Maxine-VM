@@ -68,20 +68,24 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
         stackHandles = append(invoke(Intrinsics_stackAllocate, iconst(stackHandlesSize(sig))));
 
         // Load the JNI environment variable
-        jniArgs.add(jniEnv);
+        boolean isCFunction = nativeMethod.isCFunction();
+        if (!isCFunction) {
+            jniArgs.add(jniEnv);
 
-        if (nativeMethod.isStatic()) {
-            // Load the class for a static method
-            jniArgs.add(handlize(oconst(nativeMethod.holder().toJava())));
-        } else {
-            // Load the receiver for a non-static method
-            jniArgs.add(handlize(nativeMethodArg.next()));
+            if (nativeMethod.isStatic()) {
+                // Load the class for a static method
+                jniArgs.add(handlize(oconst(nativeMethod.holder().toJava())));
+            } else {
+                // Load the receiver for a non-static method
+                jniArgs.add(handlize(nativeMethodArg.next()));
+            }
         }
 
         // Load the remaining parameters, handlizing object parameters
         while (nativeMethodArg.hasNext()) {
             LocalNode arg = nativeMethodArg.next();
             if (arg.kind().isObject()) {
+                assert !isCFunction;
                 jniArgs.add(handlize(arg));
                 stackHandleOffset += Word.size();
             } else {
@@ -89,19 +93,22 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
             }
         }
 
-        if (stackHandleOffset > 1) {
-            // Write the address of the handles array to STACK_HANDLES_ADDRESS_OFFSET
-            // to communicate to the GC where the initialized array is.
-            append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), stackHandles));
-        }
+        if (!isCFunction) {
+            if (stackHandleOffset > 1) {
 
-        // Place a new Java frame anchor and transition into thread_in_native state
-        append(invoke(Snippets_nativeCallPrologue, oconst(nativeMethod.nativeFunction)));
+                // Write the address of the handles array to STACK_HANDLES_ADDRESS_OFFSET
+                // to communicate to the GC where the initialized array is.
+                append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), stackHandles));
+            }
+
+            // Place a new Java frame anchor and transition into thread_in_native state
+            append(invoke(Snippets_nativeCallPrologue, oconst(nativeMethod.nativeFunction)));
+        }
 
         // Invoke the native function
         final Kind resultKind = sig.resultDescriptor().toKind();
         ValueNode[] jniArgsArray = jniArgs.toArray(new ValueNode[jniArgs.size()]);
-        NativeCallNode nativeCall = append(graph.add(new NativeCallNode(function, jniArgsArray, WordUtil.ciKind(resultKind, true), nativeMethod)));
+        NativeCallNode nativeCall = append(graph.add(new NativeCallNode(function, jniArgsArray, WordUtil.ciKind(resultKind, false), nativeMethod)));
         FrameState stateAfter = stateAfterCall(nativeCall, resultKind);
         nativeCall.setStateAfter(stateAfter);
 
@@ -111,25 +118,26 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
         // Alternatively, an object return value must be un-handlized
         // *before* the JNI frame is restored.
         ValueNode retValue = nativeCall;
-        switch (sig.returnKind(false)) {
-            case Boolean:
-            case Byte: {
+        switch (resultKind.asEnum) {
+            case BOOLEAN:
+            case BYTE: {
                 retValue = graph.unique(new ConvertNode(ConvertNode.Op.I2B, retValue));
                 break;
             }
-            case Short: {
+            case SHORT: {
                 retValue = graph.unique(new ConvertNode(ConvertNode.Op.I2S, retValue));
                 break;
             }
-            case Char: {
+            case CHAR: {
                 retValue = graph.unique(new ConvertNode(ConvertNode.Op.I2C, retValue));
                 break;
             }
-            case Object: {
+            case REFERENCE: {
+                assert !isCFunction;
                 retValue = append(invoke(JniHandle_unhand, retValue));
                 break;
             }
-            case Void: {
+            case VOID: {
                 retValue = null;
                 break;
             }

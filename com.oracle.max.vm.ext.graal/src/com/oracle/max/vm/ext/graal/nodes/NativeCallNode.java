@@ -50,7 +50,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     public final RiResolvedMethod nativeMethod;
 
     public NativeCallNode(ValueNode address, ValueNode[] arguments, CiKind returnKind, RiResolvedMethod nativeMethod) {
-        super(returnKind, arguments);
+        super(returnKind.stackKind(), arguments);
         this.nativeMethod = nativeMethod;
         this.address = address;
     }

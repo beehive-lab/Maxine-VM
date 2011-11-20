@@ -151,6 +151,7 @@ public class Graal implements RuntimeCompiler {
             plan.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
 
             GraalIntrinsics.installIntrinsics(runtime, target, plan);
+            NativeStubGraphBuilder.initialize();
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
