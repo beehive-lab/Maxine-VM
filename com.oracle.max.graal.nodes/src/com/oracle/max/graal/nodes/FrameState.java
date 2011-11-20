@@ -634,9 +634,33 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         // Nothing to do, frame states are processed as part of the handling of AbstractStateSplit nodes.
     }
 
+    public static String toString(FrameState fs) {
+        StringBuilder sb = new StringBuilder();
+        String nl = CiUtil.NEW_LINE;
+        while (fs != null) {
+            CiUtil.appendLocation(sb, fs.method, fs.bci).append(nl);
+            for (int i = 0; i < fs.localsSize(); ++i) {
+                ValueNode value = fs.localAt(i);
+                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < fs.stackSize(); ++i) {
+                ValueNode value = fs.stackAt(i);
+                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < fs.locksSize(); ++i) {
+                ValueNode value = fs.lockAt(i);
+                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            fs = fs.outerFrameState();
+        }
+        return sb.toString();
+    }
+
     @Override
     public String toString(Verbosity verbosity) {
-        if (verbosity == Verbosity.Name) {
+        if (verbosity == Verbosity.Debugger) {
+            return toString(this);
+        } else if (verbosity == Verbosity.Name) {
             return super.toString(Verbosity.Name) + "@" + bci;
         } else {
             return super.toString(verbosity);
