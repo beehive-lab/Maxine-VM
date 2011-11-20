@@ -41,7 +41,6 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -60,10 +59,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     public NativeStubGraphBuilder(ClassMethodActor nativeMethod) {
         super(nativeMethod);
         assert nativeMethod.isNative();
-        if (MaxineVM.isHosted()) {
-            init();
-        }
-        StructuredGraph template = nativeMethod.isSynchronized() ? synchronizedTemplate : normalTemplate;
+        StructuredGraph template = nativeMethod.isCFunction() ? cFunctionTemplate : nativeMethod.isSynchronized() ? synchronizedTemplate : normalTemplate;
         setGraph(template.copy(nativeMethod.name()));
     }
 
@@ -102,7 +98,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
 
 
-        //Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
+        // Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
 
         Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
         Snippets.nativeCallEpilogue();
@@ -131,8 +127,18 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         return template(nativeFunction, traceName);
     }
 
+    public static Object templateC(NativeFunction nativeFunction, String ignore) {
+        Pointer frame = VMRegister.getCpuStackPointer();
+        Address address = nativeFunction.link();
+        Snippets.nativeCallPrologueForC(nativeFunction);
+        Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
+        Snippets.nativeCallEpilogueForC();
+        return result;
+    }
+
     static StructuredGraph normalTemplate;
     static StructuredGraph synchronizedTemplate;
+    static StructuredGraph cFunctionTemplate;
 
     /**
      * Builds the graph for the native method stub.
@@ -212,7 +218,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     }
 
     @HOSTED_ONLY
-    private static void init() {
+    public static void initialize() {
         if (normalTemplate == null) {
             if (GraalOptions.PrintIdealGraphLevel != 0 || GraalOptions.Plot || GraalOptions.PlotOnError) {
                 if (GraalOptions.PrintIdealGraphFile) {
@@ -229,6 +235,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             }
             normalTemplate = createTemplate("template");
             synchronizedTemplate = createTemplate("syncTemplate");
+            cFunctionTemplate = createTemplate("templateC");
         }
     }
 
