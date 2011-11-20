@@ -43,13 +43,14 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -193,6 +194,14 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
+    }
+
+    /**
+     * Gets the code attribute from which this target method was compiled. This may differ from
+     * the code attribute of {@link #classMethodActor} in the case where it was rewritten.
+     */
+    public CodeAttribute codeAttribute() {
+        return classMethodActor == null ? null : classMethodActor.codeAttribute();
     }
 
     /**

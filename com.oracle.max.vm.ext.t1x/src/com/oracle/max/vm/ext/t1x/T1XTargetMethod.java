@@ -321,6 +321,11 @@ public final class T1XTargetMethod extends TargetMethod {
         return bciToPos;
     }
 
+    @Override
+    public CodeAttribute codeAttribute() {
+        return codeAttribute;
+    }
+
     /**
      * Initializes the exception handlers for this method, adding an extra one if necessary for
      * a synchronized method. This synthesized handler covers the machine code from the
