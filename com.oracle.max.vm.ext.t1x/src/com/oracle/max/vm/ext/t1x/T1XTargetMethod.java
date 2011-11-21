@@ -303,14 +303,6 @@ public final class T1XTargetMethod extends TargetMethod {
         return survivedEvictions;
     }
 
-    /**
-     * @return {@code true} if this target method's {@link ClassMethodActor} says so.
-     */
-    @Override
-    public boolean isUsingTaggedLocals() {
-        return classMethodActor.isUsingTaggedLocals();
-    }
-
     @Override
     public MethodProfile profile() {
         return profile;
@@ -319,6 +311,11 @@ public final class T1XTargetMethod extends TargetMethod {
     @Override
     public int[] bciToPosMap() {
         return bciToPos;
+    }
+
+    @Override
+    public CodeAttribute codeAttribute() {
+        return codeAttribute;
     }
 
     /**

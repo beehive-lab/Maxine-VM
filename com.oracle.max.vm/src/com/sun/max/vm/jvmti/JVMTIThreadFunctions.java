@@ -46,7 +46,7 @@ import com.sun.max.vm.thread.*;
  */
 class JVMTIThreadFunctions {
     static int getAllThreads(Pointer threadsCountPtr, Pointer threadsPtr) {
-        final Thread[] threads = VmThreadMap.getThreads(false);
+        final Thread[] threads = VmThreadMap.getThreads(true);
         threadsCountPtr.setInt(threads.length);
         Pointer threadCArray = Memory.allocate(Size.fromInt(threads.length * Word.size()));
         if (threadCArray.isZero()) {

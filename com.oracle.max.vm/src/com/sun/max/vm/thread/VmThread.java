@@ -179,7 +179,12 @@ public class VmThread {
         mainThreadGroup = new ThreadGroup(systemThreadGroup, hostMainThreadGroup.getName());
 
         mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
-        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
+        Thread vmOperationJavaThread = new VmOperationThread(systemThreadGroup);
+        vmOperationThread = initVmThread(vmOperationJavaThread);
+        // the VmOperationThread thread is completely hidden; we could, with more complexity,
+        // put it in a hidden group, but since the external world never sees it, it suffices to detach it.
+        // N.B. at this point it is unstarted so not actually a child of systemThreadGroup
+        WithoutAccessCheck.setInstanceField(vmOperationJavaThread, "group", null);
         signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
 
         try {
@@ -275,6 +280,11 @@ public class VmThread {
      * A "monitor" used to suspend the thread by {@link VmOperation}.
      */
     public final OSMonitor.SuspendMonitor suspendMonitor = new OSMonitor.SuspendMonitor();
+
+    /**
+     * Marks this as a JVMTI agent thread. These are not visible to calls like {@link Thread#getThreads}.
+     */
+    private boolean jvmtiAgent;
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be
@@ -404,8 +414,6 @@ public class VmThread {
      * The pool of JNI local references allocated for this thread.
      */
     private JniHandles jniHandles;
-
-    private boolean isGCThread;
 
     /**
      * Next thread waiting on the same monitor this thread is {@linkplain Object#wait() waiting} on.
@@ -946,7 +954,7 @@ public class VmThread {
      */
     public VmThread(Thread javaThread) {
         if (javaThread != null) {
-            setJavaThread(javaThread, javaThread.getName());
+            setJavaThread(javaThread, JDK_java_lang_Thread.getName(javaThread));
         }
     }
 
@@ -1101,11 +1109,12 @@ public class VmThread {
         return vmOperationThread == this;
     }
 
-    /**
-     * Determines if this thread is owned by the garbage collector.
-     */
-    public final boolean isGCThread() {
-        return isGCThread;
+    public final boolean isJVMTIAgentThread() {
+        return jvmtiAgent;
+    }
+
+    public final void setAsJVMTIAgentThread() {
+        jvmtiAgent = true;
     }
 
     /**
@@ -1114,7 +1123,6 @@ public class VmThread {
      * @param name the name of the thread
      */
     public final VmThread setJavaThread(Thread javaThread, String name) {
-        this.isGCThread = Heap.isGcThread(javaThread);
         this.javaThread = javaThread;
         this.name = name;
         return this;
@@ -1311,6 +1319,8 @@ public class VmThread {
         @INTRINSIC(UNSAFE_CAST) public static native ThreadGroupAlias asThreadGroupAlias(Object object);
         @ALIAS(declaringClass = ThreadGroup.class)
         private native void add(Thread t);
+        @ALIAS(declaringClass = ThreadGroup.class)
+        int nUnstartedThreads;
     }
 
     /**
@@ -1320,7 +1330,12 @@ public class VmThread {
      */
     public final void startVmSystemThread() {
         ThreadGroupAlias threadGroupAlias = ThreadGroupAlias.asThreadGroupAlias(systemThreadGroup);
-        threadGroupAlias.add(javaThread);
+        if (this == vmOperationThread) {
+            // hidden
+            threadGroupAlias.nUnstartedThreads--;
+        } else {
+            threadGroupAlias.add(javaThread);
+        }
         start0();
     }
 

@@ -585,7 +585,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
         } else {
             XirArgument guard = guardFor(type);
-            return new XirSnippet(materializedInstanceofForNonLeafTemplate.unresolved, receiver, guard);
+            return new XirSnippet(materializedInstanceofForNonLeafTemplate.unresolved, receiver, guard, trueValue, falseValue);
         }
     }
 
@@ -1552,7 +1552,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         {
             // unresolved materializeInstanceOf
-            unresolved = buildUnresolvedInstanceOf(nonnull);
+            unresolved = buildUnresolvedMaterializeInstanceOf(nonnull);
         }
         return new XirPair(resolved, unresolved);
     }
@@ -1560,7 +1560,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildUnresolvedMaterializeInstanceOf(boolean nonnull) {
         XirTemplate unresolved;
-        XirOperand result = asm.restart(CiKind.Boolean);
+        XirOperand result = asm.restart(CiKind.Int);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         XirOperand guard = asm.createConstantInputParameter("hub", CiKind.Object);
         XirOperand trueValue = asm.createConstantInputParameter("trueValue", CiKind.Int);
