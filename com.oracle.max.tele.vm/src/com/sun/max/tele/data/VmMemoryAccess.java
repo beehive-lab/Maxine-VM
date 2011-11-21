@@ -37,7 +37,7 @@ import com.sun.max.vm.value.*;
  * methods wrapped around the low level data reading interface, but access to the low level
  * interface is possible for other cases.
  */
-public final class VmMemoryAccess extends AbstractVmHolder implements TeleVMCache, MaxMemory {
+public final class VmMemoryAccess extends AbstractVmHolder implements MaxMemory {
 
     private static final int TRACE_VALUE = 1;
 
@@ -260,10 +260,5 @@ public final class VmMemoryAccess extends AbstractVmHolder implements TeleVMCach
         }
     }
 
-    @Override
-    public void updateCache(long epoch) {
-        // TODO Auto-generated method stub
-
-    }
 
 }
