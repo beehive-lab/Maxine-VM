@@ -45,8 +45,23 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
 
     private boolean rethrowException;
 
+    /**
+     * When a node whose frame state has this BCI value is inlined, its frame state
+     * will be replaced with the frame state before the inlined invoke node.
+     */
     public static final int BEFORE_BCI = -2;
+
+    /**
+     * When a node whose frame state has this BCI value is inlined, its frame state
+     * will be replaced with the frame state {@linkplain Invoke#stateAfter() after}
+     * the inlined invoke node.
+     */
     public static final int AFTER_BCI = -3;
+
+    /**
+     * This BCI should be used for frame states that are built for code with no meaningful BCI.
+     */
+    public static final int UNKNOWN_BCI = -4;
 
     @Input private FrameState outerFrameState;
 

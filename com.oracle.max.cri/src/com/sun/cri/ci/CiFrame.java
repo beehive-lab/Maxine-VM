@@ -134,23 +134,19 @@ public class CiFrame extends CiCodePos implements Serializable {
         }
         if (obj instanceof CiFrame) {
             CiFrame other = (CiFrame) obj;
-            return equals(other, false);
+            return equals(other, false, false);
         }
         return false;
     }
 
     /**
-     * Deep equality test, ignoring value kinds.
+     * Deep equality test.
+     *
+     * @param ignoreKinds if {@code true}, compares values but {@link CiValue#equalsIgnoringKind(CiValue) ignore} their kinds
+     * @param ignoreNegativeBCIs if {@code true}, negative BCIs are treated as equal
      */
-    public boolean equalsIgnoringKind(CiFrame other) {
-        if (other == this) {
-            return true;
-        }
-        return equals(other, true);
-    }
-
-    private boolean equals(CiFrame other, boolean ignoreKinds) {
-        if (other.bci == bci &&
+    public boolean equals(CiFrame other, boolean ignoreKinds, boolean ignoreNegativeBCIs) {
+        if ((other.bci == bci || (ignoreNegativeBCIs && other.bci < 0 && bci < 0)) &&
             numLocals == other.numLocals &&
             numStack == other.numStack &&
             numLocks == other.numLocks &&
@@ -175,7 +171,7 @@ public class CiFrame extends CiCodePos implements Serializable {
             if (other.caller == null) {
                 return false;
             }
-            return caller().equals(other.caller(), ignoreKinds);
+            return caller().equals(other.caller(), ignoreKinds, ignoreNegativeBCIs);
         }
         return false;
     }
