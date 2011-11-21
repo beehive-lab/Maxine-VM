@@ -1099,15 +1099,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * @return {@code true} if the machine code of this method is using tagged pointers.
-     * The default implementation pessimistically assumes this is the case.
-     */
-    public boolean isUsingTaggedLocals() {
-        return true;
-    }
-
-    /**
-     * Determines if this is a stub of a give type.
+     * Determines if this is a stub of a given type.
      */
     public final boolean is(Stub.Type type) {
         return stubType() == type;
