@@ -2293,7 +2293,17 @@ public class JVMTIFunctions  {
         Pointer anchor = prologue(env);
         tracePrologue("IsMethodObsolete", anchor);
         try {
-            return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+            if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
+                return JVMTI_ERROR_WRONG_PHASE;
+            }
+            if (is_obsolete_ptr.isZero()) {
+                return JVMTI_ERROR_NULL_POINTER;
+            }
+            ClassMethodActor classMethodActor = JVMTIUtil.toClassMethodActor(method);
+            if (classMethodActor == null) {
+                return JVMTI_ERROR_INVALID_METHODID;
+            }
+            return JVMTIClassFunctions.isMethodObsolete(classMethodActor, is_obsolete_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
@@ -2304,7 +2314,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SuspendThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:777
+        // Source: JVMTIFunctionsSource.java:780
         Pointer anchor = prologue(env);
         tracePrologue("SuspendThreadList", anchor);
         try {
@@ -2331,7 +2341,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ResumeThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:788
+        // Source: JVMTIFunctionsSource.java:791
         Pointer anchor = prologue(env);
         tracePrologue("ResumeThreadList", anchor);
         try {
@@ -2358,31 +2368,31 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved94();
-        // Source: JVMTIFunctionsSource.java:799
-
-    @VM_ENTRY_POINT
-    private static native void reserved95();
         // Source: JVMTIFunctionsSource.java:802
 
     @VM_ENTRY_POINT
-    private static native void reserved96();
+    private static native void reserved95();
         // Source: JVMTIFunctionsSource.java:805
 
     @VM_ENTRY_POINT
-    private static native void reserved97();
+    private static native void reserved96();
         // Source: JVMTIFunctionsSource.java:808
 
     @VM_ENTRY_POINT
-    private static native void reserved98();
+    private static native void reserved97();
         // Source: JVMTIFunctionsSource.java:811
 
     @VM_ENTRY_POINT
-    private static native void reserved99();
+    private static native void reserved98();
         // Source: JVMTIFunctionsSource.java:814
 
     @VM_ENTRY_POINT
-    private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
+    private static native void reserved99();
         // Source: JVMTIFunctionsSource.java:817
+
+    @VM_ENTRY_POINT
+    private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
+        // Source: JVMTIFunctionsSource.java:820
         Pointer anchor = prologue(env);
         tracePrologue("GetAllStackTraces", anchor);
         try {
@@ -2406,7 +2416,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadListStackTraces(Pointer env, int thread_count, Pointer thread_list, int max_frame_count, Pointer stack_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:827
+        // Source: JVMTIFunctionsSource.java:830
         Pointer anchor = prologue(env);
         tracePrologue("GetThreadListStackTraces", anchor);
         try {
@@ -2430,7 +2440,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:837
+        // Source: JVMTIFunctionsSource.java:840
         Pointer anchor = prologue(env);
         tracePrologue("GetThreadLocalStorage", anchor);
         try {
@@ -2460,7 +2470,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:845
+        // Source: JVMTIFunctionsSource.java:848
         Pointer anchor = prologue(env);
         tracePrologue("SetThreadLocalStorage", anchor);
         try {
@@ -2487,7 +2497,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
-        // Source: JVMTIFunctionsSource.java:852
+        // Source: JVMTIFunctionsSource.java:855
         Pointer anchor = prologue(env);
         tracePrologue("GetStackTrace", anchor);
         try {
@@ -2520,11 +2530,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved105();
-        // Source: JVMTIFunctionsSource.java:863
+        // Source: JVMTIFunctionsSource.java:866
 
     @VM_ENTRY_POINT
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
-        // Source: JVMTIFunctionsSource.java:866
+        // Source: JVMTIFunctionsSource.java:869
         Pointer anchor = prologue(env);
         tracePrologue("GetTag", anchor);
         try {
@@ -2550,7 +2560,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetTag(Pointer env, JniHandle object, long tag) {
-        // Source: JVMTIFunctionsSource.java:874
+        // Source: JVMTIFunctionsSource.java:877
         Pointer anchor = prologue(env);
         tracePrologue("SetTag", anchor);
         try {
@@ -2573,7 +2583,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int ForceGarbageCollection(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:881
+        // Source: JVMTIFunctionsSource.java:884
         Pointer anchor = prologue(env);
         tracePrologue("ForceGarbageCollection", anchor);
         try {
@@ -2589,7 +2599,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverObjectsReachableFromObject(Pointer env, JniHandle object, Address object_reference_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:887
+        // Source: JVMTIFunctionsSource.java:890
         Pointer anchor = prologue(env);
         tracePrologue("IterateOverObjectsReachableFromObject", anchor);
         try {
@@ -2604,7 +2614,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverReachableObjects(Pointer env, Address heap_root_callback, Address stack_ref_callback, Address object_ref_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:892
+        // Source: JVMTIFunctionsSource.java:895
         Pointer anchor = prologue(env);
         tracePrologue("IterateOverReachableObjects", anchor);
         try {
@@ -2619,7 +2629,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverHeap(Pointer env, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:897
+        // Source: JVMTIFunctionsSource.java:900
         Pointer anchor = prologue(env);
         tracePrologue("IterateOverHeap", anchor);
         try {
@@ -2634,7 +2644,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateOverInstancesOfClass(Pointer env, JniHandle klass, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:902
+        // Source: JVMTIFunctionsSource.java:905
         Pointer anchor = prologue(env);
         tracePrologue("IterateOverInstancesOfClass", anchor);
         try {
@@ -2649,11 +2659,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved113();
-        // Source: JVMTIFunctionsSource.java:907
+        // Source: JVMTIFunctionsSource.java:910
 
     @VM_ENTRY_POINT
     private static int GetObjectsWithTags(Pointer env, int tag_count, Pointer tags, Pointer count_ptr, Pointer object_result_ptr, Pointer tag_result_ptr) {
-        // Source: JVMTIFunctionsSource.java:910
+        // Source: JVMTIFunctionsSource.java:913
         Pointer anchor = prologue(env);
         tracePrologue("GetObjectsWithTags", anchor);
         try {
@@ -2674,7 +2684,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int FollowReferences(Pointer env, int heap_filter, JniHandle klass, JniHandle initial_object, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:917
+        // Source: JVMTIFunctionsSource.java:920
         Pointer anchor = prologue(env);
         tracePrologue("FollowReferences", anchor);
         try {
@@ -2689,7 +2699,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int IterateThroughHeap(Pointer env, int heap_filter, JniHandle klass, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:922
+        // Source: JVMTIFunctionsSource.java:925
         Pointer anchor = prologue(env);
         tracePrologue("IterateThroughHeap", anchor);
         try {
@@ -2724,19 +2734,19 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved117();
-        // Source: JVMTIFunctionsSource.java:932
-
-    @VM_ENTRY_POINT
-    private static native void reserved118();
         // Source: JVMTIFunctionsSource.java:935
 
     @VM_ENTRY_POINT
-    private static native void reserved119();
+    private static native void reserved118();
         // Source: JVMTIFunctionsSource.java:938
 
     @VM_ENTRY_POINT
-    private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
+    private static native void reserved119();
         // Source: JVMTIFunctionsSource.java:941
+
+    @VM_ENTRY_POINT
+    private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
+        // Source: JVMTIFunctionsSource.java:944
         Pointer anchor = prologue(env);
         tracePrologue("SetJNIFunctionTable", anchor);
         try {
@@ -2751,7 +2761,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetJNIFunctionTable(Pointer env, Pointer function_table) {
-        // Source: JVMTIFunctionsSource.java:946
+        // Source: JVMTIFunctionsSource.java:949
         Pointer anchor = prologue(env);
         tracePrologue("GetJNIFunctionTable", anchor);
         try {
@@ -2766,7 +2776,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetEventCallbacks(Pointer env, Pointer callbacks, int size_of_callbacks) {
-        // Source: JVMTIFunctionsSource.java:951
+        // Source: JVMTIFunctionsSource.java:954
         Pointer anchor = prologue(env);
         tracePrologue("SetEventCallbacks", anchor);
         try {
@@ -2786,7 +2796,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GenerateEvents(Pointer env, int event_type) {
-        // Source: JVMTIFunctionsSource.java:959
+        // Source: JVMTIFunctionsSource.java:962
         Pointer anchor = prologue(env);
         tracePrologue("GenerateEvents", anchor);
         try {
@@ -2801,7 +2811,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetExtensionFunctions(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:964
+        // Source: JVMTIFunctionsSource.java:967
         Pointer anchor = prologue(env);
         tracePrologue("GetExtensionFunctions", anchor);
         try {
@@ -2816,7 +2826,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetExtensionEvents(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:969
+        // Source: JVMTIFunctionsSource.java:972
         Pointer anchor = prologue(env);
         tracePrologue("GetExtensionEvents", anchor);
         try {
@@ -2831,7 +2841,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetExtensionEventCallback(Pointer env, int extension_event_index, Address callback) {
-        // Source: JVMTIFunctionsSource.java:974
+        // Source: JVMTIFunctionsSource.java:977
         Pointer anchor = prologue(env);
         tracePrologue("SetExtensionEventCallback", anchor);
         try {
@@ -2846,7 +2856,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int DisposeEnvironment(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:979
+        // Source: JVMTIFunctionsSource.java:982
         Pointer anchor = prologue(env);
         tracePrologue("DisposeEnvironment", anchor);
         try {
@@ -2862,7 +2872,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetErrorName(Pointer env, int error, Pointer name_ptr) {
-        // Source: JVMTIFunctionsSource.java:985
+        // Source: JVMTIFunctionsSource.java:988
         Pointer anchor = prologue(env);
         tracePrologue("GetErrorName", anchor);
         try {
@@ -2888,7 +2898,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetlongFormat(Pointer env, Pointer format_ptr) {
-        // Source: JVMTIFunctionsSource.java:999
+        // Source: JVMTIFunctionsSource.java:1002
         Pointer anchor = prologue(env);
         tracePrologue("GetlongFormat", anchor);
         try {
@@ -2903,7 +2913,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
-        // Source: JVMTIFunctionsSource.java:1004
+        // Source: JVMTIFunctionsSource.java:1007
         Pointer anchor = prologue(env);
         tracePrologue("GetSystemProperties", anchor);
         try {
@@ -2918,7 +2928,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:1009
+        // Source: JVMTIFunctionsSource.java:1012
         Pointer anchor = prologue(env);
         tracePrologue("GetSystemProperty", anchor);
         try {
@@ -2939,7 +2949,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
-        // Source: JVMTIFunctionsSource.java:1016
+        // Source: JVMTIFunctionsSource.java:1019
         Pointer anchor = prologue(env);
         tracePrologue("SetSystemProperty", anchor);
         try {
@@ -2954,7 +2964,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetPhase(Pointer env, Pointer phase_ptr) {
-        // Source: JVMTIFunctionsSource.java:1021
+        // Source: JVMTIFunctionsSource.java:1024
         Pointer anchor = prologue(env);
         tracePrologue("GetPhase", anchor);
         try {
@@ -2973,7 +2983,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1028
+        // Source: JVMTIFunctionsSource.java:1031
         Pointer anchor = prologue(env);
         tracePrologue("GetCurrentThreadCpuTimerInfo", anchor);
         try {
@@ -2988,7 +2998,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1033
+        // Source: JVMTIFunctionsSource.java:1036
         Pointer anchor = prologue(env);
         tracePrologue("GetCurrentThreadCpuTime", anchor);
         try {
@@ -3003,7 +3013,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1038
+        // Source: JVMTIFunctionsSource.java:1041
         Pointer anchor = prologue(env);
         tracePrologue("GetThreadCpuTimerInfo", anchor);
         try {
@@ -3018,7 +3028,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTime(Pointer env, JniHandle thread, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1043
+        // Source: JVMTIFunctionsSource.java:1046
         Pointer anchor = prologue(env);
         tracePrologue("GetThreadCpuTime", anchor);
         try {
@@ -3033,7 +3043,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1048
+        // Source: JVMTIFunctionsSource.java:1051
         Pointer anchor = prologue(env);
         tracePrologue("GetTimerInfo", anchor);
         try {
@@ -3048,7 +3058,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1053
+        // Source: JVMTIFunctionsSource.java:1056
         Pointer anchor = prologue(env);
         tracePrologue("GetTime", anchor);
         try {
@@ -3068,7 +3078,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetPotentialCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1061
+        // Source: JVMTIFunctionsSource.java:1064
         Pointer anchor = prologue(env);
         tracePrologue("GetPotentialCapabilities", anchor);
         try {
@@ -3091,11 +3101,11 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved141();
-        // Source: JVMTIFunctionsSource.java:1070
+        // Source: JVMTIFunctionsSource.java:1073
 
     @VM_ENTRY_POINT
     private static int AddCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1073
+        // Source: JVMTIFunctionsSource.java:1076
         Pointer anchor = prologue(env);
         tracePrologue("AddCapabilities", anchor);
         try {
@@ -3116,7 +3126,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1080
+        // Source: JVMTIFunctionsSource.java:1083
         Pointer anchor = prologue(env);
         tracePrologue("RelinquishCapabilities", anchor);
         try {
@@ -3144,7 +3154,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
-        // Source: JVMTIFunctionsSource.java:1094
+        // Source: JVMTIFunctionsSource.java:1097
         Pointer anchor = prologue(env);
         tracePrologue("GetAvailableProcessors", anchor);
         try {
@@ -3164,7 +3174,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
-        // Source: JVMTIFunctionsSource.java:1102
+        // Source: JVMTIFunctionsSource.java:1105
         Pointer anchor = prologue(env);
         tracePrologue("GetClassVersionNumbers", anchor);
         try {
@@ -3185,7 +3195,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
-        // Source: JVMTIFunctionsSource.java:1109
+        // Source: JVMTIFunctionsSource.java:1112
         Pointer anchor = prologue(env);
         tracePrologue("GetConstantPool", anchor);
         try {
@@ -3200,7 +3210,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:1114
+        // Source: JVMTIFunctionsSource.java:1117
         Pointer anchor = prologue(env);
         tracePrologue("GetEnvironmentLocalStorage", anchor);
         try {
@@ -3215,7 +3225,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:1119
+        // Source: JVMTIFunctionsSource.java:1122
         Pointer anchor = prologue(env);
         tracePrologue("SetEnvironmentLocalStorage", anchor);
         try {
@@ -3230,7 +3240,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1124
+        // Source: JVMTIFunctionsSource.java:1127
         Pointer anchor = prologue(env);
         tracePrologue("AddToBootstrapClassLoaderSearch", anchor);
         try {
@@ -3249,7 +3259,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
-        // Source: JVMTIFunctionsSource.java:1131
+        // Source: JVMTIFunctionsSource.java:1134
         Pointer anchor = prologue(env);
         tracePrologue("SetVerboseFlag", anchor);
         try {
@@ -3281,7 +3291,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1153
+        // Source: JVMTIFunctionsSource.java:1156
         Pointer anchor = prologue(env);
         tracePrologue("AddToSystemClassLoaderSearch", anchor);
         try {
@@ -3296,7 +3306,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
-        // Source: JVMTIFunctionsSource.java:1158
+        // Source: JVMTIFunctionsSource.java:1161
         Pointer anchor = prologue(env);
         tracePrologue("RetransformClasses", anchor);
         try {
@@ -3311,7 +3321,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1163
+        // Source: JVMTIFunctionsSource.java:1166
         Pointer anchor = prologue(env);
         tracePrologue("GetOwnedMonitorStackDepthInfo", anchor);
         try {
@@ -3326,7 +3336,7 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:1168
+        // Source: JVMTIFunctionsSource.java:1171
         Pointer anchor = prologue(env);
         tracePrologue("GetObjectSize", anchor);
         try {
@@ -3352,7 +3362,7 @@ public class JVMTIFunctions  {
      */
     @VM_ENTRY_POINT
     private static int SetJVMTIEnv(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:1180
+        // Source: JVMTIFunctionsSource.java:1183
         Pointer anchor = prologue(env);
         tracePrologue("SetJVMTIEnv", anchor);
         try {

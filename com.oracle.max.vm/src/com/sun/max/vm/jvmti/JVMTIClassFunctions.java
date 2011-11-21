@@ -406,6 +406,12 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_ABSENT_INFORMATION;
     }
 
+    static int isMethodObsolete(ClassMethodActor classMethodActor, Pointer isObsoletePtr) {
+        // TODO implement properly!
+        isObsoletePtr.setBoolean(false);
+        return JVMTI_ERROR_NONE;
+    }
+
     static int getMethodName(MethodActor methodActor, Pointer namePtrPtr, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
         if (!namePtrPtr.isZero()) {
             namePtrPtr.setWord(CString.utf8FromJava(methodActor.name()));
@@ -446,8 +452,8 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_INVALID_METHODID;
         }
         byte[] code = classMethodActor.codeAttribute().code();
-        startLocationPtr.setInt(0);
-        endLocationPtr.setInt(code.length - 1);
+        startLocationPtr.setLong(0);
+        endLocationPtr.setLong(code.length - 1);
         return JVMTI_ERROR_NONE;
     }
 
