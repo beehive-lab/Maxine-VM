@@ -150,7 +150,7 @@ public abstract class StackFrameWalker {
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
-        boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
+        boolean initialIsInNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
 
         while (!current.sp.isZero()) {
@@ -158,10 +158,10 @@ public abstract class StackFrameWalker {
             TargetMethod calleeTM = callee.targetMethod();
             traceCursor(current);
 
-            if (tm != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+            if (tm != null && (!initialIsInNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
                 // found target method
-                inNative = false;
+                initialIsInNative = false;
 
                 checkVmEntrypointCaller(calleeTM, tm);
 
@@ -184,8 +184,8 @@ public abstract class StackFrameWalker {
                     }
                 }
 
-                if (inNative) {
-                    inNative = false;
+                if (initialIsInNative) {
+                    initialIsInNative = false;
                     Pointer anchor = nextNativeStubAnchor();
                     advanceFrameInNative(anchor, purpose);
                 } else {
