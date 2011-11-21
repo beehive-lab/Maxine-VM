@@ -41,7 +41,7 @@ import com.sun.cri.ri.*;
  */
 public class Snippets {
 
-    public static void install(GraalCompiler compiler, GraalRuntime runtime, CiTarget target, SnippetsInterface obj, boolean plotGraphs) {
+    public static void install(GraalRuntime runtime, CiTarget target, SnippetsInterface obj, boolean plotGraphs, PhasePlan plan) {
         Class<? extends SnippetsInterface> clazz = obj.getClass();
         Class<?> original = clazz.getAnnotation(ClassSubstitution.class).value();
         GraalContext context = new GraalContext("Installing Snippet");
@@ -76,7 +76,7 @@ public class Snippets {
                 for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
                     invokes.add(invoke);
                 }
-                new InliningPhase(compiler, runtime, target, invokes, null).apply(graph, context);
+                new InliningPhase(runtime, target, invokes, null, plan).apply(graph, context);
 
                 new SnippetIntrinsificationPhase(runtime).apply(graph, context);
 

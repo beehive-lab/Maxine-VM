@@ -93,15 +93,22 @@ public class CFGPrinterObserver implements CompilationObserver {
                 cfgPrinter.printMachineCode(runtime.disassemble(targetMethod), null);
             }
         } else if (graph != null) {
+            List<? extends Block> blocks = null;
             if (schedule == null) {
                 try {
-                    schedule = new IdentifyBlocksPhase(true);
+                    schedule = new IdentifyBlocksPhase(true, LIRBlock.FACTORY);
                     schedule.apply((StructuredGraph) graph, false, false);
+                    blocks = schedule.getBlocks();
+
+                    ComputeLinearScanOrder clso = new ComputeLinearScanOrder(schedule.getBlocks().size(), schedule.loopCount(), (LIRBlock) schedule.getStartBlock());
+                    blocks = clso.codeEmittingOrder();
                 } catch (Throwable t) {
                     // nothing to do here...
                 }
             }
-            cfgPrinter.printCFG(event.label, schedule.getBlocks(), true);
+            if (blocks != null) {
+                cfgPrinter.printCFG(event.label, blocks, true);
+            }
         }
         if (allocator != null && intervals != null) {
             cfgPrinter.printIntervals(event.label, allocator, intervals);

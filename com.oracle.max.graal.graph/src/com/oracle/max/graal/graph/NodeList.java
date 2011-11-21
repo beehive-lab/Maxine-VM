@@ -306,7 +306,10 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
 
     @Override
     public boolean addAll(Collection< ? extends T> c) {
-        throw new UnsupportedOperationException("not implemented");
+        for (T e : c) {
+            add(e);
+        }
+        return true;
     }
 
     @Override

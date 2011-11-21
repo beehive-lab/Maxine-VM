@@ -74,7 +74,10 @@ public class MaxRuntime implements GraalRuntime {
 
     private IntrinsicImpl.Registry intrinsicRegistry;
 
-    public static MaxRuntime getInstance() {
+    /**
+     * Gets the global MaxRuntime instance.
+     */
+    public static MaxRuntime runtime() {
         return instance;
     }
 
@@ -88,7 +91,7 @@ public class MaxRuntime implements GraalRuntime {
             VMConfigurator.installStandard(BuildLevel.PRODUCT);
             JavaPrototype.initialize(false);
         }
-        return getInstance();
+        return runtime();
     }
 
 
