@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -52,6 +53,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -152,6 +154,16 @@ public class Graal implements RuntimeCompiler {
 
             GraalIntrinsics.installIntrinsics(runtime, target, plan);
             NativeStubGraphBuilder.initialize();
+
+            // Ensure all the Node classes used by Maxine have their NodeClass instances in the image.
+            for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+                if (Node.class.isAssignableFrom(classActor.toJava())) {
+                    Class<?> nodeClass = classActor.toJava();
+                    if (!Modifier.isAbstract(nodeClass.getModifiers())) {
+                        NodeClass.get(nodeClass);
+                    }
+                }
+            }
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
