@@ -469,7 +469,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         for (int i = 0; i < dims.length; i++) {
             dims[i] = toXirArgument(x.dimension(i));
         }
-        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.elementType);
+        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.type());
         emitXir(snippet, x, state(), null, true);
     }
 
