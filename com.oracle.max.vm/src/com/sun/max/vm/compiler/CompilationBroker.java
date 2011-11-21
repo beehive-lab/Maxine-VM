@@ -105,7 +105,7 @@ public class CompilationBroker {
             "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
-    private HashMap<String, String> compileCommandMap;
+    private LinkedHashMap<String, String> compileCommandMap;
 
     /**
      * Gets the {@linkplain RuntimeCompiler#name() name} of the compiler to be used to
@@ -120,7 +120,7 @@ public class CompilationBroker {
         // A race to parse the option and create the map is fine. The result will be identical
         // for both threads and so one result just becomes instant garbage.
         if (compileCommandMap == null) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
             String[] parts = CompileCommand.split(",");
             for (String part : parts) {
                 int colon = part.indexOf(':');
@@ -136,7 +136,7 @@ public class CompilationBroker {
         }
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
-            if (methodString.contains(e.getKey())) {
+            if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
                 return e.getValue();
             }
         }
@@ -414,15 +414,15 @@ public class CompilationBroker {
                 compiler = optimizingCompiler;
             } else {
                 compiler = defaultCompiler;
-                String compilerName = compilerFor(cma);
-                if (compilerName != null) {
-                    if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                        compiler = optimizingCompiler;
-                    } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                        compiler = baselineCompiler;
-                    }
+            }
+
+            String compilerName = compilerFor(cma);
+            if (compilerName != null) {
+                if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                    compiler = optimizingCompiler;
+                } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                    compiler = baselineCompiler;
                 }
-                assert compiler != null;
             }
         }
 

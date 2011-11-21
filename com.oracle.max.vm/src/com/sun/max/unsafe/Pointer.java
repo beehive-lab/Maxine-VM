@@ -713,6 +713,11 @@ public abstract class Pointer extends Address implements Accessor {
         setWord(0, value);
     }
 
+    @INLINE
+    public final void writeObject(int offset, Object value) {
+        writeReference(Offset.fromInt(offset), Reference.fromJava(value));
+    }
+
     @INTRINSIC(PWRITE_OFF)
     public final void writeReference(int offset, Reference value) {
         writeReference(Offset.fromInt(offset), value);

@@ -222,13 +222,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
-            // Create duplicate graph.
-            StructuredGraph duplicate = new StructuredGraph();
-            Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
-            replacements.put(graph.start(), duplicate.start());
-            duplicate.addDuplicate(graph.getNodes(), replacements);
-
-            cachedGraphs.put(method, duplicate);
+            cachedGraphs.put(method, graph.copy());
         }
     }
 
@@ -814,7 +808,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             dims[i] = frameState.ipop();
         }
         if (type instanceof RiResolvedType) {
-            NewArrayNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims, cpi, constantPool));
+            FixedWithNextNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims));
             frameState.apush(append(n));
         } else {
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));

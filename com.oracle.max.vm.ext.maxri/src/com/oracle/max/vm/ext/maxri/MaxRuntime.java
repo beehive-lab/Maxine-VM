@@ -70,28 +70,14 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRuntime implements GraalRuntime {
 
-    public static final class CompilationInfo {
-
-        public boolean usesTagging = false;
-
-        public void reset() {
-            usesTagging = false;
-        }
-
-    }
-
-    public static final ThreadLocal<CompilationInfo> compilationInfo = new ThreadLocal<CompilationInfo>() {
-        @Override
-        protected CompilationInfo initialValue() {
-            return new CompilationInfo();
-        }
-    };
-
     private static MaxRuntime instance = new MaxRuntime();
 
     private IntrinsicImpl.Registry intrinsicRegistry;
 
-    public static MaxRuntime getInstance() {
+    /**
+     * Gets the global MaxRuntime instance.
+     */
+    public static MaxRuntime runtime() {
         return instance;
     }
 
@@ -105,7 +91,7 @@ public class MaxRuntime implements GraalRuntime {
             VMConfigurator.installStandard(BuildLevel.PRODUCT);
             JavaPrototype.initialize(false);
         }
-        return getInstance();
+        return runtime();
     }
 
 
@@ -192,17 +178,6 @@ public class MaxRuntime implements GraalRuntime {
         }
 
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
-    }
-
-    @Override
-    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        if (callee instanceof ClassMethodActor) {
-            final ClassMethodActor cmaCallee = (ClassMethodActor) callee;
-            if (cmaCallee.isUsingTaggedLocals()) {
-                final CompilationInfo ci = compilationInfo.get();
-                ci.usesTagging = true;
-            }
-        }
     }
 
     /**

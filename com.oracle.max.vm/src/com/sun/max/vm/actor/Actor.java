@@ -95,13 +95,6 @@ public abstract class Actor {
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
 
-    // VM-internal flag for tagging:
-    // * methods that use tagged local variables have this flag set,
-    public static final int USES_TAGGED_VALUES =   0x08000000;
-    // * and so have fields that are of a tagged type.
-    public static final int TAGGED_FIELD       =   0x08000000;
-
-
     /**
      * Mask of flags that a substitutee should adopt from its {@linkplain SUBSTITUTE substitute}.
      * Adoption of flags is a union operation with the existing flags of the substitutee.
@@ -444,21 +437,6 @@ public abstract class Actor {
     @INLINE
     public static boolean hasFinalizer(int flags) {
         return (flags & FINALIZER) != 0;
-    }
-
-    @INLINE
-    public static boolean isUsingTaggedValues(int flags) {
-        return (flags & USES_TAGGED_VALUES) != 0;
-    }
-
-    @INLINE
-    public void setIsUsingTaggedValues() {
-        flags |= USES_TAGGED_VALUES;
-    }
-
-    @INLINE
-    public static boolean isTaggedField(int flags) {
-        return (flags & TAGGED_FIELD) != 0;
     }
 
     /**

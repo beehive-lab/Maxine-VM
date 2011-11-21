@@ -704,29 +704,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitAllocateStackHandle(StackHandle x) {
-        CiValue value = load(x.value());
-        CiValue src = forceToSpill(value, x.value().kind, true);
-        CiValue dst = createResultVariable(x);
-
-        CiConstant constant = x.value().isConstant() ? x.value().asConstant() : null;
-        CiConstant zero = null;
-        if (constant == null) {
-            zero = CiConstant.defaultValue(x.value().kind);
-            lir.cmp(Condition.EQ, src, zero);
-        }
-        lir.lea(src, dst);
-        if (constant != null) {
-            if (constant.isDefaultValue()) {
-                lir.move(value, dst);
-            }
-        } else {
-            assert zero != null;
-            lir.cmove(Condition.EQ, zero, dst, dst);
-        }
-    }
-
-    @Override
     public void visitLoadPointer(LoadPointer x) {
         LIRDebugInfo info = maybeStateFor(x);
         CiValue pointer = load(x.pointer());
@@ -773,10 +750,12 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitStackAllocate(StackAllocate x) {
+    public void visitAlloca(Alloca x) {
         CiValue result = createResultVariable(x);
         assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
-        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
+        assert x.refs().isConstant() : "ALLOCA bytecode 'refs' operand is not a constant: " + x.refs();
+        boolean refs = x.refs().asConstant().asInt() != 0;
+        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt(), refs);
         lir.alloca(stackBlock, result);
     }
 

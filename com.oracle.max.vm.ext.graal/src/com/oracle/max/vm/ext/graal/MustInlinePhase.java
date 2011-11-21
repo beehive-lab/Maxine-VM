@@ -61,11 +61,10 @@ public class MustInlinePhase extends Phase {
                         new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
                     }
                     new FoldPhase(runtime).apply(inlineGraph);
-                    new MaxineIntrinsicsPhase(runtime).apply(inlineGraph);
+                    new MaxineIntrinsicsPhase().apply(inlineGraph);
                     new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
                     cache.put(method, inlineGraph);
                 }
-                runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
                 InliningUtil.inline(invoke, inlineGraph, false);
             }
         }

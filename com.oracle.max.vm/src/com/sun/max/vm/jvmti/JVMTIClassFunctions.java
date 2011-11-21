@@ -74,7 +74,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-/**
+    /**
      * Dispatch the {@link JVMTIEvent#CLASS_FILE_LOAD_HOOK}.
      * We do not check the event state, caller is presumed to have called {@link JVMTI#eventNeeded(int).
      * @param classLoader null for boot
@@ -84,8 +84,8 @@ class JVMTIClassFunctions {
      * @return transformed bytes or null if no change
      */
     static byte[] classFileLoadHook(ClassLoader classLoader, String className, ProtectionDomain protectionDomain, byte[] classfileBytes) {
-        Pointer newClassDataLenPtr = Intrinsics.stackAllocate(Pointer.size());
-        Pointer newClassDataPtrPtr = Intrinsics.stackAllocate(Pointer.size());
+        Pointer newClassDataLenPtr = Intrinsics.alloca(Pointer.size(), false);
+        Pointer newClassDataPtrPtr = Intrinsics.alloca(Pointer.size(), false);
         Pointer classDataPtr = Reference.fromJava(classfileBytes).toOrigin().plus(JVMTIUtil.byteDataOffset);
         int classfileBytesLength = classfileBytes.length;
         boolean changed = false;

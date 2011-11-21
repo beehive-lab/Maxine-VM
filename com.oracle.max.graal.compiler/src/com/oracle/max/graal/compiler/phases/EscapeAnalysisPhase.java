@@ -213,9 +213,11 @@ public class EscapeAnalysisPhase extends Phase {
     }
 
     private final GraalCompilation compilation;
+    private final PhasePlan plan;
 
-    public EscapeAnalysisPhase(GraalCompilation compilation) {
+    public EscapeAnalysisPhase(GraalCompilation compilation, PhasePlan plan) {
         this.compilation = compilation;
+        this.plan = plan;
     }
 
     public static class EscapeRecord {
@@ -391,7 +393,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(compilation.compiler, compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions).apply(graph, context);
+            new InliningPhase(compilation.compiler.runtime, compilation.compiler.target, invokes, compilation.assumptions, plan).apply(graph, context);
             new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {

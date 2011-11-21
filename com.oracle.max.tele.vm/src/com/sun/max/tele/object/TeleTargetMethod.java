@@ -55,6 +55,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -411,11 +412,9 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
 
                 // Get the raw bytecodes from which the method was compiled, if available.
                 byte[] bytecodes = null;
-                if (teleClassMethodActor != null) {
-                    final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-                    if (teleCodeAttribute != null) {
-                        bytecodes = teleCodeAttribute.readBytecodes();
-                    }
+                CodeAttribute codeAttribute = targetMethodCopy.codeAttribute();
+                if (codeAttribute != null) {
+                    bytecodes = codeAttribute.code();
                 }
 
                 // Safepoint position locations in compiled code (by byte offset from the start): null if not available
