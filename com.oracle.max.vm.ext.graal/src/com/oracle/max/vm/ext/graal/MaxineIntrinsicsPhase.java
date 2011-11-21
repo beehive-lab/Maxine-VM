@@ -22,21 +22,16 @@
  */
 package com.oracle.max.vm.ext.graal;
 
+import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
+
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.member.*;
 
 
 public class MaxineIntrinsicsPhase extends Phase {
-
-    private final MaxRuntime runtime;
-
-    public MaxineIntrinsicsPhase(MaxRuntime runtime) {
-        this.runtime = runtime;
-    }
 
     @Override
     protected void run(StructuredGraph graph) {
@@ -49,12 +44,18 @@ public class MaxineIntrinsicsPhase extends Phase {
         }
     }
 
-    public void intrinsify(Invoke invoke, MethodActor method) {
-        IntrinsicImpl impl = runtime.getIntrinsicRegistry().get(method);
+    private void intrinsify(Invoke invoke, MethodActor method) {
+        IntrinsicImpl impl = runtime().getIntrinsicRegistry().get(method);
         assert impl != null : method.intrinsic();
         if (impl != null) {
-            ValueNode node = ((GraalIntrinsicImpl) impl).createGraph(invoke.callTarget().graph(), method, runtime, invoke.callTarget().arguments());
+            FrameState stateAfter = invoke.stateAfter();
+            ValueNode node = ((GraalIntrinsicImpl) impl).createGraph(invoke.callTarget().graph(), method, invoke.callTarget().arguments());
             invoke.intrinsify(node);
+            if (node instanceof AbstractStateSplit) {
+                if (stateAfter != null) {
+                    ((AbstractStateSplit) node).setStateAfter(stateAfter);
+                }
+            }
         }
     }
 }
