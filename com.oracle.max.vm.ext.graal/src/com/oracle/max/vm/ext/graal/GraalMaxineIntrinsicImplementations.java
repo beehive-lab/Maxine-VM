@@ -218,9 +218,9 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    static class StackAllocateIntrinsic extends GraalIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, int size) {
-            return graph.add(new StackAllocateNode(size, (RiResolvedType) method.signature().returnType(null)));
+    static class AllocaIntrinsic extends GraalIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, int size, boolean refs) {
+            return graph.add(new AllocaNode(size, refs, (RiResolvedType) method.signature().returnType(null)));
         }
     }
 
@@ -258,8 +258,7 @@ public class GraalMaxineIntrinsicImplementations {
 
         registry.add(PAUSE, new SafepointIntrinsic(SafepointNode.Op.PAUSE));
         registry.add(BREAKPOINT_TRAP, new SafepointIntrinsic(SafepointNode.Op.BREAKPOINT));
-        registry.add(STACKHANDLE, new NotImplementedIntrinsic());
-        registry.add(ALLOCA, new StackAllocateIntrinsic());
+        registry.add(ALLOCA, new AllocaIntrinsic());
 
         registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());
     }

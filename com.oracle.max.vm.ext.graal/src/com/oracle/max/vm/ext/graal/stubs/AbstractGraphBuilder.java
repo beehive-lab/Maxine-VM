@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal.stubs;
 
 import static com.oracle.max.graal.nodes.FrameState.*;
 import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
@@ -32,8 +33,12 @@ import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -152,4 +157,10 @@ public abstract class AbstractGraphBuilder {
         }
         return node;
     }
+
+    static final MethodActor Pointer_writeObject = findMethod(Pointer.class, "writeObject", int.class, Object.class);
+    static final MethodActor Snippets_nativeCallPrologue = findMethod(Snippets.class, "nativeCallPrologue", NativeFunction.class);
+    static final MethodActor Intrinsics_alloca = findMethod(Intrinsics.class, "alloca", int.class, boolean.class);
+    static final MethodActor JniHandle_unhand = findMethod(JniHandle.class, "unhand");
+    static final MethodActor JniHandles_getHandle = findMethod(JniHandles.class, "getHandle", Pointer.class, int.class, Object.class);
 }

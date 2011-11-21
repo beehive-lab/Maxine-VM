@@ -22,20 +22,14 @@
  */
 package com.oracle.max.vm.ext.graal.stubs;
 
-import static com.sun.max.vm.jni.JniHandles.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
-
 import java.util.*;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -45,8 +39,8 @@ import com.sun.max.vm.type.*;
  */
 class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
 
-    private InvokeNode stackHandles;
-    private int stackHandleOffset;
+    private final ValueNode handles;
+    private int handleOffset;
 
     public NativeFunctionCallGraphBuilder(ClassMethodActor nativeMethod) {
         super(nativeMethod);
@@ -56,7 +50,7 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
 
         List<LocalNode> nativeFunctionCallArgs = createLocals(0, NativeStubGraphBuilder.nativeFunctionCall.descriptor(), true);
         ValueNode function = nativeFunctionCallArgs.get(0);
-        ValueNode frame = nativeFunctionCallArgs.get(1);
+        handles = nativeFunctionCallArgs.get(1);
         ValueNode jniEnv = nativeFunctionCallArgs.get(2);
 
         List<LocalNode> nativeMethodArgs = createLocals(nativeFunctionCallArgs.size(), sig, nativeMethod.isStatic());
@@ -65,11 +59,9 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
 
         List<ValueNode> jniArgs = new ArrayList<ValueNode>(nativeMethodArgs.size() + 1);
 
-        stackHandles = append(invoke(Intrinsics_stackAllocate, iconst(stackHandlesSize(sig))));
-
-        // Load the JNI environment variable
         boolean isCFunction = nativeMethod.isCFunction();
         if (!isCFunction) {
+            // Load the JNI environment variable
             jniArgs.add(jniEnv);
 
             if (nativeMethod.isStatic()) {
@@ -87,20 +79,13 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
             if (arg.kind().isObject()) {
                 assert !isCFunction;
                 jniArgs.add(handlize(arg));
-                stackHandleOffset += Word.size();
+                handleOffset += Word.size();
             } else {
                 jniArgs.add(arg);
             }
         }
 
         if (!isCFunction) {
-            if (stackHandleOffset > 1) {
-
-                // Write the address of the handles array to STACK_HANDLES_ADDRESS_OFFSET
-                // to communicate to the GC where the initialized array is.
-                append(invoke(Pointer_writeWord, frame, iconst(STACK_HANDLES_ADDRESS_OFFSET), stackHandles));
-            }
-
             // Place a new Java frame anchor and transition into thread_in_native state
             append(invoke(Snippets_nativeCallPrologue, oconst(nativeMethod.nativeFunction)));
         }
@@ -148,14 +133,8 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
 
     private InvokeNode handlize(ValueNode object) {
         assert object.kind().isObject();
-        InvokeNode handle = append(invoke(JniHandles_createStackHandle, stackHandles, iconst(stackHandleOffset), object));
-        stackHandleOffset += Word.size();
+        InvokeNode handle = append(invoke(JniHandles_getHandle, handles, iconst(handleOffset), object));
+        handleOffset += Word.size();
         return handle;
     }
-
-    static final MethodActor Pointer_writeWord = findMethod(Pointer.class, "writeWord", int.class, Word.class);
-    static final MethodActor Snippets_nativeCallPrologue = findMethod(Snippets.class, "nativeCallPrologue", NativeFunction.class);
-    static final MethodActor Intrinsics_stackAllocate = findMethod(Intrinsics.class, "stackAllocate", int.class);
-    static final MethodActor JniHandle_unhand = findMethod(JniHandle.class, "unhand");
-    static final MethodActor JniHandles_createStackHandle = findMethod(JniHandles.class, "createStackHandle", Pointer.class, int.class, Object.class);
 }

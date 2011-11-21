@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.graal.stubs;
 
 import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
-import static com.sun.max.vm.jni.JniHandles.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
@@ -64,11 +63,17 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     }
 
     /**
+     * Placeholder for the code allocating and initialize the JNI handles for the object arguments of a native method stub.
+     * The call to the method is replaced with a graph produced by {@link InitializeHandlesGraphBuilder}.
+     */
+    static native Pointer initializeHandles();
+    static final MethodActor initializeHandles = findMethod(NativeStubGraphBuilder.class, "initializeHandles");
+
+    /**
      * Placeholder for the real native function call in a template native method stub.
      * The call to the method is replaced with a graph produced by {@link NativeFunctionCallGraphBuilder}.
      */
     static native Object nativeFunctionCall(Address function, Pointer frame, Pointer jniEnv);
-
     static final MethodActor nativeFunctionCall = findMethod(NativeStubGraphBuilder.class, "nativeFunctionCall", Address.class, Pointer.class, Pointer.class);
 
     /**
@@ -77,11 +82,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     @INLINE
     public static Object template(NativeFunction nativeFunction, String traceName) throws Throwable {
 
-        // Zero out the slot at STACK_HANDLES_ADDRESS_OFFSET
-        // so that the GC doesn't scan the object handles array.
-        // There must not be a safepoint in the stub before this point.
-        Pointer frame = VMRegister.getCpuStackPointer();
-        frame.writeWord(STACK_HANDLES_ADDRESS_OFFSET, Address.zero());
+        Pointer handles = initializeHandles();
 
         Address address = nativeFunction.link();
         VmThread thread = VmThread.current();
@@ -96,14 +97,8 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
         int jniHandlesTop = thread.jniHandlesTop();
 
-
-
-        // Snippets.nativeCallPrologue(nativeMethod.nativeFunction);
-
-        Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
+        Object result = nativeFunctionCall(address, handles, VmThread.jniEnv());
         Snippets.nativeCallEpilogue();
-
-        VMRegister.getCpuStackPointer().writeWord(STACK_HANDLES_ADDRESS_OFFSET, Address.zero());
 
         thread.resetJniHandlesTop(jniHandlesTop);
 
@@ -184,7 +179,23 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         for (Invoke invoke : graph.getInvokes()) {
             MethodCallTargetNode callTarget = invoke.callTarget();
             RiResolvedMethod method = callTarget.targetMethod();
-            if (method == nativeFunctionCall) {
+            if (method == initializeHandles) {
+                NodeInputList<ValueNode> arguments = callTarget.arguments();
+                assert arguments.isEmpty();
+                arguments.addAll(inArgs);
+                StructuredGraph initializeHandlesGraph = new InitializeHandlesGraphBuilder(nativeMethod).graph;
+                if (observer != null) {
+                    observer.printGraph("InitializeHandles", initializeHandlesGraph);
+                }
+
+                apply(new FoldPhase(runtime()), initializeHandlesGraph);
+                apply(new MaxineIntrinsicsPhase(), initializeHandlesGraph);
+                apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), initializeHandlesGraph);
+                apply(new WordTypeRewriterPhase(), initializeHandlesGraph);
+                apply(new CanonicalizerPhase(null, runtime(), null), initializeHandlesGraph);
+
+                InliningUtil.inline(invoke, initializeHandlesGraph, false);
+            } else if (method == nativeFunctionCall) {
                 // replace call with native function sequence
                 NodeInputList<ValueNode> arguments = callTarget.arguments();
                 arguments.addAll(inArgs);
@@ -199,7 +210,6 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 apply(new CanonicalizerPhase(null, runtime(), null), nativeFunctionCallGraph);
 
                 InliningUtil.inline(invoke, nativeFunctionCallGraph, false);
-                break;
             }
         }
 
