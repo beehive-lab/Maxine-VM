@@ -83,7 +83,7 @@ public abstract class AbstractGraphBuilder {
         }
         for (int i = 0; i < sig.numberOfParameters(); i++) {
             final TypeDescriptor parameterDescriptor = sig.parameterDescriptorAt(i);
-            CiKind kind = WordUtil.ciKind(parameterDescriptor.toKind(), true);
+            CiKind kind = WordUtil.ciKind(parameterDescriptor.toKind(), true).stackKind();
             args.add(graph.unique(new LocalNode(kind, index)));
             index++;
         }
@@ -113,7 +113,7 @@ public abstract class AbstractGraphBuilder {
 
         RiType returnType = target.descriptor().returnType(nativeMethod.holder());
         MethodCallTargetNode targetNode = graph.add(new MethodCallTargetNode(invokeKind, target, args, returnType));
-        InvokeNode invokeNode = graph.add(new InvokeNode(targetNode, FrameState.BEFORE_BCI));
+        InvokeNode invokeNode = graph.add(new InvokeNode(targetNode, UNKNOWN_BCI));
         FrameState stateAfter = stateAfterCall(invokeNode, target.descriptor().resultKind());
         invokeNode.setStateAfter(stateAfter);
         return invokeNode;
@@ -135,7 +135,7 @@ public abstract class AbstractGraphBuilder {
         }
 
         List<ValueNode> locks = Collections.emptyList();
-        return graph.add(new FrameState(nativeMethod, AFTER_BCI, locals, stack, stackSize, locks, false));
+        return graph.add(new FrameState(nativeMethod, UNKNOWN_BCI, locals, stack, stackSize, locks, false));
     }
 
     /**
