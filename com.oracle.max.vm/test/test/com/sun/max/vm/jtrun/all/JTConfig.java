@@ -247,8 +247,6 @@ public class JTConfig {
         jtt.exbytecode.EBC_movl2d_02.class,
         jtt.exbytecode.EBC_movl2d_03.class,
         jtt.exbytecode.EBC_movl2d_04.class,
-        jtt.exbytecode.EBC_stackhandle01.class,
-        jtt.exbytecode.EBC_stackhandle02.class,
         jtt.exbytecode.EBC_ucmp_ae_01.class,
         jtt.exbytecode.EBC_ucmp_at_01.class,
         jtt.exbytecode.EBC_ucmp_be_01.class,

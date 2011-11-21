@@ -134,7 +134,7 @@ public enum JavaFrameAnchor {
      */
     @INLINE
     public static Pointer create(Word sp, Word fp, CodePointer ip, Word previousAnchor) {
-        Pointer anchor = Intrinsics.stackAllocate(size());
+        Pointer anchor = Intrinsics.alloca(size(), false);
         FP.set(anchor, fp);
         SP.set(anchor, sp);
         PC.set(anchor, ip.toAddress());

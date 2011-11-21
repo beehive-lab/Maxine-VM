@@ -23,6 +23,7 @@
 package com.sun.max.vm.intrinsics;
 
 import com.sun.cri.bytecode.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -64,30 +65,12 @@ public class MaxineIntrinsicIDs {
      * <pre>
      * static Pointer m(@INTRINSIC.Constant int size);
      * size: The number of bytes to allocate on the stack.
-     *     This parameter must be a compile-time constant.
+     *     This parameter must be a compile-time constant and a multiple of {@link Word#size()}
+     * refs: Specifies if the values that will be in the stack region at all safepoints in the
+     *     method are object values. This parameter must be a compile-time constant.
      * </pre>
      */
     public static final String ALLOCA = p + "ALLOCA";
-
-    /**
-     * Create a handle for a given value on the native stack frame.
-     * <p>
-     * Forces the compiler to allocate a native frame slot and initializes it with {@code value}
-     * If the {@code value} is 0 or {@code null}, then the result is 0 otherwise the result is the
-     * address of the native frame slot.
-     * <p>
-     * The native frame slot will be live for the rest of the method. The type of {@code value} determines
-     * if it is a GC root. If {@code value} is an object, any subsequent value written to the slot
-     * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value
-     * written to the slot must not be an object.
-     * <b>The compiler is not required to enforce this type safety.</b>
-     * <p>
-     * The method definition must have the following form:
-     * <pre>
-     * static Pointer m(T value);
-     * </pre>
-     */
-    public static final String STACKHANDLE = p + "STACKHANDLE";
 
     /**
      * If the CPU supports it, then this intrinsic issues an instruction that improves the performance of spin loops by

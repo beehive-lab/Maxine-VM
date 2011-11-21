@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.graph.*;
@@ -33,6 +34,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Base class for intrinsic implementations targeting Graal. The intrinsic has access to the graph so that
@@ -83,7 +85,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
                 if (!node.isConstant()) {
                     throw new CiBailout("intrinsic parameter " + (i - offset) + " must be compile time constant for invoke " + method);
                 }
-                actualParams[i] = node.asConstant().boxedValue();
+                actualParams[i] = node.asConstant().boxedValue(WordUtil.ciKind(Kind.fromJava(formalParams[i]), false));
             } else {
                 actualParams[i] = node;
             }
@@ -92,7 +94,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
         try {
             return (ValueNode) createMethod.invoke(this, actualParams);
         } catch (Exception ex) {
-            throw new CiBailout("intrinsic exception for invoke " + method, ex);
+            throw new CiBailout("intrinsic exception for invoke " + method + " " + Arrays.toString(actualParams), ex);
         }
     }
 

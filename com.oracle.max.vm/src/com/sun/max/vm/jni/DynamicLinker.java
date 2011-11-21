@@ -178,7 +178,7 @@ public final class DynamicLinker {
         if (TraceDL) {
             trace(DLSYM, symbol, h);
         }
-        Pointer symbolAsCString = Intrinsics.stackAllocate(STACK_BUFFER_SIZE);
+        Pointer symbolAsCString = Intrinsics.alloca(STACK_BUFFER_SIZE, false);
         Word addr;
         int delim = symbol.indexOf(Mangle.LONG_NAME_DELIMITER);
         if (delim == -1) {

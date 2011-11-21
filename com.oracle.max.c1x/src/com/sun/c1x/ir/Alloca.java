@@ -22,48 +22,52 @@
  */
 package com.sun.c1x.ir;
 
-import static com.sun.c1x.util.Util.*;
-
 import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
 
 /**
- * Instruction implementing the semantics of {@link Bytecodes#STACKHANDLE}.
+ * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
  */
-public final class StackHandle extends Instruction {
+public final class Alloca extends Instruction {
 
-    /**
-     * The value that will be used to initialize the stack slot by allocated by this instruction.
-     */
-    private Value value;
+    private Value size;
+    private Value refs;
     public final RiType declaredType;
 
     /**
-     * Creates a new LoadStackAddress instance.
+     * Creates a new StackAllocate instance.
      */
-    public StackHandle(Value value, RiType declaredType) {
+    public Alloca(Value size, Value refs, RiType declaredType) {
         super(declaredType.kind(false));
-        setFlag(Flag.NonNull);
-        this.value = value;
+        this.size = size;
+        this.refs = refs;
         this.declaredType = declaredType;
+        setFlag(Flag.NonNull);
+        eliminateNullCheck();
     }
 
     @Override
     public void accept(ValueVisitor v) {
-        v.visitAllocateStackHandle(this);
+        v.visitAlloca(this);
     }
 
     @Override
     public void inputValuesDo(ValueClosure closure) {
-        value = closure.apply(value);
+        size = closure.apply(size);
+        refs = closure.apply(refs);
     }
 
     /**
      * Gets the instruction that produced the size argument.
      */
-    public Value value() {
-        return value;
+    public Value size() {
+        return size;
+    }
+
+    public Value refs() {
+        return refs;
     }
 
     @Override
@@ -73,6 +77,6 @@ public final class StackHandle extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print("stackHandle(").print(valueString(value)).print(")");
+        out.print("alloca(").print(Util.valueString(size)).print(")");
     }
 }
