@@ -43,13 +43,14 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -193,6 +194,14 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
+    }
+
+    /**
+     * Gets the code attribute from which this target method was compiled. This may differ from
+     * the code attribute of {@link #classMethodActor} in the case where it was rewritten.
+     */
+    public CodeAttribute codeAttribute() {
+        return classMethodActor == null ? null : classMethodActor.codeAttribute();
     }
 
     /**
@@ -1094,15 +1103,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * @return {@code true} if the machine code of this method is using tagged pointers.
-     * The default implementation pessimistically assumes this is the case.
-     */
-    public boolean isUsingTaggedLocals() {
-        return true;
-    }
-
-    /**
-     * Determines if this is a stub of a give type.
+     * Determines if this is a stub of a given type.
      */
     public final boolean is(Stub.Type type) {
         return stubType() == type;

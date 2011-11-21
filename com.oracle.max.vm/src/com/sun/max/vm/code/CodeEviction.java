@@ -264,10 +264,14 @@ public final class CodeEviction extends VmOperation {
                 return true;
             }
 
-            if (tm.isUsingTaggedLocals()) {
-                // patch locals
-                tm.prepareReferenceMap(current, callee, codePointerRelocator);
-            }
+            // Patch locals
+            // (ds) There used to exist a mechanism for querying whether a TargetMethod
+            // may include CodePointer values in an activation frame. This meant that
+            // scanning for CodePointers only had to be done for these methods. However,
+            // the extra complexity introduced into the CRI was not worth the
+            // performance gain of this optimization, especially given how rare code
+            // evictions are.
+            tm.prepareReferenceMap(current, callee, codePointerRelocator);
 
             // If the method executing in the current stack frame (tm) is a baseline method,
             // the callee's return address needs to be patched.

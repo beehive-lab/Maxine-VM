@@ -86,11 +86,6 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      */
     private DebugInfo debugInfo;
 
-    /**
-     * Flag to mark whether this method - probably by means of any inlined method - is using tagged pointers.
-     */
-    private boolean isUsingTaggedLocals;
-
     private final CodeAnnotation[] annotations;
 
     @HOSTED_ONLY
@@ -141,19 +136,6 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public Lifespan lifespan() {
         return Lifespan.LONG;
-    }
-
-    /**
-     * @return {@code true} if this method (maybe due to inlining) uses tagged locals. This is controlled by the inlining logic in the
-     * optimising JIT compiler. See {@link RiRuntime#notifyInline()}.
-     */
-    @Override
-    public boolean isUsingTaggedLocals() {
-        return isUsingTaggedLocals;
-    }
-
-    public void setUsingTaggedLocals() {
-        isUsingTaggedLocals = true;
     }
 
     @Override
