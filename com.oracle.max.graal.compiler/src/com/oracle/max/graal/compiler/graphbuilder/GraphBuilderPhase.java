@@ -808,7 +808,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             dims[i] = frameState.ipop();
         }
         if (type instanceof RiResolvedType) {
-            NewArrayNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims, cpi, constantPool));
+            FixedWithNextNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims));
             frameState.apush(append(n));
         } else {
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
