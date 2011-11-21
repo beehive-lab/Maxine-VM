@@ -224,15 +224,14 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 if (GraalOptions.PrintIdealGraphFile) {
                     observer = new IdealGraphPrinterObserver();
                 } else {
-                    observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+                    IdealGraphPrinterObserver o = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+                    if (o.networkAvailable()) {
+                        observer = o;
+                    }
                 }
             }
 
             // Initialize the templates
-            IdealGraphPrinterObserver o = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-            if (o.networkAvailable()) {
-                observer = o;
-            }
             normalTemplate = createTemplate("template");
             synchronizedTemplate = createTemplate("syncTemplate");
             cFunctionTemplate = createTemplate("templateC");
