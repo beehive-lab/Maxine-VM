@@ -46,6 +46,7 @@ import com.sun.cri.ri.*;
 public class CFGPrinter extends CompilationPrinter {
 
     public final ByteArrayOutputStream buffer;
+    public final GraalCompilation compilation;
     public final CiTarget target;
     public final RiRuntime runtime;
 
@@ -58,6 +59,7 @@ public class CFGPrinter extends CompilationPrinter {
     public CFGPrinter(ByteArrayOutputStream buffer, GraalCompilation compilation) {
         super(buffer);
         this.buffer = buffer;
+        this.compilation = compilation;
         this.target = compilation.compiler.target;
         this.runtime = compilation.compiler.runtime;
     }
@@ -367,12 +369,12 @@ public class CFGPrinter extends CompilationPrinter {
         end("IR");
     }
 
-    private static String nodeToString(Node node) {
+    private String nodeToString(Node node) {
         if (node == null) {
             return "-";
         }
         String prefix;
-        if (node instanceof BeginNode) {
+        if (node instanceof BeginNode && compilation.lir() == null) {
             prefix = "B";
         } else if (node instanceof ValueNode) {
             ValueNode value = (ValueNode) node;
@@ -387,8 +389,15 @@ public class CFGPrinter extends CompilationPrinter {
         return prefix + node.toString(Verbosity.Id);
     }
 
-    private static String blockToString(Block block) {
-        return "B" + block.firstNode().toString(Verbosity.Id);
+    private String blockToString(Block block) {
+        if (compilation.lir() == null) {
+            // During all the front-end phases, the block schedule is built only for the debug output.
+            // Therefore, the block numbers would be different for every CFG printed -> use the id of the first instruction.
+            return "B" + block.firstNode().toString(Verbosity.Id);
+        } else {
+            // LIR instructions contain references to blocks and these blocks are printed as the blockID -> use the blockID.
+            return "B" + block.blockID();
+        }
     }
 
 
@@ -406,7 +415,7 @@ public class CFGPrinter extends CompilationPrinter {
     }
 
     private void printInterval(LinearScan allocator, Interval interval) {
-        out.printf("%d %s ", interval.operandNumber, (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
+        out.printf("%s %s ", interval.operand.name(), (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
         if (interval.operand.isRegister()) {
             out.printf("\"[%s|%c]\"", interval.operand.name(), interval.operand.kind.typeChar);
         } else {
@@ -416,7 +425,7 @@ public class CFGPrinter extends CompilationPrinter {
         }
 
         Interval hint = interval.locationHint(false, allocator);
-        out.printf("%d %d ", interval.splitParent().operandNumber, hint != null ? hint.operandNumber : -1);
+        out.printf("%s %s ", interval.splitParent().operand.name(), hint != null ? hint.operand.name() : -1);
 
         // print ranges
         Range cur = interval.first();
