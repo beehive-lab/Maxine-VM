@@ -177,7 +177,7 @@ public final class DebugInfo {
                     CiDebugInfo info = infoAt(i, null, false);
                     CiFrame frame = info.frame();
                     CiFrame originalFrame = debugInfos[i].frame();
-                    assert frame.equalsIgnoringKind(originalFrame);
+                    assert frame.equals(originalFrame, true, true);
                 }
                 forEachCodePos(new TestCPC(), i);
             }
@@ -227,7 +227,7 @@ public final class DebugInfo {
 
             out.encodeUInt(((ClassActor) frame.method.holder()).id);
             int m = ((MethodActor) frame.method).memberIndex() << 1;
-            if (frame.bci == -1) {
+            if (frame.bci < 0) {
                 out.encodeUInt(m | 1);
             } else {
                 out.encodeUInt(m);
