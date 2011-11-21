@@ -84,7 +84,7 @@ public class InliningPhase extends Phase implements InliningCallback {
             scanInvokes(graph.getNodes(InvokeWithExceptionNode.class), 0);
         }
 
-        while (!inlineCandidates.isEmpty()) {
+        while (!inlineCandidates.isEmpty() && graph.getNodeCount() < GraalOptions.MaximumDesiredSize) {
             InlineInfo info = inlineCandidates.remove();
             double penalty = Math.pow(GraalOptions.InliningSizePenaltyExp, graph.getNodeCount() / (double) GraalOptions.MaximumDesiredSize) / GraalOptions.InliningSizePenaltyExp;
             if (info.weight > GraalOptions.MaximumInlineWeight / (1 + penalty * GraalOptions.InliningSizePenalty)) {
