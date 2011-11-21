@@ -77,7 +77,7 @@ public class JVMTIBreakpoints {
         long id = createBreakpointID(methodID, location);
 //        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         int index = tryRecordBreakpoint(id);
-        if (index >= 0) {
+        if (index < 0) {
             return JVMTI_ERROR_DUPLICATE;
         }
         return JVMTI_ERROR_NONE;
