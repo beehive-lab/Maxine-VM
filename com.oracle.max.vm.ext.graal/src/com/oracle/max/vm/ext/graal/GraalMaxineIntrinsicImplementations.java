@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal;
 
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.oracle.max.vm.ext.maxri.MaxRuntime.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.oracle.max.cri.intrinsics.*;
@@ -32,27 +33,27 @@ import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
-import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 
 public class GraalMaxineIntrinsicImplementations {
-    protected static class NotImplementedIntrinsic extends GraalIntrinsicImpl {
+    static class NotImplementedIntrinsic extends GraalIntrinsicImpl {
         @Override
-        public ValueNode createGraph(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, NodeList<ValueNode> args) {
+        public ValueNode createGraph(StructuredGraph graph, RiResolvedMethod method, NodeList<ValueNode> args) {
             throw new UnsupportedOperationException("intrinsic not implemented");
         }
     }
 
-    protected static class MembarIntrinsic extends GraalIntrinsicImpl {
+    static class MembarIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, int barriers) {
             return graph.add(new MembarNode(barriers));
         }
     }
 
-    protected static class NormalizeCompareIntrinsic extends GraalIntrinsicImpl {
+    static class NormalizeCompareIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, int opcode, ValueNode x, ValueNode y) {
             switch (opcode) {
                 // Checkstyle: off
@@ -69,19 +70,19 @@ public class GraalMaxineIntrinsicImplementations {
     }
 
 
-    protected static class IntegerUDivIntrinsic extends GraalIntrinsicImpl {
+    static class IntegerUDivIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ValueNode x, ValueNode y) {
             return graph.unique(new IntegerUDivNode(x.kind(), x, y));
         }
     }
 
-    protected static class IntegerURemIntrinsic extends GraalIntrinsicImpl {
+    static class IntegerURemIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ValueNode x, ValueNode y) {
             return graph.unique(new IntegerURemNode(x.kind(), x, y));
         }
     }
 
-    protected static class CompareIntrinsic extends GraalIntrinsicImpl {
+    static class CompareIntrinsic extends GraalIntrinsicImpl {
         private final Condition condition;
 
         public CompareIntrinsic(Condition condition) {
@@ -94,7 +95,7 @@ public class GraalMaxineIntrinsicImplementations {
     }
 
 
-    protected static class BitIntrinsic extends GraalIntrinsicImpl {
+    static class BitIntrinsic extends GraalIntrinsicImpl {
         private final MaxineMathIntrinsicsNode.Op op;
 
         public BitIntrinsic(MaxineMathIntrinsicsNode.Op op) {
@@ -106,7 +107,7 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class UnsafeCastIntrinsic extends GraalIntrinsicImpl {
+    static class UnsafeCastIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, ValueNode value) {
             RiType toType = method.signature().returnType(method.holder());
             if (!(toType instanceof RiResolvedType)) {
@@ -123,19 +124,19 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class PointerReadOffsetIntrinsic extends GraalIntrinsicImpl {
+    static class PointerReadOffsetIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, ValueNode pointer, ValueNode offset) {
             return graph.add(new ExtendedUnsafeLoadNode(pointer, null, ensureLong(graph, offset), method.signature().returnKind(true)));
         }
     }
 
-    protected static class PointerReadIndexIntrinsic extends GraalIntrinsicImpl {
+    static class PointerReadIndexIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, ValueNode pointer, ValueNode displacement, ValueNode index) {
             return graph.add(new ExtendedUnsafeLoadNode(pointer, displacement, ensureLong(graph, index), method.signature().returnKind(true)));
         }
     }
 
-    protected static class PointerWriteOffsetIntrinsic extends GraalIntrinsicImpl {
+    static class PointerWriteOffsetIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, ValueNode pointer, ValueNode offset, ValueNode value) {
             RiType dataType = method.signature().argumentTypeAt(method.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
@@ -143,7 +144,7 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class PointerWriteIndexIntrinsic extends GraalIntrinsicImpl {
+    static class PointerWriteIndexIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, ValueNode pointer, ValueNode displacement, ValueNode index, ValueNode value) {
             RiType dataType = method.signature().argumentTypeAt(method.signature().argumentCount(false) - 1, null);
             CiKind kind = dataType.kind(true);
@@ -151,7 +152,7 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class PointerCompareAndSwapIntrinsic extends GraalIntrinsicImpl {
+    static class PointerCompareAndSwapIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, ValueNode pointer, ValueNode offset, ValueNode expectedValue, ValueNode newValue) {
             return graph.add(new CompareAndSwapNode(pointer, ensureLong(graph, offset), expectedValue, newValue, true));
         }
@@ -165,7 +166,7 @@ public class GraalMaxineIntrinsicImplementations {
      * This is required as the value is used as a 64-bit value and so the high 32 bits
      * need to be correct.
      */
-    private static ValueNode ensureLong(Graph graph, ValueNode value) {
+    static ValueNode ensureLong(Graph graph, ValueNode value) {
         if (value.kind() == CiKind.Int && Platform.target().arch.is64bit()) {
             return graph.unique(new ConvertNode(ConvertNode.Op.I2L, value));
         }
@@ -173,9 +174,9 @@ public class GraalMaxineIntrinsicImplementations {
     }
 
 
-    protected static class ReadRegisterIntrinsic extends GraalIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, int registerId) {
-            RiRegisterConfig registerConfig = runtime.getRegisterConfig(method);
+    static class ReadRegisterIntrinsic extends GraalIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, int registerId) {
+            RiRegisterConfig registerConfig = runtime().getRegisterConfig(method);
             CiRegister register = registerConfig.getRegisterForRole(registerId);
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
@@ -189,9 +190,9 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class WriteRegisterIntrinsic extends GraalIntrinsicImpl {
-        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, int registerId, ValueNode value) {
-            CiRegister register = runtime.getRegisterConfig(method).getRegisterForRole(registerId);
+    static class WriteRegisterIntrinsic extends GraalIntrinsicImpl {
+        public ValueNode create(StructuredGraph graph, RiResolvedMethod method, int registerId, ValueNode value) {
+            CiRegister register = runtime().getRegisterConfig(method).getRegisterForRole(registerId);
             if (register == null) {
                 throw new CiBailout("Unsupported WRITEREG operand " + registerId);
             }
@@ -199,7 +200,7 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class SafepointIntrinsic extends GraalIntrinsicImpl {
+    static class SafepointIntrinsic extends GraalIntrinsicImpl {
         private SafepointNode.Op op;
 
         public SafepointIntrinsic(SafepointNode.Op op) {
@@ -211,19 +212,19 @@ public class GraalMaxineIntrinsicImplementations {
         }
     }
 
-    protected static class UncommonTrapIntrinsic extends GraalIntrinsicImpl {
+    static class UncommonTrapIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph) {
             return graph.add(new DeoptimizeNode(DeoptAction.InvalidateReprofile));
         }
     }
 
-    protected static class StackAllocateIntrinsic extends GraalIntrinsicImpl {
+    static class StackAllocateIntrinsic extends GraalIntrinsicImpl {
         public ValueNode create(StructuredGraph graph, RiResolvedMethod method, int size) {
             return graph.add(new StackAllocateNode(size, (RiResolvedType) method.signature().returnType(null)));
         }
     }
 
-
+    @HOSTED_ONLY
     public static void initialize(IntrinsicImpl.Registry registry) {
         registry.add(MEMBAR, new MembarIntrinsic());
 
