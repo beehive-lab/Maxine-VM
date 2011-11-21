@@ -66,7 +66,10 @@ public class C1XGraal implements RuntimeCompiler {
      * what it cannot yet handle.
      */
     boolean forceC1X(final ClassMethodActor method) {
-        return method.isNative() || method.isTemplate();
+        if (isHosted()) {
+            return !method.isNative();
+        }
+        return false;
     }
 
     public Nature nature() {
