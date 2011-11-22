@@ -43,6 +43,7 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,
@@ -133,7 +134,7 @@ public final class GraalCompilation {
         try {
             try {
                 emitHIR(plan);
-                emitLIR();
+                emitLIR(compiler.xir);
                 targetMethod = emitCode();
 
                 if (GraalOptions.Meter) {
@@ -167,11 +168,6 @@ public final class GraalCompilation {
 
         return new CiResult(targetMethod, null, stats);
     }
-
-    public static final int SCALE = 20;
-    public static int[] methodSizes = new int[20000 / SCALE];
-    public static String[] methodNames = new String[20000 / SCALE];
-    public static int methodCount = 0;
 
     /**
      * Builds the graph, optimizes it.
@@ -276,22 +272,6 @@ public final class GraalCompilation {
             LIRBlock startBlock = valueToBlock.get(graph.start());
             assert startBlock != null;
             assert startBlock.numberOfPreds() == 0;
-/*
-            methodSizes[graph.getNodeCount() / SCALE]++;
-            methodNames[graph.getNodeCount() / SCALE] = InliningUtil.methodName(method);
-            if ((methodCount++ % 100) == 0) {
-                for (int i = 0; i < methodSizes.length; i++) {
-                    if (i < 30 || methodSizes[i] != 0) {
-                        System.out.print((i * SCALE) + ": ");
-                        int s = methodSizes[i];
-                        s = s > 80 ? 80 : s;
-                        for (int i2 = 0; i2 < s; i2++) {
-                            System.out.print('X');
-                        }
-                        System.out.println("  (" + methodSizes[i] + ") " + methodNames[i]);
-                    }
-                }
-            }*/
 
             context().timers.startScope("Compute Linear Scan Order");
             try {
@@ -368,7 +348,7 @@ public final class GraalCompilation {
         frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
     }
 
-    private void emitLIR() {
+    private void emitLIR(RiXirGenerator xir) {
         context().timers.startScope("LIR");
         try {
             if (GraalOptions.GenLIR) {
@@ -377,7 +357,7 @@ public final class GraalCompilation {
                 try {
                     initFrameMap(maxLocks());
 
-                    lirGenerator = compiler.backend.newLIRGenerator(this);
+                    lirGenerator = compiler.backend.newLIRGenerator(this, xir);
 
                     for (LIRBlock b : lir.linearScanOrder()) {
                         lirGenerator.doBlock(b);
