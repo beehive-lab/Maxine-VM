@@ -742,7 +742,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
             final ClassActor classActorForType = teleArrayObject.classActorForObjectType();
             final String name = classActorForType.simpleName();
-            final int length = teleArrayObject.getLength();
+            final int length = teleArrayObject.length();
             return objectReference(null, teleArrayObject, null, name.substring(0, name.length() - 1) + length + "]");
         }
 
@@ -750,7 +750,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
             final ClassActor classActorForType = teleArrayObject.classActorForObjectType();
             final String name = classActorForType.name.toString();
-            final int length = teleArrayObject.getLength();
+            final int length = teleArrayObject.length();
             return objectReference(null, teleArrayObject, null, name.substring(0, name.length() - 1) + length + "]");
         }
     }

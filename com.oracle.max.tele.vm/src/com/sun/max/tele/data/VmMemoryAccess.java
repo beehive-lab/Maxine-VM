@@ -24,10 +24,7 @@ package com.sun.max.tele.data;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.util.*;
-import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -62,31 +59,7 @@ public final class VmMemoryAccess extends AbstractVmHolder implements MaxMemory 
     }
 
     public Value readArrayElementValue(Kind kind, Reference reference, int index) {
-        switch (kind.asEnum) {
-            case BYTE:
-                return ByteValue.from(Layout.getByte(reference, index));
-            case BOOLEAN:
-                return BooleanValue.from(Layout.getBoolean(reference, index));
-            case SHORT:
-                return ShortValue.from(Layout.getShort(reference, index));
-            case CHAR:
-                return CharValue.from(Layout.getChar(reference, index));
-            case INT:
-                return IntValue.from(Layout.getInt(reference, index));
-            case FLOAT:
-                return FloatValue.from(Layout.getFloat(reference, index));
-            case LONG:
-                return LongValue.from(Layout.getLong(reference, index));
-            case DOUBLE:
-                return DoubleValue.from(Layout.getDouble(reference, index));
-            case WORD:
-                return new WordValue(Layout.getWord(reference, index));
-            case REFERENCE:
-                final Address elementAddress = Layout.getWord(reference, index).asAddress();
-                return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
-            default:
-                throw TeleError.unknownCase("unknown array kind");
-        }
+        return objects().unsafeReadArrayElementValue(kind, reference, index);
     }
 
     public void readBytes(Address address, byte[] bytes) {
@@ -143,7 +116,7 @@ public final class VmMemoryAccess extends AbstractVmHolder implements MaxMemory 
     }
 
     /**
-     * Reads a single word from VM memory.
+     * Reads a single byte from VM memory.
      *
      * @param address a location in VM memory
      * @param offset from the location at which to read
@@ -225,40 +198,5 @@ public final class VmMemoryAccess extends AbstractVmHolder implements MaxMemory 
     public void setWord(Address address, int displacement, int index, Word value) {
         access.setWord(address, displacement, index, value);
     }
-
-    public void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
-        switch (kind.asEnum) {
-            case BYTE:
-                Layout.byteArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case BOOLEAN:
-                Layout.booleanArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case SHORT:
-                Layout.shortArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case CHAR:
-                Layout.charArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case INT:
-                Layout.intArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case FLOAT:
-                Layout.floatArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case LONG:
-                Layout.longArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case DOUBLE:
-                Layout.doubleArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            case WORD:
-                Layout.wordArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
-                break;
-            default:
-                throw TeleError.unknownCase("unknown array kind");
-        }
-    }
-
 
 }

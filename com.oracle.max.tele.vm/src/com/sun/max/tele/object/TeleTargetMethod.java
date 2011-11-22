@@ -59,8 +59,8 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link TargetMethod} in the VM.
@@ -982,12 +982,11 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             if (codeByteArrayOrigin == null || checkForRelocation()) {
                 codeByteArrayOrigin = reference().readWord(fields().TargetMethod_code.fieldActor().offset()).asAddress();
                 // Get the absolute location of all target code bytes.
-                // Use low level machinery; we dont' want to create a {@link TeleObject} for every one of them.
+                // Use low level machinery; we don't want to create a {@link TeleObject} for every one of them.
                 final RemoteTeleReference codeByteArrayRef = referenceManager().makeTemporaryRemoteReference(codeByteArrayOrigin);
-                final int length = Layout.readArrayLength(codeByteArrayRef);
-                final ArrayLayout byteArrayLayout = Layout.layoutScheme().byteArrayLayout;
-                codeStartAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(0));
-                codeEndAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(length));
+                final int length = objects().unsafeReadArrayLength(codeByteArrayRef);
+                codeStartAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, 0);
+                codeEndAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, length);
             }
         } catch (DataIOError dataIOError) {
             // If something goes wrong, delay the cache update until next time.

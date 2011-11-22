@@ -35,11 +35,14 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
+import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Singleton cache of information about objects in the VM, including a factory for creating
@@ -343,6 +346,125 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return teleObjectFactory.make(reference);
     }
 
+    /**
+     * @return access to information about object layout in the VM.
+     */
+    public LayoutScheme layoutScheme() {
+        return Layout.layoutScheme();
+    }
+
+    /**
+     * @return access to general information about array object layout in the VM.
+     */
+    public ArrayLayout arrayLayout() {
+        return layoutScheme().arrayLayout;
+    }
+
+    /**
+     * @return access to information about a specific kind of array object layout in the VM.
+     */
+    public ArrayLayout arrayLayout(Kind kind) {
+        return kind.arrayLayout(layoutScheme());
+    }
+
+
+    /**
+     * Low-level read of a VM array length
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array at the specified location.
+     *
+     * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
+     * @return the value in the length field of the array
+     */
+    public int unsafeReadArrayLength(Reference reference) {
+        return arrayLayout().readLength(reference);
+    }
+
+    /**
+     * Low-level translation of an index into a specific array to the address of the array element in VM memory.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array if the specified kind at the specified origin.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
+     * @param index identifies a specific array element
+     * @return address of the array element in VM memory
+     */
+    public Address unsafeArrayIndexToAddress(Kind kind, Address origin, int index) {
+        return origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(index));
+    }
+
+    /**
+     * Low-level translation of an address, presumed to be the location in VM memory of an array element of the specified type,
+     * to the index of the array element.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array if the specified kind at the specified origin.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
+     * @param index identifies a specific array element
+     * @return address of the array element in VM memory
+     */
+    public Address unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
+        return address.minus(origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(0))).dividedBy(kind.width.numberOfBytes);
+    }
+
+    /**
+     * Low-level read of a VM array element word as a generic boxed value.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
+     * @param index offset into the array
+     * @return a generic boxed value based on the contents of the word in VM memory.
+     */
+    public Value unsafeReadArrayElementValue(Kind kind, Reference reference, int index) {
+        switch (kind.asEnum) {
+            case BYTE:
+                return ByteValue.from(Layout.getByte(reference, index));
+            case BOOLEAN:
+                return BooleanValue.from(Layout.getBoolean(reference, index));
+            case SHORT:
+                return ShortValue.from(Layout.getShort(reference, index));
+            case CHAR:
+                return CharValue.from(Layout.getChar(reference, index));
+            case INT:
+                return IntValue.from(Layout.getInt(reference, index));
+            case FLOAT:
+                return FloatValue.from(Layout.getFloat(reference, index));
+            case LONG:
+                return LongValue.from(Layout.getLong(reference, index));
+            case DOUBLE:
+                return DoubleValue.from(Layout.getDouble(reference, index));
+            case WORD:
+                return new WordValue(Layout.getWord(reference, index));
+            case REFERENCE:
+                final Address elementAddress = Layout.getWord(reference, index).asAddress();
+                return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
+            default:
+                throw TeleError.unknownCase("unknown array kind");
+        }
+    }
+
+    /**
+     * Low level copying of array elements from the VM into a local object.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
+     *
+     * @param kind the kind of elements held in the array.
+     * @param src a reference to an array in VM memory described by the layout configured for this kind
+     * @param srcIndex starting index in the source array
+     * @param dst the array into which the values are copied
+     * @param dstIndex the starting index in the destination array
+     * @param length the number of elements to copy
+     * @see ArrayLayout#copyElements(Accessor, int, Object, int, int)
+     */
+    public void unsafeCopyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
+    }
+
+    // TODO (mlvdv) this is specific to copying collectors
     /**
      * Finds an object in the VM that has been located at a particular place in memory, but which
      * may have been relocated.
