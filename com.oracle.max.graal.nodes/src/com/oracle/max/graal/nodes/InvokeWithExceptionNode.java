@@ -138,7 +138,9 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> debugProperties = super.getDebugProperties();
         debugProperties.put("memoryCheckpoint", "true");
-        debugProperties.put("targetMethod", CiUtil.format("%h.%n(%p)", callTarget.targetMethod()));
+        if (callTarget != null && callTarget.targetMethod() != null) {
+            debugProperties.put("targetMethod", CiUtil.format("%h.%n(%p)", callTarget.targetMethod()));
+        }
         return debugProperties;
     }
 
