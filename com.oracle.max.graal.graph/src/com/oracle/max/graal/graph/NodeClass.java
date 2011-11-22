@@ -201,13 +201,18 @@ public class NodeClass {
         return canGVN;
     }
 
-    public static final synchronized NodeClass get(Class< ? > c) {
+    public static final synchronized NodeClass getSynchronized(Class< ? > c) {
         NodeClass clazz = nodeClasses.get(c);
         if (clazz == null) {
             clazz = new NodeClass(c);
             nodeClasses.put(c, clazz);
         }
         return clazz;
+    }
+
+    public static final NodeClass get(Class< ? > c) {
+        NodeClass clazz = nodeClasses.get(c);
+        return clazz == null ? getSynchronized(c) : clazz;
     }
 
     public static int cacheSize() {
