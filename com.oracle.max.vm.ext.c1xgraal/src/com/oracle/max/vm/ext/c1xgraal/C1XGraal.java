@@ -34,6 +34,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Integration of the C1X + Graal compiler into Maxine's compilation framework.
@@ -41,8 +42,10 @@ import com.sun.max.vm.compiler.target.*;
 public class C1XGraal implements RuntimeCompiler {
 
     static boolean FailOverToC1X = true;
+    static boolean DisableGraal;
     static {
         addFieldOption("-XX:", "FailOverToC1X", "Retry failed Graal compilations with C1X.");
+        addFieldOption("-XX:", "DisableGraal", "Disable the Graal compiler (only C1X will be used).");
     }
 
     private Graal graal;
@@ -58,6 +61,10 @@ public class C1XGraal implements RuntimeCompiler {
     public void initialize(Phase phase) {
         c1x.initialize(phase);
         graal.initialize(phase);
+        if (FailOverToC1X) {
+            // This is required so that assertions in Graal don't immediately stop the VM
+            Throw.FatalVMAssertions = false;
+        }
     }
 
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
@@ -100,7 +107,7 @@ public class C1XGraal implements RuntimeCompiler {
         if (isHosted()) {
             return !method.isNative();
         }
-        return false;
+        return DisableGraal;
     }
 
     public Nature nature() {
