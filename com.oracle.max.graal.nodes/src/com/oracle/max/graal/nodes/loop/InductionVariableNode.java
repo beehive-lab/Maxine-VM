@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.loop;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -33,7 +34,17 @@ public abstract class InductionVariableNode extends FloatingNode {
 
     public static enum StrideDirection {
         Up,
-        Down
+        Down;
+
+        public static StrideDirection opposite(StrideDirection d) {
+            if (d == Up) {
+                return Down;
+            }
+            if (d == Down) {
+                return Up;
+            }
+            return null;
+        }
     }
 
     public InductionVariableNode(CiKind kind) {
@@ -42,8 +53,8 @@ public abstract class InductionVariableNode extends FloatingNode {
     }
 
     /**
-     * Retruns the loopBeginNode corresponding to the loop this induction vraibles is attached to.
-     * @return the loopBeginNode corresponding to the loop this induction vraibles is attached to.
+     * Retruns the loopBeginNode corresponding to the loop this induction variables is attached to.
+     * @return the loopBeginNode corresponding to the loop this induction variables is attached to.
      */
     public abstract LoopBeginNode loopBegin();
 
@@ -54,7 +65,7 @@ public abstract class InductionVariableNode extends FloatingNode {
 
     /**
      * Transforms this induction variable to generic nodes (Phis, arithmetics...).
-     * @return the generic node that computes the value of this induction vraible.
+     * @return the generic node that computes the value of this induction variables.
      */
     public abstract ValueNode lowerInductionVariable();
 
