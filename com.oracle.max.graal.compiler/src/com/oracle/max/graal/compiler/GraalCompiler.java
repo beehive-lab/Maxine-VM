@@ -87,7 +87,8 @@ public class GraalCompiler implements CiCompiler  {
         try {
             long startTime = 0;
             int index = context.metrics.CompiledMethods++;
-            if (GraalOptions.PrintCompilation) {
+            final boolean printCompilation = GraalOptions.PrintCompilation && !TTY.isSuppressed();
+            if (printCompilation) {
                 TTY.println(String.format("Graal %4d %-70s %-45s %-50s ...",
                                 index,
                                 method.holder().name(),
@@ -97,13 +98,13 @@ public class GraalCompiler implements CiCompiler  {
             }
 
             CiResult result = null;
-            TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
+            TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             try {
                 result = compilation.compile(plan);
             } finally {
                 filter.remove();
-                if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
+                if (printCompilation) {
                     long time = (System.nanoTime() - startTime) / 100000;
                     TTY.println(String.format("Graal %4d %-70s %-45s %-50s | %3d.%dms %4dnodes %5dB",
                                     index,
