@@ -26,6 +26,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -33,7 +34,9 @@ import java.util.concurrent.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
+import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
@@ -58,6 +61,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -135,6 +139,12 @@ public class Graal implements RuntimeCompiler {
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             Registry intrinsicRegistry = new IntrinsicImpl.Registry();
             GraalMaxineIntrinsicImplementations.initialize(intrinsicRegistry);
+            for (Map.Entry<String, IntrinsicImpl> e : intrinsicRegistry) {
+                GraalIntrinsicImpl impl = (GraalIntrinsicImpl) e.getValue();
+                if (impl.createMethod != null) {
+                    CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(impl.createMethod));
+                }
+            }
             runtime.setIntrinsicRegistry(intrinsicRegistry);
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
@@ -167,6 +177,9 @@ public class Graal implements RuntimeCompiler {
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
+            // Don't put boot time observers into the boot image
+            compiler.context.observable.clear();
+
             NodeClass.rescanAllFieldOffsets(new CalcOffset() {
                 @Override
                 public long getOffset(Field field) {
@@ -174,8 +187,10 @@ public class Graal implements RuntimeCompiler {
                 }
             });
         }
-
-        if (phase == Phase.TERMINATING) {
+        if (phase == Phase.STARTING) {
+            // This makes sure the relevant observers are (re)initialized based on the runtime options
+            compiler.context.reset();
+        } else if (phase == Phase.TERMINATING) {
             if (GraalOptions.Meter) {
                 compiler.context.metrics.print();
                 DebugInfo.dumpStats(Log.out);
@@ -197,9 +212,7 @@ public class Graal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             if (method.compilee().isNative()) {
-                NativeStubGraphBuilder nativeStubCompiler = new NativeStubGraphBuilder(method);
-                compiledMethod = compiler.compileMethod(method, nativeStubCompiler.build(), plan).targetMethod();
-                //System.out.println(runtime.disassemble(compiledMethod));
+                compiledMethod = compileNativeMethod(method);
             } else {
                 compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
             }
@@ -219,11 +232,54 @@ public class Graal implements RuntimeCompiler {
                         Log.println("DEPS: " + deps.toString(true));
                     }
                 }
+                TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
+                try {
+                    printMachineCode(compiledMethod, maxTargetMethod, false);
+                } finally {
+                    filter.remove();
+                }
                 return maxTargetMethod;
 
             }
             // Loop back and recompile.
         } while(true);
+    }
+
+    protected CiTargetMethod compileNativeMethod(final ClassMethodActor method) {
+        NativeStubGraphBuilder nativeStubCompiler = new NativeStubGraphBuilder(method);
+        TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
+        try {
+            return compiler.compileMethod(method, nativeStubCompiler.build(), plan).targetMethod();
+        } finally {
+            filter.remove();
+        }
+    }
+
+    void printMachineCode(CiTargetMethod ciTM, MaxTargetMethod maxTM, boolean reentrant) {
+        if (!GraalOptions.PrintCFGToFile || reentrant || TTY.isSuppressed()) {
+            return;
+        }
+        if (!isHosted() && !isRunning()) {
+            // Cannot write to file system at runtime until the VM is in the RUNNING phase
+            return;
+        }
+
+        ByteArrayOutputStream cfgPrinterBuffer = new ByteArrayOutputStream();
+        CFGPrinter cfgPrinter = new CFGPrinter(cfgPrinterBuffer, null, target(), runtime);
+        cfgPrinter.printMachineCode(runtime.disassemble(ciTM, maxTM), "After code installation");
+        cfgPrinter.flush();
+
+        OutputStream stream = CompilationPrinter.globalOut();
+        if (stream != null) {
+            synchronized (stream) {
+                try {
+                    stream.write(cfgPrinter.buffer.toByteArray());
+                    stream.flush();
+                } catch (IOException e) {
+                    TTY.println("WARNING: Error writing CFGPrinter output: %s", e);
+                }
+            }
+        }
     }
 
     @Override

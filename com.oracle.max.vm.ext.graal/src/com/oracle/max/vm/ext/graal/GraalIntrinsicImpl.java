@@ -46,7 +46,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
      */
     public final String CREATE_NAME = "create";
 
-    private final Method createMethod;
+    public final Method createMethod;
 
     /**
      * Creates the graph nodes necessary for the implementation of the intrinsic and appends them to the supplied {@link StructuredGraph}.
