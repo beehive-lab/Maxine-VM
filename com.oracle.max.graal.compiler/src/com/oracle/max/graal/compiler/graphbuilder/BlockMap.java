@@ -204,7 +204,7 @@ public final class BlockMap {
         addExceptionEdges();
         if (hasJsrBytecodes) {
             if (!GraalOptions.SupportJsrBytecodes) {
-                throw new JSRNotSupportedBailout("jsr/ret parsing disabled");
+                throw new JsrNotSupportedBailout("jsr/ret parsing disabled");
             }
             createJsrAlternatives(blockMap[0]);
         }
@@ -315,7 +315,7 @@ public final class BlockMap {
                     hasJsrBytecodes = true;
                     int target = bci + Bytes.beSVar(code, bci + 1, opcode == JSR_W);
                     if (target == 0) {
-                        throw new JSRNotSupportedBailout("jsr target bci 0 not allowed");
+                        throw new JsrNotSupportedBailout("jsr target bci 0 not allowed");
                     }
                     Block b1 = makeBlock(target);
                     current.jsrSuccessor = b1;
@@ -472,7 +472,7 @@ public final class BlockMap {
                     nextScope = scope.pop();
                 }
                 if (!successor.jsrScope.isEmpty()) {
-                    throw new JSRNotSupportedBailout("unstructured control flow  (" + successor.jsrScope + " " + nextScope + ")");
+                    throw new JsrNotSupportedBailout("unstructured control flow  (" + successor.jsrScope + " " + nextScope + ")");
                 }
                 if (!nextScope.isEmpty()) {
                     Block clone;
