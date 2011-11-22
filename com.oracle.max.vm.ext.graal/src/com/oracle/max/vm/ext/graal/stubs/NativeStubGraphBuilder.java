@@ -187,13 +187,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 if (observer != null) {
                     observer.printGraph("InitializeHandles", initializeHandlesGraph);
                 }
-
-                apply(new FoldPhase(runtime()), initializeHandlesGraph);
-                apply(new MaxineIntrinsicsPhase(), initializeHandlesGraph);
-                apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), initializeHandlesGraph);
-                apply(new WordTypeRewriterPhase(), initializeHandlesGraph);
-                apply(new CanonicalizerPhase(null, runtime(), null), initializeHandlesGraph);
-
+                applyPhasesBeforeInlining(initializeHandlesGraph);
                 InliningUtil.inline(invoke, initializeHandlesGraph, false);
             } else if (method == nativeFunctionCall) {
                 // replace call with native function sequence
@@ -203,12 +197,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
                 if (observer != null) {
                     observer.printGraph("NativeFunctionCall", nativeFunctionCallGraph);
                 }
-
-                apply(new FoldPhase(runtime()), nativeFunctionCallGraph);
-                apply(new MaxineIntrinsicsPhase(), nativeFunctionCallGraph);
-                apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), nativeFunctionCallGraph);
-                apply(new CanonicalizerPhase(null, runtime(), null), nativeFunctionCallGraph);
-
+                applyPhasesBeforeInlining(nativeFunctionCallGraph);
                 InliningUtil.inline(invoke, nativeFunctionCallGraph, false);
             }
         }
@@ -225,6 +214,16 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
         graph.verify();
         return graph;
+    }
+
+    /**
+     * Applies a number of phases to a graph before it is inlined into another graph.
+     */
+    protected void applyPhasesBeforeInlining(StructuredGraph graph) {
+        apply(new FoldPhase(runtime()), graph);
+        apply(new MaxineIntrinsicsPhase(), graph);
+        apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), graph);
+        apply(new CanonicalizerPhase(null, runtime(), null), graph);
     }
 
     @HOSTED_ONLY
@@ -266,19 +265,11 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         }
 
         apply(new GraphBuilderPhase(runtime, method, null, false, true), graph);
-        apply(new PhiSimplificationPhase(), graph);
+        apply(new FoldPhase(runtime), graph);
+        apply(new MaxineIntrinsicsPhase(), graph);
+        apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null), graph);
+        apply(new CanonicalizerPhase(null, runtime, null), graph);
         apply(new DeadCodeEliminationPhase(), graph);
-        int nodeCount;
-        do {
-            nodeCount = graph.getNodeCount();
-            apply(new FoldPhase(runtime), graph);
-            apply(new MaxineIntrinsicsPhase(), graph);
-            apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null), graph);
-            apply(new DeadCodeEliminationPhase(), graph);
-            apply(new WordTypeRewriterPhase(), graph);
-            apply(new CanonicalizerPhase(null, runtime, null), graph);
-            apply(new DeadCodeEliminationPhase(), graph);
-        } while (graph.getNodeCount() != nodeCount);
 
         if (observer != null) {
             observer.compilationFinished(null);
