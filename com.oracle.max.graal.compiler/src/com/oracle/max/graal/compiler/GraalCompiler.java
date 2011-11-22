@@ -88,7 +88,11 @@ public class GraalCompiler implements CiCompiler  {
             long startTime = 0;
             int index = context.metrics.CompiledMethods++;
             if (GraalOptions.PrintCompilation) {
-                TTY.print(String.format("Graal %4d %-70s %-45s %-50s | ", index, method.holder().name(), method.name(), method.signature().asString()));
+                TTY.println(String.format("Graal %4d %-70s %-45s %-50s ...",
+                                index,
+                                method.holder().name(),
+                                method.name(),
+                                method.signature().asString()));
                 startTime = System.nanoTime();
             }
 
@@ -101,7 +105,15 @@ public class GraalCompiler implements CiCompiler  {
                 filter.remove();
                 if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
                     long time = (System.nanoTime() - startTime) / 100000;
-                    TTY.println(String.format("%3d.%dms", time / 10, time % 10));
+                    TTY.println(String.format("Graal %4d %-70s %-45s %-50s | %3d.%dms %4dnodes %5dB",
+                                    index,
+                                    method.holder().name(),
+                                    method.name(),
+                                    method.signature().asString(),
+                                    time / 10,
+                                    time % 10,
+                                    compilation.graph.getNodeCount(),
+                                    result.targetMethod().targetCodeSize()));
                 }
             }
 
