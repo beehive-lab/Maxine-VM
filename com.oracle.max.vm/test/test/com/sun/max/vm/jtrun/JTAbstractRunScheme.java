@@ -23,14 +23,12 @@
 package test.com.sun.max.vm.jtrun;
 
 import static com.sun.max.vm.VMOptions.*;
-import test.com.sun.max.vm.jtrun.all.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 
@@ -65,9 +63,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
             return;
         }
 
-        if (BootImageGenerator.calleeBaseline) {
-            CompilationBroker.compileWithBaseline.add(javaClass);
-        }
         if (COMPILE_ALL_TEST_METHODS) {
             // add all virtual and static methods to the image
             addMethods(actor.localStaticMethodActors());
@@ -105,9 +100,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
     private void registerClasses() {
         if (!classesRegistered) {
             classesRegistered = true;
-            if (BootImageGenerator.callerBaseline) {
-                CompilationBroker.compileWithBaseline.add(JTRuns.class);
-            }
             Class[] list = getClassList();
             for (Class<?> testClass : list) {
                 addClassToImage(testClass);

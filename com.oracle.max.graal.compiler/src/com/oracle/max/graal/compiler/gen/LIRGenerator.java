@@ -523,17 +523,18 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
-        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPooling()) {
+        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPolling()) {
             emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
 
     public void emitSafepointPoll(FixedNode x) {
-        XirSnippet snippet = xir.genSafepointPoll(site(x));
-        emitXir(snippet, x, state(), null, false);
+        if (!lastState.method().noSafepointPolls()) {
+            XirSnippet snippet = xir.genSafepointPoll(site(x));
+            emitXir(snippet, x, state(), null, false);
+        }
     }
-
 
     @Override
     public void emitIf(IfNode x) {
@@ -1283,7 +1284,12 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         public CiCodePos getCodePos() {
-            // TODO: get the code position of the current instruction if possible
+            if (current instanceof StateSplit) {
+                FrameState stateAfter = ((StateSplit) current).stateAfter();
+                if (stateAfter != null) {
+                    return stateAfter.toCodePos();
+                }
+            }
             return null;
         }
 

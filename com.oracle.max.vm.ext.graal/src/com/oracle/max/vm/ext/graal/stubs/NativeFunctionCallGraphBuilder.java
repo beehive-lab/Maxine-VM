@@ -79,7 +79,6 @@ class NativeFunctionCallGraphBuilder extends AbstractGraphBuilder {
             if (arg.kind().isObject()) {
                 assert !isCFunction;
                 jniArgs.add(handlize(arg));
-                handleOffset += Word.size();
             } else {
                 jniArgs.add(arg);
             }
