@@ -33,11 +33,16 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
+// Notes:  this class isolates the old system for dealing with external/native code. They simply
+// get registered as discovered, checked to determine that the new region does not overlap any
+// other known region, and then kept in a list.
+//
+// It now includes a manager for creating code pointers, which in this case are treated as constant.
 
 /**
  * The singleton manager for managing information about machine code external to the VM.
  */
-public final class ExternalMachineCodeAccess extends AbstractVmHolder {
+public final class ExternalMachineCodeAccess extends AbstractVmHolder implements AllocationHolder, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
@@ -87,6 +92,17 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
         this.codePointerManager = new FakeRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(statsPrinter);
+    }
+
+    public void updateCache(long epoch) {
+    }
+
+    public List<MaxMemoryRegion> memoryAllocations() {
+        // TODO Return descriptions of each memory region known to be occupied by a dll.
+        // We haven't been reporting the singly-registered regions of external code in the list of "allocations".
+        // Presumably in the new arrangement, some (many? all?) such external code will be known to be sub-regions
+        // of some dll.
+        return null;
     }
 
     TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
@@ -154,6 +170,8 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
      */
     private class FakeRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
+        // TODO (mlvdv) Will need to generalize this in order to manage pointers into dlls.
+
         /**
          * Map:  address in VM --> a {@link RemoteCodePointer} that refers to the machine code at that location.
          */
@@ -163,6 +181,12 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder {
             super(vm);
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * These regions of native code are external to  the VM, so there is no VM entity
+         * that corresponds to them.
+         */
         public CodeHoldingRegion codeRegion() {
             return null;
         }
