@@ -79,19 +79,4 @@ public abstract class LinearInductionVariableNode extends InductionVariableNode 
             return searchExtremum(point, StrideDirection.Up);
         }
     }
-
-    @Override
-    public StrideDirection strideDirection() {
-        ValueNode stride = a();
-        if (stride.isConstant()) {
-            long val = stride.asConstant().asLong();
-            if (val > 0) {
-                return StrideDirection.Up;
-            }
-            if (val < 0) {
-                return StrideDirection.Down;
-            }
-        }
-        return null;
-    }
 }
