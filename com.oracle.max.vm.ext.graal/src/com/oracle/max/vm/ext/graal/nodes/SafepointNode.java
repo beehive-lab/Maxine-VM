@@ -49,7 +49,6 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
     public void generateAmd64(AMD64LIRGenerator gen) {
         switch (op) {
             case SAFEPOINT_POLL: {
-                // TODO Maxine-specific, but currently implemented as XIR.
                 gen.emitSafepointPoll(this);
                 break;
             }
