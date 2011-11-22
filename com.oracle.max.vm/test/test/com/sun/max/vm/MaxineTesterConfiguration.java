@@ -25,6 +25,8 @@ package test.com.sun.max.vm;
 import java.io.*;
 import java.util.*;
 
+import test.com.sun.max.vm.jtrun.all.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -244,21 +246,27 @@ public class MaxineTesterConfiguration {
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
         String opt_c1x = "-opt=C1X";
+        String opt_c1xgraal = "-opt=C1XGraal";
+
+        String testCallerT1X = "--XX:CompileCommand=" + JTRuns.class.getName() + ":T1X";
+        String testCalleeT1X = "--XX:CompileCommand=jtt.:T1X";
+        String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
 
         imageConfig("java", "-run=java");
-        imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-c1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline", "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline", "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
+        imageConfig("jtt-c1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X, testCalleeT1X, "--XX:+FailOverCompilation");
         imageConfig("jtt-c1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeGraal);
 
-        imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline");
-        imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
+        imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCallerT1X);
+        imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCallerT1X, testCalleeT1X);
         imageConfig("jtt-msc1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
 
-        imageConfig("jtt-msec1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-callee-baseline");
-        imageConfig("jtt-mset1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-msec1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCalleeT1X);
+        imageConfig("jtt-mset1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCallerT1X);
+        imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCallerT1X, testCalleeT1X);
         imageConfig("jtt-msec1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests");
 
         maxvmConfig("std", "-Xms2g", "-Xmx2g");

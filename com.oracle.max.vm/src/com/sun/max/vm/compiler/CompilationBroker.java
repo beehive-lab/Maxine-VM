@@ -381,9 +381,6 @@ public class CompilationBroker {
         }
     }
 
-    @HOSTED_ONLY
-    public static final HashSet<Class> compileWithBaseline = new HashSet<Class>();
-
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
@@ -398,31 +395,26 @@ public class CompilationBroker {
         }
 
         RuntimeCompiler compiler;
-        if (isHosted()) {
-            if (compileWithBaseline.contains(cma.holder().javaClass())) {
-                compiler = baselineCompiler;
-                assert compiler != null;
-            } else {
-                // at prototyping time, default to the opt compiler
-                compiler = optimizingCompiler;
-            }
+        if (nature == Nature.BASELINE) {
+            compiler = baselineCompiler;
+            assert compiler != null;
+        } else if (nature == Nature.OPT) {
+            compiler = optimizingCompiler;
         } else {
-            if (nature == Nature.BASELINE) {
-                compiler = baselineCompiler;
-                assert compiler != null;
-            } else if (nature == Nature.OPT) {
+            if (isHosted()) {
+                // at prototyping time, default to the opt compiler
                 compiler = optimizingCompiler;
             } else {
                 compiler = defaultCompiler;
             }
+        }
 
-            String compilerName = compilerFor(cma);
-            if (compilerName != null) {
-                if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                    compiler = optimizingCompiler;
-                } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                    compiler = baselineCompiler;
-                }
+        String compilerName = compilerFor(cma);
+        if (compilerName != null) {
+            if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                compiler = optimizingCompiler;
+            } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                compiler = baselineCompiler;
             }
         }
 

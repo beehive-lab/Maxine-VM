@@ -171,10 +171,14 @@ public class MaxRuntime implements GraalRuntime {
             return true;
         }
 
-        if (isHosted() && CompilationBroker.compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
-            // Ensure that methods intended to be compiled by the baseline compiler for the
-            // purpose of a JTT test are not inlined.
-            return true;
+        if (isHosted()) {
+            CompilationBroker cb = vm().compilationBroker;
+            String compilerName = cb.compilerFor(classMethodActor);
+            if (compilerName != null && cb.baselineCompiler != null && cb.baselineCompiler.matches(compilerName)) {
+                // Ensure that methods intended to be compiled by the baseline compiler for the
+                // purpose of a JTT test are not inlined.
+                return true;
+            }
         }
 
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
