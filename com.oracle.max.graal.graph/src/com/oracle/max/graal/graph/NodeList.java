@@ -268,6 +268,11 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return (A[]) Arrays.copyOf(nodes, size, template.getClass());
     }
 
+    @Override
+    public Object[] toArray() {
+        return Arrays.copyOf(nodes, size);
+    }
+
     protected void replace(T node, T other) {
         incModCount();
         for (int i = 0; i < size(); i++) {
@@ -292,11 +297,6 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
     @Override
     public boolean contains(Object o) {
         return indexOf(o) != -1;
-    }
-
-    @Override
-    public Object[] toArray() {
-        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
