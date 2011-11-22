@@ -39,8 +39,6 @@ import com.sun.max.vm.run.java.*;
  */
 public abstract class JTAbstractRunScheme extends JavaRunScheme {
 
-    public static final String NATIVE_TESTS_PROPERTY = "max.jtt.nativeTests";
-
     @HOSTED_ONLY
     public JTAbstractRunScheme() {
     }
@@ -146,7 +144,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         JTUtil.verbose = 3;
         if (MaxineVM.isHosted()) {
             registerClasses();
-            nativeTests = System.getProperty(NATIVE_TESTS_PROPERTY) != null;
+            nativeTests = BootImageGenerator.nativeTests;
             super.initialize(phase);
         }
     }
