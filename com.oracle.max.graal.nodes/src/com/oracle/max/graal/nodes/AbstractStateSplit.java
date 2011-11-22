@@ -74,7 +74,7 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> debugProperties = super.getDebugProperties();
         if (stateAfter() != null) {
-            debugProperties.put("stateAfter", stateAfter.toString(Verbosity.Debugger));
+            debugProperties.put("stateAfter", stateAfter().toString(Verbosity.Debugger));
         }
         return debugProperties;
     }
