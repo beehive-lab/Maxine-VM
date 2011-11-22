@@ -25,8 +25,6 @@ package com.sun.max.vm.hosted;
 import java.io.*;
 import java.util.*;
 
-import test.com.sun.max.vm.jtrun.*;
-
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -95,6 +93,8 @@ public final class BootImageGenerator {
     // TODO: clean this up. Just for getting perf numbers.
     private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
+
+    public static boolean nativeTests;
 
     /**
      * Gets the default VM directory where the VM executable, shared libraries, boot image
@@ -185,9 +185,7 @@ public final class BootImageGenerator {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
             }
 
-            if (testNative.getValue()) {
-                System.setProperty(JTAbstractRunScheme.NATIVE_TESTS_PROPERTY, "true");
-            }
+            nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();
             vmDirectory.mkdirs();
