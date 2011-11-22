@@ -22,9 +22,11 @@
  */
 package com.sun.max.memory;
 
+import java.nio.*;
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.hosted.*;
 
 /**
  * Memory access using wrapped Word types.
@@ -32,39 +34,30 @@ import com.sun.max.vm.hosted.*;
 @HOSTED_ONLY
 public final class BoxedMemory {
 
+    private static byte[] buf = new byte[1024];
+
+    public static ByteBuffer memory = ByteBuffer.wrap(buf);
+
     private BoxedMemory() {
     }
 
-    private static native long nativeAllocate(long size);
-
-    public static Pointer allocate(Size size) {
-        Prototype.loadHostedLibrary();
-        final Boxed box = (Boxed) size;
-        return BoxedPointer.from(nativeAllocate(box.value()));
+    public static synchronized Pointer allocate(Size size) {
+        int offset = buf.length;
+        int newLength = offset + size.toInt();
+        buf = Arrays.copyOf(buf, newLength);
+        memory = ByteBuffer.wrap(buf);
+        memory.order(ByteOrder.nativeOrder());
+        return BoxedPointer.fromInt(offset);
     }
-
-    private static native long nativeReallocate(long block, long size);
 
     public static Pointer reallocate(Pointer block, Size size) {
-        Prototype.loadHostedLibrary();
-        final Boxed blockBox = (Boxed) block;
-        final Boxed sizeBox = (Boxed) size;
-        return BoxedPointer.from(nativeReallocate(blockBox.value(), sizeBox.value()));
+        Pointer newBlock = allocate(size);
+        Memory.copyBytes(block, newBlock, size);
+        return newBlock;
     }
-
-    private static native int nativeDeallocate(long pointer);
 
     public static int deallocate(Address block) {
-        Prototype.loadHostedLibrary();
-        final Boxed box = (Boxed) block;
-        return nativeDeallocate(box.value());
+        // TODO (ds): implement a free list
+        return 0;
     }
-
-    private static native void nativeWriteBytes(byte[] fromArray, int startIndex, int numberOfBytes, long toPointer);
-
-    public static void writeBytes(byte[] fromArray, int startIndex, int numberOfBytes, Pointer toPointer) {
-        Prototype.loadHostedLibrary();
-        nativeWriteBytes(fromArray, startIndex, numberOfBytes, toPointer.toLong());
-    }
-
 }
