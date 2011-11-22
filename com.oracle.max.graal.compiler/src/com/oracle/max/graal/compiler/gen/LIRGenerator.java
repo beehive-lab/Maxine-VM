@@ -26,6 +26,7 @@ import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -344,15 +345,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     private boolean checkStartOperands(Node node, FrameState fs) {
-        if (node == ((StructuredGraph) node.graph()).start()) {
-            CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
-            int slot = 0;
-            for (CiKind kind : arguments) {
-                LocalNode local = (LocalNode) fs.localAt(slot);
-                assert local != null && local.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
-                slot++;
-                if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+        if (!Modifier.isNative(compilation.method.accessFlags())) {
+            if (node == ((StructuredGraph) node.graph()).start()) {
+                CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
+                int slot = 0;
+                for (CiKind kind : arguments) {
+                    ValueNode arg = fs.localAt(slot);
+                    assert arg != null && arg.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + arg + ")";
                     slot++;
+                    if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+                        slot++;
+                    }
                 }
             }
         }
@@ -466,7 +469,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         for (int i = 0; i < dims.length; i++) {
             dims[i] = toXirArgument(x.dimension(i));
         }
-        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.elementType);
+        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.type());
         emitXir(snippet, x, state(), null, true);
     }
 

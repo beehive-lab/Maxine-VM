@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
 import com.sun.cri.ci.*;
@@ -82,6 +83,9 @@ public class WordTypeRewriterPhase extends Phase {
             ConstantNode c = (ConstantNode) valueNode;
             valueNode = ConstantNode.forCiConstant(((WordUtil.WrappedWord) c.value.asObject()).archConstant(), null, valueNode.graph());
             c.replaceAndDelete(valueNode);
+        } else if (valueNode instanceof NullCheckNode) {
+            assert valueNode.usages().isEmpty();
+            valueNode.delete();
         } else {
             valueNode.setKind(WordUtil.archKind());
         }

@@ -210,7 +210,7 @@ public class VmThreadLocal implements FormatWithToString {
 
     /**
      * The state of this thread with respect to {@linkplain VmOperation freezing}.
-     * This will be one of the {@code THREAD_IN_...} constants defined in {@link SafepointPoll}.
+     * This will be one of the {@code THREAD_IN_...} constants defined in {@link VmOperation}.
      */
     public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing", Nature.Single);
 

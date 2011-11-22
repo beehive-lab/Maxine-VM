@@ -52,7 +52,6 @@ public abstract class ValueVisitor {
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitInfopoint(Infopoint i);
     public abstract void visitLoadPointer(LoadPointer i);
-    public abstract void visitAllocateStackHandle(StackHandle i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);
@@ -76,7 +75,7 @@ public abstract class ValueVisitor {
     public abstract void visitReturn(Return i);
     public abstract void visitShiftOp(ShiftOp i);
     public abstract void visitSignificantBit(SignificantBitOp i);
-    public abstract void visitStackAllocate(StackAllocate i);
+    public abstract void visitAlloca(Alloca i);
     public abstract void visitStoreField(StoreField i);
     public abstract void visitStoreIndexed(StoreIndexed i);
     public abstract void visitStorePointer(StorePointer i);

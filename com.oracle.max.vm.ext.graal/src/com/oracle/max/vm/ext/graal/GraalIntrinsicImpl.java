@@ -20,9 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.maxri;
+package com.oracle.max.vm.ext.graal;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.graph.*;
@@ -30,6 +31,10 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Base class for intrinsic implementations targeting Graal. The intrinsic has access to the graph so that
@@ -41,7 +46,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
      */
     public final String CREATE_NAME = "create";
 
-    private Method createMethod;
+    private final Method createMethod;
 
     /**
      * Creates the graph nodes necessary for the implementation of the intrinsic and appends them to the supplied {@link StructuredGraph}.
@@ -62,18 +67,13 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
      * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
      * @return The instruction that should substitute the original method call that is intrinsified.
      */
-    public ValueNode createGraph(StructuredGraph graph, RiResolvedMethod method, RiRuntime runtime, NodeList<ValueNode> args) {
-        if (createMethod == null) {
-            initialize();
-        }
-
+    public ValueNode createGraph(StructuredGraph graph, RiResolvedMethod method, NodeList<ValueNode> args) {
         Class[] formalParams = createMethod.getParameterTypes();
         Object[] actualParams = new Object[formalParams.length];
 
         int offset = 0;
         offset = assignParam(offset, formalParams, actualParams, StructuredGraph.class, graph);
         offset = assignParam(offset, formalParams, actualParams, RiResolvedMethod.class, method);
-        offset = assignParam(offset, formalParams, actualParams, RiRuntime.class, runtime);
 
         if (offset + args.size() != actualParams.length) {
             throw new CiBailout("intrinsic has wrong number of parameters for invoke " + method);
@@ -85,7 +85,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
                 if (!node.isConstant()) {
                     throw new CiBailout("intrinsic parameter " + (i - offset) + " must be compile time constant for invoke " + method);
                 }
-                actualParams[i] = node.asConstant().boxedValue();
+                actualParams[i] = node.asConstant().boxedValue(WordUtil.ciKind(Kind.fromJava(formalParams[i]), false));
             } else {
                 actualParams[i] = node;
             }
@@ -94,7 +94,7 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
         try {
             return (ValueNode) createMethod.invoke(this, actualParams);
         } catch (Exception ex) {
-            throw new CiBailout("intrinsic exception for invoke " + method, ex);
+            throw new CiBailout("intrinsic exception for invoke " + method + " " + Arrays.toString(actualParams), ex);
         }
     }
 
@@ -106,16 +106,36 @@ public class GraalIntrinsicImpl implements IntrinsicImpl {
         return offset;
     }
 
-    private void initialize() {
-        int count = 0;
-        for (Method m : getClass().getMethods()) {
-            if (CREATE_NAME.equals(m.getName()) && m.getReturnType() == ValueNode.class) {
-                createMethod = m;
-                count++;
-            }
+    @HOSTED_ONLY
+    private Method getCreateGraphMethod() {
+        try {
+            return getClass().getMethod("createGraph", StructuredGraph.class, RiResolvedMethod.class, NodeList.class);
+        } catch (Exception e) {
+            throw FatalError.unexpected("Could not find createGraph method in hierarchy of " + getClass(), e);
         }
-        if (count != 1) {
-            throw new CiBailout("Expected one create method, but found " + count);
+    }
+
+    @HOSTED_ONLY
+    protected GraalIntrinsicImpl() {
+        Method createGraphMethod = getCreateGraphMethod();
+        // Only look for "create(...)" if createGraph() was not overidden
+        if (createGraphMethod.getDeclaringClass() == GraalIntrinsicImpl.class) {
+            int count = 0;
+            Method createMethod = null;
+
+            for (Method m : getClass().getMethods()) {
+                if (CREATE_NAME.equals(m.getName()) && m.getReturnType() == ValueNode.class) {
+                    createMethod = m;
+                    count++;
+                }
+            }
+            FatalError.check(count == 1, "Expected 1 create method, but found " + count + " in " + this);
+            this.createMethod = createMethod;
+
+            // Ensures that the 'createMethod' is compiled into the boot image
+            new CriticalMethod(ClassMethodActor.fromJava(createMethod), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        } else {
+            createMethod = null;
         }
     }
 }

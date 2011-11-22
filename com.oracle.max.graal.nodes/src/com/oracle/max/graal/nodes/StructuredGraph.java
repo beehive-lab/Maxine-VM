@@ -38,8 +38,16 @@ public class StructuredGraph extends Graph {
     /**
      * Creates a new Graph containing a single {@link BeginNode} as the {@link #start() start} node.
      */
-    public StructuredGraph() {
+    public StructuredGraph(String name) {
+        super(name);
         this.start = add(new BeginNode());
+    }
+
+    /**
+     * Creates a new Graph containing a single {@link BeginNode} as the {@link #start() start} node.
+     */
+    public StructuredGraph() {
+        this(null);
     }
 
     public BeginNode start() {
@@ -48,11 +56,15 @@ public class StructuredGraph extends Graph {
 
     @Override
     public StructuredGraph copy() {
-        StructuredGraph copy = new StructuredGraph();
+        return copy(name);
+    }
+
+    @Override
+    public StructuredGraph copy(String name) {
+        StructuredGraph copy = new StructuredGraph(name);
         HashMap<Node, Node> replacements = new HashMap<Node, Node>();
         replacements.put(start, copy.start);
         copy.addDuplicates(getNodes(), replacements);
-        copy.verify();
         return copy;
     }
 

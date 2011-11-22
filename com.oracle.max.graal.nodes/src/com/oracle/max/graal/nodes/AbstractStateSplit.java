@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
 
 /**
@@ -66,5 +68,14 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
                 stateAfter.delete();
             }
         }
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        if (stateAfter() != null) {
+            debugProperties.put("stateAfter", stateAfter.toString(Verbosity.Debugger));
+        }
+        return debugProperties;
     }
 }

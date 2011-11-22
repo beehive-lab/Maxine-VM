@@ -27,9 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
-import static com.sun.max.vm.jni.JniHandles.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
-import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.util.*;
 
@@ -86,11 +84,6 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      */
     private DebugInfo debugInfo;
 
-    /**
-     * Flag to mark whether this method - probably by means of any inlined method - is using tagged pointers.
-     */
-    private boolean isUsingTaggedLocals;
-
     private final CodeAnnotation[] annotations;
 
     @HOSTED_ONLY
@@ -141,19 +134,6 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public Lifespan lifespan() {
         return Lifespan.LONG;
-    }
-
-    /**
-     * @return {@code true} if this method (maybe due to inlining) uses tagged locals. This is controlled by the inlining logic in the
-     * optimising JIT compiler. See {@link RiRuntime#notifyInline()}.
-     */
-    @Override
-    public boolean isUsingTaggedLocals() {
-        return isUsingTaggedLocals;
-    }
-
-    public void setUsingTaggedLocals() {
-        isUsingTaggedLocals = true;
     }
 
     @Override
@@ -433,19 +413,6 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             preparer.visitReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
-        }
-
-        // prepare map for handlized object arguments in a native method stub
-        if (classMethodActor != null && classMethodActor.compilee().isNative()) {
-            Pointer objectHandlesBase = current.sp().readWord(STACK_HANDLES_ADDRESS_OFFSET).asPointer();
-            if (!objectHandlesBase.isZero()) {
-                int handles = stackHandlesSize(classMethodActor.descriptor()) / STACK_SLOT_SIZE;
-                slotPointer = objectHandlesBase;
-                for (int i = 0; i < handles; i++) {
-                    preparer.visitReferenceMapBits(current, slotPointer, 1, 1);
-                    slotPointer = slotPointer.plus(STACK_SLOT_SIZE);
-                }
-            }
         }
     }
 

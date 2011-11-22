@@ -28,6 +28,7 @@ import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -57,7 +58,26 @@ public class C1XGraal implements RuntimeCompiler {
         if (forceC1X(method) || (name != null && name.equals("C1X"))) {
             return c1x.compile(method, install, stats);
         } else {
-            return graal.compile(method, install, stats);
+            try {
+                return graal.compile(method, install, stats);
+            } catch (Throwable t) {
+                String errorMessage = "Compilation of " + method + " by Graal failed";
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printCurrentThread(false);
+                    Log.print(": ");
+                    Log.println(errorMessage);
+                    t.printStackTrace(Log.out);
+                    Log.unlock(lockDisabledSafepoints);
+                }
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printCurrentThread(false);
+                    Log.println(": Retrying with C1X...");
+                    Log.unlock(lockDisabledSafepoints);
+                }
+                return c1x.compile(method, install, stats);
+            }
         }
     }
 
@@ -66,7 +86,10 @@ public class C1XGraal implements RuntimeCompiler {
      * what it cannot yet handle.
      */
     boolean forceC1X(final ClassMethodActor method) {
-        return method.isNative() || method.isTemplate();
+        if (isHosted()) {
+            return !method.isNative();
+        }
+        return false;
     }
 
     public Nature nature() {

@@ -32,6 +32,8 @@ import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.Node.Verbosity;
+import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
+import com.oracle.max.graal.graph.NodeClass.Position;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.loop.*;
 import com.sun.cri.bytecode.*;
@@ -48,12 +50,14 @@ public class IdealGraphPrinter {
         final int fromIndex;
         final String to;
         final int toIndex;
+        final String label;
 
-        Edge(String from, int fromIndex, String to, int toIndex) {
+        Edge(String from, int fromIndex, String to, int toIndex, String label) {
             this.from = from;
             this.fromIndex = fromIndex;
             this.to = to;
             this.toIndex = toIndex;
+            this.label = label;
         }
     }
 
@@ -98,7 +102,7 @@ public class IdealGraphPrinter {
         stream.printf(" <method name='%s' shortName='%s' bci='%d'>%n", escape(name), escape(shortName), bci);
         if (GraalOptions.PrintIdealGraphBytecodes && method != null) {
             StringBuilder sb = new StringBuilder(40);
-            stream.println("<bytecodes>\n&lt;![CDATA[");
+            stream.println("<bytecodes>\n<![CDATA[");
             BytecodeStream bytecodes = new BytecodeStream(method.code());
             while (bytecodes.currentBC() != Bytecodes.END) {
                 sb.setLength(0);
@@ -110,7 +114,7 @@ public class IdealGraphPrinter {
                 stream.println(sb.toString());
                 bytecodes.next();
             }
-            stream.println("]]&gt;</bytecodes>");
+            stream.println("]]></bytecodes>");
         }
         stream.println("</method>");
     }
@@ -330,18 +334,24 @@ public class IdealGraphPrinter {
 
             // successors
             int fromIndex = 0;
-            for (Node successor : node.successors()) {
+            NodeClassIterator succIter = node.successors().iterator();
+            while (succIter.hasNext()) {
+                Position position = succIter.nextPosition();
+                Node successor = node.getNodeClass().get(node, position);
                 if (successor != null && !omittedClasses.contains(successor.getClass())) {
-                    edges.add(new Edge(node.toString(Verbosity.Id), fromIndex, successor.toString(Verbosity.Id), 0));
+                    edges.add(new Edge(node.toString(Verbosity.Id), fromIndex, successor.toString(Verbosity.Id), 0, node.getNodeClass().getName(position)));
                 }
                 fromIndex++;
             }
 
             // inputs
             int toIndex = 1;
-            for (Node input : node.inputs()) {
+            NodeClassIterator inputIter = node.inputs().iterator();
+            while (inputIter.hasNext()) {
+                Position position = inputIter.nextPosition();
+                Node input = node.getNodeClass().get(node, position);
                 if (input != null && !omittedClasses.contains(input.getClass())) {
-                    edges.add(new Edge(input.toString(Verbosity.Id), input.successors().explicitCount(), node.toString(Verbosity.Id), toIndex));
+                    edges.add(new Edge(input.toString(Verbosity.Id), input.successors().explicitCount(), node.toString(Verbosity.Id), toIndex, node.getNodeClass().getName(position)));
                 }
                 toIndex++;
             }
@@ -351,7 +361,7 @@ public class IdealGraphPrinter {
     }
 
     private void printEdge(Edge edge) {
-        stream.printf("   <edge from='%s' fromIndex='%d' to='%s' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
+        stream.printf("   <edge from='%s' fromIndex='%d' to='%s' toIndex='%d' label='%s' />%n", edge.from, edge.fromIndex, edge.to, edge.toIndex, edge.label);
     }
 
     private void printBlock(Graph graph, Block block, NodeMap<Block> nodeToBlock) {

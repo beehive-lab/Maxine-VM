@@ -113,11 +113,6 @@ public class FieldActor extends MemberActor implements RiResolvedField {
     }
 
     @INLINE
-    public final boolean isTaggedField() {
-        return isTaggedField(flags());
-    }
-
-    @INLINE
     public final TypeDescriptor descriptor() {
         return (TypeDescriptor) descriptor;
     }
