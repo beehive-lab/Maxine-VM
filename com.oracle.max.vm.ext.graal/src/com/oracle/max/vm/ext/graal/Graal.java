@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -41,6 +42,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.snippets.*;
+import com.oracle.max.vm.ext.graal.stubs.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
@@ -51,6 +53,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -138,18 +141,29 @@ public class Graal implements RuntimeCompiler {
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
             plan = new PhasePlan();
             plan.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
-            plan.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase(runtime));
+            plan.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase());
             plan.addPhase(PhasePosition.AFTER_PARSING, new MustInlinePhase(runtime, cache, null));
 
             // Run forced inlining again because high-level optimizations (such as replacing a final field read by a constant) can open up new opportunities.
             plan.addPhase(PhasePosition.HIGH_LEVEL, new FoldPhase(runtime));
-            plan.addPhase(PhasePosition.HIGH_LEVEL, new MaxineIntrinsicsPhase(runtime));
+            plan.addPhase(PhasePosition.HIGH_LEVEL, new MaxineIntrinsicsPhase());
             plan.addPhase(PhasePosition.HIGH_LEVEL, new MustInlinePhase(runtime, cache, null));
 
             plan.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsificationPhase(runtime));
             plan.addPhase(PhasePosition.HIGH_LEVEL, new WordTypeRewriterPhase());
 
             GraalIntrinsics.installIntrinsics(runtime, target, plan);
+            NativeStubGraphBuilder.initialize();
+
+            // Ensure all the Node classes used by Maxine have their NodeClass instances in the image.
+            for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+                if (Node.class.isAssignableFrom(classActor.toJava())) {
+                    Class<?> nodeClass = classActor.toJava();
+                    if (!Modifier.isAbstract(nodeClass.getModifiers())) {
+                        NodeClass.get(nodeClass);
+                    }
+                }
+            }
         }
 
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
@@ -183,8 +197,9 @@ public class Graal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             if (method.compilee().isNative()) {
-                NativeStubCompiler nsc = new NativeStubCompiler(method);
-                compiledMethod = nsc.compile(compiler(), plan);
+                NativeStubGraphBuilder nativeStubCompiler = new NativeStubGraphBuilder(method);
+                compiledMethod = compiler.compileMethod(method, nativeStubCompiler.build(), plan).targetMethod();
+                //System.out.println(runtime.disassemble(compiledMethod));
             } else {
                 compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
             }

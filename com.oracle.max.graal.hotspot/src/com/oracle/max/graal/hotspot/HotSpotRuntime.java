@@ -725,9 +725,4 @@ public class HotSpotRuntime implements GraalRuntime {
         Compiler compilerInstance = CompilerImpl.getInstance();
         return HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
     }
-
-    @Override
-    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        // empty
-    }
 }

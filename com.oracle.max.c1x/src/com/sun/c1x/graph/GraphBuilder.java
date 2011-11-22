@@ -1962,7 +1962,6 @@ public final class GraphBuilder {
         }
 
         stats.inlineCount++;
-        compilation.runtime.notifyInline(compilation.method, target);
     }
 
     private Value synchronizedObject(FrameState curState, RiResolvedMethod target) {

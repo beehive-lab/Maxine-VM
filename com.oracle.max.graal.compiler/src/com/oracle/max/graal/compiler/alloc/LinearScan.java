@@ -1981,9 +1981,7 @@ public final class LinearScan {
     private void computeDebugInfo(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
         if (info != null) {
             if (info.debugInfo == null) {
-                int frameSize = compilation.frameMap().frameSize();
-                int frameWords = frameSize / compilation.compiler.target.spillSlotSize;
-                CiBitMap frameRefMap = new CiBitMap(frameWords);
+                CiBitMap frameRefMap = compilation.frameMap().initFrameRefMap();
                 CiBitMap regRefMap = op.hasCall() ? null : new CiBitMap(compilation.compiler.target.arch.registerReferenceMapBitCount);
                 CiFrame frame = compilation.placeholderState != null ? null : computeFrame(info.state, op.id(), frameRefMap);
                 computeOopMap(iw, op, info, frameRefMap, regRefMap);

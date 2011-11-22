@@ -97,7 +97,6 @@ public class InliningUtil {
 
         @Override
         public void inline(StructuredGraph compilerGraph, GraalRuntime runtime, InliningCallback callback) {
-            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), invoke.callTarget().targetMethod());
             InliningUtil.inline(invoke, intrinsicGraph, true);
         }
 
@@ -132,7 +131,6 @@ public class InliningUtil {
                 graph = callback.buildGraph(concrete);
             }
 
-            runtime.notifyInline(invoke.stateAfter().outermostFrameState().method(), concrete);
             InliningUtil.inline(invoke, graph, true);
         }
 

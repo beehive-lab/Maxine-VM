@@ -61,8 +61,6 @@ public final class C1XCompilation {
     private boolean hasExceptionHandlers;
     private final C1XCompilation parent;
 
-    private boolean isUsingTaggedLocals;
-
     /**
      * @see #setNotTypesafe()
      * @see #isTypesafe()
@@ -109,14 +107,6 @@ public final class C1XCompilation {
 
     public IR hir() {
         return hir;
-    }
-
-    public void setUsingTaggedLocals() {
-        isUsingTaggedLocals = true;
-    }
-
-    public boolean isUsingTaggedLocals() {
-        return isUsingTaggedLocals;
     }
 
     /**

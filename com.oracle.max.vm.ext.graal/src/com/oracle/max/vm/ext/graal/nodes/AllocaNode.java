@@ -34,24 +34,23 @@ import com.sun.cri.ri.*;
 /**
  * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
  */
-public final class StackAllocateNode extends FixedWithNextNode implements AMD64LIRLowerable {
+public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLowerable {
 
     @Data public final int size;
+    @Data public final boolean refs;
     @Data public final RiResolvedType declaredType;
 
-    /**
-     * Creates a new StackAllocate instance.
-     */
-    public StackAllocateNode(int size, RiResolvedType declaredType) {
+    public AllocaNode(int size, boolean refs, RiResolvedType declaredType) {
         super(declaredType.kind(false));
         this.size = size;
+        this.refs = refs;
         this.declaredType = declaredType;
     }
 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
         CiVariable result = gen.newVariable(kind);
-        StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size);
+        StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
         gen.append(STACK_ALLOCATE.create(result, stackBlock));
         gen.setResult(this, result);
     }

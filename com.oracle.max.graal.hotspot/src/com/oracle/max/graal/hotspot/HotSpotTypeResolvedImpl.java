@@ -50,6 +50,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private RiField[] fields;
     private RiConstantPool constantPool;
     private boolean isInitialized;
+    private RiResolvedType arrayOfType;
 
     private HotSpotTypeResolvedImpl() {
         super(null);
@@ -62,7 +63,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public RiResolvedType arrayOf() {
-        return (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
+        if (arrayOfType == null) {
+           arrayOfType = (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
+        }
+        return arrayOfType;
     }
 
     @Override
