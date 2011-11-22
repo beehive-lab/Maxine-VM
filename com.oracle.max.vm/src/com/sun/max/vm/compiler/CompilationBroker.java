@@ -94,6 +94,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
     }
 
+    @RESET
     static String CompileCommand;
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand",
