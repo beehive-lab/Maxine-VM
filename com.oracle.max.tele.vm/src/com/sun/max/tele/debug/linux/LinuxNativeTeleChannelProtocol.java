@@ -28,9 +28,9 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.natives.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.unix.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.hosted.*;
 
@@ -63,13 +63,13 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
 
     @Override
     public long create(String programFile, String[] commandLineArguments) {
-        final Pointer commandLineArgumentsBuffer;
+        final long commandLineArgumentsBuffer;
         try {
             commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
         } catch (BootImageException ex) {
             return -1;
         }
-        leaderTask = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        leaderTask = LinuxTask.createChild(commandLineArgumentsBuffer, agent.port());
         if (leaderTask == null) {
             return -1;
         }
