@@ -47,7 +47,7 @@ public class InliningUtil {
         void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete);
     }
 
-    private static String methodName(RiResolvedMethod method) {
+    public static String methodName(RiResolvedMethod method) {
         return CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
     }
 

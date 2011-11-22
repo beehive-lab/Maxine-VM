@@ -57,7 +57,9 @@ public class PhasePlan {
     public static final PhasePlan DEFAULT = new PhasePlan();
 
     @SuppressWarnings("unchecked")
-    public final ArrayList<Phase>[] phases = new ArrayList[PhasePosition.values().length];
+    private final ArrayList<Phase>[] phases = new ArrayList[PhasePosition.values().length];
+
+    private final Set<Class<? extends Phase>> disabledPhases = new HashSet<Class<? extends Phase>>();
 
     public void addPhase(PhasePosition pos, Phase phase) {
         if (phases[pos.ordinal()] == null) {
@@ -72,5 +74,13 @@ public class PhasePlan {
                 p.apply(graph, context);
             }
         }
+    }
+
+    public void disablePhase(Class<? extends Phase> clazz) {
+        disabledPhases.add(clazz);
+    }
+
+    public boolean isPhaseDisabled(Class<? extends Phase> clazz) {
+        return disabledPhases.contains(clazz);
     }
 }

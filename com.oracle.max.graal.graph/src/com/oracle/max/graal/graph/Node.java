@@ -311,7 +311,7 @@ public abstract class Node implements Cloneable {
         try {
             newNode = (Node) this.clone();
         } catch (CloneNotSupportedException e) {
-            throw new VerificationError(e).addContext(this);
+            throw new GraalInternalError(e).addContext(this);
         }
         getNodeClass().clearInputs(newNode);
         getNodeClass().clearSuccessors(newNode);

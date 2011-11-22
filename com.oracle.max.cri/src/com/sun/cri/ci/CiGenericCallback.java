@@ -20,12 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.sun.cri.ci;
 
-
-public enum EdgeType {
-    INPUTS,
-    USAGES,
-    PREDECESSORS,
-    SUCCESSORS;
+/**
+ * This interface is used for {@link CiRuntimeCall#GenericCallback} runtime calls.
+ */
+public interface CiGenericCallback {
+    Object callback(Object arg);
 }

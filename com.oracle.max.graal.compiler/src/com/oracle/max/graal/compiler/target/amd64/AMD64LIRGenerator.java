@@ -47,6 +47,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class implements the X86-specific portion of the LIR generator.
@@ -71,8 +72,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
         StandardOpcode.XIR = AMD64XirOpcode.XIR;
     }
 
-    public AMD64LIRGenerator(GraalCompilation compilation) {
-        super(compilation);
+    public AMD64LIRGenerator(GraalCompilation compilation, RiXirGenerator xir) {
+        super(compilation, xir);
         lir.methodEndMarker = new AMD64MethodEndStub();
     }
 

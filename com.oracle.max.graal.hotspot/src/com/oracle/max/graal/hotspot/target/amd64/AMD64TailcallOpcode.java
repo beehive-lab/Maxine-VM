@@ -22,14 +22,15 @@
  */
 package com.oracle.max.graal.hotspot.target.amd64;
 
+import java.util.*;
+
 import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
 import com.oracle.max.graal.compiler.asm.TargetMethodAssembler;
 import com.oracle.max.graal.compiler.lir.LIRInstruction;
 import com.oracle.max.graal.compiler.lir.LIROpcode;
 import com.oracle.max.graal.compiler.target.amd64.AMD64LIRInstruction;
 import com.oracle.max.graal.compiler.util.Util;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiValue;
+import com.sun.cri.ci.*;
 
 /**
  * Performs a hard-coded tail call to the specified target, which normally should be an RiCompiledCode instance.
@@ -37,24 +38,26 @@ import com.sun.cri.ci.CiValue;
 public enum AMD64TailcallOpcode implements LIROpcode {
     TAILCALL;
 
-    public LIRInstruction create(final Object target, CiValue[] parameters, CiValue[] callingConvention) {
-        CiValue[] inputs = parameters.clone();
+    public LIRInstruction create(List<CiValue> parameters, CiValue target, CiValue[] callingConvention) {
+        CiValue[] inputs = new CiValue[parameters.size() + 1];
+        parameters.toArray(inputs);
+        inputs[parameters.size()] = target;
         CiValue[] temps = callingConvention.clone();
-        assert inputs.length == temps.length;
+        assert inputs.length == temps.length + 1;
 
         return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs, temps) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, target, inputs, temps);
+                emit(tasm, masm, inputs, temps);
             }
         };
     }
 
-    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, Object target, CiValue[] inputs, CiValue[] temps) {
+    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue[] inputs, CiValue[] temps) {
         switch (this) {
             case TAILCALL: {
                 // move all parameters to the correct positions, according to the calling convention
-                for (int i = 0; i < inputs.length; i++) {
+                for (int i = 0; i < inputs.length - 1; i++) {
                     assert inputs[i].kind == CiKind.Object || inputs[i].kind == CiKind.Int || inputs[i].kind == CiKind.Long : "only Object, int and long supported for now";
                     assert temps[i].isRegister() : "too many parameters";
                     if (inputs[i].isRegister()) {
@@ -65,11 +68,9 @@ public enum AMD64TailcallOpcode implements LIROpcode {
                 }
                 // destroy the current frame (now the return address is the top of stack)
                 masm.leave();
+
                 // jump to the target method
-                int before = masm.codeBuffer.position();
-                masm.jmp(0, true);
-                int after = masm.codeBuffer.position();
-                tasm.recordDirectCall(before, after, target, null);
+                masm.jmp(inputs[inputs.length - 1].asRegister());
                 masm.ensureUniquePC();
                 break;
             }
