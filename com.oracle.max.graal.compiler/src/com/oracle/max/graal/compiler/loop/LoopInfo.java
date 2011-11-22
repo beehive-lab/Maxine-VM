@@ -24,8 +24,8 @@ package com.oracle.max.graal.compiler.loop;
 
 import java.util.*;
 
-import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.util.*;
 
 public class LoopInfo {
     private final NodeMap<Loop> nodeToLoop;
