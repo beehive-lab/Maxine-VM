@@ -195,9 +195,9 @@ public class IdealGraphPrinter {
             }
         }
 
-        Map<Node, Set<Entry<String, Integer>>> colors = new IdentityHashMap<Node, Set<Entry<String, Integer>>>();
-        Map<Node, Set<Entry<String, String>>> colorsToString = new IdentityHashMap<Node, Set<Entry<String, String>>>();
-        Map<Node, Set<String>> bits = new IdentityHashMap<Node, Set<String>>();
+        NodeMap<Set<Entry<String, Integer>>> colors = graph.createNodeMap();
+        NodeMap<Set<Entry<String, String>>> colorsToString = graph.createNodeMap();
+        NodeMap<Set<String>> bits = graph.createNodeMap();
 // TODO This code was never reachable, since there was no code putting a NodeMap or NodeBitMap into the debugObjects.
 // If you need to reactivate this code, put the mapping from names to values into a helper object and register it in the new debugObjects array.
 //
