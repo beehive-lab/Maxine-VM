@@ -38,7 +38,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * The singleton manager for representations of machine code locations, both VM method
- * compilations and blocks of external native code about which less is known.
+ * compilations in the VM's code cache and blocks of external native code about which less is known.
  */
 public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineCode, TeleVMCache {
 
@@ -101,6 +101,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
+            externalMachineCodeAccess.updateCache(epoch);
             for (TeleTargetMethod teleTargetMethod : unallocatedTeleTargetMethods) {
                 if (teleTargetMethod.getRegionStart().isNotZero() && teleTargetMethod.getRegionNBytes() != 0) {
                     // The compilation has been allocated memory in the VM since the last time we looked; complete its registration.
