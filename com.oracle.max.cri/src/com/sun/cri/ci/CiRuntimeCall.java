@@ -49,7 +49,8 @@ public enum CiRuntimeCall {
     ArithmeticTan(Double, Double),
     ArithmeticLog(Double, Double),
     ArithmeticLog10(Double, Double),
-    ArithmeticSin(Double, Double);
+    ArithmeticSin(Double, Double),
+    GenericCallback(Object, Object, Object);
 
     public final CiKind resultKind;
     public final CiKind[] arguments;

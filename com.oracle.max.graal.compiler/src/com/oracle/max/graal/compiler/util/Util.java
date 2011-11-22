@@ -41,19 +41,19 @@ public class Util {
     public static final char SEPERATOR_CHARACTER = '-';
 
     public static RuntimeException unimplemented() {
-        throw new VerificationError("unimplemented");
+        throw new GraalInternalError("unimplemented");
     }
 
     public static RuntimeException unimplemented(String msg, Object... args) {
-        throw new VerificationError("unimplemented: " + msg, args);
+        throw new GraalInternalError("unimplemented: " + msg, args);
     }
 
     public static RuntimeException shouldNotReachHere() {
-        throw new VerificationError("should not reach here");
+        throw new GraalInternalError("should not reach here");
     }
 
     public static RuntimeException shouldNotReachHere(String msg, Object... args) {
-        throw new VerificationError("should not reach here: " + msg, args);
+        throw new GraalInternalError("should not reach here: " + msg, args);
     }
 
     public static <T> boolean replaceInList(T a, T b, List<T> list) {

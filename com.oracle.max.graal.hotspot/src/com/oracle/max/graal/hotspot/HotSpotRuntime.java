@@ -60,6 +60,8 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig regConfig;
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
+    // TODO(ls) this is not a permanent solution - there should be a more sophisticated compiler oracle
+    private HashSet<RiResolvedMethod> notInlineableMethods = new HashSet<RiResolvedMethod>();
 
     private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
 
@@ -163,7 +165,14 @@ public class HotSpotRuntime implements GraalRuntime {
 
     @Override
     public boolean mustNotInline(RiResolvedMethod method) {
+        if (notInlineableMethods.contains(method)) {
+            return true;
+        }
         return Modifier.isNative(method.accessFlags());
+    }
+
+    public void makeNotInlineable(RiResolvedMethod method) {
+        notInlineableMethods.add(method);
     }
 
     @Override
@@ -689,10 +698,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
-    public HotSpotCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
-        Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, true);
-        return new HotSpotCompiledMethod(compilerInstance, (HotSpotMethodResolved) method, nmethod);
+    public void installMethod(RiMethod method, CiTargetMethod code) {
+        HotSpotTargetMethod.installMethod(CompilerImpl.getInstance(), (HotSpotMethodResolved) method, code, true);
     }
 
     @Override
@@ -716,7 +723,6 @@ public class HotSpotRuntime implements GraalRuntime {
     @Override
     public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
         Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
-        return new HotSpotCompiledMethod(compilerInstance, method, nmethod);
+        return HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
     }
 }

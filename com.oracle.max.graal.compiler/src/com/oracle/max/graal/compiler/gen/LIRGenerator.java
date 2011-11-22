@@ -75,11 +75,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private ValueNode lastInstructionPrinted; // Debugging only
     private FrameState lastState;
 
-    public LIRGenerator(GraalCompilation compilation) {
+    public LIRGenerator(GraalCompilation compilation, RiXirGenerator xir) {
         this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.lir = compilation.lir();
-        this.xir = compilation.compiler.xir;
+        this.xir = xir;
         this.xirSupport = new XirSupport();
         this.operands = new OperandPool(compilation.compiler.target);
     }
