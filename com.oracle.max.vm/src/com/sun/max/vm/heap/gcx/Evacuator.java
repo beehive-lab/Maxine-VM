@@ -26,7 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -37,40 +37,71 @@ import com.sun.max.vm.reference.*;
  *
  */
 public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor {
+    /**
+     * Indicate whether the cell at the specified origin is in an area under evacuation.
+     * @param origin origin of a cell
+     * @return true if the cell is in an evacuation area
+     */
     abstract boolean inEvacuatedArea(Pointer origin);
+    /**
+     * Evacuate the cell at the specified origin. The destination of the cell is
+     * @param origin origin of the cell to evacuate
+     * @return origin of the cell after evacuation
+     */
     abstract Pointer evacuate(Pointer origin);
 
-    abstract void writeBarrier(Pointer pointer, int wordIndex, Reference ref);
+    /**
+     * Remembered set updates to apply to reference a to an evacuated cells.
+     * Default is to do nothing.
+     *
+     * @param refHolderOrigin origin of the reference holder
+     * @param wordIndex
+     * @param ref reference to an evacuated cell
+     */
+    void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
+        // default is doing nothing.
+    }
 
-    final void scavengeReference(Pointer pointer, int wordIndex) {
-        final Reference ref = pointer.getReference(wordIndex);
+    /**
+     * Update a potential reference to an evacuated cell.
+     * If the reference points to the evacuation area, the cell is evacuated and the reference is updated to the evacuated cell's new location.
+     * @param refHolderOrigin origin of the holder of the referencel
+     * @param wordIndex index to a reference of the evacuated cell.
+     */
+    final void updateEvacuatedRef(Pointer refHolderOrigin, int wordIndex) {
+        final Reference ref = refHolderOrigin.getReference(wordIndex);
         Pointer origin = ref.toOrigin();
         if (inEvacuatedArea(origin)) {
             final Reference forwardRef = Layout.readForwardRef(origin);
             if (!forwardRef.isZero()) {
-                pointer.setReference(wordIndex, forwardRef);
-                writeBarrier(pointer, wordIndex, forwardRef);
+                refHolderOrigin.setReference(wordIndex, forwardRef);
+                updateRSet(refHolderOrigin, wordIndex, forwardRef);
                 return;
             }
             final Pointer toOrigin = evacuate(origin);
             final Reference toRef = Reference.fromOrigin(toOrigin);
+            HeapScheme.Inspect.notifyObjectRelocated(Layout.originToCell(origin), Layout.originToCell(toOrigin));
             Layout.writeForwardRef(origin, toRef);
-            pointer.setReference(wordIndex, toRef);
+            refHolderOrigin.setReference(wordIndex, toRef);
         }
     }
 
     @Override
     public void visit(Pointer pointer, int wordIndex) {
-        scavengeReference(pointer, wordIndex);
+        updateEvacuatedRef(pointer, wordIndex);
     }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
     private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
 
-    private void scanReferenceArray(Pointer origin) {
-        final int length = Layout.readArrayLength(origin);
+    protected Hub getHub(Pointer origin) {
+        return UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+    }
+
+    private void updateReferenceArray(Pointer refArrayOrigin) {
+        final int length = Layout.readArrayLength(refArrayOrigin);
         for (int index = 0; index < length; index++) {
-            scavengeReference(origin, index);
+            updateEvacuatedRef(refArrayOrigin, index);
         }
     }
 
@@ -78,25 +109,22 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * Evacuate all objects of the evacuated area directly reachable from roots (thread stacks, monitors, etc.).
      */
     void evacuateFromRoots() {
-
+        heapRootsScanner.run();
     }
     /**
      * Evacuate all objects of the evacuated area directly reachable from the remembered sets of the evacuated area. By default, this does nothing
      * (i.e., there are no remembered sets). For instance, a pure semi-space flat heap doesn't have any remembered sets to evacuate from.
      */
-    void evacuateFromRSets() {
-    }
-
-    abstract class EvacuationRangeIterable {
-        abstract void doNextRange(Evacuator evacuator);
+    protected void evacuateFromRSets() {
     }
 
     /**
-     * Evacuate all objects of the evacuated area reachable from already evacuated objects.
+     * Evacuate all objects of the evacuated area reachable from already evacuated cells.
      */
-    void evacuateReachable() {
+    abstract protected void evacuateReachables();
 
-    }
+    abstract protected void doBeforeEvacuation();
+    abstract protected void doAfterEvacuation();
 
     /**
      * Evacuate all objects of the evacuated area directly reachable from the boot heap.
@@ -106,16 +134,16 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     /**
-     * Visit an evacuated object.
+     * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      *
-     * @param cell
-     * @return
+     * @param cell a pointer to a cell
+     * @return pointer to the end of the cell
      */
     final public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
         // Update the hub first so that is can be dereferenced to obtain
         // the reference map needed to find the other references in the object
-        scavengeReference(origin,  HUB_WORD_INDEX);
+        updateEvacuatedRef(origin,  HUB_WORD_INDEX);
         final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
@@ -129,13 +157,14 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            scanReferenceArray(origin);
+            updateReferenceArray(origin);
         }
         return cell.plus(Layout.size(origin));
     }
 
     /**
-     * Evacuate all objects of the evacuated area directly reachable from a range of heap addresses that contains previously evacuated objects.
+     * Evacuate all cells from the evacuated area reachable from the specified range of heap addresses.
+     * The range must start at a valid cell.
      *
      * @param start first address of the range
      * @param end last address of the range
@@ -147,11 +176,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
     }
 
-    void evacuate() {
+    public void evacuate() {
+        doBeforeEvacuation();
         evacuateFromRoots();
         evacuateFromBootHeap();
         evacuateFromRSets();
-        evacuateReachable();
+        evacuateReachables();
+        doAfterEvacuation();
     }
 
 }

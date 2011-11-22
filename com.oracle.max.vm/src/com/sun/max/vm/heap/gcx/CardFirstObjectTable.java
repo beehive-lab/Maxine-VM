@@ -76,6 +76,8 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
      */
     static private final byte LOG2_ENCODING_THRESHOLD = 7;
 
+    static private final Address CardAlignmentMask = Address.fromInt(CARD_SIZE).minus(1).not();
+
     CardFirstObjectTable() {
         super(LOG2_CARD_SIZE);
     }
@@ -93,6 +95,16 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
     }
 
     /**
+     * Indicate whether allocating the specify ranges requires updating the FOT.
+     * @param cellStart start of the cell (inclusive)
+     * @param cellEnd end of the cell (exclusive)
+     * @return true if the specified range cross or start at a card boundary
+     */
+    static boolean needsUpdate(Address cellStart, Address cellEnd) {
+        return cellEnd.minus(1).and(Address.fromInt(CARD_SIZE).minus(1).not()).greaterEqual(cellStart);
+    }
+
+    /**
      * Set FOT entries corresponding to the cards overlapped by the specified cell.
      * If the object fit within a single card and doesn't overlap with its first word, no update take place.
      * This method must be used only to
@@ -101,17 +113,19 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param size size of the object
      */
     void set(Address cell, Size size) {
+        set(cell, cell.plus(size));
+    }
+    void set(Address cell, Address cellEnd) {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);
-        int lastCard = tableEntryIndex(cell.plus(size));
+        int lastCard = tableEntryIndex(cellEnd);
+        if (atBoundary(cell)) {
+            set(firstCard, (byte) 0);
+        }
         // This is the number of cards, excluding the cards where the cell start.
-        int numCards = lastCard  - firstCard;
+        final int numCards = lastCard  - firstCard;
         if (numCards == 0) {
-            if (atBoundary(cell)) {
-                set(firstCard, (byte) 0);
-                return;
-            }
-            // Otherwise, the cell doesn't cross a card boundary, so nothing to update.
+            return;
         }
         // FOT entry next to that for the card that contains the start of the cell always encode a negative offset.
         int nextCard = firstCard + 1;

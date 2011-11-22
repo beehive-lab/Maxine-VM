@@ -29,14 +29,10 @@ import com.sun.max.vm.runtime.*;
 /**
  * A simple nursery implementation that allocates objects in a single contiguous space and evacuate all survivors to the next generation on minor collections.
  * The next generation is responsible for keeping a reserve large enough to accommodate the worst-case evacuation.
- *
- *
- * with a fixed ratio between young and old generation size.
  */
 public class NoAgingNursery implements HeapSpace {
 
-
-    class NurseryRefiller extends Refiller {
+    final class NurseryRefiller extends Refiller {
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
@@ -45,13 +41,16 @@ public class NoAgingNursery implements HeapSpace {
                 size = totalSpace();
                 // TODO: condition for OOM
             }
-            HeapFreeChunk.format(allocator.start, size);
+            // Refill the nursery allocator with the entire range of contiguous virtual memory currently committed.
+            // The allocator is already set to the current size of the nursery, so all we have to do is format it as one
+            // huge HeapFreeChunk.
+            HeapFreeChunk.format(allocator.start, totalSpace());
             return allocator.start;
         }
 
         @Override
         protected void doBeforeGC() {
-            // TODO Auto-generated method stub
+            // Nothing to do.
         }
 
     }
@@ -138,13 +137,11 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public void doBeforeGC() {
-        // TODO Auto-generated method stub
-
+        // Nothing to be done. It's all done in the refiller.
     }
 
     @Override
     public void doAfterGC() {
-        // TODO Auto-generated method stub
 
     }
 

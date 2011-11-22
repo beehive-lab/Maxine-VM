@@ -27,8 +27,6 @@ import com.sun.max.vm.heap.*;
 
 /**
  * A pure card-table based remembered set.
- * @author ldayne
- *
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
     final CardTable cardTable;
