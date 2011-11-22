@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code LoadFieldNode} represents a read of a static or instance field.
  */
-public final class LoadFieldNode extends AccessFieldNode implements Canonicalizable, LIRLowerable {
+public final class LoadFieldNode extends AccessFieldNode implements Canonicalizable, LIRLowerable, Node.IterableNodeType {
 
     /**
      * Creates a new LoadFieldNode instance.

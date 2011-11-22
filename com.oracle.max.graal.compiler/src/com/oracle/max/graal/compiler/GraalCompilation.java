@@ -43,6 +43,7 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,
@@ -133,7 +134,7 @@ public final class GraalCompilation {
         try {
             try {
                 emitHIR(plan);
-                emitLIR();
+                emitLIR(compiler.xir);
                 targetMethod = emitCode();
 
                 if (GraalOptions.Meter) {
@@ -141,7 +142,7 @@ public final class GraalCompilation {
                 }
             } catch (CiBailout b) {
                 return new CiResult(null, b, stats);
-            } catch (VerificationError e) {
+            } catch (GraalInternalError e) {
                 throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
             } catch (Throwable t) {
                 if (GraalOptions.BailoutOnException) {
@@ -150,7 +151,7 @@ public final class GraalCompilation {
                     throw new RuntimeException("Exception while compiling: " + method, t);
                 }
             }
-        } catch (VerificationError error) {
+        } catch (GraalInternalError error) {
             if (context().isObserved()) {
                 if (error.node() != null) {
                     context().observable.fireCompilationEvent("VerificationError on Node " + error.node(), CompilationEvent.ERROR, this, error.node().graph());
@@ -185,7 +186,7 @@ public final class GraalCompilation {
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
-            if (GraalOptions.ProbabilityAnalysis) {
+            if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
 
@@ -193,8 +194,8 @@ public final class GraalCompilation {
                 new IntrinsificationPhase(compiler.runtime).apply(graph, context());
             }
 
-            if (GraalOptions.Inline) {
-                new InliningPhase(compiler.runtime, compiler.target, null, assumptions, plan).apply(graph, context());
+            if (GraalOptions.Inline && !plan.isPhaseDisabled(InliningPhase.class)) {
+                new InliningPhase(compiler.target, compiler.runtime, null, assumptions, plan).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
             }
 
@@ -217,8 +218,8 @@ public final class GraalCompilation {
                 }
             }
 
-            if (GraalOptions.EscapeAnalysis) {
-                new EscapeAnalysisPhase(this, plan).apply(graph, context());
+            if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {
+                new EscapeAnalysisPhase(compiler.target, compiler.runtime, assumptions, plan).apply(graph, context());
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
@@ -271,7 +272,6 @@ public final class GraalCompilation {
             LIRBlock startBlock = valueToBlock.get(graph.start());
             assert startBlock != null;
             assert startBlock.numberOfPreds() == 0;
-
 
             context().timers.startScope("Compute Linear Scan Order");
             try {
@@ -348,7 +348,7 @@ public final class GraalCompilation {
         frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
     }
 
-    private void emitLIR() {
+    private void emitLIR(RiXirGenerator xir) {
         context().timers.startScope("LIR");
         try {
             if (GraalOptions.GenLIR) {
@@ -357,7 +357,7 @@ public final class GraalCompilation {
                 try {
                     initFrameMap(maxLocks());
 
-                    lirGenerator = compiler.backend.newLIRGenerator(this);
+                    lirGenerator = compiler.backend.newLIRGenerator(this, xir);
 
                     for (LIRBlock b : lir.linearScanOrder()) {
                         lirGenerator.doBlock(b);

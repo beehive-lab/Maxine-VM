@@ -22,22 +22,18 @@
  */
 package com.oracle.max.graal.hotspot.nodes;
 
- import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
+ import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
+import java.util.*;
 
-import com.oracle.max.graal.compiler.gen.LIRGenerator;
-import com.oracle.max.graal.hotspot.target.amd64.AMD64TailcallOpcode;
-import com.oracle.max.graal.nodes.FixedWithNextNode;
-import com.oracle.max.graal.nodes.FrameState;
-import com.oracle.max.graal.nodes.spi.LIRGeneratorTool;
-import com.oracle.max.graal.nodes.spi.LIRLowerable;
-import com.sun.cri.ci.CiCallingConvention;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiUtil;
-import com.sun.cri.ci.CiValue;
-import com.sun.cri.ri.RiCompiledMethod;
-import com.sun.cri.ri.RiResolvedMethod;
+import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.hotspot.*;
+import com.oracle.max.graal.hotspot.target.amd64.*;
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Performs a tail call to the specified target compiled method, with the parameter taken from the supplied FrameState.
@@ -45,9 +41,14 @@ import com.sun.cri.ri.RiResolvedMethod;
 public class TailcallNode extends FixedWithNextNode implements LIRLowerable {
 
     @Input private final FrameState frameState;
-    @Data private final RiCompiledMethod target;
+    @Input private final ValueNode target;
 
-    public TailcallNode(RiCompiledMethod target, FrameState frameState) {
+    /**
+     * Creates a TailcallNode.
+     * @param target points to the start of an nmethod
+     * @param frameState the parameters will be taken from this FrameState
+     */
+    public TailcallNode(ValueNode target, FrameState frameState) {
         super(CiKind.Illegal);
         this.target = target;
         this.frameState = frameState;
@@ -56,21 +57,23 @@ public class TailcallNode extends FixedWithNextNode implements LIRLowerable {
     @Override
     public void generate(LIRGeneratorTool generator) {
         LIRGenerator gen = (LIRGenerator) generator;
-
+        HotSpotVMConfig config = CompilerImpl.getInstance().getConfig();
         RiResolvedMethod method = frameState.method();
         boolean isStatic = Modifier.isStatic(method.accessFlags());
+
+
         CiKind[] signature = CiUtil.signatureToKinds(method.signature(), isStatic ? null : method.holder().kind(true));
         CiCallingConvention cc = gen.compilation.registerConfig.getCallingConvention(JavaCall, signature, gen.compilation.compiler.target, false);
-
-        CiValue[] parameters = new CiValue[cc.locations.length];
-        int slot = 0;
-        for (int i = 0; i < parameters.length; i++) {
-            parameters[i] = gen.operand(frameState.localAt(slot++));
-            if (parameters[i].kind == CiKind.Long) {
-                slot++;
-            }
+        gen.compilation.frameMap().adjustOutgoingStackSize(cc, JavaCall);
+        List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
+        List<ValueNode> parameters = new ArrayList<ValueNode>();
+        for (int i = 0; i < cc.locations.length; i++) {
+            parameters.add(frameState.localAt(i));
         }
+        List<CiValue> argList = gen.visitInvokeArguments(cc, parameters, pointerSlots);
 
-        gen.append(AMD64TailcallOpcode.TAILCALL.create(target, parameters, cc.locations));
+        CiVariable entry = gen.emitLoad(new CiAddress(CiKind.Long, gen.operand(target), config.nmethodEntryOffset), CiKind.Long, false);
+
+        gen.append(AMD64TailcallOpcode.TAILCALL.create(argList, entry, cc.locations));
     }
 }

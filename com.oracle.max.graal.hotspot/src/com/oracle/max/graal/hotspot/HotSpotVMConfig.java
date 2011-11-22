@@ -65,6 +65,7 @@ public final class HotSpotVMConfig extends CompilerObject {
     public int runtimeCallStackSize;
     public int klassModifierFlagsOffset;
     public int klassOopOffset;
+    public int nmethodEntryOffset;
 
     // runtime stubs
     public long debugStub;

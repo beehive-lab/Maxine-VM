@@ -422,11 +422,11 @@ public class Graph {
                 try {
                     assert node.verify();
                 } catch (AssertionError t) {
-                    throw new VerificationError(t);
+                    throw new GraalInternalError(t);
                 } catch (RuntimeException t) {
-                    throw new VerificationError(t);
+                    throw new GraalInternalError(t);
                 }
-            } catch (VerificationError e) {
+            } catch (GraalInternalError e) {
                 throw e.addContext(node).addContext(this);
             }
         }

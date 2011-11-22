@@ -49,8 +49,8 @@ public class AMD64Backend extends Backend {
      * @return an appropriate LIR generator instance
      */
     @Override
-    public LIRGenerator newLIRGenerator(GraalCompilation compilation) {
-        return new AMD64LIRGenerator(compilation);
+    public LIRGenerator newLIRGenerator(GraalCompilation compilation, RiXirGenerator xir) {
+        return new AMD64LIRGenerator(compilation, xir);
     }
 
     @Override

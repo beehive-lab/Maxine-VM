@@ -160,11 +160,11 @@ public class LIR {
             try {
                 op.emitCode(tasm);
             } catch (AssertionError t) {
-                throw new VerificationError(t);
+                throw new GraalInternalError(t);
             } catch (RuntimeException t) {
-                throw new VerificationError(t);
+                throw new GraalInternalError(t);
             }
-        } catch (VerificationError e) {
+        } catch (GraalInternalError e) {
             throw e.addContext("lir instruction", op);
         }
     }
