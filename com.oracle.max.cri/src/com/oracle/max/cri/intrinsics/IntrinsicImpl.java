@@ -23,6 +23,7 @@
 package com.oracle.max.cri.intrinsics;
 
 import java.util.*;
+import java.util.Map.*;
 import java.util.concurrent.*;
 
 import com.sun.cri.ci.*;
@@ -41,7 +42,7 @@ public interface IntrinsicImpl {
      * Intrinsic ID strings can either be explicitly defined as String constants, or inferred from the
      * fully qualified name and signature of a method.
      */
-    public class Registry {
+    public class Registry implements Iterable<Map.Entry<String, IntrinsicImpl>> {
         private Map<String, IntrinsicImpl> implRegistry = new ConcurrentHashMap<String, IntrinsicImpl>(100, 0.75f, 1);
 
         /**
@@ -82,6 +83,11 @@ public interface IntrinsicImpl {
 
         private static String literalId(RiMethod method) {
             return method.holder().name() + method.name() + method.signature().asString();
+        }
+
+        @Override
+        public Iterator<Entry<String, IntrinsicImpl>> iterator() {
+            return implRegistry.entrySet().iterator();
         }
     }
 }
