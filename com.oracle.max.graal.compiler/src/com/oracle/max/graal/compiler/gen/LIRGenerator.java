@@ -972,15 +972,14 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
 
 
-    private void moveToPhi(MergeNode merge, Node pred) {
+    private void moveToPhi(MergeNode merge, FixedNode pred) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 1) {
             TTY.println("MOVE TO PHI from " + pred + " to " + merge);
         }
-        int nextSuccIndex = merge.phiPredecessorIndex(pred);
         PhiResolver resolver = new PhiResolver(this);
         for (PhiNode phi : merge.phis()) {
             if (phi.type() == PhiType.Value) {
-                ValueNode curVal = phi.valueAt(nextSuccIndex);
+                ValueNode curVal = phi.valueAt(pred);
                 resolver.move(operand(curVal), operandForPhi(phi));
             }
         }
