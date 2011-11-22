@@ -63,8 +63,8 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
         return true;
     }
 
-    protected Pointer createBufferAndAgent(String programFile, String[] commandLineArguments) throws BootImageException {
-        final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(new File(programFile), commandLineArguments);
+    protected long createBufferAndAgent(String programFile, String[] commandLineArguments) throws BootImageException {
+        final long commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(new File(programFile), commandLineArguments);
         this.agent = new TeleVMAgent();
         agent.start();
         return commandLineArgumentsBuffer;
@@ -72,13 +72,13 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
 
     @Override
     public long create(String programFile, String[] commandLineArguments) {
-        final Pointer commandLineArgumentsBuffer;
+        final long commandLineArgumentsBuffer;
         try {
             commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
         } catch (BootImageException ex) {
             return -1;
         }
-        processHandle = natives.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        processHandle = natives.createChild(commandLineArgumentsBuffer, agent.port());
         return processHandle;
     }
 

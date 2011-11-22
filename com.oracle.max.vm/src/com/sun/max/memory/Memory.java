@@ -94,10 +94,6 @@ public final class Memory {
         return isHosted() ? BoxedMemory.reallocate(block, size) : memory_reallocate(block, size);
     }
 
-    public static Pointer reallocate(Pointer block, int size) throws OutOfMemoryError, IllegalArgumentException {
-        return reallocate(block, Size.fromInt(size));
-    }
-
     @C_FUNCTION
     private static native int memory_deallocate(Address pointer);
 

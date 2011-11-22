@@ -387,7 +387,7 @@ public class VMOption {
     public void findMatchingArgumentAndParse() {
         if (vmArguments != null) {
             if (vmArgumentPointers == null) {
-                vmArgumentPointers = CString.utf8ArrayFromStringArray(vmArguments, false);
+                vmArgumentPointers = Pointer.fromLong(CString.utf8ArrayFromStringArray(vmArguments, false, false));
             }
             for (int i = 0; i < vmArguments.length; ++i) {
                 final String argument = vmArguments[i];
