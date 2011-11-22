@@ -159,13 +159,13 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             VmFieldAccess f = fields();
             final Reference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
             Reference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
-            int segmentArrayLength = Layout.readArrayLength(segmentArrayRef);
+            int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
             for (int i = 0; i < segmentArrayLength; i++) {
                 final Reference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
                 if (!segmentRef.isZero()) {
                     Reference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
                     if (!entryArrayRef.isZero()) {
-                        int entryArrayLength = Layout.readArrayLength(entryArrayRef);
+                        int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
                         for (int j = 0; j != entryArrayLength; j++) {
                             Reference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
                             while (!entryRef.isZero()) {
@@ -213,7 +213,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                 final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(fields().InspectableClassInfo_classActors.fieldActor().offset());
                 final Reference loadedClassActorsArrayReference = referenceManager().makeReference(memory().readWord(loadedClassActorsPointer).asAddress());
                 while (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                    final Reference classActorReference = memory().readArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
+                    final Reference classActorReference = objects().unsafeReadArrayElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
                     try {
                         addToRegistry(classActorReference);
                     } catch (InvalidReferenceException e) {
