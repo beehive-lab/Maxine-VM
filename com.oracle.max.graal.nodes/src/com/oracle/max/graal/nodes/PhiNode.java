@@ -85,6 +85,10 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         values.set(i, x);
     }
 
+    public ValueNode valueAt(FixedNode pred) {
+        return valueAt(merge().phiPredecessorIndex(pred));
+    }
+
     /**
      * Get the number of inputs to this phi (i.e. the number of predecessors to the merge).
      *

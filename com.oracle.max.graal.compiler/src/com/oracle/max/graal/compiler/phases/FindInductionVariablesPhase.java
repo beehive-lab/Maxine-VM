@@ -58,11 +58,9 @@ public class FindInductionVariablesPhase extends Phase {
         LoopBeginNode loopBegin = loop.loopBegin();
         NodeBitMap loopNodes = loop.nodes();
         List<PhiNode> phis = new ArrayList<PhiNode>(loopBegin.phis());
-        int backIndex = loopBegin.phiPredecessorIndex(loopBegin.loopEnd());
-        int initIndex = loopBegin.phiPredecessorIndex(loopBegin.forwardEdge());
         for (PhiNode phi : phis) {
-            ValueNode init = phi.valueAt(initIndex);
-            ValueNode backEdge = phi.valueAt(backIndex);
+            ValueNode init = phi.valueAt(loopBegin.forwardEdge());
+            ValueNode backEdge = phi.valueAt(loopBegin.loopEnd());
             if (loopNodes.isNew(init) || loopNodes.isNew(backEdge)) {
                 continue;
             }
