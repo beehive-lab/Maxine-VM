@@ -63,7 +63,7 @@ public final class ComputeImmediateDominator {
             }
             return dominator;
         } catch (Throwable t) {
-            throw new VerificationError(t).addContext("Could not find a dominator").addContext(dominated);
+            throw new GraalInternalError(t).addContext("Could not find a dominator").addContext(dominated);
         }
     }
 
