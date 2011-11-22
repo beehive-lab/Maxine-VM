@@ -47,6 +47,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
+    /**
+     * Knob for the fixed ratio resizing policy.
+     */
     static int YoungGenHeapPercent = 30;
     static Size ELABSize = Size.K.times(64);
     static {
@@ -68,12 +71,40 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     private final HeapAccount<GenMSEHeapScheme> heapAccount;
 
     // FIXME: the interface for a generations abstraction not fully designed yet, so for now we use spaces directly here.
+    /**
+     * Young generation.
+     */
     private final NoAgingNursery youngSpace;
+    /**
+     * Tenured generation.
+     */
     private final FirstFitMarkSweepSpace<GenMSEHeapScheme> oldSpace;
+
+    /**
+     * Policy for resizing the heap after each GC.
+     */
     private GenHeapSizingPolicy heapResizingPolicy;
+
+    /**
+     * Card-table based remembered set for the nursery.
+     */
     private CardTableRSet cardTableRSet;
 
+    /**
+     * Implementation of young space evacuation. Used by minor collection operations.
+     */
     private Evacuator youngSpaceEvacuator;
+
+    /**
+     * Operation to submit to the {@link VmOperationThread} to perform a minor collection.
+     */
+    private MinorCollection minorCollection;
+
+    /**
+     * Operation to submit to the {@link VmOperationThread} to perform a full collection.
+     */
+    private MajorCollection fullCollection;
+
     /**
      * Marking algorithm used to trace the heap.
      */
@@ -218,6 +249,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
             HeapScheme.Inspect.notifyGCStarted();
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
+            // TODO: this is where potentially you want
+            //
             HeapScheme.Inspect.notifyGCCompleted();
         }
     }
@@ -241,8 +274,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        FatalError.unimplemented();
-        return false;
+        // TODO:
+        // Right now, we do a minor collection just for testing the code.
+        minorCollection.submit();
+
+        return true;
     }
 
     @Override
