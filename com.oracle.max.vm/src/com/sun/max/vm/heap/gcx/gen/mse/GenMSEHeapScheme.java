@@ -48,8 +48,10 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     private static final int WORDS_COVERED_PER_BIT = 1;
 
     static int YoungGenHeapPercent = 30;
+    static Size ELABSize = Size.K.times(64);
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenMSEHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of local allocation buffers for evacuation to old gen", Phase.PRISTINE);
     }
 
     /**
@@ -71,6 +73,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     private GenHeapSizingPolicy heapResizingPolicy;
     private CardTableRSet cardTableRSet;
 
+    private Evacuator youngSpaceEvacuator;
     /**
      * Marking algorithm used to trace the heap.
      */
@@ -171,6 +174,13 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
             youngSpace.initialize(heapResizingPolicy);
             oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
 
+            // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
+            // worst case evacuation and the number of fragments of old space available for allocation.
+            // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
+
+            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
+                            new SurvivorRangesQueue(1000), ELABSize);
+
         } finally {
             disableCustomAllocation();
         }
@@ -205,8 +215,10 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         @Override
         protected void collect(int invocationCount) {
             // TODO Auto-generated method stub
-            HeapScheme.Inspect.notifyGCCompleted();
             HeapScheme.Inspect.notifyGCStarted();
+            // Evacuate young space
+            youngSpaceEvacuator.evacuate();
+            HeapScheme.Inspect.notifyGCCompleted();
         }
     }
 

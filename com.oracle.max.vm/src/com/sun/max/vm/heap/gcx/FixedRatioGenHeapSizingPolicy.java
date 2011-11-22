@@ -45,7 +45,7 @@ public final class FixedRatioGenHeapSizingPolicy implements GenHeapSizingPolicy 
      */
     final Size initHeapSize;
     /**
-     * Size generations are aligned to. In other words, <pre>unitSize = Size.fromInt(1).shiftedLeft({@link #log2Alignment})</pre>
+     * Size to which generations are aligned to. In other words, <pre>unitSize = Size.fromInt(1).shiftedLeft({@link #log2Alignment})</pre>
      */
     final Size unitSize;
 
