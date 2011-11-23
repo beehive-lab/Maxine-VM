@@ -36,6 +36,7 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 
 /**
@@ -226,6 +227,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         @Override
         protected void collect(int invocationCount) {
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
             HeapScheme.Inspect.notifyGCStarted();
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
@@ -239,7 +241,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         }
         @Override
         protected void collect(int invocationCount) {
-            // TODO Auto-generated method stub
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
             HeapScheme.Inspect.notifyGCStarted();
             HeapScheme.Inspect.notifyGCCompleted();
         }
