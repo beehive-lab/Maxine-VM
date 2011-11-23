@@ -35,17 +35,16 @@ public class NoAgingNursery implements HeapSpace {
     final class NurseryRefiller extends Refiller {
         @Override
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-            HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
-            Size size = totalSpace();
+            Size size = allocator.size();
             while (!Heap.collectGarbage(size)) {
-                size = totalSpace();
+                size = allocator.size();
                 // TODO: condition for OOM
             }
-            // Refill the nursery allocator with the entire range of contiguous virtual memory currently committed.
-            // The allocator is already set to the current size of the nursery, so all we have to do is format it as one
-            // huge HeapFreeChunk.
-            HeapFreeChunk.format(allocator.start, totalSpace());
-            return allocator.start;
+            FatalError.check(allocator.usedSpace().equals(Size.zero()) && allocator.freeSpace().equals(allocator.size()), "GC must have reseted the nursery's allocator");
+            // Format the allocator's space as a heap free chunk to comply with the allocateRefill interface.
+            // This is pure overhead induced by the BaseAtomicBumpPointerAllocator interface.
+            HeapFreeChunk.format(allocator.top, allocator.freeSpace());
+            return allocator.top;
         }
 
         @Override
@@ -137,12 +136,12 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public void doBeforeGC() {
-        // Nothing to be done. It's all done in the refiller.
+        allocator.doBeforeGC();
     }
 
     @Override
     public void doAfterGC() {
-
+        allocator.reset();
     }
 
     @Override

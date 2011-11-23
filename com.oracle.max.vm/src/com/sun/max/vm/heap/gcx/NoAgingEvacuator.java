@@ -32,8 +32,8 @@ import com.sun.max.vm.layout.*;
  * The evacuator is parameterized with two heap space.
  *
  * TODO: move allocation and cfotable update code into a wrapper of the FirsFitMarkSweepSpace.
- * The wrapper keeps track of scavenging ranges and update the remembered set (mostly the cfo table).
- * This makes the evacuator independent of the detail of scavenge range tracking and imprecise rset subtleties.
+ * The wrapper keeps track of survivor ranges and update the remembered set (mostly the cfo table).
+ * This makes the evacuator independent of the detail of survivor rangestracking and imprecise rset subtleties.
  */
 public final class NoAgingEvacuator extends Evacuator {
     private static final Size LAB_HEADROOM = MIN_OBJECT_SIZE;
@@ -105,11 +105,6 @@ public final class NoAgingEvacuator extends Evacuator {
 
     @Override
     protected void doBeforeEvacuation() {
-        Size nextTLABSize = fromSpace.usedSpace();
-        Size promotionArea = Size.fromInt(HeapRegionConstants.regionSizeInBytes);
-        if (nextTLABSize.lessThan(promotionArea)) {
-            nextTLABSize = promotionArea;
-        }
         promotedBytes = Size.zero();
         top = Pointer.zero();
         end = Pointer.zero();
@@ -117,12 +112,14 @@ public final class NoAgingEvacuator extends Evacuator {
         allocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
+        fromSpace.doBeforeGC();
     }
 
     @Override
     protected void doAfterEvacuation() {
         // Give back LAB allocator ?
         survivorRanges.clear();
+        fromSpace.doAfterGC();
     }
 
     private void recordRange(Address start, Address end) {

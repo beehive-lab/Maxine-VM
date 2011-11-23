@@ -386,5 +386,13 @@ public final class HeapRegionManager implements HeapAccountOwner {
             }
         }
     }
+
+    public boolean supportsTagging() {
+        return false;
+    }
+
+    public boolean isGcThread(Thread thread) {
+        return false;
+    }
 }
 

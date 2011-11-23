@@ -99,6 +99,10 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         end = chunk.plus(chunkSize).minus(headroom);
     }
 
+    protected final void reset() {
+        top = start;
+    }
+
     public BaseAtomicBumpPointerAllocator(T refiller) {
         refillManager = refiller;
     }

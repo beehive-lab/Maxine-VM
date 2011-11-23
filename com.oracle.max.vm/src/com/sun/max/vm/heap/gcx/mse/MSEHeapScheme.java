@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
  * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
  * Used for testing region-based support.
  */
-public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccountOwner {
+public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements HeapAccountOwner {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -58,29 +58,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAfterGC", MSEHeapScheme.class, "Dump region fragmentation stats after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAtGCFailure", MSEHeapScheme.class, "Dump region fragmentation when GC failed to reclaim enough space", Phase.PRISTINE);
     }
-   /**
-     * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
-     * appended to a TLAB to fill unused space before a TLAB refill.
-     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    static Size TLAB_HEADROOM;
-
-    private static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
-        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("TLAB_MARK = ");
-            Log.print(tlabAllocationMark);
-            Log.print(", TLAB end = ");
-            Log.println(tlabEnd);
-            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            Log.unlock(lockDisabledSafepoints);
-            return;
-        }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
-    }
 
     /**
      * Marking algorithm used to trace the heap.
@@ -92,16 +69,13 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
      */
     private final FirstFitMarkSweepSpace<MSEHeapScheme> markSweepSpace;
 
-    private final MarkSweepCollection collect = new MarkSweepCollection();
+    final MarkSweepCollection collect = new MarkSweepCollection();
 
     /**
      * An instance of an after mark sweep verifier to use for heap verification after a mark sweep.
      * @see Sweeper
      */
     final AfterMarkSweepVerifier afterGCVerifier;
-
-    // For debugging purposes only.
-    final private AtomicPinnedCounter pinnedCounter;
 
     private HeapRegionStatistics fragmentationStats;
 
@@ -111,38 +85,29 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
 
     @HOSTED_ONLY
     public MSEHeapScheme() {
+        super();
         final HeapAccount<MSEHeapScheme> heapAccount = new HeapAccount<MSEHeapScheme>(this);
         markSweepSpace = new FirstFitMarkSweepSpace<MSEHeapScheme>(heapAccount);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, markSweepSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, this));
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
-        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // VM-generation time initialization.
-            TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            BaseAtomicBumpPointerAllocator.hostInitialize();
-            if (MaxineVM.isDebug()) {
-                AtomicPinnedCounter.hostInitialize();
-            }
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
-            allocateHeapAndGCStorage();
-        } else if (phase == MaxineVM.Phase.TERMINATING) {
-            if (Heap.traceGCTime()) {
-                collect.reportTotalGCTimes();
-            }
-        }
+    }
 
+    @Override
+    protected void reportTotalGCTimes() {
+        collect.reportTotalGCTimes();
     }
 
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
-    private void allocateHeapAndGCStorage() {
+    @Override
+    protected void allocateHeapAndGCStorage() {
         final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
@@ -202,13 +167,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         theHeapRegionManager().checkOutgoingReferences();
     }
 
-    @Override
-    public int reservedVirtualSpaceKB() {
-        // 2^30 Kb = 1 TB of reserved virtual space.
-        // This will be truncated as soon as we taxed what we need at initialization time.
-        return Size.G.toInt();
-    }
-
     private void reportFragmentationStats(boolean reclaimedEnoughSpace) {
         if (DumpFragStatsAfterGC || (!reclaimedEnoughSpace && DumpFragStatsAtGCFailure)) {
             fragmentationStats.reportStats(heapAccount());
@@ -255,10 +213,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         return  theHeapRegionManager().contains(address);
     }
 
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof VmOperationThread;
-    }
-
     public Size reportFreeSpace() {
         return markSweepSpace.freeSpace();
     }
@@ -271,55 +225,11 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
     public void writeBarrier(Reference from, Reference to) {
     }
 
-    @INLINE(override = true)
-    public boolean pin(Object object) {
-        // Objects never relocate. So this is always safe.
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.increment();
-        }
-        return true;
-    }
-
-    @INLINE(override = true)
-    public void unpin(Object object) {
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.decrement();
-        }
-    }
-
-    @Override
-    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        fillTLABWithDeadObject(tlabAllocationMark, tlabEnd);
-    }
-
-    static class TLABFiller extends ResetTLAB {
-        @Override
-        protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
-            if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepSpace.DebuggedRegion) {
-                TLABLog.doOnRetireTLAB(etla);
-            }
-            if (tlabMark.greaterThan(tlabTop)) {
-                // Already filled-up (mark is at the limit).
-                return;
-            }
-            fillTLABWithDeadObject(tlabMark, tlabTop);
-        }
-    }
-
-    @Override
-    protected void tlabReset(Pointer tla) {
-        collect.tlabFiller.run(tla);
-    }
-
-
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class MarkSweepCollection extends GCOperation {
-        private TLABFiller tlabFiller = new TLABFiller();
-
-
         public MarkSweepCollection() {
             super("MarkSweepCollection");
         }
@@ -350,7 +260,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
             Log.unlock(lockDisabledSafepoints);
         }
 
-        private void reportTotalGCTimes() {
+        void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportTotalElapsedTimes();
             Log.print(", sweeping=");
@@ -468,14 +378,19 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         return tlabAllocate(size);
     }
 
+    @Override
+    protected boolean logTLABEvents(Address tlabStart) {
+        return RegionTable.theRegionTable().regionID(tlabStart) == FirstFitMarkSweepSpace.DebuggedRegion;
+    }
+
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param etla the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
+    protected void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = markSweepSpace.allocateTLAB(tlabSize);
-        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlab) == FirstFitMarkSweepSpace.DebuggedRegion) {
+        if (MaxineVM.isDebug() && logTLABEvents(tlab)) {
             TLABLog.doOnRefillTLAB(etla, tlabSize, true);
         }
         Size effectiveSize = setNextTLABChunk(tlab);
@@ -565,17 +480,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccou
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
-    }
-
-    @INLINE(override = true)
-    @Override
-    public boolean supportsTagging() {
-        return false;
-    }
-
-    @Override
-    protected void releaseUnusedReservedVirtualSpace() {
-        // Do nothing. This heap scheme has its own way of doing this.
     }
 
     @Override
