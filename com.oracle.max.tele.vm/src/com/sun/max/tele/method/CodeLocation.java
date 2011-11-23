@@ -70,7 +70,8 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
     }
 
     public final boolean hasAddress() {
-        return codePointer() != null;
+        final RemoteCodePointer codePointer = codePointer();
+        return codePointer != null && codePointer.isLive();
     }
 
     public final Address address() {
