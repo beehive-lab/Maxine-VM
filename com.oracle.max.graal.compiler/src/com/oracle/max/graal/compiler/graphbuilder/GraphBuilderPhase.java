@@ -224,6 +224,39 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             cachedGraphs.put(method, graph.copy());
         }
+
+        // Remove redundant phis.
+        for (LoopBeginNode loop : graph.getNodes(LoopBeginNode.class)) {
+            for (PhiNode phiNode : loop.phis()) {
+                checkPhi(phiNode);
+            }
+        }
+    }
+
+    private void checkPhi(PhiNode phiNode) {
+        if (phiNode.isDeleted()) {
+            return;
+        }
+
+        Node differentValue = null;
+        for (ValueNode n : phiNode.values()) {
+            if (n != phiNode) {
+                if (differentValue == null) {
+                    differentValue = n;
+                } else if (differentValue != n) {
+                    return;
+                }
+            }
+        }
+
+        assert differentValue != null : phiNode;
+        NodeUsagesList phiUsages = phiNode.usages().snapshot();
+        phiNode.replaceAndDelete(differentValue);
+        for (Node n : phiUsages) {
+            if (n instanceof PhiNode) {
+                checkPhi((PhiNode) n);
+            }
+        }
     }
 
     private int nextBlockNumber() {

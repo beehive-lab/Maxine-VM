@@ -64,6 +64,10 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         return type;
     }
 
+    public NodeInputList<ValueNode> values() {
+        return values;
+    }
+
     @Override
     public boolean verify() {
         assertTrue(merge() != null, "missing merge");

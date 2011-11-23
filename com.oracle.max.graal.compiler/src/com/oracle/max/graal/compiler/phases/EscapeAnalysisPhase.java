@@ -385,8 +385,6 @@ public class EscapeAnalysisPhase extends Phase {
                 if (context.isObserved()) {
                     context.observable.fireCompilationEvent("After escape", graph);
                 }
-                new PhiSimplificationPhase().apply(graph, context);
-
                 break;
             }
             if (weight < minimumWeight) {

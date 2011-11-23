@@ -54,8 +54,6 @@ public class DeadCodeEliminationPhase extends Phase {
                 endNode.replaceAndDelete(next);
             }
         }
-
-        new PhiSimplificationPhase().apply(graph, context);
     }
 
     private void iterateSuccessors() {
