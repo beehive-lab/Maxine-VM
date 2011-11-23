@@ -50,7 +50,7 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
         do {
             if (current instanceof Invoke) {
                 invoke((Invoke) current);
-                queueSuccessors(current);
+                queueSuccessors(current, null);
                 current = nextQueuedNode();
             } else if (current instanceof LoopBeginNode) {
                 state.loopBegin((LoopBeginNode) current);
@@ -89,8 +89,8 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
                 unwind((UnwindNode) current);
                 current = nextQueuedNode();
             } else if (current instanceof ControlSplitNode) {
-                controlSplit((ControlSplitNode) current);
-                queueSuccessors(current);
+                Set<Node> successors = controlSplit((ControlSplitNode) current);
+                queueSuccessors(current, successors);
                 current = nextQueuedNode();
             } else {
                 assert false : current;
@@ -98,11 +98,20 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
         } while(current != null);
     }
 
-    private void queueSuccessors(FixedNode x) {
+    private void queueSuccessors(FixedNode x, Set<Node> successors) {
         nodeStates.put(x, state);
-        for (Node node : x.successors()) {
-            if (node != null) {
-                nodeQueue.addFirst((FixedNode) node);
+        if (successors != null) {
+            for (Node node : successors) {
+                nodeStates.put((FixedNode) node.predecessor(), state);
+                if (node != null) {
+                    nodeQueue.addFirst((FixedNode) node);
+                }
+            }
+        } else {
+            for (Node node : x.successors()) {
+                if (node != null) {
+                    nodeQueue.addFirst((FixedNode) node);
+                }
             }
         }
     }
@@ -176,8 +185,9 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
         node(deoptimize);
     }
 
-    protected void controlSplit(ControlSplitNode controlSplit) {
+    protected Set<Node> controlSplit(ControlSplitNode controlSplit) {
         node(controlSplit);
+        return null;
     }
 
     protected void returnNode(ReturnNode returnNode) {
