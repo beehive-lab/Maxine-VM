@@ -309,30 +309,19 @@ public final class GraalCompilation {
     }
 
     private void extensionOptimizations(StructuredGraph graph) {
-        Class< ? > c = method.holder().toJava();
-        if (c != null && !Modifier.isPrivate(method.accessFlags())) {
-            Class< ? >[] parameterTypes = SnippetIntrinsificationPhase.toClassArray(method.signature(), method.holder());
-            try {
-                Method m = c.getMethod(method.name(), parameterTypes);
-                Node.NodePhase nodePhase = m.getAnnotation(Node.NodePhase.class);
-                if (nodePhase != null) {
-                    try {
-                        Phase phase = (Phase) nodePhase.value().newInstance();
-                        phase.apply(graph);
-                    } catch (InstantiationException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
+        if (!Modifier.isPrivate(method.accessFlags())) {
+            Node.NodePhase nodePhase = method.getAnnotation(Node.NodePhase.class);
+            if (nodePhase != null) {
+                try {
+                    Phase phase = (Phase) nodePhase.value().newInstance();
+                    phase.apply(graph);
+                } catch (InstantiationException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
-            } catch (SecurityException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
             }
         }
 

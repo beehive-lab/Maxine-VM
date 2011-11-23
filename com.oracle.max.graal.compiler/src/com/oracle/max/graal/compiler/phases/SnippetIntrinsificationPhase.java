@@ -51,29 +51,27 @@ public class SnippetIntrinsificationPhase extends Phase {
 
     private void tryIntrinsify(Invoke invoke) {
         RiResolvedMethod target = invoke.callTarget().targetMethod();
-        Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
-        Method m = findMethod(target, parameterTypes);
-        if (m != null) {
-            NodeIntrinsic intrinsic = m.getAnnotation(Node.NodeIntrinsic.class);
-            if (intrinsic != null) {
-                // Prepare the arguments for the reflective constructor call on the node class.
-                Object[] nodeConstructorArguments = prepareArguments(invoke, parameterTypes, m);
+        NodeIntrinsic intrinsic = target.getAnnotation(Node.NodeIntrinsic.class);
+        if (intrinsic != null) {
+            Class< ? >[] parameterTypes = CiUtil.signatureToTypes(target.signature(), target.holder());
 
-                // Create the new node instance.
-                Class< ? > c = getNodeClass(target, intrinsic);
-                Node newInstance = createNodeInstance(c, parameterTypes, nodeConstructorArguments);
+            // Prepare the arguments for the reflective constructor call on the node class.
+            Object[] nodeConstructorArguments = prepareArguments(invoke, parameterTypes, target);
 
-                // Replace the invoke with the new node.
-                invoke.node().graph().add(newInstance);
-                invoke.intrinsify(newInstance);
+            // Create the new node instance.
+            Class< ? > c = getNodeClass(target, intrinsic);
+            Node newInstance = createNodeInstance(c, parameterTypes, nodeConstructorArguments);
 
-                // Clean up checkcast instructions inserted by javac if the return type is generic.
-                cleanUpReturnCheckCast(newInstance);
-            }
+            // Replace the invoke with the new node.
+            invoke.node().graph().add(newInstance);
+            invoke.intrinsify(newInstance);
+
+            // Clean up checkcast instructions inserted by javac if the return type is generic.
+            cleanUpReturnCheckCast(newInstance);
         }
     }
 
-    private Object[] prepareArguments(Invoke invoke, Class< ? >[] parameterTypes, Method m) {
+    private Object[] prepareArguments(Invoke invoke, Class< ? >[] parameterTypes, RiResolvedMethod target) {
         NodeInputList<ValueNode> arguments = invoke.callTarget().arguments();
         Object[] nodeConstructorArguments = new Object[arguments.size()];
         for (int i = 0; i < nodeConstructorArguments.length; ++i) {
@@ -81,8 +79,8 @@ public class SnippetIntrinsificationPhase extends Phase {
             if (!invoke.callTarget().isStatic()) {
                 parameterIndex--;
             }
-            ValueNode argument = tryBoxingElimination(parameterIndex, m, arguments.get(i));
-            ConstantNodeParameter param = findConstantParameterAnnotation(parameterIndex, m.getParameterAnnotations());
+            ValueNode argument = tryBoxingElimination(parameterIndex, target, arguments.get(i));
+            ConstantNodeParameter param = CiUtil.getParameterAnnotation(ConstantNodeParameter.class, parameterIndex, target);
             if (param != null) {
                 assert argument instanceof ConstantNode : "parameter " + parameterIndex + " must be compile time constant for " + invoke.callTarget().targetMethod();
                 ConstantNode constantNode = (ConstantNode) argument;
@@ -133,9 +131,9 @@ public class SnippetIntrinsificationPhase extends Phase {
         return null;
     }
 
-    private ValueNode tryBoxingElimination(int parameterIndex, Method m, ValueNode node) {
+    private ValueNode tryBoxingElimination(int parameterIndex, RiResolvedMethod target, ValueNode node) {
         if (parameterIndex >= 0) {
-            Type type = m.getGenericParameterTypes()[parameterIndex];
+            Type type = target.getGenericParameterTypes()[parameterIndex];
             if (type instanceof TypeVariable) {
                 TypeVariable typeVariable = (TypeVariable) type;
                 if (typeVariable.getBounds().length == 1) {
@@ -210,14 +208,5 @@ public class SnippetIntrinsificationPhase extends Phase {
                 }
             }
         }
-    }
-
-    public static Class< ? >[] toClassArray(RiSignature signature, RiType accessingClass) {
-        int count = signature.argumentCount(false);
-        Class< ? >[] result = new Class< ? >[count];
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = ((RiResolvedType) signature.argumentTypeAt(i, accessingClass)).toJava();
-        }
-        return result;
     }
 }
