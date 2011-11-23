@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.hotspot;
 
+import java.lang.annotation.*;
+
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -148,6 +150,11 @@ public final class HotSpotTypePrimitive extends HotSpotType implements RiResolve
     @Override
     public RiField[] declaredFields() {
         return null;
+    }
+
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return toJava().getAnnotation(annotationClass);
     }
 
     @Override
