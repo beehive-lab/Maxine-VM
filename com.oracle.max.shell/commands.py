@@ -968,11 +968,25 @@ def vm(env, args):
     """launch the Maxine VM
 
     Run the Maxine VM with the given options and arguments.
+    A class path component with a '@' prefix is expanded to be the
+    class path of the project named after the '@'.
     The expansion of the MAXVM_OPTIONS environment variable is inserted
     before any other VM options specified on the command line.
 
     Use "mx vm -help" to see what other options this command accepts."""
-
+    
+    for i in range(len(args)):
+        if args[i] == '-cp' or args[i] == '-classpath':
+            if i + 1 < len(args):
+                cp = []
+                for part in args[i + 1].split(os.pathsep):
+                    if part.startswith('@'):
+                        cp += env.pdb().classpath(part[1:]).split(os.pathsep)
+                    else:
+                        cp.append(part)
+                args[i + 1] = os.pathsep.join(cp)
+            break
+        
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
     env.run([join(env.vmdir, 'maxvm')] + maxvmOptions + args)
             
