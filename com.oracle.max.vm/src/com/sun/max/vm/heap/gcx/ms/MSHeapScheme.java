@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
  *
  * @see FreeHeapSpaceManager.
  */
-public class MSHeapScheme extends HeapSchemeWithTLAB {
+public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -57,24 +57,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     static {
         VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
-    }
-
-   /**
-     * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
-     * appended to a TLAB to fill unused space before a TLAB refill.
-     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    static Size TLAB_HEADROOM;
-
-    private static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
-        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            return;
-        }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
     }
 
     /**
@@ -100,9 +82,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
-    // For debugging purposes only.
-    final private AtomicPinnedCounter pinnedCounter;
-
     @HOSTED_ONLY
     public MSHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
@@ -111,33 +90,23 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker));
 
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
-        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // VM-generation time initialization.
-            TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            BaseAtomicBumpPointerAllocator.hostInitialize();
-            if (MaxineVM.isDebug()) {
-                AtomicPinnedCounter.hostInitialize();
-            }
-        } else  if (phase == MaxineVM.Phase.PRISTINE) {
-            allocateHeapAndGCStorage();
-        } else if (phase == MaxineVM.Phase.TERMINATING) {
-            if (Heap.traceGCTime()) {
-                collect.reportTotalGCTimes();
-            }
-        }
+    }
 
+    @Override
+    protected void reportTotalGCTimes() {
+        collect.reportTotalGCTimes();
     }
 
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
-    private void allocateHeapAndGCStorage() {
+    @Override
+    protected void allocateHeapAndGCStorage() {
         final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
@@ -185,13 +154,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         InspectableHeapInfo.init(true, markedSpace);
     }
 
-    @Override
-    public int reservedVirtualSpaceKB() {
-        // 2^30 Kb = 1 TB of reserved virtual space.
-        // This will be truncated as soon as we taxed what we need at initialization time.
-        return Size.G.toInt();
-    }
-
     public boolean collectGarbage(Size requestedFreeSpace) {
         collect.requestedSize = requestedFreeSpace;
         boolean forcedGC = requestedFreeSpace.toInt() == 0;
@@ -212,75 +174,26 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean contains(Address address) {
-        return objectSpace.committedHeapSpace().inCommittedSpace(address);
-    }
-
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof VmOperationThread;
+        return objectSpace.contains(address);
     }
 
     public Size reportFreeSpace() {
-        return objectSpace.freeSpaceLeft();
+        return objectSpace.freeSpace();
     }
 
     public Size reportUsedSpace() {
-        return objectSpace.committedHeapSpace().committedSize().minus(reportFreeSpace());
+        return objectSpace.usedSpace();
     }
 
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
     }
 
-    @INLINE(override = true)
-    public boolean pin(Object object) {
-        // Objects never relocate. So this is always safe.
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.increment();
-        }
-        return true;
-    }
-
-
-    @INLINE(override = true)
-    public void unpin(Object object) {
-        if (MaxineVM.isDebug()) {
-            pinnedCounter.decrement();
-        }
-    }
-
-    @Override
-    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        fillTLABWithDeadObject(tlabAllocationMark, tlabEnd);
-    }
-
-    static class TLABFiller extends ResetTLAB {
-        @Override
-        protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
-            if (tlabMark.greaterThan(tlabTop)) {
-                // Already filled-up (mark is at the limit).
-                return;
-            }
-            // Before filling the current TLAB chunk, save link to next pointer.
-            final Pointer nextChunk = tlabTop.getWord().asPointer();
-            fillTLABWithDeadObject(tlabMark, tlabTop);
-            // FIXME: we shouldn't have to do the following. Heap walker should be able to walk over HeapFreeChunk.
-            HeapFreeChunk.makeParsable(nextChunk);
-        }
-    }
-
-    @Override
-    protected void tlabReset(Pointer tla) {
-        collect.tlabFiller.run(tla);
-    }
-
-
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class Collect extends GCOperation {
-        private TLABFiller tlabFiller = new TLABFiller();
-
         public Collect() {
             super("Collect");
         }
@@ -356,7 +269,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
-            objectSpace.makeParsable();
+            objectSpace.doBeforeGC();
             heapMarker.markAll();
             Size freeSpaceAfterGC = reclaim();
             if (VerifyAfterGC) {
@@ -521,17 +434,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
-    }
-
-    @INLINE(override = true)
-    @Override
-    public boolean supportsTagging() {
-        return false;
-    }
-
-    @Override
-    protected void releaseUnusedReservedVirtualSpace() {
-        // Do nothing. This heap scheme has its own way of doing this.
     }
 }
 

@@ -41,7 +41,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapAccountOwner {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -56,14 +56,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenMSEHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of local allocation buffers for evacuation to old gen", Phase.PRISTINE);
     }
-
-    /**
-     * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
-     * appended to a TLAB to fill unused space before a TLAB refill.
-     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    static Size TLAB_HEADROOM;
 
     /**
      * Account for the application's generational heap. Both old and young generations tap in this account for their storage.
@@ -88,7 +80,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     /**
      * Card-table based remembered set for the nursery.
      */
-    private CardTableRSet cardTableRSet;
+    private final CardTableRSet cardTableRSet;
 
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
@@ -98,12 +90,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a minor collection.
      */
-    private MinorCollection minorCollection;
+    private final MinorCollection minorCollection;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a full collection.
      */
-    private MajorCollection fullCollection;
+    private final MajorCollection fullCollection;
 
     /**
      * Marking algorithm used to trace the heap.
@@ -117,24 +109,20 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         youngSpace = new NoAgingNursery(heapAccount);
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
         cardTableRSet = new CardTableRSet();
+        minorCollection = new MinorCollection();
+        fullCollection = new MajorCollection();
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // VM-generation time initialization.
-            TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            BaseAtomicBumpPointerAllocator.hostInitialize();
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
-            allocateHeapAndGCStorage();
-        }
     }
 
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
-    private void allocateHeapAndGCStorage() {
+    @Override
+    protected void allocateHeapAndGCStorage() {
         final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
@@ -231,13 +219,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         // See allocateHeapAndGCStorage
     }
 
-    @Override
-    public boolean isGcThread(Thread thread) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
     final class MinorCollection extends GCOperation {
         MinorCollection() {
             super("MinorCollection");
@@ -245,12 +226,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
 
         @Override
         protected void collect(int invocationCount) {
-            // TODO Auto-generated method stub
             HeapScheme.Inspect.notifyGCStarted();
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
-            // TODO: this is where potentially you want
-            //
             HeapScheme.Inspect.notifyGCCompleted();
         }
     }
@@ -277,7 +255,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
         // TODO:
         // Right now, we do a minor collection just for testing the code.
         minorCollection.submit();
-
         return true;
     }
 
@@ -295,24 +272,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
 
     @Override
     public void writeBarrier(Reference from, Reference to) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public boolean pin(Object object) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public void unpin(Object object) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected void tlabReset(Pointer tla) {
         // TODO Auto-generated method stub
 
     }
@@ -382,12 +341,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     }
 
     @Override
-    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     protected Pointer customAllocate(Pointer customAllocator, Size size) {
         return BaseAtomicBumpPointerAllocator.asBumpPointerAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
     }
@@ -395,6 +348,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLAB  implements HeapA
     @Override
     public HeapAccount<GenMSEHeapScheme> heapAccount() {
         return heapAccount;
+    }
+
+    @Override
+    protected void reportTotalGCTimes() {
+        // TODO
     }
 
 }

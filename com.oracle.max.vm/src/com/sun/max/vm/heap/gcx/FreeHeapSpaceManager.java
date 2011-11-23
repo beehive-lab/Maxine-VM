@@ -46,7 +46,7 @@ import com.sun.max.vm.runtime.*;
  * The other bins are used for large object space allocation.
  * "Bin" allocation are synchronized.
  */
-public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpace {
+public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
@@ -693,6 +693,10 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         return committedHeapSpace;
     }
 
+    public boolean contains(Address address) {
+        return committedHeapSpace.inCommittedSpace(address);
+    }
+
     public FreeHeapSpaceManager() {
         committedHeapSpace = new ContiguousHeapSpace("Heap");
         totalFreeChunkSpace = 0;
@@ -740,8 +744,12 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
      * Estimated free space left.
      * @return an estimation of the space available for allocation (in bytes).
      */
-    public synchronized Size freeSpaceLeft() {
+    public synchronized Size freeSpace() {
         return lockedFreeSpaceLeft();
+    }
+
+    public Size usedSpace() {
+        return totalSpace().minus(freeSpace());
     }
 
     @Override
@@ -769,11 +777,14 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         return lockedFreeSpaceLeft();
     }
 
-    public void makeParsable() {
+    public void doBeforeGC() {
         smallObjectAllocator.doBeforeGC();
         for (FreeSpaceList fsp : freeChunkBins) {
             fsp.makeParsable();
         }
+    }
+
+    public void doAfterGC() {
     }
 
     @INLINE
