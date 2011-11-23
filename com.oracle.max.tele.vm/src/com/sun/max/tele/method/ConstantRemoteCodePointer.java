@@ -36,9 +36,12 @@ class ConstantRemoteCodePointer implements RemoteCodePointer {
         this.address = address;
     }
 
-    @Override
     public Address getAddress() {
         return address;
+    }
+
+    public boolean isLive() {
+        return true;
     }
 
 }

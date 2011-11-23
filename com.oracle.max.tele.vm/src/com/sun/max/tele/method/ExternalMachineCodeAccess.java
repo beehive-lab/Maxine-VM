@@ -202,13 +202,20 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         }
 
         public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
-            TeleError.check(isValidCodePointer(address), "Location is in a VM allocation");
+            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
+            if (memoryRegion != null) {
+                final StringBuffer sb = new StringBuffer();
+                sb.append(" Creating external code pointer=" + address.to0xHexString());
+                sb.append(", points into region=\"" + memoryRegion.regionName() + "\"");
+                TeleWarning.message(sb.toString());
+            }
+            //TeleError.check(isValidCodePointer(address), "Location is in a VM allocation");
             RemoteCodePointer codePointer = null;
             final WeakReference<RemoteCodePointer> existingRef = addressToCodePointer.get(address.toLong());
             if (existingRef != null) {
                 codePointer = existingRef.get();
             }
-            if (codePointer == null && isValidCodePointer(address)) {
+            if (codePointer == null) {
                 codePointer = new ConstantRemoteCodePointer(address);
                 addressToCodePointer.put(address.toLong(), new WeakReference<RemoteCodePointer>(codePointer));
             }
