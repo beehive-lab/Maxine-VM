@@ -135,6 +135,10 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
+        if (millis == -1) {
+            // jdwp seems to use -1 when it means 0
+            millis = 0;
+        }
         if (OSMonitor.nativeConditionWait(Struct.MUTEX.get(rawMonitor), Struct.CONDITION.get(rawMonitor), millis)) {
             return JVMTI_ERROR_NONE;
         } else {

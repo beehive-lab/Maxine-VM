@@ -308,7 +308,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
                                 @Override
                                 public Value fetchValue() {
-                                    return IntValue.from(teleArrayObject.getLength());
+                                    return IntValue.from(teleArrayObject.length());
                                 }
                             };
                             break;

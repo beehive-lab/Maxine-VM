@@ -43,7 +43,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
@@ -60,8 +60,8 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link TargetMethod} in the VM.
@@ -838,7 +838,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
         // superclass constructors.
-        vm.codeCache().register(this);
+        vm.machineCode().registerCompilation(this);
     }
 
     /**
@@ -886,7 +886,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * in the VM.
      */
     private boolean isCurrent() {
-        return !targetMethodCache.codeStart.isZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
+        return targetMethodCache.codeStart.isNotZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
     }
 
     private void setEvicted() {
@@ -981,12 +981,11 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             if (codeByteArrayOrigin == null || checkForRelocation()) {
                 codeByteArrayOrigin = reference().readWord(fields().TargetMethod_code.fieldActor().offset()).asAddress();
                 // Get the absolute location of all target code bytes.
-                // Use low level machinery; we dont' want to create a {@link TeleObject} for every one of them.
+                // Use low level machinery; we don't want to create a {@link TeleObject} for every one of them.
                 final RemoteTeleReference codeByteArrayRef = referenceManager().makeTemporaryRemoteReference(codeByteArrayOrigin);
-                final int length = Layout.readArrayLength(codeByteArrayRef);
-                final ArrayLayout byteArrayLayout = Layout.layoutScheme().byteArrayLayout;
-                codeStartAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(0));
-                codeEndAddress = codeByteArrayOrigin.plus(byteArrayLayout.getElementOffsetFromOrigin(length));
+                final int length = objects().unsafeReadArrayLength(codeByteArrayRef);
+                codeStartAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, 0);
+                codeEndAddress = objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, length);
             }
         } catch (DataIOError dataIOError) {
             // If something goes wrong, delay the cache update until next time.
@@ -994,7 +993,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
         // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
         // last check, assuming that the last check wasn't *in* an eviction cycle.
-        if (!codeWipedSentinelAddress.isZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
+        if (codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
             setEvicted();
             return true;
         }

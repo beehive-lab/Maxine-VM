@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.loop;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -33,7 +34,17 @@ public abstract class InductionVariableNode extends FloatingNode {
 
     public static enum StrideDirection {
         Up,
-        Down
+        Down;
+
+        public static StrideDirection opposite(StrideDirection d) {
+            if (d == Up) {
+                return Down;
+            }
+            if (d == Down) {
+                return Up;
+            }
+            return null;
+        }
     }
 
     public InductionVariableNode(CiKind kind) {
@@ -42,8 +53,8 @@ public abstract class InductionVariableNode extends FloatingNode {
     }
 
     /**
-     * Retruns the loopBeginNode corresponding to the loop this induction vraibles is attached to.
-     * @return the loopBeginNode corresponding to the loop this induction vraibles is attached to.
+     * Retruns the loopBeginNode corresponding to the loop this induction variables is attached to.
+     * @return the loopBeginNode corresponding to the loop this induction variables is attached to.
      */
     public abstract LoopBeginNode loopBegin();
 
@@ -54,7 +65,7 @@ public abstract class InductionVariableNode extends FloatingNode {
 
     /**
      * Transforms this induction variable to generic nodes (Phis, arithmetics...).
-     * @return the generic node that computes the value of this induction vraible.
+     * @return the generic node that computes the value of this induction variables.
      */
     public abstract ValueNode lowerInductionVariable();
 
@@ -86,8 +97,56 @@ public abstract class InductionVariableNode extends FloatingNode {
     public abstract StrideDirection strideDirection();
 
     public ValueNode searchExtremum(FixedNode point, StrideDirection direction) {
-        //LoopBeginNode upTo = loopBegin();
+        LoopBeginNode upTo = loopBegin();
         //TODO (gd) collect conditions up the dominating CFG nodes path, stop as soon as we find a matching condition, it will usually be the 'narrowest'
+        FixedNode from = point;
+
+        for (FixedNode node : NodeIterators.dominators(point).until(upTo)) {
+            if (node instanceof IfNode) {
+                IfNode ifNode = (IfNode) node;
+                if (!(ifNode.compare() instanceof CompareNode)) {
+                    continue;
+                }
+                CompareNode compare = (CompareNode) ifNode.compare();
+                ValueNode y = null;
+                Condition cond = null;
+
+                if (from == ifNode.trueSuccessor()) {
+                    cond = compare.condition();
+                } else {
+                    assert from == ifNode.falseSuccessor();
+                    cond = compare.condition().negate();
+                }
+
+                if (compare.x() == this) {
+                    y = compare.y();
+                } else if (compare.y() == this) {
+                    y = compare.x();
+                    cond = cond.mirror();
+                }
+
+                if (y == null || !validConditionAndStrideDirection(cond, direction)) {
+                    continue;
+                }
+
+                return y;
+            }
+            from = node;
+        }
+
         return null;
+    }
+
+    private static boolean validConditionAndStrideDirection(Condition cond, StrideDirection direction) {
+        if (direction == StrideDirection.Up) {
+            if (cond == Condition.LT || cond == Condition.LE) {
+                return true;
+            }
+        } else if (direction == StrideDirection.Down) {
+            if (cond == Condition.GT || cond == Condition.GE) {
+                return true;
+            }
+        }
+        return false;
     }
 }

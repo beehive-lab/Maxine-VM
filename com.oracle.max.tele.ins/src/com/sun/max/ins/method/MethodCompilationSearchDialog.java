@@ -47,19 +47,19 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
 
         private final String name;
 
-        private final MaxCompilation compiledCode;
+        private final MaxCompilation compilation;
 
-        public NamedMethodCompilation(String name, MaxCompilation compiledCode) {
+        public NamedMethodCompilation(String name, MaxCompilation compilation) {
             this.name = name;
-            this.compiledCode = compiledCode;
+            this.compilation = compilation;
         }
 
         public String name() {
             return name;
         }
 
-        public MaxCompilation compiledCode() {
-            return compiledCode;
+        public MaxCompilation compilation() {
+            return compilation;
         }
 
         public int compareTo(NamedMethodCompilation o) {
@@ -74,7 +74,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
 
     @Override
     protected MaxCompilation convertSelectedItem(Object listItem) {
-        return ((NamedMethodCompilation) listItem).compiledCode();
+        return ((NamedMethodCompilation) listItem).compilation();
     }
 
     @Override
@@ -90,30 +90,30 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                     if (filterLowerCase.isEmpty() ||
                                     (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                                     methodNameLowerCase.contains(filterLowerCase)) {
-                        for (MaxCompilation compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
-                            final String name = inspection().nameDisplay().shortName(compiledCode, ReturnTypeSpecification.AS_SUFFIX);
-                            namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
+                        for (MaxCompilation compilation : vm().machineCode().compilations(teleClassMethodActor)) {
+                            final String name = inspection().nameDisplay().shortName(compilation, ReturnTypeSpecification.AS_SUFFIX);
+                            namedMethodCompilations.add(new NamedMethodCompilation(name, compilation));
                         }
                     }
                 }
             }
         } else {
-            for (MaxCodeCacheRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
-                for (MaxCompilation compiledCode : teleCompiledCodeRegion.compilations()) {
-                    ClassMethodActor methodActor = compiledCode.classMethodActor();
-                    String methodCompilationType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
+            for (MaxCodeCacheRegion teleCompiledCodeRegion : inspection().vm().codeCache().codeCacheRegions()) {
+                for (MaxCompilation compilation : teleCompiledCodeRegion.compilations()) {
+                    ClassMethodActor methodActor = compilation.classMethodActor();
+                    String methodCompilationType = Classes.getSimpleName(compilation.representation().classActorForObjectType().javaClass().getSimpleName());
                     if (methodActor != null) {
                         final String textToMatch = methodActor.format("%h.%n " + methodCompilationType).toLowerCase();
                         if (filterLowerCase.isEmpty() ||
                             (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                              textToMatch.contains(filterLowerCase)) {
                             final String name = methodActor.format("%h.%n(%p) [" + methodCompilationType + "]");
-                            namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
+                            namedMethodCompilations.add(new NamedMethodCompilation(name, compilation));
                         }
                     } else {
-                        String regionName = compiledCode.entityName();
+                        String regionName = compilation.entityName();
                         if (filterLowerCase.isEmpty() || (regionName + " " + methodCompilationType).toLowerCase().contains(filterLowerCase)) {
-                            namedMethodCompilations.add(new NamedMethodCompilation(regionName + " [" + methodCompilationType + "]", compiledCode));
+                            namedMethodCompilations.add(new NamedMethodCompilation(regionName + " [" + methodCompilationType + "]", compilation));
                         }
                     }
                 }

@@ -26,19 +26,20 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
 
-public class AgentLibVMOption extends NativeAgentVMOption {
-    private static final String optionValueTemplate = ":<libname>[=<options>]";
+public class PathAgentVMOption extends AgentVMOption {
+
+    private static final String optionValueTemplate = ":<pathname>[=<options>]";
 
     @HOSTED_ONLY
-    public AgentLibVMOption() {
-        super("-agentlib", optionValueTemplate,
-              "load native agent library <libname>, e.g. -agentlib:hprof  see also, -agentlib:jdwp=help and -agentlib:hprof=help");
+    public PathAgentVMOption() {
+        super("-agentpath", optionValueTemplate,
+              "load native agent library by full pathname",
+              true);
     }
 
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(category(), prefix, ":<libname>[=<options>]", help);
+        VMOptions.printHelpForOption(category(), prefix, optionValueTemplate, help);
     }
-
 
 }

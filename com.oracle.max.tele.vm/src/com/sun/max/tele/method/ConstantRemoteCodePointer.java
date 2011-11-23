@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jvmti;
+package com.sun.max.tele.method;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import com.sun.max.unsafe.*;
 
+/**
+ * A fixed location in VM memory that contains machine code, to be used for machine code locations that are presumed not
+ * to move or be evicted.
+ */
+class ConstantRemoteCodePointer implements RemoteCodePointer {
 
-public class AgentPathVMOption extends NativeAgentVMOption {
+    private final Address address;
 
-    private static final String optionValueTemplate = ":<pathname>[=<options>]";
-
-    @HOSTED_ONLY
-    public AgentPathVMOption() {
-        super("-agentpath", optionValueTemplate,
-              "load native agent library by full pathname");
+    public ConstantRemoteCodePointer(Address address) {
+        this.address = address;
     }
 
     @Override
-    public void printHelp() {
-        VMOptions.printHelpForOption(category(), prefix, optionValueTemplate, help);
+    public Address getAddress() {
+        return address;
     }
 
 }

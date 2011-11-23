@@ -198,7 +198,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         if (printer() != null && graph != null) {
             printer().print(graph, event.label, true, event.debugObject(IdentifyBlocksPhase.class));
         }
-        if (lazyStart) {
+        if (lazyStart && printer() != null) {
             closePrinter();
         }
     }

@@ -104,7 +104,7 @@ public abstract class TeleHybridObject extends TeleObject {
      * @return length of the int array part of this hybrid in the VM
      */
     public int readArrayLength() {
-        return  Layout.readArrayLength(reference());
+        return  objects().unsafeReadArrayLength(reference());
     }
 
     /**

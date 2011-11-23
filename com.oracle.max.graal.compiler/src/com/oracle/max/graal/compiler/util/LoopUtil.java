@@ -24,7 +24,6 @@ package com.oracle.max.graal.compiler.util;
 
 import java.util.*;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.Node.Verbosity;
@@ -32,12 +31,6 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 
 public class LoopUtil {
-
-    private GraalContext context;
-
-    public LoopUtil(GraalContext context) {
-        this.context = context;
-    }
 
     public static class Loop {
         private final LoopBeginNode loopBegin;
@@ -198,8 +191,7 @@ public class LoopUtil {
                     MergeNode merge = phi.merge();
                     if (merge instanceof LoopBeginNode) {
                         LoopBeginNode phiLoop = (LoopBeginNode) merge;
-                        int backIndex = phiLoop.phiPredecessorIndex(phiLoop.loopEnd());
-                        if (phi.valueAt(backIndex) == n) {
+                        if (phi.valueAt(phiLoop.loopEnd()) == n) {
                             continue;
                         }
                     }

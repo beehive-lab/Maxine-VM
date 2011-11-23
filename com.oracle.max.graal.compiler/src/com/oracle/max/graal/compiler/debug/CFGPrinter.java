@@ -54,7 +54,6 @@ public class CFGPrinter extends CompilationPrinter {
      * Creates a control flow graph printer.
      *
      * @param buffer where the output generated via this printer shown be written
-     * @param target the target architecture description
      */
     public CFGPrinter(ByteArrayOutputStream buffer, GraalCompilation compilation) {
         super(buffer);
@@ -64,6 +63,13 @@ public class CFGPrinter extends CompilationPrinter {
         this.runtime = compilation.compiler.runtime;
     }
 
+    public CFGPrinter(ByteArrayOutputStream buffer, GraalCompilation compilation, CiTarget target, RiRuntime runtime) {
+        super(buffer);
+        this.buffer = buffer;
+        this.compilation = compilation;
+        this.target = target;
+        this.runtime = runtime;
+    }
 
     /**
      * Prints the control flow graph denoted by a given block map.
@@ -374,7 +380,7 @@ public class CFGPrinter extends CompilationPrinter {
             return "-";
         }
         String prefix;
-        if (node instanceof BeginNode && compilation.lir() == null) {
+        if (node instanceof BeginNode && compilation != null && compilation.lir() == null) {
             prefix = "B";
         } else if (node instanceof ValueNode) {
             ValueNode value = (ValueNode) node;
@@ -390,7 +396,7 @@ public class CFGPrinter extends CompilationPrinter {
     }
 
     private String blockToString(Block block) {
-        if (compilation.lir() == null) {
+        if (compilation != null && compilation.lir() == null) {
             // During all the front-end phases, the block schedule is built only for the debug output.
             // Therefore, the block numbers would be different for every CFG printed -> use the id of the first instruction.
             return "B" + block.firstNode().toString(Verbosity.Id);
