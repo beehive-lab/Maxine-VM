@@ -73,6 +73,7 @@ class Env(ArgumentParser):
     def __init__(self):
         self.java_initialized = False
         self.extraProjectDirs = []
+        self.maxine_home = None
         self._pdb = None
         ArgumentParser.__init__(self, prog='mx')
     
@@ -91,7 +92,9 @@ class Env(ArgumentParser):
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
         self.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
         
-    def parse_cmd_line(self):
+    def parse_cmd_line(self, args=None):
+        if args is None:
+            args = sys.argv[1:]
         
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
         
@@ -126,7 +129,8 @@ class Env(ArgumentParser):
         os.environ['JAVA_HOME'] = self.java_home
         os.environ['HOME'] = self.user_home
  
-        self.maxine_home = dirname(abspath(dirname(sys.argv[0])))
+        if self.maxine_home is None:
+            self.maxine_home = dirname(abspath(dirname(sys.argv[0])))
     
         if self.vmdir is None:
             self.vmdir = join(self.maxine_home, 'com.oracle.max.vm.native', 'generated', self.os)
