@@ -990,14 +990,12 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType holder = resolvedTarget.holder();
             if (!holder.isInitialized() && GraalOptions.ResolveClassBeforeStaticInvoke) {
-                // Re-use the same resolution code as for accessing a static field. Even though
-                // the result of resolution is not used by the invocation (only the side effect
-                // of initialization is required), it can be commoned with static field accesses.
-                genTypeOrDeopt(RiType.Representation.StaticFields, holder, false);
+                genInvokeDeopt(target, false);
+            } else {
+                FrameState stateBefore = frameState.duplicate(bci());
+                ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
+                appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool, stateBefore);
             }
-            FrameState stateBefore = frameState.duplicate(bci());
-            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
-            appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool, stateBefore);
         } else {
             genInvokeDeopt(target, false);
         }
