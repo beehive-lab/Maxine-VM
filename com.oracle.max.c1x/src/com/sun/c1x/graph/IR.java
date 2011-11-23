@@ -102,10 +102,6 @@ public class IR {
         new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
         observeCompilationEvent(CompilationEvent.AFTER_PARSING);
-
-        if (C1XOptions.PrintCompilation) {
-            TTY.print(String.format("%3d blocks | ", this.numberOfBlocks()));
-        }
     }
 
     private void optimize1() {
