@@ -337,6 +337,48 @@ public class NodeClass {
         public String toString() {
             return (input ? "input " : "successor ") + index + "/" + subIndex;
         }
+
+        public Node get(Node node) {
+            return node.getNodeClass().get(node, this);
+        }
+
+        public void set(Node node, Node value) {
+            node.getNodeClass().set(node, this, value);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + index;
+            result = prime * result + (input ? 1231 : 1237);
+            result = prime * result + subIndex;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Position other = (Position) obj;
+            if (index != other.index) {
+                return false;
+            }
+            if (input != other.input) {
+                return false;
+            }
+            if (subIndex != other.subIndex) {
+                return false;
+            }
+            return true;
+        }
     }
 
     private static Node getNode(Node node, long offset) {
