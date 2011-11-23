@@ -33,55 +33,83 @@ import com.sun.max.vm.*;
  * phase and no heap is available.
  */
 
-public abstract class NativeAgentVMOption extends VMOption {
+public abstract class AgentVMOption extends VMOption {
+
+    static class Info {
+        boolean isAbsolute;
+        Pointer libStart;
+        Pointer optionStart = Pointer.zero();
+    }
 
     /**
      * Pre-allocated storage for individual options.
      */
-    private static NativeString[] nativeStrings = new NativeString[JVMTI.MAX_ENVS];
+    protected static Info[] infoArray = new Info[JVMTI.MAX_ENVS];
 
-    private static int index;
+    protected static int index;
 
     static {
-        for (int i = 0; i < nativeStrings.length; i++) {
-            nativeStrings[i] = new NativeString();
+        for (int i = 0; i < infoArray.length; i++) {
+            infoArray[i] = new Info();
         }
     }
 
-    private static String usage;
+    private String usage;
+
+    protected boolean expectsAbsolute;
 
     @HOSTED_ONLY
-    protected NativeAgentVMOption(String prefix, String optionValueTemplate, String help) {
+    protected AgentVMOption(String prefix, String optionValueTemplate, String help, boolean expectsAbsolute) {
         super(prefix, help);
         usage = prefix + optionValueTemplate;
+        this.expectsAbsolute = expectsAbsolute;
     }
 
-    @Override
-    public boolean parseValue(Pointer optionValue) {
-        if (index >= nativeStrings.length) {
-            Log.println("too many -agentpath/-agentlib options");
+    protected Info checkSpace() {
+        if (index >= infoArray.length) {
+            Log.println("too many -agentpath/-agentlib/-Xrun options");
             MaxineVM.native_exit(1);
         }
-        Pointer p = optionValue;
-        if (p.readByte(0) != ':') {
-            Log.println(usage);
-        }
-        p = p.plus(1);
-        nativeStrings[index].libStart = p;
-        int b = 0;
-        while ((b = p.readByte(0)) != (byte) 0) {
-            if (b == '=') {
-                p.setByte(0, (byte) 0); // zero terminate library string
-                nativeStrings[index].optionStart = p.plus(1);
-                break;
-            }
-            p = p.plus(1);
+        infoArray[index].isAbsolute = expectsAbsolute;
+        return infoArray[index];
+    }
+
+    protected void usageError() {
+        Log.println(usage);
+        MaxineVM.native_exit(1);
+    }
+
+    protected boolean finishParse(Info info) {
+        if (info.optionStart.isZero()) {
+            info.optionStart = Memory.allocate(Size.fromInt(1));
+            info.optionStart.setByte((byte) 0);
         }
         index++;
         return true;
     }
 
-    public int count() {
+    @Override
+    public boolean parseValue(Pointer optionValue) {
+        Info info = checkSpace();
+        Pointer p = optionValue;
+        if (p.readByte(0) != ':') {
+            usageError();
+        }
+        p = p.plus(1);
+        info.libStart = p;
+        int b = 0;
+        while ((b = p.readByte(0)) != (byte) 0) {
+            if (b == '=') {
+                p.setByte(0, (byte) 0); // zero terminate library string
+                info.optionStart = p.plus(1);
+                break;
+            }
+            p = p.plus(1);
+        }
+        return finishParse(info);
+    }
+
+    public static int count() {
         return index;
     }
 
@@ -90,27 +118,9 @@ public abstract class NativeAgentVMOption extends VMOption {
      * @param i
      * @return
      */
-    public Pointer getLibStart(int i) {
-        return nativeStrings[i].libStart;
+    public static Info getInfo(int i) {
+        return infoArray[i];
     }
 
-    /**
-     * Get address of option string for i'th occurrence or empty string if none.
-     * @param i
-     * @return
-     */
-    public Pointer getOptionStart(int i) {
-        Pointer result = nativeStrings[i].optionStart;
-        if (result.isZero()) {
-            result = Memory.allocate(Size.fromInt(1));
-            result.setByte((byte) 0);
-        }
-        return result;
-    }
-
-    static class NativeString {
-        Pointer libStart;
-        Pointer optionStart = Pointer.zero();
-    }
 
 }

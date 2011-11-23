@@ -26,7 +26,6 @@ import static com.sun.max.vm.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTIEvent.*;
 import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
-import static com.sun.max.vm.jvmti.JVMTIVMOptions.*;
 import static com.sun.max.vm.jvmti.JVMTIFieldWatch.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.unsafe.UnsafeCast.*;
@@ -120,7 +119,7 @@ public class JVMTI {
             Env jvmtiEnv = new Env();
             jvmtiEnvs[i] = jvmtiEnv;
             for (int j = 0; j < jvmtiEnv.bootClassPathAdd.length; j++) {
-                jvmtiEnv.bootClassPathAdd [j] = 0;
+                jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
     }
@@ -169,24 +168,31 @@ public class JVMTI {
     }
 
     /**
-     * Initial entry from VM in {@code PRIMORDIAL} phase.
-     * We call Agent_OnLoad for all the agents listed in VM startup command.
+     * Initial entry from VM at the start of {@code PRISTINE} phase, i.e., before {code
+     * VMConfiguration.initializeSchemes(MaxineVM.Phase.PRISTINE)} has been called. We call Agent_OnLoad for all the
+     * agents listed in VM startup command.
      */
     public static void initialize() {
-        // TODO agentLibOption variant
-        for (int i = 0; i < agentPathOption.count(); i++) {
-            Pointer path = agentPathOption.getLibStart(i);
-            Word handle = DynamicLinker.load(path);
+        for (int i = 0; i < AgentVMOption.count(); i++) {
+            AgentVMOption.Info info = AgentVMOption.getInfo(i);
+            Word handle = Word.zero();
+            Pointer path = info.libStart;
+            if (info.isAbsolute) {
+                handle = DynamicLinker.load(path);
+            } else {
+                handle = JVMTISystem.load(path);
+            }
+
             if (handle.isZero()) {
-                initializeFail("failed to load agentlib: ", path, "");
+                initializeFail("failed to load agentlib: ", info.libStart, "");
             }
             Word onLoad = DynamicLinker.lookupSymbol(handle, AGENT_ONLOAD);
             if (onLoad.isZero()) {
-                initializeFail("agentlib: ", path, " does not contain an Agent_OnLoad function");
+                initializeFail("agentlib: ", info.libStart, " does not contain an Agent_OnLoad function");
             }
-            int rc = invokeAgentOnLoad(onLoad.asAddress(), agentPathOption.getOptionStart(i));
+            int rc = invokeAgentOnLoad(onLoad.asAddress(), info.optionStart);
             if (rc != 0) {
-                initializeFail("agentlib: ", path, " failed to initialize");
+                initializeFail("agentlib: ", info.libStart, " failed to initialize");
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -504,7 +510,7 @@ public class JVMTI {
             // in any easy way, as they are not setup until the STARTING phase. So we have to hand craft
             // the implementation for a specific set of properties. Yuk.
             if (CString.equals(property, JAVA_HOME)) {
-                propValPtr = JVMTIEnvVar.getValue(Reference.fromJava(JAVA_HOME_BYTES).toOrigin().plus(JVMTIUtil.byteDataOffset));
+                propValPtr = JVMTISystem.findJavaHome();
                 if (propValPtr.isZero()) {
                     Log.println("Environment variable JAVA_HOME not set");
                     MaxineVM.native_exit(-1);
