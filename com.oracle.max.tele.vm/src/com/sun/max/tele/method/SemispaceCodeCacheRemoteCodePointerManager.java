@@ -32,7 +32,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 
-// TODO (mlvdv)  incomplete; unused.
 
 /**
  * A manager for pointers to machine code allocated in a {@link SemiSpaceCodeRegion}.
@@ -51,6 +50,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
+    // TODO (mlvdv) temporary counter
+    int count = 0;
 
     // We need to get inside (more detail) about TTM.  Shouldn't really make this internal to it,
     // because it is specific to the Semispace.
@@ -95,34 +96,32 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
         TeleError.check(codeCacheRegion.memoryRegion().contains(address), "Location is outside region");
         RemoteCodePointer codePointer = null;
         final TeleCompilation compilation = codeCacheRegion.findCompilation(address);
-        if (compilation != null) {
-  //          final Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
-
-        }
-
-//
-//        final TeleCompilation compilation = codeCacheRegion.findCompilation(address);
 //        if (compilation != null) {
-//            final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
-//            if (teleTargetMethod != null) {
-//                final RemoteCodePointer codePointer = teleTargetMethod.makeCodePointer(address);
+//            final Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
 //
-//            }
 //        }
+
+        if (compilation != null) {
+            final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
+            if (teleTargetMethod != null) {
+                codePointer = teleTargetMethod.createRemoteCodePointer(address);
+                count++;
+            }
+        }
         return codePointer;
     }
 
-    private void recordCodePointer(Compilation compilation, int offset, RemoteCodePointer codePointer) {
-        Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
-        if (pointerMap == null) {
-            pointerMap = new HashMap<Integer, WeakReference<RemoteCodePointer>>();
-            pointerMaps.put(compilation, pointerMap);
-        }
-        pointerMap.put(offset, new WeakReference<RemoteCodePointer>(codePointer));
-    }
+//    private void recordCodePointer(Compilation compilation, int offset, RemoteCodePointer codePointer) {
+//        Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
+//        if (pointerMap == null) {
+//            pointerMap = new HashMap<Integer, WeakReference<RemoteCodePointer>>();
+//            pointerMaps.put(compilation, pointerMap);
+//        }
+//        pointerMap.put(offset, new WeakReference<RemoteCodePointer>(codePointer));
+//    }
 
     public int activePointerCount() {
-        int count = 0;
+//       int count = 0;
 //        for (MaxCompilation compilation : codeCacheRegion.compilations()) {
 //            final TeleObject teleObject = compilation.representation();
 //            if (teleObject instanceof TeleTargetMethod) {
@@ -135,7 +134,7 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
 
     public int totalPointerCount() {
 //        return addressToCodePointer.size();
-        return 0;
+        return count;
     }
 
 }

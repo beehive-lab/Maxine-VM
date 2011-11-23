@@ -134,8 +134,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
         this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.objectReferenceManager = new SemispaceCodeCacheRemoteReferenceManager(vm, this);
-        // TODO (mlvdv) put in the right code pointer manager
-        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
+        this.codePointerManager = new SemispaceCodeCacheRemoteCodePointerManager(vm, this);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleSemiSpaceCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleSemiSpaceCodeRegion.getRegionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
