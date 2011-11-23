@@ -38,6 +38,24 @@ import xml.dom.minidom
 import StringIO
 from projects import Library
 
+# Helper functions
+
+def _expand_project_in_class_path_arg(env, cpArg):
+    cp = []
+    for part in cpArg.split(os.pathsep):
+        if part.startswith('@'):
+            cp += env.pdb().classpath(part[1:]).split(os.pathsep)
+        else:
+            cp.append(part)
+    return os.pathsep.join(cp)
+    
+def _expand_project_in_args(env, args):
+    for i in range(len(args)):
+        if args[i] == '-cp' or args[i] == '-classpath':
+            if i + 1 < len(args):
+                args[i + 1] = _expand_project_in_class_path_arg(env, args[i + 1])
+            return
+    
 # Commands are in alphabetical order in this file.
 
 def build(env, args):
@@ -702,7 +720,7 @@ def inspect(env, args):
             os.environ['TELE_LOG_FILE'] = 'tele-' + logFile
         elif arg in ['-cp', '-classpath']:
             vmArgs += [arg, args[i + 1]]
-            insCP += [args[i + 1]]
+            insCP += [_expand_project_in_class_path_arg(env, args[i + 1])]
             i += 1
         elif arg == '-jar':
             vmArgs += ['-jar', args[i + 1]]
@@ -736,6 +754,8 @@ def inspect(env, args):
     insCP = pathsep.join(insCP)
     insArgs += ['-cp=' + insCP]
     
+    _expand_project_in_args(env, vmArgs)  
+
     cmd = env.format_java_cmd(sysProps + ['-cp', env.pdb().classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
     
@@ -975,18 +995,7 @@ def vm(env, args):
 
     Use "mx vm -help" to see what other options this command accepts."""
     
-    for i in range(len(args)):
-        if args[i] == '-cp' or args[i] == '-classpath':
-            if i + 1 < len(args):
-                cp = []
-                for part in args[i + 1].split(os.pathsep):
-                    if part.startswith('@'):
-                        cp += env.pdb().classpath(part[1:]).split(os.pathsep)
-                    else:
-                        cp.append(part)
-                args[i + 1] = os.pathsep.join(cp)
-            break
-        
+    _expand_project_in_args(env, args)  
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
     env.run([join(env.vmdir, 'maxvm')] + maxvmOptions + args)
             
