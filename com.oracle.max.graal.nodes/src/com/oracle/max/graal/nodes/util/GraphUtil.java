@@ -40,7 +40,7 @@ public class GraphUtil {
             EndNode end = (EndNode) node;
             MergeNode merge = end.merge();
             if (merge instanceof LoopBeginNode) {
-                for (PhiNode phi : merge.phis()) {
+                for (PhiNode phi : merge.phis().snapshot()) {
                     ValueNode value = phi.valueAt(0);
                     phi.replaceAndDelete(value);
                 }
@@ -48,7 +48,7 @@ public class GraphUtil {
             } else {
                 merge.removeEnd(end);
                 if (merge.phiPredecessorCount() == 1) {
-                    for (PhiNode phi : merge.phis()) {
+                    for (PhiNode phi : merge.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                     }

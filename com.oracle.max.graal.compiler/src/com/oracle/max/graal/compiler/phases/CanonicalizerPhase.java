@@ -169,7 +169,7 @@ public class CanonicalizerPhase extends Phase {
                     assert loopBegin.endCount() == 1;
                     EndNode predEnd = loopBegin.endAt(0);
 
-                    for (PhiNode phi : loopBegin.phis()) {
+                    for (PhiNode phi : loopBegin.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                         nodeWorkList.replaced(value, phi, false);
@@ -184,7 +184,7 @@ public class CanonicalizerPhase extends Phase {
                 EndNode end = (EndNode) node;
                 MergeNode merge = end.merge();
                 if (merge instanceof LoopBeginNode) {
-                    for (PhiNode phi : merge.phis()) {
+                    for (PhiNode phi : merge.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                         nodeWorkList.replaced(value, phi, false);
@@ -196,7 +196,7 @@ public class CanonicalizerPhase extends Phase {
                 } else {
                     merge.removeEnd(end);
                     if (merge.phiPredecessorCount() == 1) {
-                        for (PhiNode phi : merge.phis()) {
+                        for (PhiNode phi : merge.phis().snapshot()) {
                             ValueNode value = phi.valueAt(0);
                             phi.replaceAndDelete(value);
                             nodeWorkList.replaced(value, phi, false);
