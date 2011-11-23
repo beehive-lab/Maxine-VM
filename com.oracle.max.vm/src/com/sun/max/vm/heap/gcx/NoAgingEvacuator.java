@@ -56,6 +56,12 @@ public final class NoAgingEvacuator extends Evacuator {
      * Hint of size of local allocation buffer when refilling.
      */
     private final Size labSize;
+
+    /**
+     * Remembered set of the from space.
+     */
+    private final CardTableRSet rset;
+
     /**
      * Cached card first object table for fast access.
      */
@@ -78,14 +84,19 @@ public final class NoAgingEvacuator extends Evacuator {
     private Address nextLABChunk;
 
     /**
-     * Mark to keep track of allocated ranges recording.
+     * Mark to keep track of survivor ranges.
      */
     private Address allocatedRangeStart;
 
     /**
-     * Mark to keep track of ranges from overflow allocation to record.
+     * Start of the last unrecorded survivor ranges resulting from overflow allocation.
      */
     private Address lastOverflowAllocatedRangeStart;
+    /**
+     * End of the last unrecorded survivor ranges resulting from overflow allocation. This is kept to try
+     * to coalesce the range with the overflow allocation request. If the ranges cannot be coalesced,
+     * the last range is recorded and a new range begin with the result of new allocation request.
+     */
     private Address lastOverflowAllocatedRangeEnd;
 
     /**
@@ -97,6 +108,7 @@ public final class NoAgingEvacuator extends Evacuator {
     public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold, SurvivorRangesQueue queue, Size labSize) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
+        this.rset = rset;
         this.cfoTable = rset.cfoTable;
         this.minRefillThreshold = minRefillThreshold;
         this.survivorRanges = queue;
@@ -206,6 +218,13 @@ public final class NoAgingEvacuator extends Evacuator {
         final Pointer toCell = allocate(size);
         Memory.copyBytes(fromCell, toCell, size);
         return toCell;
+    }
+
+    @Override
+    protected void evacuateFromRSets() {
+        // FIXME: this may redo iteration over the boot heap region. Verify that this is not the case.
+
+        rset.iterateDirtyCards(this);
     }
 
     @Override
