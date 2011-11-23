@@ -191,7 +191,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
                 final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(SafepointPoll.State.ENABLED);
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
-                    if (!threadLocalValue.isZero()) {
+                    if (threadLocalValue.isNotZero()) {
                         final Reference vmThreadReference = referenceManager().makeReference(threadLocalValue.asAddress());
                         teleVmThread = (TeleVmThread) objects().makeTeleObject(vmThreadReference);
                     }

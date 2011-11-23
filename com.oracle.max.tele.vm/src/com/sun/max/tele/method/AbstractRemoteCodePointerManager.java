@@ -20,15 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.method;
 
+import java.io.*;
+import java.text.*;
 
-/**
- * Data describing a single block of external machine code representing a native routine
- * about which little is known.
- */
-public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
+import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 
-    long DEFAULT_NATIVE_CODE_LENGTH = 200;
+public abstract class AbstractRemoteCodePointerManager extends AbstractVmHolder implements RemoteCodePointerManager {
+
+    public AbstractRemoteCodePointerManager(TeleVM vm) {
+        super(vm);
+    }
+
+    public final void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        final StringBuilder sb3 = new StringBuilder();
+        final int activePointerCount = activePointerCount();
+        sb3.append("code pointers:  active=" + formatter.format(activePointerCount));
+        sb3.append(", inactive=" + formatter.format(totalPointerCount() - activePointerCount));
+        sb3.append(", mgr=" + getClass().getSimpleName());
+        printStream.println(indentation + sb3.toString());
+    }
 
 }

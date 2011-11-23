@@ -55,14 +55,14 @@ class InitializeHandlesGraphBuilder extends AbstractGraphBuilder {
             append(invoke(Pointer_writeObject, handles, iconst(0), oconst(nativeMethod.holder().toJava())));
         } else {
             append(invoke(Pointer_writeObject, handles, iconst(0), nativeMethodArg.next()));
-            handleOffset += Word.size();
         }
+        handleOffset += Word.size();
 
         // Load the remaining parameters, handlizing object parameters
         while (nativeMethodArg.hasNext()) {
             LocalNode arg = nativeMethodArg.next();
             if (arg.kind().isObject()) {
-                append(invoke(Pointer_writeObject, handles, iconst(0), arg));
+                append(invoke(Pointer_writeObject, handles, iconst(handleOffset), arg));
                 handleOffset += Word.size();
             }
         }

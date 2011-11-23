@@ -258,8 +258,8 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                     setValue(null);
                                     setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
-                                    final MaxCompilation compiledCode = stackFrame.compiledCode();
-                                    final String name = compiledCode == null ? "nativeMethod: " + stackFrame.codeLocation().address().to0xHexString() : compiledCode.entityName();
+                                    final MaxCompilation compilation = stackFrame.compilation();
+                                    final String name = compilation == null ? "nativeMethod: " + stackFrame.codeLocation().address().to0xHexString() : compilation.entityName();
                                     setValue(name);
                                     setWrappedToolTipHtmlText(htmlify(name));
                                 }

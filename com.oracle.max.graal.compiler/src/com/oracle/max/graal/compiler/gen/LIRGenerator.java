@@ -523,17 +523,18 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
-        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPooling()) {
+        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPolling()) {
             emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
 
     public void emitSafepointPoll(FixedNode x) {
-        XirSnippet snippet = xir.genSafepointPoll(site(x));
-        emitXir(snippet, x, state(), null, false);
+        if (!lastState.method().noSafepointPolls()) {
+            XirSnippet snippet = xir.genSafepointPoll(site(x));
+            emitXir(snippet, x, state(), null, false);
+        }
     }
-
 
     @Override
     public void emitIf(IfNode x) {
@@ -972,15 +973,14 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
 
 
-    private void moveToPhi(MergeNode merge, Node pred) {
+    private void moveToPhi(MergeNode merge, FixedNode pred) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 1) {
             TTY.println("MOVE TO PHI from " + pred + " to " + merge);
         }
-        int nextSuccIndex = merge.phiPredecessorIndex(pred);
         PhiResolver resolver = new PhiResolver(this);
         for (PhiNode phi : merge.phis()) {
             if (phi.type() == PhiType.Value) {
-                ValueNode curVal = phi.valueAt(nextSuccIndex);
+                ValueNode curVal = phi.valueAt(pred);
                 resolver.move(operand(curVal), operandForPhi(phi));
             }
         }
@@ -1284,7 +1284,12 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         public CiCodePos getCodePos() {
-            // TODO: get the code position of the current instruction if possible
+            if (current instanceof StateSplit) {
+                FrameState stateAfter = ((StateSplit) current).stateAfter();
+                if (stateAfter != null) {
+                    return stateAfter.toCodePos();
+                }
+            }
             return null;
         }
 

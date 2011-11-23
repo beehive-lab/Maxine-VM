@@ -296,7 +296,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Is there a currently selected {@link Address}.
      */
     public boolean hasAddress() {
-        return  !address.isZero();
+        return address.isNotZero();
     }
 
     /**
@@ -305,7 +305,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      */
     public void setAddress(Address address) {
         InspectorError.check(address != null, "setAddress(null) should use zero Address instead");
-        if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(this.address))) {
+        if ((address.isZero() && hasAddress()) || (address.isNotZero() && !address.equals(this.address))) {
             final Address oldAddress = this.address;
             this.address = address;
             Trace.line(TRACE_VALUE, addressFocusTracer);

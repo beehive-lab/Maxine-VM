@@ -631,9 +631,9 @@ public final class BreakpointsTable extends InspectorTable {
         MachineCodeBreakpointData(MaxBreakpoint machineCodeBreakpoint) {
             super(machineCodeBreakpoint);
             final Address address = codeLocation().address();
-            final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
-            if (compiledCode != null) {
-                shortName = inspection().nameDisplay().shortName(compiledCode);
+            final MaxCompilation compilation = vm().machineCode().findCompilation(address);
+            if (compilation != null) {
+                shortName = inspection().nameDisplay().shortName(compilation);
                 final StringBuilder sb = new StringBuilder();
                 sb.append("(");
                 if (breakpoint().getDescription() == null) {
@@ -642,12 +642,12 @@ public final class BreakpointsTable extends InspectorTable {
                     sb.append(breakpoint().getDescription());
                 }
                 sb.append(") ");
-                sb.append(inspection().nameDisplay().longName(compiledCode, address));
+                sb.append(inspection().nameDisplay().longName(compilation, address));
                 longName = sb.toString();
-                codeStart = compiledCode.getCodeStart();
+                codeStart = compilation.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(address);
+                final MaxExternalCodeRoutine externalCode = vm().machineCode().findExternalCode(address);
                 if (externalCode != null) {
                     codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();

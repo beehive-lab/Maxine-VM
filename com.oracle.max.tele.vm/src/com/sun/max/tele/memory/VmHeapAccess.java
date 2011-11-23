@@ -283,10 +283,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
         final Word fieldValue = memory().readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
 
-        if (!fieldValue.isZero()) {
+        if (fieldValue.isNotZero()) {
             // Assert that this points to an array of references, read as words
             final RemoteTeleReference wordArrayRef = referenceManager().makeTemporaryRemoteReference(fieldValue.asAddress());
-            final int wordArrayLength = Layout.readArrayLength(wordArrayRef);
+            final int wordArrayLength = objects().unsafeReadArrayLength(wordArrayRef);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < wordArrayLength; index++) {
@@ -595,8 +595,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(vm().methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(vm().methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
+            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
+            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
             locations.addAll(teleHeapScheme.inspectableMethods());
             inspectableMethods = Collections.unmodifiableList(locations);
@@ -629,7 +629,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         } else if (gcCompletedCount >= 0) {
             printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
         }
-        printStream.print(indentation + "Regions: \n");
+        printStream.print(indentation + "By region: \n");
         for (MaxHeapRegion region : allHeapRegions) {
             region.printSessionStats(printStream, indent + 5, verbose);
         }

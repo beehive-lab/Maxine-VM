@@ -25,6 +25,10 @@ package com.sun.max.vm.jvmti;
 import com.sun.max.vm.*;
 
 public class JVMTIVMOptions {
-    public static final AgentPathVMOption agentPathOption = VMOptions.register(new AgentPathVMOption(), MaxineVM.Phase.PRISTINE);
-    public static final AgentLibVMOption agentLibOption = VMOptions.register(new AgentLibVMOption(), MaxineVM.Phase.PRISTINE);
+    static {
+        VMOptions.register(new PathAgentVMOption(), MaxineVM.Phase.PRISTINE);
+        VMOptions.register(new LibAgentVMOption(), MaxineVM.Phase.PRISTINE);
+        VMOptions.register(new RunAgentVMOption(), MaxineVM.Phase.PRISTINE);
+        VMOptions.register(new VMOption("-Xdebug ", "(deprecated) debugging support"), MaxineVM.Phase.PRISTINE);
+    }
 }

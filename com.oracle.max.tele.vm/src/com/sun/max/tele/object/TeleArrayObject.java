@@ -63,15 +63,15 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public HeaderField[] headerFields() {
-        return Layout.arrayLayout().headerFields();
+        return objects().arrayLayout().headerFields();
     }
 
     /**
      * @return length of this array in the VM.
      */
-    public int getLength() {
+    public int length() {
         if (length < 0) {
-            length = Layout.readArrayLength(reference());
+            length = objects().unsafeReadArrayLength(reference());
         }
         return length;
     }
@@ -85,7 +85,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public int arrayOffsetFromOrigin() {
-        return componentKind().arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
+        return objects().arrayLayout(componentKind()).getElementOffsetFromOrigin(0).toInt();
     }
 
     @Override
@@ -103,11 +103,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      * @return the value read from the specified field in this array in the VM
      */
     public Value readElementValue(int index) {
-        return memory().readArrayElementValue(componentKind(), reference(), index);
-    }
-
-    public void copyElements(int srcIndex, Object dst, int dstIndex, int length) {
-        memory().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
+        return objects().unsafeReadArrayElementValue(componentKind(), reference(), index);
     }
 
     @Override
@@ -127,7 +123,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Object shallowCopy() {
-        final int length = getLength();
+        final int length = length();
         if (componentKind().isReference) {
             final Reference[] newRefArray = new Reference[length];
             for (int index = 0; index < length; index++) {
@@ -146,13 +142,13 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     @Override
     protected Object createDeepCopy(DeepCopier context) {
         final Kind componentKind = componentKind();
-        final int length = getLength();
+        final int length = length();
         final Class<?> componentJavaClass = classActorForObjectType().componentClassActor().toJava();
         final Object newArray = Array.newInstance(componentJavaClass, length);
         context.register(this, newArray, true);
         if (length != 0) {
             if (componentKind != Kind.REFERENCE) {
-                copyElements(0, newArray, 0, length);
+                objects().unsafeCopyElements(componentKind, reference(), 0, newArray, 0, length);
             } else {
                 Object[] referenceArray = (Object[]) newArray;
                 for (int index = 0; index < length; index++) {
@@ -173,10 +169,6 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     public VMValue getValue(int i) {
         return vm().maxineValueToJDWPValue(readElementValue(i));
-    }
-
-    public int length() {
-        return getLength();
     }
 
     public void setValue(int i, VMValue value) {
