@@ -108,9 +108,9 @@ public class GraalCompiler implements CiCompiler  {
                     long time = (System.nanoTime() - startTime) / 100000;
                     TTY.println(String.format("Graal %4d %-70s %-45s %-50s | %3d.%dms %4dnodes %5dB",
                                     index,
-                                    method.holder().name(),
-                                    method.name(),
-                                    method.signature().asString(),
+                                    "",
+                                    "",
+                                    "",
                                     time / 10,
                                     time % 10,
                                     compilation.graph.getNodeCount(),
