@@ -34,40 +34,26 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
 import com.sun.max.tele.reference.*;
-import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
+import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
- * Singleton cache of information about objects in the VM.
+ * Singleton cache of information about objects in the VM, including a factory for creating
+ * local surrogates (instances of {@link TeleObject}) for objects in the VM, and methods for
+ * locating objects by various means.
  * <p>
- * Initialization between this class and {@link VmClassAccess} are mutually
- * dependent.  The cycle is broken by creating this class in a partially initialized
- * state that only considers the boot heap region; this class is only made fully functional
- * with a call to {@link #initialize()}, which requires that {@link VmClassAccess} be
- * fully initialized.
- * <p>
- * Interesting heap state includes the list of memory regions allocated.
- * <p>
- * This class also provides access to a special root table in the VM, active
- * only when being inspected.  The root table allows inspection references
- * to track object locations when they are relocated by GC.
- * <p>
- * This class needs to be specialized by a helper class that
- * implements the interface {@link TeleHeapScheme}, typically
- * a class that contains knowledge of the heap implementation
- * configured into the VM.
+ * Objects in the VM can appear in memory regions other than the heap proper.
  *
- * @see InspectableHeapInfo
- * @see TeleRoots
- * @see HeapScheme
- * @see TeleHeapScheme
+ * @see ObjectHoldingRegion
+ * @see VmHeapRegion
+ * @see VmCodeCacheRegion
  */
 public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCache, MaxObjects {
 
@@ -94,7 +80,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private long lastUpdateEpoch = -1L;
 
-    private final String entityName = "Object Manager";
+    private final String entityName = "Objects";
 
     private final String entityDescription;
 
@@ -117,7 +103,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         tracer.begin();
 
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
-        this.entityDescription = "Object creation and management for the " + vm().entityName();
+        this.entityDescription = "Object creation and management for the " + vm.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(statsPrinter);
@@ -132,6 +118,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     public void updateCache(long epoch) {
         teleObjectFactory.updateCache(epoch);
+        lastUpdateEpoch = epoch;
     }
 
     public String entityName() {
@@ -182,7 +169,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             return immortalHeapRegion.objectReferenceManager().isObjectOrigin(address);
         }
 
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCompiledCodeRegion(address);
+        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
         if (compiledCodeRegion != null) {
             return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
         }
@@ -340,7 +327,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM. Specific subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
@@ -360,6 +347,125 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
+     * @return access to information about object layout in the VM.
+     */
+    public LayoutScheme layoutScheme() {
+        return Layout.layoutScheme();
+    }
+
+    /**
+     * @return access to general information about array object layout in the VM.
+     */
+    public ArrayLayout arrayLayout() {
+        return layoutScheme().arrayLayout;
+    }
+
+    /**
+     * @return access to information about a specific kind of array object layout in the VM.
+     */
+    public ArrayLayout arrayLayout(Kind kind) {
+        return kind.arrayLayout(layoutScheme());
+    }
+
+
+    /**
+     * Low-level read of a VM array length
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array at the specified location.
+     *
+     * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
+     * @return the value in the length field of the array
+     */
+    public int unsafeReadArrayLength(Reference reference) {
+        return arrayLayout().readLength(reference);
+    }
+
+    /**
+     * Low-level translation of an index into a specific array to the address of the array element in VM memory.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array if the specified kind at the specified origin.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
+     * @param index identifies a specific array element
+     * @return address of the array element in VM memory
+     */
+    public Address unsafeArrayIndexToAddress(Kind kind, Address origin, int index) {
+        return origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(index));
+    }
+
+    /**
+     * Low-level translation of an address, presumed to be the location in VM memory of an array element of the specified type,
+     * to the index of the array element.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array if the specified kind at the specified origin.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
+     * @param index identifies a specific array element
+     * @return address of the array element in VM memory
+     */
+    public Address unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
+        return address.minus(origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(0))).dividedBy(kind.width.numberOfBytes);
+    }
+
+    /**
+     * Low-level read of a VM array element word as a generic boxed value.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
+     *
+     * @param kind identifies one of the basic VM value types
+     * @param reference location in the VM presumed (but not checked) to be an array origin of the specified kind
+     * @param index offset into the array
+     * @return a generic boxed value based on the contents of the word in VM memory.
+     */
+    public Value unsafeReadArrayElementValue(Kind kind, Reference reference, int index) {
+        switch (kind.asEnum) {
+            case BYTE:
+                return ByteValue.from(Layout.getByte(reference, index));
+            case BOOLEAN:
+                return BooleanValue.from(Layout.getBoolean(reference, index));
+            case SHORT:
+                return ShortValue.from(Layout.getShort(reference, index));
+            case CHAR:
+                return CharValue.from(Layout.getChar(reference, index));
+            case INT:
+                return IntValue.from(Layout.getInt(reference, index));
+            case FLOAT:
+                return FloatValue.from(Layout.getFloat(reference, index));
+            case LONG:
+                return LongValue.from(Layout.getLong(reference, index));
+            case DOUBLE:
+                return DoubleValue.from(Layout.getDouble(reference, index));
+            case WORD:
+                return new WordValue(Layout.getWord(reference, index));
+            case REFERENCE:
+                final Address elementAddress = Layout.getWord(reference, index).asAddress();
+                return TeleReferenceValue.from(vm(), referenceManager().makeReference(elementAddress));
+            default:
+                throw TeleError.unknownCase("unknown array kind");
+        }
+    }
+
+    /**
+     * Low level copying of array elements from the VM into a local object.
+     * <p>
+     * <strong>Unsafe:</strong> does not check that there is a valid array of the specified kind at the specified location.
+     *
+     * @param kind the kind of elements held in the array.
+     * @param src a reference to an array in VM memory described by the layout configured for this kind
+     * @param srcIndex starting index in the source array
+     * @param dst the array into which the values are copied
+     * @param dstIndex the starting index in the destination array
+     * @param length the number of elements to copy
+     * @see ArrayLayout#copyElements(Accessor, int, Object, int, int)
+     */
+    public void unsafeCopyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
+    }
+
+    // TODO (mlvdv) this is specific to copying collectors
+    /**
      * Finds an object in the VM that has been located at a particular place in memory, but which
      * may have been relocated.
      * <p>
@@ -372,14 +478,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
         return teleObjectFactory.make(forwardedObjectReference);
     }
-
-
-    /**
-     * Avoid potential circularity problems by handling heap queries specially when we
-     * know we are in a refresh cycle during which information about heap regions may not
-     * be well formed.  This variable is true during those periods.
-     */
-    private boolean updatingHeapMemoryRegions = false;
 
     /**
      * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,

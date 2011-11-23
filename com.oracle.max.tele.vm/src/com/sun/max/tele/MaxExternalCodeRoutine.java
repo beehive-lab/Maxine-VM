@@ -20,25 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
-
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
 /**
- * A allocatable area in the VM that can contain machine code.
+ * Data describing a single block of external machine code representing a native routine
+ * about which little is known.
  */
-public interface CodeHoldingRegion {
+public interface MaxExternalCodeRoutine extends MaxMachineCodeRoutine<MaxExternalCodeRoutine> {
 
-    /**
-     * @return description of the VM memory allocated for this region, null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with pointers to machine code in this memory region.
-     */
-    RemoteCodePointerManager codePointerManager();
+    long DEFAULT_NATIVE_CODE_LENGTH = 200;
 
 }

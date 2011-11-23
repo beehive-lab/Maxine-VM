@@ -41,7 +41,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleArrayObject}; never null;
      */
     public static ObjectScrollPane createArrayElementsPane(Inspection inspection, TeleArrayObject teleArrayObject, ObjectViewPreferences instanceViewPreferences) {
-        final int length = teleArrayObject.getLength();
+        final int length = teleArrayObject.length();
         final Kind kind = teleArrayObject.componentKind();
         final WordValueLabel.ValueMode valueMode = kind.isReference ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = teleArrayObject.arrayOffsetFromOrigin();

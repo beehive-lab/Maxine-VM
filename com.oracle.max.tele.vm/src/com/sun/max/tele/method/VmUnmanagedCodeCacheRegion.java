@@ -61,6 +61,8 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final VmCodeCacheAccess codeCache;
 
+    private final RemoteCodePointerManager codePointerManager;
+
     /**
      * Known method compilations in the region, organized for efficient lookup by address.
      * Map:  Address --> TeleCompilation
@@ -90,6 +92,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
         this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.remoteObjectReferenceManager = new UnmanagedCodeCacheRemoteReferenceManager(vm, this);
+        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
         this.localStatsPrinter = new UnmanagedCodeCacheRegionStatsPrinter();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleCodeRegion.getRegionName() + " with " + remoteObjectReferenceManager.getClass().getSimpleName());
@@ -143,7 +146,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
         // Assumes no code eviction; no movement; allocated linearly.
         if (compilations.size() < teleTargetMethods.size()) {
             for (int index = compilations.size(); index < teleTargetMethods.size(); index++) {
-                compilations.add(find(teleTargetMethods.get(index).getRegionStart()));
+                compilations.add(findCompilation(teleTargetMethods.get(index).getRegionStart()));
             }
         }
         return Collections.unmodifiableList(compilations);
@@ -173,7 +176,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
     }
 
     @Override
-    public TeleCompilation find(Address address) {
+    public TeleCompilation findCompilation(Address address) {
         return addressToCompilationMap.find(address);
     }
 
@@ -184,6 +187,10 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
 
     public RemoteObjectReferenceManager objectReferenceManager() {
         return remoteObjectReferenceManager;
+    }
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
     }
 
 }

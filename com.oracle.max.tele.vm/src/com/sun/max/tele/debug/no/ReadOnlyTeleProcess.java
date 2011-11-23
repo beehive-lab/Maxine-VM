@@ -91,7 +91,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         bootImageBuffer.order(platform().endianness().asByteOrder());
         randomAccessFile.close();
 
-        if (!heapPointer.isZero()) {
+        if (heapPointer.isNotZero()) {
             long address = (Long) WithoutAccessCheck.getInstanceField(bootImageBuffer, "address");
             bootImage.relocate(address, heapPointer);
         }

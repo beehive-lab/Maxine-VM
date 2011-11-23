@@ -32,7 +32,7 @@ import com.sun.max.vm.stack.*;
 /**
  * Data describing a single compilation of a method, stub, adaptor, or other routine in the VM.
  */
-public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
+public interface MaxCompilation extends MaxMachineCodeRoutine<MaxCompilation> {
 
     /**
      * @return true if this is a baseline compilation, false if optimized.

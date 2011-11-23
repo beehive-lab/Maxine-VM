@@ -37,11 +37,11 @@ import com.sun.max.unsafe.*;
  * <li>Objects, once created never move and are never collected/evicted.</li>
  * </ul>
  */
-public class FixedObjectRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
+public final class FixedObjectRemoteReferenceManager extends AbstractRemoteReferenceManager {
 
     private static final int TRACE_VALUE = 1;
 
-    ObjectHoldingRegion objectRegion;
+    private final ObjectHoldingRegion objectRegion;
 
     /**
      * Map:  address in VM --> a {@link TeleReference} that refers to the object whose origin is at that location.
@@ -58,12 +58,10 @@ public class FixedObjectRemoteReferenceManager extends AbstractVmHolder implemen
         this.objectRegion = objectRegion;
     }
 
-    @Override
     public ObjectHoldingRegion objectRegion() {
         return objectRegion;
     }
 
-    @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Location is outside region");
         // The only way we can tell in general is with the heuristic.

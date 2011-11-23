@@ -172,6 +172,9 @@ public final class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
+            if (registerHistory == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final String name = registerHistory.name();
             setText(name);
             setToolTipText(tableModel.getRowDescription(row));

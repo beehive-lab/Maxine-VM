@@ -22,23 +22,16 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
 /**
- * A allocatable area in the VM that can contain machine code.
+ * Represents a machine code location in the VM.
+ * <p>
+ * The absolute location may change, or may become
+ * obsolete in a managed code region.
  */
-public interface CodeHoldingRegion {
+public interface RemoteCodePointer {
 
-    /**
-     * @return description of the VM memory allocated for this region, null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with pointers to machine code in this memory region.
-     */
-    RemoteCodePointerManager codePointerManager();
-
+    Address getAddress();
 }

@@ -85,7 +85,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
                         Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
                         Word tlabMarkWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME);
                         Word tlabTopWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME);
-                        if (!tlabDisabledWord.isZero() && !tlabMarkWord.isZero() && !tlabTopWord.isZero()) {
+                        if (tlabDisabledWord.isNotZero() && tlabMarkWord.isNotZero() && tlabTopWord.isNotZero()) {
                             if (address.greaterEqual(tlabMarkWord.asAddress()) && tlabTopWord.asAddress().greaterThan(address)) {
                                 return MaxMemoryStatus.FREE;
                             }
@@ -121,7 +121,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
 
     @Override
     public boolean isObjectForwarded(Pointer origin) {
-        if (!origin.isZero()) {
+        if (origin.isNotZero()) {
             Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 return true;
@@ -131,7 +131,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
     }
 
     public boolean isForwardingPointer(Pointer pointer) {
-        return (!pointer.isZero()) && pointer.and(1).toLong() == 1;
+        return (pointer.isNotZero()) && pointer.and(1).toLong() == 1;
     }
 
     public Pointer getTrueLocationFromPointer(Pointer pointer) {
@@ -139,11 +139,11 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
     }
 
     public Pointer getForwardedOrigin(Pointer origin) {
-        if (!origin.isZero()) {
+        if (origin.isNotZero()) {
             Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 final Pointer newCell = getTrueLocationFromPointer(possibleForwardingPointer);
-                if (!newCell.isZero()) {
+                if (newCell.isNotZero()) {
                     return Layout.generalLayout().cellToOrigin(newCell);
                 }
             }
