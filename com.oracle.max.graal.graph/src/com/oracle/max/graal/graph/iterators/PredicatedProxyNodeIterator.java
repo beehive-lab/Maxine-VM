@@ -20,39 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
-import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
-import com.oracle.max.graal.graph.iterators.*;
+import java.util.*;
 
-public abstract class NodeSuccessorsIterable extends NodeIterable<Node> {
+import com.oracle.max.graal.graph.*;
 
-    @SuppressWarnings("unused")
-    public int explicitCount() {
-        int count = 0;
-        for (Node node : this) {
-            count++;
-        }
-        return count;
+public final class PredicatedProxyNodeIterator<T extends Node> extends NodeIterator<T> {
+    private final Iterator<T> iterator;
+    private final NodePredicate predicate;
+    public PredicatedProxyNodeIterator(NodePredicate until, Iterator<T> iterator, NodePredicate predicate) {
+        super(until);
+        this.iterator = iterator;
+        this.predicate = predicate;
     }
-
-    public Node first() {
-        for (Node node : this) {
-            return node;
-        }
-        return null;
-    }
-
-    public void replaceFirst(Node node, Node newNode) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public void replace(Node node, Node other) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public abstract boolean contains(Node node);
-
     @Override
-    public abstract NodeClassIterator iterator();
+    protected void forward() {
+        while ((current == null || !current.isAlive() || !predicate.apply(current)) && iterator.hasNext()) {
+            current = iterator.next();
+        }
+        if (current != null && (!current.isAlive() || !predicate.apply(current))) {
+            current = null;
+        }
+    }
 }

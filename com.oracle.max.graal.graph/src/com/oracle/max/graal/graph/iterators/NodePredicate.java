@@ -20,39 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
-import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
-import com.oracle.max.graal.graph.iterators.*;
+import com.oracle.max.graal.graph.*;
 
-public abstract class NodeSuccessorsIterable extends NodeIterable<Node> {
+public abstract class NodePredicate {
+    public abstract boolean apply(Node n);
 
-    @SuppressWarnings("unused")
-    public int explicitCount() {
-        int count = 0;
-        for (Node node : this) {
-            count++;
-        }
-        return count;
+    public NodePredicate and(final NodePredicate np) {
+        final NodePredicate thiz = this;
+        return new NodePredicate() {
+            @Override
+            public boolean apply(Node n) {
+                return thiz.apply(n) && np.apply(n);
+            }
+        };
     }
 
-    public Node first() {
-        for (Node node : this) {
-            return node;
-        }
-        return null;
+    public NodePredicate or(final NodePredicate np) {
+        final NodePredicate thiz = this;
+        return new NodePredicate() {
+            @Override
+            public boolean apply(Node n) {
+                return thiz.apply(n) || np.apply(n);
+            }
+        };
     }
-
-    public void replaceFirst(Node node, Node newNode) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public void replace(Node node, Node other) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public abstract boolean contains(Node node);
-
-    @Override
-    public abstract NodeClassIterator iterator();
 }
