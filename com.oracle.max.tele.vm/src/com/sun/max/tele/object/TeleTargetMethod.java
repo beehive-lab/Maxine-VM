@@ -672,27 +672,6 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
 
     }
 
-    // TODO (mlvdv) How to deal with eviction?
-
-    /**
-     * A pointer a machine code location in a VM method compilation, represented as an
-     * offset relative to the beginning of the code array so that it can track possible
-     * code location.
-     */
-    private final class RelativeRemoteCodePointer implements RemoteCodePointer {
-
-        private final int codeOffset;
-
-        public RelativeRemoteCodePointer(Address address) {
-            codeOffset = objects().unsafeArrayElementAddressToIndex(Kind.BYTE, codeByteArrayOrigin, address);
-        }
-
-        public Address getAddress() {
-            return objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, codeOffset);
-        }
-
-    }
-
     /**
      * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
      * as a result of inlining.
@@ -1140,13 +1119,6 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * @return the Java source name for the frame slot, null if not available.
      */
     public String sourceVariableName(MaxStackFrame.Compiled javaStackFrame, int slot) {
-        return null;
-    }
-
-    public RemoteCodePointer createRemoteCodePointer(Address address) {
-        if (isValidCodeLocation(address)) {
-            return new RelativeRemoteCodePointer(address);
-        }
         return null;
     }
 

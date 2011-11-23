@@ -27,10 +27,12 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.object.TeleTargetMethod.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.type.*;
 
 
 /**
@@ -50,12 +52,6 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
-    // TODO (mlvdv) temporary counter
-    int count = 0;
-
-    // We need to get inside (more detail) about TTM.  Shouldn't really make this internal to it,
-    // because it is specific to the Semispace.
-    // Or, create a CodePointer class of "RelativeRemoteCodePointer" ; that might work inside TTM
     private final VmCodeCacheRegion codeCacheRegion;
 
     /**
@@ -65,8 +61,8 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
      *   Compilation  -->  [ Integer  -->  WeakReference&lt;RemoteCodePointer&gt; ]
      * </pre>
      */
-    private final Map<Compilation, Map<Integer, WeakReference<RemoteCodePointer> > > pointerMaps =
-        new HashMap<Compilation, Map<Integer, WeakReference<RemoteCodePointer> > >();
+    private final Map<TeleCompilation, Map<Integer, WeakReference<RelativeRemoteCodePointer> > > pointerMaps =
+        new HashMap<TeleCompilation, Map<Integer, WeakReference<RelativeRemoteCodePointer> > >();
 
     /**
      * Creates a manager for pointers to machine code a particular region
@@ -91,50 +87,80 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
         return false;
     }
 
-
     public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(address), "Location is outside region");
-        RemoteCodePointer codePointer = null;
         final TeleCompilation compilation = codeCacheRegion.findCompilation(address);
-//        if (compilation != null) {
-//            final Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
-//
-//        }
-
-        if (compilation != null) {
-            final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
-            if (teleTargetMethod != null) {
-                codePointer = teleTargetMethod.createRemoteCodePointer(address);
-                count++;
+        if (compilation == null || !compilation.isValidCodeLocation(address)) {
+            return null;
+        }
+        RelativeRemoteCodePointer codePointer = null;
+        final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
+        final Address codeByteArrayOrigin = teleTargetMethod.codeCacheObjectOrigin(CodeCacheReferenceKind.CODE);
+        final int codeOffset = objects().unsafeArrayElementAddressToIndex(Kind.BYTE, codeByteArrayOrigin, address);
+        Map<Integer, WeakReference<RelativeRemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
+        if (pointerMap == null) {
+            pointerMap = new HashMap<Integer, WeakReference<RelativeRemoteCodePointer> >();
+            pointerMaps.put(compilation, pointerMap);
+        } else {
+            final WeakReference<RelativeRemoteCodePointer> weakReference = pointerMap.get(codeOffset);
+            if (weakReference != null) {
+                codePointer = weakReference.get();
             }
+        }
+        if (codePointer == null) {
+            codePointer = new RelativeRemoteCodePointer(teleTargetMethod, codeOffset);
+            pointerMap.put(codeOffset, new WeakReference<RelativeRemoteCodePointer>(codePointer));
         }
         return codePointer;
     }
 
-//    private void recordCodePointer(Compilation compilation, int offset, RemoteCodePointer codePointer) {
-//        Map<Integer, WeakReference<RemoteCodePointer>> pointerMap = pointerMaps.get(compilation);
-//        if (pointerMap == null) {
-//            pointerMap = new HashMap<Integer, WeakReference<RemoteCodePointer>>();
-//            pointerMaps.put(compilation, pointerMap);
-//        }
-//        pointerMap.put(offset, new WeakReference<RemoteCodePointer>(codePointer));
-//    }
-
     public int activePointerCount() {
-//       int count = 0;
-//        for (MaxCompilation compilation : codeCacheRegion.compilations()) {
-//            final TeleObject teleObject = compilation.representation();
-//            if (teleObject instanceof TeleTargetMethod) {
-//                final TeleTargetMethod targetMethod = (TeleTargetMethod) teleObject;
-//                count += targetMethod.activePointerCount();
-//            }
-//        }
+        int count = 0;
+        for (Map<Integer, WeakReference<RelativeRemoteCodePointer>> pointerMap : pointerMaps.values()) {
+            for (WeakReference<RelativeRemoteCodePointer> weakReference : pointerMap.values()) {
+                if (weakReference.get() != null) {
+                    count++;
+                }
+            }
+        }
         return count;
     }
 
     public int totalPointerCount() {
-//        return addressToCodePointer.size();
+        int count = 0;
+        for (Map<Integer, WeakReference<RelativeRemoteCodePointer>> pointerMap : pointerMaps.values()) {
+            count += pointerMap.size();
+        }
         return count;
+    }
+
+    /**
+     * A pointer a machine code location in a VM method compilation, represented as an
+     * offset relative to the beginning of the code array so that it can track possible
+     * code location.
+     */
+    private final class RelativeRemoteCodePointer implements RemoteCodePointer {
+
+        private final TeleTargetMethod teleTargetMethod;
+        private final int codeOffset;
+
+        public RelativeRemoteCodePointer(TeleTargetMethod teleTargetMethod, int codeOffset) {
+            this.teleTargetMethod = teleTargetMethod;
+            this.codeOffset = codeOffset;
+        }
+
+        public Address getAddress() {
+            if (teleTargetMethod.isLive()) {
+                final Address codeByteArrayOrigin = teleTargetMethod.codeCacheObjectOrigin(CodeCacheReferenceKind.CODE);
+                return objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, codeOffset);
+            }
+            return Address.zero();
+        }
+
+        public boolean isLive() {
+            return teleTargetMethod.isLive();
+        }
+
     }
 
 }
