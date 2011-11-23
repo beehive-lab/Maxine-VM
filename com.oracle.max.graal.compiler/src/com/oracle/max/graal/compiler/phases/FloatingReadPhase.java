@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.loop.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -173,7 +174,7 @@ public class FloatingReadPhase extends Phase {
             return result;
         }
 
-        public void createLoopEntryMemoryMap(Set<Object> modifiedLocations, LoopBeginNode begin) {
+        public void createLoopEntryMemoryMap(Set<Object> modifiedLocations, Loop loop) {
 
             loopEntryMap = new IdentityHashMap<Object, Node>();
 
@@ -184,20 +185,20 @@ public class FloatingReadPhase extends Phase {
                 } else {
                     other = map.get(LocationNode.ANY_LOCATION);
                 }
-                createLoopEntryPhi(modifiedLocation, other, begin, loopEntryMap);
+                createLoopEntryPhi(modifiedLocation, other, loop, loopEntryMap);
             }
 
             if (modifiedLocations.contains(LocationNode.ANY_LOCATION)) {
                 for (Map.Entry<Object, Node> entry : map.entrySet()) {
                     if (!modifiedLocations.contains(entry.getKey())) {
-                        createLoopEntryPhi(entry.getKey(), entry.getValue(), begin, loopEntryMap);
+                        createLoopEntryPhi(entry.getKey(), entry.getValue(), loop, loopEntryMap);
                     }
                 }
             }
         }
 
-        private void createLoopEntryPhi(Object modifiedLocation, Node other, LoopBeginNode begin, IdentityHashMap<Object, Node> loopEntryMap) {
-            PhiNode phi = other.graph().unique(new PhiNode(CiKind.Illegal, begin, PhiType.Memory));
+        private void createLoopEntryPhi(Object modifiedLocation, Node other, Loop loop, IdentityHashMap<Object, Node> loopEntryMap) {
+            PhiNode phi = other.graph().unique(new PhiNode(CiKind.Illegal, loop.loopBegin(), PhiType.Memory));
             phi.addInput((ValueNode) other);
             map.put(modifiedLocation, phi);
             loopEntryMap.put(modifiedLocation, phi);
@@ -215,35 +216,17 @@ public class FloatingReadPhase extends Phase {
         // Add start node write checkpoint.
         addStartCheckpoint(graph);
 
-        // Create node-to-loop relation.
-        NodeMap<LoopBeginNode> nodeToLoop = graph.createNodeMap();
-        for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
-            mark(begin, null, nodeToLoop);
-        }
+        LoopInfo loopInfo = LoopUtil.computeLoopInfo(graph);
 
-
-        // Get parent-child relationships between loops.
-        NodeMap<List<LoopBeginNode>> loopChildren = graph.createNodeMap();
-        NodeMap<Set<Object>> modifiedValues = graph.createNodeMap();
-        List<LoopBeginNode> rootLoops = new ArrayList<LoopBeginNode>();
-        for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
-            LoopBeginNode parentLoop = nodeToLoop.get(begin.forwardEdge());
-            if (parentLoop != null) {
-                if (loopChildren.get(parentLoop) == null) {
-                    loopChildren.set(parentLoop, new ArrayList<LoopBeginNode>());
-                }
-                loopChildren.get(parentLoop).add(begin);
-            } else {
-                rootLoops.add(begin);
-            }
-
-            // Initialize modified values to empty hash set.
-            modifiedValues.set(begin, new HashSet<Object>());
+        HashMap<Loop, Set<Object>> modifiedValues = new HashMap<Loop, Set<Object>>();
+        // Initialize modified values to empty hash set.
+        for (Loop loop : loopInfo.loops()) {
+            modifiedValues.put(loop, new HashSet<Object>());
         }
 
         // Get modified values in loops.
         for (Node n : graph.getNodes()) {
-            LoopBeginNode loop = nodeToLoop.get(n);
+            Loop loop = loopInfo.loop(n);
             if (loop != null) {
                 if (n instanceof WriteNode) {
                     WriteNode writeNode = (WriteNode) n;
@@ -255,12 +238,12 @@ public class FloatingReadPhase extends Phase {
         }
 
         // Propagate values to parent loops.
-        for (LoopBeginNode begin : rootLoops) {
-            propagateFromChildren(begin, modifiedValues, loopChildren);
+        for (Loop loop : loopInfo.rootLoops()) {
+            propagateFromChildren(loop, modifiedValues);
         }
 
         if (GraalOptions.TraceMemoryMaps) {
-            print(graph, nodeToLoop, modifiedValues);
+            print(graph, loopInfo, modifiedValues);
         }
 
         // Identify blocks.
@@ -271,7 +254,7 @@ public class FloatingReadPhase extends Phase {
         // Process blocks (predecessors first).
         MemoryMap[] memoryMaps = new MemoryMap[blocks.size()];
         for (final Block b : blocks) {
-            processBlock(b, memoryMaps, s.getNodeToBlock(), modifiedValues);
+            processBlock(b, memoryMaps, s.getNodeToBlock(), modifiedValues, loopInfo);
         }
     }
 
@@ -283,7 +266,7 @@ public class FloatingReadPhase extends Phase {
         checkpoint.setNext(next);
     }
 
-    private void processBlock(Block b, MemoryMap[] memoryMaps, NodeMap<Block> nodeToBlock, NodeMap<Set<Object>> modifiedValues) {
+    private void processBlock(Block b, MemoryMap[] memoryMaps, NodeMap<Block> nodeToBlock, HashMap<Loop, Set<Object>> modifiedValues, LoopInfo loopInfo) {
 
         // Visit every block at most once.
         if (memoryMaps[b.blockID()] != null) {
@@ -292,7 +275,7 @@ public class FloatingReadPhase extends Phase {
 
         // Process predecessors before this block.
         for (Block pred : b.getPredecessors()) {
-            processBlock(pred, memoryMaps, nodeToBlock, modifiedValues);
+            processBlock(pred, memoryMaps, nodeToBlock, modifiedValues, loopInfo);
         }
 
 
@@ -304,8 +287,8 @@ public class FloatingReadPhase extends Phase {
             map = new MemoryMap(b, memoryMaps[b.getPredecessors().get(0).blockID()]);
             if (b.isLoopHeader()) {
                 assert b.getPredecessors().size() == 1;
-                LoopBeginNode begin = (LoopBeginNode) b.firstNode();
-                map.createLoopEntryMemoryMap(modifiedValues.get(begin), begin);
+                Loop loop = loopInfo.loop(b.firstNode());
+                map.createLoopEntryMemoryMap(modifiedValues.get(loop), loop);
             } else {
                 for (int i = 1; i < b.getPredecessors().size(); ++i) {
                     assert b.firstNode() instanceof MergeNode : b.firstNode();
@@ -342,29 +325,27 @@ public class FloatingReadPhase extends Phase {
         }
     }
 
-    private void traceMemoryCheckpoint(LoopBeginNode loop, NodeMap<Set<Object>> modifiedValues) {
+    private void traceMemoryCheckpoint(Loop loop, HashMap<Loop, Set<Object>> modifiedValues) {
         modifiedValues.get(loop).add(LocationNode.ANY_LOCATION);
     }
 
-    private void propagateFromChildren(LoopBeginNode begin, NodeMap<Set<Object>> modifiedValues, NodeMap<List<LoopBeginNode>> loopChildren) {
-        if (loopChildren.get(begin) != null) {
-            for (LoopBeginNode child : loopChildren.get(begin)) {
-                propagateFromChildren(child, modifiedValues, loopChildren);
-                modifiedValues.get(begin).addAll(modifiedValues.get(child));
-            }
+    private void propagateFromChildren(Loop loop, HashMap<Loop, Set<Object>> modifiedValues) {
+        for (Loop child : loop.children()) {
+            propagateFromChildren(child, modifiedValues);
+            modifiedValues.get(loop).addAll(modifiedValues.get(child));
         }
     }
 
-    private void traceWrite(LoopBeginNode loop, Object locationIdentity, NodeMap<Set<Object>> modifiedValues) {
+    private void traceWrite(Loop loop, Object locationIdentity, HashMap<Loop, Set<Object>> modifiedValues) {
         modifiedValues.get(loop).add(locationIdentity);
     }
 
-    private void print(StructuredGraph graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
+    private void print(StructuredGraph graph, LoopInfo loopInfo, HashMap<Loop, Set<Object>> modifiedValues) {
 
         TTY.println();
         TTY.println("Loops:");
-        for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
-            TTY.print("Loop " + begin + " modified values: " + modifiedValues.get(begin));
+        for (Loop loop : loopInfo.loops()) {
+            TTY.print(loop + " modified values: " + modifiedValues.get(loop));
             TTY.println();
         }
 //

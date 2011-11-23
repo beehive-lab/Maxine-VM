@@ -95,4 +95,9 @@ public class ObservableContext {
         }
     }
 
+    public void clear() {
+        if (observers != null) {
+            observers = null;
+        }
+    }
 }

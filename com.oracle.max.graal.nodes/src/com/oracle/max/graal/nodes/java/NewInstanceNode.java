@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewInstanceNode} represents the allocation of an instance class object.
  */
-public final class NewInstanceNode extends FixedWithNextNode implements EscapeAnalyzable, LIRLowerable {
+public final class NewInstanceNode extends FixedWithNextNode implements EscapeAnalyzable, LIRLowerable, Node.IterableNodeType {
 
     private final RiResolvedType instanceClass;
 

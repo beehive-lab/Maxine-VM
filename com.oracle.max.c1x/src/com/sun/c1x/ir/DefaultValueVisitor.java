@@ -63,7 +63,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitLoadIndexed(LoadIndexed i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }
     @Override public void visitLoadRegister(LoadRegister i) { visit(i); }
-    @Override public void visitAllocateStackHandle(StackHandle i) { visit(i); }
     @Override public void visitLocal(Local i) { visit(i); }
     @Override public void visitLogicOp(LogicOp i) { visit(i); }
     @Override public void visitLookupSwitch(LookupSwitch i) { visit(i); }
@@ -86,7 +85,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitReturn(Return i) { visit(i); }
     @Override public void visitShiftOp(ShiftOp i) { visit(i); }
     @Override public void visitSignificantBit(SignificantBitOp i) { visit(i); }
-    @Override public void visitStackAllocate(StackAllocate i) { visit(i); }
+    @Override public void visitAlloca(Alloca i) { visit(i); }
     @Override public void visitStoreField(StoreField i) { visit(i); }
     @Override public void visitStoreIndexed(StoreIndexed i) { visit(i); }
     @Override public void visitStorePointer(StorePointer i) { visit(i); }

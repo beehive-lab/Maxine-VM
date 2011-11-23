@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,35 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jtt.exbytecode;
+package com.oracle.max.graal.compiler.phases;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.oracle.max.graal.compiler.util.*;
+import com.oracle.max.graal.compiler.util.NodeIterators.NodeIterable;
+import com.oracle.max.graal.nodes.*;
 
-/*
- * @Harness: java
- * @Runs: 0=true; 1=true; 34=true
- */
-public class EBC_stackhandle01 {
-    public static boolean test(int i) {
-        Pointer addr = Intrinsics.stackHandle(i);
-        Pointer addr2 = Intrinsics.stackHandle(i + 1);
+public class SafepointPoolingEliminationPhase extends Phase {
 
-        if (i == 0) {
-            if (!addr.isZero()) {
-                return false;
+    @Override
+    protected void run(StructuredGraph graph) {
+        for (LoopEndNode loopEnd : graph.getNodes(LoopEndNode.class)) {
+            NodeIterable<FixedNode> it = NodeIterators.dominators(loopEnd).until(loopEnd.loopBegin());
+            for (FixedNode n : it) {
+                if (n instanceof Invoke) {
+                    loopEnd.setSafePointPooling(false);
+                    break;
+                }
             }
-        } else if (addr.readInt(0) != i) {
-            return false;
         }
-
-        if (i + 1 == 0) {
-            if (!addr2.isZero()) {
-                return false;
-            }
-        } else if (addr2.readInt(0) != i + 1) {
-            return false;
-        }
-        return true;
     }
 }

@@ -67,7 +67,7 @@ public interface VMEntries {
 
     void RiConstantPool_loadReferencedType(HotSpotTypeResolved pool, int cpi, byte byteCode);
 
-    long installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
+    HotSpotCompiledMethod installMethod(HotSpotTargetMethod targetMethod, boolean installCode);
 
     long installStub(HotSpotTargetMethod targetMethod);
 

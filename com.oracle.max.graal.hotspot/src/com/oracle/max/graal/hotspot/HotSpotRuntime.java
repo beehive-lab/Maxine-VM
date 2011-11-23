@@ -60,7 +60,8 @@ public class HotSpotRuntime implements GraalRuntime {
     final HotSpotRegisterConfig regConfig;
     final HotSpotRegisterConfig globalStubRegConfig;
     private final Compiler compiler;
-    private IdentityHashMap<RiMethod, StructuredGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, StructuredGraph>();
+    // TODO(ls) this is not a permanent solution - there should be a more sophisticated compiler oracle
+    private HashSet<RiResolvedMethod> notInlineableMethods = new HashSet<RiResolvedMethod>();
 
     private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
 
@@ -164,7 +165,14 @@ public class HotSpotRuntime implements GraalRuntime {
 
     @Override
     public boolean mustNotInline(RiResolvedMethod method) {
+        if (notInlineableMethods.contains(method)) {
+            return true;
+        }
         return Modifier.isNative(method.accessFlags());
+    }
+
+    public void makeNotInlineable(RiResolvedMethod method) {
+        notInlineableMethods.add(method);
     }
 
     @Override
@@ -373,6 +381,10 @@ public class HotSpotRuntime implements GraalRuntime {
     @Override
     public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
 
+        if (!((HotSpotMethodResolvedImpl) method).canIntrinsify) {
+            return null;
+        }
+
         if (method.holder().name().equals("Ljava/lang/Object;")) {
             String fullName = method.name() + method.signature().asString();
             if (fullName.equals("getClass()Ljava/lang/Class;")) {
@@ -407,7 +419,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             }
         }
-        if (!intrinsicGraphs.containsKey(method)) {
+        if (!containsGraph(method)) {
             RiType holder = method.holder();
             String fullName = method.name() + method.signature().asString();
             String holderName = holder.name();
@@ -421,7 +433,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     graph.start().setNext(klassOop);
                     klassOop.setNext(result);
                     result.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (method.holder().name().equals("Ljava/lang/Class;")) {
                 if (fullName.equals("getModifiers()I")) {
@@ -433,7 +445,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     ReadNode result = graph.unique(new ReadNode(CiKind.Int, klassOop, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Int, config.klassModifierFlagsOffset, graph)));
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("isInstance(Ljava/lang/Object;)Z")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
@@ -444,7 +456,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument, false)), graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/System;")) {
                 if (fullName.equals("currentTimeMillis()J")) {
@@ -453,21 +465,21 @@ public class HotSpotRuntime implements GraalRuntime {
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
                     graph.start().setNext(call);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("nanoTime()J")) {
                     StructuredGraph graph = new StructuredGraph();
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeNanos));
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
                     graph.start().setNext(call);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Float;")) {
                 if (fullName.equals("floatToRawIntBits(F)I")) {
                     StructuredGraph graph = new StructuredGraph();
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, graph.unique(new LocalNode(CiKind.Float, 0))))));
                     graph.start().setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("floatToIntBits(F)I")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0));
@@ -477,19 +489,19 @@ public class HotSpotRuntime implements GraalRuntime {
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
                     conditionalStructure.merge.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("intBitsToFloat(I)F")) {
                     StructuredGraph graph = new StructuredGraph();
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_I2F, graph.unique(new LocalNode(CiKind.Int, 0))))));
                     graph.start().setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Double;")) {
                 if (fullName.equals("doubleToRawLongBits(D)J")) {
                     StructuredGraph graph = new StructuredGraph();
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, graph.unique(new LocalNode(CiKind.Double, 0))))));
                     graph.start().setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("doubleToLongBits(D)J")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0));
@@ -499,12 +511,12 @@ public class HotSpotRuntime implements GraalRuntime {
                     ReturnNode ret = graph.add(new ReturnNode(conditionalStructure.phi));
                     graph.start().setNext(conditionalStructure.ifNode);
                     conditionalStructure.merge.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("longBitsToDouble(J)D")) {
                     StructuredGraph graph = new StructuredGraph();
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_L2D, graph.unique(new LocalNode(CiKind.Long, 0))))));
                     graph.start().setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (holderName.equals("Lsun/misc/Unsafe;")) {
                 if (fullName.startsWith("compareAndSwap")) {
@@ -528,7 +540,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         ReturnNode ret = graph.add(new ReturnNode(cas));
                         cas.setNext(ret);
                         graph.start().setNext(cas);
-                        intrinsicGraphs.put(method, graph);
+                        addGraph(method, graph);
                     }
                 } else if (fullName.equals("getObject(Ljava/lang/Object;J)Ljava/lang/Object;")) {
                     StructuredGraph graph = new StructuredGraph();
@@ -538,7 +550,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
                     graph.start().setNext(load);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
 // TODO disabled for now.  The old VolatileReadNode was not safe and is deleted now.  We need a MemoryBarrierNode before and after the
 // actual read, and it must be guaranteed that the memory barriers stay next to the read during scheduling.
 //                } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
@@ -562,7 +574,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     graph.start().setNext(load);
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 } else if (fullName.equals("putObject(Ljava/lang/Object;JLjava/lang/Object;)V")) {
                     StructuredGraph graph = new StructuredGraph();
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
@@ -574,7 +586,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     store.setStateAfter(frameState);
                     ReturnNode ret = graph.add(new ReturnNode(null));
                     store.setNext(ret);
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Math;") && compiler.getCompiler().target.arch.isX86()) {
                 Operation op = null;
@@ -634,15 +646,28 @@ public class HotSpotRuntime implements GraalRuntime {
                         ReturnNode ret = graph.add(new ReturnNode(result));
                         graph.start().setNext(ret);
                     }
-                    intrinsicGraphs.put(method, graph);
+                    addGraph(method, graph);
                 }
             }
 
-            if (!intrinsicGraphs.containsKey(method)) {
-                intrinsicGraphs.put(method, null);
+            if (!containsGraph(method)) {
+                ((HotSpotMethodResolvedImpl) method).canIntrinsify = false;
+                return null;
             }
         }
-        return intrinsicGraphs.get(method);
+        return getGraph(method);
+    }
+
+    private StructuredGraph getGraph(RiResolvedMethod method) {
+        return (StructuredGraph) method.compilerStorage().get(Graph.class);
+    }
+
+    private void addGraph(RiResolvedMethod method, StructuredGraph graph) {
+        method.compilerStorage().put(Graph.class, graph);
+    }
+
+    private boolean containsGraph(RiResolvedMethod method) {
+        return method.compilerStorage().containsKey(Graph.class);
     }
 
     private SafeReadNode safeReadHub(Graph graph, ValueNode value) {
@@ -673,10 +698,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
-    public HotSpotCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
-        Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, true);
-        return new HotSpotCompiledMethod(compilerInstance, (HotSpotMethodResolved) method, nmethod);
+    public void installMethod(RiMethod method, CiTargetMethod code) {
+        HotSpotTargetMethod.installMethod(CompilerImpl.getInstance(), (HotSpotMethodResolved) method, code, true);
     }
 
     @Override
@@ -700,12 +723,6 @@ public class HotSpotRuntime implements GraalRuntime {
     @Override
     public RiCompiledMethod addMethod(RiResolvedMethod method, CiTargetMethod code) {
         Compiler compilerInstance = CompilerImpl.getInstance();
-        long nmethod = HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
-        return new HotSpotCompiledMethod(compilerInstance, method, nmethod);
-    }
-
-    @Override
-    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        // empty
+        return HotSpotTargetMethod.installMethod(compilerInstance, (HotSpotMethodResolved) method, code, false);
     }
 }

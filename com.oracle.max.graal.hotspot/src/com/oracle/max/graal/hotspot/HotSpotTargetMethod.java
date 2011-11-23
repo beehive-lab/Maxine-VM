@@ -97,7 +97,7 @@ public final class HotSpotTargetMethod extends CompilerObject {
         return result;
     }
 
-    public static long installMethod(Compiler compiler, HotSpotMethodResolved method, CiTargetMethod targetMethod, boolean installCode) {
+    public static HotSpotCompiledMethod installMethod(Compiler compiler, HotSpotMethodResolved method, CiTargetMethod targetMethod, boolean installCode) {
         return compiler.getVMEntries().installMethod(new HotSpotTargetMethod(compiler, method, targetMethod), installCode);
     }
 

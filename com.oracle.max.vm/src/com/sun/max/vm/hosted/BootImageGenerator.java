@@ -78,14 +78,6 @@ public final class BootImageGenerator {
     private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
 
-    private final Option<Boolean> testCallerBaseline = options.newBooleanOption("test-caller-baseline", false,
-            "For the Java tester, this option specifies that each test case's harness should be compiled " +
-            "with the baseline compiler (helpful for testing baseline->baseline and baseline->opt calls).");
-
-    private final Option<Boolean> testCalleeBaseline = options.newBooleanOption("test-callee-baseline", false,
-            "For the Java tester, this option specifies that each test case's method should be compiled " +
-            "with the baseline compiler (helpful for testing baseline->baseline and opt->baseline calls).");
-
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
@@ -102,20 +94,7 @@ public final class BootImageGenerator {
     private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
-    /**
-     * Used in the Java tester to indicate whether to compile the testing harness itself with the baseline compiler.
-     */
-    public static boolean callerBaseline = false;
-
-    /**
-     * Used by the Java tester to indicate whether to compile the tests themselves with the baseline compiler.
-     */
-    public static boolean calleeBaseline = false;
-
-    /**
-     * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
-     */
-    public static boolean nativeTests = false;
+    public static boolean nativeTests;
 
     /**
      * Gets the default VM directory where the VM executable, shared libraries, boot image
@@ -206,9 +185,7 @@ public final class BootImageGenerator {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
             }
 
-            BootImageGenerator.calleeBaseline = testCalleeBaseline.getValue();
-            BootImageGenerator.callerBaseline = testCallerBaseline.getValue();
-            BootImageGenerator.nativeTests = testNative.getValue();
+            nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();
             vmDirectory.mkdirs();

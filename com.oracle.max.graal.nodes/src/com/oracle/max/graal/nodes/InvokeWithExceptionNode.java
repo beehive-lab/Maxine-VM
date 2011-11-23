@@ -30,6 +30,7 @@ import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.util.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint, LIRLowerable {
@@ -137,6 +138,9 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> debugProperties = super.getDebugProperties();
         debugProperties.put("memoryCheckpoint", "true");
+        if (callTarget != null && callTarget.targetMethod() != null) {
+            debugProperties.put("targetMethod", CiUtil.format("%h.%n(%p)", callTarget.targetMethod()));
+        }
         return debugProperties;
     }
 

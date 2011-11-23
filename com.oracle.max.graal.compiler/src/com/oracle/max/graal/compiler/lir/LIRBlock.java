@@ -38,6 +38,13 @@ import com.oracle.max.graal.nodes.java.*;
  */
 public final class LIRBlock extends Block {
 
+    public static final IdentifyBlocksPhase.BlockFactory FACTORY = new IdentifyBlocksPhase.BlockFactory() {
+        @Override
+        public Block createBlock(int blockID) {
+            return new LIRBlock(blockID);
+        }
+    };
+
     public final Label label;
     private List<LIRInstruction> lir;
     private FrameState lastState;

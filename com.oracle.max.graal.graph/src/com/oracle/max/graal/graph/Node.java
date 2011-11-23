@@ -311,7 +311,7 @@ public abstract class Node implements Cloneable {
         try {
             newNode = (Node) this.clone();
         } catch (CloneNotSupportedException e) {
-            throw new VerificationError(e).addContext(this);
+            throw new GraalInternalError(e).addContext(this);
         }
         getNodeClass().clearInputs(newNode);
         getNodeClass().clearSuccessors(newNode);
@@ -434,6 +434,10 @@ public abstract class Node implements Cloneable {
          */
         Long,
         /**
+         * For use by a custom formatting facility in an IDE.
+         */
+        Debugger,
+        /**
          * All the other information plus all debug properties of the node.
          */
         All
@@ -452,6 +456,7 @@ public abstract class Node implements Cloneable {
                 return toString(Verbosity.Id) + "|" + toString(Verbosity.Name);
             case Long:
                 return toString(Verbosity.Short);
+            case Debugger:
             case All: {
                 StringBuilder str = new StringBuilder();
                 str.append(toString(Verbosity.Short)).append(" { ");

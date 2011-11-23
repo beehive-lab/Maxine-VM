@@ -26,6 +26,7 @@ import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -74,11 +75,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private ValueNode lastInstructionPrinted; // Debugging only
     private FrameState lastState;
 
-    public LIRGenerator(GraalCompilation compilation) {
+    public LIRGenerator(GraalCompilation compilation, RiXirGenerator xir) {
         this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.lir = compilation.lir();
-        this.xir = compilation.compiler.xir;
+        this.xir = xir;
         this.xirSupport = new XirSupport();
         this.operands = new OperandPool(compilation.compiler.target);
     }
@@ -344,15 +345,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     private boolean checkStartOperands(Node node, FrameState fs) {
-        if (node == ((StructuredGraph) node.graph()).start()) {
-            CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
-            int slot = 0;
-            for (CiKind kind : arguments) {
-                LocalNode local = (LocalNode) fs.localAt(slot);
-                assert local != null && local.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
-                slot++;
-                if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+        if (!Modifier.isNative(compilation.method.accessFlags())) {
+            if (node == ((StructuredGraph) node.graph()).start()) {
+                CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
+                int slot = 0;
+                for (CiKind kind : arguments) {
+                    ValueNode arg = fs.localAt(slot);
+                    assert arg != null && arg.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + arg + ")";
                     slot++;
+                    if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+                        slot++;
+                    }
                 }
             }
         }
@@ -466,7 +469,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         for (int i = 0; i < dims.length; i++) {
             dims[i] = toXirArgument(x.dimension(i));
         }
-        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.elementType);
+        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.type());
         emitXir(snippet, x, state(), null, true);
     }
 
@@ -520,17 +523,18 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
-        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPooling()) {
+        if (GraalOptions.GenLoopSafepoints && x.hasSafePointPolling()) {
             emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
 
     public void emitSafepointPoll(FixedNode x) {
-        XirSnippet snippet = xir.genSafepointPoll(site(x));
-        emitXir(snippet, x, state(), null, false);
+        if (!lastState.method().noSafepointPolls()) {
+            XirSnippet snippet = xir.genSafepointPoll(site(x));
+            emitXir(snippet, x, state(), null, false);
+        }
     }
-
 
     @Override
     public void emitIf(IfNode x) {
@@ -969,15 +973,14 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
 
 
-    private void moveToPhi(MergeNode merge, Node pred) {
+    private void moveToPhi(MergeNode merge, FixedNode pred) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 1) {
             TTY.println("MOVE TO PHI from " + pred + " to " + merge);
         }
-        int nextSuccIndex = merge.phiPredecessorIndex(pred);
         PhiResolver resolver = new PhiResolver(this);
         for (PhiNode phi : merge.phis()) {
             if (phi.type() == PhiType.Value) {
-                ValueNode curVal = phi.valueAt(nextSuccIndex);
+                ValueNode curVal = phi.valueAt(pred);
                 resolver.move(operand(curVal), operandForPhi(phi));
             }
         }
@@ -1281,7 +1284,12 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         public CiCodePos getCodePos() {
-            // TODO: get the code position of the current instruction if possible
+            if (current instanceof StateSplit) {
+                FrameState stateAfter = ((StateSplit) current).stateAfter();
+                if (stateAfter != null) {
+                    return stateAfter.toCodePos();
+                }
+            }
             return null;
         }
 

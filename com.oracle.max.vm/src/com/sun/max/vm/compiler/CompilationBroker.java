@@ -94,6 +94,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
     }
 
+    @RESET
     static String CompileCommand;
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand",
@@ -105,7 +106,7 @@ public class CompilationBroker {
             "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
-    private HashMap<String, String> compileCommandMap;
+    private LinkedHashMap<String, String> compileCommandMap;
 
     /**
      * Gets the {@linkplain RuntimeCompiler#name() name} of the compiler to be used to
@@ -120,7 +121,7 @@ public class CompilationBroker {
         // A race to parse the option and create the map is fine. The result will be identical
         // for both threads and so one result just becomes instant garbage.
         if (compileCommandMap == null) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
             String[] parts = CompileCommand.split(",");
             for (String part : parts) {
                 int colon = part.indexOf(':');
@@ -136,7 +137,7 @@ public class CompilationBroker {
         }
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
-            if (methodString.contains(e.getKey())) {
+            if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
                 return e.getValue();
             }
         }
@@ -381,9 +382,6 @@ public class CompilationBroker {
         }
     }
 
-    @HOSTED_ONLY
-    public static final HashSet<Class> compileWithBaseline = new HashSet<Class>();
-
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
@@ -398,31 +396,26 @@ public class CompilationBroker {
         }
 
         RuntimeCompiler compiler;
-        if (isHosted()) {
-            if (compileWithBaseline.contains(cma.holder().javaClass())) {
-                compiler = baselineCompiler;
-                assert compiler != null;
-            } else {
-                // at prototyping time, default to the opt compiler
-                compiler = optimizingCompiler;
-            }
+        if (nature == Nature.BASELINE) {
+            compiler = baselineCompiler;
+            assert compiler != null;
+        } else if (nature == Nature.OPT) {
+            compiler = optimizingCompiler;
         } else {
-            if (nature == Nature.BASELINE) {
-                compiler = baselineCompiler;
-                assert compiler != null;
-            } else if (nature == Nature.OPT) {
+            if (isHosted()) {
+                // at prototyping time, default to the opt compiler
                 compiler = optimizingCompiler;
             } else {
                 compiler = defaultCompiler;
-                String compilerName = compilerFor(cma);
-                if (compilerName != null) {
-                    if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                        compiler = optimizingCompiler;
-                    } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                        compiler = baselineCompiler;
-                    }
-                }
-                assert compiler != null;
+            }
+        }
+
+        String compilerName = compilerFor(cma);
+        if (compilerName != null) {
+            if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                compiler = optimizingCompiler;
+            } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                compiler = baselineCompiler;
             }
         }
 

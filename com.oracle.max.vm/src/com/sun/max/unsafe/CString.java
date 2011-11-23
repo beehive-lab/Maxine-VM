@@ -25,10 +25,13 @@ package com.sun.max.unsafe;
 
 import java.io.*;
 
+import sun.misc.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Utilities for converting between Java strings and C strings (encoded as UTF8 bytes).
@@ -130,6 +133,22 @@ public final class CString {
         return start + n;
     }
 
+    private static void setWord(long address, int index, long value, boolean unsafe) {
+        if (unsafe) {
+            WithoutAccessCheck.unsafe.putAddress(address + Word.size() * index, value);
+        } else {
+            Pointer.fromLong(address).setWord(index, Address.fromLong(value));
+        }
+    }
+
+    private static void writeByte(long address, int offset, int value, boolean unsafe) {
+        if (unsafe) {
+            WithoutAccessCheck.unsafe.putByte(address + offset, (byte) value);
+        } else {
+            Pointer.fromLong(address).writeByte(offset, (byte) value);
+        }
+    }
+
     /**
      * Fills a given buffer with the bytes in the UTF8 representation of a string following by a terminating zero. The
      * maximum number of bytes written to the buffer is limited to the number of leading characters of {@code string}
@@ -138,9 +157,10 @@ public final class CString {
      * @param string the String to write to the buffer
      * @param buffer a pointer to the beginning of the buffer
      * @param bufferSize the size of the buffer
+     * @param unsafe specifies if {@link Unsafe} should be used instead of boxed memory
      * @return a pointer to the position in the buffer following the terminating zero character
      */
-    public static Pointer writeUtf8(final String string, final Pointer buffer, final int bufferSize) {
+    public static long writeUtf8(final String string, final long buffer, final int bufferSize, boolean unsafe) {
         int position = 0;
         final int endPosition = bufferSize - 1;
         for (int i = 0; i < string.length(); i++) {
@@ -149,24 +169,24 @@ public final class CString {
                 if (position >= endPosition) {
                     break;
                 }
-                buffer.writeByte(position++, (byte) ch);
+                writeByte(buffer, position++, ch, unsafe);
             } else if (ch > 0x07FF) {
                 if (position + 2 >= endPosition) {
                     break;
                 }
-                buffer.writeByte(position++, (byte) (0xe0 | (byte) (ch >> 12)));
-                buffer.writeByte(position++, (byte) (0x80 | ((ch & 0xfc0) >> 6)));
-                buffer.writeByte(position++, (byte) (0x80 | (ch & 0x3f)));
+                writeByte(buffer, position++, (byte) (0xe0 | (byte) (ch >> 12)), unsafe);
+                writeByte(buffer, position++, (byte) (0x80 | ((ch & 0xfc0) >> 6)), unsafe);
+                writeByte(buffer, position++, (byte) (0x80 | (ch & 0x3f)), unsafe);
             } else {
                 if (position + 1 >= endPosition) {
                     break;
                 }
-                buffer.writeByte(position++, (byte) (0xc0 | (byte) (ch >> 6)));
-                buffer.writeByte(position++, (byte) (0x80 | (ch & 0x3f)));
+                writeByte(buffer, position++, (byte) (0xc0 | (byte) (ch >> 6)), unsafe);
+                writeByte(buffer, position++, (byte) (0x80 | (ch & 0x3f)), unsafe);
             }
         }
-        buffer.writeByte(position, (byte) 0);
-        return buffer.plus(position + 1);
+        writeByte(buffer, position, 0, unsafe);
+        return buffer + position + 1;
     }
 
     /**
@@ -264,17 +284,18 @@ public final class CString {
     }
 
     /**
-     * Copies an array of Java strings into a native array of C strings. The memory for the C string array and each
+     * Copies an array of Java strings into an array of C strings. The memory for the C string array and each
      * element in the array is allocated in one memory chunk. The C string array is first in the chunk, followed by 0 if
      * {@code appendNullDelimiter == true}, followed by {@code strings.length} null terminated C strings. De-allocating
      * the memory for the buffer is the responsibility of the caller.
      *
      * @param strings an array of Java strings
      * @param appendNullDelimiter {@code true} if a null delimiter character '\0' should be appended
-     * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
+     * @param unsafe specifies if {@link Unsafe} should be used instead of boxed memory
+     * @return a buffer that can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */
-    public static Pointer utf8ArrayFromStringArray(String[] strings, boolean appendNullDelimiter) {
+    public static long utf8ArrayFromStringArray(String[] strings, boolean appendNullDelimiter, boolean unsafe) {
         final int nullDelimiter = appendNullDelimiter ? 1 : 0;
         final int pointerArraySize = Word.size() * (strings.length + nullDelimiter);
         int bufferSize = pointerArraySize;
@@ -285,16 +306,17 @@ public final class CString {
             utf8Lengths[i] = utf8Length;
             bufferSize += utf8Length + 1;
         }
-        final Pointer buffer = Memory.mustAllocate(bufferSize);
 
-        Pointer stringPointer = buffer.plus(pointerArraySize);
+        long buffer = unsafe ? WithoutAccessCheck.unsafe.allocateMemory(bufferSize) : Memory.mustAllocate(bufferSize).toLong();
+
+        long stringPointer = buffer + pointerArraySize;
         for (int i = 0; i < strings.length; ++i) {
             final String s = strings[i];
-            buffer.setWord(i, stringPointer);
-            stringPointer = CString.writeUtf8(s, stringPointer, utf8Lengths[i] + 1);
+            setWord(buffer, i, stringPointer, unsafe);
+            stringPointer = CString.writeUtf8(s, stringPointer, utf8Lengths[i] + 1, unsafe);
         }
         if (appendNullDelimiter) {
-            buffer.setWord(strings.length, Word.zero());
+            setWord(buffer, strings.length, 0L, unsafe);
         }
 
         return buffer;

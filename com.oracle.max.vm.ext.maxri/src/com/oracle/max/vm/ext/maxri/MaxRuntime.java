@@ -70,28 +70,14 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRuntime implements GraalRuntime {
 
-    public static final class CompilationInfo {
-
-        public boolean usesTagging = false;
-
-        public void reset() {
-            usesTagging = false;
-        }
-
-    }
-
-    public static final ThreadLocal<CompilationInfo> compilationInfo = new ThreadLocal<CompilationInfo>() {
-        @Override
-        protected CompilationInfo initialValue() {
-            return new CompilationInfo();
-        }
-    };
-
     private static MaxRuntime instance = new MaxRuntime();
 
     private IntrinsicImpl.Registry intrinsicRegistry;
 
-    public static MaxRuntime getInstance() {
+    /**
+     * Gets the global MaxRuntime instance.
+     */
+    public static MaxRuntime runtime() {
         return instance;
     }
 
@@ -105,7 +91,7 @@ public class MaxRuntime implements GraalRuntime {
             VMConfigurator.installStandard(BuildLevel.PRODUCT);
             JavaPrototype.initialize(false);
         }
-        return getInstance();
+        return runtime();
     }
 
 
@@ -185,24 +171,17 @@ public class MaxRuntime implements GraalRuntime {
             return true;
         }
 
-        if (isHosted() && CompilationBroker.compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
-            // Ensure that methods intended to be compiled by the baseline compiler for the
-            // purpose of a JTT test are not inlined.
-            return true;
+        if (isHosted()) {
+            CompilationBroker cb = vm().compilationBroker;
+            String compilerName = cb.compilerFor(classMethodActor);
+            if (compilerName != null && cb.baselineCompiler != null && cb.baselineCompiler.matches(compilerName)) {
+                // Ensure that methods intended to be compiled by the baseline compiler for the
+                // purpose of a JTT test are not inlined.
+                return true;
+            }
         }
 
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
-    }
-
-    @Override
-    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        if (callee instanceof ClassMethodActor) {
-            final ClassMethodActor cmaCallee = (ClassMethodActor) callee;
-            if (cmaCallee.isUsingTaggedLocals()) {
-                final CompilationInfo ci = compilationInfo.get();
-                ci.usesTagging = true;
-            }
-        }
     }
 
     /**
@@ -525,13 +504,12 @@ public class MaxRuntime implements GraalRuntime {
         return MethodActor.fromJava(reflectionMethod);
     }
 
-    public RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
+    public void installMethod(RiMethod method, CiTargetMethod code) {
         ClassMethodActor cma = (ClassMethodActor) method;
         synchronized (cma) {
             MaxTargetMethod tm = new MaxTargetMethod(cma, code, true);
             cma.compiledState = new Compilations(null, tm);
         }
-        return null;
     }
 
     @Override

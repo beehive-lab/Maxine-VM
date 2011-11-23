@@ -43,24 +43,7 @@ public class GraalContext {
     private GraalContext(boolean empty, String name) {
         this.name = name;
         if (!empty) {
-            if (GraalOptions.PrintCFGToFile) {
-                observable.addCompilationObserver(new CFGPrinterObserver());
-            }
-            if (GraalOptions.PrintDOTGraphToFile) {
-                observable.addCompilationObserver(new GraphvizPrinterObserver(false));
-            }
-            if (GraalOptions.PrintDOTGraphToPdf) {
-                observable.addCompilationObserver(new GraphvizPrinterObserver(true));
-            }
-            if (GraalOptions.PrintIdealGraphLevel != 0 || GraalOptions.Plot || GraalOptions.PlotOnError) {
-                CompilationObserver observer;
-                if (GraalOptions.PrintIdealGraphFile) {
-                    observer = new IdealGraphPrinterObserver();
-                } else {
-                    observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-                }
-                observable.addCompilationObserver(observer);
-            }
+            reset();
         }
     }
 
@@ -70,6 +53,28 @@ public class GraalContext {
 
     public boolean isObserved() {
         return observable.isObserved();
+    }
+
+    public void reset() {
+        observable.clear();
+        if (GraalOptions.PrintCFGToFile) {
+            observable.addCompilationObserver(new CFGPrinterObserver());
+        }
+        if (GraalOptions.PrintDOTGraphToFile) {
+            observable.addCompilationObserver(new GraphvizPrinterObserver(false));
+        }
+        if (GraalOptions.PrintDOTGraphToPdf) {
+            observable.addCompilationObserver(new GraphvizPrinterObserver(true));
+        }
+        if (GraalOptions.PrintIdealGraphLevel != 0 || GraalOptions.Plot || GraalOptions.PlotOnError) {
+            CompilationObserver observer;
+            if (GraalOptions.PrintIdealGraphFile) {
+                observer = new IdealGraphPrinterObserver();
+            } else {
+                observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            }
+            observable.addCompilationObserver(observer);
+        }
     }
 
     public void print() {

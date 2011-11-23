@@ -103,11 +103,11 @@ public class NodeWorkList implements Iterable<Node> {
         visited.clearAll();
     }
 
-    public void replaced(Node newNode, Node oldNode, EdgeType... edges) {
-        this.replaced(newNode, oldNode, false, edges);
+    public void replaced(Node newNode, Node oldNode) {
+        this.replaced(newNode, oldNode, false);
     }
 
-    public void replaced(Node newNode, Node oldNode, boolean add, EdgeType... edges) {
+    public void replaced(Node newNode, Node oldNode, boolean add) {
         worklist.remove(oldNode);
         if (newNode == null) {
             return;
@@ -115,29 +115,8 @@ public class NodeWorkList implements Iterable<Node> {
         if (add) {
             this.add(newNode);
         }
-        for (EdgeType type : edges) {
-            switch (type) {
-                case INPUTS:
-                    for (Node n : newNode.inputs()) {
-                        addAgain(n);
-                    }
-                    break;
-                case PREDECESSORS:
-                    if (newNode.predecessor() != null) {
-                        addAgain(newNode.predecessor());
-                    }
-                    break;
-                case USAGES:
-                    for (Node n : newNode.usages()) {
-                        addAgain(n);
-                    }
-                    break;
-                case SUCCESSORS:
-                    for (Node n : newNode.successors()) {
-                        addAgain(n);
-                    }
-                    break;
-            }
+        for (Node n : newNode.usages()) {
+            addAgain(n);
         }
     }
 

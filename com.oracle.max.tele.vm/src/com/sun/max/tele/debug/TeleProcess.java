@@ -91,11 +91,11 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */
-    public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
+    public static long createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
         final String[] strings = new String[commandLineArguments.length + 1];
         strings[0] = programFile.getAbsolutePath();
         System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);
-        return CString.utf8ArrayFromStringArray(strings, true);
+        return CString.utf8ArrayFromStringArray(strings, true, true);
     }
 
     /**
