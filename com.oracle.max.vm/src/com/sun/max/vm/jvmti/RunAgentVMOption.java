@@ -22,13 +22,43 @@
  */
 package com.sun.max.vm.jvmti;
 
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
-public class JVMTIVMOptions {
-    static {
-        VMOptions.register(new PathAgentVMOption(), MaxineVM.Phase.PRISTINE);
-        VMOptions.register(new LibAgentVMOption(), MaxineVM.Phase.PRISTINE);
-        VMOptions.register(new RunAgentVMOption(), MaxineVM.Phase.PRISTINE);
-        VMOptions.register(new VMOption("-Xdebug ", "(deprecated) debugging support"), MaxineVM.Phase.PRISTINE);
+/**
+ * Support for the deprecated but still used -XrunNAME option.
+ */
+public class RunAgentVMOption extends AgentVMOption {
+    private static final String optionValueTemplate = "NAME[:<options>]";
+
+    @HOSTED_ONLY
+    public RunAgentVMOption() {
+        super("-Xrun", optionValueTemplate,
+              "(deprecated) load native agent library NAME, e.g. -Xrunjdwp",
+              false);
     }
+
+    @Override
+    public boolean parseValue(Pointer optionValue) {
+        Info info = checkSpace();
+        Pointer p = optionValue;
+        info.libStart = p;
+        int b = 0;
+        while ((b = p.readByte(0)) != (byte) 0) {
+            if (b == ':') {
+                p.setByte(0, (byte) 0); // zero terminate library name
+                info.optionStart = p.plus(1);
+                break;
+            }
+            p = p.plus(1);
+        }
+        return finishParse(info);
+    }
+
+    @Override
+    public void printHelp() {
+        VMOptions.printHelpForOption(category(), prefix, optionValueTemplate, help);
+    }
+
 }

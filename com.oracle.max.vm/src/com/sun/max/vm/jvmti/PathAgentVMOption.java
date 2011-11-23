@@ -26,14 +26,15 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
 
-public class AgentPathVMOption extends NativeAgentVMOption {
+public class PathAgentVMOption extends AgentVMOption {
 
     private static final String optionValueTemplate = ":<pathname>[=<options>]";
 
     @HOSTED_ONLY
-    public AgentPathVMOption() {
+    public PathAgentVMOption() {
         super("-agentpath", optionValueTemplate,
-              "load native agent library by full pathname");
+              "load native agent library by full pathname",
+              true);
     }
 
     @Override

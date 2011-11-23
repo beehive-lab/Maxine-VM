@@ -230,6 +230,7 @@ class JVMTIThreadFunctions {
         }
 
         StackElement getStackElement(int depth) {
+            assert depth < stackElements.size();
             return stackElements.get((stackElements.size() - 1) - depth);
         }
 
@@ -506,12 +507,13 @@ class JVMTIThreadFunctions {
         FindAppFramesStackTraceVisitor stackVisitor = new FindAppFramesStackTraceVisitor();
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackVisitor);
         op.submit();
-        if (stackVisitor.stackElements.size() < depth) {
+        if (depth < stackVisitor.stackElements.size()) {
+            methodPtr.setWord(MethodID.fromMethodActor(stackVisitor.getStackElement(depth).classMethodActor));
+            locationPtr.setLong(stackVisitor.getStackElement(depth).bci);
+            return JVMTI_ERROR_NONE;
+        } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;
         }
-        methodPtr.setWord(MethodID.fromMethodActor(stackVisitor.getStackElement(depth).classMethodActor));
-        locationPtr.setLong(stackVisitor.getStackElement(depth).bci);
-        return JVMTI_ERROR_NONE;
     }
 
     private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {

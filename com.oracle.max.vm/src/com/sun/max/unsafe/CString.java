@@ -356,6 +356,98 @@ public final class CString {
     }
 
     /**
+     * Determines if a given C string ends with a given suffix.
+     *
+     * @param cstring the C string to test
+     * @param suffix the suffix to test against
+     * @return {@code true} if {@code cstring} starts with {@code suffix}
+     */
+    public static boolean endsWith(Pointer cstring, String suffix) {
+        if (cstring.isZero()) {
+            return false;
+        }
+        int sl = suffix.length();
+        if (sl == 0) {
+            return true;
+        }
+        int csl = CString.length(cstring).toInt();
+        if (sl > csl) {
+            return false;
+        }
+        for (int i = sl - 1; i >= 0; i--) {
+            final byte ch = cstring.getByte(csl - 1);
+            if (ch != suffix.charAt(i)) {
+                return false;
+            }
+            csl--;
+        }
+        return true;
+    }
+
+    /**
+     * Append a (UTF8) {@link String} to a C string.
+     * @param cstring
+     * @param string
+     * @return new C string
+     */
+    public static Pointer append(Pointer cstring, String string) {
+        Size csl = CString.length(cstring);
+        int sl = string.length();
+        Pointer result = Memory.allocate(csl.plus(sl).plus(1));
+        if (result.isZero()) {
+            return result;
+        }
+        Memory.copyBytes(cstring, result, csl);
+        for (int i = 0; i < sl; i++) {
+            result.setByte(i + csl.toInt(), (byte) string.charAt(i));
+        }
+        result.setByte(csl.toInt() + sl, (byte) 0);
+        return result;
+    }
+
+    /**
+     * Append two C strings.
+     * @param cstring
+     * @param string
+     * @return new C string
+     */
+    public static Pointer appendCString(Pointer cstring1, Pointer cstring2) {
+        Size csl1 = CString.length(cstring1);
+        Size csl2 = CString.length(cstring2);
+        Size nl = csl1.plus(csl2);
+        Pointer result = Memory.allocate(nl.plus(1));
+        if (result.isZero()) {
+            return result;
+        }
+        Memory.copyBytes(cstring1, result, csl1);
+        Memory.copyBytes(cstring2, result.plus(csl1), csl2);
+        result.setByte(nl.toInt(), (byte) 0);
+        return result;
+    }
+
+    /**
+     * Chop suffix from C string. Assert {@code cstring.endsWith(suffix)}
+     * @param cstring
+     * @param suffix
+     * @return newly allocated C string without suffix
+     */
+    public static Pointer chopSuffix(Pointer cstring, String suffix) {
+        Size csl = CString.length(cstring);
+        int sl = suffix.length();
+        if (csl.toInt() < sl) {
+            return cstring;
+        }
+        Size nl = csl.minus(sl);
+        Pointer result = Memory.allocate(nl);
+        if (result.isZero()) {
+            return result;
+        }
+        Memory.copyBytes(cstring, result, nl);
+        result.setByte(nl.toInt(), (byte) 0);
+        return result;
+    }
+
+    /**
      * Parse a size specification nX, where X := {K, M, G, T, P, k, m, g, t, p}.
      *
      * For backwards compatibility with HotSpot,

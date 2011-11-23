@@ -38,6 +38,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -123,6 +124,9 @@ public final class StackView extends AbstractView<StackView> {
                         } finally {
                             vm().releaseLegacyVMAccess();
                         }
+                    } catch (DataIOError e) {
+                        methodName += inspection().nameDisplay().unavailableDataShortText();
+                        toolTip = inspection().nameDisplay().unavailableDataLongText();
                     } catch (MaxVMBusyException e) {
                         methodName += inspection().nameDisplay().unavailableDataShortText();
                         toolTip = inspection().nameDisplay().unavailableDataLongText();
