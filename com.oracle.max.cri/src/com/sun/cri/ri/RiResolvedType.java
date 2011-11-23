@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
@@ -165,6 +166,14 @@ public interface RiResolvedType extends RiType {
      * @return an array of instance fields
      */
     RiField[] declaredFields();
+
+    /**
+     * Returns this type's annotation of a specified type.
+     *
+     * @param annotationClass the Class object corresponding to the annotation type
+     * @return the annotation of type {@code annotationClass} for this type if present, else null
+     */
+    <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 
     /**
      * Returns the java.lang.Class object representing this RiType instance or {@code null} if none exists.
