@@ -184,6 +184,10 @@ public final class GraalCompilation {
                 plan.runPhases(PhasePosition.AFTER_PARSING, graph, context());
 
                 new DeadCodeEliminationPhase().apply(graph, context());
+            } else {
+                if (context().isObserved()) {
+                    context().observable.fireCompilationEvent("initial state", graph);
+                }
             }
 
             if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
