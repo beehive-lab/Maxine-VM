@@ -156,7 +156,7 @@ public final class CompilerImpl implements Compiler, Remote {
             if (Logger.ENABLED) {
                 generator = LoggingProxy.getProxy(RiXirGenerator.class, generator);
             }
-            compiler = new GraalCompiler(context, getRuntime(), getTarget(), generator, registerConfig, null);
+            compiler = new GraalCompiler(context, getRuntime(), getTarget(), generator, registerConfig);
         }
         return compiler;
     }
