@@ -222,7 +222,8 @@ public final class NoAgingEvacuator extends Evacuator {
 
     @Override
     protected void evacuateFromRSets() {
-        rset.visitDirtyCards(fromSpace, this);
+        // Visit the dirty cards of the toSpace, which is the old gen in this case.
+        rset.visitDirtyCards(toSpace, this);
     }
 
     @Override
