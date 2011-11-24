@@ -31,6 +31,7 @@ import com.oracle.max.graal.nodes.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.*;
 
 /**
  * Builds a mapping between bytecodes and basic blocks and builds a conservative control flow

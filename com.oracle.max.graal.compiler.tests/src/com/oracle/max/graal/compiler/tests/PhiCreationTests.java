@@ -27,8 +27,7 @@ import org.junit.*;
 import com.oracle.max.graal.nodes.*;
 
 /**
- * In the following tests, the usages of local variable "a" are replaced with the integer constant 0.
- * Then canonicalization is applied and it is verified that the resulting graph contains specific phi nodes.
+ * In the following tests, the correct removal of redundant phis during graph building is tested.
  */
 public class PhiCreationTests extends GraphTest {
 
@@ -62,5 +61,53 @@ public class PhiCreationTests extends GraphTest {
             test();
         }
         return a;
+    }
+
+    @Test
+    public void test3() {
+        StructuredGraph graph = parse("test3Snippet");
+        print(graph);
+        Assert.assertFalse(graph.getNodes(PhiNode.class).iterator().hasNext());
+    }
+
+    public static int test3Snippet(int a) {
+        while (a > 1) {
+            while (a > 1) {
+                test();
+            }
+        }
+        return a;
+    }
+
+    @Test
+    public void test4() {
+        StructuredGraph graph = parse("test4Snippet");
+        print(graph);
+        Assert.assertFalse(graph.getNodes(PhiNode.class).iterator().hasNext());
+    }
+
+    public static int test4Snippet(int a) {
+        int b = 5;
+        while (a > 1) {
+            while (a > 1) {
+                while (a > 1) {
+                    try {
+                        test();
+                    } catch (Throwable t) {
+
+                    }
+                }
+            }
+            while (a > 1) {
+                while (a > 1) {
+                    try {
+                        test();
+                    } catch (Throwable t) {
+
+                    }
+                }
+            }
+        }
+        return a + b;
     }
 }

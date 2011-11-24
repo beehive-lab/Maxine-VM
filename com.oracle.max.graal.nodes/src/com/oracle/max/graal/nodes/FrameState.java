@@ -473,9 +473,9 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
                 assert currentValue.valueCount() == 1;
                 ValueNode otherValue = other.valueAt(i);
                 if (otherValue == currentValue) {
-                    currentValue.replaceAndDelete(currentValue.firstValue());
+                    deleteRedundantPhi(currentValue, currentValue.firstValue());
                 } else if (otherValue == null) {
-                    deletePhi(currentValue);
+                    deleteInvalidPhi(currentValue);
                 } else {
                     currentValue.addInput(otherValue);
                 }
@@ -483,13 +483,43 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         }
     }
 
-    private void deletePhi(PhiNode phiNode) {
+    private void deleteRedundantPhi(PhiNode currentValue, ValueNode newValue) {
+        NodeUsagesList phiUsages = currentValue.usages().snapshot();
+        currentValue.replaceAndDelete(newValue);
+        for (Node n : phiUsages) {
+            if (n instanceof PhiNode) {
+                PhiNode phiNode = (PhiNode) n;
+                checkRedundantPhi(phiNode);
+            }
+        }
+    }
+
+    private void checkRedundantPhi(PhiNode phiNode) {
+        if (phiNode.isDeleted() || phiNode.valueCount() == 1) {
+            return;
+        }
+
+        ValueNode differentValue = null;
+        for (ValueNode n : phiNode.values()) {
+            if (n != phiNode) {
+                if (differentValue == null) {
+                    differentValue = n;
+                } else if (differentValue != n) {
+                    return;
+                }
+            }
+        }
+
+        deleteRedundantPhi(phiNode, differentValue);
+    }
+
+    private void deleteInvalidPhi(PhiNode phiNode) {
         if (!phiNode.isDeleted()) {
             NodeUsagesList phiUsages = phiNode.usages().snapshot();
             phiNode.replaceAndDelete(null);
             for (Node n : phiUsages) {
                 if (n instanceof PhiNode) {
-                    deletePhi((PhiNode) n);
+                    deleteInvalidPhi((PhiNode) n);
                 }
             }
         }
