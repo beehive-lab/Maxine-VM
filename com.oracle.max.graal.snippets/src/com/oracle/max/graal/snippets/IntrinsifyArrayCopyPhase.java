@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.snippets;
 
-import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -93,7 +92,6 @@ public class IntrinsifyArrayCopyPhase extends Phase {
                     new PhiSimplificationPhase().apply(snippetGraph);
                     snippetMethod.compilerStorage().put(Graph.class, snippetGraph);
                 }
-                TTY.println("> use array copy snippet <");
                 InliningUtil.inline(methodCallTarget.invoke(), snippetGraph, false);
             }
         }
