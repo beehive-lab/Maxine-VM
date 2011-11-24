@@ -30,11 +30,11 @@ import com.sun.cri.ci.*;
 public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
     @Input(notDataflow = true) private LoopBeginNode loopBegin;
-    @Data private boolean safePointPolling;
+    @Data private boolean safepointPolling;
 
     public LoopEndNode() {
         super(CiKind.Illegal);
-        this.safePointPolling = true;
+        this.safepointPolling = true;
     }
 
     public LoopBeginNode loopBegin() {
@@ -47,12 +47,12 @@ public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIR
     }
 
 
-    public void setSafePointPooling(boolean safePointPolling) {
-        this.safePointPolling = safePointPolling;
+    public void setSafepointPolling(boolean safePointPolling) {
+        this.safepointPolling = safePointPolling;
     }
 
-    public boolean hasSafePointPolling() {
-        return safePointPolling;
+    public boolean hasSafepointPolling() {
+        return safepointPolling;
     }
 
     @Override

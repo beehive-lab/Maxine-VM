@@ -219,7 +219,7 @@ public final class GraalCompilation {
                 if (GraalOptions.OptCanonicalizer) {
                     new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
                 }
-                new SafepointPoolingEliminationPhase().apply(graph, context());
+                new SafepointPollingEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {

@@ -26,7 +26,7 @@ import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.NodeIterators.NodeIterable;
 import com.oracle.max.graal.nodes.*;
 
-public class SafepointPoolingEliminationPhase extends Phase {
+public class SafepointPollingEliminationPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
@@ -34,7 +34,7 @@ public class SafepointPoolingEliminationPhase extends Phase {
             NodeIterable<FixedNode> it = NodeIterators.dominators(loopEnd).until(loopEnd.loopBegin());
             for (FixedNode n : it) {
                 if (n instanceof Invoke) {
-                    loopEnd.setSafePointPooling(false);
+                    loopEnd.setSafepointPolling(false);
                     break;
                 }
             }
