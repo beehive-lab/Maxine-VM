@@ -66,4 +66,8 @@ public class HotSpotExceptionHandler extends CompilerObject implements RiExcepti
         return catchClass;
     }
 
+    @Override
+    public String toString() {
+        return String.format("HotSpotExceptionHandler[startBci=%d, endBci=%d, handlerBci=%d, catchClassIndex=%d, catchClass=%s", startBci, endBci, handlerBci, catchClassIndex, catchClass);
+    }
 }

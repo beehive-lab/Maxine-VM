@@ -169,7 +169,9 @@ public class InliningPhase extends Phase implements InliningCallback {
         StructuredGraph graph = new StructuredGraph();
         new GraphBuilderPhase(runtime, method).apply(graph, context, true, false);
 
-        plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);
+        if (plan != null) {
+            plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);
+        }
 
         if (GraalOptions.ProbabilityAnalysis) {
             new DeadCodeEliminationPhase().apply(graph, context, true, false);

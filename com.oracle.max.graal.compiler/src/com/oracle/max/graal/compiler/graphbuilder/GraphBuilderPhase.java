@@ -198,8 +198,8 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         appendGoto(createTarget(blockMap.startBlock, frameState));
         unwindHandler = new CiExceptionHandler(0, method.code().length, -2, 0, null);
 
-        // do the normal parsing
         iterateAllBlocks();
+        connectLoopEndToBegin();
 
         List<Loop> loops = LoopUtil.computeLoops(graph);
         NodeBitMap loopExits = graph.createNodeBitMap();
@@ -224,8 +224,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             cachedGraphs.put(method, graph.copy());
         }
+    }
 
-        // Remove redundant phis.
+    private void removeRedundantPhis() {
         for (LoopBeginNode loop : graph.getNodes(LoopBeginNode.class)) {
             for (PhiNode phiNode : loop.phis()) {
                 checkPhi(phiNode);
@@ -240,6 +241,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
         Node differentValue = null;
         for (ValueNode n : phiNode.values()) {
+            assert n != null;
             if (n != phiNode) {
                 if (differentValue == null) {
                     differentValue = n;
@@ -1394,32 +1396,31 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
                 }
             }
         }
-        for (Block b : blocksVisited) {
-            if (b.isLoopHeader) {
-                LoopBeginNode begin = loopBegin(b);
-                LoopEndNode loopEnd = begin.loopEnd();
-                AbstractStateSplit loopEndPred = (AbstractStateSplit) loopEnd.predecessor();
+    }
 
+    private void connectLoopEndToBegin() {
+        for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
+            LoopEndNode loopEnd = begin.loopEnd();
+            AbstractStateSplit loopEndStateSplit = (AbstractStateSplit) loopEnd.predecessor();
+            if (loopEndStateSplit.stateAfter() != null) {
+                begin.stateAfter().mergeLoop(begin, loopEndStateSplit.stateAfter());
+            } else {
 //              This can happen with degenerated loops like this one:
-//                for (;;) {
-//                    try {
-//                        break;
-//                    } catch (UnresolvedException iioe) {
-//                    }
-//                }
-                if (loopEndPred.stateAfter() != null) {
-                    begin.stateAfter().merge(begin, loopEndPred.stateAfter());
-                } else {
-                    loopEndPred.delete();
-                    loopEnd.delete();
-                    MergeNode merge = graph.add(new MergeNode());
-                    merge.addEnd(begin.forwardEdge());
-                    FixedNode next = begin.next();
-                    begin.setNext(null);
-                    merge.setNext(next);
-                    merge.setStateAfter(begin.stateAfter());
-                    begin.replaceAndDelete(merge);
-                }
+//              for (;;) {
+//                  try {
+//                      break;
+//                  } catch (UnresolvedException iioe) {
+//                  }
+//              }
+                loopEndStateSplit.delete();
+                loopEnd.delete();
+                MergeNode merge = graph.add(new MergeNode());
+                merge.addEnd(begin.forwardEdge());
+                FixedNode next = begin.next();
+                begin.setNext(null);
+                merge.setNext(next);
+                merge.setStateAfter(begin.stateAfter());
+                begin.replaceAndDelete(merge);
             }
         }
     }
@@ -1465,7 +1466,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             assert frameState.stackSize() == 1 : frameState;
 
             RiType catchType = block.handler.catchType();
-            ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, catchType, catchType instanceof RiResolvedType);
+            ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, catchType, (catchType instanceof RiResolvedType) && ((RiResolvedType) catchType).isInitialized());
             if (typeInstruction != null) {
                 Block nextBlock = block.successors.size() == 1 ? unwindBlock(block.deoptBci) : block.successors.get(1);
 
