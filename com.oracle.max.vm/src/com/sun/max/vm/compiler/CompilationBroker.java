@@ -390,33 +390,55 @@ public class CompilationBroker {
      * @return the compiler that should be used to perform the next compilation of the method
      */
     protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature) {
-        if (Actor.isUnsafe(cma.flags() | cma.compilee().flags())) {
-            assert nature != Nature.BASELINE : "cannot produce baseline version of " + cma;
-            return optimizingCompiler;
-        }
-
+        String reason;
         RuntimeCompiler compiler;
-        if (nature == Nature.BASELINE) {
-            compiler = baselineCompiler;
-            assert compiler != null;
-        } else if (nature == Nature.OPT) {
+
+        if (Actor.isUnsafe(cma.compilee().flags())) {
+            assert nature != Nature.BASELINE : "cannot produce baseline version of " + cma;
+            reason = "unsafe";
             compiler = optimizingCompiler;
         } else {
-            if (isHosted()) {
-                // at prototyping time, default to the opt compiler
+            if (nature == Nature.BASELINE) {
+                compiler = baselineCompiler;
+                reason = "nature:baseline";
+                assert compiler != null;
+            } else if (nature == Nature.OPT) {
+                reason = "nature:opt";
                 compiler = optimizingCompiler;
             } else {
-                compiler = defaultCompiler;
+                reason = null;
+                if (isHosted()) {
+                    // at prototyping time, default to the opt compiler
+                    compiler = optimizingCompiler;
+                } else {
+                    compiler = defaultCompiler;
+                }
+            }
+
+            String compilerName = compilerFor(cma);
+            if (compilerName != null) {
+                if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                    compiler = optimizingCompiler;
+                    reason = "CompileCommand";
+                } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                    compiler = baselineCompiler;
+                    reason = "CompileCommand";
+                }
             }
         }
 
-        String compilerName = compilerFor(cma);
-        if (compilerName != null) {
-            if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                compiler = optimizingCompiler;
-            } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                compiler = baselineCompiler;
-            }
+        // Print the reason for the compiler selection if it's not the default
+        if (VMOptions.verboseOption.verboseCompilation && reason != null) {
+            String methodString = cma.format("%H.%n(%p)");
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.print(": ");
+            Log.print(compiler.getClass().getSimpleName());
+            Log.print(" selected to compile ");
+            Log.print(methodString);
+            Log.print(", reason: ");
+            Log.println(reason);
+            Log.unlock(lockDisabledSafepoints);
         }
 
         return compiler;
