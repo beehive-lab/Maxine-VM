@@ -98,22 +98,23 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
             name = name.substring(1, name.length() - 1).replace('/', '.');
             name = name + "." + compilation.method.name();
 
-            if (host != null) {
-                openNetworkPrinter(name, compilation.method);
-            } else {
-                openFilePrinter(name, compilation.method);
-            }
+            openPrinter(name, compilation.method);
         }
     }
 
-    private void openPrinter(String title) {
+    private void openPrinter(String title, RiResolvedMethod method) {
         assert (context().stream == null && printer() == null);
-
         if (!TTY.isSuppressed()) {
-            if (host != null) {
-                openNetworkPrinter(title, null);
-            } else {
-                openFilePrinter(title, null);
+            // Use a filter to suppress a recursive attempt to open a printer
+            TTY.Filter filter = new TTY.Filter();
+            try {
+                if (host != null) {
+                    openNetworkPrinter(title, null);
+                } else {
+                    openFilePrinter(title, null);
+                }
+            } finally {
+                filter.remove();
             }
         }
     }
@@ -148,6 +149,8 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
 
     private void openNetworkPrinter(String title, RiResolvedMethod method) {
         try {
+
+
             context().socket = new Socket(host, port);
             if (socket().getInputStream().read() == 'y') {
                 context().stream = new BufferedOutputStream(socket().getOutputStream(), 0x4000);
@@ -232,7 +235,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     }
 
     public void printGraphs(String groupTitle, Graph... graphs) {
-        openPrinter(groupTitle);
+        openPrinter(groupTitle, null);
         if (printer() != null) {
             int i = 0;
             for (Graph graph : graphs) {
@@ -244,7 +247,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     }
 
     public void compilationStarted(String groupTitle) {
-        openPrinter(groupTitle);
+        openPrinter(groupTitle, null);
     }
 
     public void printGraph(String graphTitle, Graph graph) {
@@ -258,7 +261,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     }
 
     public void printSingleGraph(String groupTitle, String graphTitle, Graph graph) {
-        openPrinter(groupTitle);
+        openPrinter(groupTitle, null);
         if (printer() != null) {
             printer().print(graph, graphTitle, true);
             closePrinter();
