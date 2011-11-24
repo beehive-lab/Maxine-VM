@@ -24,13 +24,27 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.CardTable.CardValue;
 
 /**
  * A pure card-table based remembered set.
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
+    private class HeapSpaceDirtyCardClosure implements HeapSpaceRangeVisitor {
+        private OverlappingCellVisitor cellVisitor;
+        void initialize(OverlappingCellVisitor cellVisitor) {
+            this.cellVisitor = cellVisitor;
+        }
+
+        @Override
+        public void visit(Address start, Address end) {
+            visitCards(start, end, cellVisitor);
+        }
+    }
+
     final CardTable cardTable;
     final CardFirstObjectTable cfoTable;
+    final private HeapSpaceDirtyCardClosure heapSpaceCardClosure;
 
     public void  recordWrite(Address referenceLocation) {
 
@@ -44,6 +58,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     public CardTableRSet() {
         cardTable = new CardTable();
         cfoTable = new CardFirstObjectTable();
+        heapSpaceCardClosure = new HeapSpaceDirtyCardClosure();
     }
 
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
@@ -52,11 +67,34 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         cfoTable.initialize(coveredAreaStart, coveredAreaSize, cfoTableStart);
     }
 
-    public void iterateDirtyCards(CellVisitor visitor) {
-
+    public void visitDirtyCards(HeapSpace fromSpace, OverlappingCellVisitor cellVisitor) {
+        heapSpaceCardClosure.initialize(cellVisitor);
+        fromSpace.visit(heapSpaceCardClosure);
     }
 
-    void visitCard(int cardIndex, CellVisitor visitor) {
+    /**
+     * Visit the cells that overlap a card.
+     *
+     * @param cardIndex index of the card
+     * @param cellVisitor the logic to apply to the visited cell
+     */
+    private void visitCard(int cardIndex, OverlappingCellVisitor cellVisitor) {
+        visitCards(cardIndex, cardIndex + 1, cellVisitor);
+    }
+
+    /**
+     * Visit the cells that overlap a contiguous range of cards.
+     *
+     * @param cardIndex index of the card
+     * @param cellVisitor the logic to apply to the visited cell
+     */
+    private void visitCards(int startCardIndex, int endCardIndex, OverlappingCellVisitor cellVisitor) {
+        final Address start = cardTable.rangeStart(startCardIndex);
+        final Address end = cardTable.rangeStart(endCardIndex);
+        Pointer cell = cfoTable.cellStart(startCardIndex).asPointer();
+        do {
+            cell = cellVisitor.visitCell(cell, start, end);
+        } while (cell.lessThan(end));
     }
 
     /**
@@ -65,12 +103,13 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
      * @param end
      * @param cellVisitor
      */
-    void iterate(Address start, Address end, CellVisitor visitor) {
+    private void visitCards(Address start, Address end, OverlappingCellVisitor cellVisitor) {
         final int endOfRange = cardTable.tableEntryIndex(end);
-        int cardIndex = cardTable.firstDirty(cardTable.tableEntryIndex(start), endOfRange);
-        while (cardIndex < endOfRange) {
-            visitCard(cardIndex, visitor);
-            cardIndex = cardTable.firstDirty(cardIndex, endOfRange);
+        int startCardIndex = cardTable.firstDirty(cardTable.tableEntryIndex(start), endOfRange);
+        while (startCardIndex < endOfRange) {
+            int endCardIndex = cardTable.first(++startCardIndex, endOfRange, CardValue.CLEAN_CARD);
+            visitCards(startCardIndex, endCardIndex, cellVisitor);
+            startCardIndex = cardTable.firstDirty(startCardIndex, endOfRange);
         }
     }
 

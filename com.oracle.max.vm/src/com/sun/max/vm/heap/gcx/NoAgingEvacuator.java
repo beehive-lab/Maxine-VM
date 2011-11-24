@@ -222,9 +222,7 @@ public final class NoAgingEvacuator extends Evacuator {
 
     @Override
     protected void evacuateFromRSets() {
-        // FIXME: this may redo iteration over the boot heap region. Verify that this is not the case.
-
-        rset.iterateDirtyCards(this);
+        rset.visitDirtyCards(fromSpace, this);
     }
 
     @Override

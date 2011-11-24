@@ -109,7 +109,23 @@ class CardTable extends  Log2RegionToByteMapTable {
         final Pointer first = tableAddress.plus(start);
         final Pointer limit = tableAddress.plus(end);
         Pointer cursor = first;
-        while (cursor.getByte() != 0) {
+        while (cursor.getByte() != DIRTY_CARD.value) {
+            cursor = cursor.plus(1);
+            if (cursor.greaterEqual(limit)) {
+                return -1;
+            }
+        }
+        return cursor.minus(first).toInt();
+    }
+
+    final int first(int start, int end, CardValue cardValue) {
+        // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
+        // We may also get rid of the limit test by making the end of the range looking like a marked card.
+        // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
+        final Pointer first = tableAddress.plus(start);
+        final Pointer limit = tableAddress.plus(end);
+        Pointer cursor = first;
+        while (cursor.getByte() != cardValue.value) {
             cursor = cursor.plus(1);
             if (cursor.greaterEqual(limit)) {
                 return -1;
