@@ -432,10 +432,12 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         for (int i = 0; i < valuesSize(); i++) {
             ValueNode currentValue = valueAt(i);
             ValueNode otherValue = other.valueAt(i);
-            if (block.isPhiAtMerge(currentValue)) {
-                addToPhi((PhiNode) currentValue, otherValue);
-            } else {
-                setValueAt(i, combineValues(currentValue, otherValue, block));
+            if (currentValue != otherValue) {
+                if (block.isPhiAtMerge(currentValue)) {
+                    addToPhi((PhiNode) currentValue, otherValue);
+                } else {
+                    setValueAt(i, combineValues(currentValue, otherValue, block));
+                }
             }
         }
     }
