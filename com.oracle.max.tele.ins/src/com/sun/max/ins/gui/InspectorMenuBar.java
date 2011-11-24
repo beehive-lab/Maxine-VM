@@ -22,12 +22,10 @@
  */
 package com.sun.max.ins.gui;
 
-import java.util.*;
-
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.AbstractView.*;
+import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
@@ -43,8 +41,6 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     private final Inspection inspection;
     private final String tracePrefix;
 
-    private final List<InspectorMenu> menus = new ArrayList<InspectorMenu>(10);
-
     /**
      * Creates a new {@link JMenuBar}, specialized for use in the Inspector.
      */
@@ -57,11 +53,11 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     public void add(InspectorMenu inspectorMenu) {
         assert inspectorMenu.getMenuName() != null;
         super.add(inspectorMenu);
-        menus.add(inspectorMenu);
     }
 
     private InspectorMenu findMenu(String name) {
-        for (InspectorMenu inspectorMenu : menus) {
+        for (MenuElement element : getSubElements()) {
+            final InspectorMenu inspectorMenu = (InspectorMenu) element;
             if (inspectorMenu.getMenuName().equals(name)) {
                 return inspectorMenu;
             }
@@ -88,7 +84,6 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     public void clearAll() {
-        menus.clear();
         removeAll();
     }
 
@@ -124,8 +119,9 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     public void refresh(boolean force) {
-        for (InspectorMenu menu : menus) {
-            menu.refresh(force);
+        for (MenuElement element : getSubElements()) {
+            final InspectorMenu inspectorMenu = (InspectorMenu) element;
+            inspectorMenu.refresh(force);
         }
     }
 
