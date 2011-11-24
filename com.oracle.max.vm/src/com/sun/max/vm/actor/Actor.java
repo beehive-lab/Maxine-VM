@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.actor;
 
-import java.lang.annotation.*;
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -524,15 +522,6 @@ public abstract class Actor {
         if (flag) {
             sb.append(string);
         }
-    }
-
-    /**
-     * @see AnnotatedElement#getAnnotation(Class)
-     */
-    public abstract <A extends Annotation> A getAnnotation(Class<A> annotationClass);
-
-    public boolean isAnnotationPresent(Class< ? extends Annotation> annotationClass) {
-        return getAnnotation(annotationClass) != null;
     }
 
     /**

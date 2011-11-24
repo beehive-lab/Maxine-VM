@@ -25,10 +25,10 @@ package com.oracle.max.graal.compiler.graphbuilder;
 import com.sun.cri.ci.*;
 
 
-public class JSRNotSupportedBailout extends CiBailout{
+public class JsrNotSupportedBailout extends CiBailout{
     private static final long serialVersionUID = -7476925652727154272L;
 
-    public JSRNotSupportedBailout(String reason) {
+    public JsrNotSupportedBailout(String reason) {
         super(reason);
     }
 }

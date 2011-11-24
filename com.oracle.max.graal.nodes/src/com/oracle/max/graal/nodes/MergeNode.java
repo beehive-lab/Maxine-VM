@@ -120,6 +120,10 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         }
     }
 
+    public void clearEnds() {
+        ends.clear();
+    }
+
     public int phiPredecessorCount() {
         return endCount();
     }

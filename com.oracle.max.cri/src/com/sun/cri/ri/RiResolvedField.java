@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
@@ -53,4 +54,12 @@ public interface RiResolvedField extends RiField {
      * @return the holder of this field
      */
     RiResolvedType holder();
+
+    /**
+     * Returns this field's annotation of a specified type.
+     *
+     * @param annotationClass the Class object corresponding to the annotation type
+     * @return the annotation of type {@code annotationClass} for this field if present, else null
+     */
+    <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 }

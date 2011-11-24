@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.hotspot;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -238,5 +239,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     @Override
     public Class< ? > toJava() {
         return javaMirror;
+    }
+
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return toJava().getAnnotation(annotationClass);
     }
 }
