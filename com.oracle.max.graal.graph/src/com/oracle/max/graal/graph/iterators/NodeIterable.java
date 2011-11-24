@@ -27,28 +27,13 @@ import java.util.*;
 import com.oracle.max.graal.graph.*;
 
 public abstract class NodeIterable<T extends Node> implements Iterable<T> {
-    protected NodePredicate until = new NodePredicate() {
-        @Override
-        public boolean apply(Node n) {
-            return n == null;
-        }
-    };
+    protected NodePredicate until = NodePredicate.IS_NULL;
     public NodeIterable<T> until(final T u) {
-        until = until.or(new NodePredicate() {
-            @Override
-            public boolean apply(Node n) {
-                return u == n;
-            }
-        });
+        until = until.or(NodePredicate.equals(u));
         return this;
     }
     public NodeIterable<T> until(final Class<? extends T> clazz) {
-        until = until.or(new NodePredicate() {
-            @Override
-            public boolean apply(Node n) {
-                return clazz.isInstance(n);
-            }
-        });
+        until = until.or(new TypePredicate(clazz));
         return this;
     }
     public <F extends T> FilteredNodeIterable<F> filter(Class<F> clazz) {

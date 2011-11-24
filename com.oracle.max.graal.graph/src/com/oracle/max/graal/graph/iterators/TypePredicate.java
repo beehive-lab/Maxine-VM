@@ -25,15 +25,12 @@ package com.oracle.max.graal.graph.iterators;
 import com.oracle.max.graal.graph.*;
 
 public final class TypePredicate extends NodePredicate {
-    private Class<? extends Node> type;
+    private final Class<? extends Node> type;
     public TypePredicate(Class< ? extends Node> type) {
         this.type = type;
     }
     @Override
     public boolean apply(Node n) {
-        if (type.isInstance(n)) {
-            return true;
-        }
-        return false;
+        return type.isInstance(n);
     }
 }

@@ -28,12 +28,7 @@ import com.oracle.max.graal.graph.*;
 
 public class FilteredNodeIterable<T extends Node> extends NodeIterable<T> {
     private final NodeIterable<T> nodeIterable;
-    private NodePredicate predicate = new NodePredicate() {
-        @Override
-        public boolean apply(Node n) {
-            return true;
-        }
-    };
+    private NodePredicate predicate = NodePredicate.TAUTOLOGY;
     public FilteredNodeIterable(NodeIterable<T> nodeIterable) {
         this.nodeIterable = nodeIterable;
         this.until = nodeIterable.until;

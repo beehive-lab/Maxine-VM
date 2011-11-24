@@ -25,25 +25,72 @@ package com.oracle.max.graal.graph.iterators;
 import com.oracle.max.graal.graph.*;
 
 public abstract class NodePredicate {
-    public abstract boolean apply(Node n);
+    public static final TautologyPredicate TAUTOLOGY = new TautologyPredicate();
 
-    public NodePredicate and(final NodePredicate np) {
-        final NodePredicate thiz = this;
-        return new NodePredicate() {
-            @Override
-            public boolean apply(Node n) {
-                return thiz.apply(n) && np.apply(n);
-            }
-        };
+    public static final IsNullPredicate IS_NULL = new IsNullPredicate();
+
+    public static final class TautologyPredicate extends NodePredicate {
+        @Override
+        public boolean apply(Node n) {
+            return true;
+        }
     }
 
-    public NodePredicate or(final NodePredicate np) {
-        final NodePredicate thiz = this;
-        return new NodePredicate() {
-            @Override
-            public boolean apply(Node n) {
-                return thiz.apply(n) || np.apply(n);
-            }
-        };
+    public static final class AndPredicate extends NodePredicate {
+        private final NodePredicate a;
+        private final NodePredicate b;
+        private AndPredicate(NodePredicate np, NodePredicate thiz) {
+            this.a = np;
+            this.b = thiz;
+        }
+        @Override
+        public boolean apply(Node n) {
+            return b.apply(n) && a.apply(n);
+        }
+    }
+
+    public static final class OrPredicate extends NodePredicate {
+        private final NodePredicate a;
+        private final NodePredicate b;
+        private OrPredicate(NodePredicate np, NodePredicate thiz) {
+            this.a = np;
+            this.b = thiz;
+        }
+        @Override
+        public boolean apply(Node n) {
+            return b.apply(n) || a.apply(n);
+        }
+    }
+
+    public static final class IsNullPredicate extends NodePredicate {
+        @Override
+        public boolean apply(Node n) {
+            return n == null;
+        }
+    }
+
+    public static final class EqualsPredicate<T extends Node> extends NodePredicate {
+        private final T u;
+        public EqualsPredicate(T u) {
+            this.u = u;
+        }
+        @Override
+        public boolean apply(Node n) {
+            return u == n;
+        }
+    }
+
+    public abstract boolean apply(Node n);
+
+    public AndPredicate and(final NodePredicate np) {
+        return new AndPredicate(this, np);
+    }
+
+    public OrPredicate or(final NodePredicate np) {
+        return new OrPredicate(this, np);
+    }
+
+    public static <T extends Node> EqualsPredicate<T> equals(T u) {
+        return new EqualsPredicate<T>(u);
     }
 }
