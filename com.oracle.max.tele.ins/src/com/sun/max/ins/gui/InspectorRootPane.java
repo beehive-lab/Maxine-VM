@@ -38,13 +38,14 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     private final AbstractView view;
     private final TabbedView parent;
+    private final InspectorMenuBar menuBar;
 
     private String title = null;
 
     /**
      * Creates a simple frame, with content pane, for a view intended to be in a
      * tabbed frame.
-     * <br>
+     * <p>
      * The frame has an optional menu bar.  It is a program error to call {@link #makeMenu(MenuKind)}
      * if no menu bar is present.
      *
@@ -56,7 +57,8 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     public InspectorRootPane(AbstractView view, TabbedView parent, boolean addMenuBar) {
         this.view = view;
         this.parent = parent;
-        setJMenuBar(addMenuBar ? new InspectorMenuBar(view.inspection()) : null);
+        this.menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;
+        setJMenuBar(menuBar);
     }
 
     public JComponent getJComponent() {
@@ -95,6 +97,10 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
         InspectorError.check(menuBar() != null);
         return menuBar().makeMenu(menuKind);
+    }
+
+    public void clearMenus() {
+        menuBar.clearAll();
     }
 
     public void setSelected() {
