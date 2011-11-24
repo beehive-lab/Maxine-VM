@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.hosted;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
@@ -30,6 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -306,6 +308,10 @@ public final class HostedBootClassLoader extends ClassLoader {
                 throw new OmittedClassError(javaType.getName());
             }
             makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
+
+            if (Proxy.isProxyClass(javaType)) {
+                JDK_java_lang_reflect_Proxy.bootProxyClasses.add(javaType);
+            }
             return javaType;
         } catch (Exception exception) {
             throw Utils.cast(ClassNotFoundException.class, exception);
