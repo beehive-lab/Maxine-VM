@@ -72,6 +72,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public RiResolvedType componentType() {
+        assert isArrayClass();
         return (RiResolvedType) compiler.getVMEntries().RiType_componentType(this);
     }
 
