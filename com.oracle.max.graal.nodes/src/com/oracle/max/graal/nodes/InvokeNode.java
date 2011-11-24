@@ -112,9 +112,14 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
 
     @Override
     public void intrinsify(Node node) {
+        this.callTarget.delete();
         if (node instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) node;
             stateSplit.setStateAfter(stateAfter());
+        } else {
+            if (stateAfter().usages().size() == 1) {
+                stateAfter().delete();
+            }
         }
         if (node instanceof FixedWithNextNode) {
             FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
@@ -127,7 +132,7 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
             setNext(null);
             this.replaceAtPredecessors(next);
             this.replaceAtUsages(node);
-            this.delete();
+            this.safeDelete();
         }
     }
 }

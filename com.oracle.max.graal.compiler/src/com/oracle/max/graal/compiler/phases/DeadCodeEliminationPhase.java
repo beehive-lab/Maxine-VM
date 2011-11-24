@@ -50,7 +50,7 @@ public class DeadCodeEliminationPhase extends Phase {
                 replacePhis(merge);
                 EndNode endNode = merge.endAt(0);
                 FixedNode next = merge.next();
-                merge.delete();
+                merge.safeDelete();
                 endNode.replaceAndDelete(next);
             }
         }
@@ -95,7 +95,7 @@ public class DeadCodeEliminationPhase extends Phase {
                     FixedNode next = loop.next();
                     loop.setNext(null);
                     endNode.replaceAndDelete(next);
-                    loop.delete();
+                    loop.safeDelete();
                 }
             }
         }
@@ -117,7 +117,7 @@ public class DeadCodeEliminationPhase extends Phase {
         }
         for (Node node : graph.getNodes()) {
             if (!flood.isMarked(node)) {
-                node.delete();
+                node.safeDelete();
             }
         }
     }

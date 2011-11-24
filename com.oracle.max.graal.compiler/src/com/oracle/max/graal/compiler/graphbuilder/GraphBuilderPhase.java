@@ -217,7 +217,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         // remove dead FrameStates
         for (Node n : graph.getNodes(FrameState.class)) {
             if (n.usages().size() == 0 && n.predecessor() == null) {
-                n.delete();
+                n.safeDelete();
             }
         }
 
@@ -1412,15 +1412,23 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 //                  } catch (UnresolvedException iioe) {
 //                  }
 //              }
-                loopEndStateSplit.delete();
-                loopEnd.delete();
-                MergeNode merge = graph.add(new MergeNode());
-                merge.addEnd(begin.forwardEdge());
-                FixedNode next = begin.next();
-                begin.setNext(null);
-                merge.setNext(next);
-                merge.setStateAfter(begin.stateAfter());
-                begin.replaceAndDelete(merge);
+                // Delete the phis (all of them must have exactly one input).
+                for (PhiNode phi : begin.phis()) {
+                    assert phi.valueCount() == 1;
+                    begin.stateAfter().deleteRedundantPhi(phi, phi.firstValue());
+                }
+
+                // Delete the loop end.
+                loopEndStateSplit.safeDelete();
+                loopEnd.safeDelete();
+
+                // Remove the loop begin.
+                EndNode loopEntryEnd = begin.forwardEdge();
+                FixedNode beginSucc = begin.next();
+                FrameState stateAfter = begin.stateAfter();
+                stateAfter.delete();
+                begin.safeDelete();
+                loopEntryEnd.replaceAndDelete(beginSucc);
             }
         }
     }

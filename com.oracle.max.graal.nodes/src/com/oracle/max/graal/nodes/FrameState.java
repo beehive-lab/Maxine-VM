@@ -483,7 +483,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         }
     }
 
-    private void deleteRedundantPhi(PhiNode currentValue, ValueNode newValue) {
+    public void deleteRedundantPhi(PhiNode currentValue, ValueNode newValue) {
         NodeUsagesList phiUsages = currentValue.usages().snapshot();
         currentValue.replaceAndDelete(newValue);
         for (Node n : phiUsages) {
@@ -783,15 +783,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         properties.put("locks", str.toString());
         properties.put("rethrowException", rethrowException);
         return properties;
-    }
-
-    @Override
-    public void delete() {
-        FrameState outerFrameState = outerFrameState();
-        super.delete();
-        if (outerFrameState != null && outerFrameState.usages().isEmpty()) {
-            outerFrameState.delete();
-        }
     }
 
     @Override

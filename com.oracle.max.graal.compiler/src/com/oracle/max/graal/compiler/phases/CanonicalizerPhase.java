@@ -176,7 +176,7 @@ public class CanonicalizerPhase extends Phase {
                     }
                     FixedNode next = loopBegin.next();
                     loopEnd.setLoopBegin(null);
-                    loopBegin.delete();
+                    loopBegin.safeDelete();
 
                     predEnd.replaceAndDelete(next);
                 }
@@ -207,8 +207,11 @@ public class CanonicalizerPhase extends Phase {
                         FixedNode next = merge.next();
                         merge.setNext(null);
                         pred.replaceFirstSuccessor(replacedSux, next);
-                        merge.delete();
-                        replacedSux.delete();
+                        if (merge.stateAfter().usages().size() == 1) {
+                            merge.stateAfter().delete();
+                        }
+                        merge.safeDelete();
+                        replacedSux.safeDelete();
                     }
                 }
             }
@@ -226,7 +229,7 @@ public class CanonicalizerPhase extends Phase {
                 }
                 // null out remaining usages
                 node.replaceAtUsages(null);
-                node.delete();
+                node.safeDelete();
             }
         }
 

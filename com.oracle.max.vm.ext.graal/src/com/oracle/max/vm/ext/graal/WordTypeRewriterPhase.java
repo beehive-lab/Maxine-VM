@@ -85,7 +85,7 @@ public class WordTypeRewriterPhase extends Phase {
             c.replaceAndDelete(valueNode);
         } else if (valueNode instanceof NullCheckNode) {
             assert valueNode.usages().isEmpty();
-            valueNode.delete();
+            valueNode.safeDelete();
         } else {
             valueNode.setKind(WordUtil.archKind());
         }

@@ -93,13 +93,13 @@ public class FindInductionVariablesPhase extends Phase {
                         phi.replaceAndDelete(biv1);
                     } else {
                         phi.replaceFirstInput(binary, null);
-                        phi.delete();
+                        phi.safeDelete();
                     }
                     if (backEdge.usages().size() > 0) {
                         biv2 = graph.add(new BasicInductionVariableNode(kind, IntegerArithmeticNode.add(init, stride), stride, counter));
                         backEdge.replaceAndDelete(biv2);
                     } else {
-                        backEdge.delete();
+                        backEdge.safeDelete();
                     }
                     if (biv1 != null) {
                         findDerivedInductionVariable(biv1, kind, loopNodes);

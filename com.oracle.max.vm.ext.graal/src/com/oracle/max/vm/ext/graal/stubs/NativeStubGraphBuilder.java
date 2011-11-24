@@ -156,8 +156,8 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         // Replace template parameters with constants
         local0.replaceAtUsages(oconst(nativeMethod.nativeFunction));
         local1.replaceAtUsages(JniFunctions.TraceJNI ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
-        local0.delete();
-        local1.delete();
+        local0.safeDelete();
+        local1.safeDelete();
 
         ReturnNode returnNode = null;
         for (Node n : graph.getNodes()) {

@@ -236,7 +236,7 @@ public abstract class Node implements Cloneable {
         clearSuccessors();
         replaceAtUsages(other);
         replaceAtPredecessors(other);
-        delete();
+        safeDelete();
     }
 
     public void replaceFirstSuccessor(Node oldSuccessor, Node newSuccessor) {
@@ -287,8 +287,12 @@ public abstract class Node implements Cloneable {
         return true;
     }
 
-    public void delete() {
+    public void safeDelete() {
         assert checkDeletion();
+        delete();
+    }
+
+    public void delete() {
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
