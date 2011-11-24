@@ -197,14 +197,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                             }
                             invokeNode.node().replaceAtUsages(newInstance);
                             invokeNode.node().replaceAndDelete(invokeNode.next());
-                            checkCastCallTarget.delete();
+                            checkCastCallTarget.safeDelete();
                         } else if (checkCastUsage instanceof FrameState) {
                             checkCastUsage.replaceFirstInput(checkCastNode, null);
                         } else {
                             assert false : "unexpected checkcast usage: " + checkCastUsage;
                         }
                     }
-                    checkCastNode.delete();
+                    checkCastNode.safeDelete();
                 }
             }
         }

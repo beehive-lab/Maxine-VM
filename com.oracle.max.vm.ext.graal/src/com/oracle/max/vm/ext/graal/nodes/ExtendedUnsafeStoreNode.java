@@ -61,6 +61,6 @@ public class ExtendedUnsafeStoreNode extends ExtendedUnsafeNode implements Lower
         write.setNext(next);
         write.setStateAfter(stateAfter());
         replaceAtPredecessors(write);
-        delete();
+        safeDelete();
     }
 }

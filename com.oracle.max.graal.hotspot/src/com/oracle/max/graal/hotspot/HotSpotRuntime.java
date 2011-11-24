@@ -340,7 +340,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 memoryWrite.setNext(next);
             }
             storeIndexed.replaceAtPredecessors(anchor);
-            storeIndexed.delete();
+            storeIndexed.safeDelete();
         } else if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
             StructuredGraph graph = load.graph();
@@ -366,7 +366,7 @@ public class HotSpotRuntime implements GraalRuntime {
             write.setNext(barrier);
             write.setStateAfter(store.stateAfter());
             store.replaceAtPredecessors(write);
-            store.delete();
+            store.safeDelete();
         }
     }
 

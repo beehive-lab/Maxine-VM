@@ -487,7 +487,7 @@ public class MaxRuntime implements GraalRuntime {
             write.setNext(next);
             write.setStateAfter(store.stateAfter());
             store.replaceAtPredecessors(write);
-            store.delete();
+            store.safeDelete();
         }
     }
 

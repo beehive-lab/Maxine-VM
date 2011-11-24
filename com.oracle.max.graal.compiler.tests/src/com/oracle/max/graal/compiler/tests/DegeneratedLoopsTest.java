@@ -81,13 +81,11 @@ public class DegeneratedLoopsTest extends GraphTest {
                 n.replaceFirstInput(local, constant);
             }
         }
-        print(graph);
         for (Invoke invoke : graph.getInvokes()) {
             invoke.intrinsify(null);
         }
-        print(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
-        StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
+        StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET); print(referenceGraph);
         assertEquals(referenceGraph, graph);
     }
 }

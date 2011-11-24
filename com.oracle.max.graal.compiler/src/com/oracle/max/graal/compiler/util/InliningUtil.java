@@ -495,6 +495,5 @@ public class InliningUtil {
         if (stateAfter.usages().isEmpty()) {
             stateAfter.delete();
         }
-
     }
 }

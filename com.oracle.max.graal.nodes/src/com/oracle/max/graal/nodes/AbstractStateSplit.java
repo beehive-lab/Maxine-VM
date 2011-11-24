@@ -41,7 +41,7 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
 
     @Override
     public void setStateAfter(FrameState x) {
-        assert x.isAlive() : "frame state must be in a graph";
+        assert x == null || x.isAlive() : "frame state must be in a graph";
         updateUsages(stateAfter, x);
         stateAfter = x;
     }
@@ -57,17 +57,6 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
     @Override
     public boolean needsStateAfter() {
         return true;
-    }
-
-    @Override
-    public void delete() {
-        FrameState stateAfter = stateAfter();
-        super.delete();
-        if (stateAfter != null) {
-            if (stateAfter.usages().isEmpty()) {
-                stateAfter.delete();
-            }
-        }
     }
 
     @Override

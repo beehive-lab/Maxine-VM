@@ -151,26 +151,23 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     }
 
     @Override
-    public void delete() {
-        FrameState stateAfter = stateAfter();
-        super.delete();
-        if (stateAfter != null && stateAfter.usages().isEmpty()) {
-            stateAfter.delete();
-        }
-    }
-
-    @Override
     public boolean needsStateAfter() {
         return true;
     }
 
     @Override
     public void intrinsify(Node node) {
+        this.callTarget.delete();
         killExceptionEdge();
         if (node instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) node;
             stateSplit.setStateAfter(stateAfter());
+        } else {
+            if (stateAfter().usages().size() == 1) {
+                stateAfter().delete();
+            }
         }
+
         if (node instanceof FixedWithNextNode) {
             FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
             FixedNode next = this.next();
