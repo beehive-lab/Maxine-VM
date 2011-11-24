@@ -315,12 +315,8 @@ public final class GraalCompilation {
                 try {
                     Phase phase = (Phase) nodePhase.value().newInstance();
                     phase.apply(graph);
-                } catch (InstantiationException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace(TTY.out().out());
                 }
             }
         }
