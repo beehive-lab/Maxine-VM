@@ -79,7 +79,7 @@ public class ValueUtil {
     }
 
     public static boolean typeMismatch(ValueNode x, ValueNode y) {
-        return y == null || x.kind() != y.kind;
+        return y == null || x == null || x.kind() != y.kind;
     }
 
 

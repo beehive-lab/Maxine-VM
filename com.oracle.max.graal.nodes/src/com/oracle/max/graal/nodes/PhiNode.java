@@ -181,4 +181,8 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         end1.delete();
         end2.delete();
     }
+
+    public ValueNode firstValue() {
+        return valueAt(0);
+    }
 }

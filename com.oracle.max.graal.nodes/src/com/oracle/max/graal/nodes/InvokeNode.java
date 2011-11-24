@@ -122,7 +122,7 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
             setNext(null);
             fixedWithNextNode.setNext(next);
             this.replaceAndDelete(node);
-        } else if (node instanceof FloatingNode) {
+        } else if (node instanceof FloatingNode || (node == null && this.kind == CiKind.Void)) {
             FixedNode next = this.next();
             setNext(null);
             this.replaceAtPredecessors(next);

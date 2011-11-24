@@ -421,50 +421,75 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         return localsSize + stackSize;
     }
 
-    private void checkSize(FrameStateAccess other) {
-        if (other.stackSize() != stackSize()) {
-            throw new CiBailout("stack sizes do not match");
-        } else if (other.localsSize() != localsSize) {
-            throw new CiBailout("local sizes do not match");
-        }
+    private boolean checkSize(FrameStateAccess other) {
+        assert other.stackSize() == stackSize() : "stack sizes do not match";
+        assert other.localsSize() == localsSize : "local sizes do not match";
+        return true;
     }
 
     public void merge(MergeNode block, FrameStateAccess other) {
-        checkSize(other);
+        assert checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
-            ValueNode x = valueAt(i);
-            if (x != null) {
-                ValueNode y = other.valueAt(i);
-                if (x != y || block.isPhiAtMerge(x)) {
-                    if (ValueUtil.typeMismatch(x, y)) {
-                        if (block.isPhiAtMerge(x)) {
-                            x.replaceAtUsages(null);
-                            x.delete();
-                        }
-                        setValueAt(i, null);
-                        continue;
-                    }
-                    PhiNode phi = null;
-                    if (i < localsSize) {
-                        // this a local
-                        phi = setupPhiForLocal(block, i);
-                    } else {
-                        // this is a stack slot
-                        phi = setupPhiForStack(block, i - localsSize);
-                    }
+            ValueNode currentValue = valueAt(i);
+            ValueNode otherValue = other.valueAt(i);
+            if (block.isPhiAtMerge(currentValue)) {
+                currentValue = addToPhi((PhiNode) currentValue, otherValue);
+            } else {
+                currentValue = combineValues(currentValue, otherValue, block);
+            }
+            setValueAt(i, currentValue);
+        }
+    }
 
-                    if (phi.valueCount() == 0) {
-                        int size = block.phiPredecessorCount();
-                        for (int j = 0; j < size; ++j) {
-                            phi.addInput(x);
-                        }
-                        phi.addInput((x == y) ? phi : y);
-                    } else {
-                        phi.addInput((x == y) ? phi : y);
-                    }
+    private ValueNode combineValues(ValueNode currentValue, ValueNode otherValue, MergeNode block) {
+        if (currentValue == null || otherValue == null || currentValue.kind() != otherValue.kind()) {
+            return null;
+        }
 
-                    assert phi.valueCount() == block.phiPredecessorCount() + (block instanceof LoopBeginNode ? 0 : 1) : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
-               }
+        PhiNode phi = graph().unique(new PhiNode(currentValue.kind(), block, PhiType.Value));
+        for (int j = 0; j < block.phiPredecessorCount(); ++j) {
+            phi.addInput(currentValue);
+        }
+        phi.addInput(otherValue);
+        assert phi.valueCount() == block.phiPredecessorCount() + (block instanceof LoopBeginNode ? 0 : 1) : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
+        return phi;
+    }
+
+    private ValueNode addToPhi(PhiNode currentValue, ValueNode otherValue) {
+        if (otherValue == null || otherValue.kind != currentValue.kind) {
+            return null;
+        } else {
+            currentValue.addInput(otherValue);
+            return currentValue;
+        }
+    }
+
+    public void mergeLoop(LoopBeginNode block, FrameStateAccess other) {
+        assert checkSize(other);
+        for (int i = 0; i < valuesSize(); i++) {
+            PhiNode currentValue = (PhiNode) valueAt(i);
+            if (currentValue != null) {
+                assert currentValue.merge() == block && currentValue.valueCount() == 0;
+                ValueNode otherValue = other.valueAt(i);
+                if (otherValue == currentValue) {
+                    currentValue.replaceAndDelete(currentValue.firstValue());
+                } else if (otherValue == null) {
+                    deletePhi(currentValue);
+                } else {
+                    currentValue.addInput(otherValue);
+                }
+            }
+        }
+    }
+
+    private void deletePhi(PhiNode phiNode) {
+        if (!phiNode.isDeleted()) {
+            NodeUsagesList phiUsages = phiNode.usages().snapshot();
+            phiNode.replaceAndDelete(null);
+            for (Node n : phiUsages) {
+                if (n instanceof PhiNode) {
+                    deletePhi((PhiNode) n);
+                }
             }
         }
     }
