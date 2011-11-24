@@ -150,6 +150,8 @@ public class SnippetIntrinsificationPhase extends Phase {
                                         InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
                                         invokeWithExceptionNode.killExceptionEdge();
                                     }
+                                    assert invokeNode.stateAfter().usages().size() == 1;
+                                    invokeNode.stateAfter().delete();
                                     invokeNode.node().replaceAndDelete(invokeNode.next());
                                     return callTarget.arguments().get(0);
                                 }
