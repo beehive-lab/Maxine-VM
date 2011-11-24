@@ -433,11 +433,10 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             ValueNode currentValue = valueAt(i);
             ValueNode otherValue = other.valueAt(i);
             if (block.isPhiAtMerge(currentValue)) {
-                currentValue = addToPhi((PhiNode) currentValue, otherValue);
+                addToPhi((PhiNode) currentValue, otherValue);
             } else {
-                currentValue = combineValues(currentValue, otherValue, block);
+                setValueAt(i, combineValues(currentValue, otherValue, block));
             }
-            setValueAt(i, currentValue);
         }
     }
 
@@ -451,16 +450,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             phi.addInput(currentValue);
         }
         phi.addInput(otherValue);
-        assert phi.valueCount() == block.phiPredecessorCount() + (block instanceof LoopBeginNode ? 0 : 1) : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
+        assert phi.valueCount() == block.phiPredecessorCount() + 1 : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
         return phi;
     }
 
-    private ValueNode addToPhi(PhiNode currentValue, ValueNode otherValue) {
+    private void addToPhi(PhiNode currentValue, ValueNode otherValue) {
         if (otherValue == null || otherValue.kind != currentValue.kind) {
-            return null;
+            currentValue.replaceAndDelete(null);
         } else {
             currentValue.addInput(otherValue);
-            return currentValue;
         }
     }
 
@@ -469,7 +467,8 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         for (int i = 0; i < valuesSize(); i++) {
             PhiNode currentValue = (PhiNode) valueAt(i);
             if (currentValue != null) {
-                assert currentValue.merge() == block && currentValue.valueCount() == 0;
+                assert currentValue.merge() == block;
+                assert currentValue.valueCount() == 1;
                 ValueNode otherValue = other.valueAt(i);
                 if (otherValue == currentValue) {
                     currentValue.replaceAndDelete(currentValue.firstValue());
