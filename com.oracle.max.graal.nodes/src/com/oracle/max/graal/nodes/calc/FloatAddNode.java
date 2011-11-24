@@ -67,7 +67,7 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
     public void generate(LIRGeneratorTool gen) {
         CiValue op1 = gen.operand(x());
         CiValue op2 = gen.operand(y());
-        if (!livesLonger(this, y(), gen)) {
+        if (!y().isConstant() && !livesLonger(this, y(), gen)) {
             CiValue op = op1;
             op1 = op2;
             op2 = op;

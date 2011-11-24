@@ -115,7 +115,7 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
             EndNode trueEnd = (EndNode) trueSuccessor().next();
             EndNode falseEnd = (EndNode) falseSuccessor().next();
             MergeNode merge = trueEnd.merge();
-            if (merge == falseEnd.merge() && merge.phis().size() == 0 && merge.endCount() == 2) {
+            if (merge == falseEnd.merge() && !merge.phis().iterator().hasNext() && merge.endCount() == 2) {
                 FixedNode next = merge.next();
                 merge.safeDelete();
                 BeginNode falseSuccessor = this.falseSuccessor();

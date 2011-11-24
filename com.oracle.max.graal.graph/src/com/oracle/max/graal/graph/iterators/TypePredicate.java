@@ -20,39 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
-import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
-import com.oracle.max.graal.graph.iterators.*;
+import com.oracle.max.graal.graph.*;
 
-public abstract class NodeSuccessorsIterable extends NodeIterable<Node> {
-
-    @SuppressWarnings("unused")
-    public int explicitCount() {
-        int count = 0;
-        for (Node node : this) {
-            count++;
-        }
-        return count;
+public final class TypePredicate extends NodePredicate {
+    private final Class<? extends Node> type;
+    public TypePredicate(Class< ? extends Node> type) {
+        this.type = type;
     }
-
-    public Node first() {
-        for (Node node : this) {
-            return node;
-        }
-        return null;
-    }
-
-    public void replaceFirst(Node node, Node newNode) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public void replace(Node node, Node other) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public abstract boolean contains(Node node);
-
     @Override
-    public abstract NodeClassIterator iterator();
+    public boolean apply(Node n) {
+        return type.isInstance(n);
+    }
 }

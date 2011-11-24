@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.graphbuilder;
+package com.oracle.max.graal.graph.iterators;
 
-import com.sun.cri.ci.*;
+import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 
-public class JSRNotSupportedBailout extends CiBailout{
-    private static final long serialVersionUID = -7476925652727154272L;
-
-    public JSRNotSupportedBailout(String reason) {
-        super(reason);
+public abstract class NodeIterator<T extends Node> implements Iterator<T>{
+    protected T current;
+    protected final NodePredicate until;
+    public NodeIterator(NodePredicate until) {
+        this.until = until;
+    }
+    protected abstract void forward();
+    @Override
+    public boolean hasNext() {
+        forward();
+        return current != null && !until.apply(current);
+    }
+    @Override
+    public T next() {
+        forward();
+        T ret = current;
+        if (current == null || until.apply(current)) {
+            throw new NoSuchElementException();
+        }
+        current = null;
+        return ret;
+    }
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
     }
 }

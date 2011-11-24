@@ -54,6 +54,7 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
         setB(init);
     }
 
+    @Override
     public ValueNode stride() {
         return a();
     }
@@ -123,7 +124,7 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
 
     @Override
     public StrideDirection strideDirection() {
-        ValueNode stride = a();
+        ValueNode stride = stride();
         if (stride.isConstant()) {
             long val = stride.asConstant().asLong();
             if (val > 0) {
@@ -132,6 +133,28 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
             if (val < 0) {
                 return StrideDirection.Down;
             }
+        }
+        return null;
+    }
+
+    @Override
+    public ValueNode minValue(FixedNode point) {
+        StrideDirection strideDirection = strideDirection();
+        if (strideDirection == StrideDirection.Up) {
+            return init();
+        } else if (strideDirection == StrideDirection.Down) {
+            return searchExtremum(point, StrideDirection.Down);
+        }
+        return null;
+    }
+
+    @Override
+    public ValueNode maxValue(FixedNode point) {
+        StrideDirection strideDirection = strideDirection();
+        if (strideDirection == StrideDirection.Down) {
+            return init();
+        } else if (strideDirection == StrideDirection.Up) {
+            return searchExtremum(point, StrideDirection.Up);
         }
         return null;
     }

@@ -40,6 +40,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -185,6 +186,8 @@ public final class BootImageGenerator {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
             }
 
+            Set<File> preexistingProxyClassFiles = enableProxyClassFileDumping();
+
             nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();
@@ -204,6 +207,8 @@ public final class BootImageGenerator {
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 
             VMOptions.beforeExit();
+
+            disableProxyClassFileDumping(preexistingProxyClassFiles);
 
             // write the statistics
             if (statsOption.getValue()) {
@@ -234,6 +239,40 @@ public final class BootImageGenerator {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
             Trace.line(1, "Total time: " + (timeInMilliseconds / 1000.0f) + " seconds");
             System.out.flush();
+        }
+    }
+
+    private static Set<File> enableProxyClassFileDumping() {
+        // Add the current working directory to the class path that
+        // will be created when HostedBootClassLoader.classpath() is
+        // first called. This is the directory where ProxyGenerator
+        // dumps out the class files it generates.
+        String cwd = System.getProperty("user.dir");
+        String javaClassPath = System.getProperty("java.class.path");
+        System.setProperty("java.class.path", cwd + File.pathSeparatorChar + javaClassPath);
+
+        // See sun.misc.ProxyGenerator.saveGeneratedFiles field
+        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
+        File[] existingProxyClassFiles = new File(cwd).listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
+            }
+        });
+        return new HashSet<File>(Arrays.asList(existingProxyClassFiles));
+    }
+
+    private static void disableProxyClassFileDumping(Set<File> preexistingProxyClassFiles) {
+        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
+        File cwd = new File(System.getProperty("user.dir"));
+        File[] proxyClassFiles = cwd.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
+            }
+        });
+        for (File f : proxyClassFiles) {
+            if (!preexistingProxyClassFiles.contains(f)) {
+                f.delete();
+            }
         }
     }
 
