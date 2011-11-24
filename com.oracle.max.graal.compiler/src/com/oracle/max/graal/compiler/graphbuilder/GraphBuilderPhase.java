@@ -252,7 +252,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
 
         assert differentValue != null : phiNode;
-        NodeUsagesList phiUsages = phiNode.usages().snapshot();
+        Collection<Node> phiUsages = phiNode.usages().snapshot();
         phiNode.replaceAndDelete(differentValue);
         for (Node n : phiUsages) {
             if (n instanceof PhiNode) {

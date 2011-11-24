@@ -89,7 +89,6 @@ public class IntrinsifyArrayCopyPhase extends Phase {
                 if (snippetGraph == null) {
                     snippetGraph = new StructuredGraph();
                     new GraphBuilderPhase(runtime, snippetMethod).apply(snippetGraph);
-                    new PhiSimplificationPhase().apply(snippetGraph);
                     snippetMethod.compilerStorage().put(Graph.class, snippetGraph);
                 }
                 InliningUtil.inline(methodCallTarget.invoke(), snippetGraph, false);
