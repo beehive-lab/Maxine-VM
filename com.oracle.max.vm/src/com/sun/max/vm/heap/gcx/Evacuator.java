@@ -23,11 +23,14 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Base class for evacuating objects of an evacuated area made of possibly discontinuous range of addresses.
@@ -36,7 +39,7 @@ import com.sun.max.vm.reference.*;
  * the remembered set holdings references to the evacuated area.
  *
  */
-public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor {
+public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor {
     /**
      * Indicate whether the cell at the specified origin is in an area under evacuation.
      * @param origin origin of a cell
@@ -93,16 +96,32 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
     private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
+    private final int FIRST_ELEMENT_OFFSET = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
 
     protected Hub getHub(Pointer origin) {
         return UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
     }
 
-    private void updateReferenceArray(Pointer refArrayOrigin) {
-        final int length = Layout.readArrayLength(refArrayOrigin);
-        for (int index = 0; index < length; index++) {
+
+    private void updateReferenceArray(Pointer refArrayOrigin, final int firstIndex, final int length) {
+        for (int index = firstIndex; index < length; index++) {
             updateEvacuatedRef(refArrayOrigin, index);
         }
+    }
+
+    private void updateReferenceArray(Pointer refArrayOrigin) {
+        final int length = Layout.readArrayLength(refArrayOrigin);
+        updateReferenceArray(refArrayOrigin, 0, length);
+    }
+
+
+    private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
+        final int length = Layout.readArrayLength(refArrayOrigin);
+        final Address firstElementAddr = refArrayOrigin.plus(FIRST_ELEMENT_OFFSET);
+        final Address endOfArrayAddr = firstElementAddr.plusWords(length);
+        final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
+        final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
+        updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
 
     /**
@@ -162,12 +181,59 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
+    private boolean cellInRegion(Pointer cell, Pointer endOfCell, Address start, Address end) {
+        return cell.greaterEqual(start) && endOfCell.lessEqual(end);
+    }
+
+    private void checkCellOverlap(Pointer cell, Address start, Address end) {
+        if (MaxineVM.isDebug()) {
+            final Pointer endOfCell = cell.plus(Layout.size(Layout.cellToOrigin(cell)));
+            if ((cell.lessThan(end) && endOfCell.greaterThan(start)) || cellInRegion(cell, endOfCell, start, end)) {
+                return;
+            }
+            FatalError.check(false, "Cell doesn't overlap range");
+        }
+    }
+
+    /**
+     * Scan the part of cell that overlap with a region of memory to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
+     *
+     * @param cell Pointer to the first word of the cell to be visited
+     * @param start start of the region overlapping with the cell
+     * @param end end of the region overlapping with the cell
+     * @return pointer to the end of the cell
+     */
+    final public Pointer visitCell(Pointer cell, Address start, Address end) {
+        checkCellOverlap(cell, start, end);
+        final Pointer origin = Layout.cellToOrigin(cell);
+        Pointer hubReferencePtr = origin.plus(HUB_WORD_INDEX);
+        if (hubReferencePtr.greaterEqual(start)) {
+            updateEvacuatedRef(origin,  HUB_WORD_INDEX);
+        }
+        final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        // Update the other references in the object
+        final SpecificLayout specificLayout = hub.specificLayout;
+        if (specificLayout.isTupleLayout()) {
+            TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+            if (hub.isJLRReference) {
+                SpecialReferenceManager.discoverSpecialReference(origin);
+            }
+            return cell.plus(hub.tupleSize);
+        }
+        if (specificLayout.isHybridLayout()) {
+            TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+        } else if (specificLayout.isReferenceArrayLayout()) {
+            updateReferenceArray(origin, start, end);
+        }
+        return cell.plus(Layout.size(origin));
+    }
+
     /**
      * Evacuate all cells from the evacuated area reachable from the specified range of heap addresses.
-     * The range must start at a valid cell.
+     * The range comprise an integral number of cells.
      *
-     * @param start first address of the range
-     * @param end last address of the range
+     * @param start first address of the range, must coincide with the start of a cell
+     * @param end last address of the range, must coincide with the end of a cell
      */
     final void evacuateRange(Pointer start, Pointer end) {
         Pointer cell = start;
