@@ -102,6 +102,10 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         return values.size();
     }
 
+    public void clearValues() {
+        values.clear();
+    }
+
     @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Name) {

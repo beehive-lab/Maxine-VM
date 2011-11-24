@@ -184,6 +184,10 @@ public final class GraalCompilation {
                 plan.runPhases(PhasePosition.AFTER_PARSING, graph, context());
 
                 new DeadCodeEliminationPhase().apply(graph, context());
+            } else {
+                if (context().isObserved()) {
+                    context().observable.fireCompilationEvent("initial state", graph);
+                }
             }
 
             if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
@@ -311,12 +315,8 @@ public final class GraalCompilation {
                 try {
                     Phase phase = (Phase) nodePhase.value().newInstance();
                     phase.apply(graph);
-                } catch (InstantiationException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace(TTY.out().out());
                 }
             }
         }

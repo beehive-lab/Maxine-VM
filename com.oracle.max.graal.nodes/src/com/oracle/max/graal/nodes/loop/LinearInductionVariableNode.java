@@ -61,22 +61,4 @@ public abstract class LinearInductionVariableNode extends InductionVariableNode 
     public boolean isLinearInductionVariableInput(Node n) {
         return n == a() || n == b();
     }
-
-    @Override
-    public ValueNode minValue(FixedNode point) {
-        if (strideDirection() == StrideDirection.Up) {
-            return b();
-        } else {
-            return searchExtremum(point, StrideDirection.Down);
-        }
-    }
-
-    @Override
-    public ValueNode maxValue(FixedNode point) {
-        if (strideDirection() == StrideDirection.Down) {
-            return b();
-        } else {
-            return searchExtremum(point, StrideDirection.Up);
-        }
-    }
 }

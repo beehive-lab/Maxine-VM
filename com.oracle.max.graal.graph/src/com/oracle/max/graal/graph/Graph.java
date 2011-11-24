@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.Node.IterableNodeType;
 import com.oracle.max.graal.graph.Node.ValueNumberable;
+import com.oracle.max.graal.graph.iterators.*;
 
 /**
  * This class is a graph container, it contains the set of nodes that belong to this graph.
@@ -273,8 +274,8 @@ public class Graph {
      * Returns an {@link Iterable} providing all the live nodes.
      * @return an {@link Iterable} providing all the live nodes.
      */
-    public Iterable<Node> getNodes() {
-        return new Iterable<Node>() {
+    public NodeIterable<Node> getNodes() {
+        return new NodeIterable<Node>() {
             @Override
             public Iterator<Node> iterator() {
                 return new NodeIterator();
@@ -340,9 +341,9 @@ public class Graph {
      * @param type the type of node to return
      * @return an {@link Iterable} providing all the matching nodes.
      */
-    public <T extends Node & IterableNodeType> Iterable<T> getNodes(final Class<T> type) {
+    public <T extends Node & IterableNodeType> NodeIterable<T> getNodes(final Class<T> type) {
         final Node start = getStartNode(type);
-        return new Iterable<T>() {
+        return new NodeIterable<T>() {
             @Override
             public Iterator<T> iterator() {
                 return new TypedNodeIterator<T>(start);

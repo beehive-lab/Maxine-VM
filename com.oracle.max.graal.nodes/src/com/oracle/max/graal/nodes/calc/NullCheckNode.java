@@ -76,7 +76,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        if (object instanceof NewInstanceNode || object instanceof NewArrayNode) {
+        if (object instanceof NewInstanceNode || object instanceof NewArrayNode || object instanceof NewMultiArrayNode) {
             return ConstantNode.forBoolean(!expectedNull, graph());
         }
         CiConstant constant = object().asConstant();

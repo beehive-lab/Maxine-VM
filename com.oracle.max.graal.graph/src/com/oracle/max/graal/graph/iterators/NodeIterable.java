@@ -20,39 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
-import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
-import com.oracle.max.graal.graph.iterators.*;
+import java.util.*;
 
-public abstract class NodeSuccessorsIterable extends NodeIterable<Node> {
+import com.oracle.max.graal.graph.*;
 
-    @SuppressWarnings("unused")
-    public int explicitCount() {
-        int count = 0;
-        for (Node node : this) {
-            count++;
+public abstract class NodeIterable<T extends Node> implements Iterable<T> {
+    protected NodePredicate until = NodePredicate.IS_NULL;
+    public NodeIterable<T> until(final T u) {
+        until = until.or(NodePredicate.equals(u));
+        return this;
+    }
+    public NodeIterable<T> until(final Class<? extends T> clazz) {
+        until = until.or(new TypePredicate(clazz));
+        return this;
+    }
+    public <F extends T> FilteredNodeIterable<F> filter(Class<F> clazz) {
+        return new FilteredNodeIterable<T>(this).and(clazz);
+    }
+    @SuppressWarnings("unchecked")
+    public Collection<T> snapshot() {
+        ArrayList<T> list = new ArrayList<T>();
+        for (T n : this) {
+            list.add(n);
         }
-        return count;
+        return list;
     }
-
-    public Node first() {
-        for (Node node : this) {
-            return node;
-        }
-        return null;
-    }
-
-    public void replaceFirst(Node node, Node newNode) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public void replace(Node node, Node other) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    public abstract boolean contains(Node node);
-
-    @Override
-    public abstract NodeClassIterator iterator();
 }

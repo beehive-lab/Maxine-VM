@@ -40,16 +40,16 @@ public class GraphUtil {
             EndNode end = (EndNode) node;
             MergeNode merge = end.merge();
             if (merge instanceof LoopBeginNode) {
-                for (PhiNode phi : merge.phis()) {
-                    ValueNode value = phi.firstValue();
+                for (PhiNode phi : merge.phis().snapshot()) {
+                    ValueNode value = phi.valueAt(0);
                     phi.replaceAndDelete(value);
                 }
                 killCFG(merge);
             } else {
                 merge.removeEnd(end);
                 if (merge.phiPredecessorCount() == 1) {
-                    for (PhiNode phi : merge.phis()) {
-                        ValueNode value = phi.firstValue();
+                    for (PhiNode phi : merge.phis().snapshot()) {
+                        ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                     }
                     Node replacedSux = merge.phiPredecessorAt(0);

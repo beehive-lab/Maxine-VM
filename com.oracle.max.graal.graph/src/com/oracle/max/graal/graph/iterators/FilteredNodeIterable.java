@@ -20,49 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
 import java.util.*;
 
-public final class FilteringNodeIterator implements Iterator<Node> {
+import com.oracle.max.graal.graph.*;
 
-    private final Iterator< ? extends Node> input;
-    private Node next;
-    private Class< ? > clazz;
-
-    public FilteringNodeIterator(Iterator< ? extends Node> input, Class< ? > clazz) {
-        this.input = input;
-        this.clazz = clazz;
+public class FilteredNodeIterable<T extends Node> extends NodeIterable<T> {
+    private final NodeIterable<T> nodeIterable;
+    private NodePredicate predicate = NodePredicate.TAUTOLOGY;
+    public FilteredNodeIterable(NodeIterable<T> nodeIterable) {
+        this.nodeIterable = nodeIterable;
+        this.until = nodeIterable.until;
     }
-
+    @SuppressWarnings("unchecked")
+    public <F extends T> FilteredNodeIterable<F> and(Class<F> clazz) {
+        this.predicate = predicate.and(new TypePredicate(clazz));
+        return (FilteredNodeIterable<F>) this;
+    }
+    @SuppressWarnings("unchecked")
+    public FilteredNodeIterable<Node> or(Class<? extends Node> clazz) {
+        this.predicate = predicate.or(new TypePredicate(clazz));
+        return (FilteredNodeIterable<Node>) this;
+    }
     @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Node next() {
-        forward();
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-        Node res = next;
-        next = null;
-        return res;
-    }
-
-    @Override
-    public boolean hasNext() {
-        forward();
-        return next != null;
-    }
-
-    private void forward() {
-        while (next == null && input.hasNext()) {
-            next = input.next();
-            if (clazz.isInstance(next)) {
-                next = null;
-            }
-        }
+    public Iterator<T> iterator() {
+        final Iterator<T> iterator = nodeIterable.iterator();
+        return new PredicatedProxyNodeIterator<T>(until, iterator, predicate);
     }
 }

@@ -20,25 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.snippets;
+package com.oracle.max.graal.compiler.graphbuilder;
 
-import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.phases.*;
-import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
-import com.oracle.max.graal.cri.*;
 import com.sun.cri.ci.*;
 
-/**
- * Definition of the snippets that are VM-independent and can be intrinsified by Graal in any VM.
- */
-public class GraalIntrinsics {
-    public static void installIntrinsics(GraalRuntime runtime, CiTarget target, PhasePlan plan) {
-        if (GraalOptions.Intrinsify) {
-            Snippets.install(runtime, target, new MathSnippetsX86(), GraalOptions.PlotSnippets, plan);
-            Snippets.install(runtime, target, new DoubleSnippets(), GraalOptions.PlotSnippets, plan);
-            Snippets.install(runtime, target, new FloatSnippets(), GraalOptions.PlotSnippets, plan);
-            Snippets.install(runtime, target, new NodeClassSnippets(), GraalOptions.PlotSnippets, plan);
-            plan.addPhase(PhasePosition.HIGH_LEVEL, new IntrinsifyArrayCopyPhase(runtime));
-        }
+
+public class JsrNotSupportedBailout extends CiBailout{
+    private static final long serialVersionUID = -7476925652727154272L;
+
+    public JsrNotSupportedBailout(String reason) {
+        super(reason);
     }
 }

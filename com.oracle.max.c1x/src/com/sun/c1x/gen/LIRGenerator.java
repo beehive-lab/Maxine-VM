@@ -2114,7 +2114,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 visitTypeEqualityCheck(typeCheck);
             }
             boolean inputsSame = src == dest;
-            boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
+            boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) && dest.checkFlag(Flag.ResultIsUnique));
             boolean needsStoreCheck = type.componentType().kind(true) == CiKind.Object && destType != srcType;
             if (!needsStoreCheck) {
                 arrayCopy.setFlag(Flag.NoStoreCheck);

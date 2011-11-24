@@ -96,6 +96,8 @@ public abstract class InductionVariableNode extends FloatingNode {
      */
     public abstract StrideDirection strideDirection();
 
+    public abstract ValueNode stride();
+
     public ValueNode searchExtremum(FixedNode point, StrideDirection direction) {
         LoopBeginNode upTo = loopBegin();
         //TODO (gd) collect conditions up the dominating CFG nodes path, stop as soon as we find a matching condition, it will usually be the 'narrowest'
