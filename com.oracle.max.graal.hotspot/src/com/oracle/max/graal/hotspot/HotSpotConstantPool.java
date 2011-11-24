@@ -22,9 +22,6 @@
  */
 package com.oracle.max.graal.hotspot;
 
-import java.io.*;
-import java.util.*;
-
 import com.sun.cri.ri.*;
 
 /**
