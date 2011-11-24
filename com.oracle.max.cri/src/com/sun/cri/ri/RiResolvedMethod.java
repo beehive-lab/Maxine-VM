@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -192,4 +193,36 @@ public interface RiResolvedMethod extends RiMethod {
      * @return the constant pool
      */
     RiConstantPool getConstantPool();
+
+    /**
+     * Returns this method's annotation of a specified type.
+     *
+     * @param annotationClass the Class object corresponding to the annotation type
+     * @return the annotation of type {@code annotationClass} for this method if present, else null
+     */
+    <T extends Annotation> T getAnnotation(Class<T> annotationClass);
+
+    /**
+     * Returns an array of arrays that represent the annotations on the formal
+     * parameters, in declaration order, of this method.
+     *
+     * @see Method#getParameterAnnotations()
+     * @see CiUtil#getParameterAnnotation(int, RiResolvedMethod)
+     */
+    Annotation[][] getParameterAnnotations();
+
+    /**
+     * Returns an array of {@link Type} objects that represent the formal
+     * parameter types, in declaration order, of this method.
+     *
+     * @see Method#getGenericParameterTypes()
+     */
+    Type[] getGenericParameterTypes();
+
+    /**
+     * Returns a {@link Type} object that represents the formal return type of this method.
+     *
+     * @see Method#getGenericReturnType()
+     */
+    Type getGenericReturnType();
 }

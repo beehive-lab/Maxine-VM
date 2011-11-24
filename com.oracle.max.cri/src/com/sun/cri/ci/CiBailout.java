@@ -29,7 +29,7 @@ import java.util.*;
  * e.g. bytecode wouldn't verify, too big, JSR/ret too complicated, etc. This exception is <i>not</i>
  * meant to indicate problems with the compiler itself.
  */
-public class CiBailout extends InternalError {
+public class CiBailout extends RuntimeException {
 
     public static final long serialVersionUID = 8974598793458772L;
 

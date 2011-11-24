@@ -109,10 +109,10 @@ public class InliningUtil {
     /**
      * Represents an inlining opportunity where the compiler can statically determine a monomorphic target method and therefore is able to determine the called method exactly.
      */
-    private static class StaticInlineInfo extends InlineInfo {
+    private static class ExactInlineInfo extends InlineInfo {
         public final RiResolvedMethod concrete;
 
-        public StaticInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
+        public ExactInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
             super(invoke, weight, level);
             this.concrete = concrete;
         }
@@ -136,7 +136,7 @@ public class InliningUtil {
 
         @Override
         public String toString() {
-            return "static inlining " + CiUtil.format("%H.%n(%p):%r", concrete, false);
+            return "exact inlining " + CiUtil.format("%H.%n(%p):%r", concrete, false);
         }
     }
 
@@ -144,7 +144,7 @@ public class InliningUtil {
      * Represents an inlining opportunity for which profiling information suggests a monomorphic receiver, but for which the receiver type cannot be proven.
      * A type check guard will be generated if this inlining is performed.
      */
-    private static class TypeGuardInlineInfo extends StaticInlineInfo {
+    private static class TypeGuardInlineInfo extends ExactInlineInfo {
 
         public final RiResolvedType type;
         public final double probability;
@@ -178,7 +178,7 @@ public class InliningUtil {
     /**
      * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method, but for which an assumption has to be registered because of non-final classes.
      */
-    private static class AssumptionInlineInfo extends StaticInlineInfo {
+    private static class AssumptionInlineInfo extends ExactInlineInfo {
 
         public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
             super(invoke, weight, level, concrete);
@@ -223,7 +223,7 @@ public class InliningUtil {
         if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
             if (checkTargetConditions(callTarget.targetMethod(), runtime)) {
                 double weight = callback.inliningWeight(parent, callTarget.targetMethod(), invoke);
-                return new StaticInlineInfo(invoke, weight, level, callTarget.targetMethod());
+                return new ExactInlineInfo(invoke, weight, level, callTarget.targetMethod());
             }
             return null;
         }
@@ -233,7 +233,7 @@ public class InliningUtil {
             RiResolvedMethod resolved = exact.resolveMethodImpl(callTarget.targetMethod());
             if (checkTargetConditions(resolved, runtime)) {
                 double weight = callback.inliningWeight(parent, resolved, invoke);
-                return new StaticInlineInfo(invoke, weight, level, resolved);
+                return new ExactInlineInfo(invoke, weight, level, resolved);
             }
             return null;
         }
