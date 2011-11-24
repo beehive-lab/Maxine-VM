@@ -165,6 +165,10 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         return codeLocationFactory().createMachineCodeLocation(callEntryPoint, "Code entry");
     }
 
+    public boolean isCodeLive() {
+        return !teleTargetMethod.isEvicted();
+    }
+
     public boolean isBaseline() {
         return teleTargetMethod.isBaseline();
     }

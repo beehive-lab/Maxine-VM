@@ -33,7 +33,7 @@ import com.sun.max.tele.*;
 
 /**
  * A menu bar specialized for use in the VM Inspector.
- * <br>
+ * <p>
  * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
  */
 public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
@@ -46,7 +46,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     private final List<InspectorMenu> menus = new ArrayList<InspectorMenu>(10);
 
     /**
-     * Creates a new {@JMenuBar}, specialized for use in the VM Inspector.
+     * Creates a new {@link JMenuBar}, specialized for use in the Inspector.
      */
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;
@@ -85,6 +85,11 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         }
         add(menu);
         return menu;
+    }
+
+    public void clearAll() {
+        menus.clear();
+        removeAll();
     }
 
     public final Inspection inspection() {
@@ -130,4 +135,5 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     protected String tracePrefix() {
         return tracePrefix;
     }
+
 }
