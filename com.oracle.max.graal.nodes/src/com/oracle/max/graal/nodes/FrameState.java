@@ -456,11 +456,11 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         return phi;
     }
 
-    private void addToPhi(PhiNode currentValue, ValueNode otherValue) {
-        if (otherValue == null || otherValue.kind != currentValue.kind) {
-            currentValue.replaceAndDelete(null);
+    private void addToPhi(PhiNode phiNode, ValueNode otherValue) {
+        if (otherValue == null || otherValue.kind != phiNode.kind) {
+            phiNode.replaceAndDelete(null);
         } else {
-            currentValue.addInput(otherValue);
+            phiNode.addInput(otherValue);
         }
     }
 
@@ -483,9 +483,9 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         }
     }
 
-    public void deleteRedundantPhi(PhiNode currentValue, ValueNode newValue) {
-        Collection<Node> phiUsages = currentValue.usages().snapshot();
-        currentValue.replaceAndDelete(newValue);
+    public void deleteRedundantPhi(PhiNode redundantPhi, ValueNode phiValue) {
+        Collection<Node> phiUsages = redundantPhi.usages().snapshot();
+        redundantPhi.replaceAndDelete(phiValue);
         for (Node n : phiUsages) {
             if (n instanceof PhiNode) {
                 PhiNode phiNode = (PhiNode) n;

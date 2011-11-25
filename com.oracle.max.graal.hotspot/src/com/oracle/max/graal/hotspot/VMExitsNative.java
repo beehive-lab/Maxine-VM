@@ -152,39 +152,42 @@ public class VMExitsNative implements VMExits, Remote {
     public void compileMethod(final HotSpotMethodResolved method, final int entryBCI, boolean blocking) throws Throwable {
         try {
             Runnable runnable = new Runnable() {
-
                 public void run() {
-                    CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
-                    if (LogCompiledMethods) {
-                        String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
-                        compiledMethods.add(qualifiedName);
-                    }
+                    try {
+                        CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
+                        if (LogCompiledMethods) {
+                            String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
+                            compiledMethods.add(qualifiedName);
+                        }
 
-                    if (result.bailout() != null) {
-                        Throwable cause = result.bailout().getCause();
-                        if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JsrNotSupportedBailout)) {
-                            StringWriter out = new StringWriter();
-                            result.bailout().printStackTrace(new PrintWriter(out));
-                            TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
-                            if (cause != null) {
-                                Logger.info("Trace for cause: ");
-                                for (StackTraceElement e : cause.getStackTrace()) {
-                                    String current = e.getClassName() + "::" + e.getMethodName();
-                                    String type = "";
-                                    if (compiledMethods.contains(current)) {
-                                        type = "compiled";
+                        if (result.bailout() != null) {
+                            Throwable cause = result.bailout().getCause();
+                            if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JsrNotSupportedBailout)) {
+                                StringWriter out = new StringWriter();
+                                result.bailout().printStackTrace(new PrintWriter(out));
+                                TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
+                                if (cause != null) {
+                                    Logger.info("Trace for cause: ");
+                                    for (StackTraceElement e : cause.getStackTrace()) {
+                                        String current = e.getClassName() + "::" + e.getMethodName();
+                                        String type = "";
+                                        if (compiledMethods.contains(current)) {
+                                            type = "compiled";
+                                        }
+                                        Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
                                     }
-                                    Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
                                 }
                             }
+                            String s = result.bailout().getMessage();
+                            if (cause != null) {
+                                s = cause.getMessage();
+                            }
+                            compiler.getVMEntries().recordBailout(s);
+                        } else {
+                            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
                         }
-                        String s = result.bailout().getMessage();
-                        if (cause != null) {
-                            s = cause.getMessage();
-                        }
-                        compiler.getVMEntries().recordBailout(s);
-                    } else {
-                        HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
+                    } catch (Throwable t) {
+                        t.printStackTrace();
                     }
                 }
             };
