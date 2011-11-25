@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.phases;
+package com.oracle.max.graal.nodes.extended;
 
 import java.util.*;
 
@@ -32,9 +32,9 @@ public class BoxingMethodPool {
     private static final String BOX_METHOD = "valueOf";
     private final Set<RiMethod> specialMethods = new HashSet<RiMethod>();
     private final RiRuntime runtime;
-    private final RiMethod[] boxingMethods = new RiMethod[CiKind.values().length];
-    private final RiMethod[] unboxingMethods = new RiMethod[CiKind.values().length];
-    private final RiField[] boxFields = new RiField[CiKind.values().length];
+    private final RiResolvedMethod[] boxingMethods = new RiResolvedMethod[CiKind.values().length];
+    private final RiResolvedMethod[] unboxingMethods = new RiResolvedMethod[CiKind.values().length];
+    private final RiResolvedField[] boxFields = new RiResolvedField[CiKind.values().length];
 
     public BoxingMethodPool(RiRuntime runtime) {
         this.runtime = runtime;
@@ -71,8 +71,8 @@ public class BoxingMethodPool {
         specialMethods.add(unboxingMethod);
 
         // Get the field that contains the boxed value.
-        RiField[] fields = runtime.getType(type).declaredFields();
-        RiField boxField = fields[0];
+        RiResolvedField[] fields = runtime.getType(type).declaredFields();
+        RiResolvedField boxField = fields[0];
         assert fields.length == 1 && boxField.kind(false) == kind;
         boxFields[kind.ordinal()] = boxField;
     }
@@ -81,15 +81,15 @@ public class BoxingMethodPool {
         return specialMethods.contains(method);
     }
 
-    public RiMethod getBoxingMethod(CiKind kind) {
+    public RiResolvedMethod getBoxingMethod(CiKind kind) {
         return boxingMethods[kind.ordinal()];
     }
 
-    public RiMethod getUnboxingMethod(CiKind kind) {
+    public RiResolvedMethod getUnboxingMethod(CiKind kind) {
         return unboxingMethods[kind.ordinal()];
     }
 
-    public RiField getBoxField(CiKind kind) {
+    public RiResolvedField getBoxField(CiKind kind) {
         return boxFields[kind.ordinal()];
     }
 }

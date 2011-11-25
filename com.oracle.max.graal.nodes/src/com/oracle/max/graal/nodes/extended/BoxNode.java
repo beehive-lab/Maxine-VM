@@ -24,14 +24,18 @@ package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 
 public final class BoxNode extends AbstractStateSplit implements Node.IterableNodeType {
 
     @Input private ValueNode source;
+    @Data private int bci;
 
-    public BoxNode(ValueNode value) {
+    public BoxNode(ValueNode value, int bci) {
         super(CiKind.Object);
         this.source = value;
         assert value.kind() != CiKind.Object : "can only box from primitive type";
@@ -41,7 +45,11 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
         return source;
     }
 
-    public CiKind sourceKind() {
-        return source().kind();
+    public void expand(BoxingMethodPool pool) {
+        RiResolvedMethod boxingMethod = pool.getBoxingMethod(source().kind());
+        MethodCallTargetNode callTarget = graph().add(new MethodCallTargetNode(InvokeKind.Static, boxingMethod, new ValueNode[]{source}, boxingMethod.signature().returnType(boxingMethod.holder())));
+        InvokeNode invokeNode = graph().add(new InvokeNode(callTarget, bci));
+        invokeNode.setStateAfter(stateAfter());
+        this.replaceWithFixedWithNext(invokeNode);
     }
 }

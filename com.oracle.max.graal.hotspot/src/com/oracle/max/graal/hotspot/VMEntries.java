@@ -99,7 +99,7 @@ public interface VMEntries {
 
     RiType getRiType(CiConstant constant);
 
-    RiField[] RiType_fields(HotSpotTypeResolved klass);
+    RiResolvedField[] RiType_fields(HotSpotTypeResolved klass);
 
     boolean RiMethod_hasCompiledCode(HotSpotMethodResolved method);
 

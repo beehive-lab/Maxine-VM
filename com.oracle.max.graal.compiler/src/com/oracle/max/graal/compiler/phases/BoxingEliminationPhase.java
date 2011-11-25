@@ -42,6 +42,19 @@ public class BoxingEliminationPhase extends Phase {
         // TODO: Implement
     }
 
+
+
+
+
+
+
+
+
+
+
+
+    // TODO: Remove those methods.
+
     public static synchronized boolean isUnboxingMethod(RiRuntime runtime, RiMethod method) {
         if (!unboxingMethodsMap.containsKey(runtime)) {
             unboxingMethodsMap.put(runtime, createUnboxingMethodSet(runtime));

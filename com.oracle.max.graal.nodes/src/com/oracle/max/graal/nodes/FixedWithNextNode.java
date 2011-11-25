@@ -53,4 +53,11 @@ public abstract class FixedWithNextNode extends FixedNode {
         replaceAtPredecessors(next);
         replaceAtUsages(other);
     }
+
+    public void replaceWithFixedWithNext(FixedWithNextNode other) {
+        FixedNode next = this.next();
+        setNext(null);
+        other.setNext(next);
+        replaceAndDelete(other);
+    }
 }
