@@ -93,15 +93,19 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     private void openPrinter(GraalCompilation compilation, boolean error) {
         assert (context().stream == null && printer() == null);
         if ((!TTY.isSuppressed() && GraalOptions.Plot) || (GraalOptions.PlotOnError && error)) {
-            String name = null;
-            name = compilation.method.holder().name();
-            name = name.substring(1, name.length() - 1).replace('/', '.');
-            name = name + "." + compilation.method.name();
+            String name;
+            if (compilation != null) {
+                name = compilation.method.holder().name();
+                name = name.substring(1, name.length() - 1).replace('/', '.');
+                name = name + "." + compilation.method.name();
+            } else {
+                name = "null";
+            }
 
             if (host != null) {
-                openNetworkPrinter(name, compilation.method);
+                openNetworkPrinter(name, compilation == null ? null : compilation.method);
             } else {
-                openFilePrinter(name, compilation.method);
+                openFilePrinter(name, compilation == null ? null : compilation.method);
             }
         }
     }
