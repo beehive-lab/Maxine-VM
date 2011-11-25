@@ -58,7 +58,7 @@ public class BoxingEliminationPhase extends Phase {
                 n.replaceFirstInput(boxNode, null);
             } else if (n instanceof FrameState) {
                 if (virtualValueNode == null) {
-                    VirtualObjectNode virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.getDestinationType(), 1));
+                    VirtualObjectNode virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.exactType(), 1));
                     virtualValueNode = graph.add(new VirtualObjectFieldNode(virtualObjectNode, virtualObjectNode, boxNode.source(), 0));
                 }
                 n.replaceFirstInput(boxNode, virtualValueNode);
