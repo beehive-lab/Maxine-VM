@@ -72,9 +72,9 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
                 assert current != null;
             } else if (current instanceof FixedWithNextNode) {
                 FixedNode next = ((FixedWithNextNode) current).next();
+                assert next != null : current;
                 node(current);
                 current = next;
-                assert current != null;
             } else if (current instanceof EndNode) {
                 end((EndNode) current);
                 queueMerge((EndNode) current);
