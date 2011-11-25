@@ -130,6 +130,7 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType, L
     public boolean verify() {
         assertTrue(loopEnd() != null, "missing loopEnd");
         assertTrue(forwardEdge() != null, "missing forwardEdge");
+        assertTrue(usages().filter(LoopEndNode.class).snapshot().size() == 1, "multiple loop ends");
         return super.verify();
     }
 
