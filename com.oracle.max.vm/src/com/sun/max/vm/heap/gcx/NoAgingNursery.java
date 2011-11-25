@@ -156,7 +156,7 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
-        visitor.visit(allocator.start, allocator.top);
+        visitor.visitCells(allocator.start, allocator.top);
     }
 
 }

@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.heap.gcx.CardTable.CardValue.*;
+import static com.sun.max.vm.heap.gcx.CardTable.CardState.*;
 
 import com.sun.max.unsafe.*;
 /**
@@ -41,11 +41,11 @@ class CardTable extends  Log2RegionToByteMapTable {
 
     static final int NO_CARD_INDEX = -1;
 
-    static enum CardValue {
+    static enum CardState {
         CLEAN_CARD(0xff),
         DIRTY_CARD(0);
         byte value;
-        CardValue(int value) {
+        CardState(int value) {
             this.value = (byte) value;
         }
         byte value() {
@@ -70,62 +70,70 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all cards of the table to the {@link CardValue#CLEAN_CARD} value.
+     * Set all cards of the table to the {@link CardState#CLEAN_CARD} value.
      */
     void cleanAll() {
         fill(CLEAN_CARD.value());
     }
 
-    void clear(int fromIndex, int toIndex) {
+    /**
+     * Set all cards in the index range to the {@link CardState#CLEAN_CARD} value.
+     * @param fromIndex index to the first card of the range (inclusive)
+     * @param toIndex index to the last card of the range (exclusive)
+     */
+    void clean(int fromIndex, int toIndex) {
         fill(fromIndex, toIndex, CLEAN_CARD.value());
     }
 
+    /**
+     * Set all cards in the index range to the {@link CardState#DIRTY_CARD} value.
+     * @param fromIndex index to the first card of the range (inclusive)
+     * @param toIndex index to the last card of the range (exclusive)
+     */
     void dirty(int fromIndex, int toIndex) {
         fill(fromIndex, toIndex, DIRTY_CARD.value());
     }
 
-    void clear(int index) {
+    /**
+     * Set card at specified index to the {@link CardState#CLEAN_CARD} value.
+     * @param index a card index
+     */
+    void clean(int index) {
         set(index, CLEAN_CARD.value());
     }
 
+   /**
+    * Set card at specified index to the {@link CardState#DIRTY_CARD} value.
+    * @param index a card index
+    */
     void dirty(int index) {
         set(index, DIRTY_CARD.value());
     }
 
+    /**
+     * Dirty the entry in the card table corresponding to the card of the covered heap address.
+     * @param coveredAddress an address in heap covered by the card table
+     */
     void dirtyCovered(Address coveredAddress) {
         unsafeSet(coveredAddress, DIRTY_CARD.value());
     }
 
     /**
-     * Find the first dirty card specified range of entries in the table.
+     * Find the first card set to the specified value in the specified range of entries in the table .
      * @param start index of the first card in the range (inclusive)
-     * @param end index of the last card of the range (exclusive
+     * @param end index of the last card of the range (exclusive)
+     * @param cardState a card state
     * @return {@link #NO_CARD_INDEX} if all the cards in the range are clean, the index to the first dirty card otherwise.
     */
-    final int firstDirty(int start, int end) {
+    final int first(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
         // We may also get rid of the limit test by making the end of the range looking like a marked card.
         // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
         final Pointer first = tableAddress.plus(start);
         final Pointer limit = tableAddress.plus(end);
+        final byte cardValue = cardState.value;
         Pointer cursor = first;
-        while (cursor.getByte() != DIRTY_CARD.value) {
-            cursor = cursor.plus(1);
-            if (cursor.greaterEqual(limit)) {
-                return -1;
-            }
-        }
-        return cursor.minus(first).toInt();
-    }
-
-    final int first(int start, int end, CardValue cardValue) {
-        // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
-        // We may also get rid of the limit test by making the end of the range looking like a marked card.
-        // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
-        final Pointer first = tableAddress.plus(start);
-        final Pointer limit = tableAddress.plus(end);
-        Pointer cursor = first;
-        while (cursor.getByte() != cardValue.value) {
+        while (cursor.getByte() != cardValue) {
             cursor = cursor.plus(1);
             if (cursor.greaterEqual(limit)) {
                 return -1;

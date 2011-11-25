@@ -871,7 +871,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
-        visitor.visit(committedHeapSpace.start(), committedHeapSpace.committedEnd());
+        visitor.visitCells(committedHeapSpace.start(), committedHeapSpace.committedEnd());
     }
 
 }
