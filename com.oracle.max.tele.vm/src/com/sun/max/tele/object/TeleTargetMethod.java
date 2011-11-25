@@ -94,6 +94,7 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
+
     private static final int TRACE_VALUE = 2;
     private static final List<TargetCodeInstruction> EMPTY_TARGET_INSTRUCTIONS =  Collections.emptyList();
     private static final MachineCodeLocation[] EMPTY_MACHINE_CODE_LOCATIONS = {};
