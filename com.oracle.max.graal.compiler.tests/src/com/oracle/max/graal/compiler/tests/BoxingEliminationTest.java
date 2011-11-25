@@ -49,6 +49,10 @@ public class BoxingEliminationTest extends GraphTest {
         return 1;
     }
 
+    public static Object boxedObject() {
+        return 1;
+    }
+
     @Test
     public void test1() {
         test("test1Snippet");
@@ -56,6 +60,15 @@ public class BoxingEliminationTest extends GraphTest {
 
     public static int test1Snippet(int a) {
         return boxedInteger();
+    }
+
+    @Test
+    public void test2() {
+        test("test2Snippet");
+    }
+
+    public static int test2Snippet(int a) {
+        return (Integer) boxedObject();
     }
 
     private void test(String snippet) {
@@ -80,8 +93,10 @@ public class BoxingEliminationTest extends GraphTest {
         phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
         new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
+        print(graph);
         new BoxingEliminationPhase().apply(graph);
         new ExpandBoxingNodesPhase(pool).apply(graph);
+        new CanonicalizerPhase(null, runtime(), null).apply(graph);
         new DeadCodeEliminationPhase().apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);

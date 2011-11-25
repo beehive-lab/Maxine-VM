@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code AnchorNode} can be used a lower bound for a Guard. It can also be used as an upper bound if no other FixedNode can be used for that purpose.
  */
-public final class AnchorNode extends FixedWithNextNode implements LIRLowerable {
+public final class AnchorNode extends FixedWithNextNode implements LIRLowerable, Canonicalizable {
 
     @Input(notDataflow = true) private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
 
@@ -39,6 +39,14 @@ public final class AnchorNode extends FixedWithNextNode implements LIRLowerable 
 
     public void addGuard(GuardNode x) {
         guards.add(x);
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (this.usages().size() == 0 && guards.size() == 0) {
+            return null;
+        }
+        return this;
     }
 
     @Override

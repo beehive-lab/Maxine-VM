@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -78,16 +79,28 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
         RiResolvedType objectExactType = object().exactType();
         RiResolvedType classExactType = exactType();
         if (objectExactType != null && classExactType != null && objectExactType.isSubtypeOf(classExactType)) {
+            freeAnchor();
             return object();
         }
         CiConstant constant = object().asConstant();
         if (constant != null) {
             assert constant.kind == CiKind.Object;
             if (constant.isNull()) {
+                freeAnchor();
                 return object();
             }
         }
         return this;
+    }
+
+    // TODO(tw): Find a better way to handle anchors.
+    private void freeAnchor() {
+        for (Node n : usages()) {
+            if (n instanceof ValueAnchorNode) {
+                n.replaceFirstInput(this, null);
+                return;
+            }
+        }
     }
 
     @Override

@@ -52,6 +52,9 @@ public final class ValueAnchorNode extends FixedWithNextNode implements Canonica
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
+        if (object == null) {
+            return null;
+        }
         if (object instanceof ConstantNode) {
             return null;
         }
