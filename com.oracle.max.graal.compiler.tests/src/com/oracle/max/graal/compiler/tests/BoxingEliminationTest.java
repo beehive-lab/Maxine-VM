@@ -27,6 +27,7 @@ import java.util.*;
 import org.junit.*;
 
 import com.oracle.max.graal.compiler.phases.*;
+import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
@@ -58,6 +59,9 @@ public class BoxingEliminationTest extends GraphTest {
 
     private void test(String snippet) {
         StructuredGraph graph = parse(snippet);
+        BoxingMethodPool pool = new BoxingMethodPool(runtime());
+        IdentifyBoxingPhase identifyBoxingPhase = new IdentifyBoxingPhase(pool);
+        identifyBoxingPhase.apply(graph);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
         ConstantNode constant = ConstantNode.forInt(0, graph);
         for (Node n : local.usages().snapshot()) {
@@ -71,7 +75,9 @@ public class BoxingEliminationTest extends GraphTest {
         for (Invoke invoke : graph.getInvokes()) {
             hints.add(invoke);
         }
-        new InliningPhase(null, runtime(), hints, null, PhasePlan.DEFAULT).apply(graph);
+        PhasePlan phasePlan = new PhasePlan();
+        phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
+        new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         new DeadCodeEliminationPhase().apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
