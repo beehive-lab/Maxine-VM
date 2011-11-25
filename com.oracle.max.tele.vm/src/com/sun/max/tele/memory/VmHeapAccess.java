@@ -519,7 +519,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     }
 
     public boolean providesHeapRegionInfo() {
-        return teleHeapScheme instanceof TeleMSEHeapScheme;
+        return teleHeapScheme instanceof TeleRegionBasedHeapScheme;
     }
 
     /**
