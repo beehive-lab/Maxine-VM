@@ -37,7 +37,6 @@ import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -201,17 +200,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         iterateAllBlocks();
         connectLoopEndToBegin();
 
-        List<Loop> loops = LoopUtil.computeLoops(graph);
-        NodeBitMap loopExits = graph.createNodeBitMap();
-        for (Loop loop : loops) {
-            loopExits.setUnion(loop.exits());
-        }
-
         // remove Placeholders (except for loop exits)
         for (PlaceholderNode n : graph.getNodes(PlaceholderNode.class)) {
-            if (!loopExits.isMarked(n)) {
-                n.replaceAndDelete(n.next());
-            }
+            n.replaceAndDelete(n.next());
         }
 
         // remove dead FrameStates
@@ -223,41 +214,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             cachedGraphs.put(method, graph.copy());
-        }
-    }
-
-    private void removeRedundantPhis() {
-        for (LoopBeginNode loop : graph.getNodes(LoopBeginNode.class)) {
-            for (PhiNode phiNode : loop.phis()) {
-                checkPhi(phiNode);
-            }
-        }
-    }
-
-    private void checkPhi(PhiNode phiNode) {
-        if (phiNode.isDeleted()) {
-            return;
-        }
-
-        Node differentValue = null;
-        for (ValueNode n : phiNode.values()) {
-            assert n != null;
-            if (n != phiNode) {
-                if (differentValue == null) {
-                    differentValue = n;
-                } else if (differentValue != n) {
-                    return;
-                }
-            }
-        }
-
-        assert differentValue != null : phiNode;
-        Collection<Node> phiUsages = phiNode.usages().snapshot();
-        phiNode.replaceAndDelete(differentValue);
-        for (Node n : phiUsages) {
-            if (n instanceof PhiNode) {
-                checkPhi((PhiNode) n);
-            }
         }
     }
 
