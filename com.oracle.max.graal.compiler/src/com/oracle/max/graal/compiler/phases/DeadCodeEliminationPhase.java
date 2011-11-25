@@ -102,9 +102,8 @@ public class DeadCodeEliminationPhase extends Phase {
     }
 
     private void replacePhis(MergeNode merge) {
-        for (Node usage : merge.usages().snapshot()) {
-            assert usage instanceof PhiNode;
-            usage.replaceAndDelete(((PhiNode) usage).valueAt(0));
+        for (PhiNode phi : merge.phis().snapshot()) {
+            phi.replaceAndDelete((phi).valueAt(0));
         }
     }
 
