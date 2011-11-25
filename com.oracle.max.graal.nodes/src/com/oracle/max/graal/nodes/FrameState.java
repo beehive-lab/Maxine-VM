@@ -499,18 +499,11 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             return;
         }
 
-        ValueNode differentValue = null;
-        for (ValueNode n : phiNode.values()) {
-            if (n != phiNode) {
-                if (differentValue == null) {
-                    differentValue = n;
-                } else if (differentValue != n) {
-                    return;
-                }
-            }
-        }
+        ValueNode singleValue = phiNode.singleValue();
 
-        deleteRedundantPhi(phiNode, differentValue);
+        if (singleValue != null) {
+            deleteRedundantPhi(phiNode, singleValue);
+        }
     }
 
     private void deleteInvalidPhi(PhiNode phiNode) {
