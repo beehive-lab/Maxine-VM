@@ -48,7 +48,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private RiConstantPool pool;
     private RiResolvedType superType;
     private boolean superTypeSet;
-    private RiField[] fields;
+    private RiResolvedField[] fields;
     private RiConstantPool constantPool;
     private boolean isInitialized;
     private RiResolvedType arrayOfType;
@@ -230,7 +230,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiField[] declaredFields() {
+    public RiResolvedField[] declaredFields() {
         if (fields == null) {
             fields = compiler.getVMEntries().RiType_fields(this);
         }

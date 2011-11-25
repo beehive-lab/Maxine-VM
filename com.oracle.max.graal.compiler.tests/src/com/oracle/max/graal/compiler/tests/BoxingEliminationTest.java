@@ -30,6 +30,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 
 /**
  * In the following tests, the usages of local variable "a" are replaced with the integer constant 0.
@@ -80,6 +81,9 @@ public class BoxingEliminationTest extends GraphTest {
         new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         new DeadCodeEliminationPhase().apply(graph);
+        print(graph);
+        new ExpandBoxingNodesPhase(pool).apply(graph);
+        print(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }

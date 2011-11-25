@@ -146,7 +146,7 @@ public class VMEntriesNative implements VMEntries, Remote {
     }
 
     @Override
-    public native RiField[] RiType_fields(HotSpotTypeResolved klass);
+    public native RiResolvedField[] RiType_fields(HotSpotTypeResolved klass);
 
     @Override
     public native boolean RiMethod_hasCompiledCode(HotSpotMethodResolved method);
