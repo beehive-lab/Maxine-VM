@@ -75,6 +75,8 @@ public class BoxingEliminationTest extends GraphTest {
         StructuredGraph graph = parse(snippet);
         BoxingMethodPool pool = new BoxingMethodPool(runtime());
         IdentifyBoxingPhase identifyBoxingPhase = new IdentifyBoxingPhase(pool);
+        PhasePlan phasePlan = new PhasePlan();
+        phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
         identifyBoxingPhase.apply(graph);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
         ConstantNode constant = ConstantNode.forInt(0, graph);
@@ -89,8 +91,6 @@ public class BoxingEliminationTest extends GraphTest {
         for (Invoke invoke : graph.getInvokes()) {
             hints.add(invoke);
         }
-        PhasePlan phasePlan = new PhasePlan();
-        phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
         new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         print(graph);

@@ -25,11 +25,12 @@ package com.oracle.max.graal.nodes.extended;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public final class UnboxNode extends FixedWithNextNode implements Node.IterableNodeType {
+public final class UnboxNode extends FixedWithNextNode implements Node.IterableNodeType, Canonicalizable {
 
     @Input private ValueNode source;
 
@@ -52,5 +53,34 @@ public final class UnboxNode extends FixedWithNextNode implements Node.IterableN
         RiResolvedField field = pool.getBoxField(kind());
         LoadFieldNode loadField = graph().add(new LoadFieldNode(source, field));
         this.replaceWithFixedWithNext(loadField);
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (source.isConstant()) {
+            CiConstant constant = source.asConstant();
+            Object o = constant.asObject();
+            switch (kind()) {
+                case Boolean:
+                    return ConstantNode.forBoolean((Boolean) o, graph());
+                case Byte:
+                    return ConstantNode.forByte((Byte) o, graph());
+                case Char:
+                    return ConstantNode.forChar((Character) o, graph());
+                case Short:
+                    return ConstantNode.forShort((Short) o, graph());
+                case Int:
+                    return ConstantNode.forInt((Integer) o, graph());
+                case Long:
+                    return ConstantNode.forLong((Long) o, graph());
+                case Float:
+                    return ConstantNode.forFloat((Long) o, graph());
+                case Double:
+                    return ConstantNode.forDouble((Long) o, graph());
+                default:
+                    assert false;
+            }
+        }
+        return this;
     }
 }

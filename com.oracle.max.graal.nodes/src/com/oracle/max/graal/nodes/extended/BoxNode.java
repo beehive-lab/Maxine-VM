@@ -40,6 +40,7 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
         super(CiKind.Object);
         this.source = value;
         this.destinationType = type;
+        this.bci = bci;
         assert value.kind() != CiKind.Object : "can only box from primitive type";
     }
 

@@ -38,6 +38,7 @@ public class BoxingEliminationPhase extends Phase {
 
     private void tryEliminate(BoxNode boxNode, StructuredGraph graph) {
 
+        System.out.println("try elminate on " + boxNode);
         for (Node n : boxNode.usages()) {
             if (!(n instanceof FrameState) && !(n instanceof UnboxNode)) {
                 // Elimination failed, because boxing object escapes.
@@ -46,16 +47,18 @@ public class BoxingEliminationPhase extends Phase {
         }
 
         ValueNode virtualValueNode = null;
+        VirtualObjectNode virtualObjectNode = null;
         FrameState stateAfter = boxNode.stateAfter();
         for (Node n : boxNode.usages().snapshot()) {
             if (n == stateAfter) {
                 n.replaceFirstInput(boxNode, null);
             } else if (n instanceof FrameState) {
                 if (virtualValueNode == null) {
-                    VirtualObjectNode virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.exactType(), 1));
-                    virtualValueNode = graph.add(new VirtualObjectFieldNode(virtualObjectNode, virtualObjectNode, boxNode.source(), 0));
+                    virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.exactType(), 1));
+                    virtualValueNode = graph.add(new VirtualObjectFieldNode(virtualObjectNode, null, boxNode.source(), 0));
                 }
-                n.replaceFirstInput(boxNode, virtualValueNode);
+                ((FrameState) n).addVirtualObjectMapping(virtualValueNode);
+                n.replaceFirstInput(boxNode, virtualObjectNode);
             } else if (n instanceof UnboxNode) {
                 ((UnboxNode) n).replaceAndUnlink(boxNode.source());
             } else {
@@ -63,6 +66,7 @@ public class BoxingEliminationPhase extends Phase {
             }
         }
 
+        System.out.println("ELIMINATED: " + boxNode);
         boxNode.setStateAfter(null);
         stateAfter.safeDelete();
         FixedNode next = boxNode.next();

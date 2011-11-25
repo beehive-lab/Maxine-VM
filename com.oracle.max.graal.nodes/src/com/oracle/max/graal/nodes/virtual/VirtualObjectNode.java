@@ -79,6 +79,6 @@ public class VirtualObjectNode extends ValueNode implements LIRLowerable {
     }
 
     public int fieldsCount() {
-        return fields.length;
+        return fieldsCount;
     }
 }
