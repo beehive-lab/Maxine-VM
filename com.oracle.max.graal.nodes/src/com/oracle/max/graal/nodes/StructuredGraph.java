@@ -68,6 +68,15 @@ public class StructuredGraph extends Graph {
         return copy;
     }
 
+    public LocalNode getLocal(int index) {
+        for (LocalNode local : getNodes(LocalNode.class)) {
+            if (local.index() == index) {
+                return local;
+            }
+        }
+        return null;
+    }
+
     public Iterable<Invoke> getInvokes() {
         final Iterator<MethodCallTargetNode> callTargets = getNodes(MethodCallTargetNode.class).iterator();
         return new Iterable<Invoke>() {
