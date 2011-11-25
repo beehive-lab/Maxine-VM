@@ -24,11 +24,12 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.graph.*;
 
 /**
  * The {@code MonitorEnterNode} represents a monitor release.
  */
-public final class MonitorExitNode extends AccessMonitorNode implements LIRLowerable {
+public final class MonitorExitNode extends AccessMonitorNode implements LIRLowerable, Node.IterableNodeType {
 
     /**
      * Creates a new MonitorExitNode.
