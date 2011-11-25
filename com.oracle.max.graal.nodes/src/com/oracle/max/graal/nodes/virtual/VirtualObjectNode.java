@@ -34,11 +34,19 @@ public class VirtualObjectNode extends ValueNode implements LIRLowerable {
 
     @Data private RiType type;
     private EscapeField[] fields;
+    private int fieldsCount;
 
     public VirtualObjectNode(RiType type, EscapeField[] fields) {
         super(CiKind.Int);
         this.type = type;
         this.fields = fields;
+        this.fieldsCount = fields.length;
+    }
+
+    public VirtualObjectNode(RiType type, int fieldCount) {
+        super(CiKind.Int);
+        this.type = type;
+        this.fieldsCount = fieldCount;
     }
 
     public RiType type() {
@@ -68,5 +76,9 @@ public class VirtualObjectNode extends ValueNode implements LIRLowerable {
         } else {
             return super.toString(verbosity);
         }
+    }
+
+    public int fieldsCount() {
+        return fields.length;
     }
 }

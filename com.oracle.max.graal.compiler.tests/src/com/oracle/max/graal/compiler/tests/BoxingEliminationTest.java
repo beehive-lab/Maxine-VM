@@ -80,10 +80,9 @@ public class BoxingEliminationTest extends GraphTest {
         phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
         new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
-        new DeadCodeEliminationPhase().apply(graph);
-        print(graph);
+        new BoxingEliminationPhase().apply(graph);
         new ExpandBoxingNodesPhase(pool).apply(graph);
-        print(graph);
+        new DeadCodeEliminationPhase().apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }

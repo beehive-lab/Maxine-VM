@@ -1938,9 +1938,9 @@ public final class LinearScan {
                     for (Entry<VirtualObjectNode, CiVirtualObject> entry : virtualObjectsCopy.entrySet()) {
                         if (entry.getValue().values() == null) {
                             VirtualObjectNode vobj = entry.getKey();
-                            CiValue[] values = new CiValue[vobj.fields().length];
+                            CiValue[] values = new CiValue[vobj.fieldsCount()];
                             entry.getValue().setValues(values);
-                            if (vobj.fields().length > 0) {
+                            if (values.length > 0) {
                                 changed = true;
                                 ValueNode currentField = objectStates.get(vobj);
                                 assert currentField != null;

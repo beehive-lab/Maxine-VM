@@ -74,7 +74,7 @@ public class VirtualObjectFieldNode extends ValueNode implements LIRLowerable {
 
     @Override
     public String toString(Verbosity verbosity) {
-        if (verbosity == Verbosity.Name) {
+        if (verbosity == Verbosity.Name && object().fields() != null) {
             return super.toString(Verbosity.Name) + " " + object().fields()[index].name();
         } else {
             return super.toString(verbosity);
