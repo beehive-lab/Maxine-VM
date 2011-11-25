@@ -118,7 +118,7 @@ public abstract class ValueNode extends Node {
      */
     public RiResolvedType exactType() {
         RiResolvedType declType = declaredType();
-        if (Modifier.isFinal(declType.accessFlags())) {
+        if (declType != null && Modifier.isFinal(declType.accessFlags())) {
             return declType;
         }
         return null; // default: unknown exact type

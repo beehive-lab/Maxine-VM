@@ -81,6 +81,14 @@ public class BoxingMethodPool {
         return specialMethods.contains(method);
     }
 
+    public boolean isBoxingMethod(RiResolvedMethod method) {
+        return isSpecialMethod(method) && method.signature().returnKind(false) == CiKind.Object;
+    }
+
+    public boolean isUnboxingMethod(RiResolvedMethod method) {
+        return isSpecialMethod(method) && method.signature().returnKind(false) != CiKind.Object;
+    }
+
     public RiResolvedMethod getBoxingMethod(CiKind kind) {
         return boxingMethods[kind.ordinal()];
     }
