@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewArrayNode} class is the base of all instructions that allocate arrays.
  */
-public abstract class NewArrayNode extends FixedWithNextNode {
+public abstract class NewArrayNode extends FixedWithNextNode implements EscapeAnalyzable{
 
     @Input private ValueNode length;
 
