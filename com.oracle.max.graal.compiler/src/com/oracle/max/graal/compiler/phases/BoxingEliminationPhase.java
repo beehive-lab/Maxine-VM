@@ -24,24 +24,58 @@ package com.oracle.max.graal.compiler.phases;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ri.*;
 
 public class BoxingEliminationPhase extends Phase {
 
     private static final HashMap<RiRuntime, Set<RiMethod>> boxingMethodsMap = new HashMap<RiRuntime, Set<RiMethod>>();
     private static final HashMap<RiRuntime, Set<RiMethod>> unboxingMethodsMap = new HashMap<RiRuntime, Set<RiMethod>>();
-    private final RiRuntime runtime;
-
-    public BoxingEliminationPhase(RiRuntime runtime) {
-        this.runtime = runtime;
-    }
 
     @Override
     protected void run(StructuredGraph graph) {
-        // TODO: Implement
+        for (BoxNode boxNode : graph.getNodes(BoxNode.class)) {
+            tryEliminate(boxNode, graph);
+        }
     }
 
+    private void tryEliminate(BoxNode boxNode, StructuredGraph graph) {
+
+        for (Node n : boxNode.usages()) {
+            if (!(n instanceof FrameState) && !(n instanceof UnboxNode)) {
+                // Elimination failed, because boxing object escapes.
+                return;
+            }
+        }
+
+        ValueNode virtualValueNode = null;
+        FrameState stateAfter = boxNode.stateAfter();
+        for (Node n : boxNode.usages().snapshot()) {
+            if (n == stateAfter) {
+                n.replaceFirstInput(boxNode, null);
+            } else if (n instanceof FrameState) {
+                if (virtualValueNode == null) {
+                    VirtualObjectNode virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.getDestinationType(), 1));
+                    virtualValueNode = graph.add(new VirtualObjectFieldNode(virtualObjectNode, virtualObjectNode, boxNode.source(), 0));
+                }
+                n.replaceFirstInput(boxNode, virtualValueNode);
+            } else if (n instanceof UnboxNode) {
+                ((UnboxNode) n).replaceAndUnlink(boxNode.source());
+            } else {
+                assert false;
+            }
+        }
+
+        boxNode.setStateAfter(null);
+        stateAfter.safeDelete();
+        FixedNode next = boxNode.next();
+        boxNode.setNext(null);
+        boxNode.replaceAtPredecessors(next);
+        boxNode.safeDelete();
+    }
 
 
 

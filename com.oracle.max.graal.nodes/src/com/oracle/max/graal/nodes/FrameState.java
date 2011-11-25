@@ -648,8 +648,8 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             do {
                 HashSet<VirtualObjectNode> vobjsCopy = new HashSet<VirtualObjectNode>(vobjs);
                 for (VirtualObjectNode vobj : vobjsCopy) {
-                    if (vobj.fields().length > 0) {
-                        boolean[] fieldState = new boolean[vobj.fields().length];
+                    if (vobj.fieldsCount() > 0) {
+                        boolean[] fieldState = new boolean[vobj.fieldsCount()];
                         ValueNode currentField = objectStates.get(vobj);
                         assert currentField != null : this;
                         do {
