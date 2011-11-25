@@ -24,6 +24,7 @@ package com.oracle.max.graal.graph;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.GraphEvent.NodeEvent;
 import com.oracle.max.graal.graph.Node.IterableNodeType;
 import com.oracle.max.graal.graph.Node.ValueNumberable;
 import com.oracle.max.graal.graph.iterators.*;
@@ -35,6 +36,8 @@ public class Graph {
 
     protected final String name;
 
+    private static final boolean TIME_TRAVEL = true;
+
     private final ArrayList<Node> nodes;
 
     // these two arrays contain one entry for each NodeClass, indexed by NodeClass.iterableId.
@@ -43,6 +46,7 @@ public class Graph {
     private final ArrayList<Node> nodeCacheLast;
     private int deletedNodeCount;
     private int mark;
+    private GraphEventLog eventLog;
 
     ArrayList<Node> usagesDropped = new ArrayList<Node>();
     private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
@@ -387,7 +391,7 @@ public class Graph {
         return new NodeWorkList(this, fill, iterationLimitPerNode);
     }
 
-    int register(Node node) {
+    void register(Node node) {
         assert node.id() == Node.INITIAL_ID;
         int id = nodes.size();
         nodes.add(id, node);
@@ -407,10 +411,35 @@ public class Graph {
             nodeCacheLast.set(nodeClassId, node);
         }
 
-        return id;
+        node.id = id;
+        logNodeAdded(node);
+    }
+
+    void logNodeAdded(Node node) {
+        if (TIME_TRAVEL) {
+            log(new GraphEvent.NodeEvent(node, GraphEvent.NodeEvent.Type.ADDED));
+        }
+    }
+
+    void logNodeDeleted(Node node) {
+        if (TIME_TRAVEL) {
+            log(new GraphEvent.NodeEvent(node, GraphEvent.NodeEvent.Type.DELETED));
+        }
+    }
+
+    private void log(NodeEvent nodeEvent) {
+        if (eventLog == null) {
+            eventLog = new GraphEventLog();
+        }
+        eventLog.add(nodeEvent);
+    }
+
+    public GraphEventLog getEventLog() {
+        return eventLog;
     }
 
     void unregister(Node node) {
+        logNodeDeleted(node);
         nodes.set(node.id(), null);
         deletedNodeCount++;
 
