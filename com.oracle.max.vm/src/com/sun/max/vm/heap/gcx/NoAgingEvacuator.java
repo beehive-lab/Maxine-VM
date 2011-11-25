@@ -160,12 +160,14 @@ public final class NoAgingEvacuator extends Evacuator  {
         if (size.lessThan(minRefillThreshold)) {
             // check if request can fit in the remaining space when taking the headroom into account.
             Pointer limit = end.plus(LAB_HEADROOM);
-            if (top.plus(size).lessEqual(limit)) {
+            if (top.plus(size).equals(limit)) {
                 // Does fit.
                 return top;
             }
-            // format remaining storage into dead space for parsability
-            fillWithDeadObject(top, limit);
+            if (top.lessThan(limit)) {
+                // format remaining storage into dead space for parsability
+                fillWithDeadObject(top, limit);
+            }
             // Check if there is another chunk in the lab.
             Address chunk = nextLABChunk;
             if (chunk.isZero()) {
