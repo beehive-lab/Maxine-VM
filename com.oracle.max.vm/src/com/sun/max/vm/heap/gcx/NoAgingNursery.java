@@ -131,7 +131,7 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public boolean contains(Address address) {
-        return address.greaterEqual(allocator.start) && address.equals(allocator.end);
+        return address.greaterEqual(allocator.start) && address.lessThan(allocator.end);
     }
 
     @Override
