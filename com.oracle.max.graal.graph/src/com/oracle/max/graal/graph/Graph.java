@@ -36,7 +36,7 @@ public class Graph {
 
     protected final String name;
 
-    private static final boolean TIME_TRAVEL = true;
+    private static final boolean TIME_TRAVEL = false;
 
     private final ArrayList<Node> nodes;
 
