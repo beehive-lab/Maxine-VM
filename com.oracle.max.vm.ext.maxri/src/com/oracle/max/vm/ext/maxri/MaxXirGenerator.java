@@ -742,7 +742,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         int elemSize = target().sizeInBytes(kind);
         asm.pstore(kind, array, index, value, offsetOfFirstArrayElement(), Scale.fromInt(elemSize), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
-            addWriteBarrier(asm, array, value);
+            writeBarrier(asm, array, value);
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
@@ -1311,7 +1311,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
-                addWriteBarrier(asm, object, value);
+                writeBarrier(asm, object, value);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
@@ -1328,7 +1328,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
-                addWriteBarrier(asm, object, value);
+                writeBarrier(asm, object, value);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
@@ -1661,7 +1661,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return template;
     }
 
-    private void addWriteBarrier(CiXirAssembler asm, XirOperand object, XirOperand value) {
+    private void writeBarrier(CiXirAssembler asm, XirOperand object, XirOperand value) {
         // XXX: add write barrier mechanism
     }
 
