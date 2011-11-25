@@ -75,8 +75,6 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass(java.io.File.class.getName() + "$TempDirectory");
         HostedBootClassLoader.omitClass(java.util.Calendar.class.getName() + "$CalendarAccessControlContext");
         HostedBootClassLoader.omitClass("sun.reflect.UnsafeFieldAccessorFactory");
-        // Don't want the static Map fields initialized
-        HostedBootClassLoader.omitClass(java.lang.reflect.Proxy.class);
         // This class uses Unsafe.objectFieldOffset() and stores the offsets in arrays.  We currently have no way in JDKInterceptor
         // to rewrite these offsets to the correct Maxine layout specific values, so make sure this class is not part of the boot image.
         HostedBootClassLoader.omitClass(java.io.ObjectStreamClass.class.getName() + "$FieldReflector");

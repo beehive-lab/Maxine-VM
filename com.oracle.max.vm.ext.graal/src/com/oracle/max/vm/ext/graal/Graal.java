@@ -37,8 +37,6 @@ import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
-import com.oracle.max.graal.compiler.ext.*;
-import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
 import com.oracle.max.graal.graph.*;
@@ -47,7 +45,6 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.snippets.*;
 import com.oracle.max.vm.ext.graal.stubs.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -73,16 +70,6 @@ public class Graal implements RuntimeCompiler {
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by Graal.
      */
     public final MaxRuntime runtime = MaxRuntime.runtime();
-
-    public final ExtendedBytecodeHandler extendedBytecodeHandler = new ExtendedBytecodeHandler() {
-        @Override
-        public boolean handle(int opcode, BytecodeStream s, StructuredGraph graph, FrameStateBuilder frameState, GraphBuilderTool graphBuilderTool) {
-            if (opcode == Bytecodes.JNICALL) {
-                // TODO(tw): Add code for JNI calls. int cpi = s.readCPI();
-            }
-            return false;
-        }
-    };
 
     /**
      * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
@@ -148,7 +135,7 @@ public class Graal implements RuntimeCompiler {
             runtime.setIntrinsicRegistry(intrinsicRegistry);
 
             GraalContext context = new GraalContext("Virtual Machine Compiler");
-            compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub, extendedBytecodeHandler);
+            compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
             plan = new PhasePlan();
             plan.addPhase(PhasePosition.AFTER_PARSING, new FoldPhase(runtime));
             plan.addPhase(PhasePosition.AFTER_PARSING, new MaxineIntrinsicsPhase());

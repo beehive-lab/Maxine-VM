@@ -129,9 +129,13 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void clear() {
         incModCount();
+        for (int i = 0; i < size; i++) {
+            update((T) nodes[i], null);
+        }
         nodes = EMPTY_NODE_ARRAY;
         size = 0;
     }

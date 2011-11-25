@@ -24,12 +24,24 @@ package com.sun.cri.ci;
 
 import com.sun.cri.ri.*;
 
+/**
+ * An instance of this class represents an object whose allocation was removed by escape analysis. The information stored in the {@link CiVirtualObject} is used during
+ * deoptimization to recreate the object.
+ */
 public final class CiVirtualObject extends CiValue {
 
-    public final RiType type;
+    private final RiType type;
     private CiValue[] values;
     private final int id;
 
+    /**
+     * Creates a new CiVirtualObject for the given type, with the given fields. If the type is an instance class then the values array needs to have one entry for each field, ordered in
+     * like the fields returned by {@link RiResolvedType#declaredFields()}. If the type is an array then the length of the values array determines the reallocated array length.
+     * @param type the type of the object whose allocation was removed during compilation. This can be either an instance of an array type.
+     * @param values an array containing all the values to be stored into the object when it is recreated.
+     * @param id a unique id that identifies the object within the debug information for one position in the compiled code.
+     * @return a new CiVirtualObject instance.
+     */
     public static CiVirtualObject get(RiType type, CiValue[] values, int id) {
         return new CiVirtualObject(type, values, id);
     }
@@ -46,14 +58,31 @@ public final class CiVirtualObject extends CiValue {
         return "vobject";
     }
 
-    public int id() {
-        return id;
+    /**
+     * @return the type of the object whose allocation was removed during compilation. This can be either an instance of an array type.
+     */
+    public RiType type() {
+        return type;
     }
 
+    /**
+     * @return an array containing all the values to be stored into the object when it is recreated.
+     */
     public CiValue[] values() {
         return values;
     }
 
+    /**
+     * @return the unique id that identifies the object within the debug information for one position in the compiled code.
+     */
+    public int id() {
+        return id;
+    }
+
+    /**
+     * Overwrites the current set of values with a new one.
+     * @param values an array containing all the values to be stored into the object when it is recreated.
+     */
     public void setValues(CiValue[] values) {
         this.values = values;
     }
@@ -88,6 +117,9 @@ public final class CiVirtualObject extends CiValue {
         return equals(o);
     }
 
+    /**
+     * This is a helper class used to create virtual objects for a number of different JDK classes.
+     */
     public static class CiVirtualObjectFactory {
         private int nextId = 0;
         private final RiRuntime runtime;
