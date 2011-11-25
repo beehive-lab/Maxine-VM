@@ -35,7 +35,7 @@ import com.sun.max.vm.layout.*;
  * The wrapper keeps track of survivor ranges and update the remembered set (mostly the cfo table).
  * This makes the evacuator independent of the detail of survivor rangestracking and imprecise rset subtleties.
  */
-public final class NoAgingEvacuator extends Evacuator {
+public final class NoAgingEvacuator extends Evacuator  {
     private static final Size LAB_HEADROOM = MIN_OBJECT_SIZE;
     /**
      * Heap Space that is being evacuated.
@@ -104,6 +104,12 @@ public final class NoAgingEvacuator extends Evacuator {
      */
     private final SurvivorRangesQueue survivorRanges;
 
+    private final HeapSpaceRangeVisitor heapSpaceDirtyCardClosure = new HeapSpaceRangeVisitor() {
+        @Override
+        public void visitCells(Address start, Address end) {
+            rset.cleanAndVisitCards(start, end, NoAgingEvacuator.this);
+        }
+    };
 
     public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold, SurvivorRangesQueue queue, Size labSize) {
         this.fromSpace = fromSpace;
@@ -222,8 +228,8 @@ public final class NoAgingEvacuator extends Evacuator {
 
     @Override
     protected void evacuateFromRSets() {
-        // Visit the dirty cards of the toSpace, which is the old gen in this case.
-        rset.visitDirtyCards(toSpace, this);
+        // Visit the dirty cards of the old gen (i.e., the toSpace).
+        toSpace.visit(heapSpaceDirtyCardClosure);
     }
 
     @Override

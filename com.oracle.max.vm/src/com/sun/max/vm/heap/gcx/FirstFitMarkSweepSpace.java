@@ -995,7 +995,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             final RegionRange r = regionsRangeIterable.nextIterableRange();
             final Address start = HeapRegionInfo.fromRegionID(r.firstRegion()).regionStart();
             final Address end = start.plus(Size.fromInt(r.numRegions()).shiftedLeft(log2RegionSizeInBytes));
-            visitor.visit(start, end);
+            visitor.visitCells(start, end);
         }
     }
 

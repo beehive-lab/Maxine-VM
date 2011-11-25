@@ -154,7 +154,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
             // Card Table Data are allocated at end of the space reserved to the heap regions.
             final Address cardTableDataStart =  heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
-            final Size cardTableDataSize = cardTableRSet.memoryRequirement(heapBounds.size());
+
+            // We want the card table to cover not just the dynamic heap, but also the boot image and code cache to avoid testing
+            // for boundaries in the write barrier. Note that covering these with the card table doesn't mean we will iterate over these
+            // cards to find references to young objects (i.e., it may be cheaper to use the reference maps for the boot image).
+            final Size cardTableCoveredAreaSize = heapBounds.end().minus(Heap.bootHeapRegion.start()).asSize();
+            final Size cardTableDataSize = cardTableRSet.memoryRequirement(cardTableCoveredAreaSize);
 
             // Address to the first reserved byte unused by the heap scheme.
             Address unusedReservedSpaceStart = cardTableDataStart.plus(cardTableDataSize).roundedUpBy(pageSize);
@@ -167,7 +172,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
                 MaxineVM.reportPristineMemoryFailure("card table space", "commit", heapMarkerDatasize);
             }
-            cardTableRSet.initialize(heapBounds.start(), heapBounds.size(), cardTableDataStart, cardTableDataSize);
+            cardTableRSet.initialize(Heap.bootHeapRegion.start(), cardTableCoveredAreaSize, cardTableDataStart, cardTableDataSize);
 
             if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
                 MaxineVM.reportPristineMemoryFailure("heap marker space", "commit", heapMarkerDatasize);

@@ -39,7 +39,15 @@ import com.sun.max.vm.type.*;
  */
 public class Log2RegionToByteMapTable {
     final int log2RangeSize;
+    /**
+     * Start of the contiguous range of virtual memory covered by this byte map table.
+     * This address must be aligned to size of the region covered by a single byte.
+     */
     private Address coveredAreaStart;
+    /**
+     * End of the contiguous range of virtual memory covered by this byte map table.
+     * This address must be aligned to size of the region covered by a single byte.
+    */
     private Address coveredAreaEnd;
 
     /**

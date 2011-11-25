@@ -32,9 +32,9 @@ import com.sun.max.unsafe.*;
  */
 interface HeapSpaceRangeVisitor {
     /**
-     * Logic to apply to a visited iterable contiguous range of heap space.
+     * Logic to apply to an iterable contiguous range of heap space.
      * @param start Address to the first cell in a  iterable contiguous range of heap space
      * @param end Address after the end of the last cell of an iterable contiguous range of heap space
      */
-    void visit(Address start, Address end);
+    void visitCells(Address start, Address end);
 }

@@ -66,9 +66,10 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     /**
-     * Update a potential reference to an evacuated cell.
-     * If the reference points to the evacuation area, the cell is evacuated and the reference is updated to the evacuated cell's new location.
-     * @param refHolderOrigin origin of the holder of the referencel
+     * Test if a reference in an cell points to the evacuated area. If it does, the referenced cell is
+     * first evacuated if it is still in the evacuated area.
+     * The reference is updated to the evacuated cell's new location.
+     * @param refHolderOrigin origin of the holder of the reference
      * @param wordIndex index to a reference of the evacuated cell.
      */
     final void updateEvacuatedRef(Pointer refHolderOrigin, int wordIndex) {
@@ -89,9 +90,14 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         }
     }
 
+    /**
+     * Apply the evacuation logic to the reference at the specified index from the origin of a cell.
+     * @param origin origin of the cell holding the visited reference
+     * @param wordIndex  index of the visited reference from the origin
+     */
     @Override
-    public void visit(Pointer pointer, int wordIndex) {
-        updateEvacuatedRef(pointer, wordIndex);
+    public void visit(Pointer origin, int wordIndex) {
+        updateEvacuatedRef(origin, wordIndex);
     }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
