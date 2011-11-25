@@ -179,27 +179,23 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
         nextBlockNumber = blockMap.blocks.size();
 
-        // create the start block
-        /*Block startBlock = nextBlock(FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
-        markOnWorkList(startBlock);
-        lastInstr = (FixedWithNextNode) createTarget(startBlock, frameState);
-        graph.start().setNext(lastInstr);*/
-
-        AbstractStateSplit lastStateSplit = graph.start();
+        lastInstr = graph.start();
         if (isSynchronized(method.accessFlags())) {
             // add a monitor enter to the start block
             graph.start().setStateAfter(frameState.create(FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI));
             methodSynchronizedObject = synchronizedObject(frameState, method);
-            genMonitorEnter(methodSynchronizedObject, FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
+            lastInstr = genMonitorEnter(methodSynchronizedObject, FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
         }
 
         // finish the start block
-        lastStateSplit.setStateAfter(frameState.create(0));
-        blockMap.startBlock.firstInstruction = lastStateSplit;
-        lastInstr = lastStateSplit;
+        ((AbstractStateSplit) lastInstr).setStateAfter(frameState.create(0));
+        if (blockMap.startBlock.isLoopHeader) {
+            appendGoto(createTarget(blockMap.startBlock, frameState));
+        } else {
+            blockMap.startBlock.firstInstruction = lastInstr;
+        }
         addToWorkList(blockMap.startBlock);
 
-        //appendGoto(createTarget(blockMap.startBlock, frameState));
         unwindHandler = new CiExceptionHandler(0, method.code().length, -2, 0, null);
 
         iterateAllBlocks();
@@ -336,7 +332,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         if (existingState == null) {
             // copy state because it is modified
             first.setStateAfter(newState.duplicate(bci));
-            System.out.println("set state after of " + first + " to " + first.stateAfter());
         } else {
             if (!GraalOptions.AssumeVerifiedBytecode && !existingState.isCompatibleWith(newState)) {
                 // stacks or locks do not match--bytecodes would not verify
@@ -1411,7 +1406,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 //                  }
 //              }
                 // Delete the phis (all of them must have exactly one input).
-                for (PhiNode phi : begin.phis()) {
+                for (PhiNode phi : begin.phis().snapshot()) {
                     assert phi.valueCount() == 1;
                     begin.stateAfter().deleteRedundantPhi(phi, phi.firstValue());
                 }
