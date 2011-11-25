@@ -20,34 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.*;
+import com.sun.cri.ci.*;
 
-public interface Invoke extends StateSplit {
 
-    FixedNode next();
+public final class UnboxNode extends FixedWithNextNode implements Node.IterableNodeType {
 
-    void setNext(FixedNode x);
+    @Input private ValueNode source;
 
-    void setCanInline(boolean b);
+    public UnboxNode(CiKind kind, ValueNode source) {
+        super(kind);
+        this.source = source;
+        assert kind != CiKind.Object : "can only unbox to primitive";
+        assert source.kind() == CiKind.Object : "can only unbox objects";
+    }
 
-    boolean canInline();
+    public ValueNode source() {
+        return source;
+    }
 
-    MethodCallTargetNode callTarget();
-
-    int bci();
-
-    FixedNode node();
-
-    FrameState stateDuring();
-
-    FrameState stateAfter();
-
-    Node predecessor();
-
-    void intrinsify(Node node);
-
-    Graph graph();
+    public CiKind destinationKind() {
+        return this.kind();
+    }
 }
