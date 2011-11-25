@@ -40,6 +40,7 @@ import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
@@ -321,7 +322,8 @@ public final class GraalCompilation {
             }
         }
 
-        new SnippetIntrinsificationPhase(compiler.runtime).apply(graph, context());
+        BoxingMethodPool pool = new BoxingMethodPool(compiler.runtime);
+        new SnippetIntrinsificationPhase(compiler.runtime, pool).apply(graph, context());
 
         ServiceLoader<Optimizer> serviceLoader = optimizerLoader.get();
         if (serviceLoader == null) {
