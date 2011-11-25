@@ -29,6 +29,7 @@ import org.junit.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
 
 /**
  * In the following tests, the usages of local variable "a" are replaced with the integer constant 0.
@@ -56,7 +57,24 @@ public class MonitorTest extends GraphTest {
         return const1();
     }
 
-    private void test(String snippet) {
+    @Test
+    public void test2() {
+        StructuredGraph graph = parseAndProcess("test2Snippet");
+        Collection<MonitorExitNode> monitors = graph.getNodes(MonitorExitNode.class).snapshot();
+        Assert.assertEquals(1, monitors.size());
+        MonitorExitNode monitor = monitors.iterator().next();
+        Assert.assertEquals(monitor.stateAfter().bci, 3);
+    }
+
+    public static int test2Snippet(int a) {
+        return const2();
+    }
+
+    public static synchronized int const2() {
+        return 1;
+    }
+
+    private StructuredGraph parseAndProcess(String snippet) {
         StructuredGraph graph = parse(snippet);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
         ConstantNode constant = ConstantNode.forInt(0, graph);
@@ -74,6 +92,11 @@ public class MonitorTest extends GraphTest {
         new InliningPhase(null, runtime(), hints, null, PhasePlan.DEFAULT).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         new DeadCodeEliminationPhase().apply(graph);
+        return graph;
+    }
+
+    private void test(String snippet) {
+        StructuredGraph graph = parseAndProcess(snippet);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }
