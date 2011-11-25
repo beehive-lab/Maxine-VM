@@ -136,6 +136,24 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
+        if (valueCount() == 1) {
+            return valueAt(0);
+        }
+
+        ValueNode differentValue = null;
+        for (ValueNode n : values()) {
+            if (n != this) {
+                if (differentValue == null) {
+                    differentValue = n;
+                } else if (differentValue != n) {
+                    return canonicalizeMaterializationPhi();
+                }
+            }
+        }
+        return differentValue;
+    }
+
+    private Node canonicalizeMaterializationPhi() {
         if (merge().endCount() != 2 || merge() instanceof LoopBeginNode) {
             return this;
         }
@@ -147,13 +165,16 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         Node end1 = merge().endAt(1);
         Node endPred0 = end0.predecessor();
         Node endPred1 = end1.predecessor();
-        if (endPred0 != endPred1 || !(endPred0 instanceof IfNode)) {
+        if (!(endPred0 instanceof BeginNode) || !(endPred1 instanceof BeginNode)) {
+            return this;
+        }
+        if (endPred0.predecessor() != endPred1.predecessor() || !(endPred0.predecessor() instanceof IfNode)) {
             return this;
         }
 
         // Get true/false value.
-        IfNode ifNode = (IfNode) endPred0;
-        boolean inverted = ifNode.trueSuccessor() == end1;
+        IfNode ifNode = (IfNode) endPred0.predecessor();
+        boolean inverted = ifNode.trueSuccessor() == endPred1;
         ValueNode trueValue = valueAt(inverted ? 1 : 0);
         ValueNode falseValue = valueAt(inverted ? 0 : 1);
         if (trueValue.kind() != falseValue.kind) {
@@ -177,11 +198,17 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         MergeNode merge = this.merge;
         EndNode end1 = merge.endAt(0);
         EndNode end2 = merge.endAt(1);
+        BeginNode trueSuccessor = ifNode.trueSuccessor();
+        BeginNode falseSuccessor = ifNode.falseSuccessor();
         merge().setNext(null);
+        ifNode.setTrueSuccessor(null);
+        ifNode.setFalseSuccessor(null);
         ifNode.replaceAndDelete(next);
         updateUsages(this.merge, null);
         this.merge = null;
         merge.safeDelete();
+        trueSuccessor.safeDelete();
+        falseSuccessor.safeDelete();
         end1.safeDelete();
         end2.safeDelete();
     }
