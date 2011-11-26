@@ -91,7 +91,7 @@ public abstract class ValueNode extends Node {
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiResolvedType exactType() {
+    public final RiResolvedType exactType() {
         return stamp.exactType();
     }
 
@@ -99,7 +99,7 @@ public abstract class ValueNode extends Node {
      * Computes the declared type of the result of this node, if possible.
      * @return the declared type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiResolvedType declaredType() {
+    public final RiResolvedType declaredType() {
         return stamp.declaredType();
     }
 }
