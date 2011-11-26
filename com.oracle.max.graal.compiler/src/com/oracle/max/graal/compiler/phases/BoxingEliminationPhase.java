@@ -22,17 +22,88 @@
  */
 package com.oracle.max.graal.compiler.phases;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.PhiNode.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.virtual.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 public class BoxingEliminationPhase extends Phase {
 
+    private RiRuntime runtime;
+
+    public BoxingEliminationPhase(RiRuntime runtime) {
+        this.runtime = runtime;
+    }
+
     @Override
     protected void run(StructuredGraph graph) {
-        for (BoxNode boxNode : graph.getNodes(BoxNode.class)) {
-            tryEliminate(boxNode, graph);
+        if (graph.getNodes(UnboxNode.class).iterator().hasNext()) {
+
+            Map<PhiNode, PhiNode> phiReplacements = new HashMap<PhiNode, PhiNode>();
+            for (UnboxNode unboxNode : graph.getNodes(UnboxNode.class)) {
+                tryEliminate(unboxNode, graph, phiReplacements);
+            }
+
+            new DeadCodeEliminationPhase().apply(graph);
+
+            for (BoxNode boxNode : graph.getNodes(BoxNode.class)) {
+                tryEliminate(boxNode, graph);
+            }
+        }
+    }
+
+    private void tryEliminate(UnboxNode unboxNode, StructuredGraph graph, Map<PhiNode, PhiNode> phiReplacements) {
+        ValueNode unboxedValue = unboxedValue(unboxNode.source(), unboxNode.destinationKind(), phiReplacements);
+        if (unboxedValue != null) {
+            assert unboxedValue.kind() == unboxNode.destinationKind();
+            unboxNode.replaceAndUnlink(unboxedValue);
+        }
+    }
+
+    private PhiNode getReplacementPhi(PhiNode phiNode, CiKind kind, Map<PhiNode, PhiNode> phiReplacements) {
+        if (!phiReplacements.containsKey(phiNode)) {
+            PhiNode result = null;
+            if (phiNode.stamp().nonNull()) {
+                RiResolvedType exactType = phiNode.stamp().exactType();
+                if (exactType != null && exactType.toJava() == kind.toUnboxedJavaClass()) {
+                    result = phiNode.graph().add(new PhiNode(kind, phiNode.merge(), PhiType.Value));
+                    phiReplacements.put(phiNode, result);
+                    replaceFrameStateUsages(phiNode, result, exactType);
+                    int i = 0;
+                    for (ValueNode n : phiNode.values()) {
+                        ValueNode unboxedValue = unboxedValue(n, kind, phiReplacements);
+                        if (unboxedValue != null) {
+                            assert unboxedValue.kind() == kind;
+                            result.addInput(unboxedValue);
+                        } else {
+                            UnboxNode unboxNode = phiNode.graph().add(new UnboxNode(kind, n));
+                            FixedNode pred = phiNode.merge().phiPredecessorAt(i);
+                            pred.replaceAtPredecessors(unboxNode);
+                            unboxNode.setNext(pred);
+                            result.addInput(unboxNode);
+                        }
+                        ++i;
+                    }
+                }
+            }
+        }
+        return phiReplacements.get(phiNode);
+    }
+
+    private ValueNode unboxedValue(ValueNode n, CiKind kind, Map<PhiNode, PhiNode> phiReplacements) {
+        if (n instanceof BoxNode) {
+            BoxNode boxNode = (BoxNode) n;
+            return boxNode.source();
+        } else if (n instanceof PhiNode) {
+            PhiNode phiNode = (PhiNode) n;
+            return getReplacementPhi(phiNode, kind, phiReplacements);
+        } else {
+            return null;
         }
     }
 
@@ -40,38 +111,36 @@ public class BoxingEliminationPhase extends Phase {
 
         System.out.println("try elminate on " + boxNode);
         for (Node n : boxNode.usages()) {
-            if (!(n instanceof FrameState) && !(n instanceof UnboxNode)) {
+            if (!(n instanceof FrameState)) {
                 // Elimination failed, because boxing object escapes.
                 return;
             }
         }
 
-        ValueNode virtualValueNode = null;
-        VirtualObjectNode virtualObjectNode = null;
-        FrameState stateAfter = boxNode.stateAfter();
-        for (Node n : boxNode.usages().snapshot()) {
-            if (n == stateAfter) {
-                n.replaceFirstInput(boxNode, null);
-            } else if (n instanceof FrameState) {
-                if (virtualValueNode == null) {
-                    virtualObjectNode = graph.add(new VirtualObjectNode(boxNode.exactType(), 1));
-                    virtualValueNode = graph.add(new VirtualObjectFieldNode(virtualObjectNode, null, boxNode.source(), 0));
-                }
-                ((FrameState) n).addVirtualObjectMapping(virtualValueNode);
-                n.replaceFirstInput(boxNode, virtualObjectNode);
-            } else if (n instanceof UnboxNode) {
-                ((UnboxNode) n).replaceAndUnlink(boxNode.source());
-            } else {
-                assert false;
-            }
-        }
+        replaceFrameStateUsages(boxNode, boxNode.source(), boxNode.exactType());
 
         System.out.println("ELIMINATED: " + boxNode);
+        FrameState stateAfter = boxNode.stateAfter();
         boxNode.setStateAfter(null);
         stateAfter.safeDelete();
         FixedNode next = boxNode.next();
         boxNode.setNext(null);
         boxNode.replaceAtPredecessors(next);
         boxNode.safeDelete();
+    }
+
+    private void replaceFrameStateUsages(ValueNode boxNode, ValueNode replacement, RiType exactType) {
+        ValueNode virtualValueNode = null;
+        VirtualObjectNode virtualObjectNode = null;
+        for (Node n : boxNode.usages().snapshot()) {
+            if (n instanceof FrameState) {
+                if (virtualValueNode == null) {
+                    virtualObjectNode = n.graph().add(new VirtualObjectNode(exactType, 1));
+                    virtualValueNode = n.graph().add(new VirtualObjectFieldNode(virtualObjectNode, null, replacement, 0));
+                }
+                ((FrameState) n).addVirtualObjectMapping(virtualValueNode);
+                n.replaceFirstInput(boxNode, virtualObjectNode);
+            }
+        }
     }
 }

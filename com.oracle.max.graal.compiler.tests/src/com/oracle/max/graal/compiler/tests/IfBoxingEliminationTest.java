@@ -28,21 +28,21 @@ import org.junit.*;
 
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.phases.PhasePlan.PhasePosition;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 
-/**
- * In the following tests, the usages of local variable "a" are replaced with the integer constant 0.
- * Then boxing elimination is applied and it is verified that the resulting graph is equal to the
- * graph of the method that just has a "return 1" statement in it.
- */
-public class BoxingEliminationTest extends GraphTest {
+public class IfBoxingEliminationTest extends GraphTest {
 
     private static final String REFERENCE_SNIPPET = "referenceSnippet";
 
     public static int referenceSnippet(int a) {
-        return 1;
+        int result;
+        if (a < 0) {
+            result = 1;
+        } else {
+            result = 2;
+        }
+        return result;
     }
 
     public static Integer boxedInteger() {
@@ -50,7 +50,7 @@ public class BoxingEliminationTest extends GraphTest {
     }
 
     public static Object boxedObject() {
-        return 1;
+        return 2;
     }
 
     @Test
@@ -59,28 +59,13 @@ public class BoxingEliminationTest extends GraphTest {
     }
 
     public static int test1Snippet(int a) {
-        return boxedInteger();
-    }
-
-    @Test
-    public void test2() {
-        test("test2Snippet");
-    }
-
-    public static int test2Snippet(int a) {
-        return (Integer) boxedObject();
-    }
-    @Test
-    public void test3() {
-        test("test3Snippet");
-    }
-
-    public static int test3Snippet(int a) {
-        int b = boxedInteger();
-        if (b < 0) {
-            b = boxedInteger();
+        Integer result;
+        if (a < 0) {
+            result = boxedInteger();
+        } else {
+            result = (Integer) boxedObject();
         }
-        return b;
+        return result;
     }
 
     private void test(String snippet) {
@@ -89,21 +74,15 @@ public class BoxingEliminationTest extends GraphTest {
         IdentifyBoxingPhase identifyBoxingPhase = new IdentifyBoxingPhase(pool);
         PhasePlan phasePlan = new PhasePlan();
         phasePlan.addPhase(PhasePosition.AFTER_PARSING, identifyBoxingPhase);
+        phasePlan.addPhase(PhasePosition.AFTER_PARSING, new PhiStampPhase());
         identifyBoxingPhase.apply(graph);
-        LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
-        ConstantNode constant = ConstantNode.forInt(0, graph);
-        for (Node n : local.usages().snapshot()) {
-            if (n instanceof FrameState) {
-                // Do not replace.
-            } else {
-                n.replaceFirstInput(local, constant);
-            }
-        }
         Collection<Invoke> hints = new ArrayList<Invoke>();
         for (Invoke invoke : graph.getInvokes()) {
             hints.add(invoke);
         }
         new InliningPhase(null, runtime(), hints, null, phasePlan).apply(graph);
+        new CanonicalizerPhase(null, runtime(), null).apply(graph);
+        new PhiStampPhase().apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         print(graph);
         new BoxingEliminationPhase(runtime()).apply(graph);
@@ -112,6 +91,8 @@ public class BoxingEliminationTest extends GraphTest {
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
         new DeadCodeEliminationPhase().apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
+        new CanonicalizerPhase(null, runtime(), null).apply(referenceGraph);
+        new DeadCodeEliminationPhase().apply(referenceGraph);
         assertEquals(referenceGraph, graph);
     }
 }
