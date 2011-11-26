@@ -42,7 +42,7 @@ public class JsrScope {
 
     public JsrScope push(int jsrReturnBci) {
         if ((scope & 0xffff000000000000L) != 0) {
-            throw new JSRNotSupportedBailout("only four jsr nesting levels are supported");
+            throw new JsrNotSupportedBailout("only four jsr nesting levels are supported");
         }
         return new JsrScope((scope << 16) | jsrReturnBci);
     }

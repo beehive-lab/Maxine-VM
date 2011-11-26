@@ -27,12 +27,17 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.oracle.max.graal.graph.Node.Data;
+
 import sun.misc.Unsafe;
 
 public class NodeClass {
 
     public static final int NOT_ITERABLE = -1;
 
+    /**
+     * Interface used by {@link NodeClass#rescanAllFieldOffsets(CalcOffset)} to determine the offset (in bytes) of a field.
+     */
     public interface CalcOffset {
         long getOffset(Field field);
     }
@@ -201,13 +206,18 @@ public class NodeClass {
         return canGVN;
     }
 
-    public static final synchronized NodeClass get(Class< ? > c) {
+    private static synchronized NodeClass getSynchronized(Class< ? > c) {
         NodeClass clazz = nodeClasses.get(c);
         if (clazz == null) {
             clazz = new NodeClass(c);
             nodeClasses.put(c, clazz);
         }
         return clazz;
+    }
+
+    public static final NodeClass get(Class< ? > c) {
+        NodeClass clazz = nodeClasses.get(c);
+        return clazz == null ? getSynchronized(c) : clazz;
     }
 
     public static int cacheSize() {
@@ -327,6 +337,48 @@ public class NodeClass {
         public String toString() {
             return (input ? "input " : "successor ") + index + "/" + subIndex;
         }
+
+        public Node get(Node node) {
+            return node.getNodeClass().get(node, this);
+        }
+
+        public void set(Node node, Node value) {
+            node.getNodeClass().set(node, this, value);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + index;
+            result = prime * result + (input ? 1231 : 1237);
+            result = prime * result + subIndex;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Position other = (Position) obj;
+            if (index != other.index) {
+                return false;
+            }
+            if (input != other.input) {
+                return false;
+            }
+            if (subIndex != other.subIndex) {
+                return false;
+            }
+            return true;
+        }
     }
 
     private static Node getNode(Node node, long offset) {
@@ -346,6 +398,15 @@ public class NodeClass {
         unsafe.putObject(node, offset, value);
     }
 
+    /**
+     * An iterator that will iterate over the fields given in {@link offsets}.
+     * The first {@ directCount} offsets are treated as fields of type {@link Node}, while the rest of the fields are treated as {@link NodeList}s.
+     * All elements of these NodeLists will be visited by the iterator as well.
+     * This iterator can be used to iterate over the inputs or successors of a node.
+     *
+     * An iterator of this type will not return null values, unless the field values are modified concurrently.
+     * Concurrent modifications are detected by an assertion on a best-effort basis.
+     */
     public static final class NodeClassIterator implements Iterator<Node> {
 
         private final Node node;
@@ -355,6 +416,12 @@ public class NodeClass {
         private int index;
         private int subIndex;
 
+        /**
+         * Creates an iterator that will iterate over fields in the given node.
+         * @param node the node which contains the fields.
+         * @param offsets the offsets of the fields.
+         * @param directCount the number of fields that should be treated as fields of type {@link Node}, the rest are treated as {@link NodeList}s.
+         */
         private NodeClassIterator(Node node, long[] offsets, int directCount) {
             this.node = node;
             this.modCount = node.modCount();
@@ -439,7 +506,6 @@ public class NodeClass {
         }
     }
 
-    @SuppressWarnings("deprecation")
     public int valueNumber(Node n) {
         int number = 0;
         if (canGVN) {
@@ -470,27 +536,30 @@ public class NodeClass {
         return number;
     }
 
-    @SuppressWarnings("deprecation")
-    public void getDebugProperties(Node n, Map<Object, Object> properties) {
+    /**
+     * Populates a given map with the names and values of all fields marked with @{@link Data}.
+     * @param node the node from which to take the values.
+     * @param properties a map that will be populated.
+     */
+    public void getDebugProperties(Node node, Map<Object, Object> properties) {
         for (int i = 0; i < dataOffsets.length; ++i) {
             Class<?> type = dataTypes[i];
             Object value = null;
             if (type.isPrimitive()) {
                 if (type == Integer.TYPE) {
-                    value = unsafe.getInt(n, dataOffsets[i]);
+                    value = unsafe.getInt(node, dataOffsets[i]);
                 } else if (type == Boolean.TYPE) {
-                    value = unsafe.getBoolean(n, dataOffsets[i]);
+                    value = unsafe.getBoolean(node, dataOffsets[i]);
                 } else {
                     assert false;
                 }
             } else {
-                value = unsafe.getObject(n, dataOffsets[i]);
+                value = unsafe.getObject(node, dataOffsets[i]);
             }
             properties.put("data." + dataNames[i], value);
         }
     }
 
-    @SuppressWarnings("deprecation")
     public boolean valueEqual(Node a, Node b) {
         if (!canGVN || a.getNodeClass() != b.getNodeClass()) {
             return a == b;
@@ -598,7 +667,6 @@ public class NodeClass {
         };
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
     public boolean replaceFirstInput(Node node, Node old, Node other) {
         int index = 0;
         while (index < directInputCount) {
@@ -621,7 +689,6 @@ public class NodeClass {
         return false;
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
     public boolean replaceFirstSuccessor(Node node, Node old, Node other) {
         int index = 0;
         while (index < directSuccessorCount) {
@@ -644,7 +711,11 @@ public class NodeClass {
         return false;
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
+    /**
+     * Clear all inputs in the given node. This is accomplished by setting input fields to null and replacing input lists with new lists.
+     * (which is important so that this method can be used to clear the inputs of cloned nodes.)
+     * @param node the node to be cleared
+     */
     public void clearInputs(Node node) {
         int index = 0;
         while (index < directInputCount) {
@@ -653,11 +724,16 @@ public class NodeClass {
         while (index < inputOffsets.length) {
             long curOffset = inputOffsets[index++];
             int size = (getNodeList(node, curOffset)).initialSize;
+            // replacing with a new list object is the expected behavior!
             putNodeList(node, curOffset, new NodeInputList<Node>(node, size));
         }
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
+    /**
+     * Clear all successors in the given node. This is accomplished by setting successor fields to null and replacing successor lists with new lists.
+     * (which is important so that this method can be used to clear the successors of cloned nodes.)
+     * @param node the node to be cleared
+     */
     public void clearSuccessors(Node node) {
         int index = 0;
         while (index < directSuccessorCount) {
@@ -666,11 +742,16 @@ public class NodeClass {
         while (index < successorOffsets.length) {
             long curOffset = successorOffsets[index++];
             int size = getNodeList(node, curOffset).initialSize;
+            // replacing with a new list object is the expected behavior!
             putNodeList(node, curOffset, new NodeSuccessorList<Node>(node, size));
         }
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
+    /**
+     * Copies the inputs from node to newNode. The nodes are expected to be of the exact same NodeClass type.
+     * @param node the node from which the inputs should be copied.
+     * @param newNode the node to which the inputs should be copied.
+     */
     public void copyInputs(Node node, Node newNode) {
         assert node.getClass() == clazz && newNode.getClass() == clazz;
 
@@ -686,7 +767,11 @@ public class NodeClass {
         }
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
+    /**
+     * Copies the successors from node to newNode. The nodes are expected to be of the exact same NodeClass type.
+     * @param node the node from which the successors should be copied.
+     * @param newNode the node to which the successors should be copied.
+     */
     public void copySuccessors(Node node, Node newNode) {
         assert node.getClass() == clazz && newNode.getClass() == clazz;
 
@@ -702,7 +787,6 @@ public class NodeClass {
         }
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
     public boolean edgesEqual(Node node, Node other) {
         assert node.getClass() == clazz && other.getClass() == clazz;
 
@@ -738,7 +822,6 @@ public class NodeClass {
         return true;
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
     public boolean inputContains(Node node, Node other) {
         assert node.getClass() == clazz;
 
@@ -759,7 +842,6 @@ public class NodeClass {
         return false;
     }
 
-    @SuppressWarnings({ "deprecation", "unchecked"})
     public boolean successorContains(Node node, Node other) {
         assert node.getClass() == clazz;
 

@@ -238,7 +238,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         try {
             vm().acquireLegacyVMAccess();
             try {
-                return teleMethodActor.isSubstituted() ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
+                return teleMethodActor.isSubstituted() ? " *=substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
             } finally {
                 vm().releaseLegacyVMAccess();
             }

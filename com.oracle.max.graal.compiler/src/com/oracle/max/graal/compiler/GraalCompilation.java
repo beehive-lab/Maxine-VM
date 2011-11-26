@@ -178,12 +178,15 @@ public final class GraalCompilation {
 
             if (graph.start().next() == null) {
                 GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(compiler.runtime, method, stats);
-                graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
                 graphBuilderPhase.apply(graph, context());
 
                 plan.runPhases(PhasePosition.AFTER_PARSING, graph, context());
 
                 new DeadCodeEliminationPhase().apply(graph, context());
+            } else {
+                if (context().isObserved()) {
+                    context().observable.fireCompilationEvent("initial state", graph);
+                }
             }
 
             if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
@@ -216,7 +219,7 @@ public final class GraalCompilation {
                 if (GraalOptions.OptCanonicalizer) {
                     new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
                 }
-                new SafepointPoolingEliminationPhase().apply(graph, context());
+                new SafepointPollingEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {
@@ -311,12 +314,8 @@ public final class GraalCompilation {
                 try {
                     Phase phase = (Phase) nodePhase.value().newInstance();
                     phase.apply(graph);
-                } catch (InstantiationException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace(TTY.out().out());
                 }
             }
         }

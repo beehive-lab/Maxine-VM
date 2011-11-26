@@ -570,6 +570,50 @@ def gcutmax(env, args):
     deps = ['com.oracle.max.graal.compiler.tests', 'com.oracle.max.vm.ext.maxri']
     env.run_java(['-Dgraal.runtime=Maxine', '-ea', '-cp', env.pdb().classpath(deps), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
 
+def graalexample(env, args):
+    """run some or all Graal examples in Maxine (assumes VM was built with @graal config)"""
+
+    # name -> (project, main class, -XX:CompiledCommand match string)
+    examples = {
+        'safeadd': ['com.oracle.max.graal.examples.safeadd', 'com.oracle.max.graal.examples.safeadd.Main', 'safeadd'],
+        'vectorlib': ['com.oracle.max.graal.examples.vectorlib', 'com.oracle.max.graal.examples.vectorlib.Main', 'vectorlib'],
+    }
+
+    def run_example(env, verbose, project, mainClass, match):
+        cp = env.pdb().classpath(project)
+        sharedArgs = [mainClass]
+        
+        c1xPrintArg = '-C1X:+PrintCompilation' if verbose else '-C1X:-PrintCompilation'
+        graalPrintArg = '-G:+PrintCompilation' if verbose else '-G:-PrintCompilation'
+        
+        res = []
+        env.log("=== C1X ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':C1X', '-cp', cp, c1xPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
+        env.log("=== Graal ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
+        env.log("=== Graal with extensions ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:+Extend', '-G:-Inline'] + sharedArgs))
+        
+        if len([x for x in res if x != 0]) != 0:
+            return 1
+        return 0
+
+    verbose = False
+    if '-v' in args:
+        verbose = True
+        args = [a for a in args if a != '-v']
+
+    if len(args) == 0:
+        args = examples.keys()
+    for a in args:
+        config = examples.get(a)
+        if config is None:
+            env.log('unknown example: ' + a + '  {available examples = ' + str(examples.keys()) + '}')
+        else:
+            env.log('--------- ' + a + ' ------------')
+            project, mainClass, match = config
+            run_example(env, verbose, project, mainClass, match)
+
 def graalvm(env, args):
     """runs the GraalVM"""
     env.run_graalvm(args)
@@ -1058,6 +1102,7 @@ table = {
     'graal': [graal, '[options] patterns...'],
     'gcut': [gcut, ''],
     'gcutmax': [gcutmax, ''],
+    'graalexample': [graalexample, '[-v] example names...'],
     'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],
