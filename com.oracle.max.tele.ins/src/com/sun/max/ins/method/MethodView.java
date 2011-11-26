@@ -22,7 +22,6 @@
  */
 package com.sun.max.ins.method;
 
-import static com.sun.max.ins.gui.AbstractView.MenuKind.*;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.util.*;
@@ -288,34 +287,6 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     protected MethodView(Inspection inspection, MethodViewContainer container) {
         super(inspection, VIEW_KIND, null);
         this.container = container;
-    }
-
-    @Override
-    public InspectorFrame createTabFrame(TabbedView parent) {
-
-        final InspectorFrame frame = super.createTabFrame(parent);
-
-        // The default menu operates from the perspective of the parent container.
-        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, parent));
-
-        frame.makeMenu(EDIT_MENU);
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        final MaxMachineCodeRoutine machineCode = compilation();
-        if (machineCode != null) {
-            memoryMenu.add(views().memory().makeViewAction(machineCode.memoryRegion(), machineCode.entityName(), "View memory for machine code"));
-        }
-        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(OBJECT_MENU);
-
-        frame.makeMenu(CODE_MENU);
-
-        frame.makeMenu(DEBUG_MENU);
-
-        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
-        return frame;
     }
 
     /**
