@@ -647,7 +647,7 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = compilation.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final MaxExternalCodeRoutine externalCode = vm().machineCode().findExternalCode(address);
+                final MaxNativeFunction externalCode = vm().machineCode().findExternalCode(address);
                 if (externalCode != null) {
                     codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();

@@ -1761,11 +1761,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
-            if (libInfo != null) {
-                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "View Native Function...", "View Code", false);
+            final MaxNativeLibrary maxNativeLibrary = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
+            if (maxNativeLibrary != null) {
+                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), maxNativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).base, "native function address from library"), true);
+                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
                 }
             }
         }
@@ -2686,15 +2686,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
-            if (libInfo != null) {
-                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "Native Function Breakpoints...", "Set Breakpoint", true);
+            final MaxNativeLibrary maxNativeLibrary = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
+            if (maxNativeLibrary != null) {
+                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), maxNativeLibrary, "Native Function Breakpoints...", "Set Breakpoint", true);
                 if (functions != null) {
                     try {
                         MaxBreakpoint machineCodeBreakpoint = null;
-                        for (NativeCodeLibraries.SymbolInfo symbolInfo : functions) {
+                        for (MaxNativeFunction nativeFunction : functions) {
                             machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(symbolInfo.base, "set machine breakpoint"));
+                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
