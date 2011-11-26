@@ -47,7 +47,7 @@ public final class ConstantNode extends BooleanNode implements LIRLowerable {
      * @param value the constant
      */
     private ConstantNode(CiConstant value, RiRuntime runtime) {
-        super(StampFactory.forKind(value.kind.stackKind()));
+        super(StampFactory.forConstant(value, runtime));
         this.value = value;
         this.runtime = runtime;
     }
@@ -218,23 +218,6 @@ public final class ConstantNode extends BooleanNode implements LIRLowerable {
         } else {
             return super.toString(verbosity);
         }
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return getType();
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        return getType();
-    }
-
-    private RiResolvedType getType() {
-        if (kind().isPrimitive()) {
-            return null;
-        }
-        return runtime.getTypeOf(asConstant());
     }
 
     @Override
