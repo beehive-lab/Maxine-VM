@@ -196,7 +196,7 @@ public class AMD64ControlFlowOpcode {
 
         public LIRInstruction create(CiVariable result, final Condition condition, final boolean unorderedIsTrue, CiVariable trueValue, CiVariable falseValue) {
             CiValue[] inputs = new CiValue[] {trueValue, falseValue};
-            CiValue[] temps = new CiValue[] {trueValue};
+            CiValue[] temps = new CiValue[] {trueValue, falseValue};
 
             return new AMD64LIRInstruction(this, result, null, inputs, temps) {
                 @Override
