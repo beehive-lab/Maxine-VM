@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.lang.reflect.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
@@ -94,11 +92,7 @@ public abstract class ValueNode extends Node {
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
     public RiResolvedType exactType() {
-        RiResolvedType declType = declaredType();
-        if (declType != null && Modifier.isFinal(declType.accessFlags())) {
-            return declType;
-        }
-        return null; // default: unknown exact type
+        return stamp.exactType();
     }
 
     /**
@@ -106,6 +100,6 @@ public abstract class ValueNode extends Node {
      * @return the declared type of the result of this node, if it is known; {@code null} otherwise
      */
     public RiResolvedType declaredType() {
-        return null; // default: unknown declared type
+        return stamp.declaredType();
     }
 }

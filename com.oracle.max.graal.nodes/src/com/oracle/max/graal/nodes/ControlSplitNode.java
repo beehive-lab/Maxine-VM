@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * The {@code ControlSplitNode} is a base class for all instructions that split the control flow (ie. have more than one successor).

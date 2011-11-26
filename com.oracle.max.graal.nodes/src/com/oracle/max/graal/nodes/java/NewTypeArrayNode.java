@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -34,23 +35,13 @@ public final class NewTypeArrayNode extends NewArrayNode implements LIRLowerable
     private final RiResolvedType elementType;
 
     public NewTypeArrayNode(ValueNode length, RiResolvedType elementType) {
-        super(length);
+        super(StampFactory.exactKnownNonNull(elementType.arrayOf()), length);
         this.elementType = elementType;
     }
 
     @Override
     public RiResolvedType elementType() {
         return elementType;
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return elementType.arrayOf();
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        return elementType.arrayOf();
     }
 
     @Override

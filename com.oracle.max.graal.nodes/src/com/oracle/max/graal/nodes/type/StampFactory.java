@@ -47,12 +47,12 @@ public class StampFactory {
         }
 
         @Override
-        public RiType declaredType() {
+        public RiResolvedType declaredType() {
             return null;
         }
 
         @Override
-        public RiType exactType() {
+        public RiResolvedType exactType() {
             return null;
         }
 
@@ -83,5 +83,25 @@ public class StampFactory {
 
     public static Stamp forKind(CiKind kind) {
         return stampCache[kind.ordinal()];
+    }
+
+    public static Stamp exactKnownNonNull(final RiResolvedType type) {
+        return new BasicValueStamp(CiKind.Object) {
+
+            @Override
+            public RiResolvedType declaredType() {
+                return type;
+            }
+
+            @Override
+            public RiResolvedType exactType() {
+                return type;
+            }
+
+            @Override
+            public boolean canBeNull() {
+                return false;
+            }
+        };
     }
 }

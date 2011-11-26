@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes.extended;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 public abstract class AbstractCallNode extends AbstractStateSplit implements MemoryCheckpoint {
 

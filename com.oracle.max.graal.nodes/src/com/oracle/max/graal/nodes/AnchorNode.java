@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * The {@code AnchorNode} can be used a lower bound for a Guard. It can also be used as an upper bound if no other FixedNode can be used for that purpose.

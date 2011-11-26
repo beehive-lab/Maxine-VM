@@ -24,7 +24,6 @@ package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * The {@code SwitchNode} class is the base of both lookup and table switches.

@@ -23,7 +23,6 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.graph.Node.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;

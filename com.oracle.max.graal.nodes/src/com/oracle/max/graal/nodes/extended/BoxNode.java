@@ -38,21 +38,11 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
     @Data private RiResolvedType destinationType;
 
     public BoxNode(ValueNode value, RiResolvedType type, int bci) {
-        super(StampFactory.forKind(CiKind.Object));
+        super(StampFactory.exactKnownNonNull(type));
         this.source = value;
         this.destinationType = type;
         this.bci = bci;
         assert value.kind() != CiKind.Object : "can only box from primitive type";
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        return declaredType();
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return destinationType;
     }
 
     public ValueNode source() {

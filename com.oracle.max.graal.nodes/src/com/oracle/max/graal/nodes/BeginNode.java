@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 public class BeginNode extends AbstractStateSplit implements LIRLowerable, Canonicalizable {
     public BeginNode() {
