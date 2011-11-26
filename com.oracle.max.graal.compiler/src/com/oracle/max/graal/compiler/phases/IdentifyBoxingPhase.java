@@ -50,16 +50,17 @@ public class IdentifyBoxingPhase extends Phase {
         MethodCallTargetNode callTarget = invoke.callTarget();
         RiResolvedMethod targetMethod = callTarget.targetMethod();
         if (pool.isSpecialMethod(targetMethod)) {
-            assert invoke.callTarget().arguments().size() == 1 : "boxing/unboxing method must have exactly one argument";
+            assert callTarget.arguments().size() == 1 : "boxing/unboxing method must have exactly one argument";
             CiKind returnKind = callTarget.returnKind();
-            ValueNode sourceValue = invoke.callTarget().arguments().get(0);
+            ValueNode sourceValue = callTarget.arguments().get(0);
 
             // Check whether this is a boxing or an unboxing.
             Node newNode = null;
             if (returnKind == CiKind.Object) {
                 // We have a boxing method here.
                 assert Modifier.isStatic(targetMethod.accessFlags()) : "boxing method must be static";
-                newNode = invoke.graph().add(new BoxNode(sourceValue, targetMethod.holder(), invoke.bci()));
+                CiKind sourceKind = targetMethod.signature().argumentKindAt(0, false);
+                newNode = invoke.graph().add(new BoxNode(sourceValue, targetMethod.holder(), sourceKind, invoke.bci()));
             } else {
                 // We have an unboxing method here.
                 assert !Modifier.isStatic(targetMethod.accessFlags()) : "unboxing method must be an instance method";

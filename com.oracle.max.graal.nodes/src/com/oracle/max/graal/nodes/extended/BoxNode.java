@@ -35,13 +35,13 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
 
     @Input private ValueNode source;
     @Data private int bci;
-    @Data private RiResolvedType destinationType;
+    @Data private CiKind sourceKind;
 
-    public BoxNode(ValueNode value, RiResolvedType type, int bci) {
+    public BoxNode(ValueNode value, RiResolvedType type, CiKind sourceKind, int bci) {
         super(StampFactory.exactNonNull(type));
         this.source = value;
-        this.destinationType = type;
         this.bci = bci;
+        this.sourceKind = sourceKind;
         assert value.kind() != CiKind.Object : "can only box from primitive type";
     }
 
@@ -50,7 +50,7 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
     }
 
     public void expand(BoxingMethodPool pool) {
-        RiResolvedMethod boxingMethod = pool.getBoxingMethod(source().kind());
+        RiResolvedMethod boxingMethod = pool.getBoxingMethod(sourceKind);
         MethodCallTargetNode callTarget = graph().add(new MethodCallTargetNode(InvokeKind.Static, boxingMethod, new ValueNode[]{source}, boxingMethod.signature().returnType(boxingMethod.holder())));
         InvokeNode invokeNode = graph().add(new InvokeNode(callTarget, bci));
         invokeNode.setStateAfter(stateAfter());
