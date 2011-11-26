@@ -35,7 +35,7 @@ public final class NewTypeArrayNode extends NewArrayNode implements LIRLowerable
     private final RiResolvedType elementType;
 
     public NewTypeArrayNode(ValueNode length, RiResolvedType elementType) {
-        super(StampFactory.exactKnownNonNull(elementType.arrayOf()), length);
+        super(StampFactory.exactNonNull(elementType.arrayOf()), length);
         this.elementType = elementType;
     }
 

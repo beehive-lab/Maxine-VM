@@ -53,7 +53,7 @@ public final class NewMultiArrayNode extends FixedWithNextNode implements LIRLow
      * @param riConstantPool the constant pool for resolution
      */
     public NewMultiArrayNode(RiResolvedType type, ValueNode[] dimensions) {
-        super(StampFactory.exactKnownNonNull(type));
+        super(StampFactory.exactNonNull(type));
         this.type = type;
         this.dimensions = new NodeInputList<ValueNode>(this, dimensions);
         assert dimensions.length > 0 && type.isArrayClass();

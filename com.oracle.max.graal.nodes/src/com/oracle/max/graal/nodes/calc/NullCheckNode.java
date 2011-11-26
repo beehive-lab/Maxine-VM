@@ -24,7 +24,6 @@ package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
@@ -77,20 +76,13 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        if (object instanceof NewInstanceNode || object instanceof NewArrayNode || object instanceof NewMultiArrayNode) {
-            return ConstantNode.forBoolean(!expectedNull, graph());
-        }
         CiConstant constant = object().asConstant();
         if (constant != null) {
             assert constant.kind == CiKind.Object;
             return ConstantNode.forBoolean(constant.isNull() == expectedNull, graph());
         }
-
-        if (object instanceof LocalNode) {
-            LocalNode localNode = (LocalNode) object;
-            if (!localNode.canBeNull()) {
-                return ConstantNode.forBoolean(!expectedNull, graph());
-            }
+        if (object.stamp().nonNull()) {
+            return ConstantNode.forBoolean(!expectedNull, graph());
         }
         return this;
     }
