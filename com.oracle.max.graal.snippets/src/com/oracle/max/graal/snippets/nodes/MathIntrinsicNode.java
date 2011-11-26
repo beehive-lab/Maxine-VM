@@ -58,7 +58,7 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
         CiVariable input = gen.load(gen.operand(x()));
-        CiVariable result = gen.newVariable(kind);
+        CiVariable result = gen.newVariable(kind());
         switch (operation()) {
             case ABS:
                 gen.emitMove(input, result);

@@ -310,14 +310,14 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         assert i < localsSize : "local variable index out of range: " + i;
         invalidateLocal(i);
         setValueAt(i, x);
-        if (isTwoSlot(x.kind)) {
+        if (isTwoSlot(x.kind())) {
             // (tw) if this was a double word then kill i+1
             setValueAt(i + 1, null);
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it
             ValueNode p = localAt(i - 1);
-            if (p != null && isTwoSlot(p.kind)) {
+            if (p != null && isTwoSlot(p.kind())) {
                 setValueAt(i - 1, null);
             }
         }
@@ -369,7 +369,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
                     return phi;
                 }
             }
-            PhiNode phi = graph().unique(new PhiNode(p.kind, block, PhiType.Value));
+            PhiNode phi = graph().unique(new PhiNode(p.kind(), block, PhiType.Value));
             setValueAt(localsSize + i, phi);
             return phi;
         }
@@ -389,7 +389,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
                 return phi;
             }
         }
-        PhiNode phi = graph().unique(new PhiNode(p.kind, block, PhiType.Value));
+        PhiNode phi = graph().unique(new PhiNode(p.kind(), block, PhiType.Value));
         storeLocal(i, phi);
         return phi;
     }
@@ -457,7 +457,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     private void addToPhi(PhiNode phiNode, ValueNode otherValue) {
-        if (otherValue == null || otherValue.kind != phiNode.kind) {
+        if (otherValue == null || otherValue.kind() != phiNode.kind()) {
             phiNode.replaceAndDelete(null);
         } else {
             phiNode.addInput(otherValue);
@@ -688,15 +688,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         sb.append(nl);
         for (int i = 0; i < localsSize(); ++i) {
             ValueNode value = localAt(i);
-            sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         for (int i = 0; i < stackSize(); ++i) {
             ValueNode value = stackAt(i);
-            sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         for (int i = 0; i < locksSize(); ++i) {
             ValueNode value = lockAt(i);
-            sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         return sb.toString();
     }
@@ -713,15 +713,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             CiUtil.appendLocation(sb, fs.method, fs.bci).append(nl);
             for (int i = 0; i < fs.localsSize(); ++i) {
                 ValueNode value = fs.localAt(i);
-                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < fs.stackSize(); ++i) {
                 ValueNode value = fs.stackAt(i);
-                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < fs.locksSize(); ++i) {
                 ValueNode value = fs.lockAt(i);
-                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             fs = fs.outerFrameState();
         }

@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
 public class ValueUtil {
 
     public static ValueNode assertKind(CiKind kind, ValueNode x) {
-        assert x != null && ((x.kind() == kind) || (x.kind() == CiKind.Jsr && kind == CiKind.Object)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+        assert x != null && ((x.kind() == kind) || (x.kind() == CiKind.Jsr && kind == CiKind.Object)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind());
         return x;
     }
 
@@ -79,7 +79,7 @@ public class ValueUtil {
     }
 
     public static boolean typeMismatch(ValueNode x, ValueNode y) {
-        return y == null || x == null || x.kind() != y.kind;
+        return y == null || x == null || x.kind() != y.kind();
     }
 
 
@@ -103,6 +103,6 @@ public class ValueUtil {
      * @return the instruction representation as a string
      */
     public static String valueString(ValueNode value) {
-        return (value == null) ? "-" : ("" + value.kind.typeChar + value.toString(Verbosity.Id));
+        return (value == null) ? "-" : ("" + value.kind().typeChar + value.toString(Verbosity.Id));
     }
 }

@@ -177,7 +177,7 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         boolean inverted = ifNode.trueSuccessor() == endPred1;
         ValueNode trueValue = valueAt(inverted ? 1 : 0);
         ValueNode falseValue = valueAt(inverted ? 0 : 1);
-        if (trueValue.kind() != falseValue.kind) {
+        if (trueValue.kind() != falseValue.kind()) {
             return this;
         }
 

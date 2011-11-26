@@ -37,13 +37,13 @@ public final class IntegerSubNode extends IntegerArithmeticNode implements Canon
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x() == y()) {
-            return ConstantNode.forIntegerKind(kind, 0, graph());
+            return ConstantNode.forIntegerKind(kind(), 0, graph());
         }
         if (x().isConstant() && y().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 return ConstantNode.forInt(x().asConstant().asInt() - y().asConstant().asInt(), graph());
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 return ConstantNode.forLong(x().asConstant().asLong() - y().asConstant().asLong(), graph());
             }
         } else if (y().isConstant()) {
@@ -51,11 +51,11 @@ public final class IntegerSubNode extends IntegerArithmeticNode implements Canon
             if (c == 0) {
                 return x();
             }
-            if (kind == CiKind.Int) {
-                return graph().unique(new IntegerAddNode(kind, x(), ConstantNode.forInt((int) -c, graph())));
+            if (kind() == CiKind.Int) {
+                return graph().unique(new IntegerAddNode(kind(), x(), ConstantNode.forInt((int) -c, graph())));
             } else {
-                assert kind == CiKind.Long;
-                return graph().unique(new IntegerAddNode(kind, x(), ConstantNode.forLong(-c, graph())));
+                assert kind() == CiKind.Long;
+                return graph().unique(new IntegerAddNode(kind(), x(), ConstantNode.forLong(-c, graph())));
             }
         } else if (x().isConstant()) {
             long c = x().asConstant().asLong();

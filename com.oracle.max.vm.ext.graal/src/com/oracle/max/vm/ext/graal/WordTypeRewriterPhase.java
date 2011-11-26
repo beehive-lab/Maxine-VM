@@ -87,7 +87,8 @@ public class WordTypeRewriterPhase extends Phase {
             assert valueNode.usages().isEmpty();
             valueNode.safeDelete();
         } else {
-            valueNode.setKind(WordUtil.archKind());
+            // TODO(tw): Implement this.
+            throw new RuntimeException("must rewrite the full node: " + valueNode + " / " + valueNode.getClass());
         }
 
         // Propagate word kind.

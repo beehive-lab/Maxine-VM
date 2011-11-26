@@ -49,7 +49,7 @@ public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLower
 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
-        CiVariable result = gen.newVariable(kind);
+        CiVariable result = gen.newVariable(kind());
         StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
         gen.append(STACK_ALLOCATE.create(result, stackBlock));
         gen.setResult(this, result);

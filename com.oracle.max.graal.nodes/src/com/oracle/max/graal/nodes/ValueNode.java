@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -40,7 +41,7 @@ public abstract class ValueNode extends Node {
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
-    @Data protected CiKind kind;
+    @Data protected Stamp stamp;
 
     protected CiValue operand = CiValue.IllegalValue;
 
@@ -53,15 +54,11 @@ public abstract class ValueNode extends Node {
      */
     public ValueNode(CiKind kind) {
         assert kind != null && kind == kind.stackKind() : kind + " != " + kind.stackKind();
-        setKind(kind);
+        stamp = StampFactory.forKind(kind);
     }
 
     public CiKind kind() {
-        return kind;
-    }
-
-    public void setKind(CiKind kind) {
-        this.kind = kind;
+        return stamp.kind();
     }
 
     /**
@@ -107,7 +104,7 @@ public abstract class ValueNode extends Node {
     public final void setOperand(CiValue operand) {
         assert this.operand.isIllegal() : "operand cannot be set twice";
         assert operand != null && operand.isLegal() : "operand must be legal";
-        assert operand.kind.stackKind() == this.kind;
+        assert operand.kind.stackKind() == this.kind();
         assert !(this instanceof VirtualObjectNode);
         this.operand = operand;
     }

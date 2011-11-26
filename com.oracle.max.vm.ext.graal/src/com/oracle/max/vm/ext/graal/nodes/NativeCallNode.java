@@ -62,7 +62,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     @Override
     public void generate(LIRGeneratorTool gen) {
         LIRGenerator lir = (LIRGenerator) gen;
-        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
         LIRDebugInfo info = new LIRDebugInfo(stateDuring);
         CiValue resultOperand = lir.resultOperandFor(this.kind());
         CiValue callAddress = lir.operand(this.address());
