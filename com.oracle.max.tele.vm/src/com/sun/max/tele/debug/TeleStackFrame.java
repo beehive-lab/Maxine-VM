@@ -261,7 +261,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
 
-        private MaxExternalCodeRoutine externalMachineCode = null;
+        private MaxNativeFunction nativeFunction = null;
 
         private NativeFrame(TeleVM vm, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
             super(vm, teleStack, position, nativeStackFrame);
@@ -290,10 +290,10 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         @Override
         public MaxMachineCodeRoutine machineCode() {
-            if (externalMachineCode == null) {
-                externalMachineCode = vm().machineCode().findExternalCode(stackFrame.ip);
+            if (nativeFunction == null) {
+                nativeFunction = vm().machineCode().findExternalCode(stackFrame.ip);
             }
-            return externalMachineCode;
+            return nativeFunction;
         }
 
     }
