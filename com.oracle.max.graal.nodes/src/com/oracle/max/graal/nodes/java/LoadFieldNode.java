@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -40,30 +41,17 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
      * @param field the compiler interface field
      */
     public LoadFieldNode(ValueNode object, RiResolvedField field) {
-        super(field.kind(false).stackKind(), object, field);
+        super(createStamp(field), object, field);
     }
 
-    /**
-     * Gets the declared type of the field being accessed.
-     *
-     * @return the declared type of the field being accessed.
-     */
-    @Override
-    public RiResolvedType declaredType() {
-        RiType result = field().type();
-        return (result instanceof RiResolvedType) ? (RiResolvedType) result : null;
-    }
-
-    /**
-     * Gets the exact type of the field being accessed. If the field type is a primitive array or an instance class and
-     * the class is loaded and final, then the exact type is the same as the declared type. Otherwise it is {@code null}
-     *
-     * @return the exact type of the field if known; {@code null} otherwise
-     */
-    @Override
-    public RiResolvedType exactType() {
-        RiType declared = declaredType();
-        return (declared instanceof RiResolvedType) ? ((RiResolvedType) declared).exactType() : null;
+    private static Stamp createStamp(RiResolvedField field) {
+        CiKind kind = field.kind(false);
+        if (kind == CiKind.Object && field.type() instanceof RiResolvedType) {
+            RiResolvedType resolvedType = (RiResolvedType) field.type();
+            return StampFactory.declared(resolvedType);
+        } else {
+            return StampFactory.forKind(kind);
+        }
     }
 
     @Override
@@ -74,20 +62,6 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
     @Override
     public boolean needsStateAfter() {
         return false;
-    }
-
-    /**
-     * Gets a constant value to which this load can be reduced.
-     *
-     * @return {@code null} if this load cannot be reduced to a constant
-     */
-    private CiConstant constantValue() {
-        if (isStatic()) {
-            return field.constantValue(null);
-        } else if (object().isConstant()) {
-            return field.constantValue(object().asConstant());
-        }
-        return null;
     }
 
     @Override
@@ -102,5 +76,19 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
             return ConstantNode.forCiConstant(constant, tool.runtime(), graph());
         }
         return this;
+    }
+
+    /**
+     * Gets a constant value to which this load can be reduced.
+     *
+     * @return {@code null} if this load cannot be reduced to a constant
+     */
+    private CiConstant constantValue() {
+        if (isStatic()) {
+            return field.constantValue(null);
+        } else if (object().isConstant()) {
+            return field.constantValue(object().asConstant());
+        }
+        return null;
     }
 }

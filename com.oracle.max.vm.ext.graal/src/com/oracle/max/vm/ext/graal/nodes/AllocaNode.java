@@ -39,13 +39,11 @@ public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLower
 
     @Data public final int size;
     @Data public final boolean refs;
-    @Data public final RiResolvedType declaredType;
 
     public AllocaNode(int size, boolean refs, RiResolvedType declaredType) {
-        super(StampFactory.forKind(declaredType.kind(false)));
+        super(StampFactory.declared(declaredType));
         this.size = size;
         this.refs = refs;
-        this.declaredType = declaredType;
     }
 
     @Override
@@ -54,10 +52,5 @@ public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLower
         StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
         gen.append(STACK_ALLOCATE.create(result, stackBlock));
         gen.setResult(this, result);
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return declaredType;
     }
 }

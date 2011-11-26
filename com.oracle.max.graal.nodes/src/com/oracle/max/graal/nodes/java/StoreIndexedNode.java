@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -47,7 +48,7 @@ public final class StoreIndexedNode extends AccessIndexedNode implements Lowerab
      * @param value the value to store into the array
      */
     public StoreIndexedNode(ValueNode array, ValueNode index, ValueNode length, CiKind elementKind, ValueNode value) {
-        super(CiKind.Void, array, index, length, elementKind);
+        super(StampFactory.illegal(), array, index, length, elementKind);
         this.value = value;
     }
 
