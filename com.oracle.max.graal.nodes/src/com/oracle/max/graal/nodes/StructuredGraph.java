@@ -119,4 +119,8 @@ public class StructuredGraph extends Graph {
             }
         };
     }
+
+    public boolean hasLoops() {
+        return getNodes(LoopBeginNode.class).iterator().hasNext();
+    }
 }

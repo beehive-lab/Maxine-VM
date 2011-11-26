@@ -82,6 +82,11 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
     public boolean verify() {
         assertTrue(merge() != null, "missing merge");
         assertTrue(merge().phiPredecessorCount() == valueCount(), "mismatch between merge predecessor count and phi value count: %d != %d", merge().phiPredecessorCount(), valueCount());
+        if (type == PhiType.Value) {
+            for (ValueNode v : values()) {
+                assertTrue(v.kind() == kind(), "all phi values must have same kind");
+            }
+        }
         return super.verify();
     }
 
@@ -225,5 +230,9 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     public ValueNode firstValue() {
         return valueAt(0);
+    }
+
+    public boolean isLoopPhi() {
+        return merge() instanceof LoopBeginNode;
     }
 }

@@ -205,6 +205,8 @@ public final class GraalCompilation {
                 }
             }
 
+            new PhiStampPhase().apply(graph);
+
             if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
