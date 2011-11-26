@@ -632,7 +632,7 @@ public final class LinearScan {
                     assert info.state != null;
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(ValueNode value) {
-                            CiValue operand = value.operand();
+                            CiValue operand = compilation.operand(value);
                             if (operand.isVariable()) {
                                 int operandNum = operandNumber(operand);
                                 if (!liveKill.get(operandNum)) {
@@ -849,7 +849,7 @@ public final class LinearScan {
                                 assert info.state != null;
                                 info.state.forEachLiveStateValue(new ValueProcedure() {
                                     public void doValue(ValueNode value) {
-                                        CiValue operand = value.operand();
+                                        CiValue operand = compilation.operand(value);
                                         TTY.println("   operand=" + operand);
                                     }
                                 });
@@ -1209,8 +1209,8 @@ public final class LinearScan {
                 if (info != null) {
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(ValueNode value) {
-                            CiValue operand = value.operand();
-                            if (operand.isVariableOrRegister()) {
+                            CiValue operand = compilation.operand(value);
+                            if (operand != null && operand.isVariableOrRegister()) {
                                 addUse(operand, blockFrom, (opId + 1), RegisterPriority.None, null);
                             }
                         }
@@ -1831,8 +1831,8 @@ public final class LinearScan {
                     virtualObjects.put(obj, ciObj);
                 }
                 return ciObj;
-            } else if (value != null && value.operand() != CiValue.IllegalValue) {
-                CiValue operand = value.operand();
+            } else if (value != null && compilation.operand(value) != null) {
+                CiValue operand = compilation.operand(value);
                 ConstantNode con = null;
                 if (value instanceof ConstantNode) {
                     con = (ConstantNode) value;

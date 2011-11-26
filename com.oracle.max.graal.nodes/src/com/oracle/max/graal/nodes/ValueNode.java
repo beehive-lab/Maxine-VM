@@ -23,11 +23,9 @@
 package com.oracle.max.graal.nodes;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -42,8 +40,6 @@ public abstract class ValueNode extends Node {
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
     @Data protected Stamp stamp;
-
-    protected CiValue operand = CiValue.IllegalValue;
 
     /**
      * Creates a new value with the specified kind.
@@ -90,26 +86,6 @@ public abstract class ValueNode extends Node {
     }
 
     /**
-     * Gets the LIR operand associated with this instruction.
-     * @return the LIR operand for this instruction
-     */
-    public final CiValue operand() {
-        return operand;
-    }
-
-    /**
-     * Sets the LIR operand associated with this instruction.
-     * @param operand the operand to associate with this instruction
-     */
-    public final void setOperand(CiValue operand) {
-        assert this.operand.isIllegal() : "operand cannot be set twice";
-        assert operand != null && operand.isLegal() : "operand must be legal";
-        assert operand.kind.stackKind() == this.kind();
-        assert !(this instanceof VirtualObjectNode);
-        this.operand = operand;
-    }
-
-    /**
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
@@ -127,13 +103,6 @@ public abstract class ValueNode extends Node {
      */
     public RiResolvedType declaredType() {
         return null; // default: unknown declared type
-    }
-
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("operand", operand == null ? "null" : operand.toString());
-        return properties;
     }
 
     @SuppressWarnings("unchecked")

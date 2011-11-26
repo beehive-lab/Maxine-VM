@@ -41,6 +41,7 @@ import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
@@ -59,6 +60,7 @@ public final class GraalCompilation {
 
     public final StructuredGraph graph;
     public final CiAssumptions assumptions = GraalOptions.OptAssumptions ? new CiAssumptions() : null;
+    public NodeMap<CiValue> nodeOperands;
 
     private FrameMap frameMap;
 
@@ -103,6 +105,18 @@ public final class GraalCompilation {
 
     public LIR lir() {
         return lir;
+    }
+
+    public CiValue operand(ValueNode valueNode) {
+        return nodeOperands.get(valueNode);
+    }
+
+    public void setOperand(ValueNode valueNode, CiValue operand) {
+        assert operand(valueNode) == null : "operand cannot be set twice";
+        assert operand != null && operand.isLegal() : "operand must be legal";
+        assert operand.kind.stackKind() == valueNode.kind();
+        assert !(valueNode instanceof VirtualObjectNode);
+        nodeOperands.set(valueNode, operand);
     }
 
     /**
@@ -345,6 +359,7 @@ public final class GraalCompilation {
         try {
             if (GraalOptions.GenLIR) {
                 context().timers.startScope("Create LIR");
+                nodeOperands = graph.createNodeMap();
                 LIRGenerator lirGenerator = null;
                 try {
                     initFrameMap(maxLocks());
