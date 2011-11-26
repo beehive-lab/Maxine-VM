@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -31,9 +32,8 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessIndexedNode extends AccessArrayNode {
 
-    @Input    private ValueNode index;
-
-    @Input    private ValueNode length;
+    @Input private ValueNode index;
+    @Input private ValueNode length;
 
     public ValueNode index() {
         return index;
@@ -53,8 +53,8 @@ public abstract class AccessIndexedNode extends AccessArrayNode {
      * @param length the instruction producing the length
      * @param elementKind the type of the elements of the array
      */
-    protected AccessIndexedNode(CiKind kind, ValueNode array, ValueNode index, ValueNode length, CiKind elementKind) {
-        super(kind, array);
+    protected AccessIndexedNode(Stamp stamp, ValueNode array, ValueNode index, ValueNode length, CiKind elementKind) {
+        super(stamp, array);
         this.index = index;
         this.length = length;
         this.elementType = elementKind;

@@ -52,8 +52,8 @@ public abstract class AccessFieldNode extends AbstractStateSplit implements Lowe
      * @param field the compiler interface representation of the field
      * @param graph
      */
-    public AccessFieldNode(CiKind kind, ValueNode object, RiResolvedField field) {
-        super(StampFactory.forKind(kind));
+    public AccessFieldNode(Stamp stamp, ValueNode object, RiResolvedField field) {
+        super(stamp);
         this.object = object;
         this.field = field;
         assert field.holder().isInitialized();
