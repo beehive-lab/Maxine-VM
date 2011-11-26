@@ -146,7 +146,7 @@ public class StampFactory {
             RiResolvedType exactType = first.exactType();
             while (iterator.hasNext()) {
                 Stamp current = iterator.next().stamp();
-                assert current.kind() == first.kind();
+                assert current.kind() == first.kind() : values + " first=" + first + " current=" + current;
                 nonNull &= current.nonNull();
                 declaredType = orTypes(declaredType, current.declaredType());
                 exactType = orTypes(exactType, current.exactType());

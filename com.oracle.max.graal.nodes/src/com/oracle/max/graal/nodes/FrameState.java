@@ -472,7 +472,7 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
                 ValueNode otherValue = other.valueAt(i);
                 if (otherValue == currentValue) {
                     deleteRedundantPhi(currentValue, currentValue.firstValue());
-                } else if (otherValue == null) {
+                } else if (otherValue == null || otherValue.kind() != currentValue.kind()) {
                     deleteInvalidPhi(currentValue);
                 } else {
                     currentValue.addInput(otherValue);
