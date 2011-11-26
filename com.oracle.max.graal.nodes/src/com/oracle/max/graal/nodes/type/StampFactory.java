@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.nodes.type;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -31,9 +33,19 @@ public class StampFactory {
     private static class BasicValueStamp implements Stamp {
 
         private final CiKind kind;
+        private final boolean nonNull;
+        private RiResolvedType declaredType;
+        private RiResolvedType exactType;
 
         public BasicValueStamp(CiKind kind) {
+            this(kind, false, null, null);
+        }
+
+        public BasicValueStamp(CiKind kind, boolean nonNull, RiResolvedType declaredType, RiResolvedType exactType) {
             this.kind = kind;
+            this.nonNull = nonNull;
+            this.declaredType = declaredType;
+            this.exactType = exactType;
         }
 
         @Override
@@ -43,26 +55,34 @@ public class StampFactory {
 
         @Override
         public boolean nonNull() {
-            return false;
+            return nonNull;
         }
 
         @Override
         public RiResolvedType declaredType() {
-            return null;
+            return declaredType;
         }
 
         @Override
         public RiResolvedType exactType() {
-            return null;
+            return exactType;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof BasicValueStamp) {
-                BasicValueStamp basicValueType = (BasicValueStamp) obj;
-                return kind == basicValueType.kind;
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof Stamp) {
+                Stamp other = (Stamp) obj;
+                return kind == other.kind() && nonNull() == other.nonNull() && declaredType() == other.declaredType() && exactType() == other.exactType();
             }
             return false;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%c%s %s %s", kind().typeChar, nonNull ? "!" : "", declaredType == null ? "-" : declaredType.name(), exactType == null ? "-" : exactType.name());
         }
     }
 
@@ -86,23 +106,7 @@ public class StampFactory {
     }
 
     public static Stamp exactNonNull(final RiResolvedType type) {
-        return new BasicValueStamp(CiKind.Object) {
-
-            @Override
-            public RiResolvedType declaredType() {
-                return type;
-            }
-
-            @Override
-            public RiResolvedType exactType() {
-                return type;
-            }
-
-            @Override
-            public boolean nonNull() {
-                return true;
-            }
-        };
+        return new BasicValueStamp(CiKind.Object, true, type, type);
     }
 
     public static Stamp forConstant(CiConstant value, RiRuntime runtime) {
@@ -114,53 +118,61 @@ public class StampFactory {
     }
 
     public static Stamp objectNonNull() {
-        return new BasicValueStamp(CiKind.Object) {
-            @Override
-            public boolean nonNull() {
-                return true;
-            }
-        };
+        return new BasicValueStamp(CiKind.Object, true, null, null);
     }
 
     public static Stamp declared(final RiResolvedType type) {
         assert type != null;
-        return new BasicValueStamp(CiKind.Object) {
-
-            @Override
-            public RiResolvedType declaredType() {
-                return type;
-            }
-
-            @Override
-            public RiResolvedType exactType() {
-                return type.exactType();
-            }
-
-            @Override
-            public boolean nonNull() {
-                return false;
-            }
-        };
+        return new BasicValueStamp(CiKind.Object, false, type, type.exactType());
     }
 
     public static Stamp declaredNonNull(final RiResolvedType type) {
         assert type != null;
-        return new BasicValueStamp(CiKind.Object) {
+        return new BasicValueStamp(CiKind.Object, true, type, type.exactType());
+    }
 
-            @Override
-            public RiResolvedType declaredType() {
-                return type;
+    public static Stamp or(Collection<? extends StampProvider> values) {
+        if (values.size() == 0) {
+            return illegal();
+        } else {
+            Iterator< ? extends StampProvider> iterator = values.iterator();
+            Stamp first = iterator.next().stamp();
+            if (values.size() == 1) {
+                return first;
             }
 
-            @Override
-            public RiResolvedType exactType() {
-                return type.exactType();
+            boolean nonNull = first.nonNull();
+            RiResolvedType declaredType = first.declaredType();
+            RiResolvedType exactType = first.exactType();
+            while (iterator.hasNext()) {
+                Stamp current = iterator.next().stamp();
+                assert current.kind() == first.kind();
+                nonNull &= current.nonNull();
+                declaredType = orTypes(declaredType, current.declaredType());
+                exactType = orTypes(exactType, current.exactType());
             }
 
-            @Override
-            public boolean nonNull() {
-                return true;
+            if (nonNull != first.nonNull() || declaredType != first.declaredType() || exactType != first.exactType()) {
+                return new BasicValueStamp(first.kind(), nonNull, declaredType, exactType);
+            } else {
+                return first;
             }
-        };
+        }
+    }
+
+    private static RiResolvedType orTypes(RiResolvedType a, RiResolvedType b) {
+        if (a == b) {
+            return a;
+        } else if (a == null || b == null) {
+            return null;
+        } else {
+            if (a.isSubtypeOf(b)) {
+                return b;
+            } else if (b.isSubtypeOf(a)) {
+                return a;
+            } else {
+                return null;
+            }
+        }
     }
 }

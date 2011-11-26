@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
  * This class represents a value within the graph, including local variables, phis, and
  * all other instructions.
  */
-public abstract class ValueNode extends Node {
+public abstract class ValueNode extends Node implements StampProvider {
 
     /**
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
@@ -53,6 +53,10 @@ public abstract class ValueNode extends Node {
 
     public Stamp stamp() {
         return stamp;
+    }
+
+    protected void setStamp(Stamp stamp) {
+        this.stamp = stamp;
     }
 
     public CiKind kind() {
