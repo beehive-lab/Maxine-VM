@@ -648,26 +648,36 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
                 for (VirtualObjectNode vobj : vobjsCopy) {
                     if (vobj.fieldsCount() > 0) {
                         boolean[] fieldState = new boolean[vobj.fieldsCount()];
-                        ValueNode currentField = objectStates.get(vobj);
-                        assert currentField != null : this;
-                        do {
-                            if (currentField instanceof VirtualObjectFieldNode) {
-                                int index = ((VirtualObjectFieldNode) currentField).index();
-                                ValueNode value = ((VirtualObjectFieldNode) currentField).input();
-                                if (!fieldState[index]) {
-                                    fieldState[index] = true;
-                                    if (value instanceof VirtualObjectNode) {
-                                        vobjs.add((VirtualObjectNode) value);
-                                    } else {
-                                        proc.doValue(value);
-                                    }
-                                }
-                                currentField = ((VirtualObjectFieldNode) currentField).lastState();
-                            } else {
-                                assert currentField instanceof PhiNode : currentField;
-                                currentField = ((PhiNode) currentField).valueAt(0);
+                        if (vobj instanceof BoxedVirtualObjectNode) {
+                            BoxedVirtualObjectNode boxedVirtualObjectNode = (BoxedVirtualObjectNode) vobj;
+                            ValueNode value = boxedVirtualObjectNode.getUnboxedValue();
+                            if (!fieldState[0]) {
+                                fieldState[0] = true;
+                                proc.doValue(value);
                             }
-                        } while (currentField != null);
+                        } else {
+                            ValueNode currentField = objectStates.get(vobj);
+
+                            assert currentField != null : this + ", vobj=" + vobj;
+                            do {
+                                if (currentField instanceof VirtualObjectFieldNode) {
+                                    int index = ((VirtualObjectFieldNode) currentField).index();
+                                    ValueNode value = ((VirtualObjectFieldNode) currentField).input();
+                                    if (!fieldState[index]) {
+                                        fieldState[index] = true;
+                                        if (value instanceof VirtualObjectNode) {
+                                            vobjs.add((VirtualObjectNode) value);
+                                        } else {
+                                            proc.doValue(value);
+                                        }
+                                    }
+                                    currentField = ((VirtualObjectFieldNode) currentField).lastState();
+                                } else {
+                                    assert currentField instanceof PhiNode : currentField;
+                                    currentField = ((PhiNode) currentField).valueAt(0);
+                                }
+                            } while (currentField != null);
+                        }
                     }
                     vobjs.remove(vobj);
                 }

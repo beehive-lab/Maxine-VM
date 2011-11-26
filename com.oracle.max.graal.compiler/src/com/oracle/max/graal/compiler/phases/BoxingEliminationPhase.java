@@ -73,7 +73,7 @@ public class BoxingEliminationPhase extends Phase {
                 if (exactType != null && exactType.toJava() == kind.toUnboxedJavaClass()) {
                     result = phiNode.graph().add(new PhiNode(kind, phiNode.merge(), PhiType.Value));
                     phiReplacements.put(phiNode, result);
-                    replaceFrameStateUsages(phiNode, result, exactType);
+                    virtualizeUsages(phiNode, result, exactType);
                     int i = 0;
                     for (ValueNode n : phiNode.values()) {
                         ValueNode unboxedValue = unboxedValue(n, kind, phiReplacements);
@@ -111,13 +111,13 @@ public class BoxingEliminationPhase extends Phase {
 
         System.out.println("try elminate on " + boxNode);
         for (Node n : boxNode.usages()) {
-            if (!(n instanceof FrameState)) {
+            if (!(n instanceof FrameState) && !(n instanceof VirtualObjectFieldNode)) {
                 // Elimination failed, because boxing object escapes.
                 return;
             }
         }
 
-        replaceFrameStateUsages(boxNode, boxNode.source(), boxNode.exactType());
+        virtualizeUsages(boxNode, boxNode.source(), boxNode.exactType());
 
         System.out.println("ELIMINATED: " + boxNode);
         FrameState stateAfter = boxNode.stateAfter();
@@ -129,16 +129,14 @@ public class BoxingEliminationPhase extends Phase {
         boxNode.safeDelete();
     }
 
-    private void replaceFrameStateUsages(ValueNode boxNode, ValueNode replacement, RiType exactType) {
+    private void virtualizeUsages(ValueNode boxNode, ValueNode replacement, RiResolvedType exactType) {
         ValueNode virtualValueNode = null;
         VirtualObjectNode virtualObjectNode = null;
         for (Node n : boxNode.usages().snapshot()) {
-            if (n instanceof FrameState) {
+            if (n instanceof FrameState || n instanceof VirtualObjectFieldNode) {
                 if (virtualValueNode == null) {
-                    virtualObjectNode = n.graph().add(new VirtualObjectNode(exactType, 1));
-                    virtualValueNode = n.graph().add(new VirtualObjectFieldNode(virtualObjectNode, null, replacement, 0));
+                    virtualObjectNode = n.graph().unique(new BoxedVirtualObjectNode(exactType, replacement));
                 }
-                ((FrameState) n).addVirtualObjectMapping(virtualValueNode);
                 n.replaceFirstInput(boxNode, virtualObjectNode);
             }
         }
