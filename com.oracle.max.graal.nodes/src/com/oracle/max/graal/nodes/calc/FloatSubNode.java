@@ -37,29 +37,29 @@ public final class FloatSubNode extends FloatArithmeticNode implements Canonical
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x() == y()) {
-            return ConstantNode.forFloatingKind(kind, 0.0f, graph());
+            return ConstantNode.forFloatingKind(kind(), 0.0f, graph());
         }
         if (x().isConstant() && y().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 return ConstantNode.forFloat(x().asConstant().asFloat() - y().asConstant().asFloat(), graph());
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 return ConstantNode.forDouble(x().asConstant().asDouble() - y().asConstant().asDouble(), graph());
             }
         } else if (y().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 float c = y().asConstant().asFloat();
                 if (c == 0.0f) {
                     return x();
                 }
-                return graph().unique(new FloatAddNode(kind, x(), ConstantNode.forFloat(-c, graph()), isStrictFP()));
+                return graph().unique(new FloatAddNode(kind(), x(), ConstantNode.forFloat(-c, graph()), isStrictFP()));
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 double c = y().asConstant().asDouble();
                 if (c == 0.0) {
                     return x();
                 }
-                return graph().unique(new FloatAddNode(kind, x(), ConstantNode.forDouble(-c, graph()), isStrictFP()));
+                return graph().unique(new FloatAddNode(kind(), x(), ConstantNode.forDouble(-c, graph()), isStrictFP()));
             }
         }
         return this;

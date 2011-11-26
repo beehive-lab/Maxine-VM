@@ -38,7 +38,7 @@ public final class ReturnNode extends FixedNode implements LIRLowerable {
      * @param result the instruction producing the result for this return; {@code null} if this is a void return
      */
     public ReturnNode(ValueNode result) {
-        super(result == null ? CiKind.Void : result.kind);
+        super(result == null ? CiKind.Void : result.kind());
         this.result = result;
     }
 

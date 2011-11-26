@@ -230,7 +230,7 @@ public final class ConstantNode extends BooleanNode implements LIRLowerable {
     }
 
     private RiResolvedType getType() {
-        if (kind.isPrimitive()) {
+        if (kind().isPrimitive()) {
             return null;
         }
         return runtime.getTypeOf(asConstant());

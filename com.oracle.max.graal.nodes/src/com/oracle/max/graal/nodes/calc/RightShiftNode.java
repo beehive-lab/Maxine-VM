@@ -40,18 +40,18 @@ public final class RightShiftNode extends ShiftNode implements Canonicalizable, 
             int amount = y().asConstant().asInt();
             int originalAmout = amount;
             int mask;
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 mask = 0x1f;
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 mask = 0x3f;
             }
             amount &= mask;
             if (x().isConstant()) {
-                if (kind == CiKind.Int) {
+                if (kind() == CiKind.Int) {
                     return ConstantNode.forInt(x().asConstant().asInt() >> amount, graph());
                 } else {
-                    assert kind == CiKind.Long;
+                    assert kind() == CiKind.Long;
                     return ConstantNode.forLong(x().asConstant().asLong() >> amount, graph());
                 }
             }
@@ -67,12 +67,12 @@ public final class RightShiftNode extends ShiftNode implements Canonicalizable, 
                         if (total != (total & mask)) {
                             return ConstantNode.forInt(0, graph());
                         }
-                        return graph().unique(new RightShiftNode(kind, other.x(), ConstantNode.forInt(total, graph())));
+                        return graph().unique(new RightShiftNode(kind(), other.x(), ConstantNode.forInt(total, graph())));
                     }
                 }
             }
             if (originalAmout != amount) {
-                return graph().unique(new RightShiftNode(kind, x(), ConstantNode.forInt(amount, graph())));
+                return graph().unique(new RightShiftNode(kind(), x(), ConstantNode.forInt(amount, graph())));
             }
         }
         return this;

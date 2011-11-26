@@ -62,7 +62,7 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
         if (x != null && x.declaredType() != null && x.declaredType().isSubtypeOf(toType)) {
             return x;
         }
-        if (kind != CiKind.Object && x.kind() == kind) {
+        if (kind() != CiKind.Object && x.kind() == kind()) {
             return x;
         }
         if (x instanceof MaxineUnsafeCastNode) {
@@ -75,8 +75,8 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     @Override
     public void generate(LIRGeneratorTool gen) {
         CiValue operand = gen.operand(x);
-        if (this.kind != operand.kind || x instanceof ConstantNode) {
-            CiValue dest = gen.newVariable(this.kind);
+        if (this.kind() != operand.kind || x instanceof ConstantNode) {
+            CiValue dest = gen.newVariable(this.kind());
             gen.emitMove(operand, dest);
             gen.setResult(this, dest);
         } else {

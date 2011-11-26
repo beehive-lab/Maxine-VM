@@ -45,7 +45,7 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements AMD6
 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
-        CiVariable result = gen.newVariable(kind);
+        CiVariable result = gen.newVariable(kind());
         CiVariable input = gen.load(gen.operand(value));
         switch (op) {
             case MSB:

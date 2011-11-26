@@ -39,7 +39,7 @@ public class SafeReadNode extends SafeAccessNode implements Lowerable {
     public void lower(CiLoweringTool tool) {
         StructuredGraph graph = graph();
         GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new NullCheckNode(object(), false)));
-        ReadNode read = graph.unique(new ReadNode(kind, object(), location()));
+        ReadNode read = graph.unique(new ReadNode(kind(), object(), location()));
         read.setGuard(guard);
         FixedNode next = this.next();
         this.setNext(null);
