@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -49,7 +50,7 @@ public class ExtendedUnsafeNode extends AbstractStateSplit {
     }
 
     public ExtendedUnsafeNode(ValueNode object, ValueNode displacement, ValueNode index, CiKind kind) {
-        super(kind.stackKind());
+        super(StampFactory.forKind(kind.stackKind()));
         this.object = object;
         this.displacement = displacement;
         this.index = index;

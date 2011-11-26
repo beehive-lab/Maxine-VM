@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import java.util.*;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code AbstractStateSplit} class is the abstract base class of all instructions
@@ -50,8 +50,8 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
      * Creates a new state split with the specified value type.
      * @param kind the type of the value that this instruction produces
      */
-    public AbstractStateSplit(CiKind kind) {
-        super(kind);
+    public AbstractStateSplit(Stamp stamp) {
+        super(stamp);
     }
 
     @Override

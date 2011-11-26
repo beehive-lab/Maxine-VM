@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -64,7 +65,7 @@ public class CompareAndSwapNode extends AbstractStateSplit implements LIRLowerab
     }
 
     public CompareAndSwapNode(ValueNode object, ValueNode offset, ValueNode expected, ValueNode newValue, boolean directResult) {
-        super(directResult ? expected.kind().stackKind() : CiKind.Boolean.stackKind());
+        super(StampFactory.forKind(directResult ? expected.kind().stackKind() : CiKind.Boolean.stackKind()));
         assert expected.kind() == newValue.kind();
         this.object = object;
         this.offset = offset;

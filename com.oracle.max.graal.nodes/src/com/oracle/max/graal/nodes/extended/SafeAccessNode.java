@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 
@@ -32,7 +33,7 @@ public abstract class SafeAccessNode extends AbstractStateSplit {
     @Input private LocationNode location;
 
     public SafeAccessNode(CiKind kind, ValueNode object, LocationNode location) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.object = object;
         this.location = location;
     }

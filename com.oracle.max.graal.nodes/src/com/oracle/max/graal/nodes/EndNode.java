@@ -26,12 +26,12 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 public final class EndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
     public EndNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
     }
 
     @Override

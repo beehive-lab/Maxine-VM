@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -47,7 +48,7 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable, LI
      * @param type the type for this check
      */
     public IsTypeNode(ValueNode object, RiResolvedType type) {
-        super(CiKind.Object);
+        super(StampFactory.forKind(CiKind.Object));
         assert object == null || object.kind() == CiKind.Object;
         this.type = type;
         this.object = object;

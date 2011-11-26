@@ -66,8 +66,6 @@ public class StampFactory {
         }
     }
 
-    private static final Stamp ILLEGAL_TYPE = new BasicValueStamp(CiKind.Illegal);
-
     private static final Stamp[] stampCache = new Stamp[CiKind.values().length];
     static {
         for (CiKind k : CiKind.values()) {
@@ -76,7 +74,11 @@ public class StampFactory {
     }
 
     public static Stamp illegal() {
-        return ILLEGAL_TYPE;
+        return forKind(CiKind.Illegal);
+    }
+
+    public static Stamp intValue() {
+        return forKind(CiKind.Int);
     }
 
     public static Stamp forKind(CiKind kind) {

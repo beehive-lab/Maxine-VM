@@ -28,6 +28,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.graal.snippets.target.amd64.*;
 import com.sun.cri.ci.*;
 
@@ -49,7 +50,7 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, 
     }
 
     public MathIntrinsicNode(ValueNode x, Operation op) {
-        super(x.kind());
+        super(StampFactory.forKind(x.kind()));
         assert x.kind() == CiKind.Double;
         this.x = x;
         this.operation = op;

@@ -35,7 +35,7 @@ import com.sun.cri.ri.*;
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
  * operand stack) at a particular point in the abstract interpretation.
  */
-public final class FrameState extends ValueNode implements FrameStateAccess, Node.IterableNodeType, LIRLowerable {
+public final class FrameState extends Node implements FrameStateAccess, Node.IterableNodeType, LIRLowerable {
 
     protected final int localsSize;
 
@@ -110,7 +110,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
      * @param rethrowException if true the VM should re-throw the exception on top of the stack when deopt'ing using this framestate
      */
     public FrameState(RiResolvedMethod method, int bci, int localsSize, int stackSize, int locksSize, boolean rethrowException) {
-        super(CiKind.Illegal);
         assert stackSize >= 0;
         this.method = method;
         this.bci = bci;
@@ -123,7 +122,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<ValueNode> locks, boolean rethrowException) {
-        super(CiKind.Illegal);
         this.method = method;
         this.bci = bci;
         this.localsSize = locals.length;
@@ -802,7 +800,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     @Override
     public boolean verify() {
         for (ValueNode value : values) {
-            assert assertTrue(value == null || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
+            assert assertTrue(value == null || value instanceof VirtualObjectNode || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
         }
         return super.verify();
     }

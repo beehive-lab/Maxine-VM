@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -41,12 +42,12 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
     }
 
     public IfNode(BooleanNode condition, FixedNode trueSuccessor, FixedNode falseSuccessor, double probability) {
-        super(CiKind.Illegal, new BeginNode[] {BeginNode.begin(trueSuccessor), BeginNode.begin(falseSuccessor)}, new double[] {probability, 1 - probability});
+        super(StampFactory.illegal(), new BeginNode[] {BeginNode.begin(trueSuccessor), BeginNode.begin(falseSuccessor)}, new double[] {probability, 1 - probability});
         this.compare = condition;
     }
 
     public IfNode(BooleanNode condition, double probability) {
-        super(CiKind.Illegal, EMPTY_IF_SUCCESSORS, new double[] {probability, 1 - probability});
+        super(StampFactory.illegal(), EMPTY_IF_SUCCESSORS, new double[] {probability, 1 - probability});
         this.compare = condition;
     }
 

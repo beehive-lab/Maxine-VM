@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -45,7 +46,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
      * @param expectedNull True when this node checks that the value is null, false when this node checks for non-null
      */
     public NullCheckNode(ValueNode object, boolean expectedNull) {
-        super(CiKind.Object);
+        super(StampFactory.forKind(CiKind.Object));
         assert object.kind() == CiKind.Object : object.kind();
         this.object = object;
         this.expectedNull = expectedNull;

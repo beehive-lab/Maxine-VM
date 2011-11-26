@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -42,7 +43,7 @@ public abstract class AccessArrayNode extends AbstractStateSplit {
      * @param array the instruction that produces the array object value
      */
     public AccessArrayNode(CiKind kind, ValueNode array) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.array = array;
     }
 

@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -35,7 +36,7 @@ public final class ExceptionObjectNode extends AbstractStateSplit implements LIR
      * Constructs a new ExceptionObject instruction.
      */
     public ExceptionObjectNode() {
-        super(CiKind.Object);
+        super(StampFactory.forKind(CiKind.Object));
     }
 
     @Override

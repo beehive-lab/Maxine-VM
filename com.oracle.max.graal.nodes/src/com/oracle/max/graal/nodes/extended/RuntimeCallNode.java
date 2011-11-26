@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 public final class RuntimeCallNode extends AbstractCallNode implements LIRLowerable {
@@ -43,7 +44,7 @@ public final class RuntimeCallNode extends AbstractCallNode implements LIRLowera
     }
 
     public RuntimeCallNode(CiRuntimeCall call, ValueNode[] arguments) {
-        super(call.resultKind, arguments);
+        super(StampFactory.forKind(call.resultKind), arguments);
         this.call = call;
     }
 

@@ -49,7 +49,7 @@ public class MaxineIntrinsicsPhase extends Phase {
         assert impl != null : method.intrinsic();
         if (impl != null) {
             FrameState stateAfter = invoke.stateAfter();
-            ValueNode node = ((GraalIntrinsicImpl) impl).createGraph(invoke.callTarget().graph(), method, invoke.callTarget().arguments());
+            ValueNode node = ((GraalIntrinsicImpl) impl).createGraph((StructuredGraph) invoke.callTarget().graph(), method, invoke.callTarget().arguments());
             invoke.intrinsify(node);
             if (node instanceof AbstractStateSplit) {
                 if (stateAfter != null) {

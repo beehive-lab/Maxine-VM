@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -43,7 +44,7 @@ public abstract class SwitchNode extends ControlSplitNode {
      * @param stateAfter the state after the switch
      */
     public SwitchNode(ValueNode value, BeginNode[] successors, double[] probability) {
-        super(CiKind.Illegal, successors, probability);
+        super(StampFactory.illegal(), successors, probability);
         this.value = value;
     }
 

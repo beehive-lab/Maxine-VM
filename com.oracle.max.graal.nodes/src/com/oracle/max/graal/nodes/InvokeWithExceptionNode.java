@@ -29,6 +29,7 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -48,7 +49,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
      * @param branchProbability
      */
     public InvokeWithExceptionNode(MethodCallTargetNode callTarget, BeginNode exceptionEdge, int bci) {
-        super(callTarget.returnKind().stackKind(), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
+        super(StampFactory.forKind(callTarget.returnKind().stackKind()), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
         assert callTarget != null;
         this.bci = bci;
         this.callTarget = callTarget;

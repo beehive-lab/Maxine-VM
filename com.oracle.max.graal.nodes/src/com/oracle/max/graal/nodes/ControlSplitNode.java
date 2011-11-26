@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -48,8 +49,8 @@ public abstract class ControlSplitNode extends FixedNode {
 
     protected final double[] branchProbability;
 
-    public ControlSplitNode(CiKind kind, BeginNode[] blockSuccessors, double[] branchProbability) {
-        super(kind);
+    public ControlSplitNode(Stamp stamp, BeginNode[] blockSuccessors, double[] branchProbability) {
+        super(stamp);
         assert branchProbability.length == blockSuccessors.length;
         this.blockSuccessors = new NodeSuccessorList<BeginNode>(this, blockSuccessors);
         this.branchProbability = branchProbability;

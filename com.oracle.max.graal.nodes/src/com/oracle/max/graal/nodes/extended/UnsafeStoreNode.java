@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.extended;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -43,7 +44,7 @@ public class UnsafeStoreNode extends AbstractStateSplit implements Lowerable {
     }
 
     public UnsafeStoreNode(ValueNode object, int displacement, ValueNode offset, ValueNode value, CiKind kind) {
-        super(CiKind.Void);
+        super(StampFactory.illegal());
         assert kind != CiKind.Void && kind != CiKind.Illegal;
         this.object = object;
         this.displacement = displacement;

@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -35,7 +36,7 @@ public final class UnboxNode extends FixedWithNextNode implements Node.IterableN
     @Input private ValueNode source;
 
     public UnboxNode(CiKind kind, ValueNode source) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.source = source;
         assert kind != CiKind.Object : "can only unbox to primitive";
         assert source.kind() == CiKind.Object : "can only unbox objects";

@@ -359,7 +359,7 @@ public class InliningUtil {
      */
     public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         NodeInputList<ValueNode> parameters = invoke.callTarget().arguments();
-        StructuredGraph graph = invoke.node().graph();
+        Graph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
 

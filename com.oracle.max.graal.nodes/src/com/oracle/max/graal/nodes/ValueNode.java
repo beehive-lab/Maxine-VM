@@ -48,9 +48,13 @@ public abstract class ValueNode extends Node {
      * @param successorCount
      * @param graph
      */
-    public ValueNode(CiKind kind) {
-        assert kind != null && kind == kind.stackKind() : kind + " != " + kind.stackKind();
-        stamp = StampFactory.forKind(kind);
+    public ValueNode(Stamp stamp) {
+        this.stamp = stamp;
+        assert kind() != null && kind() == kind().stackKind() : kind() + " != " + kind().stackKind();
+    }
+
+    public Stamp stamp() {
+        return stamp;
     }
 
     public CiKind kind() {
@@ -103,11 +107,5 @@ public abstract class ValueNode extends Node {
      */
     public RiResolvedType declaredType() {
         return null; // default: unknown declared type
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public StructuredGraph graph() {
-        return (StructuredGraph) super.graph();
     }
 }

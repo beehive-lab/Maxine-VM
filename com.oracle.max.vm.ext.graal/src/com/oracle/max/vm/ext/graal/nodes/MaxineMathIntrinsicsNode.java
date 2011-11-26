@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.target.amd64.*;
 import com.sun.cri.ci.*;
 
@@ -38,7 +39,7 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements AMD6
     }
 
     public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
-        super(CiKind.Int);
+        super(StampFactory.intValue());
         this.value = value;
         this.op = op;
     }

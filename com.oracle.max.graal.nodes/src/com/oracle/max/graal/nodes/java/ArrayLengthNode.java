@@ -26,6 +26,7 @@ import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -41,7 +42,7 @@ public final class ArrayLengthNode extends FixedWithNextNode implements Canonica
     }
 
     public ArrayLengthNode(ValueNode array) {
-        super(CiKind.Int);
+        super(StampFactory.intValue());
         this.array = array;
     }
 

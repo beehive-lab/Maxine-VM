@@ -23,9 +23,10 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 public final class GuardNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
@@ -49,7 +50,7 @@ public final class GuardNode extends FloatingNode implements Canonicalizable, LI
     }
 
     public GuardNode(BooleanNode condition, FixedNode anchor) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.condition = condition;
         this.anchor = anchor;
     }
