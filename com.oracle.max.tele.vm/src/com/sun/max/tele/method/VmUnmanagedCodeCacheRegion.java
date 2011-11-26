@@ -156,7 +156,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
     public int loadedCompilationCount() {
         int count = 0;
         for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-            if (teleTargetMethod.isLoaded()) {
+            if (teleTargetMethod.isCacheLoaded()) {
                 count++;
             }
         }

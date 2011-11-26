@@ -69,12 +69,15 @@ public interface MaxMachineCodeRoutine<MachineCode_Type extends MaxMachineCodeRo
      * Gets the count of the times the code has been observed to have changed in the VM,
      * starting with 0, the initial state of the code the first time it was observed.
      * <p>
+     * This number is only related to observations, and may not correspond to actual changes
+     * in the VM.
+     * <p>
      * Any client of this interface should reloaded any cached information whenever the
-     * generation is observed to have changed.
+     * version is observed to have changed.
      *
-     * @return generation count of most recent observed code change in the VM.
+     * @return version of most recent observation of code in the VM.
      */
-    int vmCodeGeneration();
+    int codeVersion();
 
     /**
      * Writes a textual disassembly of the machine code instructions.

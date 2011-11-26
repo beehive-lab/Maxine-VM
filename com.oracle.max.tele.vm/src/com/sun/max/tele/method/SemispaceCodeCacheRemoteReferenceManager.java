@@ -216,7 +216,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
             // Don't look at the memory status of the teleTargetMethod; that refers to the
             // TargetMethod object, not to the objects stored in the code cache, which is
             // what we're dealing with here.
-            return teleTargetMethod().isEvicted() ? ObjectMemoryStatus.DEAD : ObjectMemoryStatus.LIVE;
+            return teleTargetMethod().isCodeEvicted() ? ObjectMemoryStatus.DEAD : ObjectMemoryStatus.LIVE;
         }
 
     }

@@ -277,7 +277,7 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
      * We don't bother to check if native code has changed once we have read and disassembled it.
      */
     @Override
-    public int vmCodeGeneration() {
+    public int codeVersion() {
         return 0;
     }
 

@@ -153,7 +153,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         this.methodViewPreferences = MethodViewPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compilation = compilation;
-        this.vmCodeGeneration = compilation != null ? compilation.vmCodeGeneration() : 0;
+        this.vmCodeGeneration = compilation != null ? compilation.codeVersion() : 0;
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -324,12 +324,12 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
                 gui().informationMessage("Compilation " + getToolTip() + " evicted, view closed");
                 dispose();
             }
-        } else if (compilation != null && compilation.vmCodeGeneration() > vmCodeGeneration) {
+        } else if (compilation != null && compilation.codeVersion() > vmCodeGeneration) {
             // The compiled code has been changed in some way; reconstruct the view with the same viewers.
             requestedCodeKinds.clear();
             requestedCodeKinds.addAll(codeViewers.keySet());
             reconstructView();
-            vmCodeGeneration = compilation.vmCodeGeneration();
+            vmCodeGeneration = compilation.codeVersion();
             Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
         } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {

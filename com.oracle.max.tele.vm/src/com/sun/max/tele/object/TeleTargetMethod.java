@@ -220,19 +220,19 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * <p>
      * There are three states for this cache:
      * <ul>
-     * <li><i>Unloaded, Dirty</i>:  the initial state where {@code targetMethod = null && generation = 0}. This
+     * <li><i>Unloaded, Dirty</i>:  the initial state where {@code targetMethod = null && codeVersion = 0}. This
      * represents the most common case, where we have identified a {@link TargetMethod} in the code cache, but
      * we have as yet had no reason to examine the compiled code itself.</li>
-     * <li><i>Loaded, Current</i>: {@code targetMethod != null && generation == TeleTargetMethod.codeGeneration}.
+     * <li><i>Loaded, not Dirty</i>: {@code targetMethod != null && codeVersion == TeleTargetMethod.codeVersion}.
      * In this state, all derived information has been computed and is cached; it is available without
      * need to read from VM memory.</li>
-     * <li><i>Loaded, Dirty</i>:  {@code targetMethod != null && generation < TeleTargetMethod.codeGeneration}.
-     * In this state, derived cached information is presumed to be out of date (the code in the VM has changed)
-     * and unreliable. Every attempt
+     * <li><i>Loaded, Dirty</i>:  {@code targetMethod != null && codeVersion < TeleTargetMethod.codeVersion}.
+     * In this state, derived cached information is presumed to be out of date (the code in the VM has been
+     * patched, relocated or changed in some other way). Every attempt
      * to use the cached information should be preceded by an attempt to reload the cache; if the reload fails
      * then the old information can be used for the time being.</li>
      * </ul>
-     * Once a {@link TargetMethod} has been loaded, it remains in the "loaded" state, alternating between "current" and "dirty"
+     * Once a {@link TargetMethod} has been loaded, it remains in the "loaded" state, alternating between "not dirty" and "dirty"
      * as the cached code is compared with the code in the VM during each update cycle.
      * <p>
      * This constructor requires locked access to the VM.
@@ -251,17 +251,16 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
 
 
         /**
-         * The version number of this cache, with a new one presumed to be
-         * created each time the code in the VM is discovered to have changed.  Note that this might
-         * not agree with the actual number of times the code has changed, since it may have changed
-         * more than once in a single VM execution cycle.
+         * The version number of this cache, with a new one presumed to be created each time the code in the VM is
+         * discovered to have patched or relocated. Note that this might not agree with the actual number of times the
+         * code has changed, since it may have changed more than once in a single VM execution cycle.
          * <p>
-         * Generation 0 corresponds to the initial state, where the data has not been loaded yet.
+         * Version 0 corresponds to the initial state, where the data has not been loaded yet.
          * <p>
-         * Generation -1 corresponds to the "evicted" state, where the code has been removed from
-         * the code cache and the compilation is no longer available for use.
+         * Version -1 corresponds to the "evicted" state, where the code has been removed from the code cache and the
+         * compilation is no longer available for use.
          */
-        private final int codeGenerationCount;
+        private final int codeVersion;
 
         /**
          * A copy of the machine code for the compilation.
@@ -346,14 +345,14 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          * This constructor should be called with the vm lock held.
          *
          * @param targetMethodCopy a local copy of the {@link TargetMethod} from the VM.
-         * @param generationCount number of this cache in the sequence of caches: 0 = no information; 1 VM's initial state.
+         * @param codeVersion number of this cache in the sequence of caches: 0 = no information; 1 VM's initial state.
          * @param teleClassMethodActor access to the {@link ClassMethodActor} in the VM of which this {@link TargetMethod}
          * is a compilation.
          */
-        private TargetMethodCache(TargetMethod targetMethodCopy, int generationCount, TeleClassMethodActor teleClassMethodActor) {
-            assert (targetMethodCopy == null && generationCount <= 0) || (targetMethodCopy != null && generationCount > 0);
+        private TargetMethodCache(TargetMethod targetMethodCopy, int codeVersion, TeleClassMethodActor teleClassMethodActor) {
+            assert (targetMethodCopy == null && codeVersion <= 0) || (targetMethodCopy != null && codeVersion > 0);
             this.targetMethodCopy = targetMethodCopy;
-            this.codeGenerationCount = generationCount;
+            this.codeVersion = codeVersion;
 
             if (targetMethodCopy == null || targetMethodCopy.codeLength() == 0) {
                 // Create a null cache as a placeholder until loading is required.
@@ -786,9 +785,9 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * a single immutable object for thread safety.  The cache object encapsulates a copy
      * of the {@link TargetMethod} along with a collection of derived information.
      * <p>
-     * A generation count of the cache is kept.  The initial state of the cache is
-     * generation 0, contains no {@link TargetMethod}, and is considered to be "unloaded".
-     * The initial state of the VM is considered to be generation 1.
+     * A version number of the cache is kept.  The initial state of the cache is
+     * version 0, contains no {@link TargetMethod}, and is considered to be "unloaded".
+     * The initial state of the VM is considered to be version 1.
      * As soon as the cache object is replaced, the state of the cache is henceforth
      * considered "loaded".
      * <p>
@@ -802,20 +801,26 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * this variable directly; all others should use {@link #targetMethodCache}.
      *
      * @see #targetMethodCache
-     * @see #isLoaded()
-     * @see #isCurrent()
+     * @see #isCacheLoaded()
+     * @see #isMethodCacheDirty()
      */
     private volatile TargetMethodCache targetMethodCache = new TargetMethodCache(null, 0, null);
 
     /**
-     * Counter for the versions of the code held by a{@link TargetMethod} during its lifetime
-     * in the VM, starting with
-     * its original version, which we call 1. Note that the initial (null) instance of the cache
-     * is set to generation 0, which means that the cache begins life as not current.  This is important
-     * so that we do perform expensive derivations on the code that are needed far less often than
-     * simple meta information about the code.
+     * Counter for the versions of the code held by a{@link TargetMethod} during its lifetime in the VM, starting with
+     * its original version, which we call 1. Note that the initial (null) instance of the cache is set to version 0,
+     * which means that the cache begins life as not current, which is how it will remain until detailed information
+     * is needed and the contents of the machine code is loaded into the cache.
+     * <p>
+     * The version can be incremented for different reasons:
+     * <ul>
+     * <li>The machine code has been "patched"</li>
+     * <li>The code has been relocated</li>
+     * </ul>
+     * Note that this number relates only to the <em>observed</em> changes, not necessarily the actual changes
+     * that might have taken place in the VM.
      */
-    private int vmCodeGenerationCount = 1;
+    private int methodCodeVersion = 1;
 
     /**
      * Counter for the number of completed code evictions that have been seen in this
@@ -828,13 +833,13 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * compilation has not survived an eviction cycle.  The test depends in the management
      * being used for the code cache region managing this compilation.
      */
-    private boolean evicted = false;
+    private boolean isCodeEvicted = false;
 
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
 
-        // Delay initialization of classMethodActor because of the circularity that
-        // the compilation history of the classMethodActor refers to this.
+        // Delay initialization of classMethodActor because of circularity:
+        // the compilation history of the classMethodActor refers back to this.
 
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
@@ -863,10 +868,10 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * @return the most recent cache of the information that we can get
      */
     private TargetMethodCache targetMethodCache() {
-        if (!isCurrent() && vm().tryLock()) {
+        if (isMethodCacheDirty() && vm().tryLock()) {
             try {
                 final TargetMethod targetMethodCopy = (TargetMethod) deepCopy();
-                targetMethodCache = new TargetMethodCache(targetMethodCopy, vmCodeGenerationCount, teleClassMethodActor);
+                targetMethodCache = new TargetMethodCache(targetMethodCopy, methodCodeVersion, teleClassMethodActor);
             } catch (DataIOError dataIOError) {
                 if (teleClassMethodActor == null) {
                     Trace.line(TRACE_VALUE, "WARNING: failed to update class actor");
@@ -883,26 +888,35 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
     private Class compilationClass = null;
 
     /**
-     * @return whether the current cache is up to date with the state of the {@link TargetMethod}
-     * in the VM.
+     * Marks the cache as dirty, i.e. no longer <em>Current</em>.
      */
-    private boolean isCurrent() {
-        return targetMethodCache.codeStart.isNotZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
+    private void markMethodCacheDirty() {
+        if (!isMethodCacheDirty()) {
+            methodCodeVersion = targetMethodCache.codeVersion + 1;
+        }
     }
 
-    private void setEvicted() {
-        evicted = true;
+    /**
+     * @return whether the current cache is out of date with the state of the {@link TargetMethod}
+     * in the VM.
+     */
+    private boolean isMethodCacheDirty() {
+        return targetMethodCache.codeStart.isZero() || methodCodeVersion > targetMethodCache.codeVersion;
+    }
+
+    private void markCodeEvicted() {
+        assert !isCodeEvicted;
+        isCodeEvicted = true;
         targetMethodCache = new TargetMethodCache(null, -1, null);
     }
 
-    public boolean isEvicted() {
-        return evicted;
+    public boolean isCodeEvicted() {
+        return isCodeEvicted;
     }
 
     /**
      * Determines whether there is machine code in this compilation at a specified memory
-     * location in the VM, always {@code false} if this compilation has been evicted or
-     * relocated elsewhere.
+     * location in the VM, always {@code false} if this compilation has been evicted.
      *
      * @param address an absolute memory location in the VM.
      * @return whether there is machine code at the address
@@ -910,7 +924,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * memory allocated for this compilation.
      */
     public boolean isValidCodeLocation(Address address) throws IllegalArgumentException {
-        if (isEvicted()) {
+        if (isCodeEvicted()) {
             return false;
         }
         if (!contains(address)) {
@@ -942,15 +956,16 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         }
     }
 
-    /** {@inheritDoc}
+    /**
+     * {@inheritDoc}
      * <p>
-     * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached.
-     * This update checks for cases where the code has changed since last seen, i.e. has been patched.
+     * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached. This update
+     * checks for cases where the code has changed since last seen, i.e. has been patched.
      * <p>
-     * If the code has been changed since the last time we saw it, then just make a note that the generation
-     * in the VM is one greater than the one cached; this isn't a true generation counter for the code, since
-     * it only gets updated when (a) it has been noticed to be different than the cache, and (b) there is a
-     * call to get the cache, which triggers a refill of the cache from the VM.
+     * If the code has been changed since the last time we saw it, then just make a note that the version in the VM is
+     * one greater than the one cached; this isn't a true version counter for the code, since it only gets updated when
+     * (a) it has been noticed to be different than the cache, either by patching or relocation, and (b) there is a call
+     * to get the cache, which triggers a refill of the cache from the VM.
      *
      * @see #targetMethod()
      */
@@ -959,7 +974,9 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        if (evicted) {
+        if (isCodeEvicted) {
+            // Once the compilation has been evicted from the code cache it is dead; the cache has been nulled
+            // and no more updates are needed.
             return true;
         }
         // TODO (mlvdv) consider optimizing this to avoid the pointer reads if we know there hasn't been a code eviction
@@ -972,7 +989,8 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             if (codeWipedSentinelAddress.isZero()) {
                 codeWipedSentinelAddress = fields().TargetMethod_WIPED_CODE.readWord(vm()).asAddress();
             }
-            // Read some fields using low level machinery to avoid circularity with Reference creation
+            // Read the three fields that might point into the compilation's code cache allocation, in particular at the
+            // arrays in which compilation data is stored. Use low level machinery to avoid circularity with Reference creation
             if (scalarLiteralArrayOrigin == null || checkForRelocation()) {
                 scalarLiteralArrayOrigin = reference().readWord(fields().TargetMethod_scalarLiterals.fieldActor().offset()).asAddress();
             }
@@ -994,15 +1012,16 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
         // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
         // last check, assuming that the last check wasn't *in* an eviction cycle.
+        // TODO (mlvdv) need to check here if either (a) we are in an eviction cycle, or (b) an eviction cycle has completed since last update.
         if (codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
-            setEvicted();
+            markCodeEvicted();
             return true;
         }
         if (!targetMethodCache.isLoaded()) {
             // Don't update if we've never loaded the code; delay that until actually needed.
             return true;
         }
-        if (!isCurrent()) {
+        if (isMethodCacheDirty()) {
             // If we've already discovered that the loaded copy is not current, don't bother to
             // check again. It won't be reloaded until needed.
             return true;
@@ -1013,10 +1032,8 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) objects().makeTeleObject(byteArrayReference);
             final byte[] codeInVM = (byte[]) teleByteArrayObject.shallowCopy();
             if (!Arrays.equals(codeInVM, targetMethodCache.code)) {
-                // The code in the VM is different than in the cache.
-                // Set the VM generation count to one more than the cached copy.  This
-                // makes the cache not "current", essentially marking it dirty.
-                vmCodeGenerationCount = targetMethodCache.codeGenerationCount + 1;
+                // The code in the VM is different than in the cache; record that it has changed.
+                markMethodCacheDirty();
                 Trace.line(1, tracePrefix() + "TargetMethod patched for " + getRegionName());
             }
         } catch (DataIOError dataIOError) {
@@ -1032,16 +1049,16 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      *
      * @return whether a copy of the {@link TargetMethod} in the VM has been created and cached.
      */
-    public boolean isLoaded() {
+    public boolean isCacheLoaded() {
         return targetMethodCache.isLoaded();
     }
 
     /**
-     * @return count of the generation of the {@link TargetMethod} in the VM, as of the last
-     * check.
+     * @return count of the number of times in the {@link TargetMethod} in the VM as changed, for example by patching or
+     *         relocation, as of the last check.
      */
-    public int vmCodeGenerationCount() {
-        return vmCodeGenerationCount;
+    public int codeVersion() {
+        return methodCodeVersion;
     }
 
     /**
@@ -1055,7 +1072,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
     }
 
     /**
-     * @return a local copy of the {@link TargetMethod} in the VM, the most recent generation.
+     * @return a local copy of the {@link TargetMethod} in the VM, the most recently observed version.
      */
     public TargetMethod targetMethod() {
         return targetMethodCache().targetMethodCopy;
