@@ -27,7 +27,6 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 public final class NullCheckNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
@@ -45,7 +44,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
      * @param expectedNull True when this node checks that the value is null, false when this node checks for non-null
      */
     public NullCheckNode(ValueNode object, boolean expectedNull) {
-        super(StampFactory.forKind(CiKind.Object));
+        super(StampFactory.illegal());
         assert object.kind() == CiKind.Object : object.kind();
         this.object = object;
         this.expectedNull = expectedNull;
@@ -54,18 +53,6 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
     @Override
     public void generate(LIRGeneratorTool gen) {
         // Nothing to do.
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        // null check does not alter the type of the object
-        return object().declaredType();
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        // null check does not alter the type of the object
-        return object().exactType();
     }
 
     @Override
