@@ -89,6 +89,7 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.Util");
+        HostedBootClassLoader.omitClass("sun.nio.fs.UnixNativeDispatcher");
         HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
         // Java 7 only class that indirectly caches references to JarFiles
         HostedBootClassLoader.omitClass(sun.misc.Launcher.class.getName() + "$BootClassPathHolder");
