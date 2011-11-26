@@ -24,7 +24,6 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * Base class of all nodes that are fixed within the control flow graph and have an immediate successor.

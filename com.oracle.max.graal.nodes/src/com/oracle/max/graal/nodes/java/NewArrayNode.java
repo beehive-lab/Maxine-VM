@@ -48,8 +48,8 @@ public abstract class NewArrayNode extends FixedWithNextNode implements EscapeAn
      * Constructs a new NewArrayNode.
      * @param length the node that produces the length for this allocation
      */
-    protected NewArrayNode(ValueNode length) {
-        super(StampFactory.forKind(CiKind.Object));
+    protected NewArrayNode(Stamp stamp, ValueNode length) {
+        super(stamp);
         this.length = length;
     }
 

@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * The {@code IfNode} represents a branch that can go one of two directions depending on the outcome of a

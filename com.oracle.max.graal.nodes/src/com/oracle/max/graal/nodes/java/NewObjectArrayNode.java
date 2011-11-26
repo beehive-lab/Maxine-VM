@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -40,23 +41,13 @@ public final class NewObjectArrayNode extends NewArrayNode implements LIRLowerab
      * @param graph
      */
     public NewObjectArrayNode(RiResolvedType elementClass, ValueNode length) {
-        super(length);
+        super(StampFactory.exactKnownNonNull(elementClass.arrayOf()), length);
         this.elementClass = elementClass;
     }
 
     @Override
     public RiResolvedType elementType() {
         return elementClass;
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        return elementClass.arrayOf();
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return exactType();
     }
 
     @Override

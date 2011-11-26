@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 
 /**
  * The {@code AccessMonitorNode} is the base class of both monitor acquisition and release.
