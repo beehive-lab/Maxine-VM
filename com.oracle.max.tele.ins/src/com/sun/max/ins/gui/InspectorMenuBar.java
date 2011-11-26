@@ -22,18 +22,16 @@
  */
 package com.sun.max.ins.gui;
 
-import java.util.*;
-
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.AbstractView.*;
+import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
  * A menu bar specialized for use in the VM Inspector.
- * <br>
+ * <p>
  * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
  */
 public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
@@ -43,10 +41,8 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     private final Inspection inspection;
     private final String tracePrefix;
 
-    private final List<InspectorMenu> menus = new ArrayList<InspectorMenu>(10);
-
     /**
-     * Creates a new {@JMenuBar}, specialized for use in the VM Inspector.
+     * Creates a new {@link JMenuBar}, specialized for use in the Inspector.
      */
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;
@@ -57,11 +53,11 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     public void add(InspectorMenu inspectorMenu) {
         assert inspectorMenu.getMenuName() != null;
         super.add(inspectorMenu);
-        menus.add(inspectorMenu);
     }
 
     private InspectorMenu findMenu(String name) {
-        for (InspectorMenu inspectorMenu : menus) {
+        for (MenuElement element : getSubElements()) {
+            final InspectorMenu inspectorMenu = (InspectorMenu) element;
             if (inspectorMenu.getMenuName().equals(name)) {
                 return inspectorMenu;
             }
@@ -85,6 +81,10 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         }
         add(menu);
         return menu;
+    }
+
+    public void clearAll() {
+        removeAll();
     }
 
     public final Inspection inspection() {
@@ -119,8 +119,9 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     public void refresh(boolean force) {
-        for (InspectorMenu menu : menus) {
-            menu.refresh(force);
+        for (MenuElement element : getSubElements()) {
+            final InspectorMenu inspectorMenu = (InspectorMenu) element;
+            inspectorMenu.refresh(force);
         }
     }
 
@@ -130,4 +131,5 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     protected String tracePrefix() {
         return tracePrefix;
     }
+
 }

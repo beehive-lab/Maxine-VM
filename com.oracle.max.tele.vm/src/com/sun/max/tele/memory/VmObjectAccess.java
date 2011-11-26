@@ -405,8 +405,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * @param index identifies a specific array element
      * @return address of the array element in VM memory
      */
-    public Address unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
-        return address.minus(origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(0))).dividedBy(kind.width.numberOfBytes);
+    public int unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
+        return address.minus(origin.plus(arrayLayout(kind).getElementOffsetFromOrigin(0))).dividedBy(kind.width.numberOfBytes).toInt();
     }
 
     /**
