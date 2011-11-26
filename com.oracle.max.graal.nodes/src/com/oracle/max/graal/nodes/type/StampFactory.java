@@ -84,6 +84,24 @@ public class StampFactory {
         public String toString() {
             return String.format("%c%s %s %s", kind().typeChar, nonNull ? "!" : "", declaredType == null ? "-" : declaredType.name(), exactType == null ? "-" : exactType.name());
         }
+
+        @Override
+        public boolean alwaysDistinct(Stamp other) {
+            if (other.kind() != kind()) {
+                return true;
+            } else if (kind() != CiKind.Object) {
+                return false;
+            } else if (other.declaredType() == null || declaredType() == null) {
+                // We have no type information for one of the values.
+                return false;
+            } else if (other.nonNull() || nonNull()) {
+                // One of the two values cannot be null.
+                return !other.declaredType().isSubtypeOf(declaredType()) && !declaredType().isSubtypeOf(other.declaredType());
+            } else {
+                // Both values may be null.
+                return false;
+            }
+        }
     }
 
     private static final Stamp[] stampCache = new Stamp[CiKind.values().length];

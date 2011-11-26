@@ -31,4 +31,5 @@ public interface Stamp {
     RiResolvedType declaredType();
     RiResolvedType exactType();
     CiKind kind();
+    boolean alwaysDistinct(Stamp other);
 }

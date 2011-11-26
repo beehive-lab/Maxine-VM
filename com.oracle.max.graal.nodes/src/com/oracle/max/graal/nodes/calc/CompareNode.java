@@ -199,6 +199,12 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
             }
             if (object != null) {
                 return graph().unique(new NullCheckNode(object, condition == Condition.EQ));
+            } else {
+                Stamp xStamp = x.stamp();
+                Stamp yStamp = y.stamp();
+                if (xStamp.alwaysDistinct(yStamp)) {
+                    return ConstantNode.forBoolean(condition == Condition.NE, graph());
+                }
             }
         }
         return this;
