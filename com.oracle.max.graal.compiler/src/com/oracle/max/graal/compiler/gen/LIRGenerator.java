@@ -274,7 +274,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             if (instr instanceof StateSplit) {
                 stateAfter = ((StateSplit) instr).stateAfter();
             }
-            doRoot((ValueNode) instr);
+            if (instr instanceof ValueNode) {
+                doRoot((ValueNode) instr);
+            }
             if (stateAfter != null) {
                 lastState = stateAfter;
                 assert checkStartOperands(instr, lastState);

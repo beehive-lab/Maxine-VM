@@ -24,10 +24,10 @@ package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 public abstract class FloatingNode extends ValueNode implements Node.ValueNumberable {
-    public FloatingNode(CiKind kind) {
-        super(kind);
+    public FloatingNode(Stamp stamp) {
+        super(stamp);
     }
 }

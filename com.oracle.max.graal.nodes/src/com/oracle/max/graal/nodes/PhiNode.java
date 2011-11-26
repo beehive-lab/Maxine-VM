@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -49,15 +50,14 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     private final PhiType type;
 
-    public PhiNode(CiKind kind, MergeNode merge, PhiType type) {
-        super(kind);
-        this.type = type;
-        this.merge = merge;
+    private PhiNode(CiKind kind, PhiType type) {
+        this(kind, null, type);
     }
 
-    private PhiNode(CiKind kind, PhiType type) {
-        super(kind);
+    public PhiNode(CiKind kind, MergeNode merge, PhiType type) {
+        super(StampFactory.forKind(kind));
         this.type = type;
+        this.merge = merge;
     }
 
     public PhiType type() {

@@ -27,6 +27,7 @@ import static com.sun.cri.ci.CiKind.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -80,7 +81,7 @@ public final class ConvertNode extends FloatingNode implements Canonicalizable, 
      * @param graph
      */
     public ConvertNode(Op opcode, ValueNode value) {
-        super(opcode.to.stackKind());
+        super(StampFactory.forKind(opcode.to.stackKind()));
         assert value.kind() == opcode.from : opcode + " : " + value.kind() + " != " + opcode.from;
         this.opcode = opcode;
         this.value = value;

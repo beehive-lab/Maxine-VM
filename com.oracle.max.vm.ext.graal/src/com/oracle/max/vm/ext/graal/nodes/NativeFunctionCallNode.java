@@ -26,6 +26,7 @@ import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -47,7 +48,7 @@ public final class NativeFunctionCallNode extends AbstractCallNode implements LI
     public final RiResolvedMethod nativeMethod;
 
     public NativeFunctionCallNode(ValueNode address, ClassMethodActor nativeMethod) {
-        super(WordUtil.ciKind(nativeMethod.descriptor().resultKind(), true), new ValueNode[0]);
+        super(StampFactory.forKind(WordUtil.ciKind(nativeMethod.descriptor().resultKind(), true)), new ValueNode[0]);
         this.address = address;
         this.nativeMethod = nativeMethod;
     }

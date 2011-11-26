@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -43,8 +44,8 @@ public abstract class FixedWithNextNode extends FixedNode {
 
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
-    public FixedWithNextNode(CiKind kind) {
-        super(kind);
+    public FixedWithNextNode(Stamp stamp) {
+        super(stamp);
     }
 
     public void replaceAndUnlink(Node other) {

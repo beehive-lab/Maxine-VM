@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -34,7 +35,7 @@ public final class ReadRegisterNode extends AbstractStateSplit implements LIRLow
     @Data public final CiRegister register;
 
     public ReadRegisterNode(CiRegister register, CiKind kind) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.register = register;
     }
 

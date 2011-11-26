@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -34,7 +35,7 @@ public final class AnchorNode extends FixedWithNextNode implements LIRLowerable,
     @Input(notDataflow = true) private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
 
     public AnchorNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
     }
 
     public void addGuard(GuardNode x) {

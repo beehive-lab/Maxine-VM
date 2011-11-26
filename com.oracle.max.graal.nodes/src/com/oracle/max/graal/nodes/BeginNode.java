@@ -26,11 +26,12 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 public class BeginNode extends AbstractStateSplit implements LIRLowerable, Canonicalizable {
     public BeginNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
     }
 
     public static BeginNode begin(FixedNode with) {
@@ -71,7 +72,7 @@ public class BeginNode extends AbstractStateSplit implements LIRLowerable, Canon
 
     @Override
     public boolean verify() {
-        assertTrue(predecessor() != null || this == graph().start() || this instanceof MergeNode, "begin nodes must be connected");
+        assertTrue(predecessor() != null || this == ((StructuredGraph) graph()).start() || this instanceof MergeNode, "begin nodes must be connected");
         return super.verify();
     }
 

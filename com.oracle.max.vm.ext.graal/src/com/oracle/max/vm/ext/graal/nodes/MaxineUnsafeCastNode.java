@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -42,7 +43,7 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     }
 
     public MaxineUnsafeCastNode(ValueNode x, RiResolvedType toType) {
-        super(toType.kind(false).stackKind());
+        super(StampFactory.forKind(toType.kind(false).stackKind()));
         this.x = x;
         this.toType = toType;
     }

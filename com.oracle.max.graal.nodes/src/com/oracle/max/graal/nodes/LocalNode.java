@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -47,7 +48,7 @@ public final class LocalNode extends FloatingNode implements Node.IterableNodeTy
     }
 
     public LocalNode(CiKind kind, int index, boolean canBeNull) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.index = index;
         this.canBeNull = canBeNull;
     }

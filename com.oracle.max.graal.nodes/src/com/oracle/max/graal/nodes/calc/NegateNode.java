@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code NegateNode} node negates its operand.
@@ -44,7 +45,7 @@ public final class NegateNode extends FloatingNode implements Canonicalizable, L
      * @param x the instruction producing the value that is input to this instruction
      */
     public NegateNode(ValueNode x) {
-        super(x.kind());
+        super(StampFactory.forKind(x.kind()));
         this.x = x;
     }
 

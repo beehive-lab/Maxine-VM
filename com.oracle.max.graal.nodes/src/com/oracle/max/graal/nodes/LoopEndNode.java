@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 
 public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
@@ -33,7 +33,7 @@ public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIR
     @Data private boolean safePointPolling;
 
     public LoopEndNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.safePointPolling = true;
     }
 

@@ -28,6 +28,7 @@ import java.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -52,7 +53,7 @@ public abstract class AccessFieldNode extends AbstractStateSplit implements Lowe
      * @param graph
      */
     public AccessFieldNode(CiKind kind, ValueNode object, RiResolvedField field) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.object = object;
         this.field = field;
         assert field.holder().isInitialized();

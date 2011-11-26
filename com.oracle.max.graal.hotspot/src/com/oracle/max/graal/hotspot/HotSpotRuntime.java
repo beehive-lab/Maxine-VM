@@ -252,7 +252,7 @@ public class HotSpotRuntime implements GraalRuntime {
             if (field.isVolatile()) {
                 return;
             }
-            StructuredGraph graph = field.graph();
+            Graph graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
             assert field.kind() != CiKind.Illegal;
             ReadNode memoryRead = graph.unique(new ReadNode(field.field().kind(true).stackKind(), field.object(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
@@ -266,7 +266,7 @@ public class HotSpotRuntime implements GraalRuntime {
             if (field.isVolatile()) {
                 return;
             }
-            StructuredGraph graph = field.graph();
+            Graph graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
             WriteNode memoryWrite = graph.add(new WriteNode(field.object(), field.value(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
             memoryWrite.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
@@ -283,7 +283,7 @@ public class HotSpotRuntime implements GraalRuntime {
             field.replaceAndDelete(memoryWrite);
         } else if (n instanceof LoadIndexedNode) {
             LoadIndexedNode loadIndexed = (LoadIndexedNode) n;
-            StructuredGraph graph = loadIndexed.graph();
+            Graph graph = loadIndexed.graph();
             GuardNode boundsCheck = createBoundsCheck(loadIndexed, tool);
 
             CiKind elementKind = loadIndexed.elementKind();
@@ -296,7 +296,7 @@ public class HotSpotRuntime implements GraalRuntime {
             loadIndexed.replaceAndDelete(memoryRead);
         } else if (n instanceof StoreIndexedNode) {
             StoreIndexedNode storeIndexed = (StoreIndexedNode) n;
-            StructuredGraph graph = storeIndexed.graph();
+            Graph graph = storeIndexed.graph();
             AnchorNode anchor = graph.add(new AnchorNode());
             GuardNode boundsCheck = createBoundsCheck(storeIndexed, tool);
 
@@ -343,7 +343,7 @@ public class HotSpotRuntime implements GraalRuntime {
             storeIndexed.safeDelete();
         } else if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
-            StructuredGraph graph = load.graph();
+            Graph graph = load.graph();
             assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
@@ -355,7 +355,7 @@ public class HotSpotRuntime implements GraalRuntime {
             load.replaceAndDelete(memoryRead);
         } else if (n instanceof UnsafeStoreNode) {
             UnsafeStoreNode store = (UnsafeStoreNode) n;
-            StructuredGraph graph = store.graph();
+            Graph graph = store.graph();
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));

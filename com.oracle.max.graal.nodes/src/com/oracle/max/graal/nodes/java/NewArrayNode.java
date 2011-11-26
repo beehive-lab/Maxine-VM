@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -48,7 +49,7 @@ public abstract class NewArrayNode extends FixedWithNextNode implements EscapeAn
      * @param length the node that produces the length for this allocation
      */
     protected NewArrayNode(ValueNode length) {
-        super(CiKind.Object);
+        super(StampFactory.forKind(CiKind.Object));
         this.length = length;
     }
 

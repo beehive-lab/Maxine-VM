@@ -29,6 +29,7 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -50,7 +51,7 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
     public InvokeNode(MethodCallTargetNode callTarget, int bci) {
-        super(callTarget.returnKind().stackKind());
+        super(StampFactory.forKind(callTarget.returnKind().stackKind()));
         assert callTarget != null;
         this.callTarget = callTarget;
         this.bci = bci;

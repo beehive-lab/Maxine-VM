@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -46,7 +47,7 @@ public final class ConstantNode extends BooleanNode implements LIRLowerable {
      * @param value the constant
      */
     private ConstantNode(CiConstant value, RiRuntime runtime) {
-        super(value.kind.stackKind());
+        super(StampFactory.forKind(value.kind.stackKind()));
         this.value = value;
         this.runtime = runtime;
     }

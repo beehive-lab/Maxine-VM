@@ -26,6 +26,7 @@ import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 public final class FixedGuardNode extends FixedWithNextNode implements Canonicalizable, Lowerable, LIRLowerable {
@@ -33,12 +34,12 @@ public final class FixedGuardNode extends FixedWithNextNode implements Canonical
     @Input private final NodeInputList<BooleanNode> conditions;
 
     public FixedGuardNode(BooleanNode condition) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.conditions = new NodeInputList<BooleanNode>(this, new BooleanNode[] {condition});
     }
 
     public FixedGuardNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.conditions = new NodeInputList<BooleanNode>(this);
     }
 

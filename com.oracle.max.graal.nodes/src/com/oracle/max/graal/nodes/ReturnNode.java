@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 public final class ReturnNode extends FixedNode implements LIRLowerable {
@@ -38,7 +39,7 @@ public final class ReturnNode extends FixedNode implements LIRLowerable {
      * @param result the instruction producing the result for this return; {@code null} if this is a void return
      */
     public ReturnNode(ValueNode result) {
-        super(result == null ? CiKind.Void : result.kind());
+        super(StampFactory.forKind(result == null ? CiKind.Void : result.kind()));
         this.result = result;
     }
 
