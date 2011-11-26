@@ -26,7 +26,6 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -54,7 +53,7 @@ public final class NewMultiArrayNode extends FixedWithNextNode implements LIRLow
      * @param riConstantPool the constant pool for resolution
      */
     public NewMultiArrayNode(RiResolvedType type, ValueNode[] dimensions) {
-        super(StampFactory.forKind(CiKind.Object));
+        super(StampFactory.exactKnownNonNull(type));
         this.type = type;
         this.dimensions = new NodeInputList<ValueNode>(this, dimensions);
         assert dimensions.length > 0 && type.isArrayClass();
@@ -67,15 +66,5 @@ public final class NewMultiArrayNode extends FixedWithNextNode implements LIRLow
 
     public RiResolvedType type() {
         return type;
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        return type();
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return exactType();
     }
 }

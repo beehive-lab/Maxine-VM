@@ -104,4 +104,42 @@ public class StampFactory {
             }
         };
     }
+
+    public static Stamp forConstant(CiConstant value, RiRuntime runtime) {
+        if (runtime != null && value.kind == CiKind.Object && !value.isNull()) {
+            return exactKnownNonNull(runtime.getTypeOf(value));
+        } else {
+            return forKind(value.kind.stackKind());
+        }
+    }
+
+    public static Stamp objectNonNull() {
+        return new BasicValueStamp(CiKind.Object) {
+            @Override
+            public boolean canBeNull() {
+                return false;
+            }
+        };
+    }
+
+    public static Stamp declaredKnownNonNull(final RiResolvedType type) {
+        assert type != null;
+        return new BasicValueStamp(CiKind.Object) {
+
+            @Override
+            public RiResolvedType declaredType() {
+                return type;
+            }
+
+            @Override
+            public RiResolvedType exactType() {
+                return type.exactType();
+            }
+
+            @Override
+            public boolean canBeNull() {
+                return false;
+            }
+        };
+    }
 }

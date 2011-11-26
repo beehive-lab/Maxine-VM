@@ -28,7 +28,6 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -43,7 +42,7 @@ public final class NewInstanceNode extends FixedWithNextNode implements EscapeAn
      * @param type the class being allocated
      */
     public NewInstanceNode(RiResolvedType type) {
-        super(StampFactory.forKind(CiKind.Object));
+        super(StampFactory.exactKnownNonNull(type));
         this.instanceClass = type;
     }
 
@@ -52,11 +51,6 @@ public final class NewInstanceNode extends FixedWithNextNode implements EscapeAn
      * @return the instance class allocated
      */
     public RiResolvedType instanceClass() {
-        return instanceClass;
-    }
-
-    @Override
-    public RiResolvedType exactType() {
         return instanceClass;
     }
 

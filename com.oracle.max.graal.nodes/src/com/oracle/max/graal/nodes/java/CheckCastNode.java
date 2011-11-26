@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -45,28 +46,8 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
      * @param object the instruction producing the object
      */
     public CheckCastNode(AnchorNode anchor, ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
-        super(targetClassInstruction, targetClass, object, CiKind.Object);
+        super(targetClassInstruction, targetClass, object, targetClass == null ? StampFactory.objectNonNull() : StampFactory.declaredKnownNonNull(targetClass));
         this.anchor = anchor;
-    }
-
-    /**
-     * Gets the declared type of the result of this instruction.
-     *
-     * @return the declared type of the result
-     */
-    @Override
-    public RiResolvedType declaredType() {
-        return targetClass();
-    }
-
-    /**
-     * Gets the exact type of the result of this instruction.
-     *
-     * @return the exact type of the result
-     */
-    @Override
-    public RiResolvedType exactType() {
-        return targetClass() != null ? targetClass().exactType() : null;
     }
 
     @Override
