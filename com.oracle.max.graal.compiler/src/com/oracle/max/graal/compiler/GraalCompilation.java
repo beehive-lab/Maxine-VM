@@ -218,6 +218,7 @@ public final class GraalCompilation {
             if (GraalOptions.Inline && !plan.isPhaseDisabled(InliningPhase.class)) {
                 new InliningPhase(compiler.target, compiler.runtime, null, assumptions, plan).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
+                new PhiStampPhase().apply(graph);
             }
 
             if (GraalOptions.OptCanonicalizer) {
@@ -242,6 +243,7 @@ public final class GraalCompilation {
 
             if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {
                 new EscapeAnalysisPhase(compiler.target, compiler.runtime, assumptions, plan).apply(graph, context());
+                new PhiStampPhase().apply(graph);
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
