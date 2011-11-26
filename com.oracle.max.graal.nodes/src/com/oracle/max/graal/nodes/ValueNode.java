@@ -37,7 +37,7 @@ public abstract class ValueNode extends Node {
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
-    @Data protected Stamp stamp;
+    @Data private Stamp stamp;
 
     /**
      * Creates a new value with the specified kind.
