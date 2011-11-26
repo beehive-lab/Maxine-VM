@@ -82,7 +82,7 @@ public class StampFactory {
     }
 
     public static Stamp forKind(CiKind kind) {
-        return stampCache[kind.ordinal()];
+        return stampCache[kind.stackKind().ordinal()];
     }
 
     public static Stamp exactNonNull(final RiResolvedType type) {

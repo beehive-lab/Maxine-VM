@@ -31,10 +31,6 @@ public interface Invoke extends StateSplit {
 
     void setNext(FixedNode x);
 
-    void setCanInline(boolean b);
-
-    boolean canInline();
-
     MethodCallTargetNode callTarget();
 
     int bci();
