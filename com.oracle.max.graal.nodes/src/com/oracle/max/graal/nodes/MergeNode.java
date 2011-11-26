@@ -137,7 +137,7 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         return endIndex(end);
     }
 
-    public Node phiPredecessorAt(int index) {
+    public FixedNode phiPredecessorAt(int index) {
         return endAt(index);
     }
 

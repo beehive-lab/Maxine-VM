@@ -185,6 +185,23 @@ public enum CiKind {
         // Checkstyle: resume
     }
 
+    public Class< ? > toUnboxedJavaClass() {
+        // Checkstyle: stop
+        switch(this) {
+            case Void:      return null;
+            case Long:      return java.lang.Long.class;
+            case Int:       return java.lang.Integer.class;
+            case Byte:      return java.lang.Byte.class;
+            case Char:      return java.lang.Character.class;
+            case Double:    return java.lang.Double.class;
+            case Float:     return java.lang.Float.class;
+            case Short:     return java.lang.Short.class;
+            case Boolean:   return java.lang.Boolean.class;
+            default:        return null;
+        }
+        // Checkstyle: resume
+    }
+
     /**
      * Checks whether this value type is void.
      * @return {@code true} if this type is void
