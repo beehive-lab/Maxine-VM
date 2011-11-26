@@ -68,6 +68,16 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         return values;
     }
 
+    public boolean inferStamp() {
+        Stamp newStamp = StampFactory.or(values());
+        if (stamp().equals(newStamp)) {
+            return false;
+        } else {
+            setStamp(newStamp);
+            return true;
+        }
+    }
+
     @Override
     public boolean verify() {
         assertTrue(merge() != null, "missing merge");
