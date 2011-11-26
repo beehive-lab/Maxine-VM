@@ -41,7 +41,7 @@ public final class NewObjectArrayNode extends NewArrayNode implements LIRLowerab
      * @param graph
      */
     public NewObjectArrayNode(RiResolvedType elementClass, ValueNode length) {
-        super(StampFactory.exactKnownNonNull(elementClass.arrayOf()), length);
+        super(StampFactory.exactNonNull(elementClass.arrayOf()), length);
         this.elementClass = elementClass;
     }
 

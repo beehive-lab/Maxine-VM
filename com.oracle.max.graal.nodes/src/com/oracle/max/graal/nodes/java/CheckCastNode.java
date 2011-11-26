@@ -46,7 +46,7 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
      * @param object the instruction producing the object
      */
     public CheckCastNode(AnchorNode anchor, ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
-        super(targetClassInstruction, targetClass, object, targetClass == null ? StampFactory.objectNonNull() : StampFactory.declaredKnownNonNull(targetClass));
+        super(targetClassInstruction, targetClass, object, targetClass == null ? StampFactory.forKind(CiKind.Object) : StampFactory.declared(targetClass));
         this.anchor = anchor;
     }
 

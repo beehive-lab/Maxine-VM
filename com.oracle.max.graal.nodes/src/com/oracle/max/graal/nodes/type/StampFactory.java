@@ -42,7 +42,7 @@ public class StampFactory {
         }
 
         @Override
-        public boolean canBeNull() {
+        public boolean nonNull() {
             return false;
         }
 
@@ -85,7 +85,7 @@ public class StampFactory {
         return stampCache[kind.ordinal()];
     }
 
-    public static Stamp exactKnownNonNull(final RiResolvedType type) {
+    public static Stamp exactNonNull(final RiResolvedType type) {
         return new BasicValueStamp(CiKind.Object) {
 
             @Override
@@ -99,15 +99,15 @@ public class StampFactory {
             }
 
             @Override
-            public boolean canBeNull() {
-                return false;
+            public boolean nonNull() {
+                return true;
             }
         };
     }
 
     public static Stamp forConstant(CiConstant value, RiRuntime runtime) {
         if (runtime != null && value.kind == CiKind.Object && !value.isNull()) {
-            return exactKnownNonNull(runtime.getTypeOf(value));
+            return exactNonNull(runtime.getTypeOf(value));
         } else {
             return forKind(value.kind.stackKind());
         }
@@ -116,13 +116,13 @@ public class StampFactory {
     public static Stamp objectNonNull() {
         return new BasicValueStamp(CiKind.Object) {
             @Override
-            public boolean canBeNull() {
-                return false;
+            public boolean nonNull() {
+                return true;
             }
         };
     }
 
-    public static Stamp declaredKnownNonNull(final RiResolvedType type) {
+    public static Stamp declared(final RiResolvedType type) {
         assert type != null;
         return new BasicValueStamp(CiKind.Object) {
 
@@ -137,8 +137,29 @@ public class StampFactory {
             }
 
             @Override
-            public boolean canBeNull() {
+            public boolean nonNull() {
                 return false;
+            }
+        };
+    }
+
+    public static Stamp declaredNonNull(final RiResolvedType type) {
+        assert type != null;
+        return new BasicValueStamp(CiKind.Object) {
+
+            @Override
+            public RiResolvedType declaredType() {
+                return type;
+            }
+
+            @Override
+            public RiResolvedType exactType() {
+                return type.exactType();
+            }
+
+            @Override
+            public boolean nonNull() {
+                return true;
             }
         };
     }

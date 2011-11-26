@@ -27,7 +27,7 @@ import com.sun.cri.ri.*;
 
 
 public interface Stamp {
-    boolean canBeNull();
+    boolean nonNull();
     RiResolvedType declaredType();
     RiResolvedType exactType();
     CiKind kind();

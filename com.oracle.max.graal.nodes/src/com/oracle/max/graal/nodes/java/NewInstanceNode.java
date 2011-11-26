@@ -42,7 +42,7 @@ public final class NewInstanceNode extends FixedWithNextNode implements EscapeAn
      * @param type the class being allocated
      */
     public NewInstanceNode(RiResolvedType type) {
-        super(StampFactory.exactKnownNonNull(type));
+        super(StampFactory.exactNonNull(type));
         this.instanceClass = type;
     }
 
