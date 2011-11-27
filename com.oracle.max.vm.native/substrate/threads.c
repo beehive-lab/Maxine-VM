@@ -435,6 +435,14 @@ void nativeSetGlobalThreadLock(Mutex mutex) {
     globalThreadLock = mutex;
 }
 
+/**
+ * Declared in Snippets.java.
+ */
+void nativeBlockOnThreadLock() {
+    mutex_enter(globalThreadLock);
+    mutex_exit(globalThreadLock);
+}
+
 /*
  * Create a thread.
  * @C_FUNCTION - called from Java
