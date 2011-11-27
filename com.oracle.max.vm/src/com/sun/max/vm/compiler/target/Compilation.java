@@ -145,7 +145,7 @@ public class Compilation {
     public TargetMethod get() {
         synchronized (classMethodActor) {
             boolean interrupted = false;
-            if (!done) {
+            while (!done) {
                 if (compilingThread == Thread.currentThread()) {
                     throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive");
                 }
@@ -163,6 +163,7 @@ public class Compilation {
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }
+            assert result != null;
             return result;
         }
     }
@@ -238,12 +239,13 @@ public class Compilation {
                         optimized = result;
                     }
                     classMethodActor.compiledState = new Compilations(baseline, optimized);
-                }
-                // compilation finished: this must come after the assignment to classMethodActor.compState
-                done = true;
 
-                // notify any waiters on this compilation
-                classMethodActor.notifyAll();
+                    // compilation finished: this must come after the assignment to classMethodActor.compState
+                    done = true;
+
+                    // notify any waiters on this compilation
+                    classMethodActor.notifyAll();
+                }
             }
 
             COMPILATION.set(parent);
