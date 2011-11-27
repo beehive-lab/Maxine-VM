@@ -199,15 +199,20 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     }
 
     private final String name;
-    private Address base;
-    private int length;
-    private MaxNativeLibrary lib;  // null fior disconnected function (rare)
+    Address base;
+    int length;
+    private TeleNativeLibrary lib;  // null for disconnected function (rare)
     private NativeFunctionMemoryRegion nativeFunctionMemoryRegion;
-    private InstructionMap instructionMap = null;
+    private InstructionMap instructionMap;
     private List<TargetCodeInstruction> instructions;
     private List<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
 
+    private TeleNativeFunction(TeleVM vm, String name, Address base) {
+        super(vm);
+        this.name = name;
+        this.base = base;
+    }
     /**
      * Create a {@link TeleNativeFunction}.
      * @param vm
@@ -216,10 +221,8 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
      * @param lib associated native library.
      * @throws MaxInvalidAddressException
      */
-    public TeleNativeFunction(TeleVM vm, String name, Address offset, MaxNativeLibrary lib)  {
-        super(vm);
-        this.name = name;
-        this.base = offset;
+    public TeleNativeFunction(TeleVM vm, String name, Address offset, TeleNativeLibrary lib) {
+        this(vm, name, offset);
         this.lib = lib;
     }
 
@@ -230,12 +233,11 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
      * @param base
      * @param length
      */
-    public TeleNativeFunction(TeleVM vm, String name, Address base, long length) {
-        super(vm);
-        this.name = name;
-        this.base = base;
+    public TeleNativeFunction(TeleVM vm, String name, Address base, long length) throws MaxInvalidAddressException {
+        this(vm, name, base);
         this.length = (int) length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
+        this.instructionMap = new NativeFunctionInstructionMap();
     }
 
     public void updateAddress() {
@@ -243,9 +245,10 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
         base = base.plus(lib.base());
     }
 
-    public void updateLength(int length) {
+    public void updateLength(int length) throws MaxInvalidAddressException {
         this.length = length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
+        this.instructionMap = new NativeFunctionInstructionMap();
     }
 
     @Override
@@ -300,12 +303,16 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     }
 
     public int compareTo(TeleNativeFunction other) {
-        if (base.lessThan(other.base)) {
-            return -1;
-        } else if (base.greaterThan(other.base)) {
-            return 1;
+        if (lib.sortByName()) {
+            return name.compareToIgnoreCase(other.name);
         } else {
-            return 0;
+            if (base.lessThan(other.base)) {
+                return -1;
+            } else if (base.greaterThan(other.base)) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
     }
     public InstructionMap getInstructionMap() {
@@ -322,7 +329,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     }
 
     public Address getCodeStart() {
-        return nativeFunctionMemoryRegion.start();
+        return base;
     }
 
     public CodeLocation getCodeStartLocation() {

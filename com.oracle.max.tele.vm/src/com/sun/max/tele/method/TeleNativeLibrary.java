@@ -82,6 +82,7 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
     private Address sentinelAddress;
     private TeleNativeFunction[] functions;
     private NativeLibraryMemoryRegion nativeLibraryMemoryRegion;
+    private boolean sortByName;
 
     public static TeleNativeLibrary create(MaxVM vm, OS os, String path) {
         try {
@@ -118,7 +119,7 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         long sentinelOffset = readSymbols(functionList);
         assert sentinelOffset != 0;
 
-        base = sentinelAddress.minus(sentinelOffset);
+        base = base.plus(sentinelAddress.minus(sentinelOffset));
         nativeLibraryMemoryRegion = new NativeLibraryMemoryRegion(vm(), this);
         functions = new TeleNativeFunction[functionList.size()];
         functionList.toArray(functions);
@@ -136,6 +137,13 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         for (int i = 0; i < functions.length; i++) {
             nativeLibraryMemoryRegion.addChild(functions[i]);
         }
+        //ok, now sort by name
+        sortByName = true;
+        Arrays.sort(functions);
+    }
+
+    boolean sortByName() {
+        return sortByName;
     }
 
     @Override
@@ -227,10 +235,12 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
                             if (s64.sectname.equals("__text")) {
                                 String name = slc.getSymbolName(nlist64);
                                 if (!name.equals(IGNORE)) {
+                                    // value is the offset from the start of the __TEXT segment, not the __text section
                                     functionList.add(new TeleNativeFunction(vm(), name, Address.fromLong(nlist64.value), this));
                                     if (sentinelOffset == 0 && sentinel != null && name.equals(sentinel)) {
                                         sentinelOffset = nlist64.value;
                                         // set the base/length from the Section
+                                        // N.B. base is also the offset from the start of the __TEXT segment
                                         base = Address.fromLong(s64.addr);
                                         length = s64.size;
                                     }
@@ -239,6 +249,10 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
                         }
                     }
                 }
+            }
+            // relocate the offsets to be from the start of the __text section
+            for (TeleNativeFunction f : functionList) {
+                f.base = f.base.minus(base);
             }
             return sentinelOffset;
         }
