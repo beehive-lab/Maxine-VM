@@ -49,10 +49,16 @@ public final class BoxNode extends AbstractStateSplit implements Node.IterableNo
         return source;
     }
 
+
+    public CiKind getSourceKind() {
+        return sourceKind;
+    }
+
     public void expand(BoxingMethodPool pool) {
         RiResolvedMethod boxingMethod = pool.getBoxingMethod(sourceKind);
         MethodCallTargetNode callTarget = graph().add(new MethodCallTargetNode(InvokeKind.Static, boxingMethod, new ValueNode[]{source}, boxingMethod.signature().returnType(boxingMethod.holder())));
         InvokeNode invokeNode = graph().add(new InvokeNode(callTarget, bci));
+        invokeNode.setProbability(this.probability());
         invokeNode.setStateAfter(stateAfter());
         this.replaceWithFixedWithNext(invokeNode);
     }

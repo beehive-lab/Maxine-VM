@@ -109,7 +109,8 @@ public class BoxingEliminationPhase extends Phase {
 
     private void tryEliminate(BoxNode boxNode, StructuredGraph graph) {
 
-        System.out.println("try elminate on " + boxNode);
+        virtualizeUsages(boxNode, boxNode.source(), boxNode.exactType());
+
         for (Node n : boxNode.usages()) {
             if (!(n instanceof FrameState) && !(n instanceof VirtualObjectFieldNode)) {
                 // Elimination failed, because boxing object escapes.
@@ -117,9 +118,6 @@ public class BoxingEliminationPhase extends Phase {
             }
         }
 
-        virtualizeUsages(boxNode, boxNode.source(), boxNode.exactType());
-
-        System.out.println("ELIMINATED: " + boxNode);
         FrameState stateAfter = boxNode.stateAfter();
         boxNode.setStateAfter(null);
         stateAfter.safeDelete();
