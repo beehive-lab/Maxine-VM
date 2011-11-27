@@ -34,12 +34,11 @@ import com.sun.max.ins.util.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCodeRoutine.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
+import com.sun.max.vm.actor.member.MethodKey.MethodActorKey;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
@@ -150,10 +149,10 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     private void buildView() {
         int[] bciToMachineCodePositionMap = null;
-        InstructionMap instructionMap = null;
+        MaxMachineCodeInfo machineCodeInfo = null;
         if (compilation != null) {
-            instructionMap = compilation.getInstructionMap();
-            bciToMachineCodePositionMap = instructionMap.bciToMachineCodePositionMap();
+            machineCodeInfo = compilation.getMachineCodeInfo();
+            bciToMachineCodePositionMap = machineCodeInfo.bciToMachineCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT machine code so far
             if (bciToMachineCodePositionMap != null) {
                 haveMachineCodeAddresses = true;
@@ -172,10 +171,10 @@ public abstract class BytecodeViewer extends CodeViewer {
                 final int nextBCI = bytecodeScanner.scanInstruction(methodBytes, bci);
                 final byte[] instructionBytes = Bytes.getSection(methodBytes, bci, nextBCI);
                 if (haveMachineCodeAddresses) {
-                    while (instructionMap.instruction(machineCodeRow).position < bciToMachineCodePositionMap[bci]) {
+                    while (machineCodeInfo.instruction(machineCodeRow).position < bciToMachineCodePositionMap[bci]) {
                         machineCodeRow++;
                     }
-                    machineCodeFirstAddress = instructionMap.instruction(machineCodeRow).address;
+                    machineCodeFirstAddress = machineCodeInfo.instruction(machineCodeRow).address;
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, bci, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), machineCodeRow, machineCodeFirstAddress);
@@ -203,8 +202,8 @@ public abstract class BytecodeViewer extends CodeViewer {
                 return address.lessThan(bytecodeInstructions.get(row + 1).machineCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the machine code
-            final InstructionMap instructionMap = compilation.getInstructionMap();
-            final TargetCodeInstruction lastMachineCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
+            final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+            final TargetCodeInstruction lastMachineCodeInstruction = machineCodeInfo.instruction(machineCodeInfo.length() - 1);
             return address.lessThan(lastMachineCodeInstruction.address.plus(lastMachineCodeInstruction.bytes.length));
         }
         return false;
@@ -220,7 +219,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             Arrays.fill(rowToStackFrame, null);
             for (int row = 0; row < bytecodeInstructions.size(); row++) {
                 for (MaxStackFrame frame : focus().thread().stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
-                    if (rowContainsAddress(row, frame.codeLocation().address())) {
+                    if (frame.codeLocation() != null && rowContainsAddress(row, frame.codeLocation().address())) {
                         rowToStackFrame[row] = frame;
                         break;
                     }
