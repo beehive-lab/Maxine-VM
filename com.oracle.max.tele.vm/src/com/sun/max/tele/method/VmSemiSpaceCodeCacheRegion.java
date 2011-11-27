@@ -220,7 +220,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
             if (teleCompilation.teleTargetMethod() == null) {
                 System.out.println(teleCompilation.toString() + "targetmethod=null");
             }
-            if (teleCompilation.teleTargetMethod().isLoaded()) {
+            if (teleCompilation.teleTargetMethod().isCacheLoaded()) {
                 count++;
             }
         }

@@ -133,12 +133,12 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         return teleTargetMethod;
     }
 
-    public InstructionMap getInstructionMap() {
-        return teleTargetMethod.getInstructionMap();
+    public MaxMachineCodeInfo getMachineCodeInfo() {
+        return teleTargetMethod.getMachineCodeInfo();
     }
 
-    public int vmCodeGeneration() {
-        return teleTargetMethod.vmCodeGenerationCount();
+    public int codeVersion() {
+        return teleTargetMethod.codeVersion();
     }
 
     public Address getCodeStart() {
@@ -166,7 +166,7 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
     }
 
     public boolean isCodeLive() {
-        return !teleTargetMethod.isEvicted();
+        return !teleTargetMethod.isCodeEvicted();
     }
 
     public boolean isBaseline() {

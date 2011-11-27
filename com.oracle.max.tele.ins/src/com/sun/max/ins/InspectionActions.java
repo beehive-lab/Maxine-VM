@@ -42,7 +42,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
 import com.sun.max.tele.object.*;
@@ -2517,15 +2516,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.compilation = compilation;
-            setEnabled(inspection().hasProcess() && compilation.getInstructionMap().labelIndexes().size() > 0);
+            setEnabled(inspection().hasProcess() && compilation.getMachineCodeInfo().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                final InstructionMap instructionMap = compilation.getInstructionMap();
-                for (int index : instructionMap.labelIndexes()) {
-                    vm().breakpointManager().makeBreakpoint(instructionMap.instructionLocation(index));
+                final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                for (int index : machineCodeInfo.labelIndexes()) {
+                    vm().breakpointManager().makeBreakpoint(machineCodeInfo.instructionLocation(index));
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -2551,15 +2550,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         RemoveMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.compilation = compilation;
-            setEnabled(inspection().hasProcess() && compilation.getInstructionMap().labelIndexes().size() > 0);
+            setEnabled(inspection().hasProcess() && compilation.getMachineCodeInfo().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                final InstructionMap instructionMap = compilation.getInstructionMap();
-                for (int index : instructionMap.labelIndexes()) {
-                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(index));
+                final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                for (int index : machineCodeInfo.labelIndexes()) {
+                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(machineCodeInfo.instructionLocation(index));
                     if (breakpoint != null) {
                         breakpoint.remove();
                     }
@@ -3936,12 +3935,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
                 final MaxCompilation compilation = vm().machineCode().findCompilation(maxCodeLocation.address());
                 if (compilation != null) {
-                    final InstructionMap instructionMap = compilation.getInstructionMap();
-                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
-                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
-                        if (instructionMap.isCall(index)) {
+                    final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                    final int instructionIndex = machineCodeInfo.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < machineCodeInfo.length(); index++) {
+                        if (machineCodeInfo.isCall(index)) {
                             try {
-                                vm().runToInstruction(instructionMap.instructionLocation(index), false, false);
+                                vm().runToInstruction(machineCodeInfo.instructionLocation(index), false, false);
                             } catch (Exception exception) {
                                 InspectorError.unexpected("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                             }
@@ -3988,12 +3987,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
                 final MaxCompilation compilation = vm().machineCode().findCompilation(maxCodeLocation.address());
                 if (compilation != null) {
-                    final InstructionMap instructionMap = compilation.getInstructionMap();
-                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
-                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
-                        if (instructionMap.isCall(index)) {
+                    final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                    final int instructionIndex = machineCodeInfo.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < machineCodeInfo.length(); index++) {
+                        if (machineCodeInfo.isCall(index)) {
                             try {
-                                vm().runToInstruction(instructionMap.instructionLocation(index), false, true);
+                                vm().runToInstruction(machineCodeInfo.instructionLocation(index), false, true);
                             } catch (Exception exception) {
                                 InspectorError.unexpected("Run to next call instruction could not be performed.", exception);
                             }
