@@ -23,12 +23,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
-import java.util.*;
 
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
 
 /**
@@ -59,11 +55,11 @@ public interface MaxMachineCodeRoutine<MachineCode_Type extends MaxMachineCodeRo
     CodeLocation getCallEntryLocation();
 
     /**
-     * Gets a map describing various characteristics of the current machine code.
+     * Gets a summary of various characteristics of the current machine code.
      *
      * @return meta-information about the current machine code instructions
      */
-    InstructionMap getInstructionMap();
+    MaxMachineCodeInfo getMachineCodeInfo();
 
     /**
      * Gets the count of the times the code has been observed to have changed in the VM,
@@ -83,97 +79,5 @@ public interface MaxMachineCodeRoutine<MachineCode_Type extends MaxMachineCodeRo
      * Writes a textual disassembly of the machine code instructions.
      */
     void writeSummary(PrintStream printStream);
-
-    public interface InstructionMap {
-
-        /**
-         * @return the number of machine instructions in this map
-         */
-        int length();
-
-        /**
-         * @return the instruction at a specified index in this sequence
-         * of instructions.
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        TargetCodeInstruction instruction(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the index of the instruction whose machine code location includes
-         * a specific memory location, -1 if none.
-         */
-        int findInstructionIndex(Address address);
-
-        /**
-         * @return the location of the instruction at a specified index
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        MachineCodeLocation instructionLocation(int index);
-
-        /**
-         * @return whether the instruction is a safepoint
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isSafepoint(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is a call
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isCall(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is a native call
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isNativeCall(int index) throws IllegalArgumentException;
-
-        /**
-         * @return whether the instruction is at the beginning of a sequence
-         * of instructions known precisely to implement a bytecode
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the debug info corresponding to the machine code instruction at the beginning
-         * of a sequence of machine code instructions that implement a bytecode, if known, else null
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        CiDebugInfo debugInfoAt(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the opcode corresponding to the instruction at the beginning
-         * of a sequence of instructions that implement a bytecode, if known, else -1.
-         * The special value of {@link Integer#MAX_VALUE} is returned to indicate
-         * that the instruction is the first one in the epilogue of the method
-         *
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        int opcode(int index) throws IllegalArgumentException;
-
-        /**
-         * @return if the instruction is a call, the RiMethod denoting the callee; else -1.
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        RiMethod calleeAt(int index) throws IllegalArgumentException;
-
-        /**
-         * Gets the instruction indexes of all labels synthesized by disassembly of this method.
-         *
-         * @return the index of instructions with labels, empty if none.
-         */
-        List<Integer> labelIndexes();
-
-        // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
-        /**
-         * Builds a map from the beginning of byte code instruction to the beginning of the
-         * machine code instructions generated from it.
-         *
-         * @return Map: bci (byte index in bytecode) -> byte positions in machine code, null if information not available
-         */
-        int[] bciToMachineCodePositionMap();
-
-    }
 
 }

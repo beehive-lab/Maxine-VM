@@ -133,8 +133,8 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         return teleTargetMethod;
     }
 
-    public InstructionMap getInstructionMap() {
-        return teleTargetMethod.getInstructionMap();
+    public MaxMachineCodeInfo getMachineCodeInfo() {
+        return teleTargetMethod.getMachineCodeInfo();
     }
 
     public int codeVersion() {

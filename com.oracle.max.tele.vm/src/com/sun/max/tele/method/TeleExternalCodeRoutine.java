@@ -84,9 +84,8 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
     /**
      * Summary information about a sequence of external disassembled machine code instructions about
      * which little is known.
-     *
      */
-    private final class ExternalCodeInstructionMap implements InstructionMap {
+    private final class ExternalMachineCodeInfo implements MaxMachineCodeInfo {
 
         private final List<MachineCodeLocation> machineCodeLocations;
 
@@ -95,7 +94,7 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
          */
         private final List<Integer> labelIndexes;
 
-        ExternalCodeInstructionMap() throws MaxInvalidAddressException {
+        ExternalMachineCodeInfo() throws MaxInvalidAddressException {
             instructions = getInstructions();
             final int length = instructions.size();
             final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
@@ -203,7 +202,7 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
 
     private final ExternalCodeMemoryRegion externalCodeMemoryRegion;
 
-    private InstructionMap instructionMap = null;
+    private MaxMachineCodeInfo machineCodeInfo = null;
 
     private List<TargetCodeInstruction> instructions;
     private List<MachineCodeLocation> instructionLocations;
@@ -224,7 +223,7 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
     public TeleExternalCodeRoutine(TeleVM vm, Address start, long nBytes, String name) throws MaxInvalidAddressException {
         super(vm);
         this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(vm, this, name, start, nBytes);
-        this.instructionMap = new ExternalCodeInstructionMap();
+        this.machineCodeInfo = new ExternalMachineCodeInfo();
     }
 
     private List<TargetCodeInstruction> getInstructions() throws MaxInvalidAddressException {
@@ -268,8 +267,8 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
         return null;
     }
 
-    public InstructionMap getInstructionMap() {
-        return instructionMap;
+    public MaxMachineCodeInfo getMachineCodeInfo() {
+        return machineCodeInfo;
     }
 
     /** {@inheritDoc}
