@@ -37,14 +37,14 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodView extends MethodView<NativeMethodView> {
 
-    private final MaxExternalCodeRoutine externalCode;
+    private final MaxNativeFunction nativeFunction;
     private MachineCodeViewer machineCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxExternalCodeRoutine externalCode) {
+    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxNativeFunction externalCode) {
         super(inspection, container);
-        this.externalCode = externalCode;
+        this.nativeFunction = externalCode;
         shortName = inspection().nameDisplay().shortName(externalCode);
         longName = inspection().nameDisplay().longName(externalCode);
         final InspectorFrame frame = createTabFrame(container);
@@ -68,8 +68,8 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
     }
 
     @Override
-    public MaxExternalCodeRoutine compilation() {
-        return externalCode;
+    public MaxNativeFunction compilation() {
+        return nativeFunction;
     }
 
     @Override
@@ -89,7 +89,7 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
 
     @Override
     public void createViewContent() {
-        machineCodeViewer =  new JTableMachineCodeViewer(inspection(), this, externalCode);
+        machineCodeViewer =  new JTableMachineCodeViewer(inspection(), this, nativeFunction);
         getContentPane().add(machineCodeViewer);
         pack();
     }

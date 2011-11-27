@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.max.tele.method;
 
 import static com.sun.max.platform.Platform.*;
@@ -32,47 +33,43 @@ import com.sun.cri.ri.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
-/**
- * Holds information about a block of code in the process of the VM, about which little is known
- * other than the memory location that is not in any VM-allocated region, and possibly a name
- * assigned during a session.
- * <p>
- * No attempt is made to check for changes to the code during
- * a session, unlike VM target methods.
- */
-public final class TeleExternalCodeRoutine extends AbstractVmHolder implements MaxExternalCodeRoutine {
+
+public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFunction, Comparable<TeleNativeFunction> {
 
     /**
      * Description of a region of external native code discovered in the VM's process.
      * <p>
-     * This region has no parent, as little is known about it.
-     * <p>
      * This region has no children.
      */
-    private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCodeRoutine> {
+    static final class NativeFunctionMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxNativeFunction> {
 
         private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
-        private MaxExternalCodeRoutine owner;
+        private MaxNativeFunction owner;
 
-        private ExternalCodeMemoryRegion(MaxVM vm, MaxExternalCodeRoutine owner, String name, Address start, long nBytes) {
-            super(vm, name, start, nBytes);
+        private NativeFunctionMemoryRegion(MaxVM vm, MaxNativeFunction owner) {
+            super(vm, owner.name(), owner.getCodeStart(), owner.length());
             this.owner = owner;
         }
 
+        @SuppressWarnings("unchecked")
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
-            return null;
+            if (owner.library() == null) {
+                return null;
+            } else {
+                return owner.library().memoryRegion();
+            }
         }
 
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 
-        public MaxExternalCodeRoutine owner() {
+        public MaxNativeFunction owner() {
             return owner;
         }
 
@@ -84,8 +81,9 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
     /**
      * Summary information about a sequence of external disassembled machine code instructions about
      * which little is known.
+     *
      */
-    private final class ExternalMachineCodeInfo implements MaxMachineCodeInfo {
+    private final class NativeFunctionInstructionMap implements InstructionMap {
 
         private final List<MachineCodeLocation> machineCodeLocations;
 
@@ -94,7 +92,7 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
          */
         private final List<Integer> labelIndexes;
 
-        ExternalMachineCodeInfo() throws MaxInvalidAddressException {
+        NativeFunctionInstructionMap() throws MaxInvalidAddressException {
             instructions = getInstructions();
             final int length = instructions.size();
             final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
@@ -200,75 +198,125 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
         }
     }
 
-    private final ExternalCodeMemoryRegion externalCodeMemoryRegion;
-
-    private MaxMachineCodeInfo machineCodeInfo = null;
-
+    private final String name;
+    Address base;
+    int length;
+    private TeleNativeLibrary lib;  // null for disconnected function (rare)
+    private NativeFunctionMemoryRegion nativeFunctionMemoryRegion;
+    private InstructionMap instructionMap;
     private List<TargetCodeInstruction> instructions;
     private List<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
 
-    /**
-     * Creates a representation of a block of native code about which little is known.
-     * <p>
-     * No subsequent checks are made to determine whether the code gets modified.
-     *
-     * @param vm the VM
-     * @param start starting location of code in memory
-     * @param nBytes length in bytes of code in memory
-     * @param name the name to assign to the block of code in the registry
-     * @throws IllegalArgumentException if the range overlaps one already in the registry
-     * @throws MaxInvalidAddressException if unable to read memory.
-     */
-    public TeleExternalCodeRoutine(TeleVM vm, Address start, long nBytes, String name) throws MaxInvalidAddressException {
+    private TeleNativeFunction(TeleVM vm, String name, Address base) {
         super(vm);
-        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(vm, this, name, start, nBytes);
-        this.machineCodeInfo = new ExternalMachineCodeInfo();
+        this.name = name;
+        this.base = base;
+    }
+    /**
+     * Create a {@link TeleNativeFunction}.
+     * @param vm
+     * @param name function name
+     * @param offset initially the offset from the base of the library.
+     * @param lib associated native library.
+     * @throws MaxInvalidAddressException
+     */
+    public TeleNativeFunction(TeleVM vm, String name, Address offset, TeleNativeLibrary lib) {
+        this(vm, name, offset);
+        this.lib = lib;
     }
 
-    private List<TargetCodeInstruction> getInstructions() throws MaxInvalidAddressException {
-        if (instructions == null && vm().tryLock()) {
-            byte[] code = null;
-            final Address codeStart = getCodeStart();
-            try {
-                final long nBytes = externalCodeMemoryRegion.nBytes();
-                assert nBytes < Integer.MAX_VALUE;
-                code = memory().readBytes(codeStart, (int) nBytes);
-            } catch (DataIOError dataIOError) {
-                throw new MaxInvalidAddressException(codeStart, "Can't read data at " + codeStart.to0xHexString());
-            } finally {
-                vm().unlock();
-            }
-            if (code != null) {
-                instructions = TeleDisassembler.decode(platform(), codeStart, code, null);
-            }
-        }
-        return instructions;
+    /**
+     * Create a disconnected native function.
+     * @param vm
+     * @param name
+     * @param base
+     * @param length
+     */
+    public TeleNativeFunction(TeleVM vm, String name, Address base, long length) throws MaxInvalidAddressException {
+        this(vm, name, base);
+        this.length = (int) length;
+        this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
+        this.instructionMap = new NativeFunctionInstructionMap();
     }
 
+    public void updateAddress() {
+        assert lib != null && lib.base().isNotZero();
+        base = base.plus(lib.base());
+    }
+
+    public void updateLength(int length) throws MaxInvalidAddressException {
+        this.length = length;
+        this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
+        this.instructionMap = new NativeFunctionInstructionMap();
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
     public String entityName() {
-        return externalCodeMemoryRegion.regionName();
+        return qualName();
     }
 
+    @Override
     public String entityDescription() {
-        return "A discovered block of native code not managed by the VM";
+        return "Native function " + qualName();
     }
 
-    public MaxEntityMemoryRegion<MaxExternalCodeRoutine> memoryRegion() {
-        return externalCodeMemoryRegion;
+    @Override
+    public MaxEntityMemoryRegion<MaxNativeFunction> memoryRegion() {
+        return nativeFunctionMemoryRegion;
     }
 
+    @Override
     public boolean contains(Address address) {
-        return externalCodeMemoryRegion.contains(address);
+        return nativeFunctionMemoryRegion.contains(address);
     }
 
+    @Override
     public TeleObject representation() {
-        // No distinguished object in VM runtime represents unknown native code.
+        // No distinguished object in VM runtime represents a native function.
         return null;
     }
 
-    public MaxMachineCodeInfo getMachineCodeInfo() {
-        return machineCodeInfo;
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public int length() {
+        return length;
+    }
+
+    @Override
+    public String qualName() {
+        return lib == null ? name : lib.entityName() + "." + name;
+    }
+
+    @Override
+    public MaxNativeLibrary library() {
+        return lib;
+    }
+
+    public int compareTo(TeleNativeFunction other) {
+        if (lib.sortByName()) {
+            return name.compareToIgnoreCase(other.name);
+        } else {
+            if (base.lessThan(other.base)) {
+                return -1;
+            } else if (base.greaterThan(other.base)) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+    public InstructionMap getInstructionMap() {
+        return instructionMap;
     }
 
     /** {@inheritDoc}
@@ -276,12 +324,12 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
      * We don't bother to check if native code has changed once we have read and disassembled it.
      */
     @Override
-    public int codeVersion() {
+    public int vmCodeGeneration() {
         return 0;
     }
 
     public Address getCodeStart() {
-        return externalCodeMemoryRegion.start();
+        return base;
     }
 
     public CodeLocation getCodeStartLocation() {
@@ -300,4 +348,26 @@ public final class TeleExternalCodeRoutine extends AbstractVmHolder implements M
         printStream.println("External native code: " + entityName());
         printStream.println(" ***UNIMPLEMENTED*** for external native methods");
     }
+
+    private List<TargetCodeInstruction> getInstructions() throws MaxInvalidAddressException {
+        if (instructions == null && vm().tryLock()) {
+            byte[] code = null;
+            final Address codeStart = getCodeStart();
+            try {
+                final long nBytes = nativeFunctionMemoryRegion.nBytes();
+                assert nBytes < Integer.MAX_VALUE;
+                code = memory().readBytes(codeStart, (int) nBytes);
+            } catch (DataIOError dataIOError) {
+                throw new MaxInvalidAddressException(codeStart, "Can't read data at " + codeStart.to0xHexString());
+            } finally {
+                vm().unlock();
+            }
+            if (code != null) {
+                instructions = TeleDisassembler.decode(platform(), codeStart, code, null);
+            }
+        }
+        return instructions;
+    }
+
+
 }
