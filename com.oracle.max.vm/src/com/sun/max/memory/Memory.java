@@ -164,7 +164,7 @@ public final class Memory {
     @NO_SAFEPOINT_POLLS("speed")
     public static void copyBytes(Pointer fromPointer, Pointer toPointer, Size numberOfBytes) {
         Offset i = Offset.zero();
-        Size wordBounds = numberOfBytes.and(Word.size() - 1);
+        Size wordBounds = numberOfBytes.alignDown(Word.size());
         while (i.lessThan(wordBounds.asOffset())) {
             toPointer.writeWord(i, fromPointer.readWord(i));
             i = i.plus(Word.size());
@@ -173,6 +173,7 @@ public final class Memory {
             toPointer.writeByte(i, fromPointer.readByte(i));
             i = i.plus(1);
         }
+        assert i.equals(numberOfBytes);
     }
 
     @NO_SAFEPOINT_POLLS("speed")
