@@ -83,7 +83,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
      * which little is known.
      *
      */
-    private final class NativeFunctionInstructionMap implements InstructionMap {
+    private final class NativeFunctionMachineCodeInfo implements MaxMachineCodeInfo {
 
         private final List<MachineCodeLocation> machineCodeLocations;
 
@@ -92,7 +92,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
          */
         private final List<Integer> labelIndexes;
 
-        NativeFunctionInstructionMap() throws MaxInvalidAddressException {
+        NativeFunctionMachineCodeInfo() throws MaxInvalidAddressException {
             instructions = getInstructions();
             final int length = instructions.size();
             final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
@@ -203,7 +203,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     int length;
     private TeleNativeLibrary lib;  // null for disconnected function (rare)
     private NativeFunctionMemoryRegion nativeFunctionMemoryRegion;
-    private InstructionMap instructionMap;
+    private MaxMachineCodeInfo machineCodeInfo;
     private List<TargetCodeInstruction> instructions;
     private List<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
@@ -237,7 +237,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
         this(vm, name, base);
         this.length = (int) length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
-        this.instructionMap = new NativeFunctionInstructionMap();
+        this.machineCodeInfo = new NativeFunctionMachineCodeInfo();
     }
 
     public void updateAddress() {
@@ -248,7 +248,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     public void updateLength(int length) throws MaxInvalidAddressException {
         this.length = length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
-        this.instructionMap = new NativeFunctionInstructionMap();
+        this.machineCodeInfo = new NativeFunctionMachineCodeInfo();
     }
 
     @Override
@@ -315,8 +315,8 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             }
         }
     }
-    public InstructionMap getInstructionMap() {
-        return instructionMap;
+    public MaxMachineCodeInfo getMachineCodeInfo() {
+        return machineCodeInfo;
     }
 
     /** {@inheritDoc}
@@ -324,7 +324,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
      * We don't bother to check if native code has changed once we have read and disassembled it.
      */
     @Override
-    public int vmCodeGeneration() {
+    public int codeVersion() {
         return 0;
     }
 
