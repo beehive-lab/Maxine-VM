@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.member;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -99,13 +100,20 @@ public class NativeFunction {
      *
      * @throws UnsatisfiedLinkError if the native function cannot be found
      */
+    @INLINE
     public Address link() throws UnsatisfiedLinkError {
         if (address.isZero()) {
-            address = DynamicLinker.lookup(classMethodActor, makeSymbol()).asAddress();
-            if (!MaxineVM.isPrimordialOrPristine()) {
-                if (NativeInterfaces.verbose()) {
-                    Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
-                }
+            return link0();
+        }
+        return address;
+    }
+
+    @NEVER_INLINE
+    public Address link0() throws UnsatisfiedLinkError {
+        address = DynamicLinker.lookup(classMethodActor, makeSymbol()).asAddress();
+        if (!MaxineVM.isPrimordialOrPristine()) {
+            if (NativeInterfaces.verbose()) {
+                Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
             }
         }
         return address;
