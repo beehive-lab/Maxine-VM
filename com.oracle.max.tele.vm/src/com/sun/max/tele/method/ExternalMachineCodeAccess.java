@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -72,7 +73,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
      * <li>The number of registered regions is small, so linear lookup suffices</li>
      * <ul>
      */
-    private final List<TeleExternalCodeRoutine> externalCodeRegions = new ArrayList<TeleExternalCodeRoutine>();
+    private final List<MaxMemoryRegion> externalMemoryRegions = new ArrayList<MaxMemoryRegion>();
 
     private final RemoteCodePointerManager codePointerManager;
 
@@ -95,17 +96,33 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     }
 
     public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            MaxNativeLibrary[] libs = TeleNativeLibraries.getLibs(vm());
+            for (MaxNativeLibrary lib : libs) {
+                if (lib.functions() != null) {
+                    registerLibrary(lib);
+                }
+            }
+            lastUpdateEpoch = epoch;
+        }
+    }
+
+    private void registerLibrary(MaxNativeLibrary nativeLibrary) {
+        MaxEntityMemoryRegion nativeLibraryMemoryRegion = nativeLibrary.memoryRegion();
+        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
+            if (maxMemoryRegion == nativeLibraryMemoryRegion) {
+                // already seen
+                return;
+            }
+        }
+        externalMemoryRegions.add(nativeLibraryMemoryRegion);
     }
 
     public List<MaxMemoryRegion> memoryAllocations() {
-        // TODO Return descriptions of each memory region known to be occupied by a dll.
-        // We haven't been reporting the singly-registered regions of external code in the list of "allocations".
-        // Presumably in the new arrangement, some (many? all?) such external code will be known to be sub-regions
-        // of some dll.
-        return null;
+        return externalMemoryRegions;
     }
 
-    TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+    MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         if (codeStart == null || codeStart.isZero()) {
             throw new MaxInvalidAddressException(codeStart, "Null or zero address");
         }
@@ -115,18 +132,13 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
                 throw new IllegalArgumentException("proposed external code region overlaps VM region: " + vmAllocation.regionName());
             }
         }
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (newCodeRegion.overlaps(registeredCode.memoryRegion())) {
-                throw new IllegalArgumentException("proposed external code region overlaps one already registered");
-            }
-        }
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
-            final TeleExternalCodeRoutine teleExternalCode = new TeleExternalCodeRoutine(vm(), codeStart, nBytes, name);
-            externalCodeRegions.add(teleExternalCode);
-            return teleExternalCode;
+            final TeleNativeFunction teleNativeFunction = new TeleNativeFunction(vm(), name, codeStart, nBytes);
+            externalMemoryRegions.add(teleNativeFunction.memoryRegion());
+            return teleNativeFunction;
         } finally {
             vm().unlock();
         }
@@ -137,10 +149,20 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         return codePointerManager;
     }
 
-    MaxExternalCodeRoutine findExternalCode(Address address) {
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            if (registeredCode.memoryRegion().contains(address)) {
-                return registeredCode;
+    @SuppressWarnings("unchecked")
+    MaxNativeFunction findExternalCode(Address address) {
+        //look in registered native libraries
+        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
+            MaxEntityMemoryRegion maxEntityMemoryRegion = (MaxEntityMemoryRegion) maxMemoryRegion;
+            if (maxMemoryRegion.contains(address)) {
+                for (int i = 0; i <= maxEntityMemoryRegion.children().size(); i++) {
+                    @SuppressWarnings("unchecked")
+                    MaxEntityMemoryRegion<MaxNativeFunction> functionMemoryRegion = (MaxEntityMemoryRegion<MaxNativeFunction>) maxEntityMemoryRegion.children().get(i);
+                    if (functionMemoryRegion.contains(address)) {
+                        return functionMemoryRegion.owner();
+                    }
+                }
+                return ((MaxEntityMemoryRegion<MaxNativeFunction>) maxMemoryRegion).owner();
             }
         }
         return null;
@@ -149,19 +171,18 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "External machine code regions registered: " + formatter.format(externalCodeRegions.size()) + "\n");
+        printStream.print(indentation + "External machine code regions registered: " + formatter.format(externalMemoryRegions.size()) + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (TeleExternalCodeRoutine registeredCode : externalCodeRegions) {
-            final String name = registeredCode.entityDescription();
-            final MaxEntityMemoryRegion<MaxExternalCodeRoutine> externalCodeMemoryRegion = registeredCode.memoryRegion();
-            if (lastEndAddress != null && !lastEndAddress.equals(externalCodeMemoryRegion.start())) {
-                printStream.println(lastEndAddress.toHexString() + "--" + externalCodeMemoryRegion.start().minus(1).toHexString() + ": ");
+        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
+            final String name = maxMemoryRegion.regionName();
+            if (lastEndAddress != null && !lastEndAddress.equals(maxMemoryRegion.start())) {
+                printStream.println(lastEndAddress.toHexString() + "--" + maxMemoryRegion.start().minus(1).toHexString() + ": ");
             }
-            lastEndAddress = externalCodeMemoryRegion.end();
-            printStream.println(externalCodeMemoryRegion.start().toHexString() + "--" + externalCodeMemoryRegion.end().minus(1).toHexString() + ":  " + name);
+            lastEndAddress = maxMemoryRegion.end();
+            printStream.println(maxMemoryRegion.start().toHexString() + "--" + maxMemoryRegion.end().minus(1).toHexString() + ":  " + name);
         }
     }
 

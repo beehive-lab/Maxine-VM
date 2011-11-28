@@ -291,7 +291,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         ldc(nf);
         invokevirtual(link, 1, 1);
 
-        if (classMethodActor != JVMTIFunctions.currentJniEnv) {
+        if (needsPrologueAndEpilogue()) {
             ldc(nf);
             invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
         }
@@ -299,7 +299,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         // Invoke the native function
         callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
 
-        if (classMethodActor != JVMTIFunctions.currentJniEnv) {
+        if (needsPrologueAndEpilogue()) {
             invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
         }
 
@@ -333,6 +333,13 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
 
         return_(resultKind);
+    }
+
+    /**
+     * A few native functions must not have any prologue and epilogue.  We hand-list them here.
+     */
+    private boolean needsPrologueAndEpilogue() {
+        return classMethodActor != JVMTIFunctions.currentJniEnv && classMethodActor != Snippets.blockOnThreadLockMethod();
     }
 
     /**

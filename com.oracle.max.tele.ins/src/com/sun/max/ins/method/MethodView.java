@@ -98,55 +98,43 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             // Java method
             methodView = make(inspection, compilation, MethodCodeKind.MACHINE_CODE);
         } else {
-            final MaxExternalCodeRoutine externalCode = inspection.vm().machineCode().findExternalCode(address);
+            final MaxNativeFunction externalCode = inspection.vm().machineCode().findExternalCode(address);
             if (externalCode != null) {
                 // Some other kind of known external machine code
                 methodView = make(inspection, externalCode);
             } else if (interactive) {
-                // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
-                // Check any loaded native code maps and in the last resort
-                // give the user a chance to guess at its length so we can register and view it
-                NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
-                if (nativeCodeInfo != null) {
-                    try {
-                        final MaxExternalCodeRoutine nativeCode = inspection.vm().machineCode().registerExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
-                        methodView = MethodView.make(inspection, nativeCode);
-                    } catch (MaxInvalidAddressException e) {
-                        inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
-                        e.printStackTrace();
-                    }
-                } else {
-                    final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
-                    final String defaultDescription = "Native code @0x" + address.toHexString();
-                    new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCodeRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                // Code location is not in a Java method or runtime stub or native library.
+                // Give the user a chance to guess at its length so we can register and view it
+                final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
+                final String defaultDescription = "Native code @0x" + address.toHexString();
+                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxNativeFunction.DEFAULT_DISCONNECTED_CODE_LENGTH, defaultDescription) {
 
-                        @Override
-                        public void entered(Address nativeAddress, long nBytes, String enteredName) {
-                            try {
-                                String name = enteredName;
-                                if (name == null || name.equals("")) {
-                                    name = defaultDescription;
-                                }
-                                final MaxExternalCodeRoutine externalCode = vm().machineCode().registerExternalCode(nativeAddress, nBytes, name);
-                                result.setValue(MethodView.make(inspection, externalCode));
-                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
-                            } catch (IllegalArgumentException illegalArgumentException) {
-                                inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
-                            } catch (MaxVMBusyException maxVMBusyException) {
-                                inspection.announceVMBusyFailure("View native code");
-                            } catch (MaxInvalidAddressException e) {
-                                inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
-                                e.printStackTrace();
+                    @Override
+                    public void entered(Address nativeAddress, long nBytes, String enteredName) {
+                        try {
+                            String name = enteredName;
+                            if (name == null || name.equals("")) {
+                                name = defaultDescription;
                             }
+                            final MaxNativeFunction externalCode = vm().machineCode().registerExternalCode(nativeAddress, nBytes, name);
+                            result.setValue(MethodView.make(inspection, externalCode));
+                            // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection.announceVMBusyFailure("View native code");
+                        } catch (MaxInvalidAddressException e) {
+                            inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
+                            e.printStackTrace();
                         }
+                    }
 
-                        @Override
-                        public boolean isValidSize(long nBytes) {
-                            return nBytes > 0;
-                        }
-                    };
-                    methodView = result.value();
-                }
+                    @Override
+                    public boolean isValidSize(long nBytes) {
+                        return nBytes > 0;
+                    }
+                };
+                methodView = result.value();
             }
         }
         return methodView;
@@ -262,7 +250,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return A possibly new view for a block of native code in the VM already known to the Inspector.
      * @throws MaxVMBusyException if a new view cannot be created because the VM is unavailable
      */
-    private static NativeMethodView make(Inspection inspection, MaxExternalCodeRoutine maxExternalCode) throws MaxVMBusyException {
+    private static NativeMethodView make(Inspection inspection, MaxNativeFunction maxExternalCode) throws MaxVMBusyException {
         NativeMethodView nativeMethodView = null;
         MethodView methodView = machineCodeToMethodView.get(maxExternalCode);
         if (methodView == null) {
