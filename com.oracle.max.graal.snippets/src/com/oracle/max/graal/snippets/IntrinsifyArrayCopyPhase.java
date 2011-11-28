@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.snippets;
 
+import java.lang.reflect.*;
+
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -41,15 +43,20 @@ public class IntrinsifyArrayCopyPhase extends Phase {
     public IntrinsifyArrayCopyPhase(RiRuntime runtime) {
         this.runtime = runtime;
         try {
-            intArrayCopy = runtime.getRiMethod(ArrayCopySnippets.class.getDeclaredMethod("arraycopy", int[].class, int.class, int[].class, int.class, int.class));
-            charArrayCopy = runtime.getRiMethod(ArrayCopySnippets.class.getDeclaredMethod("arraycopy", char[].class, int.class, char[].class, int.class, int.class));
-            longArrayCopy = runtime.getRiMethod(ArrayCopySnippets.class.getDeclaredMethod("arraycopy", long[].class, int.class, long[].class, int.class, int.class));
+            intArrayCopy = getArrayCopySnippet(runtime, int.class);
+            charArrayCopy = getArrayCopySnippet(runtime, char.class);
+            longArrayCopy = getArrayCopySnippet(runtime, long.class);
             arrayCopy = runtime.getRiMethod(System.class.getDeclaredMethod("arraycopy", Object.class, int.class, Object.class, int.class, int.class));
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
+    }
+
+    private static RiResolvedMethod getArrayCopySnippet(RiRuntime runtime, Class<?> componentClass) throws NoSuchMethodException {
+        Class<?> arrayClass = Array.newInstance(componentClass, 0).getClass();
+        return runtime.getRiMethod(ArrayCopySnippets.class.getDeclaredMethod("arraycopy", arrayClass, int.class, arrayClass, int.class, int.class));
     }
 
     @Override
@@ -62,25 +69,17 @@ public class IntrinsifyArrayCopyPhase extends Phase {
                 RiResolvedType destDeclaredType = methodCallTarget.arguments().get(2).declaredType();
                 if (srcDeclaredType != null
                                 && srcDeclaredType.isArrayClass()
-                                && srcDeclaredType.componentType().toJava().equals(int.class)
                                 && destDeclaredType != null
                                 && destDeclaredType.isArrayClass()
-                                && destDeclaredType.componentType().toJava().equals(int.class)) {
-                    snippetMethod = intArrayCopy;
-                } else if (srcDeclaredType != null
-                                && srcDeclaredType.isArrayClass()
-                                && srcDeclaredType.componentType().toJava().equals(char.class)
-                                && destDeclaredType != null
-                                && destDeclaredType.isArrayClass()
-                                && destDeclaredType.componentType().toJava().equals(char.class)) {
-                    snippetMethod = charArrayCopy;
-                } else if (srcDeclaredType != null
-                                && srcDeclaredType.isArrayClass()
-                                && srcDeclaredType.componentType().toJava().equals(long.class)
-                                && destDeclaredType != null
-                                && destDeclaredType.isArrayClass()
-                                && destDeclaredType.componentType().toJava().equals(long.class)) {
-                    snippetMethod = longArrayCopy;
+                                && srcDeclaredType.componentType() == destDeclaredType.componentType()) {
+                    Class<?> componentType = srcDeclaredType.componentType().toJava();
+                    if (componentType.equals(int.class)) {
+                        snippetMethod = intArrayCopy;
+                    } else if (componentType.equals(char.class)) {
+                        snippetMethod = charArrayCopy;
+                    } else if (componentType.equals(long.class)) {
+                        snippetMethod = longArrayCopy;
+                    }
                 }
             }
 
