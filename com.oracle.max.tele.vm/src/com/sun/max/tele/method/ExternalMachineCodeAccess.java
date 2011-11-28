@@ -34,11 +34,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
-// Notes:  this class isolates the old system for dealing with external/native code. They simply
-// get registered as discovered, checked to determine that the new region does not overlap any
-// other known region, and then kept in a list.
-//
-// It now includes a manager for creating code pointers, which in this case are treated as constant.
 
 /**
  * The singleton manager for managing information about machine code external to the VM.
@@ -86,7 +81,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         }
     };
 
-    ExternalMachineCodeAccess(TeleVM vm) {
+    public ExternalMachineCodeAccess(TeleVM vm) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
