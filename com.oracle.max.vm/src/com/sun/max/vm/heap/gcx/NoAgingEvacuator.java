@@ -128,18 +128,32 @@ public final class NoAgingEvacuator extends Evacuator  {
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
         fromSpace.doBeforeGC();
-        Address chunk = toSpace.allocateTLAB(labSize);
-        nextLABChunk = HeapFreeChunk.getFreeChunkNext(chunk);
-        top = chunk.asPointer();
-        end = chunk.plus(HeapFreeChunk.getFreeChunkNext(chunk)).minus(LAB_HEADROOM).asPointer();
+        if (top.isZero()) {
+            Address chunk = toSpace.allocateTLAB(labSize);
+            nextLABChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+            top = chunk.asPointer();
+            end = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
+        }
     }
 
     @Override
     protected void doAfterEvacuation() {
-        // Give back LAB allocator ?
         survivorRanges.clear();
         fromSpace.doAfterGC();
-
+        Pointer limit = end.plus(LAB_HEADROOM);
+        Size spaceLeft = limit.minus(top).asSize();
+        if (spaceLeft.lessThan(minRefillThreshold)) {
+            // Will trigger refill in doBeforeEvacution on next GC
+            top = Pointer.zero();
+            end = Pointer.zero();
+            if (spaceLeft.isZero()) {
+                fillWithDeadObject(top, limit);
+            }
+        } else {
+            // Leave remaining space in an iterable format.
+            // Next evacuation will start from top again.
+            HeapFreeChunk.format(top, spaceLeft);
+        }
     }
 
     private void recordRange(Address start, Address end) {
@@ -183,7 +197,7 @@ public final class NoAgingEvacuator extends Evacuator  {
                 allocatedRangeStart = chunk;
             }
             top = chunk.asPointer();
-            end = chunk.plus(HeapFreeChunk.getFreeChunkNext(chunk)).minus(LAB_HEADROOM).asPointer();
+            end = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
             return Pointer.zero();
         }
         // Overflow allocate
@@ -214,7 +228,7 @@ public final class NoAgingEvacuator extends Evacuator  {
             cell = top;
             newTop = top.plus(size);
         }
-
+        top = newTop;
         if (CardFirstObjectTable.needsUpdate(cell, top)) {
             cfoTable.set(cell, top);
         }
