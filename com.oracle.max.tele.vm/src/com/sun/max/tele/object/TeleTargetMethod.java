@@ -138,6 +138,24 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
     }
 
     /**
+     * A specialized message generator for tracing that incurs no runtime cost unless the trace is actually printed.
+     */
+    private final class EventTracer {
+        private final String event;
+
+        public EventTracer(String event) {
+            this.event = event;
+        }
+
+        @Override
+        public String toString() {
+            final String  name = teleClassMethodActor == null ? "<?>" : teleClassMethodActor.classMethodActor().format("%H.%n(%p)");
+            final String regionName = codeCacheRegion == null ? "<?>" : codeCacheRegion.entityName();
+            return tracePrefix() + event + ":  " + name + " in " + regionName;
+        }
+    }
+
+    /**
      * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
      * as a result of inlining.
      *
@@ -255,18 +273,24 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      */
     private final MachineCodeInfoCache machineCodeInfoCache;
 
-    // TODO (mlvdv) not used yet
-    /**
-     * Counter for the number of completed code evictions that have been seen in this method's code cache region.
-     */
-    private long evictionCount = 0;
-
     /**
      * A flag that permanently becomes {@code true} when an update detects that the code for this compilation has not
      * survived an eviction cycle. The actual test depends in the management being used for the code cache region
      * managing this compilation.
      */
     private boolean isCodeEvicted = false;
+
+    /**
+     * Starting location of the compilation's allocation in the code cache, the last time we checked.  Used to
+     * detect when the code cache allocation has been relocated, but only used when allocated in a managed code cache region.
+     */
+    private Address previousAllocationStart = Address.zero();
+
+    private final Object patchedTracer = new EventTracer("PATCHED");
+
+    private final Object relocatedTracer = new EventTracer("RELOCATED");
+
+    private final Object evictedTracer = new EventTracer("EVICTED");
 
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
@@ -279,6 +303,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         // Note that this depends on the basic location information already being read by
         // superclass constructors.
         vm.machineCode().registerCompilation(this);
+        previousAllocationStart = getRegionStart();
     }
 
     /**
@@ -298,27 +323,39 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             // and no more updates are needed.
             return true;
         }
-        // TODO (mlvdv) consider optimizing this to avoid the pointer reads if we know there hasn't been a code eviction
         try {
+            // Start with some basic attributes we need to capture.
             if (teleClassMethodActor == null) {
                 // Assumed not to change, once set.
                 final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
                 teleClassMethodActor = (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
             }
             if (codeWipedSentinelAddress.isZero()) {
-                // Assumed not to change, once set
+                // Static, assumed not to change, once set
                 codeWipedSentinelAddress = fields().TargetMethod_WIPED_CODE.readWord(vm()).asAddress();
             }
-            // Read the three fields that might point into the compilation's code cache allocation, in particular at the
-            // arrays in which compilation data is stored. Use low level machinery to avoid circularity with Reference
-            // creation
-            if (scalarLiteralArrayOrigin == null || checkForRelocation()) {
+
+            // See if the code cache allocation has been relocated
+            boolean isRelocated = false;
+            if (isRelocatable()) {
+                final Address newAllocationStart = getRegionStart();
+                if (previousAllocationStart.isNotZero() && !previousAllocationStart.equals(newAllocationStart)) {
+                    machineCodeInfoCache.markDirty();
+                    isRelocated = true;
+                    previousAllocationStart = newAllocationStart;
+                    Trace.line(TRACE_VALUE, relocatedTracer);
+                }
+            }
+            // Read (or re-read if needed) the three fields that might point into the compilation's code cache allocation, in particular at the
+            // arrays in which compilation data is stored. Use low level machinery to avoid circularity with Reference creation.
+            if (scalarLiteralArrayOrigin == null || isRelocated) {
                 scalarLiteralArrayOrigin = reference().readWord(fields().TargetMethod_scalarLiterals.fieldActor().offset()).asAddress();
             }
-            if (referenceLiteralArrayOrigin == null || checkForRelocation()) {
+            if (referenceLiteralArrayOrigin == null || isRelocated) {
                 referenceLiteralArrayOrigin = reference().readWord(fields().TargetMethod_referenceLiterals.fieldActor().offset()).asAddress();
             }
-            if (codeByteArrayOrigin == null || checkForRelocation()) {
+            if (codeByteArrayOrigin == null || isRelocatable()) {
+                // We have to check this one even if not relocated, since we test it to see if the method has been evicted.
                 codeByteArrayOrigin = reference().readWord(fields().TargetMethod_code.fieldActor().offset()).asAddress();
                 // Get the absolute location of all target code bytes.
                 // Use low level machinery; we don't want to create a {@link TeleObject} for every one of them.
@@ -331,12 +368,9 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             // If something goes wrong, delay the cache update until next time.
         }
         // See if we have been evicted since last cycle by checking if the code pointer has been "wiped".
-        // TODO (mlvdv) optimize by only checking if there has indeed been an eviction cycle completed since the
-        // last check, assuming that the last check wasn't *in* an eviction cycle.
-        // TODO (mlvdv) need to check here if either (a) we are in an eviction cycle, or (b) an eviction cycle has
-        // completed since last update.
-        if (codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
+        if (isRelocatable() && codeWipedSentinelAddress.isNotZero() && codeByteArrayOrigin != null && codeByteArrayOrigin.equals(codeWipedSentinelAddress)) {
             markCodeEvicted();
+            Trace.line(TRACE_VALUE, evictedTracer);
             return true;
         }
         if (!machineCodeInfoCache.isLoaded()) {
@@ -356,7 +390,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             if (!Arrays.equals(codeInVM, machineCodeInfoCache.machineCodeInfo().code())) {
                 // The code in the VM is different than in the cache; record that it has changed.
                 machineCodeInfoCache.markDirty();
-                Trace.line(1, tracePrefix() + "TargetMethod patched for " + getRegionName());
+                Trace.line(TRACE_VALUE, patchedTracer);
             }
         } catch (DataIOError dataIOError) {
             // If something goes wrong, delay the cache update until next time.
@@ -569,26 +603,15 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * code cache region; we might not know, however, until we have been told the region in which the code is allocated.
      */
     @Override
-    public boolean checkForRelocation() {
-
-        if (codeCacheRegion == null) {
-            // For some reason we don't yet have information about the code cache
-            // region in which this target method is allocated. Be conservative.
-            return true;
-        }
-        if (!codeCacheRegion.isManaged()) {
+    public boolean isRelocatable() {
+        // This test could in principle be refined so that a relocation check is only needed when the cache region is in an eviction cycle
+        // or an eviction cycle has completed since the last update.  But care is needed.  This predicate is called by the
+        // superclass to decide whether to update the start and size of the region, and that call happens before this class
+        // has the opportunity to check the status of evictions.
+        if (codeCacheRegion != null && !codeCacheRegion.isManaged()) {
             // In an unmanaged code region, code is assumed to never move.
             return false;
         }
-// if (codeCacheRegion.isInEviction()) {
-// // If we are in the middle of an eviction, always check.
-// return true;
-// }
-// if (codeCacheRegion.evictionCount() > evictionCount) {
-// // A new code eviction has completed
-// evictionCount = codeCacheRegion.evictionCount();
-// return true;
-// }
         return true;
     }
 
