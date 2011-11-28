@@ -591,6 +591,8 @@ public abstract class TeleVM implements MaxVM {
 
     private VmCodeCacheAccess codeCacheAccess = null;
 
+    private ExternalMachineCodeAccess externalMachineCodeAccess = null;
+
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
 
@@ -844,6 +846,9 @@ public abstract class TeleVM implements MaxVM {
                 codeCacheAccess.initialize(epoch);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
+                externalMachineCodeAccess = new ExternalMachineCodeAccess(this);
+                memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
@@ -860,6 +865,10 @@ public abstract class TeleVM implements MaxVM {
             // Update status of the code cache, including eviction status and any new allocations.
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+
+            // Update status of the code cache, including eviction status and any new allocations.
+            externalMachineCodeAccess.updateCache(epoch);
+            memoryAllocations.addAll(externalMachineCodeAccess.memoryAllocations());
 
             // A hook for any other memory regions that might be getting allocated for special platforms
             memoryAllocations.addAll(platformMemoryRegions());
@@ -969,6 +978,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final VmCodeCacheAccess codeCache() {
         return codeCacheAccess;
+    }
+
+    public final ExternalMachineCodeAccess externalMachineCode() {
+        return externalMachineCodeAccess;
     }
 
     public final CodeLocationFactory codeLocationFactory() {
