@@ -51,7 +51,8 @@ import com.sun.max.vm.value.*;
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  */
-public abstract class TeleNativeThread extends AbstractVmHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
+public abstract class TeleNativeThread extends AbstractVmHolder
+    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, AllocationHolder, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
@@ -182,6 +183,17 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
     public final MaxEntityMemoryRegion<MaxThread> memoryRegion() {
         // The thread has no VM memory allocated for itself; it allocates stack and locals spaces from the OS.
         return null;
+    }
+
+    public final List<MaxMemoryRegion> memoryAllocations() {
+        final List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>(2);
+        if (teleStack.memoryRegion() != null) {
+            allocations.add(teleStack.memoryRegion());
+        }
+        if (threadLocalsBlock.memoryRegion() != null) {
+            allocations.add(threadLocalsBlock.memoryRegion());
+        }
+        return allocations;
     }
 
     public boolean contains(Address address) {
@@ -659,8 +671,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
-                if (compiledCode == null) {
+                TeleCompilation compilation = vm().machineCode().findCompilation(address);
+                if (compilation == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
                         continue;
@@ -672,8 +684,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
                         TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().toAddress());
-                    if (compiledCode == null) {
+                    compilation = vm().machineCode().findCompilation(targetMethod.codeStart().toAddress());
+                    if (compilation == null) {
                         TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
                     }
@@ -687,15 +699,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    CiFrame frames = compiledCode.teleTargetMethod().getDebugInfoAtSafepointIndex(stopIndex).frame();
+                    CiFrame frames = compilation.teleTargetMethod().getDebugInfoAtSafepointIndex(stopIndex).frame();
 
                     if (frames == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);
 
-                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
+                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compilation.classMethodActor()) == null) {
                             LOGGER.warning("Could not find tele method!");
                         } else {
-                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                            result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, null, compilation.classMethodActor(), 0));
                         }
                     } else {
 
@@ -703,16 +715,16 @@ public abstract class TeleNativeThread extends AbstractVmHolder implements TeleV
                             final TeleClassMethodActor curTma = vm().findTeleMethodActor(TeleClassMethodActor.class, (ClassMethodActor) frames.method);
 
                             LOGGER.info("Found part frame " + frames + " tele method actor: " + curTma);
-                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, frames));
+                            result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, frames));
                             frames = frames.caller();
                         }
                     }
                 } else {
                     LOGGER.info("Not at Java stop!");
-                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
+                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compilation.classMethodActor()) == null) {
                         LOGGER.warning("Could not find tele method!");
                     } else {
-                        result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                        result.add(new FrameProviderImpl(z == 1, compilation.teleTargetMethod(), stackFrame, null, compilation.classMethodActor(), 0));
                     }
                 }
             }

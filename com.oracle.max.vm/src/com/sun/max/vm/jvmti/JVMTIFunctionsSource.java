@@ -770,7 +770,10 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IsMethodObsolete(Pointer env, MethodID method, Pointer is_obsolete_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: START,LIVE
+        // NULLCHECK: is_obsolete_ptr
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.isMethodObsolete(classMethodActor, is_obsolete_ptr);
     }
 
     @VM_ENTRY_POINT

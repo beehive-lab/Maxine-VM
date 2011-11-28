@@ -24,8 +24,6 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 
-// TODO (mlvdv) decide whether to expose this in the VMI interfaces
-
 /**
  * A allocatable area in the VM that can contain objects.
  */

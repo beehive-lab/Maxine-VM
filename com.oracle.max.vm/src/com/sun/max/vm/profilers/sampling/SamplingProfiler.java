@@ -329,9 +329,7 @@ public final class SamplingProfiler extends Thread {
     }
 
     private static boolean isSystemThread(VmThread vmThread) {
-        // Should be able to determine this via VmThread.systemThreadGroup ...
-        return vmThread == VmThread.referenceHandlerThread || vmThread == VmThread.finalizerThread ||
-               vmThread == VmThread.signalDispatcherThread;
+        return vmThread.javaThread().getThreadGroup() == VmThread.systemThreadGroup;
     }
 
     private static final StackTraceGatherer stackTraceGatherer = new StackTraceGatherer();

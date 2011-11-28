@@ -61,7 +61,7 @@ public class C1X implements RuntimeCompiler {
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
      */
-    public final MaxRuntime runtime = MaxRuntime.getInstance();
+    public final MaxRuntime runtime = MaxRuntime.runtime();
 
     /**
      * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
@@ -227,11 +227,6 @@ public class C1X implements RuntimeCompiler {
                     C1XTimers.INSTALL.start();
                 }
                 MaxTargetMethod maxTargetMethod = new MaxTargetMethod(method, compiledMethod, install);
-                final MaxRuntime.CompilationInfo ci = MaxRuntime.compilationInfo.get();
-                if (ci.usesTagging || method.isUsingTaggedLocals()) {
-                    maxTargetMethod.setUsingTaggedLocals();
-                    ci.reset();
-                }
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.stop();
                 }

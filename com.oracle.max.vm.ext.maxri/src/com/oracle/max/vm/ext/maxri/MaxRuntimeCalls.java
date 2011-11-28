@@ -208,6 +208,11 @@ public class MaxRuntimeCalls {
         return new ArrayIndexOutOfBoundsException(index);
     }
 
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.GenericCallback)
+    public static Object genericCallback(CiGenericCallback cb, Object arg) {
+        throw FatalError.unimplemented();
+    }
+
     @HOSTED_ONLY
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
         ClassMethodActor classMethodActor = null;

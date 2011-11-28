@@ -39,10 +39,10 @@ import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv) this may eventually be eliminated
+// TODO (mlvdv) this should be eliminated, cleaned up and possibly folded into VMObjectAccess.
 // TODO (mlvdv) as of October 2011, only references to the dynamic heap are handled by the old mechanism,
-// which is specialized for the semi-space GC.  That mechanism must be encapsulated so that it is only
-// used when the VM is configured with that collector.
+// which is specialized for the semi-space GC.  That mechanism should first be folded into VmHeapAccess
+// and then encapsulated so that it is only used when the VM is configured with that collector.
 /**
  * The singleton manager for instances of {@link Reference} that point (or pretend to point) at
  * objects in the VM.
@@ -331,17 +331,20 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
         // TODO (mlvdv) Transition to the new reference management framework; use it for the regions supported so far
         final VmHeapRegion bootHeapRegion = vm().heap().bootHeapRegion();
         if (bootHeapRegion.contains(address)) {
-            return bootHeapRegion.objectReferenceManager().makeReference(address);
+            TeleReference teleReference = bootHeapRegion.objectReferenceManager().makeReference(address);
+            return teleReference == null ? zeroReference() : teleReference;
         }
 
         final VmHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
         if (immortalHeapRegion != null && immortalHeapRegion.contains(address)) {
-            return immortalHeapRegion.objectReferenceManager().makeReference(address);
+            TeleReference teleReference = immortalHeapRegion.objectReferenceManager().makeReference(address);
+            return teleReference == null ? zeroReference() : teleReference;
         }
 
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCompiledCodeRegion(address);
+        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
         if (compiledCodeRegion != null) {
-            return compiledCodeRegion.objectReferenceManager().makeReference(address);
+            TeleReference teleReference = compiledCodeRegion.objectReferenceManager().makeReference(address);
+            return teleReference == null ? zeroReference() : teleReference;
         }
 
         // For everything else, use the old machinery; by now this should only be the dynamic heap.

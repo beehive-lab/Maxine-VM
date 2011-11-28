@@ -40,8 +40,10 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.verifier.*;
 
 /**
  * Construction of a virtual machine image begins here by running on a host virtual
@@ -77,14 +79,6 @@ public final class BootImageGenerator {
     private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
 
-    private final Option<Boolean> testCallerBaseline = options.newBooleanOption("test-caller-baseline", false,
-            "For the Java tester, this option specifies that each test case's harness should be compiled " +
-            "with the baseline compiler (helpful for testing baseline->baseline and baseline->opt calls).");
-
-    private final Option<Boolean> testCalleeBaseline = options.newBooleanOption("test-callee-baseline", false,
-            "For the Java tester, this option specifies that each test case's method should be compiled " +
-            "with the baseline compiler (helpful for testing baseline->baseline and opt->baseline calls).");
-
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
@@ -101,20 +95,7 @@ public final class BootImageGenerator {
     private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
-    /**
-     * Used in the Java tester to indicate whether to compile the testing harness itself with the baseline compiler.
-     */
-    public static boolean callerBaseline = false;
-
-    /**
-     * Used by the Java tester to indicate whether to compile the tests themselves with the baseline compiler.
-     */
-    public static boolean calleeBaseline = false;
-
-    /**
-     * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
-     */
-    public static boolean nativeTests = false;
+    public static boolean nativeTests;
 
     /**
      * Gets the default VM directory where the VM executable, shared libraries, boot image
@@ -205,9 +186,9 @@ public final class BootImageGenerator {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
             }
 
-            BootImageGenerator.calleeBaseline = testCalleeBaseline.getValue();
-            BootImageGenerator.callerBaseline = testCallerBaseline.getValue();
-            BootImageGenerator.nativeTests = testNative.getValue();
+            Set<File> preexistingProxyClassFiles = enableProxyClassFileDumping();
+
+            nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();
             vmDirectory.mkdirs();
@@ -227,6 +208,8 @@ public final class BootImageGenerator {
 
             VMOptions.beforeExit();
 
+            disableProxyClassFileDumping(preexistingProxyClassFiles);
+
             // write the statistics
             if (statsOption.getValue()) {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
@@ -239,6 +222,7 @@ public final class BootImageGenerator {
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
+            verifyBootClasses();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {
@@ -255,6 +239,40 @@ public final class BootImageGenerator {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
             Trace.line(1, "Total time: " + (timeInMilliseconds / 1000.0f) + " seconds");
             System.out.flush();
+        }
+    }
+
+    private static Set<File> enableProxyClassFileDumping() {
+        // Add the current working directory to the class path that
+        // will be created when HostedBootClassLoader.classpath() is
+        // first called. This is the directory where ProxyGenerator
+        // dumps out the class files it generates.
+        String cwd = System.getProperty("user.dir");
+        String javaClassPath = System.getProperty("java.class.path");
+        System.setProperty("java.class.path", cwd + File.pathSeparatorChar + javaClassPath);
+
+        // See sun.misc.ProxyGenerator.saveGeneratedFiles field
+        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
+        File[] existingProxyClassFiles = new File(cwd).listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
+            }
+        });
+        return new HashSet<File>(Arrays.asList(existingProxyClassFiles));
+    }
+
+    private static void disableProxyClassFileDumping(Set<File> preexistingProxyClassFiles) {
+        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
+        File cwd = new File(System.getProperty("user.dir"));
+        File[] proxyClassFiles = cwd.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
+            }
+        });
+        for (File f : proxyClassFiles) {
+            if (!preexistingProxyClassFiles.contains(f)) {
+                f.delete();
+            }
         }
     }
 
@@ -298,6 +316,17 @@ public final class BootImageGenerator {
         Trace.begin(1, "writing boot image jar file: " + file);
         ClassfileReader.writeClassfilesToJar(file);
         Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
+    }
+
+    private void verifyBootClasses() {
+        Trace.begin(1, "verifying boot image classes");
+        long start = System.currentTimeMillis();
+        for (ClassActor ca : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            if (!ca.kind.isWord) {
+                Verifier.verifierFor(ca).verify();
+            }
+        }
+        Trace.end(1, "verifying boot image classes", start);
     }
 
     /**

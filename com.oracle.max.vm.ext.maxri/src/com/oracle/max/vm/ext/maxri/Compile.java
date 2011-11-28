@@ -36,13 +36,16 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A harness to run a {@linkplain RuntimeCompiler compiler} offline.
@@ -60,6 +63,8 @@ public class Compile {
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
         "Set the verbosity level of the testing framework.");
+    private static final Option<Boolean> reflectionStubsOption = options.newBooleanOption("reflect", false,
+        "Generate and compile reflection stubs for the methods.");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
         "Stop compilation upon the first bailout.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
@@ -106,7 +111,9 @@ public class Compile {
     }
 
     public static void main(String[] args) throws IOException {
-        // set the default optimization level before parsing options
+
+        args = VMOption.extractVMArgs(args);
+
         VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
@@ -158,6 +165,10 @@ public class Compile {
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
+        if (reflectionStubsOption.getValue()) {
+            addReflectionStubs(methods);
+        }
+
         doCompile(compiler, methods, progress);
 
         if (verboseOption.getValue() > 0) {
@@ -168,6 +179,28 @@ public class Compile {
 
         // Non-zero exit code indicates number of failures
         System.exit(progress.failed());
+    }
+
+    protected static void addReflectionStubs(final List<MethodActor> methods) {
+        ArrayList<MethodActor> stubMethods = new ArrayList<MethodActor>();
+        for (MethodActor m : methods) {
+            try {
+                if (!m.isInstanceInitializer()) {
+                    InvocationStub javaStub = InvocationStub.newMethodStub(m.toJava(), Boxing.JAVA);
+                    InvocationStub valueStub = InvocationStub.newMethodStub(m.toJava(), Boxing.VALUE);
+                    stubMethods.add(ClassRegistry.findMethod(javaStub.getClass(), "invoke", Object.class, Object[].class));
+                    stubMethods.add(ClassRegistry.findMethod(valueStub.getClass(), "invoke", Value[].class));
+                } else {
+                    InvocationStub javaStub = InvocationStub.newConstructorStub(m.toJavaConstructor(), null, Boxing.JAVA);
+                    InvocationStub valueStub = InvocationStub.newConstructorStub(m.toJavaConstructor(), null, Boxing.VALUE);
+                    stubMethods.add(ClassRegistry.findMethod(javaStub.getClass(), "newInstance", Object[].class));
+                    stubMethods.add(ClassRegistry.findMethod(valueStub.getClass(), "newInstance", Value[].class));
+                }
+            } catch (Throwable e) {
+                out.println("Error adding reflectionstubs for " + m + ": " + e);
+            }
+        }
+        methods.addAll(stubMethods);
     }
 
     private static void doCompile(RuntimeCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
@@ -224,11 +257,6 @@ public class Compile {
         }
 
         private static boolean isCompilable(MethodActor method) {
-            if (method.isNative()) {
-//                if (t1xOption.getValue()) {
-//                    return false;
-//                }
-            }
             return method instanceof ClassMethodActor && !method.isAbstract() && !method.isIntrinsic();
         }
 

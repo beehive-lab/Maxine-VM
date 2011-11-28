@@ -99,7 +99,11 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
     private final TeleNativeThread teleNativeThread;
 
     /**
-     * The region of VM memory occupied by this block, null if this is a dummy for which there are no locals (as for a native thread).
+     * The region of VM memory occupied by this block, null if this is a dummy
+     * for which there are no locals (as for a native thread).
+     * <p>
+     * Don't null this field out when the thread is known to have died;
+     * we'll need to keep track of it to update update information about memory allocations.
      */
     private final ThreadLocalsBlockMemoryRegion threadLocalsBlockMemoryRegion;
 
@@ -187,7 +191,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
                 final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(SafepointPoll.State.ENABLED);
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
-                    if (!threadLocalValue.isZero()) {
+                    if (threadLocalValue.isNotZero()) {
                         final Reference vmThreadReference = referenceManager().makeReference(threadLocalValue.asAddress());
                         teleVmThread = (TeleVmThread) objects().makeTeleObject(vmThreadReference);
                     }

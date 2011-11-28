@@ -133,4 +133,19 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
         }
         return false;
     }
+
+    @Override
+    public StrideDirection strideDirection() {
+        ValueNode stride = a();
+        if (stride.isConstant()) {
+            long val = stride.asConstant().asLong();
+            if (val > 0) {
+                return base().strideDirection();
+            }
+            if (val < 0) {
+                return StrideDirection.opposite(base().strideDirection());
+            }
+        }
+        return null;
+    }
 }

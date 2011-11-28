@@ -187,7 +187,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
      * described by a memory region object in the VM.
      */
     public final boolean isAllocated() {
-        return !getRegionStart().isZero() && getRegionNBytes() > 0;
+        return getRegionStart().isNotZero() && getRegionNBytes() > 0;
     }
 
     /**

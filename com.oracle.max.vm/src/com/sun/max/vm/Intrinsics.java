@@ -27,7 +27,6 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.intrinsics.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * A set of methods {@linkplain INTRINSIC intrinsified} via extended bytecodes.
@@ -65,19 +64,7 @@ public class Intrinsics {
      * @see MaxineIntrinsicIDs#ALLOCA
      */
     @INTRINSIC(ALLOCA)
-    public static native Pointer stackAllocate(@INTRINSIC.Constant int size);
-
-    /**
-     * @see MaxineIntrinsicIDs#STACKHANDLE
-     */
-    @INTRINSIC(STACKHANDLE)
-    public static native Pointer stackHandle(int value);
-
-    /**
-     * @see MaxineIntrinsicIDs#STACKHANDLE
-     */
-    @INTRINSIC(STACKHANDLE)
-    public static native Pointer stackHandle(Reference value);
+    public static native Pointer alloca(@INTRINSIC.Constant int size, @INTRINSIC.Constant boolean refs);
 
     /**
      * @see MaxineIntrinsicIDs#PAUSE

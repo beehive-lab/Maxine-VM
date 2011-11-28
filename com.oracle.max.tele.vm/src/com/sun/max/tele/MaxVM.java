@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -84,7 +85,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return access to the VM's class registry and related information.
      */
-    MaxClassRegistry classes();
+    MaxClasses classes();
 
     /**
      * @return access to low level memory reading from the VM.
@@ -114,6 +115,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the singleton manager for information about code in the VM.
      */
     MaxCodeLocationFactory codeLocationFactory();
+
+    /**
+     * @returns access to information about machine code in the VM.
+     */
+    VmMachineCodeAccess machineCode();
 
     /**
      * Gets the manager for creating and managing VM breakpoints.
@@ -228,14 +234,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     * @throws MaxVMBusyException
     */
     void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException;
-
-    /**
-     * Finds the allocated region of memory in the VM, if any, that includes an address.
-     *
-     * @param address a memory location in the VM
-     * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
-     */
-    MaxMemoryRegion findMemoryRegion(Address address);
 
     /**
      * Gets whatever information is known about the current state of memory management at a particular location in VM

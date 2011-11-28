@@ -96,6 +96,10 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return (T) nodes[index];
     }
 
+    public T last() {
+        return get(size() - 1);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public T set(int index, T node) {
@@ -125,9 +129,13 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void clear() {
         incModCount();
+        for (int i = 0; i < size; i++) {
+            update((T) nodes[i], null);
+        }
         nodes = EMPTY_NODE_ARRAY;
         size = 0;
     }
@@ -264,6 +272,11 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
         return (A[]) Arrays.copyOf(nodes, size, template.getClass());
     }
 
+    @Override
+    public Object[] toArray() {
+        return Arrays.copyOf(nodes, size);
+    }
+
     protected void replace(T node, T other) {
         incModCount();
         for (int i = 0; i < size(); i++) {
@@ -291,18 +304,16 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
     }
 
     @Override
-    public Object[] toArray() {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    @Override
     public boolean containsAll(Collection< ? > c) {
         throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public boolean addAll(Collection< ? extends T> c) {
-        throw new UnsupportedOperationException("not implemented");
+        for (T e : c) {
+            add(e);
+        }
+        return true;
     }
 
     @Override

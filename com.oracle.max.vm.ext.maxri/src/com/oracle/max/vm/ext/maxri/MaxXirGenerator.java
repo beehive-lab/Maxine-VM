@@ -138,9 +138,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirPair checkcastForNonLeafTemplate;
     private XirPair instanceofForLeafTemplate;
     private XirPair instanceofForNonLeafTemplate;
-    private XirTemplate materializedInstanceofForLeafTemplate;
-    private XirTemplate materializedInstanceofForLeafAndNonNullTemplate;
-    private XirTemplate materializedInstanceofForNonLeafTemplate;
+    private XirPair materializedInstanceofForLeafTemplate;
+    private XirPair materializedInstanceofForLeafAndNonNullTemplate;
+    private XirPair materializedInstanceofForNonLeafTemplate;
 
     private XirTemplate typeAssertTemplate;
 
@@ -566,22 +566,26 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genMaterializeInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, XirArgument trueValue, XirArgument falseValue, RiType type) {
-        assert type instanceof RiResolvedType;
-        RiResolvedType resolvedType = (RiResolvedType) type;
-        XirTemplate template;
-        if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
-            assert !resolvedType.isInterface();
-            if (site.isNonNull(receiver)) {
-                template = materializedInstanceofForLeafAndNonNullTemplate;
+        if (type instanceof RiResolvedType) {
+            RiResolvedType resolvedType = (RiResolvedType) type;
+            XirTemplate template;
+            if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
+                assert !resolvedType.isInterface();
+                if (site.isNonNull(receiver)) {
+                    template = materializedInstanceofForLeafAndNonNullTemplate.resolved;
+                } else {
+                    template = materializedInstanceofForLeafTemplate.resolved;
+                }
+                return new XirSnippet(template, receiver, hub, trueValue, falseValue);
             } else {
-                template = materializedInstanceofForLeafTemplate;
+                template = materializedInstanceofForNonLeafTemplate.resolved;
+                ClassActor classActor = (ClassActor) type;
+                int typeID = classActor.id;
+                return new XirSnippet(template, receiver, hub, trueValue, falseValue, XirArgument.forInt(typeID));
             }
-            return new XirSnippet(template, receiver, hub, trueValue, falseValue);
         } else {
-            template = materializedInstanceofForNonLeafTemplate;
-            ClassActor classActor = (ClassActor) type;
-            int typeID = classActor.id;
-            return new XirSnippet(template, receiver, hub, trueValue, falseValue, XirArgument.forInt(typeID));
+            XirArgument guard = guardFor(type);
+            return new XirSnippet(materializedInstanceofForNonLeafTemplate.unresolved, receiver, guard, trueValue, falseValue);
         }
     }
 
@@ -1473,22 +1477,23 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
-            XirOperand result = asm.restart(CiKind.Boolean);
+            asm.restart(CiKind.Void);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
             XirOperand temp = asm.createTemp("temp", CiKind.Object);
-            XirLabel pass = asm.createInlineLabel("pass");
-            XirLabel fail = asm.createInlineLabel("fail");
-            asm.mov(result, asm.b(false));
+
+            XirLabel trueSucc = asm.createInlineLabel(XirLabel.TrueSuccessor);
+            XirLabel falseSucc = asm.createInlineLabel(XirLabel.FalseSuccessor);
+
             if (!nonnull) {
                 // first check for null
-                asm.jeq(fail, object, asm.o(null));
+                asm.jeq(falseSucc, object, asm.o(null));
             }
             asm.pload(CiKind.Object, temp, object, asm.i(hubOffset()), !nonnull);
-            asm.jneq(fail, temp, hub);
-            asm.bindInline(pass);
-            asm.mov(result, asm.b(true));
-            asm.bindInline(fail);
+            asm.jeq(trueSucc, temp, hub);
+
+            asm.jmp(falseSucc);
+
             resolved = finishTemplate(asm, "instanceof-leaf<" + nonnull + ">");
         }
         {
@@ -1499,15 +1504,67 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildMaterializeInstanceOf(boolean nonnull, boolean leaf) {
+    private XirPair buildMaterializeInstanceOf(boolean nonnull, boolean leaf) {
+        XirTemplate resolved;
+        XirTemplate unresolved;
+        {
+            XirOperand result = asm.restart(CiKind.Int);
+            XirParameter object = asm.createInputParameter("object", CiKind.Object);
+            XirOperand checkedHub = asm.createConstantInputParameter("hub", CiKind.Object);
+            XirOperand trueValue = asm.createConstantInputParameter("trueValue", CiKind.Int);
+            XirOperand falseValue = asm.createConstantInputParameter("falseValue", CiKind.Int);
+            XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
+            XirLabel trueSucc = asm.createInlineLabel("ok");
+            XirLabel falseSucc = asm.createInlineLabel("notOk");
+            XirLabel end = asm.createInlineLabel("end");
+
+            if (!nonnull) {
+                // null isn't "instanceof" anything
+                asm.jeq(falseSucc, object, asm.o(null));
+            }
+
+            asm.pload(CiKind.Object, objHub, object, asm.i(hubOffset()), false);
+            // if we get an exact match: succeed immediately
+            if (!leaf) {
+                XirOperand mtableTemp = asm.createTemp("mtableTemp", CiKind.Int);
+                XirOperand a = asm.createTemp("a", CiKind.Int);
+                XirParameter typeID = asm.createConstantInputParameter("typeID", CiKind.Int);
+                asm.jeq(trueSucc, objHub, checkedHub);
+                asm.pload(CiKind.Int, mtableTemp, objHub, asm.i(offsetOfMTableLength()), false);
+                asm.mod(a, typeID, mtableTemp);
+                asm.pload(CiKind.Int, mtableTemp, objHub, asm.i(offsetOfMTableStartIndex()), false);
+                asm.add(a, a, mtableTemp);
+                asm.pload(CiKind.Int, a, objHub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
+                asm.pload(CiKind.Int, a, objHub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
+                asm.jneq(falseSucc, a, typeID);
+            } else {
+                asm.jneq(falseSucc, objHub, checkedHub);
+            }
+            asm.bindInline(trueSucc);
+            asm.mov(result, trueValue);
+            asm.jmp(end);
+
+            asm.bindInline(falseSucc);
+            asm.mov(result, falseValue);
+
+            asm.bindInline(end);
+            resolved = finishTemplate(asm, "materializeInstanceOf<" + nonnull + ", " + leaf + ">");
+        }
+        {
+            // unresolved materializeInstanceOf
+            unresolved = buildUnresolvedMaterializeInstanceOf(nonnull);
+        }
+        return new XirPair(resolved, unresolved);
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildUnresolvedMaterializeInstanceOf(boolean nonnull) {
+        XirTemplate unresolved;
         XirOperand result = asm.restart(CiKind.Int);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
-        final XirOperand hub;
-        hub = asm.createConstantInputParameter("hub", CiKind.Object);
+        XirOperand guard = asm.createConstantInputParameter("hub", CiKind.Object);
         XirOperand trueValue = asm.createConstantInputParameter("trueValue", CiKind.Int);
         XirOperand falseValue = asm.createConstantInputParameter("falseValue", CiKind.Int);
-        XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
-        XirLabel trueSucc = asm.createInlineLabel("ok");
         XirLabel falseSucc = asm.createInlineLabel("notOk");
         XirLabel end = asm.createInlineLabel("end");
 
@@ -1515,32 +1572,18 @@ public class MaxXirGenerator implements RiXirGenerator {
             // null isn't "instanceof" anything
             asm.jeq(falseSucc, object, asm.o(null));
         }
+        callRuntimeThroughStub(asm, "unresolvedInstanceOf", result, object, guard);
+        asm.jeq(falseSucc, result, asm.b(false));
 
-        asm.pload(CiKind.Object, objHub, object, asm.i(hubOffset()), false);
-        // if we get an exact match: succeed immediately
-        if (!leaf) {
-            XirOperand mtableTemp = asm.createTemp("mtableTemp", CiKind.Int);
-            XirOperand a = asm.createTemp("a", CiKind.Int);
-            XirParameter typeID = asm.createConstantInputParameter("typeID", CiKind.Int);
-            asm.jeq(trueSucc, objHub, hub);
-            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableLength()), false);
-            asm.mod(a, typeID, mtableTemp);
-            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableStartIndex()), false);
-            asm.add(a, a, mtableTemp);
-            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
-            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
-            asm.jneq(falseSucc, a, typeID);
-        } else {
-            asm.jneq(falseSucc, objHub, hub);
-        }
-        asm.bindInline(trueSucc);
         asm.mov(result, trueValue);
         asm.jmp(end);
+
         asm.bindInline(falseSucc);
         asm.mov(result, falseValue);
-        asm.bindInline(end);
 
-        return asm.finishTemplate("materializeInstanceOf");
+        asm.bindInline(end);
+        unresolved = finishTemplate(asm, "materializeInstanceOf-unresolved<" + nonnull + ">");
+        return unresolved;
     }
 
     @HOSTED_ONLY
@@ -1570,7 +1613,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved instanceof for an interface or non-leaf class type
-            XirOperand result = asm.restart(CiKind.Boolean);
+            asm.restart(CiKind.Void);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter typeID = asm.createConstantInputParameter("typeID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
@@ -1578,26 +1621,26 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
             XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
             XirOperand a = asm.createTemp("a", CiKind.Int);
-            XirLabel pass = asm.createInlineLabel("pass");
-            XirLabel fail = asm.createInlineLabel("fail");
-            asm.mov(result, asm.b(false));
+
+            XirLabel trueSucc = asm.createInlineLabel(XirLabel.TrueSuccessor);
+            XirLabel falseSucc = asm.createInlineLabel(XirLabel.FalseSuccessor);
+
             // XXX: use a cache to check the last successful receiver type
             if (!nonnull) {
                 // first check for null
-                asm.jeq(fail, object, asm.o(null));
+                asm.jeq(falseSucc, object, asm.o(null));
             }
             asm.pload(CiKind.Object, hub, object, asm.i(hubOffset()), !nonnull);
-            asm.jeq(pass, hub, checkedHub);
+            asm.jeq(trueSucc, hub, checkedHub);
             asm.pload(CiKind.Int, mtableLength, hub, asm.i(offsetOfMTableLength()), false);
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(offsetOfMTableStartIndex()), false);
             asm.mod(a, typeID, mtableLength);
             asm.add(a, a, mtableStartIndex);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
-            asm.jneq(fail, a, typeID);
-            asm.bindInline(pass);
-            asm.mov(result, asm.b(true));
-            asm.bindInline(fail);
+            asm.jeq(trueSucc, a, typeID);
+
+            asm.jmp(falseSucc);
             resolved = finishTemplate(asm, "instanceof-interface<" + nonnull + ">");
         }
         {
@@ -1610,24 +1653,22 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildUnresolvedInstanceOf(boolean nonnull) {
         XirTemplate unresolved;
-        XirOperand result = asm.restart(CiKind.Boolean);
+        asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-        XirLabel fail = null;
+        XirOperand result = asm.createTemp("result", CiKind.Boolean);
+
+        XirLabel trueSucc = asm.createInlineLabel(XirLabel.TrueSuccessor);
+        XirLabel falseSucc = asm.createInlineLabel(XirLabel.FalseSuccessor);
+
         if (!nonnull) {
             // first check failed
-            fail = asm.createInlineLabel("fail");
-            asm.jeq(fail, object, asm.o(null));
+            asm.jeq(falseSucc, object, asm.o(null));
         }
         callRuntimeThroughStub(asm, "unresolvedInstanceOf", result, object, guard);
-        if (!nonnull) {
-            // null check failed
-            XirLabel pass = asm.createInlineLabel("pass");
-            asm.jmp(pass);
-            asm.bindInline(fail);
-            asm.mov(result, asm.b(false));
-            asm.bindInline(pass);
-        }
+        asm.jeq(trueSucc, result, asm.b(true));
+
+        asm.jmp(falseSucc);
         unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
         return unresolved;
     }

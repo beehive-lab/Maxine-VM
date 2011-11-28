@@ -143,6 +143,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                         ripAdjustment = Word.size();
                     } else if (b == ADDQ_SUBQ_imm32) {
                         ripAdjustment = Word.size();
+                    } else {
+                        rbpSaved = true;
                     }
                 } else {
                     rbpSaved = true;

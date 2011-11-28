@@ -22,11 +22,7 @@
  */
 package com.oracle.max.graal.nodes.extended;
 
-import com.oracle.max.graal.graph.*;
 
 public interface MemoryCheckpoint {
 
-    NodeInputList<Node> mergedNodes();
-
-    Node node();
 }

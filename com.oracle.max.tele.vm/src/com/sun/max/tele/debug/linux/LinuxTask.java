@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele.debug.linux;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.*;
 import java.util.concurrent.locks.*;
@@ -135,8 +136,29 @@ public final class LinuxTask {
     private static class Monitor extends ReentrantLock {
         @Override
         public void lock() {
-            if (!super.tryLock()) {
-                throw new ConcurrentDataIOError("Failed concurrent attempt by " + Thread.currentThread() + " to access VM [lock held by " + getOwner() + "]");
+            boolean isDispatchThread = EventQueue.isDispatchThread();
+            Thread currentThread = Thread.currentThread();
+            int retries = 5000;
+            while (!super.tryLock()) {
+                Thread owner = getOwner();
+                if (isDispatchThread) {
+                    // It's fine to let the AWT event thread fail fast when trying to access the remote VM.
+                    // All such accesses should be in a try block that catches DataIOError and will thus
+                    // simply result in a repaint being missed.
+                    throw new ConcurrentDataIOError("Failed concurrent attempt by " + currentThread + " to access VM [lock held by " + owner + "]");
+                } else {
+                    // Spin for a bit
+                    if (--retries == 0) {
+                        // Once we've spun for a 5 seconds, this is most likely indicates a potential deadlock with another non AWT thread.
+                        String message = "Failed concurrent attempt by " + currentThread + " to access VM [lock held by " + owner + "]";
+                        System.err.println(message);
+                        throw new ConcurrentDataIOError(message);
+                    }
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                    }
+                }
             }
         }
     }

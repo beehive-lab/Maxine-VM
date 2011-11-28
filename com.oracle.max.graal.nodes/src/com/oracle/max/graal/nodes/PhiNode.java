@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
  */
 public final class PhiNode extends FloatingNode implements Canonicalizable, Node.IterableNodeType {
 
-    @Input private MergeNode merge;
+    @Input(notDataflow = true) private MergeNode merge;
 
     @Input private final NodeInputList<ValueNode> values = new NodeInputList<ValueNode>(this);
 
@@ -85,6 +85,10 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         values.set(i, x);
     }
 
+    public ValueNode valueAt(FixedNode pred) {
+        return valueAt(merge().phiPredecessorIndex(pred));
+    }
+
     /**
      * Get the number of inputs to this phi (i.e. the number of predecessors to the merge).
      *
@@ -92,6 +96,10 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
      */
     public int valueCount() {
         return values.size();
+    }
+
+    public void clearValues() {
+        values.clear();
     }
 
     @Override

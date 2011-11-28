@@ -905,6 +905,11 @@ public abstract class BytecodeAssembler {
         decStack();
     }
 
+    public void imul() {
+        emitOpcode(IMUL);
+        decStack();
+    }
+
     public void i2l() {
         emitOpcode(I2L);
         incStack();

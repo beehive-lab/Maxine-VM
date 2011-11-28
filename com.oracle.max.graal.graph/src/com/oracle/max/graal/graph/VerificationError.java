@@ -22,103 +22,19 @@
  */
 package com.oracle.max.graal.graph;
 
-import java.util.*;
 
 /**
- * This error represents a failed verification of a node or an assertion error that . It must only be used for conditions that should never occur during normal operation.
+ * This error represents a failed verification of a node . It must only be used for conditions that should never occur during normal operation.
  */
-public class VerificationError extends Error {
-
-    private Node node;
-    private Graph graph;
-    private final ArrayList<String> context = new ArrayList<String>();
+public class VerificationError extends GraalInternalError {
 
     /**
-     * This constructor creates a VerificationError with a message assembled via {@link String#format(String, Object...)}.
+     * This constructor creates a {@link VerificationError} with a message assembled via {@link String#format(String, Object...)}.
      * It always uses the ENGLISH locale in order to always generate the same output.
      * @param msg the message that will be associated with the error, in String.format syntax
      * @param args parameters to String.format - parameters that implement {@link Iterable} will be expanded into a [x, x, ...] representation.
      */
     public VerificationError(String msg, Object... args) {
-        super(format(msg, args));
-    }
-
-    /**
-     * This constructor creates a VerificationError for a given causing Throwable instance.
-     * @param cause the original exception that contains additional information on this error
-     */
-    public VerificationError(Throwable cause) {
-        super(cause);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append(super.toString());
-        for (String s : context) {
-            str.append("\n\t\tat ").append(s);
-        }
-        return str.toString();
-    }
-
-    private static String format(String msg, Object... args) {
-        if (args != null) {
-            // expand Iterable parameters into a list representation
-            for (int i = 0; i < args.length; i++) {
-                if (args[i] instanceof Iterable<?>) {
-                    ArrayList<Object> list = new ArrayList<Object>();
-                    for (Object o : (Iterable<?>) args[i]) {
-                        list.add(o);
-                    }
-                    args[i] = list.toString();
-                }
-            }
-        }
-        return String.format(Locale.ENGLISH, msg, args);
-    }
-
-    public VerificationError addContext(String context) {
-        this.context.add(context);
-        return this;
-    }
-
-    public VerificationError addContext(String name, Object obj) {
-        return addContext(format("%s: %s", name, obj));
-    }
-
-    /**
-     * Adds a graph to the context of this VerificationError. The first graph added via this method will be returned by {@link #graph()}.
-     * @param graph the graph which is in a incorrect state, if the verification error was not caused by a specific node
-     */
-    public VerificationError addContext(Graph graph) {
-        if (graph != this.graph) {
-            addContext("graph", graph);
-            if (this.graph == null) {
-                this.graph = graph;
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Adds a node to the context of this VerificationError. The first node added via this method will be returned by {@link #node()}.
-     * @param node the node which is in a incorrect state, if the verification error was caused by a node
-     */
-    public VerificationError addContext(Node node) {
-        if (node != this.node) {
-            addContext("node", node);
-            if (this.node == null) {
-                this.node = node;
-            }
-        }
-        return this;
-    }
-
-    public Node node() {
-        return node;
-    }
-
-    public Graph graph() {
-        return graph;
+        super(msg, args);
     }
 }

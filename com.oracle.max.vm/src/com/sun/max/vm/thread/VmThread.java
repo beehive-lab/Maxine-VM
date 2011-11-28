@@ -26,6 +26,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
@@ -178,7 +179,12 @@ public class VmThread {
         mainThreadGroup = new ThreadGroup(systemThreadGroup, hostMainThreadGroup.getName());
 
         mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
-        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
+        Thread vmOperationJavaThread = new VmOperationThread(systemThreadGroup);
+        vmOperationThread = initVmThread(vmOperationJavaThread);
+        // the VmOperationThread thread is completely hidden; we could, with more complexity,
+        // put it in a hidden group, but since the external world never sees it, it suffices to detach it.
+        // N.B. at this point it is unstarted so not actually a child of systemThreadGroup
+        WithoutAccessCheck.setInstanceField(vmOperationJavaThread, "group", null);
         signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
 
         try {
@@ -274,6 +280,11 @@ public class VmThread {
      * A "monitor" used to suspend the thread by {@link VmOperation}.
      */
     public final OSMonitor.SuspendMonitor suspendMonitor = new OSMonitor.SuspendMonitor();
+
+    /**
+     * Marks this as a JVMTI agent thread. These are not visible to calls like {@link Thread#getThreads}.
+     */
+    private boolean jvmtiAgent;
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be
@@ -404,8 +415,6 @@ public class VmThread {
      */
     private JniHandles jniHandles;
 
-    private boolean isGCThread;
-
     /**
      * Next thread waiting on the same monitor this thread is {@linkplain Object#wait() waiting} on.
      * Any thread can only be waiting on at most one monitor.
@@ -460,6 +469,7 @@ public class VmThread {
      *
      * @return a value of C type JNIEnv*
      */
+    @INLINE
     public static Pointer jniEnv() {
         if (MaxineVM.isHosted()) {
             return Pointer.zero();
@@ -647,9 +657,9 @@ public class VmThread {
             vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
 
             // We can now start the other system threads.
-            VmThread.vmOperationThread.start0();
+            VmThread.vmOperationThread.startVmSystemThread();
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
-            VmThread.signalDispatcherThread.start0();
+            VmThread.signalDispatcherThread.startVmSystemThread();
 
         }
 
@@ -944,7 +954,7 @@ public class VmThread {
      */
     public VmThread(Thread javaThread) {
         if (javaThread != null) {
-            setJavaThread(javaThread, javaThread.getName());
+            setJavaThread(javaThread, JDK_java_lang_Thread.getName(javaThread));
         }
     }
 
@@ -1099,11 +1109,12 @@ public class VmThread {
         return vmOperationThread == this;
     }
 
-    /**
-     * Determines if this thread is owned by the garbage collector.
-     */
-    public final boolean isGCThread() {
-        return isGCThread;
+    public final boolean isJVMTIAgentThread() {
+        return jvmtiAgent;
+    }
+
+    public final void setAsJVMTIAgentThread() {
+        jvmtiAgent = true;
     }
 
     /**
@@ -1112,7 +1123,6 @@ public class VmThread {
      * @param name the name of the thread
      */
     public final VmThread setJavaThread(Thread javaThread, String name) {
-        this.isGCThread = Heap.isGcThread(javaThread);
         this.javaThread = javaThread;
         this.name = name;
         return this;
@@ -1303,6 +1313,30 @@ public class VmThread {
     public void decrementPendingOperations() {
         --pendingOperations;
         FatalError.check(pendingOperations >= 0, "pendingOperations should never be negative");
+    }
+
+    private static class ThreadGroupAlias {
+        @INTRINSIC(UNSAFE_CAST) public static native ThreadGroupAlias asThreadGroupAlias(Object object);
+        @ALIAS(declaringClass = ThreadGroup.class)
+        private native void add(Thread t);
+        @ALIAS(declaringClass = ThreadGroup.class)
+        int nUnstartedThreads;
+    }
+
+    /**
+     * Start a VM boot image system group thread.
+     * System threads created in this class are {@code ThreadGroup.addUnstarted} when created in the boot image.
+     * This method causes them to actually be added to the thread group data structure.
+     */
+    public final void startVmSystemThread() {
+        ThreadGroupAlias threadGroupAlias = ThreadGroupAlias.asThreadGroupAlias(systemThreadGroup);
+        if (this == vmOperationThread) {
+            // hidden
+            threadGroupAlias.nUnstartedThreads--;
+        } else {
+            threadGroupAlias.add(javaThread);
+        }
+        start0();
     }
 
     /**

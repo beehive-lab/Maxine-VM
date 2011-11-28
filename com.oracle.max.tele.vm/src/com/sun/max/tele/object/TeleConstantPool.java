@@ -63,7 +63,7 @@ public final class TeleConstantPool extends TeleTupleObject{
             throw new MaxVMBusyException();
         }
         try {
-            final Reference poolConstantReference = memory().readArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
+            final Reference poolConstantReference = objects().unsafeReadArrayElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
             final TeleObject teleObject = objects().makeTeleObject(poolConstantReference);
             if (!(teleObject instanceof TelePoolConstant)) {
                 return null;

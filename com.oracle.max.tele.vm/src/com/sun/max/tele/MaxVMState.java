@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
 
 /**
  * <p>
@@ -84,6 +85,14 @@ public interface MaxVMState  {
      * @return the regions of memory that the VM has allocated from the OS.
      */
     List<MaxMemoryRegion> memoryAllocations();
+
+    /**
+     * Finds the allocated region of memory in the VM, if any, that includes an address.
+     *
+     * @param address a memory location in the VM
+     * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
+     */
+    MaxMemoryRegion findMemoryRegion(Address address);
 
     /**
      * Enumerates all threads live in the VM at this state transition.

@@ -43,13 +43,14 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -193,6 +194,14 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
+    }
+
+    /**
+     * Gets the code attribute from which this target method was compiled. This may differ from
+     * the code attribute of {@link #classMethodActor} in the case where it was rewritten.
+     */
+    public CodeAttribute codeAttribute() {
+        return classMethodActor == null ? null : classMethodActor.codeAttribute();
     }
 
     /**
@@ -413,7 +422,7 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
-        assert pos >= 0 && pos < codeLength() : "pos=" + pos + ", length=" + codeLength() + ", tm=" + toString();
+        assert pos >= 0 && pos < codeLength();
         return CodePointer.from(codeStart.plus(pos));
     }
 
@@ -673,7 +682,11 @@ public abstract class TargetMethod extends MemoryRegion {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
                     } else if (CallTarget.isSymbol(call.target)) {
                         encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, NATIVE_CALL);
-                        ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
+                        // ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
+                        // (ds) cannot rely on debug info at call since Graal uses templates to produce
+                        // native method stubs and the debug info with be in the context of the template
+                        // source code, not the native method.
+                        ClassMethodActor caller = classMethodActor;
                         assert caller.isNative();
                         caller.nativeFunction.setCallSite(this, safepointPos);
                     } else {
@@ -1025,9 +1038,10 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param frame debug info from which the slots of the deoptimized are initialized
      * @param callee used to notify callee of the execution state the deoptimized frame when it is returned to
      * @param exception if non-null, this is an in-flight exception that must be handled by the deoptimized frame
+     * @param reexecute specifies if the instruction at {@code frame.bci} is to be re-executed (ignored if {@code exception != null})
      * @return object for notifying the deoptimized frame's caller of continuation state
      */
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception, boolean reexecute) {
         throw FatalError.unexpected("Cannot create deoptimized frame for " + getClass().getSimpleName() + " " + this);
     }
 
@@ -1089,15 +1103,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * @return {@code true} if the machine code of this method is using tagged pointers.
-     * The default implementation pessimistically assumes this is the case.
-     */
-    public boolean isUsingTaggedLocals() {
-        return true;
-    }
-
-    /**
-     * Determines if this is a stub of a give type.
+     * Determines if this is a stub of a given type.
      */
     public final boolean is(Stub.Type type) {
         return stubType() == type;

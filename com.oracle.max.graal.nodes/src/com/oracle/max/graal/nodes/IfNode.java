@@ -55,7 +55,7 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
      *
      * @return the true successor
      */
-    public FixedNode trueSuccessor() {
+    public BeginNode trueSuccessor() {
         return blockSuccessor(0);
     }
 
@@ -64,7 +64,7 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
      *
      * @return the false successor
      */
-    public FixedNode falseSuccessor() {
+    public BeginNode falseSuccessor() {
         return blockSuccessor(1);
     }
 
@@ -111,15 +111,19 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
                 return falseSuccessor();
             }
         }
-        if (trueSuccessor() instanceof EndNode && falseSuccessor() instanceof EndNode) {
-            EndNode trueEnd = (EndNode) trueSuccessor();
-            EndNode falseEnd = (EndNode) falseSuccessor();
+        if (trueSuccessor().next() instanceof EndNode && falseSuccessor().next() instanceof EndNode) {
+            EndNode trueEnd = (EndNode) trueSuccessor().next();
+            EndNode falseEnd = (EndNode) falseSuccessor().next();
             MergeNode merge = trueEnd.merge();
             if (merge == falseEnd.merge() && merge.phis().size() == 0 && merge.endCount() == 2) {
                 FixedNode next = merge.next();
                 merge.delete();
+                BeginNode falseSuccessor = this.falseSuccessor();
+                BeginNode trueSuccessor = this.trueSuccessor();
                 this.setTrueSuccessor(null);
                 this.setFalseSuccessor(null);
+                trueSuccessor.delete();
+                falseSuccessor.delete();
                 trueEnd.delete();
                 falseEnd.delete();
                 return next;

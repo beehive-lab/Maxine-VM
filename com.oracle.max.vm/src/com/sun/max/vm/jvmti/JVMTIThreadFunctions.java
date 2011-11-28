@@ -25,18 +25,20 @@ package com.sun.max.vm.jvmti;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIUtil.TypedData;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.runtime.VmOperation;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -45,8 +47,57 @@ import com.sun.max.vm.thread.*;
  * Support for the JVMTI functions related to {@link Thread}.
  */
 class JVMTIThreadFunctions {
+    private static ClassActor vmThreadClassActor;
+    private static ClassActor jniFunctionsClassActor;
+    private static ClassActor vmThreadMapClassActor;
+    private static ClassActor methodClassActor;
+    private static ClassActor jvmtiClassActor;
+    private static ClassActor javaRunSchemeClassActor;
+
+    private static ClassActor vmThreadClassActor() {
+        if (vmThreadClassActor == null) {
+            vmThreadClassActor = ClassActor.fromJava(VmThread.class);
+        }
+        return vmThreadClassActor;
+    }
+
+    private static ClassActor vmThreadMapClassActor() {
+        if (vmThreadMapClassActor == null) {
+            vmThreadMapClassActor = ClassActor.fromJava(VmThreadMap.class);
+        }
+        return vmThreadMapClassActor;
+    }
+
+    private static ClassActor jniFunctionsClassActor() {
+        if (jniFunctionsClassActor == null) {
+            jniFunctionsClassActor = ClassActor.fromJava(JniFunctions.class);
+        }
+        return jniFunctionsClassActor;
+    }
+
+    private static ClassActor methodClassActor() {
+        if (methodClassActor == null) {
+            methodClassActor = ClassActor.fromJava(Method.class);
+        }
+        return methodClassActor;
+    }
+
+    private static ClassActor jvmtiClassActor() {
+        if (jvmtiClassActor == null) {
+            jvmtiClassActor = ClassActor.fromJava(JVMTI.class);
+        }
+        return jvmtiClassActor;
+    }
+
+    private static ClassActor javaRunSchemeClassActor() {
+        if (javaRunSchemeClassActor == null) {
+            javaRunSchemeClassActor = ClassActor.fromJava(JavaRunScheme.class);
+        }
+        return javaRunSchemeClassActor;
+    }
+
     static int getAllThreads(Pointer threadsCountPtr, Pointer threadsPtr) {
-        final Thread[] threads = VmThreadMap.getThreads(false);
+        final Thread[] threads = VmThreadMap.getThreads(true);
         threadsCountPtr.setInt(threads.length);
         Pointer threadCArray = Memory.allocate(Size.fromInt(threads.length * Word.size()));
         if (threadCArray.isZero()) {
@@ -114,109 +165,169 @@ class JVMTIThreadFunctions {
 
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
         VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
-        StackTraceVisitor stackTraceVisitor = new StackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
+        FrameBufferStackTraceVisitor stackTraceVisitor = new FrameBufferStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
         SingleThreadStackTraceVmOperation vmOperation = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
         vmOperation.submit();
         countPtr.setInt(stackTraceVisitor.frameBufferIndex);
         return JVMTI_ERROR_NONE;
     }
 
-    /**
-     * Base class for stack visiting that carries the current depth of the walk and
-     * (optionally) the computed depth of the stack.
-     */
-    private static abstract class BaseStackTraceVisitor extends SourceFrameVisitor {
-        int stackDepth;       // actual pre-computed logical depth
-        int trapDepth;        // depth at which logical stack begins
-        int depth;            // current depth of visitor
-        ClassMethodActor original;
+    private static class StackElement {
+        ClassMethodActor classMethodActor;
+        int bci;
+        Pointer fp;
 
-        /**
-         * Checks for reflection stubs and if {@link ClassMethodActor#original()} is different.
-         * @return null if it is a stub, otherwise {@link ClassMethodActor#original()}
-         */
-        protected boolean stubCheck(ClassMethodActor methodActor) {
-            original = methodActor.original();
-            if (original.holder().isReflectionStub()) {
-                // ignore invocation stubs
-                return true;
-            }
-            return false;
+        StackElement(ClassMethodActor classMethodActor, int bci, Pointer fp) {
+            this.classMethodActor = classMethodActor;
+            this.fp = fp;
+            this.bci = bci;
         }
+
     }
 
     /**
-     * Supports a variety of single-thread stack walks.
-     * {@link BaseStackTraceVisitor}
+     * A stack visitor that analyses the stack, by which we mean
+     * ignoring the frames that are on the stack because of the
+     * way {@link VMOperation} brings a thread to a safepoint, and also ignores
+     * "implementation" frames, i.e., VM frames, reflection stubs.
+     *
+     * The nature of the mechanisms for freezing threads in {@link VMOperation}
+     * and entering native code, means that there are always VM frames on the
+     * stack that we do not want to include. In addition because JVMTI is
+     * implemented in Java, any calls from agents in response to JVMTI events
+     * and callbacks will also have stacks containing VM frames. Plus the
+     * base of every thread stack has VM frames from the thread startup.
+     *
+     * The stack walker visits the stack top down, but an accurate picture
+     * requires a bottom up analysis. So in a first top down pass we build a list
+     * of {@link StackElement} which is an approximation, then re-analyse it
+     * bottom up. The resulting list is then easy to use to answer all the
+     * JVMTI query variants. The process isn't allocation free.
+     *
+     * In the initial scan downwards all VM frames are dropped until a non-VM frame
+     * is seen, then all frames are kept (except reflection stubs).
      */
-    private static class SingleThreadStackTraceVmOperation extends VmOperation {
-        /**
-         * A stack visitor that counts the logical stack depth, by which we mean
-         * not counting all the frame that are on the stack because of the
-         * way {@link VMOperation} brings a thread to a safepoint.
-         */
-        private static class CountStackTraceVisitor extends BaseStackTraceVisitor {
+    private static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
+        boolean seenNonVMFrame;
+        LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
 
-            @Override
-            public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-                if (trapped) {
-                    trapDepth = depth;
-                    stackDepth = 0;
+        @Override
+        public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
+            // "trapped" indicates the frame in the safepoint trap handler.
+            // In other stack visitors in the VM this causes a reset but,
+            // in this context, it is subsumed by the check for VM frames.
+            ClassMethodActor classMethodActor = methodActor.original();
+            // check for first non-VM frame
+            if (seenNonVMFrame) {
+                add(classMethodActor, bci);
+            } else {
+                if (!JVMTIClassFunctions.isVmClass(classMethodActor.holder())) {
+                    seenNonVMFrame = true;
+                    add(classMethodActor, bci);
                 }
-                if (!stubCheck(method)) {
-                    stackDepth++;
-                    depth++;
-                }
-                return true;
             }
+            return true;
         }
 
-        BaseStackTraceVisitor stackTraceVisitor;
-        CountStackTraceVisitor countStackTraceVisitor;
-
-        /**
-         * Create a {@link VmOperation} that runs the given {@link BaseStackTraceVisitor} on the given thread.
-         * @param vmThread
-         * @param stackTraceVisitor
-         */
-        SingleThreadStackTraceVmOperation(VmThread vmThread, BaseStackTraceVisitor stackTraceVisitor) {
-            super("JVMTISingleStackTrace", vmThread, Mode.Safepoint);
-            countStackTraceVisitor = new CountStackTraceVisitor();
-            this.stackTraceVisitor = stackTraceVisitor;
+        StackElement getStackElement(int depth) {
+            assert depth < stackElements.size();
+            return stackElements.get((stackElements.size() - 1) - depth);
         }
 
-        /**
-         * Degenerate variant that simply counts the stack depth.
-         * @param vmThread
-         */
-        SingleThreadStackTraceVmOperation(VmThread vmThread) {
-            this(vmThread, null);
+        private void add(ClassMethodActor classMethodActor, int bci) {
+            if (!classMethodActor.holder().isReflectionStub()) {
+                stackElements.addFirst(new StackElement(classMethodActor, bci, currentCursor.fp()));
+            }
         }
 
         @Override
-        public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
-            countStackTraceVisitor.walk(null, ip, sp, fp);
-            if (stackTraceVisitor != null) {
-                stackTraceVisitor.stackDepth = countStackTraceVisitor.stackDepth;
-                stackTraceVisitor.trapDepth = countStackTraceVisitor.trapDepth;
+        public void walk(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp) {
+            super.walk(walker, ip, sp, fp);
+            /*
+             * Analysing the stack to remove the VM frames depends on knowledge
+             * of the way that threads start up. The normal case is VmThread.run
+             * calls VmThread.executeRunnable which calls Thread.run.
+             * The unusual case is an attached native thread which starts with
+             * JNIFunctions.CallStaticVoidMethodA. A special case is the
+             * main thread which has a Method.invoke, since it is is called from
+             * JavaRunScheme, unless it has returned but the VM hasn't terminated, in which
+             * case it is in VmThreadMap.joinAllNonDaemons. This analysis gets the
+             * correct base frame. We then scan upwards. If we hit another VM frame we throw everything
+             * away after that. Reason being that the initial down scan may have hit a platform
+             * class method used by the VM, but couldn't know there might be another VM class below,
+             * so decided it was an app frame.
+             *
+             * TODO handle user-defined classloader callbacks, which have VM frames sandwiched
+             * between app frames.
+             */
+
+            if (stackElements.size() == 0) {
+                // some threads, e.g., SignalDispatcher, have only VM frames, so nothing to analyse.
+                return;
             }
-            if (stackTraceVisitor != null) {
-                stackTraceVisitor.walk(null, ip, sp, fp);
+
+            int startIndex = -1;
+            StackElement base = stackElements.getFirst();
+            ClassActor classActor = base.classMethodActor.holder();
+            if (classActor == vmThreadClassActor()) {
+                base = stackElements.get(1);
+                classActor = base.classMethodActor.holder();
+                if (classActor == vmThreadClassActor) {
+                    if (stackElements.get(2).classMethodActor.holder() == javaRunSchemeClassActor()) {
+                        startIndex = 5;
+                    } else {
+                        startIndex = 2;
+                    }
+                } else if (classActor == vmThreadMapClassActor()) {
+                    // main returned
+                    stackElements = new LinkedList<StackElement>();
+                    return;
+                } else if (classActor == methodClassActor()) {
+                    startIndex = 3;
+                } else if (classActor == jvmtiClassActor()) {
+                    startIndex = 2;
+                }
+            } else if (classActor == jniFunctionsClassActor()) {
+                startIndex = 3;
+            }
+
+            if (startIndex < 0) {
+                assert false : "unexpected thread stack layout";
+            }
+
+            for (int i = 0; i < startIndex; i++) {
+                stackElements.remove();
+            }
+            int endIndex = 0;
+            ListIterator<StackElement> iter = stackElements.listIterator();
+            while (iter.hasNext()) {
+                StackElement e = iter.next();
+                classActor = e.classMethodActor.holder();
+                if (JVMTIClassFunctions.isVmClass(classActor)) {
+                    break;
+                }
+                endIndex++;
+            }
+            int lastIndex = stackElements.size();
+            for (int i = endIndex; i < lastIndex; i++) {
+                stackElements.remove();
             }
         }
+
     }
 
     /**
-     * Multi-purpose visitor for the different variants of the stack trace functions.
+     * Visitor for copying portions of a stack to an agent provided buffer.
+     * We do this as a visitor because it is used in single/multiple thread variants.
      */
-    private static class StackTraceVisitor extends BaseStackTraceVisitor {
+    private static class FrameBufferStackTraceVisitor extends FindAppFramesStackTraceVisitor {
         int startDepth;       // first frame to record; > 0 => from top, < 0 from bottom
         int maxCount;         // max number of frames to record
         int frameBufferIndex; // in range 0 .. maxCount - 1
         Pointer frameBuffer;  // C struct for storing info
         VmThread vmThread;    // thread associated with this stack
 
-        StackTraceVisitor(VmThread vmThread, int startDepth, int maxCount, Pointer frameBuffer) {
+        FrameBufferStackTraceVisitor(VmThread vmThread, int startDepth, int maxCount, Pointer frameBuffer) {
             this.startDepth = startDepth;
             this.maxCount = maxCount;
             this.frameBuffer = frameBuffer;
@@ -224,19 +335,46 @@ class JVMTIThreadFunctions {
         }
 
         @Override
-        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (!stubCheck(method)) {
-                boolean record = startDepth < 0 ? depth >= trapDepth + stackDepth + startDepth : depth >= trapDepth + startDepth;
-                if (record) {
-                    setJVMTIFrameInfo(frameBuffer, frameBufferIndex, MethodID.fromMethodActor(original), bci);
-                    frameBufferIndex++;
-                    if (frameBufferIndex >= maxCount) {
-                        return false;
+        public void walk(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp) {
+            super.walk(walker, ip, sp, fp);
+            if (startDepth < 0) {
+                startDepth = stackElements.size() + startDepth;
+            }
+            for (int i = 0; i < stackElements.size(); i++) {
+                if (i >= startDepth) {
+                    if (store(getStackElement(i))) {
+                        break;
                     }
                 }
-                depth++;
             }
-            return true;
+        }
+
+        private boolean store(StackElement se) {
+            setJVMTIFrameInfo(frameBuffer, frameBufferIndex, MethodID.fromMethodActor(se.classMethodActor), se.bci);
+            frameBufferIndex++;
+            if (frameBufferIndex >= maxCount) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private static class SingleThreadStackTraceVmOperation extends VmOperation {
+        FindAppFramesStackTraceVisitor stackTraceVisitor;
+
+        /**
+         * Create a {@link VmOperation} that runs the given {@link BaseStackTraceVisitor} on the given thread.
+         * @param vmThread
+         * @param stackTraceVisitor
+         */
+        SingleThreadStackTraceVmOperation(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
+            super("JVMTISingleStackTrace", vmThread, Mode.Safepoint);
+            this.stackTraceVisitor = stackTraceVisitor;
+        }
+
+        @Override
+        public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
+            stackTraceVisitor.walk(new VmStackFrameWalker(vmThread.tla()), ip, sp, fp);
         }
     }
 
@@ -266,11 +404,17 @@ class JVMTIThreadFunctions {
         if (stackInfoArrayPtr.isZero()) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
+        Pointer frameBuffersBasePtr = stackInfoArrayPtr.plus(threadCount * stackInfoSize());
+        FrameBufferStackTraceVisitor[] stackTraceVisitors = new FrameBufferStackTraceVisitor[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            stackTraceVisitors[i] = new FrameBufferStackTraceVisitor(VmThread.fromJava(threads[i]), 0, maxFrameCount,
+                            frameBuffersBasePtr.plus(i * maxFrameCount * FRAME_INFO_STRUCT_SIZE));
+        }
 
-        MultipleThreadStackTraceVmOperation vmOperation = new MultipleThreadStackTraceVmOperation(maxFrameCount, threads, stackInfoArrayPtr);
+        MultipleThreadStackTraceVmOperation vmOperation = new MultipleThreadStackTraceVmOperation(threads, stackTraceVisitors);
         vmOperation.submit();
         for (int i = 0; i < threadCount; i++) {
-            StackTraceVisitor sv = vmOperation.stackTraceList.get(i);
+            FrameBufferStackTraceVisitor sv = stackTraceVisitors[i];
             setJVMTIStackInfo(stackInfoArrayPtr, i, JniHandles.createLocalHandle(sv.vmThread.javaThread()),
                             getThreadState(sv.vmThread), sv.frameBuffer, sv.frameBufferIndex);
         }
@@ -282,17 +426,13 @@ class JVMTIThreadFunctions {
     }
 
     private static class MultipleThreadStackTraceVmOperation extends VmOperation {
-        private int maxFrameCount;
-        ArrayList<StackTraceVisitor> stackTraceList = new ArrayList<StackTraceVisitor>();
+        FindAppFramesStackTraceVisitor[] stackTraceVisitors;
         Thread[] threads;
-        Pointer frameBuffersBasePtr;
-        int count;
 
-        MultipleThreadStackTraceVmOperation(int maxFrameCount, Thread[] threads, Pointer stackInfoArrayPtr) {
+        MultipleThreadStackTraceVmOperation(Thread[] threads, FindAppFramesStackTraceVisitor[] stackTraceVisitors) {
             super("JVMTIMultipleStackTrace", null, Mode.Safepoint);
-            this.maxFrameCount = maxFrameCount;
             this.threads = threads;
-            this.frameBuffersBasePtr = stackInfoArrayPtr.plus(threads.length * stackInfoSize());
+            this.stackTraceVisitors = stackTraceVisitors;
         }
 
         @Override
@@ -305,13 +445,19 @@ class JVMTIThreadFunctions {
             return false;
         }
 
+        private FindAppFramesStackTraceVisitor getStackTraceVisitor(VmThread vmThread) {
+            for (int i = 0; i < threads.length; i++) {
+                if (VmThread.fromJava(threads[i]) == vmThread) {
+                    return stackTraceVisitors[i];
+                }
+            }
+            assert false;
+            return null;
+        }
+
         @Override
         public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
-            Pointer frameBuffer = frameBuffersBasePtr.plus(count * FRAME_INFO_STRUCT_SIZE);
-            StackTraceVisitor stackTraceVisitor = new StackTraceVisitor(vmThread, 0, maxFrameCount, frameBuffer);
-            stackTraceList.add(stackTraceVisitor);
-            stackTraceVisitor.walk(null, ip, sp, fp);
-            count++;
+            getStackTraceVisitor(vmThread).walk(new VmStackFrameWalker(vmThread.tla()), ip, sp, fp);
         }
 
     }
@@ -344,34 +490,10 @@ class JVMTIThreadFunctions {
         if (vmThread == null || vmThread.state() == Thread.State.TERMINATED) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread);
+        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, new FindAppFramesStackTraceVisitor());
         op.submit();
-        countPtr.setInt(op.countStackTraceVisitor.stackDepth);
+        countPtr.setInt(op.stackTraceVisitor.stackElements.size());
         return JVMTI_ERROR_NONE;
-    }
-
-    private static class FrameLocationStackTraceVisitor extends BaseStackTraceVisitor {
-        int targetDepth;
-        ClassMethodActor targetMethod;
-        int targetBCI;
-
-        FrameLocationStackTraceVisitor(int targetDepth) {
-            this.targetDepth = targetDepth;
-        }
-
-        @Override
-        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (!stubCheck(method)) {
-                if (depth == targetDepth + trapDepth) {
-                    targetMethod = original;
-                    targetBCI = bci;
-                    return false;
-                }
-                depth++;
-            }
-            return true;
-        }
-
     }
 
     static int getFrameLocation(Thread thread, int depth, Pointer methodPtr, Pointer locationPtr) {
@@ -382,132 +504,92 @@ class JVMTIThreadFunctions {
         if (depth < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        FrameLocationStackTraceVisitor stackVisitor = new FrameLocationStackTraceVisitor(depth);
+        FindAppFramesStackTraceVisitor stackVisitor = new FindAppFramesStackTraceVisitor();
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackVisitor);
         op.submit();
-        if (stackVisitor.targetMethod == null) {
+        if (depth < stackVisitor.stackElements.size()) {
+            methodPtr.setWord(MethodID.fromMethodActor(stackVisitor.getStackElement(depth).classMethodActor));
+            locationPtr.setLong(stackVisitor.getStackElement(depth).bci);
+            return JVMTI_ERROR_NONE;
+        } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;
         }
-        methodPtr.setWord(MethodID.fromMethodActor(stackVisitor.targetMethod));
-        locationPtr.setLong(stackVisitor.targetBCI);
-        return JVMTI_ERROR_NONE;
     }
 
-    private static class GetPutValueStackFrameVisitor extends BaseStackTraceVisitor {
-        int targetDepth;
-        int slot;
-        boolean isSet;
-        TypedData typedData;
-        int jvmtiError = JVMTI_ERROR_NO_MORE_FRAMES;
-
-        GetPutValueStackFrameVisitor(boolean isSet, int targetDepth, int slot, TypedData typedData) {
-            this.isSet = isSet;
-            this.targetDepth = targetDepth;
-            this.slot = slot;
-            this.typedData = typedData;
+    private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
+        if (thread == null) {
+            thread = VmThread.current().javaThread();
         }
-
-        @Override
-        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (!stubCheck(method)) {
-                if (depth == targetDepth + trapDepth) {
-                    Log.println("depth match");
-                    LocalVariableTable.Entry[] entries = original.codeAttribute().localVariableTable().entries();
-                    if (entries.length == 0) {
-                        jvmtiError = JVMTI_ERROR_INVALID_SLOT;
-                    } else {
-                        for (int i = 0; i < entries.length; i++) {
-                            LocalVariableTable.Entry entry = entries[i];
-                            if (entry.slot() == slot) {
-                                String slotType = original.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
-                                if (slotType.charAt(0) == typedData.tag) {
-                                    TargetMethod targetMethod = original.currentTargetMethod();
-                                    if (!targetMethod.isBaseline()) {
-                                        jvmtiError = JVMTI_ERROR_INVALID_SLOT;
+        FindAppFramesStackTraceVisitor stackTraceVisitor = new FindAppFramesStackTraceVisitor();
+        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), stackTraceVisitor);
+        op.submit();
+        if (depth < stackTraceVisitor.stackElements.size()) {
+            boolean isSet = valuePtr.isZero();
+            StackElement stackElement = stackTraceVisitor.getStackElement(depth);
+            ClassMethodActor classMethodActor = stackElement.classMethodActor;
+            LocalVariableTable.Entry[] entries = classMethodActor.codeAttribute().localVariableTable().entries();
+            if (entries.length == 0) {
+                return JVMTI_ERROR_INVALID_SLOT;
+            } else {
+                for (int i = 0; i < entries.length; i++) {
+                    LocalVariableTable.Entry entry = entries[i];
+                    if (entry.slot() == slot) {
+                        String slotType = classMethodActor.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
+                        if (slotType.charAt(0) == typedData.tag) {
+                            TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                            if (!targetMethod.isBaseline()) {
+                                return JVMTI_ERROR_INVALID_SLOT; // TODO
+                            }
+                            int offset = targetMethod.frameLayout().localVariableOffset(slot);
+                            Pointer varPtr = stackElement.fp;
+                            switch (typedData.tag) {
+                                case 'L':
+                                    if (isSet) {
+                                        varPtr.writeReference(offset, Reference.fromJava(typedData.objectValue));
+                                    } else {
+                                        valuePtr.setWord(JniHandles.createLocalHandle(varPtr.readReference(offset).toJava()));
                                     }
-                                    int offset = targetMethod.frameLayout().localVariableOffset(slot);
-                                    Pointer varPtr = this.currentCursor.fp();
+                                    break;
 
-                                    switch (typedData.tag) {
-                                        case 'L':
-                                            if (isSet) {
-                                                varPtr.writeReference(offset, Reference.fromJava(typedData.objectValue));
-                                            } else {
-                                                typedData.objectValue = varPtr.readReference(offset).toJava();
-                                            }
-                                            break;
-
-                                        case 'F':
-                                            if (isSet) {
-                                                varPtr.writeFloat(offset, typedData.floatValue);
-                                            } else {
-                                                typedData.floatValue = varPtr.readFloat(offset);
-                                            }
-                                            break;
-
-                                        case 'D':
-                                            if (isSet) {
-                                                varPtr.writeDouble(offset, typedData.doubleValue);
-                                            } else {
-                                                typedData.doubleValue = varPtr.readDouble(offset);
-                                            }
-                                            break;
-
-                                        default:
-                                            if (isSet) {
-                                                varPtr.writeWord(offset, typedData.wordValue);
-                                            } else {
-                                                typedData.wordValue = varPtr.readWord(offset);
-                                            }
+                                case 'F':
+                                    if (isSet) {
+                                        varPtr.writeFloat(offset, typedData.floatValue);
+                                    } else {
+                                        valuePtr.setFloat(varPtr.readFloat(offset));
                                     }
-                                    jvmtiError = JVMTI_ERROR_NONE;
-                                    return false;
-                                }
+                                    break;
+
+                                case 'D':
+                                    if (isSet) {
+                                        varPtr.writeDouble(offset, typedData.doubleValue);
+                                    } else {
+                                        valuePtr.setDouble(varPtr.readDouble(offset));
+                                    }
+                                    break;
+
+                                default:
+                                    if (isSet) {
+                                        varPtr.writeWord(offset, typedData.wordValue);
+                                    } else {
+                                        valuePtr.setWord(varPtr.readWord(offset));
+                                    }
                             }
                         }
                     }
                 }
-                depth++;
             }
-            return true;
+        } else {
+            return JVMTI_ERROR_NO_MORE_FRAMES;
         }
-    }
-
-    @NEVER_INLINE
-    private static void debug(Object obj) {
-
+        return JVMTI_ERROR_NONE;
     }
 
     static int getLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, char type) {
-        if (thread == null) {
-            thread = VmThread.current().javaThread();
-        }
-        TypedData typedData = new TypedData(type);
-        GetPutValueStackFrameVisitor getValueStackFrameVisitor = new GetPutValueStackFrameVisitor(false, depth, slot, typedData);
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), getValueStackFrameVisitor);
-        op.submit();
-        if (getValueStackFrameVisitor.jvmtiError == JVMTI_ERROR_NONE) {
-            if (type == 'L') {
-                valuePtr.setWord(JniHandles.createLocalHandle(getValueStackFrameVisitor.typedData.objectValue));
-            } else if (type == 'F') {
-                valuePtr.setFloat(getValueStackFrameVisitor.typedData.floatValue);
-            } else if (type == 'D') {
-                valuePtr.setDouble(getValueStackFrameVisitor.typedData.doubleValue);
-            } else {
-                valuePtr.setWord(getValueStackFrameVisitor.typedData.wordValue);
-            }
-        }
-        return getValueStackFrameVisitor.jvmtiError;
+        return getOrSetLocalValue(thread, depth, slot, valuePtr, new TypedData(type));
     }
 
     static int setLocalValue(Thread thread, int depth, int slot, TypedData typedData) {
-        if (thread == null) {
-            thread = VmThread.current().javaThread();
-        }
-        GetPutValueStackFrameVisitor putValueStackFrameVisitor = new GetPutValueStackFrameVisitor(true, depth, slot, typedData);
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), putValueStackFrameVisitor);
-        op.submit();
-        return putValueStackFrameVisitor.jvmtiError;
+        return getOrSetLocalValue(thread, depth, slot, Pointer.zero(), typedData);
     }
 
     static int setLocalInt(Thread thread, int depth, int slot, int value) {

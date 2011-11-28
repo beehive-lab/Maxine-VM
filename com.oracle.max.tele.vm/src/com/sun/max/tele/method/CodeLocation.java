@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -61,7 +60,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
     private final String description;
 
-    private TeleCompilation compiledCode;
+    private TeleCompilation compilation;
     private CiDebugInfo debugInfo = null;
 
     private CodeLocation(TeleVM vm, String description) {
@@ -69,16 +68,29 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         this.description = description;
     }
 
-    public final TeleCompilation compiledCode() {
-        if (compiledCode == null && hasAddress()) {
-            compiledCode = addressToCompiledCode(address());
+    public final boolean hasAddress() {
+        final RemoteCodePointer codePointer = codePointer();
+        return codePointer != null && codePointer.isLive();
+    }
+
+    public final Address address() {
+        return codePointer() == null ? Address.zero() : codePointer().getAddress();
+    }
+
+    public final TeleCompilation compilation() {
+        if (compilation == null && hasAddress()) {
+            compilation = findCompilation(codePointer());
         }
-        return compiledCode;
+        return compilation;
     }
 
     public final CiDebugInfo debugInfo() {
-        if (debugInfo == null && hasAddress()) {
-            debugInfo = addressToDebugInfo(address());
+        if (debugInfo == null && codePointer() != null && compilation() != null) {
+            final MaxMachineCodeInfo machineCodeInfo = compilation().getMachineCodeInfo();
+            final int instructionIndex = machineCodeInfo.findInstructionIndex(codePointer().getAddress());
+            if (instructionIndex >= 0) {
+                debugInfo = machineCodeInfo.debugInfoAt(instructionIndex);
+            }
         }
         return debugInfo;
     }
@@ -101,6 +113,8 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
     public final String description() {
         return description;
     }
+
+    protected abstract RemoteCodePointer codePointer();
 
     @Override
     public String toString() {
@@ -135,136 +149,9 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         return null;
     }
 
-    /**
-     * Attempt to locate information for a method loaded in the VM, based
-     * on an abstract description of the method.  Null if the method is not known to be loaded,
-     * or if the information cannot be determined at present, for example if the VM is busy.
-     *
-     * @param methodKey an abstract specification of a method
-     * @return a description of the method loaded in the VM
-     */
-    protected TeleClassMethodActor methodKeyToTeleClassMethodActor(MethodKey methodKey) {
-        if (vm().tryLock()) {
-            try {
-                final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
-                if (teleClassActor != null) {
-                    // find a matching method
-                    final String methodKeyString = methodKey.signature().toJavaString(true, true);
-                    for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                        if (teleMethodActor instanceof TeleClassMethodActor) {
-                            if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
-                                return (TeleClassMethodActor) teleMethodActor;
-                            }
-                        }
-                    }
-                }
-                // TODO (mlvdv) when the class registry is complete, this should not be necessary
-                // Try to locate TeleClassMethodActor via compiled methods in the VM.
-                final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
-                if (teleTargetMethods.size() > 0) {
-                    return Utils.first(teleTargetMethods).getTeleClassMethodActor();
-                }
-            } finally {
-                vm().unlock();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Attempt to locate bytecode location information for the method whose compilation
-     * includes a machine code instruction at a given address.
-     * <p>
-     * Note that in many cases it will not be possible to determine the actual corresponding
-     * bytecode instruction, in which case the position will be 0 (method entry).
-     * <p>
-     * <strong>Unimplemented:</strong> No attempt is made at present to compute a
-     * bytecode instruction position corresponding to the machine code location, although this
-     * could be done for JIT methods.
-     *
-     * @param address an address in the VM, possibly the location of a machine code instruction
-     * in the compilation of a method.
-     * @return  a description of the location expressed in terms of the method loaded in the VM
-     */
-    protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
-        if (vm().tryLock()) {
-            try {
-                final TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
-                if (compiledCode != null) {
-                    return compiledCode.getTeleClassMethodActor();
-                }
-            } finally {
-                vm().unlock();
-            }
-        }
-        return null;
-    }
-
-    protected TeleCompilation addressToCompiledCode(Address address) {
-        if (address != null && !address.isZero()) {
-            return vm().codeCache().findCompiledCode(address);
-        }
-        return null;
-    }
-
-    /**
-     * Attempt to locate debug info associated with the machine
-     * code instruction, if any, at the specified memory location.
-     *
-     * @param address an address in the VM, possibly the location of a machine code instruction
-     * in the compilation of a method.
-     * @return the debug info for the machine code instruction, null if not available
-     */
-    protected CiDebugInfo addressToDebugInfo(Address address) {
-        if (address != null && !address.isZero()) {
-            if (compiledCode() != null) {
-                final InstructionMap instructionMap = compiledCode().getInstructionMap();
-                final int instructionIndex = instructionMap.findInstructionIndex(address);
-                if (instructionIndex >= 0) {
-                    return instructionMap.debugInfoAt(instructionIndex);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Attempt to locate bytecode location information for a method known to be loaded and compiled
-     * into the boot image.  This should always succeed if not called too early in the startup cycle, and if
-     * the VM is not busy.
-     *
-     * @param teleMethodAccess a static method accessor produced by annotation of distinguished VM methods.
-     * @return a new location
-     */
-    protected TeleClassMethodActor methodAccessToTeleClassMethodActor(TeleMethodAccess teleMethodAccess) {
-        if (vm().tryLock()) {
-            try {
-                return teleMethodAccess.teleClassMethodActor();
-            } finally {
-                vm().unlock();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Attempt to determine the first machine code instruction address of the current
-     * compilation of the specified method.  This is the first machine code instruction
-     * of the method prologue, which is equivalent to a bci of -1.
-     *
-     * @param teleClassMethodActor description of the method in the VM
-     * @return a non-zero address, null if not available
-     */
-    protected Address teleClassMethodActorToFirstCompilationCallEntry(TeleClassMethodActor teleClassMethodActor) {
-        if (vm().tryLock()) {
-            try {
-                final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getCurrentCompilation();
-                if (javaTargetMethod != null) {
-                    return javaTargetMethod.callEntryPoint();
-                }
-            } finally {
-                vm().unlock();
-            }
+    protected TeleCompilation findCompilation(RemoteCodePointer codePointer) {
+        if (codePointer != null) {
+            return vm().machineCode().findCompilation(codePointer);
         }
         return null;
     }
@@ -277,6 +164,11 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
         private BytecodeLocation(TeleVM vm, String description) {
             super(vm, description);
+        }
+
+        @Override
+        public RemoteCodePointer codePointer() {
+            return null;
         }
 
         public boolean isSameAs(MaxCodeLocation codeLocation) {
@@ -297,15 +189,28 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      */
     public abstract static class MachineCodeLocation extends CodeLocation {
 
+        private volatile MethodKey methodKey = null;
+
         private MachineCodeLocation(TeleVM vm, String description) {
             super(vm, description);
         }
 
-        public boolean isSameAs(MaxCodeLocation codeLocation) {
+        public final boolean isSameAs(MaxCodeLocation codeLocation) {
             if (this.hasAddress() && codeLocation instanceof MachineCodeLocation) {
                 return address().equals(codeLocation.address());
             }
             return false;
+        }
+
+        public final boolean hasMethodKey() {
+            return methodKey() != null;
+        }
+
+        public final MethodKey methodKey() {
+            if (methodKey == null && teleClassMethodActor() != null) {
+                methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor());
+            }
+            return methodKey;
         }
     }
 
@@ -328,21 +233,37 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             this.methodKey = methodKey;
         }
 
-        public boolean hasAddress() {
-            return false;
-        }
-
-        public Address address() {
-            return Address.zero();
-        }
-
         public boolean hasTeleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
-            return teleClassMethodActor != null;
+            return teleClassMethodActor() != null;
         }
 
         public TeleClassMethodActor teleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
+            if (teleClassMethodActor == null) {
+                if (vm().tryLock()) {
+                    try {
+                        final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
+                        if (teleClassActor != null) {
+                            // find a matching method
+                            final String methodKeyString = methodKey.signature().toJavaString(true, true);
+                            for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
+                                if (teleMethodActor instanceof TeleClassMethodActor) {
+                                    if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
+                                        teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
+                                    }
+                                }
+                            }
+                        }
+                        // TODO (mlvdv) when the class registry is complete, this should not be necessary
+                        // Try to locate TeleClassMethodActor via compiled methods in the VM.
+                        final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
+                        if (teleTargetMethods.size() > 0) {
+                            teleClassMethodActor = Utils.first(teleTargetMethods).getTeleClassMethodActor();
+                        }
+                    } finally {
+                        vm().unlock();
+                    }
+                }
+            }
             return teleClassMethodActor;
         }
 
@@ -354,11 +275,6 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             return methodKey;
         }
 
-        private void tryLocateTeleClassMethodActor() {
-            if (teleClassMethodActor == null) {
-                teleClassMethodActor = methodKeyToTeleClassMethodActor(methodKey);
-            }
-        }
     }
 
     /**
@@ -381,14 +297,6 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             this.bci = bci;
         }
 
-        public boolean hasAddress() {
-            return false;
-        }
-
-        public Address address() {
-            return Address.zero();
-        }
-
         public boolean hasTeleClassMethodActor() {
             return true;
         }
@@ -403,19 +311,14 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         }
 
         public boolean hasMethodKey() {
-            tryCreateKey();
-            return methodKey != null;
+            return methodKey() != null;
         }
 
         public MethodKey methodKey() {
-            tryCreateKey();
-            return methodKey;
-        }
-
-        private void tryCreateKey() {
             if (methodKey == null) {
                 methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
             }
+            return methodKey;
         }
 
     }
@@ -436,57 +339,38 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         // the possibility in the startup cycle of having an address for which
         // we locate the compilation only somewhat later.
 
-        private final Address address;
+        private final RemoteCodePointer codePointer;
         private volatile TeleClassMethodActor teleClassMethodActor = null;
-        private volatile MethodKey methodKey = null;
 
-        private AddressCodeLocation(TeleVM vm, Address address, String description) {
+        private AddressCodeLocation(TeleVM vm, RemoteCodePointer codePointer, String description) {
             super(vm, description);
-            TeleError.check(address != null && !address.isZero());
-            this.address = address;
-        }
-
-        public boolean hasAddress() {
-            return true;
-        }
-
-        public Address address() {
-            return address;
+            TeleError.check(codePointer != null);
+            this.codePointer = codePointer;
         }
 
         public boolean hasTeleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
-            return teleClassMethodActor != null;
+            return teleClassMethodActor() != null;
         }
 
         public TeleClassMethodActor teleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
+            if (teleClassMethodActor == null) {
+                if (vm().tryLock()) {
+                    try {
+                        final TeleCompilation compilation = findCompilation(codePointer);
+                        if (compilation != null) {
+                            teleClassMethodActor = compilation.getTeleClassMethodActor();
+                        }
+                    } finally {
+                        vm().unlock();
+                    }
+                }
+            }
             return teleClassMethodActor;
         }
 
-        public boolean hasMethodKey() {
-            tryCreateMethodKey();
-            return methodKey != null;
-        }
-
-        public MethodKey methodKey() {
-            tryCreateMethodKey();
-            return methodKey;
-        }
-
-        private void tryLocateTeleClassMethodActor() {
-            if (teleClassMethodActor == null) {
-                teleClassMethodActor = addressToTeleClassMethodActor(address);
-            }
-        }
-
-        private void tryCreateMethodKey() {
-            if (methodKey == null) {
-                tryLocateTeleClassMethodActor();
-                if (teleClassMethodActor != null) {
-                    methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
-                }
-            }
+        @Override
+        public RemoteCodePointer codePointer() {
+            return codePointer;
         }
 
     }
@@ -499,27 +383,18 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      */
     private static final class ClassMethodActorAddressLocation extends MachineCodeLocation {
 
-        private final Address address;
+        private final RemoteCodePointer codePointer;
         private final TeleClassMethodActor teleClassMethodActor;
         private final int bci;
-        private volatile MethodKey methodKey = null;
 
-        private ClassMethodActorAddressLocation(TeleVM vm, Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) {
+        private ClassMethodActorAddressLocation(TeleVM vm, RemoteCodePointer codePointer, TeleClassMethodActor teleClassMethodActor, int bci, String description) {
             super(vm, description);
-            TeleError.check(address != null && !address.isZero());
+            TeleError.check(codePointer != null);
             TeleError.check(teleClassMethodActor != null);
             TeleError.check(bci >= -1);
-            this.address = address;
+            this.codePointer = codePointer;
             this.teleClassMethodActor = teleClassMethodActor;
             this.bci = bci;
-        }
-
-        public boolean hasAddress() {
-            return true;
-        }
-
-        public Address address() {
-            return address;
         }
 
         public boolean hasTeleClassMethodActor() {
@@ -530,21 +405,11 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             return teleClassMethodActor;
         }
 
-        public boolean hasMethodKey() {
-            tryCreateMethodKey();
-            return methodKey != null;
+        @Override
+        public RemoteCodePointer codePointer() {
+            return codePointer;
         }
 
-        public MethodKey methodKey() {
-            tryCreateMethodKey();
-            return methodKey;
-        }
-
-        private void tryCreateMethodKey() {
-            if (methodKey == null) {
-                methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
-            }
-        }
     }
 
     /**
@@ -554,14 +419,12 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      * <p>
      * The location corresponds to the beginning of the compiled method prologue, which
      * is equivalent to a bytecode position specification of -1.
-     *
      */
-    private static final class MethodAccessLocation extends MachineCodeLocation {
+    static final class MethodAccessLocation extends MachineCodeLocation {
 
         private final TeleMethodAccess teleMethodAccess;
-        private volatile Address address = null;
+        private volatile RemoteCodePointer codePointer = null;
         private volatile TeleClassMethodActor teleClassMethodActor = null;
-        private volatile MethodKey methodKey = null;
 
         private MethodAccessLocation(TeleVM vm, TeleMethodAccess teleMethodAccess, String description) {
             super(vm, description);
@@ -569,59 +432,41 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             this.teleMethodAccess = teleMethodAccess;
         }
 
-        public boolean hasAddress() {
-            tryCreateAddress();
-            return address != null;
-        }
-
-        public Address address() {
-            tryCreateAddress();
-            return address;
-        }
-
         public boolean hasTeleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
-            return teleClassMethodActor != null;
+            return teleClassMethodActor() != null;
         }
 
         public TeleClassMethodActor teleClassMethodActor() {
-            tryLocateTeleClassMethodActor();
+            if (teleClassMethodActor == null) {
+                if (vm().tryLock()) {
+                    try {
+                        teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
+                    } finally {
+                        vm().unlock();
+                    }
+                }
+            }
             return teleClassMethodActor;
         }
 
-        public boolean hasMethodKey() {
-            tryCreateMethodKey();
-            return methodKey != null;
-        }
-
-        public MethodKey methodKey() {
-            tryCreateMethodKey();
-            return methodKey;
-        }
-
-        // TODO (mlvdv)  check both known compilations?
-        private void tryCreateAddress() {
-            if (address == null) {
-                tryLocateTeleClassMethodActor();
-                if (teleClassMethodActor != null) {
-                    address = teleClassMethodActorToFirstCompilationCallEntry(teleClassMethodActor);
+        @Override
+        public RemoteCodePointer codePointer() {
+            if (codePointer == null && teleClassMethodActor() != null) {
+                if (vm().tryLock()) {
+                    try {
+                        final TeleTargetMethod javaTargetMethod = teleClassMethodActor().getCurrentCompilation();
+                        if (javaTargetMethod != null) {
+                            final Address callEntryPoint = javaTargetMethod.callEntryPoint();
+                            if (callEntryPoint != null && callEntryPoint.isNotZero()) {
+                                codePointer = vm().machineCode().makeCodePointer(callEntryPoint);
+                            }
+                        }
+                    } finally {
+                        vm().unlock();
+                    }
                 }
             }
-        }
-
-        private void tryLocateTeleClassMethodActor() {
-            if (teleClassMethodActor == null) {
-                teleClassMethodActor = methodAccessToTeleClassMethodActor(teleMethodAccess);
-            }
-        }
-
-        private void tryCreateMethodKey() {
-            if (methodKey == null) {
-                tryLocateTeleClassMethodActor();
-                if (teleClassMethodActor != null) {
-                    methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
-                }
-            }
+            return codePointer;
         }
 
     }
@@ -648,6 +493,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             return codeLocationFactory;
         }
 
+
         private CodeLocationFactory(TeleVM vm) {
             super(vm);
         }
@@ -661,11 +507,13 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         }
 
         public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError {
-            return new AddressCodeLocation(vm(), address, description);
+            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
+            return new AddressCodeLocation(vm(), codePointer, description);
         }
 
         public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
-            return new ClassMethodActorAddressLocation(vm(), address, teleClassMethodActor, bci, description);
+            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
+            return new ClassMethodActorAddressLocation(vm(), codePointer, teleClassMethodActor, bci, description);
         }
 
         /**
@@ -683,6 +531,58 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         public MachineCodeLocation createMachineCodeLocation(TeleMethodAccess teleMethodAccess, String description) throws TeleError {
             return new MethodAccessLocation(vm(), teleMethodAccess, description);
         }
+//
+//    private static HashMap<RemoteCodePointer, WeakReference<MachineCodeLocation> > pointerToLocation = new HashMap<RemoteCodePointer, WeakReference<MachineCodeLocation> >();
+//
+//
+//    private static class Count implements Comparable<Count> {
+//        String string;
+//        int value;
+//
+//        @Override
+//        public int compareTo(Count o) {
+//            return value - o.value;
+//        }
+//    }
+//
+//    static HashMap<String, Count> locationsPerString = new HashMap<String, Count>() {
+//
+//        @Override
+//        public Count get(Object key) {
+//            Count count = super.get(key);
+//            if (count == null) {
+//                count = new Count();
+//                count.string = (String) key;
+//                put((String) key, count);
+//            }
+//            return count;
+//        }
+//    };
+//
+//    static {
+//        if (Trace.hasLevel(1)) {
+//            Runtime.getRuntime().addShutdownHook(new Thread("LocationsPerDescriptionPrinter") {
+//
+//                @Override
+//                public void run() {
+//                    SortedSet<Count> set = new TreeSet<Count>(locationsPerString.values());
+//                    System.out.println("Machine code locations created (by description):");
+//                    for (Count c : set) {
+//                        System.out.println("    " + c.value + "\t" + c.string);
+//                    }
+//
+//
+//                    int count = 0;
+//                    for (WeakReference<MachineCodeLocation> weakRef : pointerToLocation.values()) {
+//                        if (weakRef.get() != null) {
+//                            count++;
+//                        }
+//                    }
+//                    System.out.println("Total Locations=" + pointerToLocation.size() + ", active=" + count);
+//                }
+//            });
+//        }
+//    }
 
     }
 }

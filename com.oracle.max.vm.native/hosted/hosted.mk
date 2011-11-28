@@ -24,8 +24,7 @@ PROJECT = ../../..
 
 LIB = hosted
 
-SOURCES = boxedMemory.c boxedPointer.c c.c log.c \
-          platform.c relocation.c dataio.c mutex.c
+SOURCES = c.c log.c platform.c relocation.c dataio.c mutex.c
 
 SOURCE_DIRS = platform hosted share substrate
 

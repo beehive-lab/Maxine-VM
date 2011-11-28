@@ -120,4 +120,19 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
         phi.addInput(after);
         return phi;
     }
+
+    @Override
+    public StrideDirection strideDirection() {
+        ValueNode stride = a();
+        if (stride.isConstant()) {
+            long val = stride.asConstant().asLong();
+            if (val > 0) {
+                return StrideDirection.Up;
+            }
+            if (val < 0) {
+                return StrideDirection.Down;
+            }
+        }
+        return null;
+    }
 }

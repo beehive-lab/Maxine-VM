@@ -242,7 +242,7 @@ public final class GraphBuilder {
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
         BytecodeStream stream = new BytecodeStream(scope.method.code());
-        RiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
+        RiConstantPool constantPool = scope.method.getConstantPool();
         scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         scope.setStoresInLoops(blockMap.getStoresInLoops());
         curBlock = start;
@@ -1005,6 +1005,12 @@ public final class GraphBuilder {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType klass = resolvedTarget.holder();
 
+            if (compilation.runtime.mustInline(resolvedTarget)) {
+                boolean result = tryInline(resolvedTarget, args);
+                assert result : "Inlining must succeed";
+                return;
+            }
+
             // 0. check for trivial cases
             if (resolvedTarget.canBeStaticallyBound() && !isAbstract(resolvedTarget.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
@@ -1488,7 +1494,7 @@ public final class GraphBuilder {
         // prepare callee state
         curState = curState.pushScope(calleeScope);
         BytecodeStream stream = new BytecodeStream(target.code());
-        RiConstantPool constantPool = compilation.runtime.getConstantPool(target);
+        RiConstantPool constantPool = target.getConstantPool();
         ScopeData data = new ScopeData(scopeData, calleeScope, blockMap, stream, constantPool);
         data.setContinuation(continuation);
         scopeData = data;
@@ -1554,24 +1560,13 @@ public final class GraphBuilder {
 
         // handle intrinsics differently
         switch (intrinsic) {
-
-            case java_lang_System$arraycopy:
-                if (compilation.runtime.supportsArrayIntrinsics()) {
-                    break;
-                } else {
-                    return false;
-                }
             case java_lang_Object$getClass:
                 canTrap = true;
                 break;
             case java_lang_Thread$currentThread:
                 break;
-            case java_util_Arrays$copyOf:
-                if (args[0].declaredType() != null && args[0].declaredType().isArrayClass() && compilation.runtime.supportsArrayIntrinsics()) {
-                    break;
-                } else {
-                    return false;
-                }
+            case java_util_Arrays$copyOf: // fall through
+            case java_lang_System$arraycopy: // fall through
             case java_lang_Object$init: // fall through
             case java_lang_String$equals: // fall through
             case java_lang_String$compareTo: // fall through
@@ -1967,7 +1962,6 @@ public final class GraphBuilder {
         }
 
         stats.inlineCount++;
-        compilation.runtime.notifyInline(compilation.method, target);
     }
 
     private Value synchronizedObject(FrameState curState, RiResolvedMethod target) {

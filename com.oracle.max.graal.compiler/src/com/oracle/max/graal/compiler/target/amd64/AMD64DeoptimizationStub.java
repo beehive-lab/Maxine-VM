@@ -83,10 +83,6 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath {
             default:
                 throw Util.shouldNotReachHere();
         }
-        if (code == 0) {
-            // TODO Why throw an exception here for a value that was set explicitly some lines above?
-            throw new RuntimeException();
-        }
         masm.movq(scratch, code);
         // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
         AMD64CallOpcode.directCall(tasm, masm, CiRuntimeCall.Deoptimize, info);

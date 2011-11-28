@@ -52,6 +52,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     private final MethodViewPreferences methodViewPreferences;
 
+    private final MethodViewContainer container;
+
     /**
      * Shared check boxes to be used in all UI code view selection.
      */
@@ -65,7 +67,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
      * Null when this view is not bound to any compilation, in which case this view is the unique (unbound)
      * view for the method.
      */
-    private final MaxCompilation compiledCode;
+    private MaxCompilation compilation;
 
     /**
      * The generation count for the code in the VM, the last time this classed accessed any information.
@@ -84,6 +86,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
      * views so that they will be restored correctly.
      */
     private Set<MethodCodeKind> requestedCodeKinds = EnumSet.noneOf(MethodCodeKind.class);
+
+    private final InspectorFrame frame;
 
     /** Map: MethodCodeKind -> CodeViewer
      * The viewer for the code kind, if it exists, i.e. if it is being displayed in the view.
@@ -120,11 +124,11 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
      *
      * @param inspection the {@link Inspection} of which this view is part
      * @param container the tabbed container for this view
-     * @param compiledCode surrogate for the compilation in the VM
+     * @param compilation surrogate for the compilation in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compiledCode, MethodCodeKind codeKind) {
-        this(inspection, container, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
+    public JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compilation, MethodCodeKind codeKind) {
+        this(inspection, container, compilation, compilation.getTeleClassMethodActor(), codeKind);
     }
 
     /**
@@ -143,17 +147,17 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         assert codeKind != MethodCodeKind.MACHINE_CODE;
     }
 
-    private JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+    private JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compilation, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, container);
-
+        this.container = container;
         this.methodViewPreferences = MethodViewPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.compiledCode = compiledCode;
-        this.vmCodeGeneration = compiledCode != null ? compiledCode.vmCodeGeneration() : 0;
+        this.compilation = compilation;
+        this.vmCodeGeneration = compilation != null ? compilation.codeVersion() : 0;
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
-        if (compiledCode != null || teleClassMethodActor.compilationCount() > 0) {
+        if (compilation != null || teleClassMethodActor.compilationCount() > 0) {
             enabledCodeKinds.add(MethodCodeKind.MACHINE_CODE);
         }
         if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
@@ -203,21 +207,35 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
             codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
         }
 
-        final InspectorFrame frame = createTabFrame(container);
+        frame = createTabFrame(container);
+        createMenus();
+    }
+
+    private void createMenus() throws InspectorError {
+
+        // The default menu operates from the perspective of the parent container.
+        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, container));
 
         final InspectorMenu editMenu = frame.makeMenu(EDIT_MENU);
+        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
         final InspectorMenu objectMenu = frame.makeMenu(OBJECT_MENU);
         final InspectorMenu codeMenu = frame.makeMenu(CODE_MENU);
         final InspectorMenu debugMenu = frame.makeMenu(DEBUG_MENU);
+        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
+
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
-        if (compiledCode != null) {
-            final InspectorAction copyAction = actions().copyCompiledCodeToClipboard(compiledCode, null);
+        if (compilation != null) {
+            final InspectorAction copyAction = actions().copyCompiledCodeToClipboard(compilation, null);
             copyAction.setEnabled(true);
+            memoryMenu.add(views().memory().makeViewAction(compilation.memoryRegion(), compilation.entityName(), "View memory for machine code"));
             editMenu.add(copyAction);
-            objectMenu.add(views().objects().makeViewAction(compiledCode.representation(), "Compiled method: " + compiledCode.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(compilation.representation(), "Compiled method: " + compilation.classActorForObjectType().simpleName()));
         }
+
+        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         if (teleClassMethodActor != null) {
             final InspectorAction copyAction = actions().copyBytecodeToClipboard(teleClassMethodActor, null);
@@ -238,16 +256,16 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         }
         codeMenu.add(defaultMenuItems(CODE_MENU));
 
-        if (compiledCode != null) {
-            breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compiledCode, "Machine code"));
+        if (compilation != null) {
+            breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compilation, "Machine code"));
         }
         if (teleClassMethodActor != null) {
             breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         }
         debugMenu.add(breakOnEntryMenu);
-        if (compiledCode != null) {
-            breakAtLabelsMenu.add(actions().setMachineCodeLabelBreakpoints(compiledCode, "Add machine code breakpoints"));
-            breakAtLabelsMenu.add(actions().removeMachineCodeLabelBreakpoints(compiledCode, "Remove machine code breakpoints"));
+        if (compilation != null) {
+            breakAtLabelsMenu.add(actions().setMachineCodeLabelBreakpoints(compilation, "Add machine code breakpoints"));
+            breakAtLabelsMenu.add(actions().removeMachineCodeLabelBreakpoints(compilation, "Remove machine code breakpoints"));
         }
         debugMenu.add(breakAtLabelsMenu);
         if (teleClassMethodActor != null) {
@@ -264,34 +282,57 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     @Override
     public void createViewContent() {
-        if (!codeViewers.isEmpty()) {
-            // Code viewers already exist, so we must be reconstructing the whole view.
-            // Remember which views were visible
-            requestedCodeKinds.clear();
-            requestedCodeKinds.addAll(codeViewers.keySet());
-
-            // Now get rid of the code viewers; this is awkward because of the way we alternate
-            // between a single viewer in the content pane and a split pane that contains two viewers.
-            // Some day we may support three.
-            while (codeViewers.size() > 1) {
-                closeCodeViewer(firstViewer());
-            }
-            getContentPane().remove(firstViewer());
-            codeViewers.clear();
+        if (frame != null) {
+            // If the frame is already available, then this we are reconstructing the view.
+            frame.clearMenus();
+            createMenus();
+            closeAllViews();
         }
-        // Create requested code viewers
-        for (MethodCodeKind codeKind : requestedCodeKinds) {
-            addCodeViewer(codeKind);
+
+         // Create requested code viewers
+        for (MethodCodeKind requestedKind : requestedCodeKinds) {
+            if (enabledCodeKinds.contains(requestedKind)) {
+                addCodeViewer(requestedKind);
+            }
+        }
+        // If can't meet request, try anything.
+        if (codeViewers.isEmpty()) {
+            for (MethodCodeKind kind : MethodCodeKind.values()) {
+                if (enabledCodeKinds.contains(kind)) {
+                    addCodeViewer(kind);
+                }
+            }
+        }
+        if (codeViewers.isEmpty()) {
+            dispose();
         }
     }
 
     @Override
     protected void refreshState(boolean force) {
-        if (compiledCode != null && compiledCode.vmCodeGeneration() > vmCodeGeneration) {
-            reconstructView();
-            vmCodeGeneration = compiledCode.vmCodeGeneration();
-            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
+        if (compilation != null && !compilation.isCodeLive()) {
+            // We had a compilation, but its code has been evicted from the code cache since we last updated.
+            // Try to reconstruct the view without a machine code viewer.
+            if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
+                compilation = null;
+                enabledCodeKinds.remove(MethodCodeKind.MACHINE_CODE);
+                codeViewCheckBoxes[MethodCodeKind.MACHINE_CODE.ordinal()].setEnabled(false);
+                requestedCodeKinds.remove(MethodCodeKind.MACHINE_CODE);
+                reconstructView();
+                Trace.line(TRACE_VALUE, tracePrefix() + "Machine code view removed after code eviction for method " + getToolTip());
+            } else {
+                gui().informationMessage("Compilation " + getToolTip() + " evicted, view closed");
+                dispose();
+                Trace.line(TRACE_VALUE, tracePrefix() + "Method view removed after code eviction for method " + getToolTip() + "no bytecode available");
 
+            }
+        } else if (compilation != null && compilation.codeVersion() > vmCodeGeneration) {
+            // The compiled code has been changed in some way; reconstruct the view with the same viewers.
+            requestedCodeKinds.clear();
+            requestedCodeKinds.addAll(codeViewers.keySet());
+            reconstructView();
+            vmCodeGeneration = compilation.codeVersion();
+            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
         } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
@@ -302,7 +343,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
     @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
-            return compiledCode.entityName();
+            return compilation.entityName();
         }
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
@@ -310,7 +351,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
         sb.append(classMethodActor.name.toString());
-        sb.append(inspection().nameDisplay().shortMethodCompilationID(compiledCode));
+        sb.append(inspection().nameDisplay().shortMethodCompilationID(compilation));
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
@@ -353,8 +394,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
     }
 
     @Override
-    public MaxCompilation machineCode() {
-        return compiledCode;
+    public MaxCompilation compilation() {
+        return compilation;
     }
 
     @Override
@@ -365,8 +406,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
     @Override
     public String getToolTip() {
         String result = "";
-        if (compiledCode != null) {
-            result =  inspection().nameDisplay().longName(compiledCode);
+        if (compilation != null) {
+            result =  inspection().nameDisplay().longName(compilation);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
             if (teleClassMethodActor.isSubstituted()) {
@@ -396,6 +437,17 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
         }
     }
 
+    private void closeAllViews() {
+        Container contentPane = getContentPane();
+        if (codeViewers.size() == 2) {
+            contentPane.remove(splitPane);
+        } else if (codeViewers.size() == 1) {
+            contentPane.remove(firstViewer());
+        }
+        codeViewers.clear();
+    }
+
+
     @Override
     public void print() {
         final String textForTitle = getTextForTitle();
@@ -422,9 +474,16 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
     private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
             case MACHINE_CODE:
-                return new JTableMachineCodeViewer(inspection(), this, compiledCode);
+                if (compilation == null && teleClassMethodActor != null) {
+                    try {
+                        compilation = vm().machineCode().latestCompilation(teleClassMethodActor);
+                    } catch (MaxVMBusyException e) {
+                        InspectorError.unexpected("Can't create machine code view");
+                    }
+                }
+                return compilation == null ? null : new JTableMachineCodeViewer(inspection(), this, compilation);
             case BYTECODES:
-                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, compiledCode);
+                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, compilation);
             case JAVA_SOURCE:
                 InspectorError.unimplemented();
                 return null;

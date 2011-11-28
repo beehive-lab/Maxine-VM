@@ -22,7 +22,10 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.java.*;
 
 
 /**
@@ -32,11 +35,79 @@ import com.oracle.max.graal.graph.*;
 public class StructuredGraph extends Graph {
     private final BeginNode start;
 
-    public StructuredGraph() {
+    /**
+     * Creates a new Graph containing a single {@link BeginNode} as the {@link #start() start} node.
+     */
+    public StructuredGraph(String name) {
+        super(name);
         this.start = add(new BeginNode());
+    }
+
+    /**
+     * Creates a new Graph containing a single {@link BeginNode} as the {@link #start() start} node.
+     */
+    public StructuredGraph() {
+        this(null);
     }
 
     public BeginNode start() {
         return start;
+    }
+
+    @Override
+    public StructuredGraph copy() {
+        return copy(name);
+    }
+
+    @Override
+    public StructuredGraph copy(String name) {
+        StructuredGraph copy = new StructuredGraph(name);
+        HashMap<Node, Node> replacements = new HashMap<Node, Node>();
+        replacements.put(start, copy.start);
+        copy.addDuplicates(getNodes(), replacements);
+        return copy;
+    }
+
+    public Iterable<Invoke> getInvokes() {
+        final Iterator<MethodCallTargetNode> callTargets = getNodes(MethodCallTargetNode.class).iterator();
+        return new Iterable<Invoke>() {
+            private Invoke next;
+
+            @Override
+            public Iterator<Invoke> iterator() {
+                return new Iterator<Invoke>() {
+
+                    @Override
+                    public boolean hasNext() {
+                        if (next == null) {
+                            while (callTargets.hasNext()) {
+                                Invoke i = callTargets.next().invoke();
+                                if (i != null) {
+                                    next = i;
+                                    return true;
+                                }
+                            }
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
+
+                    @Override
+                    public Invoke next() {
+                        try {
+                            return next;
+                        } finally {
+                            next = null;
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
     }
 }

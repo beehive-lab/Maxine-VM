@@ -24,8 +24,6 @@ package jtt.jni;
 
 import java.util.*;
 
-import com.sun.max.vm.value.*;
-
 /*
  * @Harness: java
  * @Runs: 1 = true
@@ -36,9 +34,9 @@ public class JNI_ManyObjectParameters {
         final int numberOfParameters = 56;
         final Object[] arguments = new Object[numberOfParameters + 1];
         final Object[] array = new Object[numberOfParameters];
-        arguments[0] = ReferenceValue.from(array);
+        arguments[0] = array;
         for (int i = 0; i != numberOfParameters; ++i) {
-            arguments[i + 1] = ReferenceValue.from("object" + i);
+            arguments[i + 1] = "object" + i;
         }
 
         Object[] result = manyObjectParameters(arguments,

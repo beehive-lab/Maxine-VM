@@ -24,6 +24,8 @@ package com.oracle.max.graal.compiler.observer;
 
 import java.util.*;
 
+import com.oracle.max.graal.compiler.*;
+
 /**
  * Base class for compilers that notify subscribed {@link CompilationObserver CompilationObservers} of
  * {@link CompilationEvent CompilationEvents} that occur during their compilations.
@@ -54,26 +56,27 @@ public class ObservableContext {
         observers.add(observer);
     }
 
-    public void fireCompilationStarted(CompilationEvent event) {
+    public void fireCompilationStarted(GraalCompilation compilation) {
         if (isObserved()) {
             for (CompilationObserver observer : observers) {
-                observer.compilationStarted(event);
+                observer.compilationStarted(compilation);
             }
         }
     }
 
-    public void fireCompilationEvent(CompilationEvent event) {
+    public void fireCompilationEvent(String label, Object...debugObjects) {
         if (isObserved()) {
+            CompilationEvent event = new CompilationEvent(label, debugObjects);
             for (CompilationObserver observer : observers) {
                 observer.compilationEvent(event);
             }
         }
     }
 
-    public void fireCompilationFinished(CompilationEvent event) {
+    public void fireCompilationFinished(GraalCompilation compilation) {
         if (isObserved()) {
             for (CompilationObserver observer : observers) {
-                observer.compilationFinished(event);
+                observer.compilationFinished(compilation);
             }
         }
     }
@@ -92,4 +95,9 @@ public class ObservableContext {
         }
     }
 
+    public void clear() {
+        if (observers != null) {
+            observers = null;
+        }
+    }
 }

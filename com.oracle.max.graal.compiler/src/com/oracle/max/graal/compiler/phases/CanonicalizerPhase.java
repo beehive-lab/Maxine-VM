@@ -75,9 +75,9 @@ public class CanonicalizerPhase extends Phase {
 //     cases:                                           original node:
 //                                         |Floating|Fixed-unconnected|Fixed-connected|
 //                                         --------------------------------------------
-//                                     null|   1    |        X        |       2       |
+//                                     null|   1    |        X        |       3       |
 //                                         --------------------------------------------
-//                                 Floating|   1    |        X        |       2       |
+//                                 Floating|   1    |        X        |       3       |
 //       canonical node:                   --------------------------------------------
 //                        Fixed-unconnected|   X    |        X        |       2       |
 //                                         --------------------------------------------
@@ -117,7 +117,7 @@ public class CanonicalizerPhase extends Phase {
                         nodeWorkList.add(newNode);
                     }
                     if (canonical != null) {
-                        nodeWorkList.replaced(canonical, node, false, EdgeType.USAGES);
+                        nodeWorkList.replaced(canonical, node, false);
                     }
                 }
             }
@@ -172,7 +172,7 @@ public class CanonicalizerPhase extends Phase {
                     for (PhiNode phi : loopBegin.phis()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
-                        nodeWorkList.replaced(value, phi, false, EdgeType.USAGES);
+                        nodeWorkList.replaced(value, phi, false);
                     }
                     FixedNode next = loopBegin.next();
                     loopEnd.setLoopBegin(null);
@@ -187,7 +187,7 @@ public class CanonicalizerPhase extends Phase {
                     for (PhiNode phi : merge.phis()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
-                        nodeWorkList.replaced(value, phi, false, EdgeType.USAGES);
+                        nodeWorkList.replaced(value, phi, false);
                     }
                     if (((LoopBeginNode) merge).loopEnd() != null) {
                         ((LoopBeginNode) merge).loopEnd().setLoopBegin(null);
@@ -199,7 +199,7 @@ public class CanonicalizerPhase extends Phase {
                         for (PhiNode phi : merge.phis()) {
                             ValueNode value = phi.valueAt(0);
                             phi.replaceAndDelete(value);
-                            nodeWorkList.replaced(value, phi, false, EdgeType.USAGES);
+                            nodeWorkList.replaced(value, phi, false);
                         }
                         Node replacedSux = merge.phiPredecessorAt(0);
                         Node pred = replacedSux.predecessor();

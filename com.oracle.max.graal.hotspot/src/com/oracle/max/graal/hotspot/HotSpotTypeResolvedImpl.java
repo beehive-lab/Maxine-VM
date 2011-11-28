@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.hotspot;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -48,6 +49,9 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private RiResolvedType superType;
     private boolean superTypeSet;
     private RiField[] fields;
+    private RiConstantPool constantPool;
+    private boolean isInitialized;
+    private RiResolvedType arrayOfType;
 
     private HotSpotTypeResolvedImpl() {
         super(null);
@@ -60,7 +64,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public RiResolvedType arrayOf() {
-        return (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
+        if (arrayOfType == null) {
+           arrayOfType = (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
+        }
+        return arrayOfType;
     }
 
     @Override
@@ -133,7 +140,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public boolean isInitialized() {
-        return compiler.getVMEntries().RiType_isInitialized(this);
+        if (!isInitialized) {
+            isInitialized = compiler.getVMEntries().RiType_isInitialized(this);
+        }
+        return isInitialized;
     }
 
     @Override
@@ -178,8 +188,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
 
     @Override
     public RiConstantPool constantPool() {
-        // TODO: Implement constant pool without the need for VmId and cache the constant pool.
-        return compiler.getVMEntries().RiType_constantPool(this);
+        if (constantPool == null) {
+            constantPool = new HotSpotConstantPool(compiler, this);
+        }
+        return constantPool;
     }
 
     @Override
@@ -188,7 +200,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
+    public synchronized RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
         RiResolvedField result = null;
 
         long id = offset + ((long) flags << 32);
@@ -227,5 +239,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     @Override
     public Class< ? > toJava() {
         return javaMirror;
+    }
+
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return toJava().getAnnotation(annotationClass);
     }
 }

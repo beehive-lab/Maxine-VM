@@ -35,6 +35,7 @@ public final class GraalOptions {
     // Checkstyle: resume
 
 
+    public static int     Threads                            = 4;
     public static boolean Lower                              = true;
 
     // inlining settings
@@ -47,7 +48,7 @@ public final class GraalOptions {
     public static int     FreqInlineRatio                    = 20;
     public static int     MaximumTrivialSize                 = 6;
     public static int     MaximumInlineLevel                 = 30;
-    public static int     MaximumDesiredSize                 = 8000;
+    public static int     MaximumDesiredSize                 = 6000;
     public static boolean ParseBeforeInlining                = ____;
     public static float   InliningSizePenaltyExp             = 20;
     public static float   MaximumInlineWeight                = 1.25f;
@@ -104,6 +105,7 @@ public final class GraalOptions {
     // Other printing settings
     public static boolean Meter                              = ____;
     public static boolean Time                               = ____;
+    public static boolean PrintQueue                         = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintXirTemplates                  = ____;
     public static boolean PrintIRWithLIR                     = ____;
@@ -163,6 +165,7 @@ public final class GraalOptions {
 
     public static boolean SupportJsrBytecodes                = true;
 
+    public static boolean OptAssumptions                     = true;
     public static boolean OptReadElimination                 = true;
     public static boolean OptGVN                             = true;
     public static boolean OptCanonicalizer                   = true;

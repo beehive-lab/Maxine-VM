@@ -32,10 +32,15 @@ import com.sun.max.vm.stack.*;
 /**
  * Data describing a single compilation of a method, stub, adaptor, or other routine in the VM.
  */
-public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
+public interface MaxCompilation extends MaxMachineCodeRoutine<MaxCompilation> {
 
     /**
-     * @return true if this is a baseline compilation, false if optimized.
+     * @return {@code true} if this compilation is still runnable, {@code false} if evicted from the code cache.
+     */
+    boolean isCodeLive();
+
+    /**
+     * @return {@code true} if this is a baseline compilation, {@code false} if optimized.
      */
     boolean isBaseline();
 
@@ -61,7 +66,6 @@ public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
      * in the VM.
      */
     ClassActor classActorForObjectType();
-
 
     /**
      * Determines whether there is machine code in this compilation at a specified memory

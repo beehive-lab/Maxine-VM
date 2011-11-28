@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
  */
 public interface VMExits {
 
-    void compileMethod(HotSpotMethodResolved method, int entryBCI) throws Throwable;
+    void compileMethod(HotSpotMethodResolved method, int entryBCI, boolean blocking) throws Throwable;
 
     RiMethod createRiMethodUnresolved(String name, String signature, RiType holder);
 
@@ -39,13 +39,11 @@ public interface VMExits {
 
     RiField createRiField(RiType holder, String name, RiType type, int offset, int flags);
 
-    RiType createRiType(long vmId, String name);
+    RiType createRiType(HotSpotConstantPool pool, String name);
 
     RiType createRiTypePrimitive(int basicType);
 
     RiType createRiTypeUnresolved(String name);
-
-    RiConstantPool createRiConstantPool(long vmId);
 
     CiConstant createCiConstant(CiKind kind, long value);
 
@@ -57,7 +55,9 @@ public interface VMExits {
 
     void shutdownCompiler() throws Throwable;
 
-    void startCompiler();
+    void startCompiler() throws Throwable;
+
+    void bootstrap() throws Throwable;
 
     void pollJavaQueue();
 }

@@ -25,6 +25,7 @@ package com.oracle.max.graal.examples.mock;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -77,7 +78,7 @@ public class MockExample {
         graph.start().setNext(returnNode);
 
         // Compile and print disassembly.
-        CiResult result = graalCompiler.compileMethod(riMethod, graph);
+        CiResult result = graalCompiler.compileMethod(riMethod, graph, PhasePlan.DEFAULT);
         System.out.println(runtime.disassemble(result.targetMethod()));
 
         // Install method!

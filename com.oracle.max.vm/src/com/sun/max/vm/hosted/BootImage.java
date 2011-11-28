@@ -425,6 +425,7 @@ public class BootImage {
             CPU(CPU.class),
             ISA(ISA.class),
             OS(OS.class),
+            NSIG(String.class),
             REFERENCE(BootImagePackage.class),
             LAYOUT(BootImagePackage.class),
             HEAP(BootImagePackage.class),
@@ -465,6 +466,10 @@ public class BootImage {
             return OS.valueOf(values.get(Key.OS.name()));
         }
 
+        public int nsig() {
+            return Integer.valueOf(values.get(Key.NSIG.name()));
+        }
+
         public BootImagePackage bootImagePackage(Key key) {
             return BootImagePackage.fromName(values.get(key.name()));
         }
@@ -501,6 +506,7 @@ public class BootImage {
             put(Key.CPU, platform().cpu);
             put(Key.ISA, platform().isa);
             put(Key.OS, platform().os);
+            put(Key.NSIG, platform().nsig);
             put(Key.REFERENCE, vmConfig.referencePackage);
             put(Key.LAYOUT, vmConfig.layoutPackage);
             put(Key.HEAP, vmConfig.heapPackage);
@@ -548,7 +554,7 @@ public class BootImage {
                         }
                         BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                     } else {
-                        assert key.valueType == BootImagePackage.class;
+                        assert key.valueType == BootImagePackage.class || key == Key.NSIG : e;
                     }
                 } else {
                     // must be a system property for one of the schemes
@@ -668,7 +674,7 @@ public class BootImage {
                 BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
-                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize);
+                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize, stringInfo.nsig());
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
