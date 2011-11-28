@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.snippets;
 
+
 public class ArrayCopySnippets {
 
     public static void arraycopy(int[] src, int srcPos, int[] dest, int destPos, int length) {
@@ -31,15 +32,9 @@ public class ArrayCopySnippets {
         if (srcPos < 0 || destPos < 0 || length < 0 || srcPos + length > src.length || destPos + length > dest.length) {
             throw new IndexOutOfBoundsException();
         }
-        if (src == dest) { //aliased case
-            if (srcPos > destPos) {
-                for (int i = 0; i < length; i++) {
-                    src[i + destPos] = src[i + srcPos];
-                }
-            } else if (srcPos < destPos) {
-                for (int i = length; i > 0; i--) {
-                    src[i + destPos] = src[i + srcPos];
-                }
+        if (src == dest && srcPos < destPos) { // bad aliased case
+            for (int i = length; i > 0; i--) {
+                src[i + destPos] = src[i + srcPos];
             }
         } else {
             for (int i = 0; i < length; i++) {
@@ -55,15 +50,9 @@ public class ArrayCopySnippets {
         if (srcPos < 0 || destPos < 0 || length < 0 || srcPos + length > src.length || destPos + length > dest.length) {
             throw new IndexOutOfBoundsException();
         }
-        if (src == dest) { //aliased case
-            if (srcPos > destPos) {
-                for (int i = 0; i < length; i++) {
-                    src[i + destPos] = src[i + srcPos];
-                }
-            } else if (srcPos < destPos) {
-                for (int i = length; i > 0; i--) {
-                    src[i + destPos] = src[i + srcPos];
-                }
+        if (src == dest && srcPos < destPos) { // bad aliased case
+            for (int i = length; i > 0; i--) {
+                src[i + destPos] = src[i + srcPos];
             }
         } else {
             for (int i = 0; i < length; i++) {
@@ -79,15 +68,9 @@ public class ArrayCopySnippets {
         if (srcPos < 0 || destPos < 0 || length < 0 || srcPos + length > src.length || destPos + length > dest.length) {
             throw new IndexOutOfBoundsException();
         }
-        if (src == dest) { //aliased case
-            if (srcPos > destPos) {
-                for (int i = 0; i < length; i++) {
-                    src[i + destPos] = src[i + srcPos];
-                }
-            } else if (srcPos < destPos) {
-                for (int i = length; i > 0; i--) {
-                    src[i + destPos] = src[i + srcPos];
-                }
+        if (src == dest && srcPos < destPos) { // bad aliased case
+            for (int i = length; i > 0; i--) {
+                src[i + destPos] = src[i + srcPos];
             }
         } else {
             for (int i = 0; i < length; i++) {
