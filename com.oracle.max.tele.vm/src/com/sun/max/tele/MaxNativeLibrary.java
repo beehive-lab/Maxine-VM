@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,29 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.unsafe.*;
 
 /**
- * Data describing a single block of external machine code representing a native routine
- * about which little is known.
+ * Denotes a native (dynamically loaded) library in the target VM.
+ * See {@link System#loadLibrary(String).
  */
-public interface MaxExternalCodeRoutine extends MaxMachineCodeRoutine<MaxExternalCodeRoutine> {
+public interface MaxNativeLibrary extends MaxEntity {
+    /**
+     * The file system path to the native library.
+     * @return
+     */
+    String path();
 
-    long DEFAULT_NATIVE_CODE_LENGTH = 200;
+    /**
+     * The functions in the library, or {@code null} if this information is not known (yet).
+     * There is a window between opening the library and resolving the first symbol where
+     * {@code null} can be returned.
+     * @return
+     */
+    MaxNativeFunction[] functions();
+
+    Address base();
+
+    int length();
 
 }

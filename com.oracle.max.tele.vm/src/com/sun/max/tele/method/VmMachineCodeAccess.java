@@ -223,11 +223,11 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
     }
 
-    public TeleExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+    public MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         return externalMachineCodeAccess.registerExternalCode(codeStart, nBytes, name);
     }
 
-    public MaxExternalCodeRoutine findExternalCode(Address address) {
+    public MaxNativeFunction findExternalCode(Address address) {
         return externalMachineCodeAccess.findExternalCode(address);
     }
 
