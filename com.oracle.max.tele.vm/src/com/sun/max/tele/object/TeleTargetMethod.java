@@ -81,7 +81,7 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
-    private static final int TRACE_VALUE = 1;
+    private static final int TRACE_VALUE = 2;
 
     /**
      * The data produced by a compilation is stored into an area of memory allocated from some part of the
