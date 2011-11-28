@@ -1402,6 +1402,11 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode x = returnKind == CiKind.Void ? null : frameState.pop(returnKind);
         assert frameState.stackSize() == 0;
 
+        // TODO (gd) remove this when FloatingRead is fixed
+        if (Modifier.isSynchronized(method.accessFlags())) {
+            append(graph.add(new ValueAnchorNode(x)));
+        }
+
         synchronizedEpilogue(FrameState.AFTER_BCI);
         ReturnNode returnNode = graph.add(new ReturnNode(x));
         append(returnNode);
