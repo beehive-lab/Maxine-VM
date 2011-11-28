@@ -125,7 +125,7 @@ class FixedSizeRegionAllocator {
                 bits[startWordIndex] |= bitmask(startIndex, endIndex);
             } else {
                 int i = startWordIndex;
-                bits[i++] |= bitsLeftOf(startWordIndex);
+                bits[i++] |= bitsLeftOf(startIndex);
                 while (i < endWordIndex) {
                     bits[i++] = ALL_ONES;
                 }
@@ -139,9 +139,8 @@ class FixedSizeRegionAllocator {
             if (startWordIndex == endWordIndex) {
                 bits[startWordIndex] &= ~bitmask(startIndex, endIndex);
             } else {
-
                 int i = startWordIndex;
-                bits[i++] &= ~bitsLeftOf(startWordIndex);
+                bits[i++] &= ~bitsLeftOf(startIndex);
                 while (i < endWordIndex) {
                     bits[i++] = 0L;
                 }
