@@ -124,13 +124,14 @@ public final class NoAgingEvacuator extends Evacuator  {
     @Override
     protected void doBeforeEvacuation() {
         promotedBytes = Size.zero();
-        top = Pointer.zero();
-        end = Pointer.zero();
-        nextLABChunk = Pointer.zero();
         allocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
         fromSpace.doBeforeGC();
+        Address chunk = toSpace.allocateTLAB(labSize);
+        nextLABChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+        top = chunk.asPointer();
+        end = chunk.plus(HeapFreeChunk.getFreeChunkNext(chunk)).minus(LAB_HEADROOM).asPointer();
     }
 
     @Override
@@ -138,6 +139,7 @@ public final class NoAgingEvacuator extends Evacuator  {
         // Give back LAB allocator ?
         survivorRanges.clear();
         fromSpace.doAfterGC();
+
     }
 
     private void recordRange(Address start, Address end) {
