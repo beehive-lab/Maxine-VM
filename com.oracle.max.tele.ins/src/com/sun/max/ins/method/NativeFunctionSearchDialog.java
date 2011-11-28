@@ -24,12 +24,31 @@ package com.sun.max.ins.method;
 
 import java.util.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 
 public class NativeFunctionSearchDialog extends FilteredListDialog<MaxNativeFunction> {
+
+    private static class NullDialog extends SimpleDialog {
+        private static NullDialog nullDialog;
+
+        private NullDialog(Inspection inspection) {
+            super(inspection, new JLabel("Functions are not available at this stage"), "Native Function Search", true);
+        }
+
+        static void create(Inspection inspection) {
+            if (nullDialog == null) {
+                nullDialog = new NullDialog(inspection);
+            } else {
+                nullDialog.setVisible(true);
+            }
+        }
+
+    }
 
     @Override
     protected MaxNativeFunction noSelectedObject() {
@@ -71,11 +90,16 @@ public class NativeFunctionSearchDialog extends FilteredListDialog<MaxNativeFunc
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link TeleNativeCLibraries.SymbolInfo}, null if user canceled.
+     * @return references to the selected instances of {@link MaxNativeFunction}, null if user canceled.
      */
     public static List<MaxNativeFunction> show(Inspection inspection, MaxNativeLibrary maxNativeLibrary, String title, String actionName, boolean multi) {
-        final NativeFunctionSearchDialog dialog = new NativeFunctionSearchDialog(inspection, maxNativeLibrary, title, actionName, multi);
-        dialog.setVisible(true);
-        return dialog.selectedObjects();
+        if (maxNativeLibrary.functions() == null) {
+            NullDialog.create(inspection);
+            return null;
+        } else {
+            final NativeFunctionSearchDialog dialog = new NativeFunctionSearchDialog(inspection, maxNativeLibrary, title, actionName, multi);
+            dialog.setVisible(true);
+            return dialog.selectedObjects();
+        }
     }
 }

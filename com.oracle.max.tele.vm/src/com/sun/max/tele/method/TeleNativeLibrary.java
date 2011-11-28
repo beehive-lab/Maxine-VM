@@ -267,20 +267,37 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         @Override
         protected long readSymbols(ArrayList<TeleNativeFunction> functionList) throws Exception {
             long sentinelOffset = 0;
-            ELFSymbolLookup elfSym = new ELFSymbolLookup(new File(path));
+            RandomAccessFile raf = new RandomAccessFile(path, "r");
+            ELFHeader header = ELFLoader.readELFHeader(raf);
+            ELFSectionHeaderTable elfSHT = ELFLoader.readSHT(raf, header);
+            ELFSymbolLookup elfSym = new ELFSymbolLookup(raf, header, elfSHT);
             for (Map.Entry<String, List<ELFSymbolTable.Entry>> mapEntry : elfSym.symbolMap.entrySet()) {
                 List<ELFSymbolTable.Entry> entryList = mapEntry.getValue();
                 for (ELFSymbolTable.Entry entry : entryList) {
                     ELFSymbolTable.Entry64 entry64 = (ELFSymbolTable.Entry64) entry;
                     if (entry64.isFunction() && entry64.st_value != 0) {
-                        functionList.add(new TeleNativeFunction(vm(), entry64.getName(), Address.fromLong(entry64.st_value), this));
-                        if (sentinel != null && entry64.getName().equals(sentinel)) {
-                            sentinelOffset = entry64.st_value;
+                        ELFSectionHeaderTable.Entry64 section = getSection(elfSHT, entry64.st_shndx);
+                        if (section.getName().equals(".text")) {
+                            functionList.add(new TeleNativeFunction(vm(), entry64.getName(), Address.fromLong(entry64.st_value), this));
+                            if (sentinel != null && entry64.getName().equals(sentinel)) {
+                                sentinelOffset = entry64.st_value;
+                                base = Address.fromLong(section.sh_addr);
+                                length = section.sh_size;
+                            }
                         }
                     }
                 }
             }
+            raf.close();
+            // relocate the offsets to be from the start of the .text section
+            for (TeleNativeFunction f : functionList) {
+                f.base = f.base.minus(base);
+            }
             return sentinelOffset;
+        }
+
+        private ELFSectionHeaderTable.Entry64 getSection(ELFSectionHeaderTable elfSHT, short shIndex) {
+            return (ELFSectionHeaderTable.Entry64) elfSHT.entries[shIndex];
         }
     }
 
