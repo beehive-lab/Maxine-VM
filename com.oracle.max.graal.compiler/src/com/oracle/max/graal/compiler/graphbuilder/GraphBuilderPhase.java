@@ -671,13 +671,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode exception = frameState.apop();
         FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(exception, false))));
         append(node);
-
-        FixedNode entry = handleException(exception, bci);
-        if (entry != null) {
-            append(entry);
-        } else {
-            appendGoto(createTarget(unwindBlock(bci), frameState.duplicateWithException(bci, exception)));
-        }
+        append(handleException(exception, bci));
     }
 
     private RiType lookupType(int cpi, int bytecode) {
@@ -1395,7 +1389,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private void createUnwindBlock(Block block) {
-        synchronizedEpilogue();
+        synchronizedEpilogue(FrameState.AFTER_EXCEPTION_BCI);
         UnwindNode unwindNode = graph.add(new UnwindNode(frameState.apop()));
         append(unwindNode);
     }
@@ -1408,15 +1402,15 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode x = returnKind == CiKind.Void ? null : frameState.pop(returnKind);
         assert frameState.stackSize() == 0;
 
-        synchronizedEpilogue();
+        synchronizedEpilogue(FrameState.AFTER_BCI);
         ReturnNode returnNode = graph.add(new ReturnNode(x));
         append(returnNode);
     }
 
-    private void synchronizedEpilogue() {
+    private void synchronizedEpilogue(int bci) {
         if (Modifier.isSynchronized(method.accessFlags())) {
             MonitorExitNode monitorExit = genMonitorExit(methodSynchronizedObject);
-            monitorExit.setStateAfter(frameState.create(FrameState.AFTER_BCI));
+            monitorExit.setStateAfter(frameState.create(bci));
         }
     }
 
