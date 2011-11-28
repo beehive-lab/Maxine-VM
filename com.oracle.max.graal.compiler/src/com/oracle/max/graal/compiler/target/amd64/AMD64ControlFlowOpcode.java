@@ -355,10 +355,14 @@ public class AMD64ControlFlowOpcode {
             case aboveEqual:
             case notEqual:
             case above:
+            case less:
+            case overflow:
                 return false;
             case equal:
             case belowEqual:
             case below:
+            case greaterEqual:
+            case noOverflow:
                 return true;
             default:
                 throw Util.shouldNotReachHere();

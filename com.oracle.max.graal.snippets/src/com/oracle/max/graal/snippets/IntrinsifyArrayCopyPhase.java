@@ -65,8 +65,13 @@ public class IntrinsifyArrayCopyPhase extends Phase {
             RiResolvedMethod targetMethod = methodCallTarget.targetMethod();
             RiResolvedMethod snippetMethod = null;
             if (targetMethod == arrayCopy) {
-                RiResolvedType srcDeclaredType = methodCallTarget.arguments().get(0).declaredType();
-                RiResolvedType destDeclaredType = methodCallTarget.arguments().get(2).declaredType();
+                ValueNode src = methodCallTarget.arguments().get(0);
+                ValueNode dest = methodCallTarget.arguments().get(2);
+                if (src == null || dest == null) {
+                    return;
+                }
+                RiResolvedType srcDeclaredType = src.declaredType();
+                RiResolvedType destDeclaredType = dest.declaredType();
                 if (srcDeclaredType != null
                                 && srcDeclaredType.isArrayClass()
                                 && destDeclaredType != null
