@@ -22,8 +22,10 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.unsafe.*;
 import static com.sun.max.vm.heap.gcx.CardTable.*;
+
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 /**
  * Table providing support for  linear scanning of arbitrary cards of a contiguous range of virtual addresses associated with a card table.
@@ -128,31 +130,38 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
             return;
         }
         // FOT entry next to that for the card that contains the start of the cell always encode a negative offset.
-        int nextCard = firstCard + 1;
-        final byte numWords = (byte) rangeStart(nextCard).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-        set(nextCard, numWords);
+        final int offsetCard = firstCard + 1;
+        final byte numWords = (byte) rangeStart(offsetCard).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        set(offsetCard, numWords);
         int remainingCards = numCards - 1;
         if (remainingCards == 0) {
             return;
         }
         // Subsequent LOG2_ENCODING_THRESHOLD entries encode a distance (in number of cards) to the cards holding the offset information.
         int numNonLogEncodedCards = remainingCards >= LOG2_ENCODING_THRESHOLD ? LOG2_ENCODING_THRESHOLD : remainingCards;
-
-        for (byte i = 1; i <= numNonLogEncodedCards; i++) {
+        int nextCard = offsetCard + 1;
+        for (byte i = 0; i < numNonLogEncodedCards; i++) {
             set(nextCard + i, i);
         }
         nextCard += numNonLogEncodedCards;
+
+        // FIXME: remove temp trace ---
+        Log.print("setting FOT for range [");  Log.print(cell);
+        Log.print(", ");  Log.print(cellEnd);
+        Log.print("#cards = ");  Log.print(numCards);
+        Log.print("] non-log encoding cards = ");  Log.print(numNonLogEncodedCards);
+        Log.print(" last card = "); Log.print(lastCard);
+        Log.print(" next card = "); Log.println(nextCard);
 
         // All subsequent entries, if any, encode the distance to a previous entry as a biased power of two.
         int log2 = 3;
         while (nextCard <= lastCard) {
             // get the range of FOT entries that will store  the encoded current log2.
-            int c = nextCard;
             int endOfCardRange  = 1 << (log2 + 1);
-            nextCard = firstCard + (numCards > endOfCardRange ? endOfCardRange : numCards);
+            int c = offsetCard + (numCards > endOfCardRange ? endOfCardRange : numCards);
             byte biasedLog2 = (byte) (log2 + LOG2_BIAS);
-            while (c <= nextCard) {
-                set(c, biasedLog2);
+            while (nextCard < c) {
+                set(nextCard++, biasedLog2);
             }
             log2++;
         }

@@ -72,7 +72,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     private HeapRegionList tlabAllocationRegions;
 
     /**
-     * List used to keep track of regions unavailable for allocation.
+     * Sorted list used to keep track of regions with live objects that are unavailable for allocation.
      */
     private HeapRegionList unavailableRegions;
 
