@@ -22,131 +22,47 @@
  */
 package com.oracle.max.graal.hotspot;
 
-import java.io.*;
-import java.util.*;
-
 import com.sun.cri.ri.*;
 
 /**
  * Implementation of RiConstantPool for HotSpot.
  */
 public class HotSpotConstantPool extends CompilerObject implements RiConstantPool {
+    private final HotSpotTypeResolvedImpl type;
 
-    private final long vmId;
-
-    private final FastLRUIntCache<RiMethod> methodCache = new FastLRUIntCache<RiMethod>();
-    private final FastLRUIntCache<RiField> fieldCache = new FastLRUIntCache<RiField>();
-    private final FastLRUIntCache<RiResolvedType> typeCache = new FastLRUIntCache<RiResolvedType>();
-
-    public static class FastLRUIntCache<T> implements Serializable {
-
-        private static final int InitialCapacity = 4;
-        private int lastKey;
-        private T lastObject;
-
-        private int[] keys;
-        private Object[] objects;
-        private int count;
-
-        @SuppressWarnings("unchecked")
-        private T access(int index) {
-            return (T) objects[index];
-        }
-
-        public T get(int key) {
-            if (key == lastKey) {
-                return lastObject;
-            } else if (count > 1) {
-                for (int i = 0; i < count; ++i) {
-                    if (keys[i] == key) {
-                        lastObject = access(i);
-                        lastKey = key;
-                        return lastObject;
-                    }
-                }
-            }
-            return null;
-        }
-
-        public void add(int key, T object) {
-            count++;
-            if (count == 1) {
-                lastKey = key;
-                lastObject = object;
-            } else {
-                ensureSize();
-                keys[count - 1] = key;
-                objects[count - 1] = object;
-                if (count == 2) {
-                    keys[0] = lastKey;
-                    objects[0] = lastObject;
-                }
-                lastKey = key;
-                lastObject = object;
-            }
-        }
-
-        private void ensureSize() {
-            if (keys == null) {
-                keys = new int[InitialCapacity];
-                objects = new Object[InitialCapacity];
-            } else if (count > keys.length) {
-                keys = Arrays.copyOf(keys, keys.length * 2);
-                objects = Arrays.copyOf(objects, objects.length * 2);
-            }
-        }
-    }
-
-    public HotSpotConstantPool(Compiler compiler, long vmId) {
+    public HotSpotConstantPool(Compiler compiler, HotSpotTypeResolvedImpl type) {
         super(compiler);
-        this.vmId = vmId;
+        this.type = type;
     }
 
     @Override
     public Object lookupConstant(int cpi) {
-        Object constant = compiler.getVMEntries().RiConstantPool_lookupConstant(vmId, cpi);
+        Object constant = compiler.getVMEntries().RiConstantPool_lookupConstant(type, cpi);
         return constant;
     }
 
     @Override
     public RiSignature lookupSignature(int cpi) {
-        return compiler.getVMEntries().RiConstantPool_lookupSignature(vmId, cpi);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public RiMethod lookupMethod(int cpi, int byteCode) {
-        RiMethod result = methodCache.get(cpi);
-        if (result == null) {
-            result = compiler.getVMEntries().RiConstantPool_lookupMethod(vmId, cpi, (byte) byteCode);
-            methodCache.add(cpi, result);
-        }
-        return result;
+        return compiler.getVMEntries().RiConstantPool_lookupMethod(type, cpi, (byte) byteCode);
     }
 
     @Override
     public RiType lookupType(int cpi, int opcode) {
-        RiType result = typeCache.get(cpi);
-        if (result == null) {
-            result = compiler.getVMEntries().RiConstantPool_lookupType(vmId, cpi);
-            if (result instanceof RiResolvedType) {
-                typeCache.add(cpi, (RiResolvedType) result);
-            }
-        }
-        return result;
+        return compiler.getVMEntries().RiConstantPool_lookupType(type, cpi);
     }
 
     @Override
     public RiField lookupField(int cpi, int opcode) {
-        RiField result = fieldCache.get(cpi);
-        if (result == null) {
-            result = compiler.getVMEntries().RiConstantPool_lookupField(vmId, cpi, (byte) opcode);
-            fieldCache.add(cpi, result);
-        }
-        return result;
+        return compiler.getVMEntries().RiConstantPool_lookupField(type, cpi, (byte) opcode);
     }
 
     @Override
     public void loadReferencedType(int cpi, int bytecode) {
-        compiler.getVMEntries().RiConstantPool_loadReferencedType(vmId, cpi, (byte) bytecode);
+        compiler.getVMEntries().RiConstantPool_loadReferencedType(type, cpi, (byte) bytecode);
     }
 }

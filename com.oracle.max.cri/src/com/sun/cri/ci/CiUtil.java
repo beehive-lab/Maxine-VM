@@ -24,6 +24,7 @@ package com.sun.cri.ci;
 
 import static java.lang.reflect.Modifier.*;
 
+import java.lang.annotation.*;
 import java.util.*;
 
 import com.sun.cri.ri.*;
@@ -34,6 +35,27 @@ import com.sun.cri.ri.*;
 public class CiUtil {
 
     public static final String NEW_LINE = String.format("%n");
+
+    /**
+     * Gets the annotation of a particular type for a formal parameter of a given method.
+     *
+     * @param annotationClass the Class object corresponding to the annotation type
+     * @param parameterIndex the index of a formal parameter of {@code method}
+     * @param method the method for which a parameter annotation is being requested
+     * @return the annotation of type {@code annotationClass} for the formal parameter present, else null
+     * @throws IndexOutOfBoundsException if {@code parameterIndex} does not denote a formal parameter
+     */
+    public static <T extends Annotation> T getParameterAnnotation(Class<T> annotationClass, int parameterIndex, RiResolvedMethod method) {
+        if (parameterIndex >= 0) {
+            Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+            for (Annotation a : parameterAnnotations[parameterIndex]) {
+                if (a.annotationType() == annotationClass) {
+                    return annotationClass.cast(a);
+                }
+            }
+        }
+        return null;
+    }
 
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
@@ -706,6 +728,15 @@ public class CiUtil {
         }
         for (int j = 0; j < args; j++) {
             result[i + j] = signature.argumentKindAt(j, true);
+        }
+        return result;
+    }
+
+    public static Class<?>[] signatureToTypes(RiSignature signature, RiType accessingClass) {
+        int count = signature.argumentCount(false);
+        Class<?>[] result = new Class<?>[count];
+        for (int i = 0; i < result.length; ++i) {
+            result[i] = ((RiResolvedType) signature.argumentTypeAt(i, accessingClass)).toJava();
         }
         return result;
     }

@@ -22,6 +22,7 @@
  */
 package com.sun.max.unsafe;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -528,6 +529,7 @@ public interface Accessor {
      * @param dstIndex the index in {@code dst} to which to copy
      * @param length the number of elements to copy
      */
+    @HOSTED_ONLY
     void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length);
 }
 

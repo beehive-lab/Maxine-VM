@@ -122,7 +122,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
-        if (!instructionPointer.isZero()) {
+        if (instructionPointer.isNotZero()) {
             final StackFrame callee = stackFrame.calleeFrame();
             if (callee == null) {
                 // Top frame, not a call return so no adjustment.
@@ -206,7 +206,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
             this.stackFrameMemoryRegion = new StackFrameMemoryRegion(vm, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
-            this.teleCompiledCode = vm.codeCache().findCompiledCode(stackFrame.ip);
+            this.teleCompiledCode = vm.machineCode().findCompilation(stackFrame.ip);
         }
 
         public String entityName() {
@@ -225,13 +225,13 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return stackFrameMemoryRegion.contains(address);
         }
 
-        public MaxMachineCode machineCode() {
-            return compiledCode();
+        public MaxMachineCodeRoutine machineCode() {
+            return compilation();
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             if (teleCompiledCode == null) {
-                teleCompiledCode = vm().codeCache().findCompiledCode(stackFrame.ip);
+                teleCompiledCode = vm().machineCode().findCompilation(stackFrame.ip);
             }
             return teleCompiledCode;
         }
@@ -253,15 +253,15 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String sourceVariableName(int slot) {
-            final TeleCompilation compiledCode = compiledCode();
-            return compiledCode == null ? null : compiledCode.sourceVariableName(this, slot);
+            final TeleCompilation compilation = compilation();
+            return compilation == null ? null : compilation.sourceVariableName(this, slot);
         }
 
     }
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
 
-        private MaxExternalCode externalMachineCode = null;
+        private MaxNativeFunction nativeFunction = null;
 
         private NativeFrame(TeleVM vm, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
             super(vm, teleStack, position, nativeStackFrame);
@@ -284,16 +284,16 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return false;
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             return null;
         }
 
         @Override
-        public MaxMachineCode machineCode() {
-            if (externalMachineCode == null) {
-                externalMachineCode = vm().codeCache().findExternalCode(stackFrame.ip);
+        public MaxMachineCodeRoutine machineCode() {
+            if (nativeFunction == null) {
+                nativeFunction = vm().machineCode().findExternalCode(stackFrame.ip);
             }
-            return externalMachineCode;
+            return nativeFunction;
         }
 
     }
@@ -335,11 +335,11 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return Pointer.zero();
         }
 
-        public MaxMachineCode machineCode() {
+        public MaxMachineCodeRoutine machineCode() {
             return null;
         }
 
-        public TeleCompilation compiledCode() {
+        public TeleCompilation compilation() {
             return null;
         }
 

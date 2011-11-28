@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
@@ -33,41 +32,16 @@ import com.sun.cri.ci.*;
 /**
  * Load of a value from a location specified as an offset relative to an object.
  */
-public class ExtendedUnsafeLoadNode extends AbstractStateSplit implements Lowerable, Node.ValueNumberable {
+public class ExtendedUnsafeLoadNode extends ExtendedUnsafeNode implements Lowerable {
 
-    @Input private ValueNode object;
-    @Input private ValueNode offset;
-    @Input private ValueNode displacement;
-    @Data private final CiKind loadKind;
-
-    public ValueNode object() {
-        return object;
-    }
-
-    public ValueNode displacement() {
-        return displacement;
-    }
-
-    public ValueNode offset() {
-        return offset;
-    }
-
-    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode offset, CiKind kind) {
-        super(kind.stackKind());
-        this.object = object;
-        this.displacement = displacement;
-        this.offset = offset;
-        this.loadKind = kind;
-    }
-
-    public CiKind loadKind() {
-        return loadKind;
+    public ExtendedUnsafeLoadNode(ValueNode object, ValueNode displacement, ValueNode index, CiKind kind) {
+        super(object, displacement, index, kind);
     }
 
     @Override
     public void lower(CiLoweringTool tool) {
         assert kind() != CiKind.Illegal;
-        LocationNode location = ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, loadKind(), displacement(), offset(), graph());
+        LocationNode location = createLocation();
         ReadNode memoryRead = graph().unique(new ReadNode(kind(), object(), location));
         if (object().kind() == CiKind.Object) {
             memoryRead.setGuard((GuardNode) tool.createGuard(graph().unique(new NullCheckNode(object(), false))));

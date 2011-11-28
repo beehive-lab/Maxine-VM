@@ -120,6 +120,11 @@ public final class FrameMap {
     private int stackBlocksSize;
 
     /**
+     * The list of stack blocks allocated in this frame.
+     */
+    private StackBlock stackBlocks;
+
+    /**
      * Area occupied by outgoing overflow arguments.
      * This value is adjusted as calling conventions for outgoing calls are retrieved.
      */
@@ -245,7 +250,7 @@ public final class FrameMap {
     /**
      * Gets the stack address within this frame for a given reserved stack block.
      *
-     * @param stackBlock the value returned from {@link #reserveStackBlock(int)} identifying the stack block
+     * @param stackBlock the value returned from {@link #reserveStackBlock(int, boolean)} identifying the stack block
      * @return a representation of the stack location
      */
     public CiAddress toStackAddress(StackBlock stackBlock) {
@@ -289,7 +294,7 @@ public final class FrameMap {
     }
 
     /**
-     * Encapsulates the details of a stack block reserved by a call to {@link FrameMap#reserveStackBlock(int)}.
+     * Encapsulates the details of a stack block reserved by a call to {@link FrameMap#reserveStackBlock(int, boolean)}.
      */
     public static final class StackBlock {
         /**
@@ -302,9 +307,18 @@ public final class FrameMap {
          */
         public final int offset;
 
-        public StackBlock(int size, int offset) {
+        /**
+         * Specifies if this block holds object values.
+         */
+        public final boolean refs;
+
+        public final StackBlock next;
+
+        public StackBlock(StackBlock next, int size, int offset, boolean refs) {
             this.size = size;
             this.offset = offset;
+            this.next = next;
+            this.refs = refs;
         }
     }
 
@@ -312,14 +326,16 @@ public final class FrameMap {
      * Reserves a block of memory in the frame of the method being compiled.
      *
      * @param size the number of bytes to reserve
+     * @param refs specifies if the block is all references
      * @return a descriptor of the reserved block that can be used with {@link #toStackAddress(StackBlock)} once register
      *         allocation is complete and the size of the frame has been {@linkplain #finalizeFrame(int) finalized}.
      */
-    public StackBlock reserveStackBlock(int size) {
+    public StackBlock reserveStackBlock(int size, boolean refs) {
         int wordSize = target.sizeInBytes(target.wordKind);
         assert (size % wordSize) == 0;
-        StackBlock block = new StackBlock(size, stackBlocksSize);
+        StackBlock block = new StackBlock(stackBlocks, size, stackBlocksSize, refs);
         stackBlocksSize += size;
+        stackBlocks = block;
         return block;
     }
 
@@ -413,6 +429,25 @@ public final class FrameMap {
             spillSlotCount = -1;
         }
         return (outgoingSize + customAreaSize()) / target.spillSlotSize;
+    }
+
+    /**
+     * Initializes a ref map that covers all the slots in the frame.
+     */
+    public CiBitMap initFrameRefMap() {
+        int frameSize = frameSize();
+        int frameWords = frameSize / target.spillSlotSize;
+        CiBitMap frameRefMap = new CiBitMap(frameWords);
+        for (StackBlock sb = stackBlocks; sb != null; sb = sb.next) {
+            if (sb.refs) {
+                int firstSlot = offsetForStackBlock(sb) / target.wordSize;
+                int words = sb.size / target.wordSize;
+                for (int i = 0; i < words; i++) {
+                    frameRefMap.set(firstSlot + i);
+                }
+            }
+        }
+        return frameRefMap;
     }
 
 }

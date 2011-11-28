@@ -74,7 +74,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-/**
+    /**
      * Dispatch the {@link JVMTIEvent#CLASS_FILE_LOAD_HOOK}.
      * We do not check the event state, caller is presumed to have called {@link JVMTI#eventNeeded(int).
      * @param classLoader null for boot
@@ -84,8 +84,8 @@ class JVMTIClassFunctions {
      * @return transformed bytes or null if no change
      */
     static byte[] classFileLoadHook(ClassLoader classLoader, String className, ProtectionDomain protectionDomain, byte[] classfileBytes) {
-        Pointer newClassDataLenPtr = Intrinsics.stackAllocate(Pointer.size());
-        Pointer newClassDataPtrPtr = Intrinsics.stackAllocate(Pointer.size());
+        Pointer newClassDataLenPtr = Intrinsics.alloca(Pointer.size(), false);
+        Pointer newClassDataPtrPtr = Intrinsics.alloca(Pointer.size(), false);
         Pointer classDataPtr = Reference.fromJava(classfileBytes).toOrigin().plus(JVMTIUtil.byteDataOffset);
         int classfileBytesLength = classfileBytes.length;
         boolean changed = false;
@@ -406,6 +406,12 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_ABSENT_INFORMATION;
     }
 
+    static int isMethodObsolete(ClassMethodActor classMethodActor, Pointer isObsoletePtr) {
+        // TODO implement properly!
+        isObsoletePtr.setBoolean(false);
+        return JVMTI_ERROR_NONE;
+    }
+
     static int getMethodName(MethodActor methodActor, Pointer namePtrPtr, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
         if (!namePtrPtr.isZero()) {
             namePtrPtr.setWord(CString.utf8FromJava(methodActor.name()));
@@ -446,8 +452,8 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_INVALID_METHODID;
         }
         byte[] code = classMethodActor.codeAttribute().code();
-        startLocationPtr.setInt(0);
-        endLocationPtr.setInt(code.length - 1);
+        startLocationPtr.setLong(0);
+        endLocationPtr.setLong(code.length - 1);
         return JVMTI_ERROR_NONE;
     }
 

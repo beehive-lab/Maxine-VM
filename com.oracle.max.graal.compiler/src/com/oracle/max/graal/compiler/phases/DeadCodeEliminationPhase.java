@@ -26,7 +26,6 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
 
 
 public class DeadCodeEliminationPhase extends Phase {
@@ -67,12 +66,6 @@ public class DeadCodeEliminationPhase extends Phase {
             } else {
                 for (Node successor : current.successors()) {
                     flood.add(successor);
-                }
-            }
-
-            if (current instanceof AbstractVectorNode) {
-                for (Node usage : current.usages()) {
-                    flood.add(usage);
                 }
             }
         }

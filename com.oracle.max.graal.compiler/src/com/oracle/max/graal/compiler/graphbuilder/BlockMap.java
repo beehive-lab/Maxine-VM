@@ -26,9 +26,7 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.util.*;
 
-import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -130,7 +128,7 @@ public final class BlockMap {
 
         private boolean visited;
         private boolean active;
-        private long loops;
+        public long loops;
 
         public HashMap<JsrScope, Block> jsrAlternatives;
         public JsrScope jsrScope = JsrScope.EMPTY_SCOPE;
@@ -206,7 +204,7 @@ public final class BlockMap {
         addExceptionEdges();
         if (hasJsrBytecodes) {
             if (!GraalOptions.SupportJsrBytecodes) {
-                throw new JSRNotSupportedBailout("jsr/ret parsing disabled");
+                throw new JsrNotSupportedBailout("jsr/ret parsing disabled");
             }
             createJsrAlternatives(blockMap[0]);
         }
@@ -317,7 +315,7 @@ public final class BlockMap {
                     hasJsrBytecodes = true;
                     int target = bci + Bytes.beSVar(code, bci + 1, opcode == JSR_W);
                     if (target == 0) {
-                        throw new JSRNotSupportedBailout("jsr target bci 0 not allowed");
+                        throw new JsrNotSupportedBailout("jsr target bci 0 not allowed");
                     }
                     Block b1 = makeBlock(target);
                     current.jsrSuccessor = b1;
@@ -474,7 +472,7 @@ public final class BlockMap {
                     nextScope = scope.pop();
                 }
                 if (!successor.jsrScope.isEmpty()) {
-                    throw new JSRNotSupportedBailout("unstructured control flow  (" + successor.jsrScope + " " + nextScope + ")");
+                    throw new JsrNotSupportedBailout("unstructured control flow  (" + successor.jsrScope + " " + nextScope + ")");
                 }
                 if (!nextScope.isEmpty()) {
                     Block clone;
@@ -630,44 +628,5 @@ public final class BlockMap {
         blocks.add(block);
 
         return loops;
-    }
-
-    /**
-     * Print block information in the format required by {@linkplain CFGPrinter}. The method must
-     * be here because it accesses private state of a block.
-     */
-    public void printBlock(Block block, LogStream out) {
-        out.print("name \"B").print(block.startBci).println('"');
-        out.print("from_bci ").println(block.startBci);
-        out.print("to_bci ").println(block.endBci);
-
-        out.println("predecessors ");
-
-        out.print("successors ");
-        for (Block succ : block.successors) {
-            if (!succ.isExceptionEntry) {
-                out.print("\"B").print(succ.startBci).print("\" ");
-            }
-        }
-        out.println();
-
-        out.print("xhandlers");
-        for (Block succ : block.successors) {
-            if (succ.isExceptionEntry) {
-                out.print("\"B").print(succ.startBci).print("\" ");
-            }
-        }
-        out.println();
-
-        out.print("flags ");
-        if (block.isExceptionEntry) {
-            out.print("\"ex\" ");
-        }
-        if (block.isLoopHeader) {
-            out.print("\"plh\" ");
-        }
-        out.println();
-
-        out.print("loop_depth ").println(Long.bitCount(block.loops));
     }
 }

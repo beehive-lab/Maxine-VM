@@ -53,11 +53,7 @@ public class AccessorIntrinsifier implements Intrinsifier {
                     // TODO (gd) move this to a graph buidling utility when GraphBuilderPhase is moved to its own project
                     StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
-                        StructuredGraph duplicate = new StructuredGraph();
-                        Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
-                        replacements.put(graph.start(), duplicate.start());
-                        duplicate.addDuplicate(graph.getNodes(), replacements);
-                        graph = duplicate;
+                        graph = graph.copy();
                     } else {
                         graph = new StructuredGraph();
                         new GraphBuilderPhase(runtime, accessorMethod, null).apply(graph, true, false);

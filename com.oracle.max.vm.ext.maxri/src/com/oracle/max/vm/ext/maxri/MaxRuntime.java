@@ -39,7 +39,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -56,7 +56,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationBroker.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -68,36 +70,40 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRuntime implements GraalRuntime {
 
-    public static final class CompilationInfo {
-
-        public boolean usesTagging = false;
-
-        public void reset() {
-            usesTagging = false;
-        }
-
-    }
-
-    public static final ThreadLocal<CompilationInfo> compilationInfo = new ThreadLocal<CompilationInfo>() {
-        @Override
-        protected CompilationInfo initialValue() {
-            return new CompilationInfo();
-        }
-    };
-
     private static MaxRuntime instance = new MaxRuntime();
 
     private IntrinsicImpl.Registry intrinsicRegistry;
 
-    public static MaxRuntime getInstance() {
+    /**
+     * Gets the global MaxRuntime instance.
+     */
+    public static MaxRuntime runtime() {
         return instance;
     }
+
+    /**
+     * Factory method for getting a Graal runtime instance. This method is called via reflection.
+     */
+    public static GraalRuntime getGraalRuntime() {
+        if (MaxineVM.isHosted() && vm() == null) {
+            RuntimeCompiler.optimizingCompilerOption.setValue(NullOptCompiler.class.getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(NullBaselineCompiler.class.getName());
+            VMConfigurator.installStandard(BuildLevel.PRODUCT);
+            JavaPrototype.initialize(false);
+        }
+        return runtime();
+    }
+
 
     private MaxRuntime() {
     }
 
     public void setIntrinsicRegistry(IntrinsicImpl.Registry registry) {
         intrinsicRegistry = registry;
+    }
+
+    public IntrinsicImpl.Registry getIntrinsicRegistry() {
+        return intrinsicRegistry;
     }
 
     @HOSTED_ONLY
@@ -124,15 +130,6 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     /**
-     * Gets the constant pool for a specified method.
-     * @param method the compiler interface method
-     * @return the compiler interface constant pool for the specified method
-     */
-    public RiConstantPool getConstantPool(RiResolvedMethod method) {
-        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
-    }
-
-    /**
      * Checks whether the runtime requires inlining of the specified method.
      * @param method the method to inline
      * @return {@code true} if the method must be inlined; {@code false}
@@ -142,7 +139,7 @@ public class MaxRuntime implements GraalRuntime {
         if (!(method instanceof ClassMethodActor)) {
             return false;
         }
-        ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
+        ClassMethodActor methodActor = (ClassMethodActor) method;
         if (methodActor.isInline()) {
             return true;
         }
@@ -164,7 +161,7 @@ public class MaxRuntime implements GraalRuntime {
      * {@code false} to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(RiResolvedMethod method) {
-        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        final ClassMethodActor classMethodActor = (ClassMethodActor) method;
         if (classMethodActor.isNative()) {
             // Native stubs must not be inlined as there is a 1:1 relationship between
             // a NativeFunction and the TargetMethod from which it is called. This
@@ -174,22 +171,17 @@ public class MaxRuntime implements GraalRuntime {
             return true;
         }
 
-        if (isHosted() && CompilationBroker.compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
-            // Ensure that methods intended to be compiled by the baseline compiler for the
-            // purpose of a JTT test are not inlined.
-            return true;
+        if (isHosted()) {
+            CompilationBroker cb = vm().compilationBroker;
+            String compilerName = cb.compilerFor(classMethodActor);
+            if (compilerName != null && cb.baselineCompiler != null && cb.baselineCompiler.matches(compilerName)) {
+                // Ensure that methods intended to be compiled by the baseline compiler for the
+                // purpose of a JTT test are not inlined.
+                return true;
+            }
         }
 
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
-    }
-
-    @Override
-    public void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee) {
-        final ClassMethodActor cmaCallee = asClassMethodActor(callee, "notifyInline()");
-        if (cmaCallee.isUsingTaggedLocals()) {
-            final CompilationInfo ci = compilationInfo.get();
-            ci.usesTagging = true;
-        }
     }
 
     /**
@@ -200,10 +192,6 @@ public class MaxRuntime implements GraalRuntime {
      */
     public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
-    }
-
-    static ClassMethodActor asClassMethodActor(RiResolvedMethod method, String operation) {
-        return (ClassMethodActor) method;
     }
 
     public int basicObjectLockOffsetInBytes() {
@@ -222,7 +210,7 @@ public class MaxRuntime implements GraalRuntime {
 
     @Override
     public String disassemble(RiResolvedMethod method) {
-        ClassMethodActor classMethodActor = asClassMethodActor(method, "disassemble()");
+        ClassMethodActor classMethodActor = (ClassMethodActor) method;
         return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
     }
 
@@ -462,10 +450,6 @@ public class MaxRuntime implements GraalRuntime {
         return STACK_SLOT_SIZE;
     }
 
-    public boolean supportsArrayIntrinsics() {
-        return false;
-    }
-
     public int getArrayLength(CiConstant array) {
         return Array.getLength(array.asObject());
     }
@@ -508,39 +492,6 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
-        MethodActor maxMethod = (MethodActor) method;
-        if (maxMethod.intrinsic() != null) {
-            IntrinsicImpl impl = intrinsicRegistry.get(method);
-            if (impl != null) {
-                StructuredGraph graph = new StructuredGraph();
-                ValueNode[] args = new ValueNode[parameters.size()];
-                for (int i = 0; i < args.length; i++) {
-                    ValueNode valueNode = (ValueNode) parameters.get(i);
-                    if (valueNode.isConstant()) {
-                        args[i] = ConstantNode.forCiConstant(valueNode.asConstant(), this, graph);
-                    } else {
-                        args[i] = graph.unique(new LocalNode(valueNode.kind(), i));
-                    }
-                }
-                ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
-                if (node instanceof FixedNode) {
-                    if (node instanceof FixedWithNextNode) {
-                        graph.start().setNext((FixedNode) node);
-                        ((FixedWithNextNode) node).setNext(graph.add(new ReturnNode(node)));
-                    } else {
-                        graph.start().setNext((FixedNode) node);
-                    }
-                } else {
-                    graph.start().setNext(graph.add(new ReturnNode(node)));
-                }
-                return graph;
-            } else {
-                // TODO(ls) ignore these intrinsics for now...
-                if (!IntrinsicIDs.MEMBAR.equals(method.intrinsic())) {
-                    throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
-                }
-            }
-        }
         return null;
     }
 
@@ -553,13 +504,12 @@ public class MaxRuntime implements GraalRuntime {
         return MethodActor.fromJava(reflectionMethod);
     }
 
-    public RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code) {
+    public void installMethod(RiMethod method, CiTargetMethod code) {
         ClassMethodActor cma = (ClassMethodActor) method;
         synchronized (cma) {
             MaxTargetMethod tm = new MaxTargetMethod(cma, code, true);
             cma.compiledState = new Compilations(null, tm);
         }
-        return null;
     }
 
     @Override

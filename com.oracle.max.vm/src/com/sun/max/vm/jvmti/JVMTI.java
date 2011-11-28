@@ -26,7 +26,6 @@ import static com.sun.max.vm.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTIEvent.*;
 import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
-import static com.sun.max.vm.jvmti.JVMTIVMOptions.*;
 import static com.sun.max.vm.jvmti.JVMTIFieldWatch.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.unsafe.UnsafeCast.*;
@@ -114,18 +113,13 @@ public class JVMTI {
      */
     static int phase = JVMTI_PHASE_ONLOAD;
 
-    /**
-     * We do not permit recursive events, which can happen all too easily in a meta-circular VM.
-     */
-    private static boolean inEvent;
-
     static {
         jvmtiEnvs = new Env[MAX_ENVS];
         for (int i = 0; i < jvmtiEnvs.length; i++) {
             Env jvmtiEnv = new Env();
             jvmtiEnvs[i] = jvmtiEnv;
             for (int j = 0; j < jvmtiEnv.bootClassPathAdd.length; j++) {
-                jvmtiEnv.bootClassPathAdd [j] = 0;
+                jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
     }
@@ -174,24 +168,31 @@ public class JVMTI {
     }
 
     /**
-     * Initial entry from VM in {@code PRIMORDIAL} phase.
-     * We call Agent_OnLoad for all the agents listed in VM startup command.
+     * Initial entry from VM at the start of {@code PRISTINE} phase, i.e., before {code
+     * VMConfiguration.initializeSchemes(MaxineVM.Phase.PRISTINE)} has been called. We call Agent_OnLoad for all the
+     * agents listed in VM startup command.
      */
     public static void initialize() {
-        // TODO agentLibOption variant
-        for (int i = 0; i < agentPathOption.count(); i++) {
-            Pointer path = agentPathOption.getLibStart(i);
-            Word handle = DynamicLinker.load(path);
+        for (int i = 0; i < AgentVMOption.count(); i++) {
+            AgentVMOption.Info info = AgentVMOption.getInfo(i);
+            Word handle = Word.zero();
+            Pointer path = info.libStart;
+            if (info.isAbsolute) {
+                handle = DynamicLinker.load(path);
+            } else {
+                handle = JVMTISystem.load(path);
+            }
+
             if (handle.isZero()) {
-                initializeFail("failed to load agentlib: ", path, "");
+                initializeFail("failed to load agentlib: ", info.libStart, "");
             }
             Word onLoad = DynamicLinker.lookupSymbol(handle, AGENT_ONLOAD);
             if (onLoad.isZero()) {
-                initializeFail("agentlib: ", path, " does not contain an Agent_OnLoad function");
+                initializeFail("agentlib: ", info.libStart, " does not contain an Agent_OnLoad function");
             }
-            int rc = invokeAgentOnLoad(onLoad.asAddress(), agentPathOption.getOptionStart(i));
+            int rc = invokeAgentOnLoad(onLoad.asAddress(), info.optionStart);
             if (rc != 0) {
-                initializeFail("agentlib: ", path, " failed to initialize");
+                initializeFail("agentlib: ", info.libStart, " failed to initialize");
             }
         }
         phase = JVMTI_PHASE_PRIMORDIAL;
@@ -282,7 +283,7 @@ public class JVMTI {
         if (MaxineVM.isHosted()) {
             return true;
         }
-        if (jvmtiEnvsIndex == 0 || inEvent) {
+        if (jvmtiEnvsIndex == 0) {
             return true;
         }
 
@@ -312,8 +313,8 @@ public class JVMTI {
     }
 
     /**
-     * Dispatches the event denoted by {@code eventId} to all environments that have registered
-     * and enabled a call back for it.
+     * Dispatches the event denoted by {@code eventId} to all environments that have registered and enabled a call back
+     * for it.
      *
      * @param eventId
      */
@@ -327,77 +328,71 @@ public class JVMTI {
             return;
         }
 
-        try {
-            inEvent = true;
+        // Regardless of interest in these events there are things that must be done
+        switch (eventId) {
+            case VM_START:
+                phase = JVMTI_PHASE_START;
+                JVMTIFunctions.checkTracing();
+                break;
 
-            // Regardless of interest in these events there are things that must be done
+            case VM_INIT:
+                phase = JVMTI_PHASE_LIVE;
+                tfed = new ThreadFieldEventData();
+                break;
+
+            case THREAD_START:
+                // JVMTI_FIELD_EVENT_DATA.store3(Reference.fromJava(new FieldEventData()));
+                break;
+
+            default:
+        }
+
+        // Check that event is enabled and dispatch it to all registered agents
+        for (int i = 0; i < jvmtiEnvs.length; i++) {
+            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId);
+            if (callback.isZero()) {
+                continue;
+            }
+            Pointer env = jvmtiEnvs[i].env;
             switch (eventId) {
                 case VM_START:
-                    phase = JVMTI_PHASE_START;
-                    JVMTIFunctions.checkTracing();
+                case VM_DEATH:
+                    invokeStartFunctionNoArg(callback, env);
                     break;
 
                 case VM_INIT:
-                    phase = JVMTI_PHASE_LIVE;
-                    tfed = new ThreadFieldEventData();
-                    break;
-
                 case THREAD_START:
-                    // JVMTI_FIELD_EVENT_DATA.store3(Reference.fromJava(new FieldEventData()));
+                case THREAD_END:
+                    invokeStartFunction(callback, env, currentThreadHandle());
                     break;
 
-                default:
+                case GARBAGE_COLLECTION_START:
+                case GARBAGE_COLLECTION_FINISH:
+                    invokeGarbageCollectionCallback(callback, env);
+                    break;
+
+                case METHOD_ENTRY:
+                    invokeThreadObjectCallback(callback, env, currentThreadHandle(), MethodID.fromMethodActor(asClassMethodActor(arg1)));
+                    break;
+
+                case CLASS_LOAD:
+                case CLASS_PREPARE:
+                    invokeThreadObjectCallback(callback, env, currentThreadHandle(), JniHandles.createLocalHandle(arg1));
+                    break;
+
+                case FIELD_ACCESS:
+                case FIELD_MODIFICATION:
+                    invokeFieldAccessCallback(callback, env, currentThreadHandle(), asFieldEventData(arg1));
+                    break;
+
+                case BREAKPOINT:
+                    EventBreakpointID id = asEventBreakpointID(arg1);
+                    invokeBreakpointCallback(callback, env, currentThreadHandle(), id.methodID, id.location);
+                    break;
             }
-
-            // Check that event is enabled and dispatch it to all registered agents
-            for (int i = 0; i < jvmtiEnvs.length; i++) {
-                Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId);
-                if (callback.isZero()) {
-                    continue;
-                }
-                Pointer env = jvmtiEnvs[i].env;
-                switch (eventId) {
-                    case VM_START:
-                    case VM_DEATH:
-                        invokeStartFunctionNoArg(callback, env);
-                        break;
-
-                    case VM_INIT:
-                    case THREAD_START:
-                    case THREAD_END:
-                        invokeStartFunction(callback, env, currentThreadHandle());
-                        break;
-
-                    case GARBAGE_COLLECTION_START:
-                    case GARBAGE_COLLECTION_FINISH:
-                        invokeGarbageCollectionCallback(callback, env);
-                        break;
-
-                    case METHOD_ENTRY:
-                        invokeThreadObjectCallback(callback, env, currentThreadHandle(), MethodID.fromMethodActor(asClassMethodActor(arg1)));
-                        break;
-
-                    case CLASS_LOAD:
-                    case CLASS_PREPARE:
-                        invokeThreadObjectCallback(callback, env, currentThreadHandle(), JniHandles.createLocalHandle(arg1));
-                        break;
-
-                    case FIELD_ACCESS:
-                    case FIELD_MODIFICATION:
-                        invokeFieldAccessCallback(callback, env, currentThreadHandle(), asFieldEventData(arg1));
-                        break;
-
-                    case BREAKPOINT:
-                        EventBreakpointID id = asEventBreakpointID(arg1);
-                        invokeBreakpointCallback(callback, env, currentThreadHandle(), id.methodID, id.location);
-                        break;
-                }
-            }
-            if (eventId == VM_DEATH) {
-                phase = JVMTI_PHASE_DEAD;
-            }
-        } finally {
-            inEvent = false;
+        }
+        if (eventId == VM_DEATH) {
+            phase = JVMTI_PHASE_DEAD;
         }
     }
 
@@ -515,7 +510,7 @@ public class JVMTI {
             // in any easy way, as they are not setup until the STARTING phase. So we have to hand craft
             // the implementation for a specific set of properties. Yuk.
             if (CString.equals(property, JAVA_HOME)) {
-                propValPtr = JVMTIEnvVar.getValue(Reference.fromJava(JAVA_HOME_BYTES).toOrigin().plus(JVMTIUtil.byteDataOffset));
+                propValPtr = JVMTISystem.findJavaHome();
                 if (propValPtr.isZero()) {
                     Log.println("Environment variable JAVA_HOME not set");
                     MaxineVM.native_exit(-1);
@@ -544,17 +539,13 @@ public class JVMTI {
     }
 
     static int runAgentThread(Pointer env, JniHandle jthread, Address proc, Pointer arg, int priority) {
-        /* TODO: Fully implement the specification:
+        /*
          * The JVMTI spec for this says:
          *
          * "The thread group of the thread is ignored -- specifically, the thread is not added to the thread group
          * and the thread is not seen on queries of the thread group at either the Java programming language or JVM TI levels.
          * The thread is not visible to Java programming language queries but is included in JVM TI queries
          * (for example, GetAllThreads and GetAllStackTraces)."
-         *
-         * However, the agent has created the Thread instance and, at least based on the gctest demo,
-         * invoked the <init> method via JNI, which has already done things like adding to a ThreadGroup.
-         * It's not clear how to undo these actions so for now we just let it go.
          *
          * Evidently there is no runnable method associated with the thread at this stage, and the default
          * run method just returns. So, knowing the implementation of Thread, we create a runnable and
@@ -565,7 +556,11 @@ public class JVMTI {
         agentThread.setDaemon(true);
 
         new AgentThreadRunnable(env, agentThread, proc.asPointer(), arg);
-        agentThread.start();
+        // calling VmThread.start0 instead of Thread.start avoids adding the thread
+        // to whatever thread group was set when the constructor was invoked.
+        final VmThread vmThread = VmThreadFactory.create(agentThread);
+        vmThread.setAsJVMTIAgentThread();
+        vmThread.start0();
         return JVMTI_ERROR_NONE;
     }
 

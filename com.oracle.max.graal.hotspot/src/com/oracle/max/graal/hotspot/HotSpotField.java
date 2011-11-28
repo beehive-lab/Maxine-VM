@@ -23,6 +23,7 @@
 
 package com.oracle.max.graal.hotspot;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
@@ -117,4 +118,20 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
         return "HotSpotField<" + CiUtil.format("%h.%n", this, false) + ":" + offset + ">";
     }
 
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        Field javaField = toJava();
+        if (javaField != null) {
+            return javaField.getAnnotation(annotationClass);
+        }
+        return null;
+    }
+
+    private Field toJava() {
+        try {
+            return holder.toJava().getDeclaredField(name);
+        } catch (NoSuchFieldException e) {
+            return null;
+        }
+    }
 }

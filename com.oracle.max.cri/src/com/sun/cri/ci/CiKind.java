@@ -250,6 +250,12 @@ public enum CiKind {
     }
 
     /**
+     * Marker interface for types that should be {@linkplain CiKind#format(Object) formatted}
+     * with their {@link Object#toString()} value.
+     */
+    public interface FormatWithToString {}
+
+    /**
      * Gets a formatted string for a given value of this kind.
      *
      * @param value a value of this kind
@@ -269,6 +275,8 @@ public enum CiKind {
                     }
                 } else if (value instanceof RiType) {
                     return "class " + CiUtil.toJavaName((RiType) value);
+                } else if (value instanceof Enum || value instanceof FormatWithToString) {
+                    return String.valueOf(value);
                 } else if (value instanceof Class< ? >) {
                     return ((Class< ? >) value).getName() + ".class";
                 } else {

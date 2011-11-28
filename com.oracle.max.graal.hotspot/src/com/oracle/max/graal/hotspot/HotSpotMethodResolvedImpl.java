@@ -22,8 +22,10 @@
  */
 package com.oracle.max.graal.hotspot;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.graph.*;
@@ -50,6 +52,8 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     private Graph intrinsicGraph;
     private Map<Object, Object> compilerStorage;
     private RiResolvedType holder;
+    private byte[] code;
+    public boolean canIntrinsify;
 
     private HotSpotMethodResolvedImpl() {
         super(null);
@@ -57,6 +61,7 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         accessFlags = -1;
         maxLocals = -1;
         maxStackSize = -1;
+        canIntrinsify = true;
     }
 
     @Override
@@ -76,9 +81,11 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
 
     @Override
     public byte[] code() {
-        byte[] ret = compiler.getVMEntries().RiMethod_code(this);
-        assert ret.length == codeSize : "expected: " + codeSize + ", actual: " + ret.length;
-        return ret;
+        if (code == null) {
+            code = compiler.getVMEntries().RiMethod_code(this);
+            assert code.length == codeSize : "expected: " + codeSize + ", actual: " + code.length;
+        }
+        return code;
     }
 
     @Override
@@ -201,16 +208,16 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public int compiledCodeSize() {
-        return compiler.getVMEntries().RiMethod_compiledCodeSize(this);
+    public Map<Object, Object> compilerStorage() {
+        if (compilerStorage == null) {
+            compilerStorage = new ConcurrentHashMap<Object, Object>();
+        }
+        return compilerStorage;
     }
 
     @Override
-    public Map<Object, Object> compilerStorage() {
-        if (compilerStorage == null) {
-            compilerStorage = new HashMap<Object, Object>();
-        }
-        return compilerStorage;
+    public RiConstantPool getConstantPool() {
+        return ((HotSpotTypeResolvedImpl) holder()).constantPool();
     }
 
     public void dumpProfile() {
@@ -238,6 +245,63 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
                     TTY.println("  exceptionProbability@%d: %d", i, exceptionProbability(i));
                 }
             }
+        }
+    }
+
+
+
+    @Override
+    public Annotation[][] getParameterAnnotations() {
+        if (isConstructor()) {
+            Constructor javaConstructor = toJavaConstructor();
+            return javaConstructor == null ? null : javaConstructor.getParameterAnnotations();
+        }
+        Method javaMethod = toJava();
+        return javaMethod == null ? null : javaMethod.getParameterAnnotations();
+    }
+
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        if (isConstructor()) {
+            Constructor<?> javaConstructor = toJavaConstructor();
+            return javaConstructor == null ? null : javaConstructor.getAnnotation(annotationClass);
+        }
+        Method javaMethod = toJava();
+        return javaMethod == null ? null : javaMethod.getAnnotation(annotationClass);
+    }
+
+    @Override
+    public Type getGenericReturnType() {
+        if (isConstructor()) {
+            return void.class;
+        }
+        Method javaMethod = toJava();
+        return javaMethod == null ? null : javaMethod.getGenericReturnType();
+    }
+
+    @Override
+    public Type[] getGenericParameterTypes() {
+        if (isConstructor()) {
+            Constructor javaConstructor = toJavaConstructor();
+            return javaConstructor == null ? null : javaConstructor.getGenericParameterTypes();
+        }
+        Method javaMethod = toJava();
+        return javaMethod == null ? null : javaMethod.getGenericParameterTypes();
+    }
+
+    private Method toJava() {
+        try {
+            return holder.toJava().getDeclaredMethod(name, CiUtil.signatureToTypes(signature, holder));
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    private Constructor toJavaConstructor() {
+        try {
+            return holder.toJava().getDeclaredConstructor(CiUtil.signatureToTypes(signature, holder));
+        } catch (NoSuchMethodException e) {
+            return null;
         }
     }
 }

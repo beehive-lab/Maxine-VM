@@ -252,7 +252,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            if (!address.isZero()) {
+            if (address.isNotZero()) {
                 final int offset = address.minus(getOrigin()).toInt();
                 if (offset >= startOffset && offset < endOffset) {
                     int currentOffset = startOffset;

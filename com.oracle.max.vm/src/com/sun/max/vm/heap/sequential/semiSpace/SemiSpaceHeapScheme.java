@@ -417,7 +417,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     Log.println("END: Scanning immortal heap");
                 }
 
+                if (Heap.traceGCPhases()) {
+                    Log.println("BEGIN: Moving reachable");
+                }
+                startTimer(copyTimer);
                 moveReachableObjects(toSpace.start().asPointer());
+                stopTimer(copyTimer);
+                if (Heap.traceGCPhases()) {
+                    Log.println("END: Moving reachable");
+                }
 
                 if (Heap.traceGCPhases()) {
                     Log.println("BEGIN: Processing special references");
@@ -655,18 +663,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     void moveReachableObjects(Pointer start) {
-        if (Heap.traceGCPhases()) {
-            Log.println("BEGIN: Moving reachable");
-        }
-        startTimer(copyTimer);
         Pointer cell = start;
         while (cell.lessThan(allocationMark())) {
             cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitCell(cell);
-        }
-        stopTimer(copyTimer);
-        if (Heap.traceGCPhases()) {
-            Log.println("END: Moving reachable");
         }
     }
 

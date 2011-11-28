@@ -46,7 +46,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -304,14 +303,6 @@ public final class T1XTargetMethod extends TargetMethod {
         return survivedEvictions;
     }
 
-    /**
-     * @return {@code true} if this target method's {@link ClassMethodActor} says so.
-     */
-    @Override
-    public boolean isUsingTaggedLocals() {
-        return classMethodActor.isUsingTaggedLocals();
-    }
-
     @Override
     public MethodProfile profile() {
         return profile;
@@ -320,6 +311,11 @@ public final class T1XTargetMethod extends TargetMethod {
     @Override
     public int[] bciToPosMap() {
         return bciToPos;
+    }
+
+    @Override
+    public CodeAttribute codeAttribute() {
+        return codeAttribute;
     }
 
     /**
@@ -366,9 +362,24 @@ public final class T1XTargetMethod extends TargetMethod {
     @HOSTED_ONLY
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
-        final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(classMethodActor, directCalls, virtualCalls, interfaceCalls);
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
-        bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));
+        for (int i = 0; i < safepoints.size(); ++i) {
+            int bci = bciForPos(safepoints.posAt(i));
+            if (bci != -1) {
+                RiMethod callee = codeAttribute.calleeAt(bci);
+                if (callee instanceof MethodActor) {
+                    MethodActor ma = (MethodActor) callee;
+                    int opcode = codeAttribute.code()[bci] & 0xff;
+                    if (opcode == INVOKEVIRTUAL) {
+                        virtualCalls.add(ma);
+                    } else if (opcode == INVOKESTATIC || opcode == INVOKESPECIAL) {
+                        directCalls.add(ma);
+                    } else {
+                        assert opcode == INVOKEINTERFACE;
+                        interfaceCalls.add(ma);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -948,11 +959,11 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont, Throwable exception) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont, Throwable exception, boolean reexecute) {
         int bci = frame.bci;
         ClassMethodActor method = classMethodActor;
         assert classMethodActor == frame.method : classMethodActor + " != " + frame.method;
-        CodePointer ip = findContinuationIP(exception, bci);
+        CodePointer ip = findContinuationIP(exception, bci, reexecute);
 
         // record continuation instruction pointer
         cont.setIP(info, ip.toPointer());
@@ -1050,12 +1061,18 @@ public final class T1XTargetMethod extends TargetMethod {
      *
      * @param exception if non-null, then the returned address will be for the handler of this exception
      * @param bci the BCI specified by a debug info {@linkplain CiFrame frame}
+     * @param reexecute specifies if the instruction at {@code bci} is to be re-executed
      */
-    private CodePointer findContinuationIP(Throwable exception, int bci) throws FatalError {
+    private CodePointer findContinuationIP(Throwable exception, int bci, boolean reexecute) throws FatalError {
         CodePointer ip;
         if (exception == null) {
             RiMethod callee = classMethodActor.codeAttribute().calleeAt(bci);
-            ip = findTemplateCallReturnAddress(bci, callee);
+            if (reexecute) {
+                int curPos = bciToPos[bci];
+                ip = codeAt(curPos);
+            } else {
+                ip = findTemplateCallReturnAddress(bci, callee);
+            }
         } else {
             // Unwinding to deoptimized frame containing the handler for 'exception'
             int curPos = bciToPos[bci];

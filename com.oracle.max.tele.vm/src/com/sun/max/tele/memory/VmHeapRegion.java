@@ -23,6 +23,7 @@
 package com.sun.max.tele.memory;
 
 import java.io.*;
+import java.lang.management.*;
 import java.text.*;
 import java.util.*;
 
@@ -44,7 +45,7 @@ import com.sun.max.unsafe.*;
  *
  * @see RemoteObjectReferenceManager
  */
-public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, ObjectHoldingRegion {
+public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, ObjectHoldingRegion {
 
     private static final int TRACE_VALUE = 1;
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();
@@ -83,11 +84,11 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 
-    public final String entityName() {
+    public String entityName() {
         return memoryRegion().regionName();
     }
 
-    public final String entityDescription() {
+    public String entityDescription() {
         return entityDescription;
     }
 
@@ -95,7 +96,7 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         return memoryRegion;
     }
 
-    public final boolean contains(Address address) {
+    public boolean contains(Address address) {
         return memoryRegion().contains(address);
     }
 
@@ -103,7 +104,7 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         return teleRuntimeMemoryRegion;
     }
 
-    public final boolean isBootRegion() {
+    public boolean isBootRegion() {
         return memoryRegion().isBootRegion();
     }
 
@@ -115,18 +116,20 @@ public class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, Obj
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         // Line 1
-        final StringBuilder sb1 = new StringBuilder();
-        sb1.append(entityName());
-        sb1.append(": size=" + formatter.format(memoryRegion().nBytes()));
-        printStream.println(indentation + sb1.toString());
+        printStream.println(indentation + entityName());
         // Line 2
         final StringBuilder sb2 = new StringBuilder();
-        final int activeReferenceCount = objectReferenceManager.activeReferenceCount();
-        final int totalReferenceCount = objectReferenceManager.totalReferenceCount();
-        sb2.append("object refs:  active=" + formatter.format(activeReferenceCount));
-        sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
-        sb2.append(", mgr=" + objectReferenceManager.getClass().getSimpleName());
-        printStream.println(indentation + "      " + sb2.toString());
+        sb2.append("region: ");
+        final MemoryUsage usage = memoryRegion().getUsage();
+        final long size = usage.getCommitted();
+        sb2.append("size=" + formatter.format(size));
+        if (size > 0) {
+            final long used = usage.getUsed();
+            sb2.append(", usage=" + (Long.toString(100 * used / size)) + "%");
+        }
+        printStream.println(indentation + "    " + sb2.toString());
+        // Line 3
+        objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
     }
 
     public void updateStatus(long epoch) {

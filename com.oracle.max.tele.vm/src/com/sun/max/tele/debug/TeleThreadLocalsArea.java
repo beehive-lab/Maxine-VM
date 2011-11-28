@@ -115,7 +115,7 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
      */
     public TeleThreadLocalsArea(MaxVM vm, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Pointer start) {
         super(teleNativeThread.vm());
-        assert !start.isZero();
+        assert start.isNotZero();
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
@@ -200,7 +200,7 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
     }
 
     public TeleThreadLocalVariable findThreadLocalVariable(Address address) {
-        if (!address.isZero()) {
+        if (address.isNotZero()) {
             if (memoryRegion().contains(address)) {
                 final int index = address.minus(memoryRegion().start()).dividedBy(vm().platform().nBytesInWord()).toInt();
                 return threadLocalVariables[index];

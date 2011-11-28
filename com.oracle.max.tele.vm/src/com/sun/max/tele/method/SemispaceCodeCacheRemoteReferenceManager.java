@@ -50,7 +50,7 @@ import com.sun.max.vm.compiler.target.*;
  * @see VmCodeCacheRegion
  * @see TeleTargetMethod
  */
-final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
+final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteReferenceManager {
 
     /**
      * The code cache region whose objects are being managed.
@@ -92,7 +92,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
-        final TeleCompilation compilation = codeCacheRegion.find(origin);
+        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {
@@ -115,7 +115,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     public TeleReference makeReference(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
-        final TeleCompilation compilation = codeCacheRegion.find(origin);
+        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {
@@ -133,7 +133,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return null;
     }
 
-    @Override
     public int activeReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
@@ -150,7 +149,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return count;
     }
 
-    @Override
     public int totalReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
@@ -218,7 +216,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             // Don't look at the memory status of the teleTargetMethod; that refers to the
             // TargetMethod object, not to the objects stored in the code cache, which is
             // what we're dealing with here.
-            return teleTargetMethod().isEvicted() ? ObjectMemoryStatus.DEAD : ObjectMemoryStatus.LIVE;
+            return teleTargetMethod().isCodeEvicted() ? ObjectMemoryStatus.DEAD : ObjectMemoryStatus.LIVE;
         }
 
     }

@@ -23,7 +23,6 @@
 package com.sun.cri.ri;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.sun.cri.ci.*;
 
@@ -32,13 +31,6 @@ import com.sun.cri.ci.*;
  * to constant pools, OSR frames, inlining requirements, and runtime calls such as checkcast.
 s */
 public interface RiRuntime {
-
-    /**
-     * Gets the constant pool for a method.
-     * @param method the method
-     * @return the constant pool for the method
-     */
-    RiConstantPool getConstantPool(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -58,14 +50,6 @@ public interface RiRuntime {
      * use its own heuristics
      */
     boolean mustNotInline(RiResolvedMethod method);
-
-    /**
-     * Notify the runtime of an inlining event.
-     *
-     * @param caller the method into whose code {@code callee}'s code is inlined
-     * @param callee the method whose code is inlined into {@code caller}'s
-     */
-    void notifyInline(RiResolvedMethod caller, RiResolvedMethod callee);
 
     /**
      * Checks whether the specified method cannot be compiled.
@@ -190,11 +174,6 @@ public interface RiRuntime {
     int getCustomStackAreaSize();
 
     /**
-     * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
-     */
-    boolean supportsArrayIntrinsics();
-
-    /**
      * Gets the length of the array that is wrapped in a CiConstant object.
      */
     int getArrayLength(CiConstant array);
@@ -234,9 +213,8 @@ public interface RiRuntime {
      *
      * @param method a method whose executable code is being modified
      * @param code the code to be executed when {@code method} is called
-     * @return a reference to the compiled and ready-to-run code
      */
-    RiCompiledMethod installMethod(RiMethod method, CiTargetMethod code);
+    void installMethod(RiMethod method, CiTargetMethod code);
 
     /**
      * Adds the given machine code as an implementation of the given method without making it the default implementation.

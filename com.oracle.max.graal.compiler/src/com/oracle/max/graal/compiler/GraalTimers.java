@@ -45,6 +45,7 @@ public final class GraalTimers {
     private static class TimingScope {
 
         public final TimingScope parent;
+        public final int level;
         public long time;
         public long count;
         public long subTime;
@@ -55,6 +56,7 @@ public final class GraalTimers {
 
         public TimingScope(TimingScope parent) {
             this.parent = parent;
+            this.level = parent == null ? 0 : parent.level + 1;
         }
 
         private static final String PREFIX = "       |       |       |       |       |       |       |       |       |       +";
@@ -113,22 +115,30 @@ public final class GraalTimers {
         }
     };
 
-    private int currentLevel = 0;
+    private ThreadLocal<Integer> currentLevel = new ThreadLocal<Integer>() {
+        @Override
+        protected Integer initialValue() {
+            return 0;
+        }
+    };
 
     public void startScope(Class< ? > clazz) {
         if (GraalOptions.Time) {
             startScope(clazz.getSimpleName());
         } else {
-            currentLevel++;
+            currentLevel.set(currentLevel.get() + 1);
         }
     }
 
     public int currentLevel() {
-        return currentLevel;
+        if (GraalOptions.Time) {
+            return currentScope.get().level;
+        } else {
+            return currentLevel.get();
+        }
     }
 
     public void startScope(String name) {
-        currentLevel++;
         if (GraalOptions.Time) {
             TimingScope current = currentScope.get();
             int index = current.subNames.indexOf(name);
@@ -143,6 +153,8 @@ public final class GraalTimers {
             currentScope.set(sub);
             sub.startTime = System.nanoTime();
             sub.count++;
+        } else {
+            currentLevel.set(currentLevel.get() + 1);
         }
     }
 
@@ -153,8 +165,9 @@ public final class GraalTimers {
             current.time += time;
             current.parent.subTime += time;
             currentScope.set(current.parent);
+        } else {
+            currentLevel.set(currentLevel.get() - 1);
         }
-        currentLevel--;
     }
 
     public void print() {

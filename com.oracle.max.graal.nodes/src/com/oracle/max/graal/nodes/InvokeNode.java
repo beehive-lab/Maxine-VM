@@ -22,16 +22,20 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, Invoke, LIRLowerable  {
+public final class InvokeNode extends AbstractStateSplit implements Node.IterableNodeType, Invoke, LIRLowerable, MemoryCheckpoint  {
 
     @Input private MethodCallTargetNode callTarget;
     private boolean canInline = true;
@@ -62,6 +66,13 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
 
     public MethodCallTargetNode callTarget() {
         return callTarget;
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("targetMethod", CiUtil.format("%h.%n(%p)", callTarget.targetMethod()));
+        return debugProperties;
     }
 
     @Override
@@ -97,5 +108,26 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     public FrameState stateDuring() {
         FrameState stateAfter = stateAfter();
         return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.callTarget.targetMethod().signature().returnKind(false));
+    }
+
+    @Override
+    public void intrinsify(Node node) {
+        if (node instanceof StateSplit) {
+            StateSplit stateSplit = (StateSplit) node;
+            stateSplit.setStateAfter(stateAfter());
+        }
+        if (node instanceof FixedWithNextNode) {
+            FixedWithNextNode fixedWithNextNode = (FixedWithNextNode) node;
+            FixedNode next = this.next();
+            setNext(null);
+            fixedWithNextNode.setNext(next);
+            this.replaceAndDelete(node);
+        } else if (node instanceof FloatingNode) {
+            FixedNode next = this.next();
+            setNext(null);
+            this.replaceAtPredecessors(next);
+            this.replaceAtUsages(node);
+            this.delete();
+        }
     }
 }

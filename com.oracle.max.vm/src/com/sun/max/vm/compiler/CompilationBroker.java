@@ -33,6 +33,7 @@ import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -93,6 +94,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
     }
 
+    @RESET
     static String CompileCommand;
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand",
@@ -104,7 +106,7 @@ public class CompilationBroker {
             "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
-    private HashMap<String, String> compileCommandMap;
+    private LinkedHashMap<String, String> compileCommandMap;
 
     /**
      * Gets the {@linkplain RuntimeCompiler#name() name} of the compiler to be used to
@@ -119,7 +121,7 @@ public class CompilationBroker {
         // A race to parse the option and create the map is fine. The result will be identical
         // for both threads and so one result just becomes instant garbage.
         if (compileCommandMap == null) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
             String[] parts = CompileCommand.split(",");
             for (String part : parts) {
                 int colon = part.indexOf(':');
@@ -135,7 +137,7 @@ public class CompilationBroker {
         }
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
-            if (methodString.contains(e.getKey())) {
+            if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
                 return e.getValue();
             }
         }
@@ -355,19 +357,16 @@ public class CompilationBroker {
                 }
                 return compilation.get();
             } catch (Throwable t) {
-                cma.compiledState = Compilations.EMPTY;
-                String errorMessage = "Compilation of " + cma + " by " + compilation.compiler + " failed";
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
-                    Log.print(": ");
-                    Log.println(errorMessage);
+                    Log.print(": Compilation of " + cma + " by " + compilation.compiler + " failed");
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
                 if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
-                    throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
+                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", t);
                 }
                 retryRun = true;
                 if (VMOptions.verboseOption.verboseCompilation) {
@@ -380,9 +379,6 @@ public class CompilationBroker {
         }
     }
 
-    @HOSTED_ONLY
-    public static final HashSet<Class> compileWithBaseline = new HashSet<Class>();
-
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
@@ -391,38 +387,55 @@ public class CompilationBroker {
      * @return the compiler that should be used to perform the next compilation of the method
      */
     protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature) {
-        if (Actor.isUnsafe(cma.flags() | cma.compilee().flags())) {
-            assert nature != Nature.BASELINE : "cannot produce baseline version of " + cma;
-            return optimizingCompiler;
-        }
-
+        String reason;
         RuntimeCompiler compiler;
-        if (isHosted()) {
-            if (compileWithBaseline.contains(cma.holder().javaClass())) {
-                compiler = baselineCompiler;
-                assert compiler != null;
-            } else {
-                // at prototyping time, default to the opt compiler
-                compiler = optimizingCompiler;
-            }
+
+        if (Actor.isUnsafe(cma.compilee().flags())) {
+            assert nature != Nature.BASELINE : "cannot produce baseline version of " + cma;
+            reason = "unsafe";
+            compiler = optimizingCompiler;
         } else {
             if (nature == Nature.BASELINE) {
                 compiler = baselineCompiler;
+                reason = "nature:baseline";
                 assert compiler != null;
             } else if (nature == Nature.OPT) {
+                reason = "nature:opt";
                 compiler = optimizingCompiler;
             } else {
-                compiler = defaultCompiler;
-                String compilerName = compilerFor(cma);
-                if (compilerName != null) {
-                    if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                        compiler = optimizingCompiler;
-                    } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                        compiler = baselineCompiler;
-                    }
+                reason = null;
+                if (isHosted()) {
+                    // at prototyping time, default to the opt compiler
+                    compiler = optimizingCompiler;
+                } else {
+                    compiler = defaultCompiler;
                 }
-                assert compiler != null;
             }
+
+            String compilerName = compilerFor(cma);
+            if (compilerName != null) {
+                if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                    compiler = optimizingCompiler;
+                    reason = "CompileCommand";
+                } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                    compiler = baselineCompiler;
+                    reason = "CompileCommand";
+                }
+            }
+        }
+
+        // Print the reason for the compiler selection if it's not the default
+        if (VMOptions.verboseOption.verboseCompilation && reason != null) {
+            String methodString = cma.format("%H.%n(%p)");
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.print(": ");
+            Log.print(compiler.getClass().getSimpleName());
+            Log.print(" selected to compile ");
+            Log.print(methodString);
+            Log.print(", reason: ");
+            Log.println(reason);
+            Log.unlock(lockDisabledSafepoints);
         }
 
         return compiler;
@@ -727,8 +740,6 @@ public class CompilationBroker {
                         final int dcIndex = directCalleePosition(tm, callSite);
                         assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                         logStaticCallPatch(current, callSite, dcIndex, to);
-                        Object[] directCallees = tm.directCallees();
-                        directCallees[dcIndex] = newMethod;
                         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
@@ -739,8 +750,6 @@ public class CompilationBroker {
                         final int dcIndex = directCalleePosition(tm, callSite);
                         assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                         logStaticCallPatch(current, callSite, dcIndex, to);
-                        Object[] directCallees = tm.directCallees();
-                        directCallees[dcIndex] = newMethod;
                         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
@@ -753,6 +762,48 @@ public class CompilationBroker {
                 return true;
             }
             throw FatalError.unimplemented();
+        }
+    }
+
+    /**
+     * Compiler that can be used to create a functional Maxine runtime (albeit without compilation)
+     * when a specified compiler can't be found on the class path.
+     */
+    @HOSTED_ONLY
+    public static class NullCompiler implements RuntimeCompiler {
+
+        public final Nature nature;
+
+        public NullCompiler(Nature nature) {
+            this.nature = nature;
+        }
+
+        public void initialize(Phase phase) {
+        }
+        public TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
+            return null;
+        }
+        public Nature nature() {
+            return nature;
+        }
+        public boolean matches(String compilerName) {
+            return true;
+        }
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "[" + nature + "]";
+        }
+    }
+
+    public static class NullOptCompiler extends NullCompiler {
+        public NullOptCompiler() {
+            super(Nature.OPT);
+        }
+    }
+
+    public static class NullBaselineCompiler extends NullCompiler {
+        public NullBaselineCompiler() {
+            super(Nature.BASELINE);
         }
     }
 }

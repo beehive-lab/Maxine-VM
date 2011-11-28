@@ -28,7 +28,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -39,12 +38,12 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class MachineCodeViewer extends CodeViewer {
 
-    private final MaxMachineCode machineCode;
+    private final MaxMachineCodeRoutine machineCode;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
     private String[] rowToTagText;
 
-    protected MachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
+    protected MachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCodeRoutine machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
         updateMachineCodeInfo();
@@ -54,8 +53,8 @@ public abstract class MachineCodeViewer extends CodeViewer {
      * Updates all information derived from the machine code.
      */
     private void updateMachineCodeInfo() {
-        final InstructionMap instructionMap = this.machineCode.getInstructionMap();
-        final int machineInstructionCount = instructionMap.length();
+        final MaxMachineCodeInfo machineCodeInfo = this.machineCode.getMachineCodeInfo();
+        final int machineInstructionCount = machineCodeInfo.length();
         this.rowToTagText = new String[machineInstructionCount];
         rowToStackFrame = new MaxStackFrame[machineInstructionCount];
 
@@ -63,21 +62,21 @@ public abstract class MachineCodeViewer extends CodeViewer {
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
         if (this.machineCode instanceof MaxCompilation) {
-            final MaxCompilation compiledCode = (MaxCompilation) this.machineCode;
-            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+            final MaxCompilation compilation = (MaxCompilation) this.machineCode;
+            final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
                 if (teleCodeAttribute != null) {
                     teleConstantPool = teleCodeAttribute.getTeleConstantPool();
                     ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
                     localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().cp;
-                    for (int index = 0; index < instructionMap.length(); index++) {
-                        final int opcode = instructionMap.opcode(index);
-                        if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
+                    for (int index = 0; index < machineCodeInfo.length(); index++) {
+                        final int opcode = machineCodeInfo.opcode(index);
+                        if (machineCodeInfo.isBytecodeBoundary(index) && opcode >= 0) {
                             if (opcode == Integer.MAX_VALUE) {
                                 rowToTagText[index] = "<epilogue>";
                             } else {
-                                rowToTagText[index] = instructionMap.debugInfoAt(index).codePos.bci + ": " + Bytecodes.nameOf(opcode);
+                                rowToTagText[index] = machineCodeInfo.debugInfoAt(index).codePos.bci + ": " + Bytecodes.nameOf(opcode);
                             }
                         } else {
                             rowToTagText[index] = "";
@@ -125,16 +124,16 @@ public abstract class MachineCodeViewer extends CodeViewer {
         final MaxMemoryRegion machineCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
-            final MaxMachineCode machineCode = frame.machineCode();
+            final MaxMachineCodeRoutine machineCode = frame.machineCode();
             if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
                                     machineCodeRegion.overlaps(machineCode.memoryRegion()) :
                                         machineCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
-                    final InstructionMap instructionMap = machineCode.getInstructionMap();
-                    for (int row = 0; row < instructionMap.length(); row++) {
-                        if (instructionMap.instruction(row).address.equals(frameCodeLocation.address())) {
+                    final MaxMachineCodeInfo machineCodeInfo = machineCode.getMachineCodeInfo();
+                    for (int row = 0; row < machineCodeInfo.length(); row++) {
+                        if (machineCodeInfo.instruction(row).address.equals(frameCodeLocation.address())) {
                             rowToStackFrame[row] = frame;
                             break;
                         }
@@ -147,7 +146,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
     /**
      * @return surrogate for the machine in the VM for the method being viewed.
      */
-    protected MaxMachineCode machineCode() {
+    protected MaxMachineCodeRoutine machineCode() {
         return machineCode;
     }
 
@@ -207,7 +206,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
      * Does the instruction address have a machine code breakpoint set in the VM.
      */
     protected MaxBreakpoint getMachineCodeBreakpointAtRow(int row) {
-        return vm().breakpointManager().findBreakpoint(machineCode.getInstructionMap().instructionLocation(row));
+        return vm().breakpointManager().findBreakpoint(machineCode.getMachineCodeInfo().instructionLocation(row));
     }
 
     protected final String rowToTagText(int row) {

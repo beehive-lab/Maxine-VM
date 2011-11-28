@@ -1113,6 +1113,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
            XirOperand hub = asm.createConstantInputParameter("hub", CiKind.Object);
 
            XirOperand objHub = asm.createTemp("objHub", CiKind.Object);
+           XirOperand checkHub = asm.createTemp("checkHub", CiKind.Object);
 
            XirLabel slowPath = asm.createOutOfLineLabel("deopt");
 
@@ -1121,8 +1122,9 @@ public class HotSpotXirGenerator implements RiXirGenerator {
            }
 
            asm.pload(CiKind.Object, objHub, object, asm.i(config.hubOffset), false);
+           asm.mov(checkHub, hub);
            // if we get an exact match: continue
-           asm.jneq(slowPath, objHub, hub);
+           asm.jneq(slowPath, objHub, checkHub);
 
            // -- out of line -------------------------------------------------------
            asm.bindOutOfLine(slowPath);
@@ -1199,7 +1201,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genGetField(XirSite site, XirArgument object, RiField field) {
-        return new XirSnippet(getFieldTemplates.get(site, field.kind(true)), object, XirArgument.forInt(((HotSpotField) field).offset()));
+        return new XirSnippet(getFieldTemplates.get(site, field.kind(false)), object, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override
@@ -1209,17 +1211,17 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genPutField(XirSite site, XirArgument object, RiField field, XirArgument value) {
-        return new XirSnippet(putFieldTemplates.get(site, field.kind(true)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
+        return new XirSnippet(putFieldTemplates.get(site, field.kind(false)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override
     public XirSnippet genGetStatic(XirSite site, XirArgument object, RiField field) {
-        return new XirSnippet(getFieldTemplates.get(site, field.kind(true)), object, XirArgument.forInt(((HotSpotField) field).offset()));
+        return new XirSnippet(getFieldTemplates.get(site, field.kind(false)), object, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override
     public XirSnippet genPutStatic(XirSite site, XirArgument object, RiField field, XirArgument value) {
-        return new XirSnippet(putFieldTemplates.get(site, field.kind(true)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
+        return new XirSnippet(putFieldTemplates.get(site, field.kind(false)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override

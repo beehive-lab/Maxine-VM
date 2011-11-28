@@ -75,8 +75,6 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass(java.io.File.class.getName() + "$TempDirectory");
         HostedBootClassLoader.omitClass(java.util.Calendar.class.getName() + "$CalendarAccessControlContext");
         HostedBootClassLoader.omitClass("sun.reflect.UnsafeFieldAccessorFactory");
-        // Don't want the static Map fields initialized
-        HostedBootClassLoader.omitClass(java.lang.reflect.Proxy.class);
         // This class uses Unsafe.objectFieldOffset() and stores the offsets in arrays.  We currently have no way in JDKInterceptor
         // to rewrite these offsets to the correct Maxine layout specific values, so make sure this class is not part of the boot image.
         HostedBootClassLoader.omitClass(java.io.ObjectStreamClass.class.getName() + "$FieldReflector");
@@ -91,6 +89,7 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.Util");
+        HostedBootClassLoader.omitClass("sun.nio.fs.UnixNativeDispatcher");
         HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
         // Java 7 only class that indirectly caches references to JarFiles
         HostedBootClassLoader.omitClass(sun.misc.Launcher.class.getName() + "$BootClassPathHolder");

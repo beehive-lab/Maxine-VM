@@ -34,6 +34,7 @@ import com.sun.max.program.*;
  */
 public abstract class Offset extends Word {
 
+    @HOSTED_ONLY
     protected Offset() {
     }
 
@@ -72,6 +73,7 @@ public abstract class Offset extends Word {
     }
 
     @Override
+    @HOSTED_ONLY
     public String toString() {
         return "&" + toHexString();
     }
@@ -101,6 +103,7 @@ public abstract class Offset extends Word {
         return UnsafeCast.asInt(this);
     }
 
+    @INLINE
     public final int compareTo(Offset other) {
         if (greaterThan(other)) {
             return 1;
@@ -282,6 +285,7 @@ public abstract class Offset extends Word {
         return remainder(numberOfBytes) == 0;
     }
 
+    @INLINE
     public final Offset roundedUpBy(int numberOfBytes) {
         if (isRoundedBy(numberOfBytes)) {
             return this;
@@ -350,6 +354,7 @@ public abstract class Offset extends Word {
         return and(n - 1).equals(Offset.zero());
     }
 
+    @HOSTED_ONLY
     public final int numberOfEffectiveBits() {
         if (Word.width() == 64) {
             final long n = toLong();
@@ -365,6 +370,7 @@ public abstract class Offset extends Word {
         return 33 - Integer.numberOfLeadingZeros(~n);
     }
 
+    @HOSTED_ONLY
     public final WordWidth effectiveWidth() {
         final int bit = numberOfEffectiveBits();
         for (WordWidth width : WordWidth.values()) {

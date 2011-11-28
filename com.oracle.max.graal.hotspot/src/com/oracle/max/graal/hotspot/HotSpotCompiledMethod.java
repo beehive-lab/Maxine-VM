@@ -27,20 +27,23 @@ import com.sun.cri.ri.*;
 /**
  * Implementation of RiCompiledMethod for HotSpot. Stores a reference to the nmethod which contains the compiled code.
  */
-public class HotSpotCompiledMethod extends CompilerObject implements RiCompiledMethod {
+public class HotSpotCompiledMethod implements RiCompiledMethod {
 
     private final RiResolvedMethod method;
-    private final long nmethod;
+    private long nmethod;
 
-    public HotSpotCompiledMethod(Compiler compiler, RiResolvedMethod method, long nmethod) {
-        super(compiler);
+    public HotSpotCompiledMethod(RiResolvedMethod method) {
         this.method = method;
-        this.nmethod = nmethod;
     }
 
     @Override
     public RiResolvedMethod method() {
         return method;
+    }
+
+    @Override
+    public boolean isValid() {
+        return nmethod != 0;
     }
 
     @Override

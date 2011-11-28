@@ -165,8 +165,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.listVMStateHistory());
         menu.add(actions.listThreads());
         menu.add(actions.listStackFrames());
-        menu.add(actions.listCodeRegistry());
-        menu.add(actions.listCodeRegistryToFile());
+        menu.add(actions.listMachineCode());
+        menu.add(actions.listMachineCodeToFile());
         menu.add(actions.listBreakpoints());
         if (vm().watchpointManager() != null) {
             menu.add(actions.listWatchpoints());

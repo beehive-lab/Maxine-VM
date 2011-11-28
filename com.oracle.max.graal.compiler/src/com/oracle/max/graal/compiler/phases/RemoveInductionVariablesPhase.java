@@ -61,7 +61,6 @@ public class RemoveInductionVariablesPhase extends Phase {
             }
 
             if (nextIterOf != null) {
-                int backEdgeIndex = loopBegin.phiPredecessorIndex(loopBegin.loopEnd());
                 for (Entry<InductionVariableNode, InductionVariableNode> entry : nextIterOf.entrySet()) {
                     InductionVariableNode it = entry.getValue();
                     InductionVariableNode nextIt = entry.getKey();
@@ -70,7 +69,7 @@ public class RemoveInductionVariablesPhase extends Phase {
                         ValueNode itValue = loweredIV.get(it);
                         if (itValue instanceof PhiNode) {
                             PhiNode phi = (PhiNode) itValue;
-                            loweredIV.set(nextIt, phi.valueAt(backEdgeIndex));
+                            loweredIV.set(nextIt, phi.valueAt(loopBegin.loopEnd()));
                             continue;
                         }
                     }

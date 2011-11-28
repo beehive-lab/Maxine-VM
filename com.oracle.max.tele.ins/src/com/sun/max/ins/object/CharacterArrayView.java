@@ -62,7 +62,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
         tabbedPane = new InspectorTabbedPane(inspection());
 
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
-        tabbedPane.add(componentTypeName + "[" + teleArrayObject.getLength() + "]", elementsPane);
+        tabbedPane.add(componentTypeName + "[" + teleArrayObject.length() + "]", elementsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {

@@ -133,11 +133,11 @@ public enum JavaFrameAnchor {
      * Creates an anchor in the frame of the caller (hence the {@link INLINE} annotation).
      */
     @INLINE
-    public static Pointer create(Word stackPointer, Word framePointer, CodePointer instructionPointer, Word previousAnchor) {
-        Pointer anchor = Intrinsics.stackAllocate(size());
-        FP.set(anchor, framePointer);
-        SP.set(anchor, stackPointer);
-        PC.set(anchor, instructionPointer.toAddress());
+    public static Pointer create(Word sp, Word fp, CodePointer ip, Word previousAnchor) {
+        Pointer anchor = Intrinsics.alloca(size(), false);
+        FP.set(anchor, fp);
+        SP.set(anchor, sp);
+        PC.set(anchor, ip.toAddress());
         PREVIOUS.set(anchor, previousAnchor);
         return anchor;
     }

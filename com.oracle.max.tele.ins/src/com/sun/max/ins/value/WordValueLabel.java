@@ -311,7 +311,7 @@ public class WordValueLabel extends ValueLabel {
     private TeleClassActor teleClassActor;
 
     /** Non-null if a code pointer. */
-    private MaxCompilation compiledCode;
+    private MaxCompilation compilation;
 
     /** Non-null if a stack reference. */
     private MaxThread thread;
@@ -320,7 +320,7 @@ public class WordValueLabel extends ValueLabel {
     public final void setValue(Value newValue) {
         teleObject = null;
         teleClassActor = null;
-        compiledCode = null;
+        compilation = null;
         thread = null;
 
         if (newValue == VoidValue.VOID) {
@@ -369,9 +369,9 @@ public class WordValueLabel extends ValueLabel {
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     } else {
-                        compiledCode = vm().codeCache().findCompiledCode(address);
-                        if (compiledCode != null) {
-                            final Address codeStart = compiledCode.getCodeStart();
+                        compilation = vm().machineCode().findCompilation(address);
+                        if (compilation != null) {
+                            final Address codeStart = compilation.getCodeStart();
                             final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());
                             final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
                             if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
@@ -486,7 +486,7 @@ public class WordValueLabel extends ValueLabel {
                     toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                     toolTipSB.append("<br>Reference to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                     toolTipSB.append("<br>In ");
-                    final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                     if (memoryRegion == null) {
                         toolTipSB.append(htmlify("<unknown memory region>"));
                     } else {
@@ -515,7 +515,7 @@ public class WordValueLabel extends ValueLabel {
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                         toolTipSB.append("<br>Reference to ").append(htmlify(toolTipText));
                         toolTipSB.append("<br>In ");
-                        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
                             toolTipSB.append(htmlify("<unknown memory region>"));
                         } else {
@@ -602,17 +602,17 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(hexString);
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compiledCode) + " for method" +
-                                "<br>" + htmlify(nameDisplay.longName(compiledCode)));
+                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                "<br>" + htmlify(nameDisplay.longName(compilation)));
                 break;
             }
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallEntryPointColor());
-                setWrappedText(nameDisplay.veryShortName(compiledCode));
+                setWrappedText(nameDisplay.veryShortName(compilation));
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compiledCode) + " for method" +
-                                "<br>" + htmlify(nameDisplay.longName(compiledCode)));
+                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                "<br>" + htmlify(nameDisplay.longName(compilation)));
                 break;
             }
             case CLASS_ACTOR_ID: {
@@ -635,11 +635,11 @@ public class WordValueLabel extends ValueLabel {
                 setFont(wordDataFont);
                 setForeground(style.wordCallReturnPointColor());
                 setWrappedText(hexString);
-                if (compiledCode != null) {
-                    final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
+                if (compilation != null) {
+                    final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
                     setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compiledCode) + " for method" +
-                                    "<br>" + htmlify(nameDisplay.longName(compiledCode)) +
+                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                    "<br>" + htmlify(nameDisplay.longName(compilation)) +
                                     "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }
                 break;
@@ -647,12 +647,12 @@ public class WordValueLabel extends ValueLabel {
             case CALL_RETURN_POINT_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallReturnPointColor());
-                if (compiledCode != null) {
-                    setWrappedText(htmlify(nameDisplay.veryShortName(compiledCode, value.toWord().asAddress())));
-                    final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
+                if (compilation != null) {
+                    setWrappedText(htmlify(nameDisplay.veryShortName(compilation, value.toWord().asAddress())));
+                    final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
                     setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compiledCode) + " for method" +
-                                    "<br>" + htmlify(nameDisplay.longName(compiledCode)) +
+                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                    "<br>" + htmlify(nameDisplay.longName(compilation)) +
                                     "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }
                 break;
@@ -935,7 +935,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().findMemoryRegion(address) != null) {
+                    if (vm().state().findMemoryRegion(address) != null) {
                         action = views().memory().makeViewAction(address, null);
                     }
                     break;
@@ -951,7 +951,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
+            final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(address);
             if (memoryRegion != null) {
                 action = actions().selectMemoryRegion(memoryRegion);
             }
@@ -985,7 +985,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().findMemoryRegion(address) != null) {
+                    if (vm().state().findMemoryRegion(address) != null) {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }
                     break;
@@ -1000,8 +1000,8 @@ public class WordValueLabel extends ValueLabel {
                 }
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT_TEXT: {
-                    if (compiledCode != null) {
-                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compiledCode.representation());
+                    if (compilation != null) {
+                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compilation.representation());
                     } else {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }

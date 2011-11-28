@@ -211,17 +211,10 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class StackHandleIntrinsic implements C1XIntrinsicImpl {
+    public static class AllocaIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            return b.append(new StackHandle(args[0], target.signature().returnType(null)));
-        }
-    }
-
-    public static class StackAllocateIntrinsic implements C1XIntrinsicImpl {
-        @Override
-        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            return b.append(new StackAllocate(args[0], target.signature().returnType(null)));
+            return b.append(new Alloca(args[0], args[1], target.signature().returnType(null)));
         }
     }
 
@@ -268,8 +261,10 @@ public class MaxineIntrinsicImplementations {
         registry.add(WRITEREG, new WriteRegisterIntrinsic());
         registry.add(IFLATCHBITREAD, new IfLatchBitReadIntrinsic());
 
-        registry.add(PREAD, new PointerReadIntrinsic());
-        registry.add(PWRITE, new PointerWriteIntrinsic());
+        registry.add(PREAD_OFF, new PointerReadIntrinsic());
+        registry.add(PREAD_IDX, new PointerReadIntrinsic());
+        registry.add(PWRITE_OFF, new PointerWriteIntrinsic());
+        registry.add(PWRITE_IDX, new PointerWriteIntrinsic());
         registry.add(PCMPSWP, new PointerCompareAndSwapIntrinsic());
 
         registry.add(SAFEPOINT_POLL, new InfopointIntrinsic(Infopoint.Op.SAFEPOINT_POLL));
@@ -279,8 +274,7 @@ public class MaxineIntrinsicImplementations {
 
         registry.add(PAUSE, new PauseIntrinsic());
         registry.add(BREAKPOINT_TRAP, new BreakpointTrapIntrinsic());
-        registry.add(STACKHANDLE, new StackHandleIntrinsic());
-        registry.add(ALLOCA, new StackAllocateIntrinsic());
+        registry.add(ALLOCA, new AllocaIntrinsic());
 
         registry.add(CMP_BYTECODE, new CompareBytecodeIntrinsic());
     }

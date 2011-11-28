@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.reference.*;
 
 
 public class JVMTIUtil {
@@ -37,6 +38,10 @@ public class JVMTIUtil {
      * The offset of the byte array data from the byte array object's origin.
      */
     static final Offset byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
+
+    static Pointer getByteArrayStart(byte[] data) {
+        return Reference.fromJava(data).toOrigin().plus(JVMTIUtil.byteDataOffset);
+    }
 
     /**
      * A tagged "union" type for basic types.

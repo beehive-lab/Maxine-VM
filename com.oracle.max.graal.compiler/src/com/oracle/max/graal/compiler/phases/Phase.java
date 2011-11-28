@@ -23,7 +23,6 @@
 package com.oracle.max.graal.compiler.phases;
 
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -62,7 +61,7 @@ public abstract class Phase {
     }
 
     public final void apply(StructuredGraph graph, boolean plotOnError, boolean plot) {
-        apply(graph,  GraalContext.EMPTY_CONTEXT, true, plot);
+        apply(graph,  GraalContext.EMPTY_CONTEXT, plotOnError, plot);
     }
 
     public final void apply(StructuredGraph graph, GraalContext context, boolean plotOnError, boolean plot) {
@@ -70,7 +69,7 @@ public abstract class Phase {
         this.context = context;
         try {
             assert graph != null && !shouldVerify || graph.verify();
-        } catch (VerificationError e) {
+        } catch (GraalInternalError e) {
             throw e.addContext("start of phase", getDetailedName());
         }
 
@@ -85,15 +84,15 @@ public abstract class Phase {
             } catch (CiBailout bailout) {
                 throw bailout;
             } catch (AssertionError e) {
-                throw new VerificationError(e);
+                throw new GraalInternalError(e);
             } catch (RuntimeException e) {
-                throw new VerificationError(e);
+                throw new GraalInternalError(e);
             } finally {
                 if (context != null) {
                     context.timers.endScope();
                 }
             }
-        } catch (VerificationError e) {
+        } catch (GraalInternalError e) {
             throw e.addContext(graph).addContext("phase", getDetailedName());
         }
 
@@ -108,13 +107,13 @@ public abstract class Phase {
 
             boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
             if (shouldFireCompilationEvents && context.timers.currentLevel() < GraalOptions.PlotLevel) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "After " + getDetailedName(), graph, true, false));
+                context.observable.fireCompilationEvent("After " + getName(), graph);
             }
         }
 
         try {
             assert !shouldVerify || graph.verify();
-        } catch (VerificationError e) {
+        } catch (GraalInternalError e) {
             throw e.addContext("end of phase", getDetailedName());
         }
     }

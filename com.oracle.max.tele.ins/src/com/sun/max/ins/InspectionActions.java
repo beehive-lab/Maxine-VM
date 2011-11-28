@@ -42,7 +42,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
 import com.sun.max.tele.object.*;
@@ -1414,12 +1413,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            final List<MaxCompilation> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            final List<MaxCompilation> compilations = vm().machineCode().compilations(teleClassMethodActor);
             if (getMenuComponentCount() < compilations.size()) {
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
-                    final MaxCompilation compiledCode = compilations.get(index);
-                    final String name = inspection().nameDisplay().shortName(compiledCode);
-                    add(views().objects().makeViewAction(compiledCode.representation(), name.toString()));
+                    final MaxCompilation compilation = compilations.get(index);
+                    final String name = inspection().nameDisplay().shortName(compilation);
+                    add(views().objects().makeViewAction(compilation.representation(), name.toString()));
                 }
             }
         }
@@ -1494,7 +1493,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public String validateInput(Address address) {
-                    if (vm().codeCache().findMachineCode(address) != null) {
+                    if (vm().machineCode().findMachineCode(address) != null) {
                         return null;
                     }
                     return "There is no method containing the address " + address.toHexString();
@@ -1761,11 +1760,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
-            if (libInfo != null) {
-                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "View Native Function...", "View Code", false);
+            final MaxNativeLibrary maxNativeLibrary = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
+            if (maxNativeLibrary != null) {
+                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), maxNativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).base, "native function address from library"), true);
+                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
                 }
             }
         }
@@ -1828,15 +1827,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            final List<MaxCompilation> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            final List<MaxCompilation> compilations = vm().machineCode().compilations(teleClassMethodActor);
             if (getMenuComponentCount() < compilations.size()) {
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
-                    final MaxCompilation compiledCode = compilations.get(index);
+                    final MaxCompilation compilation = compilations.get(index);
                     final StringBuilder name = new StringBuilder();
-                    name.append(inspection().nameDisplay().shortMethodCompilationID(compiledCode));
+                    name.append(inspection().nameDisplay().shortMethodCompilationID(compilation));
                     name.append("  ");
-                    name.append(compiledCode.classActorForObjectType().simpleName());
-                    add(actions().viewMethodCodeAtLocation(compiledCode.getCallEntryLocation(), name.toString()));
+                    name.append(compilation.classActorForObjectType().simpleName());
+                    add(actions().viewMethodCodeAtLocation(compilation.getCallEntryLocation(), name.toString()));
                 }
             }
         }
@@ -1966,18 +1965,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Copy disassembled machine code to clipboard";
 
-        private final MaxCompilation compiledCode;
+        private final MaxCompilation compilation;
 
-        private CopyCompiledCodeToClipboardAction(MaxCompilation compiledCode, String actionTitle) {
+        private CopyCompiledCodeToClipboardAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.compiledCode = compiledCode;
+            this.compilation = compilation;
         }
 
         @Override
         public void procedure() {
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             final PrintStream printStream = new PrintStream(outputStream);
-            compiledCode.writeSummary(printStream);
+            compilation.writeSummary(printStream);
             gui().postToClipboard(outputStream.toString());
         }
     }
@@ -1985,8 +1984,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that copies to the system clipboard a textual disassembly of machine code.
      */
-    public InspectorAction copyCompiledCodeToClipboard(MaxCompilation compiledCode, String actionTitle) {
-        return new CopyCompiledCodeToClipboardAction(compiledCode, actionTitle);
+    public InspectorAction copyCompiledCodeToClipboard(MaxCompilation compilation, String actionTitle) {
+        return new CopyCompiledCodeToClipboardAction(compilation, actionTitle);
     }
 
     /**
@@ -2405,7 +2404,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MaxCodeLocation toggleCodeLocation = (codeLocation != null) ? codeLocation : focus().codeLocation();
-            if (toggleCodeLocation.hasAddress() && !toggleCodeLocation.address().isZero()) {
+            if (toggleCodeLocation.hasAddress() && toggleCodeLocation.address().isNotZero()) {
                 MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(toggleCodeLocation);
                 try {
                     if (breakpoint == null) {
@@ -2475,7 +2474,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new NativeLocationInputDialog(inspection(), "Break at machine code address...", vm().bootImageStart(), "") {
                 @Override
                 public void entered(Address address, String description) {
-                    if (!address.isZero()) {
+                    if (address.isNotZero()) {
                         try {
                             final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
                             if (breakpoint == null) {
@@ -2512,20 +2511,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set breakpoint at every machine code label";
-        final MaxCompilation compiledCode;
+        final MaxCompilation compilation;
 
-        SetMachineCodeLabelBreakpointsAction(MaxCompilation compiledCode, String actionTitle) {
+        SetMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.compiledCode = compiledCode;
-            setEnabled(inspection().hasProcess() && compiledCode.getInstructionMap().labelIndexes().size() > 0);
+            this.compilation = compilation;
+            setEnabled(inspection().hasProcess() && compilation.getMachineCodeInfo().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                for (int index : instructionMap.labelIndexes()) {
-                    vm().breakpointManager().makeBreakpoint(instructionMap.instructionLocation(index));
+                final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                for (int index : machineCodeInfo.labelIndexes()) {
+                    vm().breakpointManager().makeBreakpoint(machineCodeInfo.instructionLocation(index));
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -2536,8 +2535,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will set a breakpoint at every machine code label in a compilation
      */
-    public final InspectorAction setMachineCodeLabelBreakpoints(MaxCompilation compiledCode, String actionTitle) {
-        return new SetMachineCodeLabelBreakpointsAction(compiledCode, actionTitle);
+    public final InspectorAction setMachineCodeLabelBreakpoints(MaxCompilation compilation, String actionTitle) {
+        return new SetMachineCodeLabelBreakpointsAction(compilation, actionTitle);
     }
 
     /**
@@ -2546,20 +2545,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove breakpoint at every machine code label";
-        private final MaxCompilation compiledCode;
+        private final MaxCompilation compilation;
 
-        RemoveMachineCodeLabelBreakpointsAction(MaxCompilation compiledCode, String actionTitle) {
+        RemoveMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.compiledCode = compiledCode;
-            setEnabled(inspection().hasProcess() && compiledCode.getInstructionMap().labelIndexes().size() > 0);
+            this.compilation = compilation;
+            setEnabled(inspection().hasProcess() && compilation.getMachineCodeInfo().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                for (int index : instructionMap.labelIndexes()) {
-                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(index));
+                final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                for (int index : machineCodeInfo.labelIndexes()) {
+                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(machineCodeInfo.instructionLocation(index));
                     if (breakpoint != null) {
                         breakpoint.remove();
                     }
@@ -2573,8 +2572,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will remove any breakpoints machine code labels.
      */
-    public final InspectorAction removeMachineCodeLabelBreakpoints(MaxCompilation compiledCode, String actionTitle) {
-        return new RemoveMachineCodeLabelBreakpointsAction(compiledCode, actionTitle);
+    public final InspectorAction removeMachineCodeLabelBreakpoints(MaxCompilation compilation, String actionTitle) {
+        return new RemoveMachineCodeLabelBreakpointsAction(compilation, actionTitle);
     }
 
      /**
@@ -2583,16 +2582,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtEntryAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set machine code breakpoint at code entry";
-        private final MaxCompilation compiledCode;
-        SetMachineCodeBreakpointAtEntryAction(MaxCompilation compiledCode, String actionTitle) {
+        private final MaxCompilation compilation;
+        SetMachineCodeBreakpointAtEntryAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.compiledCode = compiledCode;
+            this.compilation = compilation;
             refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation callEntryLocation = compiledCode.getCallEntryLocation();
+            final MaxCodeLocation callEntryLocation = compilation.getCallEntryLocation();
             try {
                 MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(callEntryLocation);
                 focus().setBreakpoint(breakpoint);
@@ -2610,15 +2609,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an interactive Action that sets a machine code breakpoint at code entry.
      */
-    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompilation compiledCode, String actionTitle) {
-        return new  SetMachineCodeBreakpointAtEntryAction(compiledCode, actionTitle);
+    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompilation compilation, String actionTitle) {
+        return new  SetMachineCodeBreakpointAtEntryAction(compilation, actionTitle);
     }
 
     /**
      * @return an interactive Action that sets a compiled code breakpoint at  a method entry
      */
-    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompilation compiledCode) {
-        return new  SetMachineCodeBreakpointAtEntryAction(compiledCode, null);
+    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompilation compilation) {
+        return new  SetMachineCodeBreakpointAtEntryAction(compilation, null);
     }
 
     /**
@@ -2644,9 +2643,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     try {
                         // There may be multiple compilations of a method in the result.
                         MaxBreakpoint machineCodeBreakpoint = null;
-                        for (MaxCompilation compiledCode : compilations) {
+                        for (MaxCompilation compilation : compilations) {
                             machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
+                                vm().breakpointManager().makeBreakpoint(compilation.getCallEntryLocation());
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -2686,15 +2685,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
-            if (libInfo != null) {
-                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "Native Function Breakpoints...", "Set Breakpoint", true);
+            final MaxNativeLibrary maxNativeLibrary = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
+            if (maxNativeLibrary != null) {
+                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), maxNativeLibrary, "Native Function Breakpoints...", "Set Breakpoint", true);
                 if (functions != null) {
                     try {
                         MaxBreakpoint machineCodeBreakpoint = null;
-                        for (NativeCodeLibraries.SymbolInfo symbolInfo : functions) {
+                        for (MaxNativeFunction nativeFunction : functions) {
                             machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(symbolInfo.base, "set machine breakpoint"));
+                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -2744,8 +2743,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             if (virtualMethodActor.name == SymbolTable.INIT) {
                                 final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                                 if (teleClassMethodActor != null) {
-                                    for (MaxCompilation compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
-                                        final MaxCodeLocation callEntryLocation = compiledCode.getCallEntryLocation();
+                                    for (MaxCompilation compilation : vm().machineCode().compilations(teleClassMethodActor)) {
+                                        final MaxCodeLocation callEntryLocation = compilation.getCallEntryLocation();
                                         breakpoint = vm().breakpointManager().makeBreakpoint(callEntryLocation);
                                     }
                                 }
@@ -3823,7 +3822,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MaxCodeLocation machineCodeLocation = (codeLocation != null) ? codeLocation : focus().codeLocation();
-            if (!machineCodeLocation.address().isZero()) {
+            if (machineCodeLocation.address().isNotZero()) {
                 try {
                     vm().runToInstruction(machineCodeLocation, false, false);
                 } catch (Exception exception) {
@@ -3934,14 +3933,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
-                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
-                if (compiledCode != null) {
-                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
-                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
-                        if (instructionMap.isCall(index)) {
+                final MaxCompilation compilation = vm().machineCode().findCompilation(maxCodeLocation.address());
+                if (compilation != null) {
+                    final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                    final int instructionIndex = machineCodeInfo.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < machineCodeInfo.length(); index++) {
+                        if (machineCodeInfo.isCall(index)) {
                             try {
-                                vm().runToInstruction(instructionMap.instructionLocation(index), false, false);
+                                vm().runToInstruction(machineCodeInfo.instructionLocation(index), false, false);
                             } catch (Exception exception) {
                                 InspectorError.unexpected("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                             }
@@ -3986,14 +3985,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
-                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
-                if (compiledCode != null) {
-                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
-                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
-                        if (instructionMap.isCall(index)) {
+                final MaxCompilation compilation = vm().machineCode().findCompilation(maxCodeLocation.address());
+                if (compilation != null) {
+                    final MaxMachineCodeInfo machineCodeInfo = compilation.getMachineCodeInfo();
+                    final int instructionIndex = machineCodeInfo.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < machineCodeInfo.length(); index++) {
+                        if (machineCodeInfo.isCall(index)) {
                             try {
-                                vm().runToInstruction(instructionMap.instructionLocation(index), false, true);
+                                vm().runToInstruction(machineCodeInfo.instructionLocation(index), false, true);
                             } catch (Exception exception) {
                                 InspectorError.unexpected("Run to next call instruction could not be performed.", exception);
                             }
@@ -4280,39 +4279,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link MaxCodeCache}.
+     * Action:  lists to the console all method compilations and external routines.
      */
-    final class ListCodeRegistryAction extends InspectorAction {
+    final class ListMachineCodeAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List code registry contents";
+        private static final String DEFAULT_TITLE = "List compilations & external routines";
 
-        ListCodeRegistryAction(String actionTitle) {
+        ListMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            vm().codeCache().writeSummary(System.out);
+            vm().machineCode().writeSummary(System.out);
         }
     }
 
-    private InspectorAction listCodeRegistry = new ListCodeRegistryAction(null);
+    private InspectorAction listMachineCode = new ListMachineCodeAction(null);
 
     /**
      * @return an Action that will list to the console the entries in the {@link MaxCodeCache}.
      */
-    public final InspectorAction listCodeRegistry() {
-        return listCodeRegistry;
+    public final InspectorAction listMachineCode() {
+        return listMachineCode;
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link MaxCodeCache} to an interactively specified file.
+     * Action:  lists all method compilations and external routines to an interactively specified file.
      */
-    final class ListCodeRegistryToFileAction extends InspectorAction {
+    final class ListMachineCodeToFileAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List code registry contents to a file...";
+        private static final String DEFAULT_TITLE = "List compilations & external routines to a file...";
 
-        ListCodeRegistryToFileAction(String actionTitle) {
+        ListMachineCodeToFileAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -4321,7 +4320,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             //Create a file chooser
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-            fileChooser.setDialogTitle("Save code registry summary to file:");
+            fileChooser.setDialogTitle("Save machine code summary to file:");
             final int returnVal = fileChooser.showSaveDialog(gui().frame());
             if (returnVal != JFileChooser.APPROVE_OPTION) {
                 return;
@@ -4332,20 +4331,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                vm().codeCache().writeSummary(printStream);
+                vm().machineCode().writeSummary(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
         }
     }
 
-    private InspectorAction listCodeRegistryToFile = new ListCodeRegistryToFileAction(null);
+    private InspectorAction listMachineCodeToFile = new ListMachineCodeToFileAction(null);
 
     /**
      * @return an interactive Action that will list to a specified file the entries in the {@link MaxCodeCache}.
      */
-    public final InspectorAction listCodeRegistryToFile() {
-        return listCodeRegistryToFile;
+    public final InspectorAction listMachineCodeToFile() {
+        return listMachineCodeToFile;
     }
 
     /**

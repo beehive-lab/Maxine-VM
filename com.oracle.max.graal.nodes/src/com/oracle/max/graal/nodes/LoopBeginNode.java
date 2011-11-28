@@ -69,7 +69,7 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType, L
     }
 
     @Override
-    public int phiPredecessorIndex(Node pred) {
+    public int phiPredecessorIndex(FixedNode pred) {
         if (pred == forwardEdge()) {
             return 0;
         } else if (pred == this.loopEnd()) {

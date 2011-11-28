@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
@@ -52,11 +51,11 @@ public class ComputeProbabilityPhase extends Phase {
     protected void run(StructuredGraph graph) {
         new PropagateProbability(graph.start()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
-            context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));
+            context.observable.fireCompilationEvent("After PropagateProbability", graph);
         }
         computeLoopFactors();
         if (context.isObserved() && GraalOptions.TraceProbability) {
-            context.observable.fireCompilationEvent(new CompilationEvent(null, "After computeLoopFactors", graph, true, false));
+            context.observable.fireCompilationEvent("After computeLoopFactors", graph);
         }
         new PropagateLoopFrequency(graph.start()).apply();
     }

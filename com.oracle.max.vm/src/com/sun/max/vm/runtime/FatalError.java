@@ -262,7 +262,7 @@ public final class FatalError extends Error {
     @INLINE
     public static void check(boolean condition, String message) {
         if (!condition) {
-            unexpected(message, false, null, Pointer.zero());
+            throw unexpected(message, false, null, Pointer.zero());
         }
     }
 

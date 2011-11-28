@@ -77,7 +77,7 @@ public class JVMTIHeapFunctions {
         class CBCV extends CallbackCellVisitor {
             @Override
             protected boolean callback(Object object) {
-                Pointer tagPtr = Intrinsics.stackAllocate(Word.size());
+                Pointer tagPtr = Intrinsics.alloca(Word.size(), false);
                 ClassActor classActor = ObjectAccess.readClassActor(object);
                 ClassActorProxy proxyClassActor = ClassActorProxy.asClassActorProxy(classActor);
 

@@ -27,6 +27,7 @@ import java.net.*;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.hotspot.logging.*;
 import com.oracle.max.graal.hotspot.server.*;
 import com.sun.cri.ci.*;
@@ -138,8 +139,8 @@ public final class CompilerImpl implements Compiler, Remote {
     /**
      * Factory method for getting a Graal compiler instance. This method is called via reflection.
      */
-    public static GraalCompiler getGraalCompiler() {
-        return getInstance().getCompiler();
+    public static GraalRuntime getGraalRuntime() {
+        return getInstance().getRuntime();
     }
 
     @Override
@@ -155,7 +156,7 @@ public final class CompilerImpl implements Compiler, Remote {
             if (Logger.ENABLED) {
                 generator = LoggingProxy.getProxy(RiXirGenerator.class, generator);
             }
-            compiler = new GraalCompiler(context, getRuntime(), getTarget(), generator, registerConfig, null);
+            compiler = new GraalCompiler(context, getRuntime(), getTarget(), generator, registerConfig);
         }
         return compiler;
     }

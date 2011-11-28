@@ -268,7 +268,7 @@ public final class ArrayElementsTable extends InspectorTable {
          */
         @Override
         public int findRow(Address address) {
-            if (!address.isZero()) {
+            if (address.isNotZero()) {
                 final int offset = address.minus(getOrigin()).minus(startOffset).toInt();
                 if (offset >= 0 && offset < arrayLength * nBytesInElement) {
                     final int elementRow = offset / nBytesInElement;

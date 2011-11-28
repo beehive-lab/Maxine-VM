@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.target.amd64.*;
@@ -47,22 +48,30 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
         switch (op) {
-            case SAFEPOINT_POLL:
-                // TODO Maxine-specific, but currently implemented as XIR.
+            case SAFEPOINT_POLL: {
                 gen.emitSafepointPoll(this);
                 break;
-            case HERE:
+            }
+            case HERE: {
                 gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
-                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
+                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+                LIRDebugInfo info = new LIRDebugInfo(stateDuring);
+                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;
-            case INFO:
-                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(gen.state()));
+            }
+            case INFO: {
+                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+                LIRDebugInfo info = new LIRDebugInfo(stateDuring);
+                gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;
-            case BREAKPOINT:
+            }
+            case BREAKPOINT: {
                 gen.append(AMD64BreakpointOpcode.BREAKPOINT.create());
                 break;
-            case PAUSE:
+            }
+            case PAUSE: {
                 break;
+            }
         }
     }
 }

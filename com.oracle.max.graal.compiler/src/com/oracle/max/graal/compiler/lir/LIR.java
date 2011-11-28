@@ -160,11 +160,11 @@ public class LIR {
             try {
                 op.emitCode(tasm);
             } catch (AssertionError t) {
-                throw new VerificationError(t);
+                throw new GraalInternalError(t);
             } catch (RuntimeException t) {
-                throw new VerificationError(t);
+                throw new GraalInternalError(t);
             }
-        } catch (VerificationError e) {
+        } catch (GraalInternalError e) {
             throw e.addContext("lir instruction", op);
         }
     }
@@ -191,10 +191,10 @@ public class LIR {
         TTY.print("B%d ", x.blockID());
 
         // print flags
-        if (x.isLinearScanLoopHeader()) {
+        if (x.isLoopHeader()) {
             TTY.print("lh ");
         }
-        if (x.isLinearScanLoopEnd()) {
+        if (x.isLoopEnd()) {
             TTY.print("le ");
         }
 
