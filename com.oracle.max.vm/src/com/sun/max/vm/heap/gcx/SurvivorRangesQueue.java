@@ -107,7 +107,14 @@ public class SurvivorRangesQueue {
         if (isEmpty()) {
             return;
         }
-        tail += 2;
+        final int newTail = tail + 2;
+        if (head == newTail) {
+            // Circular buffer is empty. Reset both head and tail to  first entry.
+            head = 0;
+            tail = 0;
+        } else {
+            tail = newTail;
+        }
     }
 
     /**
