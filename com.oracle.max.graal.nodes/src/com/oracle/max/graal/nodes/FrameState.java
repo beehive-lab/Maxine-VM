@@ -48,7 +48,7 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
     /**
      * This BCI should be used for frame states that are built for code with no meaningful BCI.
      */
-    public static final int UNKNOWN_BCI = -3;
+    public static final int UNKNOWN_BCI = -4;
 
     /**
      * When a node whose frame state has this BCI value is inlined, its frame state
@@ -62,6 +62,13 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
      * the inlined invoke node.
      */
     public static final int AFTER_BCI = -2;
+
+    /**
+     * When a node whose frame state has this BCI value is inlined, its frame state
+     * will be replaced with the frame state at the exception edge of the inlined
+     * invoke node.
+     */
+    public static final int AFTER_EXCEPTION_BCI = -3;
 
     @Input private FrameState outerFrameState;
 

@@ -164,7 +164,7 @@ public class NodeClass {
         copyInto(dataNames, scanner.dataNames);
 
         copyInto(inputTypes, arrayUsingSortedOffsets(scanner.inputTypesMap, this.inputOffsets, new Class<?>[this.inputOffsets.length]));
-        copyInto(inputNames, arrayUsingSortedOffsets(scanner.inputNamesMap, this.inputOffsets, new String[this.inputNames.length]));
+        copyInto(inputNames, arrayUsingSortedOffsets(scanner.inputNamesMap, this.inputOffsets, new String[this.inputOffsets.length]));
         copyInto(successorTypes, arrayUsingSortedOffsets(scanner.successorTypesMap, this.successorOffsets, new Class<?>[this.successorOffsets.length]));
         copyInto(successorNames, arrayUsingSortedOffsets(scanner.successorNamesMap, this.successorOffsets, new String[this.successorNames.length]));
     }
@@ -248,6 +248,7 @@ public class NodeClass {
                     if (!Modifier.isStatic(field.getModifiers())) {
                         Class< ? > type = field.getType();
                         long offset = calc.getOffset(field);
+                        String name = field.getName();
                         if (field.isAnnotationPresent(Node.Input.class)) {
                             assert !field.isAnnotationPresent(Node.Successor.class) : "field cannot be both input and successor";
                             if (INPUT_LIST_CLASS.isAssignableFrom(type)) {
@@ -257,7 +258,11 @@ public class NodeClass {
                                 inputOffsets.add(offset);
                                 inputTypesMap.put(offset, type);
                             }
-                            inputNamesMap.put(offset, field.getName());
+                            if (field.getAnnotation(Node.Input.class).notDataflow()) {
+                                inputNamesMap.put(offset, name + "#NDF");
+                            } else {
+                                inputNamesMap.put(offset, name);
+                            }
                         } else if (field.isAnnotationPresent(Node.Successor.class)) {
                             if (SUCCESSOR_LIST_CLASS.isAssignableFrom(type)) {
                                 successorListOffsets.add(offset);
@@ -266,13 +271,13 @@ public class NodeClass {
                                 successorOffsets.add(offset);
                                 successorTypesMap.put(offset, type);
                             }
-                            successorNamesMap.put(offset, field.getName());
+                            successorNamesMap.put(offset, name);
                         } else if (field.isAnnotationPresent(Node.Data.class)) {
                             dataOffsets.add(offset);
                             dataTypes.add(type);
-                            dataNames.add(field.getName());
+                            dataNames.add(name);
                         } else {
-                            assert !NODE_CLASS.isAssignableFrom(type) || field.getName().equals("Null") : "suspicious node field: " + field;
+                            assert !NODE_CLASS.isAssignableFrom(type) || name.equals("Null") : "suspicious node field: " + field;
                             assert !INPUT_LIST_CLASS.isAssignableFrom(type) : "suspicious node input list field: " + field;
                             assert !SUCCESSOR_LIST_CLASS.isAssignableFrom(type) : "suspicious node successor list field: " + field;
                         }

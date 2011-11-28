@@ -398,6 +398,34 @@ public class InliningUtil {
         }
         invoke.node().replaceAtPredecessors(invokeReplacement);
 
+        FrameState stateAtExceptionEdge = null;
+        if (invoke instanceof InvokeWithExceptionNode) {
+            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
+            if (unwindNode != null) {
+                assert unwindNode.predecessor() != null;
+                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
+                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
+                stateAtExceptionEdge = obj.stateAfter();
+                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
+                for (Node usage : obj.usages().snapshot()) {
+                    usage.replaceFirstInput(obj, unwindDuplicate.exception());
+                }
+                unwindDuplicate.clearInputs();
+                Node n = obj.next();
+                obj.setNext(null);
+                unwindDuplicate.replaceAndDelete(n);
+            } else {
+                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
+                invokeWithException.setExceptionEdge(null);
+                GraphUtil.killCFG(nodeToDelete);
+            }
+        } else {
+            if (unwindNode != null) {
+                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
+                unwindDuplicate.replaceAndDelete(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
+            }
+        }
+
         FrameState stateBefore = null;
         double invokeProbability = invoke.node().probability();
         for (Node node : duplicates.values()) {
@@ -416,6 +444,9 @@ public class InliningUtil {
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
                     frameState.replaceAndDelete(stateAfter);
+                } else if (frameState.bci == FrameState.AFTER_EXCEPTION_BCI) {
+                    assert stateAtExceptionEdge != null;
+                    frameState.replaceAndDelete(stateAtExceptionEdge);
                 }
             }
         }
@@ -443,33 +474,6 @@ public class InliningUtil {
             Node n = invoke.next();
             invoke.setNext(null);
             returnDuplicate.replaceAndDelete(n);
-        }
-
-        if (invoke instanceof InvokeWithExceptionNode) {
-            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
-            if (unwindNode != null) {
-                assert unwindNode.predecessor() != null;
-                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
-                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
-
-                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
-                for (Node usage : obj.usages().snapshot()) {
-                    usage.replaceFirstInput(obj, unwindDuplicate.exception());
-                }
-                unwindDuplicate.clearInputs();
-                Node n = obj.next();
-                obj.setNext(null);
-                unwindDuplicate.replaceAndDelete(n);
-            } else {
-                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
-                invokeWithException.setExceptionEdge(null);
-                GraphUtil.killCFG(nodeToDelete);
-            }
-        } else {
-            if (unwindNode != null) {
-                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
-                unwindDuplicate.replaceAndDelete(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-            }
         }
 
         invoke.node().clearInputs();
