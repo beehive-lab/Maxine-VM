@@ -124,7 +124,6 @@ public final class NoAgingEvacuator extends Evacuator  {
     @Override
     protected void doBeforeEvacuation() {
         promotedBytes = Size.zero();
-        allocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
         fromSpace.doBeforeGC();
@@ -134,6 +133,7 @@ public final class NoAgingEvacuator extends Evacuator  {
             top = chunk.asPointer();
             end = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
         }
+        allocatedRangeStart = top;
     }
 
     @Override
@@ -162,7 +162,8 @@ public final class NoAgingEvacuator extends Evacuator  {
     }
 
     private void updateSurvivorRanges() {
-        if (allocatedRangeStart.greaterThan(top)) {
+        if (top.greaterThan(allocatedRangeStart)) {
+            // Something was allocated in the current evacuation allocation buffer.
             recordRange(allocatedRangeStart, top);
             allocatedRangeStart = top;
         }
