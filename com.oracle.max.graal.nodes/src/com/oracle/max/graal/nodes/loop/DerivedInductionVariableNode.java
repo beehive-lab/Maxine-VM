@@ -95,7 +95,7 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
             stride = scale();
             counter = (LoopCounterNode) base;
         }
-        BasicInductionVariableNode newBIV = graph().add(new BasicInductionVariableNode(kind, init, stride, counter));
+        BasicInductionVariableNode newBIV = graph().add(new BasicInductionVariableNode(kind(), init, stride, counter));
         this.replaceAndDelete(newBIV);
         return newBIV;
     }
@@ -111,7 +111,7 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
             DerivedInductionVariableNode divBase = (DerivedInductionVariableNode) base();
             IntegerArithmeticNode newOffset = IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), divBase.offset()));
             IntegerArithmeticNode newScale = IntegerArithmeticNode.mul(scale(), divBase.scale());
-            return graph().add(new DerivedInductionVariableNode(kind, newOffset, newScale, divBase.base()));
+            return graph().add(new DerivedInductionVariableNode(kind(), newOffset, newScale, divBase.base()));
         }
         return this;
     }

@@ -23,13 +23,15 @@
 package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 
-public class LocationNode extends FloatingNode implements LIRLowerable {
+public class LocationNode extends FloatingNode implements LIRLowerable, ValueNumberable {
 
     @Data private int displacement;
     @Data private CiKind valueKind;
@@ -57,7 +59,7 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
     }
 
     protected LocationNode(Object identity, CiKind kind, int displacement) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         assert kind != CiKind.Illegal && kind != CiKind.Void;
         this.displacement = displacement;
         this.valueKind = kind;

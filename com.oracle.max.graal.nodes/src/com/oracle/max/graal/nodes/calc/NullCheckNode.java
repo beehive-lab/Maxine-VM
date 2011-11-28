@@ -24,10 +24,9 @@ package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 public final class NullCheckNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
@@ -45,7 +44,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
      * @param expectedNull True when this node checks that the value is null, false when this node checks for non-null
      */
     public NullCheckNode(ValueNode object, boolean expectedNull) {
-        super(CiKind.Object);
+        super(StampFactory.illegal());
         assert object.kind() == CiKind.Object : object.kind();
         this.object = object;
         this.expectedNull = expectedNull;
@@ -57,18 +56,6 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
     }
 
     @Override
-    public RiResolvedType declaredType() {
-        // null check does not alter the type of the object
-        return object().declaredType();
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        // null check does not alter the type of the object
-        return object().exactType();
-    }
-
-    @Override
     public boolean verify() {
         assertTrue(object().kind().isObject(), "null check input must be an object");
         return super.verify();
@@ -76,20 +63,13 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable,
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        if (object instanceof NewInstanceNode || object instanceof NewArrayNode || object instanceof NewMultiArrayNode) {
-            return ConstantNode.forBoolean(!expectedNull, graph());
-        }
         CiConstant constant = object().asConstant();
         if (constant != null) {
             assert constant.kind == CiKind.Object;
             return ConstantNode.forBoolean(constant.isNull() == expectedNull, graph());
         }
-
-        if (object instanceof LocalNode) {
-            LocalNode localNode = (LocalNode) object;
-            if (!localNode.canBeNull()) {
-                return ConstantNode.forBoolean(!expectedNull, graph());
-            }
+        if (object.stamp().nonNull()) {
+            return ConstantNode.forBoolean(!expectedNull, graph());
         }
         return this;
     }

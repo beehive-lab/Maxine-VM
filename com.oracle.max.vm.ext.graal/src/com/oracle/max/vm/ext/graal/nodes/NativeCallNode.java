@@ -31,6 +31,7 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -50,7 +51,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     public final RiResolvedMethod nativeMethod;
 
     public NativeCallNode(ValueNode address, ValueNode[] arguments, CiKind returnKind, RiResolvedMethod nativeMethod) {
-        super(returnKind.stackKind(), arguments);
+        super(StampFactory.forKind(returnKind.stackKind()), arguments);
         this.nativeMethod = nativeMethod;
         this.address = address;
     }
@@ -62,7 +63,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     @Override
     public void generate(LIRGeneratorTool gen) {
         LIRGenerator lir = (LIRGenerator) gen;
-        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+        FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
         LIRDebugInfo info = new LIRDebugInfo(stateDuring);
         CiValue resultOperand = lir.resultOperandFor(this.kind());
         CiValue callAddress = lir.operand(this.address());

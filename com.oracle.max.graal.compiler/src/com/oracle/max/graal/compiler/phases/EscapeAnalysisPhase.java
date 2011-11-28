@@ -45,7 +45,7 @@ public class EscapeAnalysisPhase extends Phase {
         public final ValueNode[] fieldState;
         public final VirtualObjectNode virtualObject;
         public ValueNode virtualObjectField;
-        public final StructuredGraph graph;
+        public final Graph graph;
 
         public BlockExitState(EscapeField[] fields, VirtualObjectNode virtualObject) {
             this.fieldState = new ValueNode[fields.length];

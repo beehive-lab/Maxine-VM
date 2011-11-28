@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.loop;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.graal.util.*;
 import com.sun.cri.ci.*;
 
@@ -48,7 +49,7 @@ public abstract class InductionVariableNode extends FloatingNode {
     }
 
     public InductionVariableNode(CiKind kind) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         assert kind.isInt() || kind.isLong();
     }
 

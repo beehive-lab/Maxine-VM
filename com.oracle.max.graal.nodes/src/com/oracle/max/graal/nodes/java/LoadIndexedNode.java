@@ -26,8 +26,8 @@ import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
  * The {@code LoadIndexedNode} represents a read from an element of an array.
@@ -42,22 +42,15 @@ public final class LoadIndexedNode extends AccessIndexedNode implements Lowerabl
      * @param elementKind the element type
      */
     public LoadIndexedNode(ValueNode array, ValueNode index, ValueNode length, CiKind elementKind) {
-        super(elementKind.stackKind(), array, index, length, elementKind);
+        super(createStamp(array, elementKind), array, index, length, elementKind);
     }
 
-    @Override
-    public RiResolvedType declaredType() {
-        RiResolvedType arrayType = array().declaredType();
-        if (arrayType == null) {
-            return null;
+    private static Stamp createStamp(ValueNode array, CiKind kind) {
+        if (kind == CiKind.Object && array.declaredType() != null) {
+            return StampFactory.declared(array.declaredType().componentType());
+        } else {
+            return StampFactory.forKind(kind);
         }
-        return arrayType.componentType();
-    }
-
-    @Override
-    public RiResolvedType exactType() {
-        RiType declared = declaredType();
-        return (declared instanceof RiResolvedType) ? ((RiResolvedType) declared).exactType() : null;
     }
 
     @Override

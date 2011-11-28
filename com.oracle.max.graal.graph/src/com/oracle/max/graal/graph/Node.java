@@ -282,8 +282,8 @@ public abstract class Node implements Cloneable {
     }
 
     private boolean checkDeletion() {
-        assertTrue(usages.isEmpty(), "cannot delete node with usages: %s", usages);
-        assertTrue(predecessor == null, "cannot delete node with predecessor: %s", predecessor);
+        assertTrue(usages.isEmpty(), "cannot delete node %s because of usages: %s", this, usages);
+        assertTrue(predecessor == null, "cannot delete node %s because of predecessor: %s", this, predecessor);
         return true;
     }
 

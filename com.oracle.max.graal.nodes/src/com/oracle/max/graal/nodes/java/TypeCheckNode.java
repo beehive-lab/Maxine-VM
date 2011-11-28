@@ -23,7 +23,7 @@
 package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -42,8 +42,8 @@ public abstract class TypeCheckNode extends BooleanNode {
      * @param object the node which produces the object
      * @param kind the result type of this node
      */
-    public TypeCheckNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, CiKind kind) {
-        super(kind);
+    public TypeCheckNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, Stamp stamp) {
+        super(stamp);
         this.targetClassInstruction = targetClassInstruction;
         this.targetClass = targetClass;
         this.object = object;

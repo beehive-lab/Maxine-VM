@@ -78,7 +78,7 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
      * @return the new DerivedInductionVariable
      */
     public DerivedInductionVariableNode toDerivedInductionVariable() {
-        DerivedInductionVariableNode newDIV = graph().add(new DerivedInductionVariableNode(kind, init(), stride(), loopCounter()));
+        DerivedInductionVariableNode newDIV = graph().add(new DerivedInductionVariableNode(kind(), init(), stride(), loopCounter()));
         this.replaceAndDelete(newDIV);
         return newDIV;
     }
@@ -93,7 +93,7 @@ public class BasicInductionVariableNode extends LinearInductionVariableNode impl
 
     @Override
     public ValueNode lowerInductionVariable() {
-        return ivToPhi(loopBegin(), init(), stride(), kind);
+        return ivToPhi(loopBegin(), init(), stride(), kind());
     }
 
     @Override

@@ -25,7 +25,7 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * Cretes a memory barrier.
@@ -35,7 +35,7 @@ public class MembarNode extends AbstractStateSplit implements LIRLowerable, Memo
     private final int barriers;
 
     public MembarNode(int barriers) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.barriers = barriers;
     }
 

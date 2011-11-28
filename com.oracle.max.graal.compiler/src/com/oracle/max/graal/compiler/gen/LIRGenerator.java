@@ -97,8 +97,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      */
     @Override
     public CiValue operand(ValueNode node) {
-        assert node.operand().isVariable() || node.operand().isConstant() : "wrong operand " + node.operand() + " at node " + node;
-        return node.operand();
+        return compilation.operand(node);
     }
 
     /**
@@ -115,7 +114,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public CiValue setResult(ValueNode x, CiValue operand) {
         assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind()) : operand.kind;
 
-        x.setOperand(operand);
+        compilation.setOperand(x, operand);
         if (GraalOptions.DetailedAsserts) {
             if (operand.isVariable()) {
                 operands.recordResult((CiVariable) operand, x);
@@ -275,7 +274,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             if (instr instanceof StateSplit) {
                 stateAfter = ((StateSplit) instr).stateAfter();
             }
-            doRoot((ValueNode) instr);
+            if (instr instanceof ValueNode) {
+                doRoot((ValueNode) instr);
+            }
             if (stateAfter != null) {
                 lastState = stateAfter;
                 assert checkStartOperands(instr, lastState);
@@ -319,7 +320,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         emitNode(instr);
 
         if (GraalOptions.TraceLIRVisit) {
-            TTY.println("Operand for " + instr + " = " + instr.operand());
+            TTY.println("Operand for " + instr + " = " + compilation.operand(instr));
         }
     }
 
@@ -368,7 +369,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirArgument array = toXirArgument(x.array());
         XirSnippet snippet = xir.genArrayLength(site(x), array);
         emitXir(snippet, x, state(), null, true);
-        x.operand();
+        operand(x);
     }
 
     @Override
@@ -989,12 +990,15 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     private CiValue operandForPhi(PhiNode phi) {
         assert phi.type() == PhiType.Value : "wrong phi type: " + phi;
-        if (phi.operand().isIllegal()) {
+        CiValue result = operand(phi);
+        if (result == null) {
             // allocate a variable for this phi
-            CiVariable operand = newVariable(phi.kind());
-            setResult(phi, operand);
+            CiVariable newOperand = newVariable(phi.kind());
+            setResult(phi, newOperand);
+            return newOperand;
+        } else {
+            return result;
         }
-        return phi.operand();
     }
 
 
@@ -1150,10 +1154,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
-            if (instruction.operand().isIllegal()) {
+            CiValue operand = compilation.operand(instruction);
+            if (operand == null) {
                 setResult(instruction, allocatedResultOperand);
             } else {
-                assert instruction.operand() == allocatedResultOperand;
+                assert operand == allocatedResultOperand;
             }
         }
 

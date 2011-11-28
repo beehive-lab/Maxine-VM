@@ -31,15 +31,13 @@ import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint, LIRLowerable {
     private static final int NORMAL_EDGE = 0;
     private static final int EXCEPTION_EDGE = 1;
 
-    @Input private MethodCallTargetNode callTarget;
+    @Input private final MethodCallTargetNode callTarget;
     @Input private FrameState stateAfter;
-    private boolean canInline = true;
     private final int bci;
 
     /**
@@ -48,18 +46,10 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
      * @param branchProbability
      */
     public InvokeWithExceptionNode(MethodCallTargetNode callTarget, BeginNode exceptionEdge, int bci) {
-        super(callTarget.returnKind().stackKind(), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
+        super(callTarget.returnStamp(), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
         assert callTarget != null;
         this.bci = bci;
         this.callTarget = callTarget;
-    }
-
-    public boolean canInline() {
-        return canInline;
-    }
-
-    public void setCanInline(boolean b) {
-        canInline = b;
     }
 
     public BeginNode exceptionEdge() {
@@ -80,12 +70,6 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
 
     public MethodCallTargetNode callTarget() {
         return callTarget;
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        RiType returnType = callTarget().returnType();
-        return (returnType instanceof RiResolvedType) ? ((RiResolvedType) returnType) : null;
     }
 
     @Override
@@ -174,7 +158,7 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
             setNext(null);
             fixedWithNextNode.setNext(next);
             this.replaceAndDelete(node);
-        } else if (node instanceof FloatingNode || (node == null && this.kind == CiKind.Void)) {
+        } else if (node instanceof FloatingNode || (node == null && this.kind() == CiKind.Void)) {
             FixedNode next = this.next();
             setNext(null);
             this.replaceAtPredecessors(next);

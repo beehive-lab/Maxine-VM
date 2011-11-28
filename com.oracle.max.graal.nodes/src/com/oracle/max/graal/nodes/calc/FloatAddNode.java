@@ -37,23 +37,23 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && !y().isConstant()) {
-            return graph().unique(new FloatAddNode(kind, y(), x(), isStrictFP()));
+            return graph().unique(new FloatAddNode(kind(), y(), x(), isStrictFP()));
         }
         if (x().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 return ConstantNode.forFloat(x().asConstant().asFloat() + y().asConstant().asFloat(), graph());
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 return ConstantNode.forDouble(x().asConstant().asDouble() + y().asConstant().asDouble(), graph());
             }
         } else if (y().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 float c = y().asConstant().asFloat();
                 if (c == 0.0f) {
                     return x();
                 }
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 double c = y().asConstant().asDouble();
                 if (c == 0.0) {
                     return x();
@@ -77,7 +77,7 @@ public final class FloatAddNode extends FloatArithmeticNode implements Canonical
 
     public static boolean livesLonger(ValueNode after, ValueNode value, LIRGeneratorTool gen) {
         for (Node usage : value.usages()) {
-            if (usage != after && ((ValueNode) usage).operand() != null) {
+            if (usage != after && usage instanceof ValueNode && gen.operand(((ValueNode) usage)) != null) {
                 return true;
             }
         }

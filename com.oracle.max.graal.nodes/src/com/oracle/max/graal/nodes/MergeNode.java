@@ -110,6 +110,10 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         return sb.toString();
     }
 
+    /**
+     * Removes the given end from the merge, along with the entries corresponding to this end in the phis connected to the merge.
+     * @param pred the end to remove
+     */
     public void removeEnd(EndNode pred) {
         int predIndex = ends.indexOf(pred);
         assert predIndex != -1;
@@ -133,7 +137,7 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLo
         return endIndex(end);
     }
 
-    public Node phiPredecessorAt(int index) {
+    public FixedNode phiPredecessorAt(int index) {
         return endAt(index);
     }
 

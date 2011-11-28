@@ -42,7 +42,7 @@ public final class ExtendedIndexedLocationNode extends LocationNode implements L
         return elementKind;
     }
 
-    public static ExtendedIndexedLocationNode create(Object identity, CiKind kind, ValueNode displacement, ValueNode index, StructuredGraph graph) {
+    public static ExtendedIndexedLocationNode create(Object identity, CiKind kind, ValueNode displacement, ValueNode index, Graph graph) {
         return graph.unique(new ExtendedIndexedLocationNode(identity, kind, index, displacement));
     }
 

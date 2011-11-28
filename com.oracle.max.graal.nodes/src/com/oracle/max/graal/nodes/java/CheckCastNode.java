@@ -24,7 +24,9 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -44,28 +46,8 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
      * @param object the instruction producing the object
      */
     public CheckCastNode(AnchorNode anchor, ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
-        super(targetClassInstruction, targetClass, object, CiKind.Object);
+        super(targetClassInstruction, targetClass, object, targetClass == null ? StampFactory.forKind(CiKind.Object) : StampFactory.declared(targetClass));
         this.anchor = anchor;
-    }
-
-    /**
-     * Gets the declared type of the result of this instruction.
-     *
-     * @return the declared type of the result
-     */
-    @Override
-    public RiResolvedType declaredType() {
-        return targetClass();
-    }
-
-    /**
-     * Gets the exact type of the result of this instruction.
-     *
-     * @return the exact type of the result
-     */
-    @Override
-    public RiResolvedType exactType() {
-        return targetClass() != null ? targetClass().exactType() : null;
     }
 
     @Override
@@ -78,16 +60,28 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
         RiResolvedType objectExactType = object().exactType();
         RiResolvedType classExactType = exactType();
         if (objectExactType != null && classExactType != null && objectExactType.isSubtypeOf(classExactType)) {
+            freeAnchor();
             return object();
         }
         CiConstant constant = object().asConstant();
         if (constant != null) {
             assert constant.kind == CiKind.Object;
             if (constant.isNull()) {
+                freeAnchor();
                 return object();
             }
         }
         return this;
+    }
+
+    // TODO(tw): Find a better way to handle anchors.
+    private void freeAnchor() {
+        for (Node n : usages()) {
+            if (n instanceof ValueAnchorNode) {
+                n.replaceFirstInput(this, null);
+                return;
+            }
+        }
     }
 
     @Override

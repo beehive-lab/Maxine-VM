@@ -24,13 +24,13 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 
 public class PlaceholderNode extends AbstractStateSplit implements Node.IterableNodeType, LIRLowerable {
 
     public PlaceholderNode() {
-        super(CiKind.Void);
+        super(StampFactory.illegal());
     }
 
     @Override

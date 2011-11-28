@@ -37,23 +37,23 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && !y().isConstant()) {
-            return graph().unique(new IntegerAddNode(kind, y(), x()));
+            return graph().unique(new IntegerAddNode(kind(), y(), x()));
         }
         if (x().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 return ConstantNode.forInt(x().asConstant().asInt() + y().asConstant().asInt(), graph());
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 return ConstantNode.forLong(x().asConstant().asLong() + y().asConstant().asLong(), graph());
             }
         } else if (y().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 int c = y().asConstant().asInt();
                 if (c == 0) {
                     return x();
                 }
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 long c = y().asConstant().asLong();
                 if (c == 0) {
                     return x();
@@ -84,6 +84,7 @@ public final class IntegerAddNode extends IntegerArithmeticNode implements Canon
     @Override
     public void generate(LIRGeneratorTool gen) {
         CiValue op1 = gen.operand(x());
+        assert op1 != null : x() + ", this=" + this;
         CiValue op2 = gen.operand(y());
         if (!y().isConstant() && !FloatAddNode.livesLonger(this, y(), gen)) {
             CiValue op = op1;

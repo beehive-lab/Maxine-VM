@@ -20,28 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 
+public class ExpandBoxingNodesPhase extends Phase {
 
-public final class CastNode extends FloatingNode implements LIRLowerable {
+    private final BoxingMethodPool pool;
 
-    @Input private ValueNode value;
-
-    public ValueNode value() {
-        return value;
-    }
-
-    public CastNode(CiKind kind, ValueNode value) {
-        super(kind);
-        this.value = value;
+    public ExpandBoxingNodesPhase(BoxingMethodPool pool) {
+        this.pool = pool;
     }
 
     @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.setResult(this, gen.operand(value()));
+    protected void run(StructuredGraph graph) {
+        for (BoxNode boxNode : graph.getNodes(BoxNode.class)) {
+            boxNode.expand(pool);
+        }
+
+        for (UnboxNode unboxNode : graph.getNodes(UnboxNode.class)) {
+            unboxNode.expand(pool);
+        }
     }
 }

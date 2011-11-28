@@ -40,6 +40,8 @@ import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
@@ -58,6 +60,7 @@ public final class GraalCompilation {
 
     public final StructuredGraph graph;
     public final CiAssumptions assumptions = GraalOptions.OptAssumptions ? new CiAssumptions() : null;
+    public NodeMap<CiValue> nodeOperands;
 
     private FrameMap frameMap;
 
@@ -102,6 +105,18 @@ public final class GraalCompilation {
 
     public LIR lir() {
         return lir;
+    }
+
+    public CiValue operand(ValueNode valueNode) {
+        return nodeOperands.get(valueNode);
+    }
+
+    public void setOperand(ValueNode valueNode, CiValue operand) {
+        assert operand(valueNode) == null : "operand cannot be set twice";
+        assert operand != null && operand.isLegal() : "operand must be legal";
+        assert operand.kind.stackKind() == valueNode.kind();
+        assert !(valueNode instanceof VirtualObjectNode);
+        nodeOperands.set(valueNode, operand);
     }
 
     /**
@@ -190,6 +205,8 @@ public final class GraalCompilation {
                 }
             }
 
+            new PhiStampPhase().apply(graph);
+
             if (GraalOptions.ProbabilityAnalysis && graph.start().probability() == 0) {
                 new ComputeProbabilityPhase().apply(graph, context());
             }
@@ -201,6 +218,7 @@ public final class GraalCompilation {
             if (GraalOptions.Inline && !plan.isPhaseDisabled(InliningPhase.class)) {
                 new InliningPhase(compiler.target, compiler.runtime, null, assumptions, plan).apply(graph, context());
                 new DeadCodeEliminationPhase().apply(graph, context());
+                new PhiStampPhase().apply(graph);
             }
 
             if (GraalOptions.OptCanonicalizer) {
@@ -225,6 +243,7 @@ public final class GraalCompilation {
 
             if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {
                 new EscapeAnalysisPhase(compiler.target, compiler.runtime, assumptions, plan).apply(graph, context());
+                new PhiStampPhase().apply(graph);
                 new CanonicalizerPhase(compiler.target, compiler.runtime, assumptions).apply(graph, context());
             }
 
@@ -321,7 +340,8 @@ public final class GraalCompilation {
             }
         }
 
-        new SnippetIntrinsificationPhase(compiler.runtime).apply(graph, context());
+        BoxingMethodPool pool = new BoxingMethodPool(compiler.runtime);
+        new SnippetIntrinsificationPhase(compiler.runtime, pool).apply(graph, context());
 
         ServiceLoader<Optimizer> serviceLoader = optimizerLoader.get();
         if (serviceLoader == null) {
@@ -343,6 +363,7 @@ public final class GraalCompilation {
         try {
             if (GraalOptions.GenLIR) {
                 context().timers.startScope("Create LIR");
+                nodeOperands = graph.createNodeMap();
                 LIRGenerator lirGenerator = null;
                 try {
                     initFrameMap(maxLocks());

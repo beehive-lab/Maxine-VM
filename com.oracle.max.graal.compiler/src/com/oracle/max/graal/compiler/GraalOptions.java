@@ -129,7 +129,7 @@ public final class GraalOptions {
     public static boolean QuietBailout                       = true;
 
     // state merging settings
-    public static boolean AssumeVerifiedBytecode             = ____;
+    public static boolean AssumeVerifiedBytecode             = true;
 
     // Linear scan settings
     public static boolean CopyPointerStackArguments          = true;

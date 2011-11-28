@@ -284,12 +284,6 @@ public class InliningUtil {
     }
 
     private static boolean checkInvokeConditions(Invoke invoke) {
-        if (!invoke.canInline()) {
-            if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke is manually set to be non-inlinable", methodName(invoke.callTarget().targetMethod(), invoke));
-            }
-            return false;
-        }
         if (invoke.stateAfter() == null) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because the invoke has no after state", methodName(invoke.callTarget().targetMethod(), invoke));
@@ -359,7 +353,7 @@ public class InliningUtil {
      */
     public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         NodeInputList<ValueNode> parameters = invoke.callTarget().arguments();
-        StructuredGraph graph = invoke.node().graph();
+        Graph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
 

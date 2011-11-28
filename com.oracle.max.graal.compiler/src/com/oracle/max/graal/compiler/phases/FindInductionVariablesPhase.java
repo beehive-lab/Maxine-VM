@@ -79,7 +79,7 @@ public class FindInductionVariablesPhase extends Phase {
                     continue;
                 }
                 if (loopNodes.isNotNewNotMarked(stride)) {
-                    StructuredGraph graph = loopBegin.graph();
+                    Graph graph = loopBegin.graph();
                     if (backEdge instanceof IntegerSubNode) {
                         stride = graph.unique(new NegateNode(stride));
                     }
