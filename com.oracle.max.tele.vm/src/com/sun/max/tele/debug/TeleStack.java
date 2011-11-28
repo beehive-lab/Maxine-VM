@@ -136,7 +136,7 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
     public TeleStack(TeleVM vm, TeleNativeThread teleNativeThread, String name, Address start, long nBytes) {
         super(vm);
         this.teleNativeThread = teleNativeThread;
-        this.entityDescription = "The stack in " + vm().entityName() + " for " + teleNativeThread.entityName();
+        this.entityDescription = "The stack owned by VM thread " + teleNativeThread.entityName();
         this.stackMemoryRegion = new StackMemoryRegion(vm, this, name, start, nBytes);
         this.offsetToReturnPC = platform().isa.offsetToReturnPC;
     }

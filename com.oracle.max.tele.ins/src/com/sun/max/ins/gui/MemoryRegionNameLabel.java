@@ -51,6 +51,15 @@ public final class MemoryRegionNameLabel extends AbstractMemoryRegionLabel imple
     public void refresh(boolean force) {
         final String regionName = memoryRegion.regionName();
         setText(regionName);
+        if (memoryRegion instanceof MaxEntityMemoryRegion<?>) {
+            final MaxEntityMemoryRegion<?> entityMemoryRegion = (MaxEntityMemoryRegion<?>) memoryRegion;
+            final Object owner = entityMemoryRegion.owner();
+            if (owner instanceof MaxEntity<?>) {
+                final MaxEntity<?> entity = (MaxEntity<?>) owner;
+                setToolTipText("Memory region for: " + entity.entityDescription());
+                return;
+            }
+        }
         setToolTipText("Memory region \"" + regionName + "\"");
     }
 }
