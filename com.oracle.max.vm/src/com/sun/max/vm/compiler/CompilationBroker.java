@@ -357,19 +357,16 @@ public class CompilationBroker {
                 }
                 return compilation.get();
             } catch (Throwable t) {
-                cma.compiledState = Compilations.EMPTY;
-                String errorMessage = "Compilation of " + cma + " by " + compilation.compiler + " failed";
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
-                    Log.print(": ");
-                    Log.println(errorMessage);
+                    Log.print(": Compilation of " + cma + " by " + compilation.compiler + " failed");
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
                 if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
-                    throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
+                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", t);
                 }
                 retryRun = true;
                 if (VMOptions.verboseOption.verboseCompilation) {
