@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -265,4 +267,14 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         } while (thisAddress.compareAndSwapWord(TOP_OFFSET, cell, newTop) != cell);
         return cell;
     }
+
+    /**
+     * Custom allocation support.
+     * @see HeapSchemeWithTLAB
+     * @param object
+     * @return an instance of BaseAtomicBumpPointerAllocator
+     */
+    @INTRINSIC(UNSAFE_CAST)
+    static public native BaseAtomicBumpPointerAllocator asBumpPointerAllocator(Object object);
+
 }
