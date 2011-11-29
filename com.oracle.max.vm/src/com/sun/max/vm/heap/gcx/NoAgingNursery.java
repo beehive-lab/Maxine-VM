@@ -102,7 +102,7 @@ public class NoAgingNursery implements HeapSpace {
     public Size growAfterGC(Size delta) {
         // TODO
         FatalError.unimplemented();
-        return null;
+        return Size.zero();
     }
 
     @Override
