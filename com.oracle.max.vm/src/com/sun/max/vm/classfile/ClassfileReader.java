@@ -54,6 +54,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
@@ -251,8 +252,6 @@ public final class ClassfileReader {
             // interface fields must be public static final (i.e. constants), but may have ACC_SYNTHETIC set
             valid = (flags & ~ACC_SYNTHETIC) == (ACC_STATIC | ACC_FINAL | ACC_PUBLIC);
         }
-        // fields referencing tagged values are currently disallowed
-        valid = valid && ((flags & TAGGED_FIELD) != TAGGED_FIELD);
         if (!valid) {
             throw classFormatError(name + ": invalid field flags 0x" + Integer.toHexString(flags));
         }
@@ -387,9 +386,6 @@ public final class ClassfileReader {
                 });
                 final int descriptorIndex = classfileStream.readUnsigned2();
                 final TypeDescriptor descriptor = parseTypeDescriptor(constantPool.utf8At(descriptorIndex, "field descriptor").toString());
-                if (descriptor.equals(CODE_POINTER)) {
-                    flags |= TAGGED_FIELD;
-                }
                 verifyFieldFlags(name.toString(), flags, isInterface);
 
                 char constantValueIndex = 0;
@@ -893,6 +889,7 @@ public final class ClassfileReader {
                             continue nextMethod;
                         } else if (annotation.annotationType() == C_FUNCTION.class) {
                             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
+                            ProgramError.check(isStatic(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-static method: " + memberString(name, descriptor));
                             ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= C_FUNCTION;
                         } else if (annotation.annotationType() == VM_ENTRY_POINT.class) {
@@ -970,6 +967,23 @@ public final class ClassfileReader {
                 }
                 if (isNative(flags)) {
                     flags |= UNSAFE;
+                }
+
+                if (MaxineVM.isHosted() && classDescriptor.toKind() == Kind.WORD) {
+                    // All non-static methods in Word types must be either @INLINE, @FOLD, @INTRINSIC, or @HOSTED_ONLY.
+                    // They have special semantics, such as that no dynamic dispatch is possible, that no null checks must
+                    // be performed when calling them, and that the receiver is not an Object.
+                    // It simplifies the compiler if they never end up as method calls, but are always optimized away by the compiler.
+
+                    if (Actor.isSynthetic(flags) && !Actor.isInitializer(flags) && !Actor.isDeclaredFoldable(flags) && !Actor.isInline(flags)) {
+                        // When methods are overridden with a changed return type, javac automatically inserts a synthetic method with the
+                        // return type of the super class method.  Since we cannot annotate such methods in source code, we add the inline flag here.
+                        flags |= INLINE;
+                    }
+
+                    if (!Actor.isStatic(flags) && !Actor.isInline(flags) && !Actor.isDeclaredFoldable(flags) && intrinsic == null) {
+                        throw FatalError.unexpected("Non-static methods in Word types must be either @INLINE, @FOLD, @INTRINSIC, or @HOSTED_ONLY: " + classDescriptor.toJavaString() + "." + name + " " + descriptor.toJavaString(true, true));
+                    }
                 }
 
                 final MethodActor methodActor;

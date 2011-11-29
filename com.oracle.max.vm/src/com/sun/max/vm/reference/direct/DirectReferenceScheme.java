@@ -411,7 +411,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
         return toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
-    @INLINE
+    @HOSTED_ONLY
     public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
         toOrigin(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
     }

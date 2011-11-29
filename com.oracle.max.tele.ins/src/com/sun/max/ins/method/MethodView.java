@@ -22,7 +22,6 @@
  */
 package com.sun.max.ins.method;
 
-import static com.sun.max.ins.gui.AbstractView.MenuKind.*;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.util.*;
@@ -94,67 +93,55 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      */
     private static MethodView make(final Inspection inspection, Address address, boolean interactive) throws MaxVMBusyException {
         MethodView methodView = null;
-        final MaxCompilation compiledCode = inspection.vm().codeCache().findCompiledCode(address);
-        if (compiledCode != null) {
+        final MaxCompilation compilation = inspection.vm().machineCode().findCompilation(address);
+        if (compilation != null) {
             // Java method
-            methodView = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
+            methodView = make(inspection, compilation, MethodCodeKind.MACHINE_CODE);
         } else {
-            final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
+            final MaxNativeFunction externalCode = inspection.vm().machineCode().findExternalCode(address);
             if (externalCode != null) {
                 // Some other kind of known external machine code
                 methodView = make(inspection, externalCode);
             } else if (interactive) {
-                // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
-                // Check any loaded native code maps and in the last resort
-                // give the user a chance to guess at its length so we can register and view it
-                NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
-                if (nativeCodeInfo != null) {
-                    try {
-                        final MaxExternalCode nativeCode = inspection.vm().codeCache().registerExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
-                        methodView = MethodView.make(inspection, nativeCode);
-                    } catch (MaxInvalidAddressException e) {
-                        inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
-                        e.printStackTrace();
-                    }
-                } else {
-                    final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
-                    final String defaultDescription = "Native code @0x" + address.toHexString();
-                    new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                // Code location is not in a Java method or runtime stub or native library.
+                // Give the user a chance to guess at its length so we can register and view it
+                final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
+                final String defaultDescription = "Native code @0x" + address.toHexString();
+                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxNativeFunction.DEFAULT_DISCONNECTED_CODE_LENGTH, defaultDescription) {
 
-                        @Override
-                        public void entered(Address nativeAddress, long nBytes, String enteredName) {
-                            try {
-                                String name = enteredName;
-                                if (name == null || name.equals("")) {
-                                    name = defaultDescription;
-                                }
-                                final MaxExternalCode externalCode = vm().codeCache().registerExternalCode(nativeAddress, nBytes, name);
-                                result.setValue(MethodView.make(inspection, externalCode));
-                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
-                            } catch (IllegalArgumentException illegalArgumentException) {
-                                inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
-                            } catch (MaxVMBusyException maxVMBusyException) {
-                                inspection.announceVMBusyFailure("View native code");
-                            } catch (MaxInvalidAddressException e) {
-                                inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
-                                e.printStackTrace();
+                    @Override
+                    public void entered(Address nativeAddress, long nBytes, String enteredName) {
+                        try {
+                            String name = enteredName;
+                            if (name == null || name.equals("")) {
+                                name = defaultDescription;
                             }
+                            final MaxNativeFunction externalCode = vm().machineCode().registerExternalCode(nativeAddress, nBytes, name);
+                            result.setValue(MethodView.make(inspection, externalCode));
+                            // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection.announceVMBusyFailure("View native code");
+                        } catch (MaxInvalidAddressException e) {
+                            inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
+                            e.printStackTrace();
                         }
+                    }
 
-                        @Override
-                        public boolean isValidSize(long nBytes) {
-                            return nBytes > 0;
-                        }
-                    };
-                    methodView = result.value();
-                }
+                    @Override
+                    public boolean isValidSize(long nBytes) {
+                        return nBytes > 0;
+                    }
+                };
+                methodView = result.value();
             }
         }
         return methodView;
     }
 
-    private static final Map<MaxMachineCode, MethodView> machineCodeToMethodView =
-        new IdentityHashMap<MaxMachineCode, MethodView>();
+    private static final Map<MaxMachineCodeRoutine, MethodView> machineCodeToMethodView =
+        new IdentityHashMap<MaxMachineCodeRoutine, MethodView>();
 
     private static final Map<TeleClassMethodActor, MethodView> teleClassMethodActorToMethodView =
         new IdentityHashMap<TeleClassMethodActor, MethodView>();
@@ -190,9 +177,9 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     private static JavaMethodView make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
         // If there are compilations, then inspect in association with the most recent
-        final MaxCompilation compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
-        if (compiledCode != null) {
-            return make(inspection, compiledCode, codeKind);
+        final MaxCompilation compilation = inspection.vm().machineCode().latestCompilation(teleClassMethodActor);
+        if (compilation != null) {
+            return make(inspection, compilation, codeKind);
         }
         final MethodView methodView = teleClassMethodActorToMethodView.get(teleClassMethodActor);
         if (methodView == null) {
@@ -220,17 +207,17 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return a possibly new view with the specified code visible.
      * @throws MaxVMBusyException if can't create a new method view because the VM is unavailable
      */
-    private static JavaMethodView make(Inspection inspection, MaxCompilation compiledCode, MethodCodeKind codeKind) throws MaxVMBusyException {
+    private static JavaMethodView make(Inspection inspection, MaxCompilation compilation, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
 
         // Is there already a view open that is bound to this compilation?
-        MethodView methodView = machineCodeToMethodView.get(compiledCode);
+        MethodView methodView = machineCodeToMethodView.get(compilation);
         if (methodView == null) {
             // No existing view is bound to this compilation; see if there is a view for this method that is
             // unbound
             inspection.vm().acquireLegacyVMAccess();
             try {
-                TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
                 if (teleClassMethodActor != null) {
                     methodView = teleClassMethodActorToMethodView.get(teleClassMethodActor);
                 }
@@ -238,15 +225,15 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 final MethodViewContainer container = methodViewManager.activateView();
                 if (methodView == null) {
                     // No existing view exists for this method; create new one bound to this compilation
-                    javaMethodView = new JavaMethodView(inspection, container, compiledCode, codeKind);
+                    javaMethodView = new JavaMethodView(inspection, container, compilation, codeKind);
                 } else {
                     // A view exists for the method, but not bound to any compilation; bind it to this compilation
                     // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                    javaMethodView = new JavaMethodView(inspection, container, compiledCode, codeKind);
+                    javaMethodView = new JavaMethodView(inspection, container, compilation, codeKind);
                 }
                 if (javaMethodView != null) {
                     container.add(javaMethodView);
-                    machineCodeToMethodView.put(compiledCode, javaMethodView);
+                    machineCodeToMethodView.put(compilation, javaMethodView);
                 }
             } finally {
                 inspection.vm().releaseLegacyVMAccess();
@@ -263,7 +250,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return A possibly new view for a block of native code in the VM already known to the Inspector.
      * @throws MaxVMBusyException if a new view cannot be created because the VM is unavailable
      */
-    private static NativeMethodView make(Inspection inspection, MaxExternalCode maxExternalCode) throws MaxVMBusyException {
+    private static NativeMethodView make(Inspection inspection, MaxNativeFunction maxExternalCode) throws MaxVMBusyException {
         NativeMethodView nativeMethodView = null;
         MethodView methodView = machineCodeToMethodView.get(maxExternalCode);
         if (methodView == null) {
@@ -290,34 +277,6 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
         this.container = container;
     }
 
-    @Override
-    public InspectorFrame createTabFrame(TabbedView parent) {
-
-        final InspectorFrame frame = super.createTabFrame(parent);
-
-        // The default menu operates from the perspective of the parent container.
-        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, parent));
-
-        frame.makeMenu(EDIT_MENU);
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        final MaxMachineCode machineCode = machineCode();
-        if (machineCode != null) {
-            memoryMenu.add(views().memory().makeViewAction(machineCode.memoryRegion(), machineCode.entityName(), "View memory for machine code"));
-        }
-        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(OBJECT_MENU);
-
-        frame.makeMenu(CODE_MENU);
-
-        frame.makeMenu(DEBUG_MENU);
-
-        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
-        return frame;
-    }
-
     /**
      * Updates the code selection to agree with the current focus.
      */
@@ -342,9 +301,9 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     }
 
     /**
-     * @return Local {@link MaxMachineCode} for the method in the VM; null if not bound to compiled code yet.
+     * @return Local {@link MaxMachineCodeRoutine} for the method in the VM; null if not bound to compiled code yet.
      */
-    public abstract MaxMachineCode machineCode();
+    public abstract MaxMachineCodeRoutine compilation();
 
     /**
      * @return Java method information; null if not known to be associated with a Java method.
@@ -369,7 +328,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
 
     @Override
     public void viewClosing() {
-        machineCodeToMethodView.remove(machineCode());
+        machineCodeToMethodView.remove(compilation());
         teleClassMethodActorToMethodView.remove(teleClassMethodActor());
         super.viewClosing();
     }

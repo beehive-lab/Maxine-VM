@@ -56,7 +56,7 @@ public class TupleReferenceMap {
         int i = staticFieldActors.length - 1;
         while (i >= 0) {
             final FieldActor staticFieldActor = staticFieldActors[i--];
-            assert !staticFieldActor.isTaggedField() : "there must be no fields of type CodePointer";
+            assert !staticFieldActor.descriptor().equals(JavaTypeDescriptor.CODE_POINTER) : "there must be no fields of type CodePointer";
             if (staticFieldActor.kind.isReference) {
                 final int fieldIndex = UnsignedMath.divide(staticFieldActor.offset(), Word.size());
                 indexes.add(fieldIndex);

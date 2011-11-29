@@ -41,6 +41,7 @@
 import sys
 import os
 import subprocess
+import exceptions
 from threading import Thread
 from argparse import ArgumentParser, REMAINDER
 from os.path import join, dirname, abspath, exists, getmtime
@@ -72,6 +73,7 @@ class Env(ArgumentParser):
     def __init__(self):
         self.java_initialized = False
         self.extraProjectDirs = []
+        self.maxine_home = None
         self._pdb = None
         ArgumentParser.__init__(self, prog='mx')
     
@@ -90,7 +92,9 @@ class Env(ArgumentParser):
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
         self.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
         
-    def parse_cmd_line(self):
+    def parse_cmd_line(self, args=None):
+        if args is None:
+            args = sys.argv[1:]
         
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
         
@@ -125,7 +129,8 @@ class Env(ArgumentParser):
         os.environ['JAVA_HOME'] = self.java_home
         os.environ['HOME'] = self.user_home
  
-        self.maxine_home = dirname(abspath(dirname(sys.argv[0])))
+        if self.maxine_home is None:
+            self.maxine_home = dirname(abspath(dirname(sys.argv[0])))
     
         if self.vmdir is None:
             self.vmdir = join(self.maxine_home, 'com.oracle.max.vm.native', 'generated', self.os)
@@ -172,15 +177,20 @@ class Env(ArgumentParser):
         if not exists(graalvm_exe):
             self.abort('GraalVM executable does not exist: ' + graalvm_exe)
             
+        os.environ['MAXINE'] = self.maxine_home
         try:
             version_cmd = [graalvm_exe, '-graal', '-XX:-BootstrapGraal', '-version']
+            #print str(os.environ).replace(', ', '\n')
             output = subprocess.check_output(version_cmd, stderr=subprocess.STDOUT)
             if 'Graal VM' not in output:
                 self.abort('Invalid GraalVM executable: ' + graalvm_exe +
                             '\nReason: "Graal VM" was not in the output of the following command:\n\t' + ' '.join(version_cmd))
-        except:
+        except subprocess.CalledProcessError as e:
             self.abort('Invalid GraalVM executable: ' + graalvm_exe +
-                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd))
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd) + '\nOutput:\n' + e.output)
+        except exceptions.OSError as e:
+            self.abort('Invalid GraalVM executable: ' + graalvm_exe +
+                       '\nReason: Error raised when executing the following command:\n\t' + ' '.join(version_cmd) + '\nError Message: ' + e.strerror)
             
         graalvm_cmd = [graalvm_exe, '-graal']
         
@@ -284,10 +294,6 @@ class Env(ArgumentParser):
 
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
-            
-        if self.os == 'windows':
-            self.log('[pretending to be Linux-AMD64 - remove when Windows is fully supported]')
-            self.java_args += ['-Dmax.platform=linux-amd64', '-Dmax.nsig=32']
             
         self.java_initialized = True
     

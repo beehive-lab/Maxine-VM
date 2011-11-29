@@ -150,7 +150,7 @@ public abstract class StackFrameWalker {
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
-        boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
+        boolean initialIsInNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
 
         while (!current.sp.isZero()) {
@@ -158,10 +158,10 @@ public abstract class StackFrameWalker {
             TargetMethod calleeTM = callee.targetMethod();
             traceCursor(current);
 
-            if (tm != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+            if (tm != null && (!initialIsInNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
                 // found target method
-                inNative = false;
+                initialIsInNative = false;
 
                 checkVmEntrypointCaller(calleeTM, tm);
 
@@ -171,7 +171,7 @@ public abstract class StackFrameWalker {
                 }
             } else {
                 // did not find target method => in native code
-                if (purpose == INSPECTING) {
+                if (MaxineVM.isHosted() && purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                     if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, current.nativeIP(), current.fp, current.sp))) {
                         break;
@@ -184,8 +184,8 @@ public abstract class StackFrameWalker {
                     }
                 }
 
-                if (inNative) {
-                    inNative = false;
+                if (initialIsInNative) {
+                    initialIsInNative = false;
                     Pointer anchor = nextNativeStubAnchor();
                     advanceFrameInNative(anchor, purpose);
                 } else {
@@ -253,7 +253,7 @@ public abstract class StackFrameWalker {
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
             targetMethod.catchException(current, callee, throwable);
-        } else if (purpose == Purpose.INSPECTING) {
+        } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
             proceed = targetMethod.acceptStackFrameVisitor(current, visitor);

@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
 
 /**
  * Implements the (mostly) immutable history of Maxine VM states during a debugging sessions.
@@ -158,6 +159,15 @@ public final class TeleVMState implements MaxVMState {
 
     public List<MaxMemoryRegion> memoryAllocations() {
         return memoryAllocations;
+    }
+
+    public MaxMemoryRegion findMemoryRegion(Address address) {
+        for (MaxMemoryRegion memoryRegion : memoryAllocations) {
+            if (memoryRegion != null && memoryRegion.contains(address)) {
+                return memoryRegion;
+            }
+        }
+        return null;
     }
 
     public List<MaxThread> threads() {

@@ -51,6 +51,11 @@ public class LogStream {
      */
     public static final LogStream SINK = new LogStream();
 
+    private static final PrintStream SINK_PS = new PrintStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException { }
+    });
+
     private LogStream() {
         this.ps = null;
         this.lineBuffer = null;
@@ -65,6 +70,13 @@ public class LogStream {
     private int indentationLevel;
     private char indentation = ' ';
     private boolean indentationDisabled;
+
+    public final PrintStream out() {
+        if (ps == null) {
+            return SINK_PS;
+        }
+        return ps;
+    }
 
     /**
      * The system dependent line separator.
@@ -109,8 +121,6 @@ public class LogStream {
         if (ps != null) {
             if (withNewline) {
                 lineBuffer.append(LINE_SEPARATOR);
-            } else {
-                assert lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1;
             }
             ps.print(lineBuffer.toString());
             ps.flush();
@@ -126,7 +136,7 @@ public class LogStream {
     public void flush() {
         if (ps != null) {
             if (lineBuffer.length() != 0) {
-                flushLine(true);
+                flushLine(false);
             }
             ps.flush();
         }

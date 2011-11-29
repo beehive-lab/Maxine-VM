@@ -22,13 +22,41 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+import java.util.*;
+
+import com.sun.max.unsafe.*;
+
 
 /**
- * Data describing a single block of external machine code representing a native routine
- * about which little is known.
+ * Access to dynamically loaded libraries of native code, external to the VM.
  */
-public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
+public interface MaxExternalCode extends MaxEntity<MaxExternalCode> {
 
-    long DEFAULT_NATIVE_CODE_LENGTH = 200;
+    /**
+     * Gets descriptions all currently allocated code cache regions in the VM's compiled code cache, including the boot
+     * code cache.
+     *
+     * @return descriptions for all code cache regions in the VM.
+     */
+    List<MaxNativeLibrary> nativeLibraries();
+
+    /**
+     * Finds a code cache region by location, where the location could be anywhere in the code
+     * cache's memory, even if unallocated or not pointing at machine code.
+     *
+     * @param address a memory location in the VM.
+     * @return the code cache region, if any, that contains the specified location
+     */
+    MaxNativeLibrary findNativeLibrary(Address address);
+
+    /**
+     * Writes current statistics concerning inspection of VM's code cache.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }

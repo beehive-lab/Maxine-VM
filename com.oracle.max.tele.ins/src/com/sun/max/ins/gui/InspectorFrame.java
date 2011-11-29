@@ -82,6 +82,11 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
     InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError;
 
     /**
+     * Clears all menus from the frame's menu bar, if it exists.
+     */
+    void clearMenus();
+
+    /**
      * Makes this frame the one currently selected in the window system.
      */
     void setSelected();

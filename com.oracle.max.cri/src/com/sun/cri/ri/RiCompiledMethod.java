@@ -32,4 +32,9 @@ public interface RiCompiledMethod {
      * @return the method to which the compiled code belongs.
      */
     RiResolvedMethod method();
+
+    /**
+     * @return true if the code represented by this object is still valid, false otherwise (may happen due to deopt, etc.)
+     */
+    boolean isValid();
 }

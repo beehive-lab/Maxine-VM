@@ -25,29 +25,25 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * The {@code NewMultiArrayNode} represents an allocation of a multi-dimensional object
  * array.
  */
-public final class NewMultiArrayNode extends NewArrayNode implements LIRLowerable {
+public final class NewMultiArrayNode extends FixedWithNextNode implements LIRLowerable {
 
     @Input private final NodeInputList<ValueNode> dimensions;
+    @Data private final RiResolvedType type;
 
-    @Override
     public ValueNode dimension(int index) {
         return dimensions.get(index);
     }
 
-    @Override
     public int dimensionCount() {
         return dimensions.size();
     }
-
-    public final RiResolvedType elementType;
-    public final int cpi;
-    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new NewMultiArrayNode.
@@ -56,12 +52,11 @@ public final class NewMultiArrayNode extends NewArrayNode implements LIRLowerabl
      * @param cpi the constant pool index for resolution
      * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArrayNode(RiResolvedType elementType, ValueNode[] dimensions, int cpi, RiConstantPool riConstantPool) {
-        super(null);
-        this.constantPool = riConstantPool;
-        this.elementType = elementType;
-        this.cpi = cpi;
+    public NewMultiArrayNode(RiResolvedType type, ValueNode[] dimensions) {
+        super(CiKind.Object);
+        this.type = type;
         this.dimensions = new NodeInputList<ValueNode>(this, dimensions);
+        assert dimensions.length > 0 && type.isArrayClass();
     }
 
     @Override
@@ -69,14 +64,13 @@ public final class NewMultiArrayNode extends NewArrayNode implements LIRLowerabl
         gen.visitNewMultiArray(this);
     }
 
-    @Override
-    public RiResolvedType elementType() {
-        return elementType;
+    public RiResolvedType type() {
+        return type;
     }
 
     @Override
     public RiResolvedType exactType() {
-        return elementType.arrayOf();
+        return type();
     }
 
     @Override

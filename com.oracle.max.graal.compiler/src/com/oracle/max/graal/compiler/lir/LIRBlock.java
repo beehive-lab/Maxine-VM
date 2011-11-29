@@ -36,30 +36,22 @@ import com.oracle.max.graal.nodes.java.*;
 /**
  * The {@code LIRBlock} class definition.
  */
-public final class LIRBlock {
+public final class LIRBlock extends Block {
 
-    private final Block block;
-
-    private final int blockID;
-    private final int loopIndex;
-    private final int loopDepth;
+    public static final IdentifyBlocksPhase.BlockFactory FACTORY = new IdentifyBlocksPhase.BlockFactory() {
+        @Override
+        public Block createBlock(int blockID) {
+            return new LIRBlock(blockID);
+        }
+    };
 
     public final Label label;
     private List<LIRInstruction> lir;
     private FrameState lastState;
 
-    private final List<Node> instructions;
-    private List<LIRBlock> predecessors;
-    private List<LIRBlock> successors;
-    private LIRDebugInfo debugInfo;
     private boolean align;
 
-    private final Node first;
-    private final Node last;
-
     private int linearScanNumber;
-    private final boolean linearScanLoopEnd;
-    private final boolean linearScanLoopHeader;
 
 
     /**
@@ -95,37 +87,9 @@ public final class LIRBlock {
     private int lastLirInstructionID;
 
 
-    public LIRDebugInfo debugInfo() {
-        return this.debugInfo;
-    }
-
-    public LIRBlock(Block block) {
-        this.block = block;
-
-        blockID = block.blockID();
-        loopIndex = block.loopIndex();
-        loopDepth = block.loopDepth();
-
+    public LIRBlock(int blockID) {
+        super(blockID);
         label = new Label();
-        linearScanNumber = blockID;
-        instructions = block.getInstructions();
-        predecessors = new ArrayList<LIRBlock>(block.getPredecessors().size());
-        successors = new ArrayList<LIRBlock>(block.getSuccessors().size());
-
-
-        linearScanLoopEnd = block.isLoopEnd();
-        linearScanLoopHeader = block.isLoopHeader();
-
-        first = block.firstNode();
-        last = block.lastNode();
-    }
-
-    public Block schedulerBlock() {
-        return block;
-    }
-
-    public List<Node> getInstructions() {
-        return instructions;
     }
 
     public int firstLirInstructionId() {
@@ -164,10 +128,6 @@ public final class LIRBlock {
         out.println("LIR Block " + blockID());
     }
 
-    public int blockID() {
-        return blockID;
-    }
-
     public int numberOfPreds() {
         return predecessors.size();
     }
@@ -181,32 +141,16 @@ public final class LIRBlock {
     }
 
     public LIRBlock predAt(int i) {
-        return predecessors.get(i);
+        return (LIRBlock) predecessors.get(i);
     }
 
     public LIRBlock suxAt(int i) {
-        return successors.get(i);
-    }
-
-    public List<LIRBlock> blockSuccessors() {
-        return successors;
+        return (LIRBlock) successors.get(i);
     }
 
     @Override
     public String toString() {
         return "B" + blockID();
-    }
-
-    public List<LIRBlock> blockPredecessors() {
-        return predecessors;
-    }
-
-    public int loopDepth() {
-        return loopDepth;
-    }
-
-    public int loopIndex() {
-        return loopIndex;
     }
 
     public Label label() {
@@ -221,17 +165,9 @@ public final class LIRBlock {
         return linearScanNumber;
     }
 
-    public boolean isLinearScanLoopEnd() {
-        return linearScanLoopEnd;
-    }
-
-    public boolean isLinearScanLoopHeader() {
-        return linearScanLoopHeader;
-    }
-
     public void replaceWith(LIRBlock other) {
-        for (LIRBlock pred : predecessors) {
-            Util.replaceAllInList(this, other, pred.successors);
+        for (Block pred : predecessors) {
+            Util.replaceAllInList(this, other, ((LIRBlock) pred).successors);
         }
         for (int i = 0; i < other.predecessors.size(); ++i) {
             if (other.predecessors.get(i) == this) {
@@ -251,15 +187,6 @@ public final class LIRBlock {
         return lastState;
     }
 
-    public Node firstInstruction() {
-        return first;
-    }
-
-
-    public Node lastInstruction() {
-        return last;
-    }
-
     public boolean endsWithJump() {
         if (lir.size() == 0) {
             return false;
@@ -273,6 +200,6 @@ public final class LIRBlock {
     }
 
     public boolean isExceptionEntry() {
-        return firstInstruction() instanceof ExceptionObjectNode;
+        return firstNode() instanceof ExceptionObjectNode;
     }
 }

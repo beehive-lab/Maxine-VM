@@ -45,16 +45,7 @@ public class PointOptimizationPhase extends Phase {
             ValueNode arg0 = callTarget.arguments().get(0);
             ValueNode arg1 = callTarget.arguments().get(1);
             if (arg0 == arg1) {
-                if (invoke instanceof FixedWithNextNode) {
-                    ((FixedWithNextNode) invoke).replaceWithFloating(ConstantNode.forBoolean(true, graph));
-                } else if (invoke instanceof InvokeWithExceptionNode) {
-                    InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invoke;
-                    invokeWithExceptionNode.killExceptionEdge();
-                    invokeWithExceptionNode.replaceAtUsages(ConstantNode.forBoolean(true, graph));
-                    FixedNode next = invokeWithExceptionNode.next();
-                    invokeWithExceptionNode.setNext(null);
-                    invokeWithExceptionNode.replaceAtPredecessors(next);
-                }
+                invoke.intrinsify(ConstantNode.forBoolean(true, graph));
             }
         }
     }

@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.member.*;
  */
 public abstract class FieldID extends MemberID {
 
+    @HOSTED_ONLY
     protected FieldID() {
     }
 

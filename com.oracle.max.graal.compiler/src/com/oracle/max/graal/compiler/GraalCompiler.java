@@ -25,7 +25,6 @@ package com.oracle.max.graal.compiler;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.target.*;
@@ -36,47 +35,6 @@ import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
 public class GraalCompiler implements CiCompiler  {
-
-    /**
-     * The compilation is split into the following sections:
-     * ========================================================================
-     * Period 1: High-level nodes. (Graph building)
-     * ========================================================================
-     * Runtime-specific lowering.
-     * ========================================================================
-     * Period 2: Mid-level nodes. (Memory dependence graph)
-     * ========================================================================
-     * Target-specific lowering, de-SSA.
-     * ========================================================================
-     * Period 3: Low-level nodes. (Register allocation, code generation)
-     * ========================================================================
-     *
-     * A compiler extension phase can chose to run at the end of periods 1-3.
-     */
-    public static enum PhasePosition {
-        AFTER_PARSING,
-        HIGH_LEVEL,
-        MID_LEVEL,
-        LOW_LEVEL
-    }
-
-    @SuppressWarnings("unchecked")
-    public final ArrayList<Phase>[] phases = new ArrayList[PhasePosition.values().length];
-
-    public void addPhase(PhasePosition pos, Phase phase) {
-        if (phases[pos.ordinal()] == null) {
-            phases[pos.ordinal()] = new ArrayList<Phase>();
-        }
-        phases[pos.ordinal()].add(phase);
-    }
-
-    public void runPhases(PhasePosition pos, StructuredGraph graph) {
-        if (phases[pos.ordinal()] != null) {
-            for (Phase p : phases[pos.ordinal()]) {
-                p.apply(graph, context);
-            }
-        }
-    }
 
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
@@ -104,41 +62,54 @@ public class GraalCompiler implements CiCompiler  {
 
     public final RiRegisterConfig compilerStubRegisterConfig;
 
-    public final ExtendedBytecodeHandler extendedBytecodeHandler;
-
-
-    public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig, ExtendedBytecodeHandler extendedBytecodeHandler) {
+    public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.context = context;
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
         this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
-        this.extendedBytecodeHandler = extendedBytecodeHandler;
         init();
     }
 
     @Override
     public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+        return compileMethod(method, osrBCI, stats, debugInfoLevel, PhasePlan.DEFAULT);
+    }
+
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel, PhasePlan plan) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
             int index = context.metrics.CompiledMethods++;
-            if (GraalOptions.PrintCompilation) {
-                TTY.print(String.format("Graal %4d %-70s %-45s %-50s | ", index, method.holder().name(), method.name(), method.signature().asString()));
+            final boolean printCompilation = GraalOptions.PrintCompilation && !TTY.isSuppressed();
+            if (printCompilation) {
+                TTY.println(String.format("Graal %4d %-70s %-45s %-50s ...",
+                                index,
+                                method.holder().name(),
+                                method.name(),
+                                method.signature().asString()));
                 startTime = System.nanoTime();
             }
 
             CiResult result = null;
-            TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
+            TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             try {
-                result = compilation.compile();
+                result = compilation.compile(plan);
             } finally {
                 filter.remove();
-                if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
+                if (printCompilation) {
                     long time = (System.nanoTime() - startTime) / 100000;
-                    TTY.println(String.format("%3d.%dms", time / 10, time % 10));
+                    TTY.println(String.format("Graal %4d %-70s %-45s %-50s | %3d.%dms %4dnodes %5dB",
+                                    index,
+                                    "",
+                                    "",
+                                    "",
+                                    time / 10,
+                                    time % 10,
+                                    compilation.graph.getNodeCount(),
+                                    result.targetMethod().targetCodeSize()));
                 }
             }
 
@@ -148,10 +119,10 @@ public class GraalCompiler implements CiCompiler  {
         }
     }
 
-    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph) {
+    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph, PhasePlan plan) {
         assert graph.verify();
         GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
-        return compilation.compile();
+        return compilation.compile(plan);
     }
 
     private void init() {

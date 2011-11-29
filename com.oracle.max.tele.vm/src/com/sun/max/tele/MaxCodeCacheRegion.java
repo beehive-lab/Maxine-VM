@@ -24,6 +24,8 @@ package com.sun.max.tele;
 
 import java.util.*;
 
+import com.sun.max.unsafe.*;
+
 /**
  * Access to an individual allocation area of the compiled code cache.
  */
@@ -46,5 +48,15 @@ public interface MaxCodeCacheRegion extends MaxEntity<MaxCodeCacheRegion> {
      * @return all known compilations currently allocated in this code cache region, {@code length = #compilationCount()}
      */
     List<MaxCompilation> compilations();
+
+    /**
+     * Get the method compilation, if any, whose code cache allocation includes
+     * a given address in the VM, whether or not there is target code at the
+     * specific location.  Null if there is no such compilation.
+     *
+     * @param address memory location in the VM
+     * @return a  method compilation whose code cache allocation includes the address, null if none
+     */
+    MaxCompilation findCompilation(Address address);
 
 }

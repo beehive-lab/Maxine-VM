@@ -156,11 +156,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return noSafepointPolls(flags()) || isTemplate();
     }
 
-    @INLINE
-    public final boolean isUsingTaggedLocals() {
-        return isUsingTaggedValues(flags());
-    }
-
     /**
      * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
      *         empty.
@@ -305,7 +300,30 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return javaConstructor;
     }
 
-    @Override
+    public Type[] getGenericParameterTypes() {
+        if (isInstanceInitializer()) {
+            return toJavaConstructor().getGenericParameterTypes();
+        } else {
+            return toJava().getGenericParameterTypes();
+        }
+    }
+
+    public Type getGenericReturnType() {
+        if (isInstanceInitializer()) {
+            return void.class;
+        } else {
+            return toJava().getGenericReturnType();
+        }
+    }
+
+    public Annotation[][] getParameterAnnotations() {
+        if (isInstanceInitializer()) {
+            return toJavaConstructor().getParameterAnnotations();
+        } else {
+            return toJava().getParameterAnnotations();
+        }
+    }
+
     public final <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
         if (isInstanceInitializer()) {
             return toJavaConstructor().getAnnotation(annotationClass);
@@ -574,13 +592,12 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return compilerStorage;
     }
 
-    @Override
-    public int compiledCodeSize() {
-        return -1;
-    }
-
     public boolean canBePermanentlyLinked() {
         return false;
     }
 
+    @Override
+    public RiConstantPool getConstantPool() {
+        return null;
+    }
 }

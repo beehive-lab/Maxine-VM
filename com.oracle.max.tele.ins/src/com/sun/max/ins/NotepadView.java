@@ -368,7 +368,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            setEnabled(address != null && !address.isZero());
+            setEnabled(address != null && address.isNotZero());
         }
     }
 
@@ -395,7 +395,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
 
         public void setSelectedAddress(Address address) {
             this.address = address;
-            this.memoryRegion = vm().findMemoryRegion(address);
+            this.memoryRegion = vm().state().findMemoryRegion(address);
             setEnabled(memoryRegion != null);
         }
     }

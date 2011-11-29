@@ -44,9 +44,8 @@
 #define MEMORY_FAULT 0
 #define STACK_FAULT 1
 #define STACK_FATAL 2
-#define ILLEGAL_INSTRUCTION 3
-#define ARITHMETIC_EXCEPTION 4
-#define ASYNC_INTERRUPT 5
+#define ARITHMETIC_EXCEPTION 3
+#define ASYNC_INTERRUPT 4
 
 static Address theJavaTrapStub;
 static boolean traceTraps = false;
@@ -78,8 +77,6 @@ int getTrapNumber(int signal) {
     case SIGBUS:
 #endif
         return MEMORY_FAULT;
-    case SIGILL:
-        return ILLEGAL_INSTRUCTION;
     case SIGFPE:
         return ARITHMETIC_EXCEPTION;
 #if !os_MAXVE

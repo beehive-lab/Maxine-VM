@@ -103,7 +103,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      * @return a reference to a {@link TargetMethod} in the VM.
      */
     public final Reference getTargetMethodReference(int index) {
-        return memory().readArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
+        return objects().unsafeReadArrayElementValue(Kind.REFERENCE, targetMethodsReference, index).asReference();
     }
 
     /**

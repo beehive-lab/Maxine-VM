@@ -38,6 +38,24 @@ import xml.dom.minidom
 import StringIO
 from projects import Library
 
+# Helper functions
+
+def _expand_project_in_class_path_arg(env, cpArg):
+    cp = []
+    for part in cpArg.split(os.pathsep):
+        if part.startswith('@'):
+            cp += env.pdb().classpath(part[1:]).split(os.pathsep)
+        else:
+            cp.append(part)
+    return os.pathsep.join(cp)
+    
+def _expand_project_in_args(env, args):
+    for i in range(len(args)):
+        if args[i] == '-cp' or args[i] == '-classpath':
+            if i + 1 < len(args):
+                args[i + 1] = _expand_project_in_class_path_arg(env, args[i + 1])
+            return
+    
 # Commands are in alphabetical order in this file.
 
 def build(env, args):
@@ -520,10 +538,81 @@ def graal(env, args):
     """alias for "mx olc -c=Graal ..." """
     olc(env, ['-c=Graal'] + args)
 
+def _find_graal_compiler_unit_tests_classes(env):
+    def find_test_classes(testClassList, searchDir, pkgRoot):
+        for root, _, files in os.walk(searchDir):
+            for name in files:
+                if name.endswith('.java') and name != 'package-info.java':
+                    isTest = False
+                    with open(join(root, name)) as f:
+                        for line in f:
+                            if line.strip() == '@Test':
+                                isTest = True
+                                break
+                    if isTest:
+                        pkg = root[len(searchDir) + 1:].replace(os.sep, '.')
+                        testClassList.append(pkg + '.' + name[:-len('.java')])
+
+    project = 'com.oracle.max.graal.compiler.tests'
+    pkgRoot = 'com.oracle.max.graal.compiler.test'
+    searchDir = join(env.maxine_home, project, 'src')
+    compilerUnitTestClasses = []
+    find_test_classes(compilerUnitTestClasses, searchDir, pkgRoot)
+    return compilerUnitTestClasses
+    
 def gcut(env, args):
     """runs the Graal Compiler Unit Tests in the GraalVM"""
     # (ds) The boot class path must be used for some reason I don't quite understand
-    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + args)
+    env.run_graalvm(['-XX:-BootstrapGraal', '-esa', '-Xbootclasspath/a:' + env.pdb().classpath(), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
+
+def gcutmax(env, args):
+    """runs the Graal Compiler Unit Tests in a hosted Maxine environment"""
+    deps = ['com.oracle.max.graal.compiler.tests', 'com.oracle.max.vm.ext.maxri']
+    env.run_java(['-Dgraal.runtime=Maxine', '-ea', '-cp', env.pdb().classpath(deps), 'org.junit.runner.JUnitCore'] + _find_graal_compiler_unit_tests_classes(env))
+
+def graalexample(env, args):
+    """run some or all Graal examples in Maxine (assumes VM was built with @graal config)"""
+
+    # name -> (project, main class, -XX:CompiledCommand match string)
+    examples = {
+        'safeadd': ['com.oracle.max.graal.examples.safeadd', 'com.oracle.max.graal.examples.safeadd.Main', 'safeadd'],
+        'vectorlib': ['com.oracle.max.graal.examples.vectorlib', 'com.oracle.max.graal.examples.vectorlib.Main', 'vectorlib'],
+    }
+
+    def run_example(env, verbose, project, mainClass, match):
+        cp = env.pdb().classpath(project)
+        sharedArgs = [mainClass]
+        
+        c1xPrintArg = '-C1X:+PrintCompilation' if verbose else '-C1X:-PrintCompilation'
+        graalPrintArg = '-G:+PrintCompilation' if verbose else '-G:-PrintCompilation'
+        
+        res = []
+        env.log("=== C1X ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':C1X', '-cp', cp, c1xPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
+        env.log("=== Graal ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
+        env.log("=== Graal with extensions ===")
+        res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:+Extend', '-G:-Inline'] + sharedArgs))
+        
+        if len([x for x in res if x != 0]) != 0:
+            return 1
+        return 0
+
+    verbose = False
+    if '-v' in args:
+        verbose = True
+        args = [a for a in args if a != '-v']
+
+    if len(args) == 0:
+        args = examples.keys()
+    for a in args:
+        config = examples.get(a)
+        if config is None:
+            env.log('unknown example: ' + a + '  {available examples = ' + str(examples.keys()) + '}')
+        else:
+            env.log('--------- ' + a + ' ------------')
+            project, mainClass, match = config
+            run_example(env, verbose, project, mainClass, match)
 
 def graalvm(env, args):
     """runs the GraalVM"""
@@ -675,7 +764,7 @@ def inspect(env, args):
             os.environ['TELE_LOG_FILE'] = 'tele-' + logFile
         elif arg in ['-cp', '-classpath']:
             vmArgs += [arg, args[i + 1]]
-            insCP += [args[i + 1]]
+            insCP += [_expand_project_in_class_path_arg(env, args[i + 1])]
             i += 1
         elif arg == '-jar':
             vmArgs += ['-jar', args[i + 1]]
@@ -709,6 +798,8 @@ def inspect(env, args):
     insCP = pathsep.join(insCP)
     insArgs += ['-cp=' + insCP]
     
+    _expand_project_in_args(env, vmArgs)  
+
     cmd = env.format_java_cmd(sysProps + ['-cp', env.pdb().classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
     
@@ -941,11 +1032,14 @@ def vm(env, args):
     """launch the Maxine VM
 
     Run the Maxine VM with the given options and arguments.
+    A class path component with a '@' prefix is expanded to be the
+    class path of the project named after the '@'.
     The expansion of the MAXVM_OPTIONS environment variable is inserted
     before any other VM options specified on the command line.
 
     Use "mx vm -help" to see what other options this command accepts."""
-
+    
+    _expand_project_in_args(env, args)  
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
     env.run([join(env.vmdir, 'maxvm')] + maxvmOptions + args)
             
@@ -1006,7 +1100,9 @@ table = {
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],
-    'gcut': [gcut, 'patterns...'],
+    'gcut': [gcut, ''],
+    'gcutmax': [gcutmax, ''],
+    'graalexample': [graalexample, '[-v] example names...'],
     'graalvm': [graalvm, ''],
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],

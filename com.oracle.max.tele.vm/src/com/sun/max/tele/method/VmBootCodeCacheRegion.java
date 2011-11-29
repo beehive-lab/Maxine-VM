@@ -60,6 +60,8 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
      */
     private final VmCodeCacheAccess codeCache;
 
+    private final RemoteCodePointerManager codePointerManager;
+
     /**
      * Known method compilations in the region, organized for efficient lookup by address.
      * Map:  Address --> TeleCompilation
@@ -84,9 +86,10 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
         super(vm, teleCodeRegion);
         this.teleCodeRegion = teleCodeRegion;
         this.codeCache = codeCache;
-        this.entityDescription = "The allocation area for pre-compiled methods in the " + vm.entityName() + " boot image";
+        this.entityDescription = "The boot image area " + teleCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.remoteObjectReferenceManager = new UnmanagedCodeCacheRemoteReferenceManager(vm, this);
+        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
         this.localStatsPrinter = new UnmanagedCodeCacheRegionStatsPrinter();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleCodeRegion.getRegionName() + " with " + remoteObjectReferenceManager.getClass().getSimpleName());
@@ -143,7 +146,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
         TeleError.check(compilations.size() <= teleTargetMethods.size(), "Compilations in boot code cache appear to have disappeared");
         if (compilations.size() < teleTargetMethods.size()) {
             for (int index = compilations.size(); index < teleTargetMethods.size(); index++) {
-                compilations.add(find(teleTargetMethods.get(index).getRegionStart()));
+                compilations.add(findCompilation(teleTargetMethods.get(index).getRegionStart()));
             }
         }
         return Collections.unmodifiableList(compilations);
@@ -153,7 +156,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
     public int loadedCompilationCount() {
         int count = 0;
         for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-            if (teleTargetMethod.isLoaded()) {
+            if (teleTargetMethod.isCacheLoaded()) {
                 count++;
             }
         }
@@ -173,9 +176,10 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
     }
 
     @Override
-    public TeleCompilation find(Address address) {
+    public TeleCompilation findCompilation(Address address) {
         return addressToCompilationMap.find(address);
     }
+
 
     @Override
     public void writeSummary(PrintStream printStream) {
@@ -184,5 +188,9 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
 
     public RemoteObjectReferenceManager objectReferenceManager() {
         return remoteObjectReferenceManager;
+    }
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
     }
 }

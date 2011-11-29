@@ -126,7 +126,7 @@ public final class CiConstant extends CiValue {
 
     @Override
     public String name() {
-        return "const[" + kind.format(boxedValue()) + (kind != CiKind.Object ? "|raw:" + primitive : "") + "]";
+        return "const[" + kind.format(boxedValue()) + (kind != CiKind.Object ? "|0x" + Long.toHexString(primitive) : "") + "]";
     }
 
     /**
@@ -157,6 +157,16 @@ public final class CiConstant extends CiValue {
      * @return the value of this constant
      */
     public Object boxedValue() {
+        return boxedValue(kind);
+    }
+
+    /**
+     * Returns the value of this constant as a boxed Java value.
+     *
+     * @param kind the kind of the boxed value to be returned
+     * @return the value of this constant
+     */
+    public Object boxedValue(CiKind kind) {
         // Checkstyle: stop
         switch (kind) {
             case Byte: return (byte) asInt();

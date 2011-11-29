@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.cri.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -31,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code LoadIndexedNode} represents a read from an element of an array.
  */
-public final class LoadIndexedNode extends AccessIndexedNode implements Lowerable, LIRLowerable {
+public final class LoadIndexedNode extends AccessIndexedNode implements Lowerable, LIRLowerable, Node.IterableNodeType {
 
     /**
      * Creates a new LoadIndexedNode.

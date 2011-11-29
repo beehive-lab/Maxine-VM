@@ -30,11 +30,9 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
-import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -111,12 +109,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
-    private ExtendedBytecodeHandler extendedBytecodeHandler;
-
-    public void setExtendedBytecodeHandler(ExtendedBytecodeHandler extendedBytecodeHandler) {
-        this.extendedBytecodeHandler = extendedBytecodeHandler;
-    }
-
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
         this(runtime, method, null);
     }
@@ -132,10 +124,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         this.method = method;
         this.stats = stats;
         this.log = GraalOptions.TraceBytecodeParserLevel > 0 ? new LogStream(TTY.out()) : null;
-        assert method.code() != null : method;
+        assert method.code() != null : "method must contain bytecodes: " + method;
         this.stream = new BytecodeStream(method.code());
-
-        this.constantPool = runtime.getConstantPool(method);
+        this.constantPool = method.getConstantPool();
     }
 
     @Override
@@ -160,7 +151,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
         if (context.isObserved()) {
             String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method);
-            context.observable.fireCompilationEvent(new CompilationEvent(null, label, map, method.code().length));
+            context.observable.fireCompilationEvent(label, map);
         }
         return map;
     }
@@ -224,13 +215,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
-            // Create duplicate graph.
-            StructuredGraph duplicate = new StructuredGraph();
-            Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
-            replacements.put(graph.start(), duplicate.start());
-            duplicate.addDuplicate(graph.getNodes(), replacements);
-
-            cachedGraphs.put(method, duplicate);
+            cachedGraphs.put(method, graph.copy());
         }
     }
 
@@ -816,7 +801,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             dims[i] = frameState.ipop();
         }
         if (type instanceof RiResolvedType) {
-            NewArrayNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims, cpi, constantPool));
+            FixedWithNextNode n = graph.add(new NewMultiArrayNode((RiResolvedType) type, dims));
             frameState.apush(append(n));
         } else {
             append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
@@ -998,14 +983,12 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType holder = resolvedTarget.holder();
             if (!holder.isInitialized() && GraalOptions.ResolveClassBeforeStaticInvoke) {
-                // Re-use the same resolution code as for accessing a static field. Even though
-                // the result of resolution is not used by the invocation (only the side effect
-                // of initialization is required), it can be commoned with static field accesses.
-                genTypeOrDeopt(RiType.Representation.StaticFields, holder, false);
+                genInvokeDeopt(target, false);
+            } else {
+                FrameState stateBefore = frameState.duplicate(bci());
+                ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
+                appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool, stateBefore);
             }
-            FrameState stateBefore = frameState.duplicate(bci());
-            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
-            appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool, stateBefore);
         } else {
             genInvokeDeopt(target, false);
         }
@@ -1160,10 +1143,10 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         assert successor.startBci == dest : successor.startBci + " != " + dest + " @" + bci();
         JsrScope scope = currentBlock.jsrScope;
         if (!successor.jsrScope.pop().equals(scope)) {
-            throw new JSRNotSupportedBailout("unstructured control flow (internal limitation)");
+            throw new JsrNotSupportedBailout("unstructured control flow (internal limitation)");
         }
         if (successor.jsrScope.nextReturnAddress() != stream().nextBCI()) {
-            throw new JSRNotSupportedBailout("unstructured control flow (internal limitation)");
+            throw new JsrNotSupportedBailout("unstructured control flow (internal limitation)");
         }
         frameState.push(CiKind.Jsr, ConstantNode.forJsr(stream().nextBCI(), graph));
         appendGoto(createTarget(successor, frameState));
@@ -1176,7 +1159,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         int retAddress = scope.nextReturnAddress();
         append(graph.add(new FixedGuardNode(graph.unique(new CompareNode(local, Condition.EQ, ConstantNode.forJsr(retAddress, graph))))));
         if (!successor.jsrScope.equals(scope.pop())) {
-            throw new JSRNotSupportedBailout("unstructured control flow (ret leaves more than one scope)");
+            throw new JsrNotSupportedBailout("unstructured control flow (ret leaves more than one scope)");
         }
         appendGoto(createTarget(successor, frameState));
     }
@@ -1727,9 +1710,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                if (extendedBytecodeHandler == null || !extendedBytecodeHandler.handle(opcode, stream, graph, frameState, this)) {
-                    throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
-                }
+                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
         }
         // Checkstyle: resume
     }

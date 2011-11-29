@@ -41,6 +41,7 @@ public abstract class Pointer extends Address implements Accessor {
     private static final int FLOAT_SIZE = 4;
     private static final int DOUBLE_SIZE = 8;
 
+    @HOSTED_ONLY
     protected Pointer() {
     }
 
@@ -73,6 +74,7 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @Override
+    @HOSTED_ONLY
     public final String toString() {
         return "^" + toHexString();
     }
@@ -268,15 +270,15 @@ public abstract class Pointer extends Address implements Accessor {
         return Platform.platform().isa.category == ISA.Category.RISC;
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public byte readByte(int offset) {
         return readByte(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract byte readByte(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final byte getByte(int displacement, int index) {
         return readByte(Offset.fromInt(index).plus(displacement));
     }
@@ -316,15 +318,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getBoolean(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final short readShort(int offset) {
         return readShort(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract short readShort(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final short getShort(int displacement, int index) {
         return readShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement));
     }
@@ -339,15 +341,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getShort(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final char readChar(int offset) {
         return readChar(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract char readChar(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final char getChar(int displacement, int index) {
         return readChar(Offset.fromInt(index).times(Chars.SIZE).plus(displacement));
     }
@@ -362,15 +364,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getChar(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final int readInt(int offset) {
         return readInt(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract int readInt(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final int getInt(int displacement, int index) {
         return readInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement));
     }
@@ -385,15 +387,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getInt(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final float readFloat(int offset) {
         return readFloat(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract float readFloat(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final float getFloat(int displacement, int index) {
         return readFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement));
     }
@@ -408,15 +410,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getFloat(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final long readLong(int offset) {
         return readLong(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract long readLong(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final long getLong(int displacement, int index) {
         return readLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement));
     }
@@ -431,15 +433,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getLong(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final double readDouble(int offset) {
         return readDouble(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract double readDouble(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final double getDouble(int displacement, int index) {
         return readDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement));
     }
@@ -454,15 +456,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getDouble(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final Word readWord(int offset) {
         return readWord(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract Word readWord(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final Word getWord(int displacement, int index) {
         return readWord(Offset.fromInt(index).times(Word.size()).plus(displacement));
     }
@@ -477,15 +479,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getWord(0);
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public final Reference readReference(int offset) {
         return readReference(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_OFF)
     public abstract Reference readReference(Offset offset);
 
-    @INTRINSIC(PREAD)
+    @INTRINSIC(PREAD_IDX)
     public final Reference getReference(int displacement, int index) {
         return readReference(Offset.fromInt(index).times(Word.size()).plus(displacement));
     }
@@ -500,15 +502,15 @@ public abstract class Pointer extends Address implements Accessor {
         return getReference(0);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeByte(int offset, byte value) {
         writeByte(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeByte(Offset offset, byte value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setByte(int displacement, int index, byte value) {
         writeByte(Offset.fromInt(index).plus(displacement), value);
     }
@@ -548,15 +550,15 @@ public abstract class Pointer extends Address implements Accessor {
         setBoolean(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeShort(int offset, short value) {
         writeShort(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeShort(Offset offset, short value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setShort(int displacement, int index, short value) {
         writeShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement), value);
     }
@@ -596,15 +598,15 @@ public abstract class Pointer extends Address implements Accessor {
         setChar(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeInt(int offset, int value) {
         writeInt(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeInt(Offset offset, int value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setInt(int displacement, int index, int value) {
         writeInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement), value);
     }
@@ -619,15 +621,15 @@ public abstract class Pointer extends Address implements Accessor {
         setInt(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeFloat(int offset, float value) {
         writeFloat(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeFloat(Offset offset, float value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setFloat(int displacement, int index, float value) {
         writeFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement), value);
     }
@@ -642,15 +644,15 @@ public abstract class Pointer extends Address implements Accessor {
         setFloat(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeLong(int offset, long value) {
         writeLong(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeLong(Offset offset, long value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setLong(int displacement, int index, long value) {
         writeLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement), value);
     }
@@ -665,15 +667,15 @@ public abstract class Pointer extends Address implements Accessor {
         setLong(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeDouble(int offset, double value) {
         writeDouble(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeDouble(Offset offset, double value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setDouble(int displacement, int index, double value) {
         writeDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement), value);
     }
@@ -688,15 +690,15 @@ public abstract class Pointer extends Address implements Accessor {
         setDouble(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public final void writeWord(int offset, Word value) {
         writeWord(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeWord(Offset offset, Word value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setWord(int displacement, int index, Word value) {
         writeWord(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
     }
@@ -711,15 +713,20 @@ public abstract class Pointer extends Address implements Accessor {
         setWord(0, value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INLINE
+    public final void writeObject(int offset, Object value) {
+        writeReference(Offset.fromInt(offset), Reference.fromJava(value));
+    }
+
+    @INTRINSIC(PWRITE_OFF)
     public final void writeReference(int offset, Reference value) {
         writeReference(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_OFF)
     public abstract void writeReference(Offset offset, Reference value);
 
-    @INTRINSIC(PWRITE)
+    @INTRINSIC(PWRITE_IDX)
     public final void setReference(int displacement, int index, Reference value) {
         writeReference(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
     }
@@ -801,6 +808,7 @@ public abstract class Pointer extends Address implements Accessor {
      *
      * @param bitIndex the index of the bit to set
      */
+    @INLINE
     public void setBit(int bitIndex) {
         final int byteIndex = UnsignedMath.divide(bitIndex, Bytes.WIDTH);
         byte byteValue = getByte(byteIndex);
@@ -820,6 +828,7 @@ public abstract class Pointer extends Address implements Accessor {
      * @param bitIndex the index of the first bit to set
      * @param bits a mask of 8 bits OR'ed with the 8 bits in this bit map starting at {@code bitIndex}
      */
+    @INLINE
     public void setBits(int bitIndex, byte bits) {
         // If we do not mask off the leading bits after a conversion to int right here,
         // then the arithmetic operations below will convert implicitly to int and may insert sign bits.
@@ -838,6 +847,7 @@ public abstract class Pointer extends Address implements Accessor {
         }
     }
 
+    @HOSTED_ONLY
     public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         Kind kind = Kind.fromJava(dst.getClass().getComponentType());
         switch (kind.asEnum) {

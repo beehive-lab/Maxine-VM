@@ -26,6 +26,7 @@ import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -36,6 +37,7 @@ import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
@@ -73,11 +75,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private ValueNode lastInstructionPrinted; // Debugging only
     private FrameState lastState;
 
-    public LIRGenerator(GraalCompilation compilation) {
+    public LIRGenerator(GraalCompilation compilation, RiXirGenerator xir) {
         this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.lir = compilation.lir();
-        this.xir = compilation.compiler.xir;
+        this.xir = xir;
         this.xirSupport = new XirSupport();
         this.operands = new OperandPool(compilation.compiler.target);
     }
@@ -151,7 +153,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     protected LabelRef getLIRBlock(FixedNode b) {
         LIRBlock result = lir.valueToBlock().get(b);
-        int suxIndex = currentBlock.blockSuccessors().indexOf(result);
+        int suxIndex = currentBlock.getSuccessors().indexOf(result);
         assert suxIndex != -1 : "Block not in successor list of current block";
 
         return LabelRef.forSuccessor(currentBlock, suxIndex);
@@ -175,7 +177,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      * @param kind the kind of value being returned
      * @return the operand representing the ABI defined location used return a value of kind {@code kind}
      */
-    protected CiValue resultOperandFor(CiKind kind) {
+    public CiValue resultOperandFor(CiKind kind) {
         if (kind == CiKind.Void) {
             return IllegalValue;
         }
@@ -218,9 +220,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 emitXir(prologue, null, null, null, false);
             }
             setOperandsForParameters();
-        } else if (block.blockPredecessors().size() > 0) {
+        } else if (block.getPredecessors().size() > 0) {
             FrameState fs = null;
-            for (LIRBlock pred : block.blockPredecessors()) {
+            for (Block p : block.getPredecessors()) {
+                LIRBlock pred = (LIRBlock) p;
                 if (fs == null) {
                     fs = pred.lastState();
                 } else if (fs != pred.lastState()) {
@@ -284,9 +287,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 }
             }
         }
-        if (block.blockSuccessors().size() >= 1 && !block.endsWithJump()) {
-            NodeSuccessorsIterable successors = block.lastInstruction().successors();
-            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastInstruction();
+        if (block.numberOfSux() >= 1 && !block.endsWithJump()) {
+            NodeSuccessorsIterable successors = block.lastNode().successors();
+            assert successors.explicitCount() >= 1 : "should have at least one successor : " + block.lastNode();
 
             emitJump(getLIRBlock((FixedNode) successors.first()), null);
         }
@@ -342,15 +345,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     private boolean checkStartOperands(Node node, FrameState fs) {
-        if (node == ((StructuredGraph) node.graph()).start()) {
-            CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
-            int slot = 0;
-            for (CiKind kind : arguments) {
-                LocalNode local = (LocalNode) fs.localAt(slot);
-                assert local != null && local.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + local + ")";
-                slot++;
-                if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+        if (!Modifier.isNative(compilation.method.accessFlags())) {
+            if (node == ((StructuredGraph) node.graph()).start()) {
+                CiKind[] arguments = CiUtil.signatureToKinds(compilation.method);
+                int slot = 0;
+                for (CiKind kind : arguments) {
+                    ValueNode arg = fs.localAt(slot);
+                    assert arg != null && arg.kind() == kind.stackKind() : "No valid local in framestate for slot #" + slot + " (" + arg + ")";
                     slot++;
+                    if (slot < fs.localsSize() && fs.localAt(slot) == null) {
+                        slot++;
+                    }
                 }
             }
         }
@@ -464,7 +469,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         for (int i = 0; i < dims.length; i++) {
             dims[i] = toXirArgument(x.dimension(i));
         }
-        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.elementType);
+        XirSnippet snippet = xir.genNewMultiArray(site(x), dims, x.type());
         emitXir(snippet, x, state(), null, true);
     }
 
@@ -518,17 +523,18 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitLoopEnd(LoopEndNode x) {
         moveToPhi(x.loopBegin(), x);
-        if (GraalOptions.GenLoopSafepoints) {
+        if (GraalOptions.GenLoopSafepoints && x.hasSafepointPolling()) {
             emitSafepointPoll(x);
         }
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
 
     public void emitSafepointPoll(FixedNode x) {
-        XirSnippet snippet = xir.genSafepointPoll(site(x));
-        emitXir(snippet, x, state(), null, false);
+        if (!lastState.method().noSafepointPolls()) {
+            XirSnippet snippet = xir.genSafepointPoll(site(x));
+            emitXir(snippet, x, state(), null, false);
+        }
     }
-
 
     @Override
     public void emitIf(IfNode x) {
@@ -721,6 +727,13 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 break;
         }
 
+        CiValue destinationAddress = null;
+        if (!target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently necessary for Maxine: since the invokeinterface-snippet uses a division, it
+            // destroys rdx, which is also used to pass a parameter.  Therefore, the snippet must be before the parameters are assigned to their locations.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, null);
+        }
+
         CiValue resultOperand = resultOperandFor(x.node().kind());
 
         CiKind[] signature = CiUtil.signatureToKinds(callTarget.targetMethod().signature(), callTarget.isStatic() ? null : callTarget.targetMethod().holder().kind(true));
@@ -729,9 +742,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, callTarget.arguments(), pointerSlots);
 
-        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
-        // implicit calling convention between the XirSnippet and the call.
-        CiValue destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        if (target().invokeSnippetAfterArguments) {
+            // TODO This is the version currently active for HotSpot.
+            destinationAddress = emitXir(snippet, x.node(), info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
+        }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -748,7 +762,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    private List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
+    public List<CiValue> visitInvokeArguments(CiCallingConvention cc, Iterable<ValueNode> arguments, List<CiValue> pointerSlots) {
         // for each argument, load it into the correct location
         List<CiValue> argList = new ArrayList<CiValue>();
         int j = 0;
@@ -833,14 +847,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         if (resultOperand.isLegal()) {
             setResult(x, emitMove(resultOperand));
         }
-    }
-
-
-
-    protected CompilerStub stubFor(CiRuntimeCall runtimeCall) {
-        CompilerStub stub = compilation.compiler.lookupStub(runtimeCall);
-        compilation.frameMap().usesStub(stub);
-        return stub;
     }
 
     protected CompilerStub stubFor(CompilerStub.Id id) {
@@ -967,15 +973,14 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
 
 
-    private void moveToPhi(MergeNode merge, Node pred) {
+    private void moveToPhi(MergeNode merge, FixedNode pred) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 1) {
             TTY.println("MOVE TO PHI from " + pred + " to " + merge);
         }
-        int nextSuccIndex = merge.phiPredecessorIndex(pred);
         PhiResolver resolver = new PhiResolver(this);
         for (PhiNode phi : merge.phis()) {
             if (phi.type() == PhiType.Value) {
-                ValueNode curVal = phi.valueAt(nextSuccIndex);
+                ValueNode curVal = phi.valueAt(pred);
                 resolver.move(operand(curVal), operandForPhi(phi));
             }
         }
@@ -1279,7 +1284,12 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         public CiCodePos getCodePos() {
-            // TODO: get the code position of the current instruction if possible
+            if (current instanceof StateSplit) {
+                FrameState stateAfter = ((StateSplit) current).stateAfter();
+                if (stateAfter != null) {
+                    return stateAfter.toCodePos();
+                }
+            }
             return null;
         }
 

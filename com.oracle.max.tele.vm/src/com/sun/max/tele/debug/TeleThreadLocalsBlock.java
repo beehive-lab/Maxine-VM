@@ -99,7 +99,11 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
     private final TeleNativeThread teleNativeThread;
 
     /**
-     * The region of VM memory occupied by this block, null if this is a dummy for which there are no locals (as for a native thread).
+     * The region of VM memory occupied by this block, null if this is a dummy
+     * for which there are no locals (as for a native thread).
+     * <p>
+     * Don't null this field out when the thread is known to have died;
+     * we'll need to keep track of it to update update information about memory allocations.
      */
     private final ThreadLocalsBlockMemoryRegion threadLocalsBlockMemoryRegion;
 
@@ -138,7 +142,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, nBytes);
         this.areas = new EnumMap<SafepointPoll.State, TeleThreadLocalsArea>(SafepointPoll.State.class);
         this.offsetToTTLA = Platform.platform().pageSize - Word.size();
-        this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
+        this.entityDescription = "VM thread-local variables owned by thread " + teleNativeThread.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
@@ -163,7 +167,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
         this.threadLocalsBlockMemoryRegion = null;
         this.areas = null;
         this.offsetToTTLA = Platform.platform().pageSize - Word.size();
-        this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
+        this.entityDescription = "VM thread-local variables owned by thread " + teleNativeThread.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
@@ -187,7 +191,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
                 final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(SafepointPoll.State.ENABLED);
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
-                    if (!threadLocalValue.isZero()) {
+                    if (threadLocalValue.isNotZero()) {
                         final Reference vmThreadReference = referenceManager().makeReference(threadLocalValue.asAddress());
                         teleVmThread = (TeleVmThread) objects().makeTeleObject(vmThreadReference);
                     }

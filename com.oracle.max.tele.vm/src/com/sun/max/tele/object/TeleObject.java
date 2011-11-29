@@ -166,7 +166,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     private long lastUpdateEpoch = -1L;
 
     private TeleReference reference;
-    private final LayoutScheme layoutScheme;
     private final SpecificLayout specificLayout;
     private final long oid;
     private TeleHub teleHub = null;
@@ -195,7 +194,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
         super(vm);
         this.reference = (TeleReference) reference;
-        this.layoutScheme = Layout.layoutScheme();
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
         lastValidPointer = Pointer.zero();
@@ -435,9 +433,9 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     public final int headerOffset(HeaderField headerField) {
         if (headerField == HeaderField.LENGTH) {
-            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField).toInt();
+            return objects().layoutScheme().arrayLayout.getOffsetFromOrigin(headerField).toInt();
         } else {
-            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField).toInt();
+            return objects().layoutScheme().generalLayout.getOffsetFromOrigin(headerField).toInt();
         }
     }
 

@@ -72,6 +72,10 @@ public abstract class AbstractVmHolder implements TeleVMAccess {
         return vm.fields();
     }
 
+    public final VmMethodAccess methods() {
+        return vm.methods();
+    }
+
     public final VmObjectAccess objects() {
         return vm.objects();
     }

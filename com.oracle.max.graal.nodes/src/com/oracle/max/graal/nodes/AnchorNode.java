@@ -31,7 +31,7 @@ import com.sun.cri.ci.*;
  */
 public final class AnchorNode extends FixedWithNextNode implements LIRLowerable {
 
-    @Input private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
+    @Input(notDataflow = true) private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
 
     public AnchorNode() {
         super(CiKind.Illegal);

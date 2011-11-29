@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import com.sun.cri.ci.CiKind.FormatWithToString;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -31,7 +32,7 @@ import com.sun.max.vm.actor.member.*;
  * Thus the boot image does not contain any of the former.
  */
 @HOSTED_ONLY
-public final class StaticTuple {
+public final class StaticTuple implements FormatWithToString {
 
     private final ClassActor classActor;
 
