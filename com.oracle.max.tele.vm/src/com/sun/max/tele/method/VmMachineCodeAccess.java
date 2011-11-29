@@ -98,7 +98,6 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
-            vm().externalMachineCode().updateCache(epoch);
             for (TeleTargetMethod teleTargetMethod : unallocatedTeleTargetMethods) {
                 if (teleTargetMethod.getRegionStart().isNotZero() && teleTargetMethod.getRegionNBytes() != 0) {
                     // The compilation has been allocated memory in the VM since the last time we looked; complete its registration.
@@ -106,9 +105,15 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
                     registerCompilation(teleTargetMethod);
                 }
             }
+            // Update the details within each code cache region.  This must be done
+            // separately from the general code cache update, once a general update
+            // on all code and heap regions is complete.
             for (VmCodeCacheRegion region : codeCache().vmCodeCacheRegions()) {
                 region.updateCache(epoch);
             }
+            // Don't need to update the details separately of external code for
+            // each TeleNativeLibrary; that
+            // happens as part of the general update for external code.
             lastUpdateEpoch = epoch;
             updateTracer.end(null);
         } else {
@@ -221,11 +226,11 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
     }
 
     public MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
-        return vm().externalMachineCode().registerExternalCode(codeStart, nBytes, name);
+        return vm().externalCode().registerExternalCode(codeStart, nBytes, name);
     }
 
     public MaxNativeFunction findExternalCode(Address address) {
-        return vm().externalMachineCode().findExternalCode(address);
+        return vm().externalCode().findExternalCode(address);
     }
 
     /**
@@ -259,7 +264,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         if (codeCacheRegion != null) {
             return codeCacheRegion.codePointerManager().makeCodePointer(address);
         }
-        return vm().externalMachineCode().codePointerManager().makeCodePointer(address);
+        return vm().externalCode().makeCodePointer(address);
     }
 
 
@@ -289,14 +294,14 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             sb.append(", code loaded=" + formatter.format(codeCacheRegion.loadedCompilationCount()));
             printStream.println(indentation + "    " + sb.toString());
         }
-        vm().externalMachineCode().printSessionStats(printStream, indent + 4, verbose);
+        vm().externalCode().printSessionStats(printStream, indent + 4, verbose);
     }
 
     public void writeSummary(PrintStream printStream) {
         for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
             codeCacheRegion.writeSummary(printStream);
         }
-        vm().externalMachineCode().writeSummary(printStream);
+        vm().externalCode().writeSummary(printStream);
     }
 
 }

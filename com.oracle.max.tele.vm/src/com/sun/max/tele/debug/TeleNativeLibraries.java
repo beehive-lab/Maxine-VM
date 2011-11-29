@@ -25,9 +25,8 @@ package com.sun.max.tele.debug;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.MaxPlatform.OS;
+import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -88,13 +87,8 @@ public class TeleNativeLibraries {
 
     private final static ArrayList<TeleNativeLibrary> libs = new ArrayList<TeleNativeLibrary>();
 
-    public static MaxNativeLibrary[] getLibs(TeleVM vm) {
-        try {
-            update(vm);
-        } catch (Exception ex) {
-            ProgramError.unexpected(ex);
-        }
-        return libs.toArray(new MaxNativeLibrary[libs.size()]);
+    public final static List<TeleNativeLibrary> libs() {
+        return libs;
     }
 
     /**
@@ -102,7 +96,7 @@ public class TeleNativeLibraries {
      * since the last refresh, so we check that.
      * @param vm
      */
-    private static void update(TeleVM vm) throws Exception {
+    public static void update(TeleVM vm) throws Exception {
         int length = vm.fields().DynamicLinker_libInfoIndex.readInt(vm);
         Reference libInfoArrayReference = vm.fields().DynamicLinker_libInfoArray.readReference(vm);
         for (int index = 0; index < length; index++) {
@@ -117,18 +111,6 @@ public class TeleNativeLibraries {
             }
         }
 
-    }
-
-    public static MaxNativeFunction find(Address address) {
-        Trace.line(1, "NativeCodeLibraries.find: " + address.to0xHexString());
-        for (TeleNativeLibrary teleNativeLibrary : libs) {
-            for (MaxNativeFunction info : teleNativeLibrary.functions()) {
-                if (info.contains(address)) {
-                    return info;
-                }
-            }
-        }
-        return null;
     }
 
     /**

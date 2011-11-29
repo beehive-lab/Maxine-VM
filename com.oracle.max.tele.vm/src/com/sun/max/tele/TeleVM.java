@@ -591,7 +591,7 @@ public abstract class TeleVM implements MaxVM {
 
     private VmCodeCacheAccess codeCacheAccess = null;
 
-    private ExternalMachineCodeAccess externalMachineCodeAccess = null;
+    private ExternalMachineCodeAccess externalCodeAccess = null;
 
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
@@ -846,7 +846,7 @@ public abstract class TeleVM implements MaxVM {
                 codeCacheAccess.initialize(epoch);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-                externalMachineCodeAccess = new ExternalMachineCodeAccess(this);
+                externalCodeAccess = new ExternalMachineCodeAccess(this);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
                 if (isAttaching()) {
@@ -866,9 +866,9 @@ public abstract class TeleVM implements MaxVM {
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-            // Update status of the code cache, including eviction status and any new allocations.
-            externalMachineCodeAccess.updateCache(epoch);
-            memoryAllocations.addAll(externalMachineCodeAccess.memoryAllocations());
+            // Update the statys of any external, dynamically loaded libraries.
+            externalCodeAccess.updateCache(epoch);
+            memoryAllocations.addAll(externalCodeAccess.memoryAllocations());
 
             // A hook for any other memory regions that might be getting allocated for special platforms
             memoryAllocations.addAll(platformMemoryRegions());
@@ -881,6 +881,7 @@ public abstract class TeleVM implements MaxVM {
 
             // Update every local surrogate for a VM compilation
             machineCodeAccess.updateCache(epoch);
+
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
             // What's not done yet is updating the thread memory regions.
@@ -980,8 +981,8 @@ public abstract class TeleVM implements MaxVM {
         return codeCacheAccess;
     }
 
-    public final ExternalMachineCodeAccess externalMachineCode() {
-        return externalMachineCodeAccess;
+    public final ExternalMachineCodeAccess externalCode() {
+        return externalCodeAccess;
     }
 
     public final CodeLocationFactory codeLocationFactory() {

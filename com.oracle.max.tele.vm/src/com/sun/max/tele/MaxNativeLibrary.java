@@ -43,6 +43,15 @@ public interface MaxNativeLibrary extends MaxEntity {
      */
     MaxNativeFunction[] functions();
 
+    /**
+     * Get the native function in the library, if any, whose code includes
+     * a given address in the VM; null if none.
+     *
+     * @param address memory location in the VM
+     * @return a native function whose code includes the address, null if none
+     */
+    MaxNativeFunction findNativeFunction(Address address);
+
     Address base();
 
     int length();
