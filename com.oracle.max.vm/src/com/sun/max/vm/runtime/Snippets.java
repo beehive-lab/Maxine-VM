@@ -504,7 +504,7 @@ public class Snippets {
     @INLINE
     public static void nativeCallPrologue0(Pointer etla, Word anchor) {
         if (!NATIVE_CALLS_DISABLED.load(currentTLA()).isZero()) {
-            FatalError.unexpected("Calling native code while native calls are disabled");
+            throw FatalError.unexpected("Calling native code while native calls are disabled");
         }
 
         // Update the last Java frame anchor for the current thread:
@@ -552,6 +552,33 @@ public class Snippets {
     }
 
     /**
+     * Acquire and immediately release the {@link VmThreadMap#THREAD_LOCK}. We only call this when we assume
+     * that the VM is still at a safepoint, i.e., that the VM Operation thread holds the thread lock.  Therfore,
+     * our thread will be blocked until the end of the safepoint, and we avoid a spin loop while waiting for the
+     * safepoint to end.
+     * <br>
+     * This method is called while the native state of a JNI call is still completely set up. Therefore, no
+     * native prologue and epilogue must be emitted for this native call.
+     * <br>
+     * The native environment already has a pointer to the thread lock for other purposes, so we don't have
+     * to pass it in as a parameter.  This makes the code to call the native method shorter.
+     */
+    @C_FUNCTION
+    private static native void nativeBlockOnThreadLock();
+
+    private static ClassMethodActor blockOnThreadLockMethod;
+
+    @FOLD
+    public static ClassMethodActor blockOnThreadLockMethod() {
+        // Note: This code cannot be in a static initializer because of circular initialization problems.
+        if (blockOnThreadLockMethod == null) {
+            CriticalNativeMethod cnm = new CriticalNativeMethod(Snippets.class, "nativeBlockOnThreadLock");
+            blockOnThreadLockMethod = cnm.classMethodActor;
+        }
+        return blockOnThreadLockMethod;
+    }
+
+    /**
      * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
      */
     @INLINE
@@ -559,16 +586,13 @@ public class Snippets {
     private static void spinWhileFrozen(Pointer etla) {
         if (UseCASBasedThreadFreezing) {
             while (true) {
-                if (MUTATOR_STATE.load(etla).equals(THREAD_IN_NATIVE)) {
-                    if (etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
-                        break;
-                    }
-                } else {
-                    if (MUTATOR_STATE.load(etla).equals(THREAD_IN_JAVA)) {
-                        FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
-                    }
+                if (etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
+                    break;
                 }
-                Intrinsics.pause();
+                if (MUTATOR_STATE.load(etla).equals(THREAD_IN_JAVA)) {
+                    throw FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
+                }
+                nativeBlockOnThreadLock();
             }
         } else {
             while (true) {
@@ -589,7 +613,7 @@ public class Snippets {
                 MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
                 while (!FROZEN.load(etla).isZero()) {
                     // Spin without doing unnecessary stores
-                    Intrinsics.pause();
+                    nativeBlockOnThreadLock();
                 }
             }
         }

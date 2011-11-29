@@ -20,24 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.phases;
 
-import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.graph.iterators.*;
-import com.oracle.max.graal.nodes.*;
+package com.sun.max.tele;
 
-public class SafepointPoolingEliminationPhase extends Phase {
 
-    @Override
-    protected void run(StructuredGraph graph) {
-        for (LoopEndNode loopEnd : graph.getNodes(LoopEndNode.class)) {
-            NodeIterable<FixedNode> it = NodeIterators.dominators(loopEnd).until(loopEnd.loopBegin());
-            for (FixedNode n : it) {
-                if (n instanceof Invoke) {
-                    loopEnd.setSafePointPooling(false);
-                    break;
-                }
-            }
-        }
-    }
+/**
+ * Denotes a native function in the target VM.
+ * Typically such a function is part of a {@link MaxNativeLibrary}, although
+ * "disconnected" native functions that simply correspond to some machine
+ * code an a known address are supported.
+ */
+public interface MaxNativeFunction extends MaxMachineCodeRoutine<MaxNativeFunction> {
+
+    long DEFAULT_DISCONNECTED_CODE_LENGTH = 200;
+
+    /**
+     * The name of the function.
+     * For a disconnected function this is the name assigned interactively
+     * or automatically generated.
+     * @return
+     */
+    String name();
+
+    int length();
+
+    /**
+     * Combines the library name and the function name.
+     * Returns {@code name()} for a disconnected function.
+     * @return
+     */
+    String qualName();
+
+    /**
+     * The library that owns this function or {@code null} if it is stand-alone (disconnected).
+     * @return
+     */
+    MaxNativeLibrary library();
+
 }

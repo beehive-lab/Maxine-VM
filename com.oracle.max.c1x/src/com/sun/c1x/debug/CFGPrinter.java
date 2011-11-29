@@ -26,17 +26,14 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.Interval.UsePosList;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRInstruction.OperandFormatter;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
 
 /**
@@ -44,33 +41,7 @@ import com.sun.cri.ri.*;
  * The output format matches that produced by HotSpot so that it can then be fed to the
  * <a href="https://c1visualizer.dev.java.net/">C1 Visualizer</a>.
  */
-public class CFGPrinter {
-    private static final String COLUMN_END = " <|@";
-    private static final String HOVER_START = "<@";
-    private static final String HOVER_SEP = "|@";
-    private static final String HOVER_END = ">@";
-
-    private static OutputStream cfgFileStream;
-
-    /**
-     * Gets the output stream  on the file "compilations-`date`" in the current working directory.
-     * This stream is first opened if necessary.
-     *
-     * @return the output stream or {@code null} if there was an error opening this file for writing
-     */
-    public static synchronized OutputStream cfgFileStream() {
-        if (cfgFileStream == null) {
-            File cfgFile = new File("compilations-" + System.currentTimeMillis() + ".cfg");
-            try {
-                cfgFileStream = new FileOutputStream(cfgFile);
-            } catch (FileNotFoundException e) {
-                TTY.println("WARNING: Could not open " + cfgFile.getAbsolutePath());
-            }
-        }
-        return cfgFileStream;
-    }
-
-    private final LogStream out;
+public class CFGPrinter extends CompilationPrinter {
     private final CiTarget target;
 
     /**
@@ -80,38 +51,8 @@ public class CFGPrinter {
      * @param target the target architecture description
      */
     public CFGPrinter(OutputStream os, CiTarget target) {
-        out = new LogStream(os);
+        super(os);
         this.target = target;
-    }
-
-    /**
-     * Flushes all buffered output to the stream passed to {@link #CFGPrinter(OutputStream, CiTarget)}.
-     */
-    public void flush() {
-        out.flush();
-    }
-
-    private void begin(String string) {
-        out.println("begin_" + string);
-        out.adjustIndentation(2);
-    }
-
-    private void end(String string) {
-        out.adjustIndentation(-2);
-        out.println("end_" + string);
-    }
-
-    /**
-     * Prints a compilation timestamp for a given method.
-     *
-     * @param method the method for which a timestamp will be printed
-     */
-    public void printCompilation(RiMethod method) {
-        begin("compilation");
-        out.print("name \"").print(CiUtil.format("%H.%n(%P)", method)).println('"');
-        out.print("method \"").print(CiUtil.format("%f %R %H.%n(%P)", method)).println('"');
-        out.print("date ").println(System.currentTimeMillis());
-        end("compilation");
     }
 
     /**
@@ -271,7 +212,7 @@ public class CFGPrinter {
     /**
      * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
      */
-    private String stateToString(FrameState state, CFGOperandFormatter operandFmt) {
+    private String stateToString(FrameState state, OperandFormatter operandFmt) {
         if (state == null) {
             return null;
         }
@@ -343,40 +284,7 @@ public class CFGPrinter {
     /**
      * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
      */
-    private String debugInfoToString(CiDebugInfo info, CFGOperandFormatter operandFmt) {
-        if (info == null) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-
-
-        if (info.hasRegisterRefMap()) {
-            sb.append("reg-ref-map:");
-            C1XCompilation compilation = C1XCompilation.compilation();
-            CiArchitecture arch = compilation == null ? null : compilation.target.arch;
-            for (int reg = info.registerRefMap.nextSetBit(0); reg >= 0; reg = info.registerRefMap.nextSetBit(reg + 1)) {
-                sb.append(' ').append(arch == null ? "reg" + reg : arch.registers[reg]);
-            }
-            sb.append("\n");
-        }
-        if (info.hasStackRefMap()) {
-            sb.append("frame-ref-map:");
-            CiBitMap bm = info.frameRefMap;
-            for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
-                sb.append(' ').append(CiStackSlot.get(CiKind.Object, i));
-            }
-            sb.append("\n");
-        }
-        if (info.codePos != null) {
-            sb.append(stateToString(info.codePos, operandFmt));
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
-     */
-    private String stateToString(CiCodePos codePos, CFGOperandFormatter operandFmt) {
+    private String stateToString(CiCodePos codePos, OperandFormatter operandFmt) {
         if (codePos == null) {
             return null;
         }
@@ -448,56 +356,6 @@ public class CFGPrinter {
     }
 
     /**
-     * Formats LIR operands as expected by the C1 Visualizer.
-     */
-    public static class CFGOperandFormatter extends OperandFormatter {
-        /**
-         * The textual delimiters used for an operand depend on the context in which it is being
-         * printed. When printed as part of a frame state or as the result operand in a HIR node listing,
-         * it is enclosed in double-quotes (i.e. {@code "}'s).
-         */
-        public final boolean asStateOrHIROperandResult;
-
-        public CFGOperandFormatter(boolean asStateOrHIROperandResult) {
-            this.asStateOrHIROperandResult = asStateOrHIROperandResult;
-        }
-
-        @Override
-        public String format(CiValue operand) {
-            if (operand.isLegal()) {
-                String op;
-                if (operand.isVariableOrRegister() || operand.isStackSlot()) {
-                    op = operand.name();
-                } else if (operand.isConstant()) {
-                    CiConstant constant = (CiConstant) operand;
-                    op = operand.kind.javaName + ":" + operand.kind.format(constant.boxedValue());
-                } else if (operand.isAddress()) {
-                    CiAddress address = (CiAddress) operand;
-                    op = "Base:" + format(address.base);
-                    if (!address.index.isIllegal()) {
-                        op += " Index:" + format(address.index);
-                    }
-                    if (address.scale != Scale.Times1) {
-                        op += " * " + address.scale.value;
-                    }
-                    op += " Disp:" + address.displacement;
-                } else {
-                    assert operand.isIllegal();
-                    op = "-";
-                }
-                if (operand.kind != CiKind.Illegal) {
-                    op += "|" + operand.kind.typeChar;
-                }
-                if (asStateOrHIROperandResult) {
-                    op = " \"" + op.replace('"', '\'') + "\" ";
-                }
-                return op;
-            }
-            return "";
-        }
-    }
-
-    /**
      * Prints the LIR for each instruction in a given block.
      *
      * @param block the block to print
@@ -517,9 +375,9 @@ public class CFGPrinter {
                     String state;
                     if (inst.info.debugInfo != null) {
                         // Use register-allocator output if available
-                        state = debugInfoToString(inst.info.debugInfo, new CFGOperandFormatter(false));
+                        state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
                     } else {
-                        state = stateToString(inst.info.state, new CFGOperandFormatter(false));
+                        state = stateToString(inst.info.state, new OperandFormatter(false));
                     }
                     if (state != null) {
                         out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);
@@ -527,7 +385,7 @@ public class CFGPrinter {
                     out.adjustIndentation(level);
                 }
 
-                out.print(" instruction ").print(inst.toString(new CFGOperandFormatter(false))).print(COLUMN_END);
+                out.print(" instruction ").print(inst.toString(new OperandFormatter(false))).print(COLUMN_END);
                 out.println(COLUMN_END);
             }
             end("IR");
@@ -536,7 +394,7 @@ public class CFGPrinter {
 
     private void printOperand(Value i) {
         if (i != null && i.operand().isLegal()) {
-            out.print(new CFGOperandFormatter(true).format(i.operand()));
+            out.print(new OperandFormatter(true).format(i.operand()));
         }
     }
 
@@ -548,7 +406,7 @@ public class CFGPrinter {
     private void printInstructionHIR(Instruction i) {
         out.print("bci ").print(i.bci()).println(COLUMN_END);
         if (i.operand().isLegal()) {
-            out.print("result ").print(new CFGOperandFormatter(false).format(i.operand())).println(COLUMN_END);
+            out.print("result ").print(new OperandFormatter(false).format(i.operand())).println(COLUMN_END);
         }
         out.print("tid ").print(Util.valueString(i)).println(COLUMN_END);
 
@@ -648,30 +506,5 @@ public class CFGPrinter {
 
         out.printf(" \"%s\"", interval.spillState());
         out.println();
-    }
-
-    public void printMachineCode(String code, String label) {
-        if (code.length() == 0) {
-            return;
-        }
-        if (label != null) {
-            begin("cfg");
-            out.print("name \"").print(label).println('"');
-            end("cfg");
-        }
-        begin("nmethod");
-        out.print(code);
-        out.println(" <|@");
-        end("nmethod");
-    }
-
-    public void printBytecodes(String code) {
-        if (code.length() == 0) {
-            return;
-        }
-        begin("bytecodes");
-        out.print(code);
-        out.println(" <|@");
-        end("bytecodes");
     }
 }

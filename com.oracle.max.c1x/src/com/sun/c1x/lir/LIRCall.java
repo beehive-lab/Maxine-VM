@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
@@ -100,7 +101,7 @@ public class LIRCall extends LIRInstruction {
     }
 
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder();
         if (result().isLegal()) {
             buf.append(operandFmt.format(result())).append(" = ");

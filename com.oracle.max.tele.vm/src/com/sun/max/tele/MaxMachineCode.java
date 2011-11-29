@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
 
 /**
  * Access to machine code in the VM, consisting of either {@linkplain MaxCompilation method compilations} in the
- * {@linkplain MaxCodeCache code cache} or {@linkplain MaxExternalCodeRoutine external code} that has been identified by
+ * {@linkplain MaxCodeCache code cache} or {@linkplain MaxNativeFunction external code} that has been identified by
  * various means.
  */
 public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
@@ -73,19 +73,19 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
     MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
 
     /**
-     * Create a new MaxExternalCode to represent a block of external native code in the VM that has not yet been
+     * Create a new MaxNativeFunction to represent a block of external native code in the VM that has not yet been
      * registered, and keep information about it in a registry for subsequent reference.
      *
      * @param codeStart starting address of the machine code in VM memory, not in any VM allocated memory
      * @param nBytes presumed size of the code in bytes
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
-     * @return a newly created TeleExternalCode
+     * @return a newly created MaxNativeFunction
      * @throws MaxVMBusyException if the VM is unavailable
      * @throws IllegalArgumentException if the range of memory overlaps in any way with a region already registered, or
      *             is in a VM-allocated code region.
      * @throws MaxInvalidAddressException if he address cannot be read
      */
-    MaxExternalCodeRoutine registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
+    MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
      * Get the block of known external native code, if any, that contains a given address in the VM.
@@ -93,7 +93,7 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
      * @param address memory location in the VM
      * @return known external native code that includes the address, null if none
      */
-    MaxExternalCodeRoutine findExternalCode(Address address);
+    MaxNativeFunction findExternalCode(Address address);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM, including

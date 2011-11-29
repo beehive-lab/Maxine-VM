@@ -20,43 +20,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.sun.max.tele;
 
-import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.oracle.max.graal.nodes.type.*;
+import com.sun.max.unsafe.*;
 
+/**
+ * Denotes a native (dynamically loaded) library in the target VM.
+ * See {@link System#loadLibrary(String).
+ */
+public interface MaxNativeLibrary extends MaxEntity {
+    /**
+     * The file system path to the native library.
+     * @return
+     */
+    String path();
 
-public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
+    /**
+     * The functions in the library, or {@code null} if this information is not known (yet).
+     * There is a window between opening the library and resolving the first symbol where
+     * {@code null} can be returned.
+     * @return
+     */
+    MaxNativeFunction[] functions();
 
-    @Input(notDataflow = true) private LoopBeginNode loopBegin;
-    @Data private boolean safepointPolling;
+    /**
+     * Get the native function in the library, if any, whose code includes
+     * a given address in the VM; null if none.
+     *
+     * @param address memory location in the VM
+     * @return a native function whose code includes the address, null if none
+     */
+    MaxNativeFunction findNativeFunction(Address address);
 
-    public LoopEndNode() {
-        super(StampFactory.illegal());
-        this.safepointPolling = true;
-    }
+    Address base();
 
-    public LoopBeginNode loopBegin() {
-        return loopBegin;
-    }
+    int length();
 
-    public void setLoopBegin(LoopBeginNode x) {
-        updateUsages(this.loopBegin, x);
-        this.loopBegin = x;
-    }
-
-
-    public void setSafepointPolling(boolean safePointPolling) {
-        this.safepointPolling = safePointPolling;
-    }
-
-    public boolean hasSafepointPolling() {
-        return safepointPolling;
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.visitLoopEnd(this);
-    }
 }
