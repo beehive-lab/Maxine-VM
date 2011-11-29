@@ -36,6 +36,7 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 
@@ -102,6 +103,15 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      * Marking algorithm used to trace the heap.
      */
     private final TricolorHeapMarker heapMarker;
+
+    /**
+     * Inspector support.
+     */
+    private final MemoryRegion cardTableMemory = new MemoryRegion("Card Table");
+    private final MemoryRegion heapMarkerMemory = new MemoryRegion("External Mark Bitmap");
+    private final MemoryRegion youngGenMemory = new MemoryRegion("Nursery");
+    private final MemoryRegion oldGenMemory = new MemoryRegion("Old Generation");
+    private final MemoryRegion bootHeapMemory = new MemoryRegion("boot heap");
 
     @HOSTED_ONLY
     public GenMSEHeapScheme() {
@@ -205,6 +215,15 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
             youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
                             new SurvivorRangesQueue(1000), ELABSize);
+
+            // Make the heap inspectable
+            // This is quick fix until the inspector can support discontinuous space that can evolve dynamically
+            cardTableMemory.setStart(cardTableDataStart);
+            cardTableMemory.setSize(cardTableDataSize);
+            heapMarkerMemory.setStart(heapMarkerDataStart);
+            heapMarkerMemory.setSize(heapMarkerDatasize);
+
+            InspectableHeapInfo.init(false, heapBounds, heapMarkerMemory, cardTableMemory);
 
         } finally {
             disableCustomAllocation();

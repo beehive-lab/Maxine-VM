@@ -284,10 +284,10 @@ public final class HeapRegionManager implements HeapAccountOwner {
             VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
             // Record initial space usage.
             regionAllocator.initialize(startOfManagedSpace, numTotalRegions, initialNumRegions);
-
+/*
             // enable early inspection.
             InspectableHeapInfo.init(false, regionAllocator.bounds());
-
+*/
             RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numTotalRegions);
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);

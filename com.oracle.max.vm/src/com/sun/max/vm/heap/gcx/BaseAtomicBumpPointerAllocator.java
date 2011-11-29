@@ -80,6 +80,28 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         top = Address.zero();
     }
 
+    /**
+     * Zap an area in the allocator from its start up to a specified limit.
+     * For debugging purpose.
+     * @param limit an address in the allocator, greater or equal to the start
+     */
+    private void zap(Address limit) {
+        Word deadMark = HeapFreeChunk.deadSpaceMark();
+        Pointer p = start.asPointer();
+        while (p.lessThan(limit)) {
+            p.setWord(deadMark);
+            p = p.plusWords(1);
+        }
+    }
+
+    final public void zap() {
+        zap(hardLimit());
+    }
+
+    final public void zapToTop() {
+        zap(top);
+    }
+
     void initialize(Address initialChunk, Size initialChunkSize) {
         headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         if (initialChunk.isZero()) {

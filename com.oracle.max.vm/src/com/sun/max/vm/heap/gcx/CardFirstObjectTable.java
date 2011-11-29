@@ -26,6 +26,7 @@ import static com.sun.max.vm.heap.gcx.CardTable.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Table providing support for  linear scanning of arbitrary cards of a contiguous range of virtual addresses associated with a card table.
@@ -68,6 +69,11 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
     static final int LOG2_NUM_WORD_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
     static final int NUM_WORD_PER_CARD = 1 << LOG2_NUM_WORD_PER_CARD;
     static final byte ZERO = 0;
+
+    static boolean TraceFOT = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceFOT", CardFirstObjectTable.class, "Trace CardFirstObjectTable updates", Phase.PRISTINE);
+    }
     /**
      * Bias to subtract to encoded power of two stored in FOT.
      */
@@ -145,13 +151,14 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         }
         nextCard += numNonLogEncodedCards;
 
-        // FIXME: remove temp trace ---
-        Log.print("setting FOT for range [");  Log.print(cell);
-        Log.print(", ");  Log.print(cellEnd);
-        Log.print("#cards = ");  Log.print(numCards);
-        Log.print("] non-log encoding cards = ");  Log.print(numNonLogEncodedCards);
-        Log.print(" last card = "); Log.print(lastCard);
-        Log.print(" next card = "); Log.println(nextCard);
+        if (MaxineVM.isDebug() && TraceFOT) {
+            Log.print("setting FOT for range [");  Log.print(cell);
+            Log.print(", ");  Log.print(cellEnd);
+            Log.print("#cards = ");  Log.print(numCards);
+            Log.print("] non-log encoding cards = ");  Log.print(numNonLogEncodedCards);
+            Log.print(" last card = "); Log.print(lastCard);
+            Log.print(" next card = "); Log.println(nextCard);
+        }
 
         // All subsequent entries, if any, encode the distance to a previous entry as a biased power of two.
         int log2 = 3;

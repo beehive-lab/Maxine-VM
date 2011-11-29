@@ -26,7 +26,9 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
 /**
  * A simple evacuator that evacuates only from one space to another, without aging.
  * The evacuator is parameterized with two heap space.
@@ -36,7 +38,6 @@ import com.sun.max.vm.layout.*;
  * This makes the evacuator independent of the detail of survivor rangestracking and imprecise rset subtleties.
  */
 public final class NoAgingEvacuator extends Evacuator  {
-    private static final Size LAB_HEADROOM = MIN_OBJECT_SIZE;
     /**
      * Heap Space that is being evacuated.
      */
@@ -56,6 +57,8 @@ public final class NoAgingEvacuator extends Evacuator  {
      * Hint of size of local allocation buffer when refilling.
      */
     private final Size labSize;
+
+    private final Size LAB_HEADROOM;
 
     /**
      * Remembered set of the from space.
@@ -119,6 +122,7 @@ public final class NoAgingEvacuator extends Evacuator  {
         this.minRefillThreshold = minRefillThreshold;
         this.survivorRanges = queue;
         this.labSize = labSize;
+        this.LAB_HEADROOM =  MIN_OBJECT_SIZE;
     }
 
     @Override
@@ -190,7 +194,7 @@ public final class NoAgingEvacuator extends Evacuator  {
             if (chunk.isZero()) {
                 chunk = toSpace.allocateTLAB(labSize);
                 // FIXME: we should have exception path to handle out of memory here -- rollback or stop evacuation to initiate full GC or throw OOM
-                assert !chunk.isZero();
+                assert !chunk.isZero() && HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(minRefillThreshold);
             }
             nextLABChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             if (!chunk.equals(limit)) {
@@ -199,10 +203,12 @@ public final class NoAgingEvacuator extends Evacuator  {
             }
             top = chunk.asPointer();
             end = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
+            // Return zero to force loop back.
             return Pointer.zero();
         }
         // Overflow allocate
         final Pointer cell = toSpace.allocate(size);
+
         if (!cell.equals(lastOverflowAllocatedRangeEnd)) {
             if (lastOverflowAllocatedRangeEnd.greaterThan(lastOverflowAllocatedRangeStart)) {
                 recordRange(lastOverflowAllocatedRangeStart, lastOverflowAllocatedRangeEnd);
@@ -210,6 +216,10 @@ public final class NoAgingEvacuator extends Evacuator  {
             lastOverflowAllocatedRangeStart = cell;
         }
         lastOverflowAllocatedRangeEnd = cell.plus(size);
+        if (MaxineVM.isDebug()) {
+            FatalError.check(CardFirstObjectTable.needsUpdate(cell, lastOverflowAllocatedRangeEnd), "large objects must be greater than a singe card");
+        }
+        cfoTable.set(cell, lastOverflowAllocatedRangeEnd);
         return cell;
     }
 
@@ -224,8 +234,9 @@ public final class NoAgingEvacuator extends Evacuator  {
         while (newTop.greaterThan(end)) {
             cell = refillOrAllocate(size);
             if (!cell.isZero()) {
-                break;
+                return cell;
             }
+            // We refilled. Retry allocating from local allocation buffer.
             cell = top;
             newTop = top.plus(size);
         }
