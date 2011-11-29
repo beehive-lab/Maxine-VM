@@ -168,14 +168,14 @@ public final class DependenciesManager {
         }
 
         @Override
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
-            RiMethod impl = concreteSubtype.resolveMethodImpl(context);
-            if (impl != method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+            RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
+            if (newImpl != impl) {
                 valid = false;
                 if (TraceDeps) {
-                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(context);
-                    if (context != method) {
-                        sb.append(",").append(method);
+                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(method);
+                    if (method != impl) {
+                        sb.append(",").append(impl);
                     }
                     sb.append("] dependency of " + targetMethod);
                     Log.println(sb.toString());
