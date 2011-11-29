@@ -99,12 +99,16 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         end = chunk.plus(chunkSize).minus(headroom);
     }
 
+    protected final void reset() {
+        top = start;
+    }
+
     public BaseAtomicBumpPointerAllocator(T refiller) {
         refillManager = refiller;
     }
 
     /**
-     * Size of the contiguous region of memory the allocator allocate from.
+     * Size of the contiguous region of memory the allocator allocates from.
      * @return size in bytes
      */
     final Size size() {

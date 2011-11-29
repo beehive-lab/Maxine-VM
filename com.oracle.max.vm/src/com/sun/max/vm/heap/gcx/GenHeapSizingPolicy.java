@@ -24,29 +24,14 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 
-/**
- * Interface that heap resizing policies expect.
- */
-public interface ResizableSpace {
-    /**
-     * Try to grow the resizable space by delta bytes.
-     * The method rounds the delta up to any alignment constraints the resizable space may have to enforce.
-     * If the requested delta is larger than the reserve of space the resizable space can grow from,  the heap is simply grown to its capacity.
-     * @param delta the number of bytes to grow the resizable with
-     * @return the effective growth of the space
-     */
-    Size growAfterGC(Size delta);
+public interface GenHeapSizingPolicy {
 
-    Size shrinkAfterGC(Size delta);
-    /**
-     * Amount of memory used by the space. This includes space allocated to live data, dark matter, and space available for allocation.
-     * The total space must be less or equal to the capacity of the resizable space.
-     * @return size in bytes
-     */
-    Size totalSpace();
-    /**
-     * Capacity of the resizable space. This is the upper bound of space the resizable space can grow up to.
-     * @return size in bytes
-     */
-    Size capacity();
+    Size initialYoungGenSize();
+
+    Size initialOldGenSize();
+
+    Size maxYoungGenSize();
+
+    Size maxOldGenSize();
+
 }

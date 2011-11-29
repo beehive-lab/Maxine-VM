@@ -125,7 +125,7 @@ class FixedSizeRegionAllocator {
                 bits[startWordIndex] |= bitmask(startIndex, endIndex);
             } else {
                 int i = startWordIndex;
-                bits[i++] |= bitsLeftOf(startWordIndex);
+                bits[i++] |= bitsLeftOf(startIndex);
                 while (i < endWordIndex) {
                     bits[i++] = ALL_ONES;
                 }
@@ -139,9 +139,8 @@ class FixedSizeRegionAllocator {
             if (startWordIndex == endWordIndex) {
                 bits[startWordIndex] &= ~bitmask(startIndex, endIndex);
             } else {
-
                 int i = startWordIndex;
-                bits[i++] &= ~bitsLeftOf(startWordIndex);
+                bits[i++] &= ~bitsLeftOf(startIndex);
                 while (i < endWordIndex) {
                     bits[i++] = 0L;
                 }
@@ -390,18 +389,14 @@ class FixedSizeRegionAllocator {
     }
 
     private boolean isValidAllocatedRange(int firstRegionId, int numRegions) {
-        final int end = firstRegionId + numRegions;
-        return firstRegionId >= residentRegions && (end - 1) <= highestAllocated &&
-        allocated.numClearBitsAt(firstRegionId, end) == 0;
+        final int last = firstRegionId + numRegions - 1;
+        return firstRegionId >= residentRegions && last <= highestAllocated &&
+        allocated.numClearBitsAt(firstRegionId, numRegions) == 0;
     }
 
     private boolean isValidCommittedRange(int firstRegionId, int numRegions) {
-        final int end = firstRegionId + numRegions;
-        return firstRegionId >= residentRegions && end <= committed.numBits() && committed.numClearBitsAt(firstRegionId, end) == 0;
-    }
-
-    boolean isValidCommittedRegion(int regionId) {
-        return regionId >= residentRegions && regionId <= committed.numBits() && committed.isSet(regionId);
+        final int last = firstRegionId + numRegions - 1;
+        return firstRegionId >= residentRegions && last <= committed.numBits() && committed.numClearBitsAt(firstRegionId, numRegions) == 0;
     }
 
     synchronized boolean free(int firstRegionId, int numRegions) {

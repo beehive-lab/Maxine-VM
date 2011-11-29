@@ -138,7 +138,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     /**
      * A procedure for resetting the TLAB of a thread.
      */
-    protected static class ResetTLAB implements Pointer.Procedure {
+    public static class ResetTLAB implements Pointer.Procedure {
 
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
             // Default is nothing.
