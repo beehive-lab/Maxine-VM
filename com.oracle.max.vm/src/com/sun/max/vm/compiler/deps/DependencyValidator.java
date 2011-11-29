@@ -68,7 +68,7 @@ class DependencyValidator extends CiAssumptionProcessor {
         if (dependencies != null) {
             return new Dependencies(dependencies, localUCMs, nonLocalUCMs);
         }
-        return null;
+        return Dependencies.INVALID;
     }
 
     @Override

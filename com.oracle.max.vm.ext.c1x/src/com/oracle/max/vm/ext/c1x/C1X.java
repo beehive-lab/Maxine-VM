@@ -264,7 +264,7 @@ public class C1X implements RuntimeCompiler {
 
         cfgPrinter.printMachineCode(runtime.disassemble(ciTM, maxTM), "After code installation");
         cfgPrinter.flush();
-        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+        OutputStream cfgFileStream = CompilationPrinter.globalOut();
         if (cfgFileStream != null) {
             synchronized (cfgFileStream) {
                 try {
