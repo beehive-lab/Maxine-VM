@@ -40,6 +40,7 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -77,7 +78,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     static final MethodActor nativeFunctionCall = findMethod(NativeStubGraphBuilder.class, "nativeFunctionCall", Address.class, Pointer.class, Pointer.class);
 
     /**
-     * Template for a native method stub.
+     * Stub template for a native method.
      */
     @INLINE
     public static Object template(NativeFunction nativeFunction, String traceName) throws Throwable {
@@ -87,13 +88,13 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         Address address = nativeFunction.link();
         VmThread thread = VmThread.current();
 
-//        if (traceName != null) {
-//            Log.print("[Thread \"");
-//            Log.print(thread.getName());
-//            Log.print(" --> JNI: ");
-//            Log.print(traceName);
-//            Log.println(']');
-//        }
+        if (traceName != null) {
+            Log.print("[Thread \"");
+            Log.print(thread.getName());
+            Log.print("\" --> JNI: ");
+            Log.print(traceName);
+            Log.println(']');
+        }
 
         int jniHandlesTop = thread.jniHandlesTop();
 
@@ -102,13 +103,13 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
         thread.resetJniHandlesTop(jniHandlesTop);
 
-//        if (traceName != null) {
-//            Log.print("[Thread \"");
-//            Log.print(thread.getName());
-//            Log.print(" <-- JNI: ");
-//            Log.print(traceName);
-//            Log.println(']');
-//        }
+        if (traceName != null) {
+            Log.print("[Thread \"");
+            Log.print(thread.getName());
+            Log.print("\" <-- JNI: ");
+            Log.print(traceName);
+            Log.println(']');
+        }
 
         thread.throwJniException();
 
@@ -116,12 +117,15 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     }
 
     /**
-     * Template for a synchronized native method stub.
+     * Stub template for a synchronized native method.
      */
     public static synchronized Object syncTemplate(NativeFunction nativeFunction, String traceName) throws Throwable {
         return template(nativeFunction, traceName);
     }
 
+    /**
+     * Stub template for a native method annotated with {@link C_FUNCTION}.
+     */
     public static Object templateC(NativeFunction nativeFunction, String ignore) {
         Pointer frame = VMRegister.getCpuStackPointer();
         Address address = nativeFunction.link();

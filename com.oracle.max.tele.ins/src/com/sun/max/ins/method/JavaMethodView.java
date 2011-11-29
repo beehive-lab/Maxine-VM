@@ -52,6 +52,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     private final MethodViewPreferences methodViewPreferences;
 
+    private final MethodViewContainer container;
+
     /**
      * Shared check boxes to be used in all UI code view selection.
      */
@@ -84,6 +86,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
      * views so that they will be restored correctly.
      */
     private Set<MethodCodeKind> requestedCodeKinds = EnumSet.noneOf(MethodCodeKind.class);
+
+    private final InspectorFrame frame;
 
     /** Map: MethodCodeKind -> CodeViewer
      * The viewer for the code kind, if it exists, i.e. if it is being displayed in the view.
@@ -145,11 +149,11 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     private JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compilation, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, container);
-
+        this.container = container;
         this.methodViewPreferences = MethodViewPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compilation = compilation;
-        this.vmCodeGeneration = compilation != null ? compilation.vmCodeGeneration() : 0;
+        this.vmCodeGeneration = compilation != null ? compilation.codeVersion() : 0;
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -203,21 +207,35 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
             codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
         }
 
-        final InspectorFrame frame = createTabFrame(container);
+        frame = createTabFrame(container);
+        createMenus();
+    }
+
+    private void createMenus() throws InspectorError {
+
+        // The default menu operates from the perspective of the parent container.
+        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, container));
 
         final InspectorMenu editMenu = frame.makeMenu(EDIT_MENU);
+        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
         final InspectorMenu objectMenu = frame.makeMenu(OBJECT_MENU);
         final InspectorMenu codeMenu = frame.makeMenu(CODE_MENU);
         final InspectorMenu debugMenu = frame.makeMenu(DEBUG_MENU);
+        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
+
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
         if (compilation != null) {
             final InspectorAction copyAction = actions().copyCompiledCodeToClipboard(compilation, null);
             copyAction.setEnabled(true);
+            memoryMenu.add(views().memory().makeViewAction(compilation.memoryRegion(), compilation.entityName(), "View memory for machine code"));
             editMenu.add(copyAction);
             objectMenu.add(views().objects().makeViewAction(compilation.representation(), "Compiled method: " + compilation.classActorForObjectType().simpleName()));
         }
+
+        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         if (teleClassMethodActor != null) {
             final InspectorAction copyAction = actions().copyBytecodeToClipboard(teleClassMethodActor, null);
@@ -264,34 +282,57 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     @Override
     public void createViewContent() {
-        if (!codeViewers.isEmpty()) {
-            // Code viewers already exist, so we must be reconstructing the whole view.
-            // Remember which views were visible
-            requestedCodeKinds.clear();
-            requestedCodeKinds.addAll(codeViewers.keySet());
-
-            // Now get rid of the code viewers; this is awkward because of the way we alternate
-            // between a single viewer in the content pane and a split pane that contains two viewers.
-            // Some day we may support three.
-            while (codeViewers.size() > 1) {
-                closeCodeViewer(firstViewer());
-            }
-            getContentPane().remove(firstViewer());
-            codeViewers.clear();
+        if (frame != null) {
+            // If the frame is already available, then this we are reconstructing the view.
+            frame.clearMenus();
+            createMenus();
+            closeAllViews();
         }
-        // Create requested code viewers
-        for (MethodCodeKind codeKind : requestedCodeKinds) {
-            addCodeViewer(codeKind);
+
+         // Create requested code viewers
+        for (MethodCodeKind requestedKind : requestedCodeKinds) {
+            if (enabledCodeKinds.contains(requestedKind)) {
+                addCodeViewer(requestedKind);
+            }
+        }
+        // If can't meet request, try anything.
+        if (codeViewers.isEmpty()) {
+            for (MethodCodeKind kind : MethodCodeKind.values()) {
+                if (enabledCodeKinds.contains(kind)) {
+                    addCodeViewer(kind);
+                }
+            }
+        }
+        if (codeViewers.isEmpty()) {
+            dispose();
         }
     }
 
     @Override
     protected void refreshState(boolean force) {
-        if (compilation != null && compilation.vmCodeGeneration() > vmCodeGeneration) {
-            reconstructView();
-            vmCodeGeneration = compilation.vmCodeGeneration();
-            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
+        if (compilation != null && !compilation.isCodeLive()) {
+            // We had a compilation, but its code has been evicted from the code cache since we last updated.
+            // Try to reconstruct the view without a machine code viewer.
+            if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
+                compilation = null;
+                enabledCodeKinds.remove(MethodCodeKind.MACHINE_CODE);
+                codeViewCheckBoxes[MethodCodeKind.MACHINE_CODE.ordinal()].setEnabled(false);
+                requestedCodeKinds.remove(MethodCodeKind.MACHINE_CODE);
+                reconstructView();
+                Trace.line(TRACE_VALUE, tracePrefix() + "Machine code view removed after code eviction for method " + getToolTip());
+            } else {
+                gui().informationMessage("Compilation " + getToolTip() + " evicted, view closed");
+                close();
+                Trace.line(TRACE_VALUE, tracePrefix() + "Method view removed after code eviction for method " + getToolTip() + "no bytecode available");
 
+            }
+        } else if (compilation != null && compilation.codeVersion() > vmCodeGeneration) {
+            // The compiled code has been changed in some way; reconstruct the view with the same viewers.
+            requestedCodeKinds.clear();
+            requestedCodeKinds.addAll(codeViewers.keySet());
+            reconstructView();
+            vmCodeGeneration = compilation.codeVersion();
+            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
         } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
@@ -395,6 +436,17 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
             pack();
         }
     }
+
+    private void closeAllViews() {
+        Container contentPane = getContentPane();
+        if (codeViewers.size() == 2) {
+            contentPane.remove(splitPane);
+        } else if (codeViewers.size() == 1) {
+            contentPane.remove(firstViewer());
+        }
+        codeViewers.clear();
+    }
+
 
     @Override
     public void print() {

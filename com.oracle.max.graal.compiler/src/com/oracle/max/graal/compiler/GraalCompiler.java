@@ -25,7 +25,6 @@ package com.oracle.max.graal.compiler;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.target.*;
@@ -63,17 +62,13 @@ public class GraalCompiler implements CiCompiler  {
 
     public final RiRegisterConfig compilerStubRegisterConfig;
 
-    public final ExtendedBytecodeHandler extendedBytecodeHandler;
-
-
-    public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig, ExtendedBytecodeHandler extendedBytecodeHandler) {
+    public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.context = context;
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
         this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
-        this.extendedBytecodeHandler = extendedBytecodeHandler;
         init();
     }
 

@@ -86,7 +86,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
         super(vm, teleCodeRegion);
         this.teleCodeRegion = teleCodeRegion;
         this.codeCache = codeCache;
-        this.entityDescription = "The allocation area for pre-compiled methods in the " + vm.entityName() + " boot image";
+        this.entityDescription = "The boot image area " + teleCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.remoteObjectReferenceManager = new UnmanagedCodeCacheRemoteReferenceManager(vm, this);
         this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
@@ -156,7 +156,7 @@ public final class VmBootCodeCacheRegion extends VmCodeCacheRegion {
     public int loadedCompilationCount() {
         int count = 0;
         for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-            if (teleTargetMethod.isLoaded()) {
+            if (teleTargetMethod.isCacheLoaded()) {
                 count++;
             }
         }

@@ -45,7 +45,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -187,7 +186,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        focus().setCodeLocation(instructionMap().instructionLocation(row));
+        focus().setCodeLocation(machineCodeInfo().instructionLocation(row));
     }
 
     @Override
@@ -222,8 +221,8 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         repaint();
     }
 
-    private InstructionMap instructionMap() {
-        return machineCode().getInstructionMap();
+    private MaxMachineCodeInfo machineCodeInfo() {
+        return machineCode().getMachineCodeInfo();
     }
 
     /**
@@ -321,7 +320,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
         private MachineCodeTableColumnModel(MachineCodeViewPreferences viewPreferences) {
             super(MachineCodeColumnKind.values().length, viewPreferences);
-            final Address startAddress = tableModel.machineCode.getInstructionMap().length() == 0 ? Address.zero() : tableModel.rowToInstruction(0).address;
+            final Address startAddress = tableModel.machineCode.getMachineCodeInfo().length() == 0 ? Address.zero() : tableModel.rowToInstruction(0).address;
             addColumn(MachineCodeColumnKind.TAG, new TagRenderer(inspection), null);
             addColumn(MachineCodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(MachineCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
@@ -352,7 +351,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public int getRowCount() {
-            return machineCode.getInstructionMap().length();
+            return machineCode.getMachineCodeInfo().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -411,11 +410,11 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return machineCode.getInstructionMap().instruction(row);
+            return machineCode.getMachineCodeInfo().instruction(row);
         }
 
         public MaxCodeLocation rowToLocation(int row) {
-            return machineCode.getInstructionMap().instructionLocation(row);
+            return machineCode.getMachineCodeInfo().instructionLocation(row);
         }
 
         /**
@@ -423,9 +422,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
          * @return the row in this block of code containing an instruction starting at the address, -1 if none.
          */
         public int findRow(Address address) {
-            final InstructionMap instructionMap = machineCode.getInstructionMap();
-            for (int row = 0; row < instructionMap.length(); row++) {
-                final TargetCodeInstruction machineCodeInstruction = instructionMap.instruction(row);
+            final MaxMachineCodeInfo machineCodeInfo = machineCode.getMachineCodeInfo();
+            for (int row = 0; row < machineCodeInfo.length(); row++) {
+                final TargetCodeInstruction machineCodeInstruction = machineCodeInfo.instruction(row);
                 if (machineCodeInstruction.address.equals(address)) {
                     return row;
                 }
@@ -448,7 +447,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     }
 
     private void setBorderForRow(JComponent component, int row) {
-        if (instructionMap().isBytecodeBoundary(row)) {
+        if (machineCodeInfo().isBytecodeBoundary(row)) {
             component.setBorder(preference().style().defaultPaneTopBorder());
         } else {
             component.setBorder(null);
@@ -465,7 +464,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
             component.setBackground(preference().style().searchMatchedBackground());
-        } else if (instructionMap().isSafepoint(row)) {
+        } else if (machineCodeInfo().isSafepoint(row)) {
             component.setOpaque(true);
             component.setBackground(safepointBackgroundColor);
         } else {
@@ -517,7 +516,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 } else {
                     setBorder(style.debugDisabledMachineCodeBreakpointTagBorder());
                 }
-            } else if (instructionMap().isBytecodeBoundary(row)) {
+            } else if (machineCodeInfo().isBytecodeBoundary(row)) {
                 setBorder(style.defaultPaneTopBorder());
             } else {
                 setBorder(null);
@@ -751,7 +750,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
-            CiDebugInfo debugInfo = instructionMap().debugInfoAt(row);
+            CiDebugInfo debugInfo = machineCodeInfo().debugInfoAt(row);
             final CiCodePos codePos = debugInfo == null ? null : debugInfo.codePos;
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
@@ -776,7 +775,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     }
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
-        private InspectorLabel[] inspectorLabels = new InspectorLabel[instructionMap().length()];
+        private InspectorLabel[] inspectorLabels = new InspectorLabel[machineCodeInfo().length()];
         private MachineCodeLabel machineCodeLabel = new MachineCodeLabel(inspection, "");
         private LiteralRenderer literalRenderer = getLiteralRenderer(inspection);
 
@@ -814,8 +813,8 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                     renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
                 } else {
-                    InstructionMap instructionMap = instructionMap();
-                    final RiMethod callee = instructionMap.calleeAt(row);
+                    MaxMachineCodeInfo machineCodeInfo = machineCodeInfo();
+                    final RiMethod callee = machineCodeInfo.calleeAt(row);
                     if (machineCodeInstruction.mnemonic.contains("call") && callee != null) {
                         renderer = new TextLabel(inspection, CiUtil.format("%h.%n()", callee));
                         renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
@@ -823,7 +822,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                         renderer.setWrappedToolTipHtmlText("<br>operands = " + text);
                         renderer.setForeground(cellForegroundColor(row, column));
                     } else {
-                        if (instructionMap.isNativeCall(row)) {
+                        if (machineCodeInfo.isNativeCall(row)) {
                             renderer = new TextLabel(inspection, "<native function>");
                             renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
                             renderer.setWrappedToolTipHtmlText("<br>operands = " + text);

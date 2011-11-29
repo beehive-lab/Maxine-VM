@@ -89,7 +89,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
         super(vm, teleCodeRegion);
         this.teleCodeRegion = teleCodeRegion;
         this.codeCache = codeCache;
-        this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
+        this.entityDescription = "The unmanaged allocation area " + teleCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.remoteObjectReferenceManager = new UnmanagedCodeCacheRemoteReferenceManager(vm, this);
         this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
@@ -156,7 +156,7 @@ public final class VmUnmanagedCodeCacheRegion extends VmCodeCacheRegion {
     public int loadedCompilationCount() {
         int count = 0;
         for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-            if (teleTargetMethod.isLoaded()) {
+            if (teleTargetMethod.isCacheLoaded()) {
                 count++;
             }
         }

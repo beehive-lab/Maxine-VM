@@ -61,6 +61,10 @@ public class ELFSymbolLookup {
         buildSymbolMap(raf, header, ELFLoader.readSHT(raf, header));
     }
 
+    public ELFSymbolLookup(RandomAccessFile raf, ELFHeader header, ELFSectionHeaderTable sht) throws IOException {
+        buildSymbolMap(raf, header, sht);
+    }
+
     private void buildSymbolMap(RandomAccessFile raf, ELFHeader header, ELFSectionHeaderTable sht) throws IOException {
         buildSymbolMap(ELFLoader.readSymbolTables(raf, header, sht));
     }

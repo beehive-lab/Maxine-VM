@@ -24,6 +24,7 @@ package com.sun.c1x.lir;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIRLabel} class definition.
@@ -63,7 +64,7 @@ public class LIRLabel extends LIROp0 {
      * Prints this instruction to a LogStream.
      */
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         return label.isBound() ? String.valueOf(label.position()) : "?";
     }
 }

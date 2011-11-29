@@ -32,7 +32,7 @@ import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
- * A internal frame controlled by an {@linkplain AbstractView view}.
+ * An internal frame controlled by an {@linkplain AbstractView view}.
  * This is the simple form of such a frame, designed to be used inside
  * a Swing {@link JDesktopPane}.  It has the usual frame decorations,
  * including a title along with affordances for resizing, minimizing,
@@ -47,7 +47,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     /**
      * Creates an internal frame, with content pane, for an Inspector intended to be in
      * a {@link JDesktopPane}.
-     * <br>
+     * <p>
      * The frame has an optional menu bar.  It is a program error to call {@link #makeMenu(MenuKind)}
      * if no menu bar is present.
      *
@@ -113,6 +113,12 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
         InspectorError.check(menuBar != null);
         return menuBar.makeMenu(menuKind);
+    }
+
+    public void clearMenus() {
+        if (menuBar != null) {
+            menuBar.clearAll();
+        }
     }
 
     public void setSelected() {

@@ -30,7 +30,6 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
@@ -108,12 +107,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     private BitSet canTrap;
 
     public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
-
-    private ExtendedBytecodeHandler extendedBytecodeHandler;
-
-    public void setExtendedBytecodeHandler(ExtendedBytecodeHandler extendedBytecodeHandler) {
-        this.extendedBytecodeHandler = extendedBytecodeHandler;
-    }
 
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
         this(runtime, method, null);
@@ -1712,9 +1705,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                if (extendedBytecodeHandler == null || !extendedBytecodeHandler.handle(opcode, stream, graph, frameState, this)) {
-                    throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
-                }
+                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
         }
         // Checkstyle: resume
     }

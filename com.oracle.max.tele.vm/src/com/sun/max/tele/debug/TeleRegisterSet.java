@@ -113,7 +113,7 @@ public final class TeleRegisterSet extends AbstractVmHolder implements TeleVMCac
                             teleIntegerRegisters.registerData(),
                             teleFloatingPointRegisters.registerData(),
                             teleStateRegisters.registerData())) {
-                TeleError.unexpected("Error while updating registers for thread: " + this);
+                TeleWarning.message("Error while updating register set " + this + " for thread: " + teleNativeThread);
             }
             teleIntegerRegisters.updateCache(epoch);
             teleFloatingPointRegisters.updateCache(epoch);
