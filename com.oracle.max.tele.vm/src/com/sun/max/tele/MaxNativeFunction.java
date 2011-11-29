@@ -23,7 +23,6 @@
 
 package com.sun.max.tele;
 
-import com.sun.max.unsafe.*;
 
 /**
  * Denotes a native function in the target VM.
