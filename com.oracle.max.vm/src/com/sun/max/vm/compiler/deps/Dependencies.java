@@ -136,10 +136,10 @@ public final class Dependencies {
             for (Assumption a : depsForContext) {
                 if (a instanceof ConcreteMethod) {
                     ConcreteMethod cm = (ConcreteMethod) a;
-                    MethodActor method = (MethodActor) cm.method;
+                    MethodActor method = (MethodActor) cm.impl;
                     int mindex = method.memberIndex();
                     FatalError.check(mindex <= Short.MAX_VALUE && mindex >= 0, "method index range not supported");
-                    if (cm.method == cm.context) {
+                    if (cm.impl == cm.context) {
                         packed[i++] = (short) mindex;
                     } else {
                         packed[i++] = (short) -(mindex + 1);
