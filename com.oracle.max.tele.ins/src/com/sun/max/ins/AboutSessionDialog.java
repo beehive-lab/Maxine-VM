@@ -54,7 +54,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         super(inspection, MaxineInspector.NAME + " session information", true);
 
 
-        this.textArea = new JTextArea(20, 50);
+        this.textArea = new JTextArea(20, 60);
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
 

@@ -591,6 +591,8 @@ public abstract class TeleVM implements MaxVM {
 
     private VmCodeCacheAccess codeCacheAccess = null;
 
+    private ExternalMachineCodeAccess externalCodeAccess = null;
+
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
 
@@ -844,6 +846,9 @@ public abstract class TeleVM implements MaxVM {
                 codeCacheAccess.initialize(epoch);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
+                externalCodeAccess = new ExternalMachineCodeAccess(this);
+                memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
@@ -861,6 +866,10 @@ public abstract class TeleVM implements MaxVM {
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
+            // Update the statys of any external, dynamically loaded libraries.
+            externalCodeAccess.updateCache(epoch);
+            memoryAllocations.addAll(externalCodeAccess.memoryAllocations());
+
             // A hook for any other memory regions that might be getting allocated for special platforms
             memoryAllocations.addAll(platformMemoryRegions());
 
@@ -872,6 +881,7 @@ public abstract class TeleVM implements MaxVM {
 
             // Update every local surrogate for a VM compilation
             machineCodeAccess.updateCache(epoch);
+
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
             // What's not done yet is updating the thread memory regions.
@@ -969,6 +979,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final VmCodeCacheAccess codeCache() {
         return codeCacheAccess;
+    }
+
+    public final ExternalMachineCodeAccess externalCode() {
+        return externalCodeAccess;
     }
 
     public final CodeLocationFactory codeLocationFactory() {

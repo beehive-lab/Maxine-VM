@@ -39,7 +39,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
-public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxNativeLibrary {
+public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxNativeLibrary, CodeHoldingRegion {
 
     private static final class NativeLibraryMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxNativeLibrary> {
         private final List<MaxEntityMemoryRegion< ? extends MaxEntity>> children = new ArrayList<MaxEntityMemoryRegion< ? extends MaxEntity>>();
@@ -60,13 +60,12 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
             return children;
         }
 
-        @SuppressWarnings("unchecked")
-        public void addChild(MaxNativeFunction maxNativeFunction) {
-            children.add(maxNativeFunction.memoryRegion());
+        public void addChild(TeleNativeFunction teleNativeFunction) {
+            children.add(teleNativeFunction.memoryRegion());
         }
 
         public MaxNativeLibrary owner() {
-            return null;
+            return library;
         }
 
         public boolean isBootRegion() {
@@ -82,6 +81,7 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
     private Address sentinelAddress;
     private TeleNativeFunction[] functions;
     private NativeLibraryMemoryRegion nativeLibraryMemoryRegion;
+    private final RemoteCodePointerManager codePointerManager;
     private boolean sortByName;
 
     public static TeleNativeLibrary create(MaxVM vm, OS os, String path) {
@@ -101,6 +101,11 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         super(vm);
         this.path = path;
         this.base = base;
+        this.codePointerManager = new ExternalRemoteCodePointerManager(vm, this);
+    }
+
+    public RemoteCodePointerManager codePointerManager() {
+        return codePointerManager;
     }
 
     public void setSentinel(String sentinel, Address sentinelAddress) {
@@ -146,7 +151,6 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         return sortByName;
     }
 
-    @Override
     public String entityName() {
         String name = new File(path).getName();
         int index = name.lastIndexOf('.');
@@ -161,42 +165,43 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         return path;
     }
 
-    @Override
     public String entityDescription() {
         return "Native library " + path();
     }
 
-    @Override
     public MaxEntityMemoryRegion<MaxNativeLibrary> memoryRegion() {
         return nativeLibraryMemoryRegion;
     }
 
-    @Override
     public boolean contains(Address address) {
         return nativeLibraryMemoryRegion.contains(address);
     }
 
-    @Override
     public TeleObject representation() {
         return null;
     }
 
-    @Override
     public String path() {
         return path;
     }
 
-    @Override
     public MaxNativeFunction[] functions() {
         return functions;
     }
 
-    @Override
+    public TeleNativeFunction findNativeFunction(Address address) {
+        for (TeleNativeFunction teleNativeFunction : functions) {
+            if (teleNativeFunction.contains(address)) {
+                return teleNativeFunction;
+            }
+        }
+        return null;
+    }
+
     public Address base() {
         return base;
     }
 
-    @Override
     public int length() {
         return (int) length;
     }

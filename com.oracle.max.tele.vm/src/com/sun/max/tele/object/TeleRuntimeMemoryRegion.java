@@ -75,7 +75,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             return false;
         }
         statsPrinter.addStat(localStatsPrinter);
-        if (!checkForRelocation() && isAllocated() && regionNameCache != null) {
+        if (!isRelocatable() && isAllocated() && regionNameCache != null) {
             statsPrinter.addStat("allocated & not relocatable, no location refresh needed");
             return true;
         }
@@ -191,20 +191,16 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /**
-     * Determines whether this memory region, once allocated, should be checked for relocation.  If {@code true}
-     * then the location needs to be checked
-     * on every refresh cycle.  If {@code false} then the check can be skipped.
+     * Determines whether this memory region, once allocated, should be checked for relocation. If {@code true} then the
+     * location needs to be checked on every refresh cycle. If {@code false} then the check can be skipped.
      * <p>
-     * Conservatively assume {@code true} for memory regions in general, of which we model only a
-     * relatively small number.  For subclasses of {@link MemoryRegion} in the VM that exist in large
-     * numbers, then efficient refresh is made possible by designating a special subclass of {@link TeleRuntimeMemoryRegion}
-     * that implements a more precise decision on whether to check on every update.  A notable example of this the
-     * the {@link TeleTargetMethod} subclass, which is used for large number of {@link TargetMethod} instances.
+     * Assume conservatively that the region is relocatable, although important subclasses (notably {@link TeleTargetMethod}}
+     * can exploit specific knowledge to avoid the test.
      *
-     * @return whether this memory region, described by a {@link MemoryRegion} object in the VM,
-     * should be assume to be relocatable.
+     * @return whether this memory region, described by a {@link MemoryRegion} object in the VM, should be assume to be
+     *         relocatable.
      */
-    protected boolean checkForRelocation() {
+    protected boolean isRelocatable() {
         return true;
     }
 
