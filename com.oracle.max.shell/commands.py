@@ -878,9 +878,10 @@ def makejdk(env, args):
     shutil.copytree(env.java_home, maxjdk)
 
     for f in os.listdir(env.vmdir):
-        if isfile(f):
-            shutil.copy(join(env.vmdir, f), join(maxjdk, 'bin'))
-            shutil.copy(join(env.vmdir, f), join(maxjdk, 'jre', 'bin'))
+        fpath = join(env.vmdir, f)
+        if isfile(fpath):
+            shutil.copy(fpath, join(maxjdk, 'bin'))
+            shutil.copy(fpath, join(maxjdk, 'jre', 'bin'))
                 
     os.unlink(join(maxjdk, 'bin', 'java'))
     os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
