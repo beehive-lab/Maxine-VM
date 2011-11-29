@@ -75,7 +75,7 @@ public final class Dependencies {
      * Statistics from boot image generation showed that the vast majority of target methods
      * have a single concrete method dependency, and less than 10 % have some unique concrete type
      * dependencies and typically a single one. Furthermore, most single concrete method dependencies
-     * are on leaf methods, i.e., wherein the context method is the concrete method.
+     * are on leaf methods, i.e., wherein the context is the holder of the concrete method.
      * The encoding of the dependencies is optimized for these cases.
      * <p>
      * The packed data structure is described below:
@@ -84,16 +84,17 @@ public final class Dependencies {
      *         s2 type;            // identifier of a context class
      *         s2 length;          // absolute value gives the length of 'deps';
      *                             // if negative, there is a unique concrete type dependency based on 'type'
-     *         s2 deps[|length|];  // array of local_method and nonlocal_method structs (defined below)
+     *         s2 deps[|length|];  // array of compact_method_dep and non_compact_method_dep structs (defined below)
      *     }[] packed;
      *
-     *     local_method {
+     *     compact_method_dep {
      *         s2 mindex;  // positive; the member index of the method in 'type'
      *     }
      *
-     *     nonlocal_method {
-     *         s2 mindex;  // negative; (-mindex - 1) is the member index of the method in 'holder'
-     *         s2 holder;  // identifier of the class in which the method is defined
+     *     non_compact_method_dep {
+     *         s2 mindex;        // negative; (-mindex - 1) is the member index of the implementation/concrete method in 'holder'
+     *         s2 implHolder;    // identifier of the class in which the implementation/concrete method is defined
+     *         s2 methodHolder;  // identifier of the class in which the declared method is defined
      *     }
      * </pre>
      */
@@ -109,13 +110,14 @@ public final class Dependencies {
      * Creates a dependencies object encapsulating all the dependencies for a single target method.
      *
      * @param dependencies a set of validated dependencies
-     * @param localUCMs the number of unique concrete method dependencies where the concrete method is the context method
-     * @param nonLocalUCMs the number of unique concrete method dependencies where the concrete method is not the context method
+     * @param compactCMs the number of compact {@linkplain ConcreteMethod concrete method} dependencies. A compact
+     *            concrete method dependency is one where {@code cm.impl == cm.method && cm.impl.holder() == cm.context}
+     * @param nonCompactCMs the number of non-compact {@linkplain ConcreteMethod concrete method} dependencies
      */
-    Dependencies(HashMap<ClassActor, ArrayList<Assumption>> dependencies, int localUCMs, int nonLocalUCMs) {
+    Dependencies(HashMap<ClassActor, ArrayList<Assumption>> dependencies, int compactCMs, int nonCompactCMs) {
         FatalError.check(classHierarchyLock.getReadHoldCount() > 0, "Must hold class hierarchy lock");
         id = idMap.allocate(this);
-        this.packed = pack(dependencies, localUCMs, nonLocalUCMs);
+        this.packed = pack(dependencies, compactCMs, nonCompactCMs);
         contextDependents.addDependencies(this, dependencies.keySet());
     }
 
@@ -124,7 +126,7 @@ public final class Dependencies {
 
         // Pre-compute size of the dependencies arrays:
         final int numClasses = deps.size();
-        int size = (numClasses * 2) + localUCMs + (nonLocalUCMs * 2);
+        int size = (numClasses * 2) + localUCMs + (nonLocalUCMs * 3);
         short[] packed = new short[size];
         int i = 0;
         for (Map.Entry<ClassActor, ArrayList<Assumption>> e : deps.entrySet()) {
@@ -136,13 +138,15 @@ public final class Dependencies {
             for (Assumption a : depsForContext) {
                 if (a instanceof ConcreteMethod) {
                     ConcreteMethod cm = (ConcreteMethod) a;
-                    MethodActor method = (MethodActor) cm.impl;
-                    int mindex = method.memberIndex();
+                    MethodActor impl = (MethodActor) cm.impl;
+                    MethodActor method = (MethodActor) cm.method;
+                    int mindex = impl.memberIndex();
                     FatalError.check(mindex <= Short.MAX_VALUE && mindex >= 0, "method index range not supported");
-                    if (cm.impl == cm.method) {
+                    if (impl == method && impl.holder() == context) {
                         packed[i++] = (short) mindex;
                     } else {
                         packed[i++] = (short) -(mindex + 1);
+                        packed[i++] = (short) impl.holder().id;
                         packed[i++] = (short) method.holder().id;
                     }
                 } else {
@@ -246,10 +250,10 @@ public final class Dependencies {
          * @param targetMethod the method compiled with this dependency
          * @param method a virtual or interface method
          * @param impl the method assumed to be the unique concrete implementation of {@code method}
-         *
+         * @param context TODO
          * @return {@code true} to continue the iteration, {@code false} to stop it
          */
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
             return true;
         }
 
@@ -284,18 +288,23 @@ public final class Dependencies {
                 while (!stop && length != 0) {
                     int mindex = packed[i++];
                     length--;
+                    MethodActor impl;
                     MethodActor method;
-                    MethodActor contextMethod;
                     if (mindex >= 0) {
-                        method = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(holder, mindex)));
-                        contextMethod = method;
+                        impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(holder, mindex)));
+                        assert impl != null;
+                        method = impl;
                     } else {
-                        int methodHolder = packed[i++];
+                        int implHolder = packed[i++];
                         length--;
-                        method = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(methodHolder, -mindex - 1)));
-                        contextMethod = classActor.findLocalMethodActor(method.name, method.descriptor());
+                        impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(implHolder, -mindex - 1)));
+                        int methodHolderID = packed[i++];
+                        length--;
+                        ClassActor methodHolder = ClassID.toClassActor(methodHolderID);
+                        method = methodHolder.findLocalMethodActor(impl.name, impl.descriptor());
+                        assert method != null : impl;
                     }
-                    stop = !dc.doConcreteMethod(targetMethod, contextMethod, method);
+                    stop = !dc.doConcreteMethod(targetMethod, method, impl, classActor);
                 }
                 assert length >= 0;
                 if (dc.classID == holder) {
@@ -342,9 +351,10 @@ public final class Dependencies {
                     return true;
                 }
                 @Override
-                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
                     sb.append(" UCM[").append(method);
-                    if (method != impl) {
+                    if (method != impl && impl.holder() != context) {
+                        sb.append(",").append(context);
                         sb.append(",").append(impl);
                     }
                     sb.append(']');
@@ -404,7 +414,7 @@ public final class Dependencies {
                 return true;
             }
             @Override
-            public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+            public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
                 DependenciesCounter.incCounter(id, counters);
                 return true;
             }

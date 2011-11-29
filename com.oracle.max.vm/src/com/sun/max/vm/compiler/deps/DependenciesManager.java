@@ -168,7 +168,7 @@ public final class DependenciesManager {
         }
 
         @Override
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
             RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
             if (newImpl != impl) {
                 valid = false;
@@ -217,8 +217,8 @@ public final class DependenciesManager {
         try {
             HashMap<ClassActor, ArrayList<Assumption>> deps = new HashMap<ClassActor, ArrayList<Assumption>>(10);
             UniqueConcreteMethodSearch ucms = null;
-            int localUCMs = 0;
-            int nonLocalUCMs = 0;
+            int compactCMs = 0;
+            int nonCompactCMs = 0;
             for (Assumption a : assumptions) {
                 if (a instanceof ConcreteMethod) {
                     ConcreteMethod cm = (ConcreteMethod) a;
@@ -229,10 +229,10 @@ public final class DependenciesManager {
                         return Dependencies.INVALID;
                     }
                     add(deps, (ClassActor) cm.context, a);
-                    if (cm.impl == cm.method) {
-                        localUCMs++;
+                    if (cm.impl == cm.method && cm.impl.holder() == cm.context) {
+                        compactCMs++;
                     } else {
-                        nonLocalUCMs++;
+                        nonCompactCMs++;
                     }
                 } else {
                     assert a instanceof ConcreteSubtype;
@@ -246,7 +246,8 @@ public final class DependenciesManager {
                     }
                 }
             }
-            return new Dependencies(deps, localUCMs, nonLocalUCMs);
+            Dependencies dependencies = new Dependencies(deps, compactCMs, nonCompactCMs);
+            return dependencies;
         } finally {
             classHierarchyLock.readLock().unlock();
         }
