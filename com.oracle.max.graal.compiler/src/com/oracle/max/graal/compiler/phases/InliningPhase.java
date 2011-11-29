@@ -295,8 +295,8 @@ public class InliningPhase extends Phase implements InliningCallback {
 
 
     @Override
-    public void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete) {
-        assumptions.recordConcreteMethod(method, concrete);
+    public void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
+        assumptions.recordConcreteMethod(method, context, impl);
     }
 
 }

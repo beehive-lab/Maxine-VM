@@ -136,10 +136,10 @@ public final class Dependencies {
             for (Assumption a : depsForContext) {
                 if (a instanceof ConcreteMethod) {
                     ConcreteMethod cm = (ConcreteMethod) a;
-                    MethodActor method = (MethodActor) cm.method;
+                    MethodActor method = (MethodActor) cm.impl;
                     int mindex = method.memberIndex();
                     FatalError.check(mindex <= Short.MAX_VALUE && mindex >= 0, "method index range not supported");
-                    if (cm.method == cm.context) {
+                    if (cm.impl == cm.method) {
                         packed[i++] = (short) mindex;
                     } else {
                         packed[i++] = (short) -(mindex + 1);
@@ -244,12 +244,12 @@ public final class Dependencies {
          * Processes a unique concrete method dependency.
          *
          * @param targetMethod the method compiled with this dependency
-         * @param context
-         * @param method the method assumed to be the unique concrete implementation of {@code context}
+         * @param method a virtual or interface method
+         * @param impl the method assumed to be the unique concrete implementation of {@code method}
          *
          * @return {@code true} to continue the iteration, {@code false} to stop it
          */
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
             return true;
         }
 
@@ -342,10 +342,10 @@ public final class Dependencies {
                     return true;
                 }
                 @Override
-                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
-                    sb.append(" UCM[").append(context);
-                    if (context != method) {
-                        sb.append(",").append(method);
+                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+                    sb.append(" UCM[").append(method);
+                    if (method != impl) {
+                        sb.append(",").append(impl);
                     }
                     sb.append(']');
                     return true;
@@ -404,7 +404,7 @@ public final class Dependencies {
                 return true;
             }
             @Override
-            public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
+            public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
                 DependenciesCounter.incCounter(id, counters);
                 return true;
             }

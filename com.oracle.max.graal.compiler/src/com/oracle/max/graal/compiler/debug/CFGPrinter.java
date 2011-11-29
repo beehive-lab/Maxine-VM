@@ -214,7 +214,9 @@ public class CFGPrinter extends CompilationPrinter {
         }
 
         for (Node node : block.getInstructions()) {
-            printNode((ValueNode) node);
+            if (node instanceof ValueNode) {
+                printNode((ValueNode) node);
+            }
         }
         out.enableIndentation();
         end("IR");
