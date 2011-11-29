@@ -25,6 +25,7 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIRConvert} class definition.
@@ -61,7 +62,7 @@ public class LIRConvert extends LIROp1 {
      * Prints this instruction to a LogStream.
      */
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         return "[" + opcode.name() + "] " + super.operationString(operandFmt);
     }
 }

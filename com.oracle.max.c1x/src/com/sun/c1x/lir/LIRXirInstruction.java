@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.gen.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -95,12 +96,12 @@ public class LIRXirInstruction extends LIRInstruction {
      * Prints this instruction.
      */
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         return toString(operandFmt);
     }
 
     @Override
-    public String toString(OperandFormatter operandFmt) {
+    public String toString(Formatter operandFmt) {
         StringBuilder sb = new StringBuilder();
         sb.append("XIR: ");
 
