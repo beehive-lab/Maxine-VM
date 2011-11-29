@@ -88,7 +88,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     /**
      * Return the address of the HeapRegionManager's own allocator.
-     * This is the allocated used to allocate the HeapRegionManager's objects at startup.
+     * This is the allocator used to allocate the HeapRegionManager's objects at startup.
      * The address as an allocator identifier for custom allocation.
      * @see HeapScheme#enableCustomAllocation(Address)
      *

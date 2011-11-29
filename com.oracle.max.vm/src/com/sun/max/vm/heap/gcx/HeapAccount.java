@@ -284,8 +284,9 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     /**
      * Commit the memory of the specified region in virtual space.
+     * This throws a FatalError if the region isn't allocated to this account.
      *
-     * @param regionID
+     * @param regionID the region allocated to this account whose virtual memory pages will be committed
      */
     public synchronized void commit(int regionID) {
         FatalError.check(uncommitted.contains(regionID), "The region must be allocated to this account");
@@ -296,8 +297,9 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     /**
      * Uncommit the memory of the specified region in virtual space.
+     * This throws a FatalError if the region isn't allocated to this account.
      *
-     * @param regionID
+     * @param regionID the region from this account whose virtual memory pages will be uncommitted
      */
     public synchronized void uncommit(int regionID) {
         FatalError.check(committed.contains(regionID), "The region must be allocated and committed to this account");
@@ -306,6 +308,11 @@ public class HeapAccount<T extends HeapAccountOwner>{
         add(regionID, uncommitted);
     }
 
+    /**
+     * Commit the memory of the specified contiguous range of regions in virtual space.
+     *
+     * @param regionsRange the contiguous range of regions allocated to this account whose virtual memory pages will be committed
+     */
     public synchronized void commit(RegionRange regionsRange) {
         int rangeHead = regionsRange.firstRegion();
         int numRegions = regionsRange.numRegions();
@@ -320,6 +327,11 @@ public class HeapAccount<T extends HeapAccountOwner>{
         addRange(rangeHead, rangeTail, committed);
     }
 
+    /**
+     * Uncommit the memory of the specified contiguous range of regions in virtual space.
+     *
+     * @param regionsRange the contiguous range of regions allocated to this account whose virtual memory pages will be uncommitted
+     */
     public synchronized void uncommit(RegionRange regionsRange) {
         int rangeHead = regionsRange.firstRegion();
         int numRegions = regionsRange.numRegions();

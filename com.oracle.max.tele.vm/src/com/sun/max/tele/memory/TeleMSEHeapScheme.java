@@ -25,7 +25,6 @@ package com.sun.max.tele.memory;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.mse.*;
 
@@ -33,65 +32,13 @@ import com.sun.max.vm.heap.gcx.mse.*;
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
  */
-final class TeleMSEHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
-    private TeleRegionTable teleRegionTable;
-
+final class TeleMSEHeapScheme extends TeleRegionBasedHeapScheme {
     TeleMSEHeapScheme(TeleVM vm) {
         super(vm);
-        teleRegionTable = TeleRegionTable.makeTheTeleRegionTable(vm);
     }
 
     public Class heapSchemeClass() {
         return MSEHeapScheme.class;
-    }
-
-    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
-
-        return new MaxMemoryManagementInfo() {
-            final int regionID = teleRegionTable.regionID(address);
-
-            public MaxMemoryStatus status() {
-                if (regionID < 0) {
-                    final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
-                    if (heapRegion == null) {
-                        // The location is not in any memory region allocated by the heap.
-                        return MaxMemoryStatus.UNKNOWN;
-                    }
-                }
-
-                // Unclear what the semantics of this should be during GC.
-                // We should be able to tell past the marking phase if an address point to a live object.
-                // But what about during the marking phase ? The only thing that can be told is that
-                // what was dead before marking begin should still be dead during marking.
-
-                // TODO (ld) This requires the inspector to know intimately about the heap structures.
-                // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
-                // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
-                // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
-
-                return MaxMemoryStatus.LIVE;
-            }
-
-            public String terseInfo() {
-                return regionID < 0 ? "-" : "region #" + regionID;
-            }
-
-            public String shortDescription() {
-                // Laurent: more information could be added here, will appear in tooltip
-                return vm().heapScheme().name();
-            }
-
-            public Address address() {
-                return address;
-            }
-
-            public TeleObject tele() {
-                if (regionID < 0) {
-                    return null;
-                }
-                return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
-            }
-        };
     }
 
     public int gcForwardingPointerOffset() {
