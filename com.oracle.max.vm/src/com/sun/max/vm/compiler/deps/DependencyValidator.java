@@ -86,15 +86,15 @@ class DependencyValidator extends CiAssumptionProcessor {
 
     @Override
     public boolean doConcreteMethod(ConcreteMethod cm) {
-        if (!isUniqueConcreteMethod((MethodActor) cm.context, (MethodActor) cm.method)) {
+        if (!isUniqueConcreteMethod((MethodActor) cm.context, (MethodActor) cm.impl)) {
             // Drop whatever was built so far.
             dependencies = null;
             return false;
         }
-        final ClassActor contextHolder = (ClassActor) cm.context.holder();
+        final ClassActor contextHolder = (ClassActor) cm.context;
 
         make(contextHolder).add(cm);
-        if (cm.method == cm.context) {
+        if (cm.impl == cm.context) {
             localUCMs++;
         } else {
             nonLocalUCMs++;

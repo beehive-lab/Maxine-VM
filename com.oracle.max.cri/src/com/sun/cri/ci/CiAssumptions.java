@@ -82,21 +82,40 @@ public final class CiAssumptions implements Serializable {
         }
     }
 
+    /**
+     * An assumption about a unique implementation of a virtual method.
+     */
     public static final class ConcreteMethod extends Assumption {
-        public final RiMethod context;
-        public final RiMethod method;
 
-        public ConcreteMethod(RiMethod context, RiMethod method) {
-            this.context = context;
+        /**
+         * A virtual (or interface) method whose unique implementation for the receiver type
+         * in {@link #context} is {@link #impl}.
+         */
+        public final RiResolvedMethod method;
+
+        /**
+         * A receiver type.
+         */
+        public final RiResolvedType context;
+
+        /**
+         * The unique implementation of {@link #method} for {@link #context}.
+         */
+        public final RiResolvedMethod impl;
+
+        public ConcreteMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
             this.method = method;
+            this.context = context;
+            this.impl = impl;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + context.hashCode();
             result = prime * result + method.hashCode();
+            result = prime * result + context.hashCode();
+            result = prime * result + impl.hashCode();
             return result;
         }
 
@@ -104,7 +123,7 @@ public final class CiAssumptions implements Serializable {
         public boolean equals(Object obj) {
             if (obj instanceof ConcreteMethod) {
                 ConcreteMethod other = (ConcreteMethod) obj;
-                return other.context == context && other.method == method;
+                return other.method == method && other.context == context && other.impl == impl;
             }
             return false;
         }
@@ -141,7 +160,7 @@ public final class CiAssumptions implements Serializable {
     }
 
     /**
-     * Records that "subtype" is the only concrete subtype in the class hierarchy below "context".
+     * Records that {@code subtype} is the only concrete subtype in the class hierarchy below {@code context}.
      * @param context the root of the subtree of the class hierarchy that this assumptions is about
      * @param subtype the one concrete subtype
      */
@@ -150,12 +169,15 @@ public final class CiAssumptions implements Serializable {
     }
 
     /**
-     * Records that "method" is the only possible concrete target for a virtual call to "context".
-     * @param context the method that is the target of the virtual call
-     * @param method the concrete method that is the only possible target for the virtual call
+     * Records that {@code impl} is the only possible concrete target for a virtual call to
+     * {@code method} with a receiver of type {@code context}.
+     *
+     * @param method a method that is the target of a virtual call
+     * @param context the receiver type of a call to {@code method}
+     * @param impl the concrete method that is the only possible target for the virtual call
      */
-    public void recordConcreteMethod(RiResolvedMethod context, RiResolvedMethod method) {
-        record(new ConcreteMethod(context, method));
+    public void recordConcreteMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
+        record(new ConcreteMethod(method, context, impl));
     }
 
     /**

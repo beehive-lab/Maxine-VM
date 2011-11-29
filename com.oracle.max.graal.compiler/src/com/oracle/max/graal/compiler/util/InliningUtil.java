@@ -44,7 +44,7 @@ public class InliningUtil {
     public interface InliningCallback {
         StructuredGraph buildGraph(RiResolvedMethod method);
         double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, Invoke invoke);
-        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete);
+        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl);
     }
 
     public static String methodName(RiResolvedMethod method) {
@@ -176,12 +176,15 @@ public class InliningUtil {
     }
 
     /**
-     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method, but for which an assumption has to be registered because of non-final classes.
+     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method,
+     * but for which an assumption has to be registered because of non-final classes.
      */
     private static class AssumptionInlineInfo extends ExactInlineInfo {
+        public final RiResolvedType context;
 
-        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
+        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedType context, RiResolvedMethod concrete) {
             super(invoke, weight, level, concrete);
+            this.context = context;
         }
 
         @Override
@@ -189,9 +192,9 @@ public class InliningUtil {
             if (GraalOptions.TraceInlining) {
                 String targetName = CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
-                TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
+                TTY.println("recording concrete method assumption: %s on receiver type %s -> %s", targetName, context, concreteName);
             }
-            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), concrete);
+            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), context, concrete);
             super.inline(graph, runtime, callback);
         }
 
@@ -255,7 +258,7 @@ public class InliningUtil {
         if (concrete != null) {
             if (checkTargetConditions(concrete, runtime)) {
                 double weight = callback.inliningWeight(parent, concrete, invoke);
-                return new AssumptionInlineInfo(invoke, weight, level, concrete);
+                return new AssumptionInlineInfo(invoke, weight, level, holder, concrete);
             }
             return null;
         }
