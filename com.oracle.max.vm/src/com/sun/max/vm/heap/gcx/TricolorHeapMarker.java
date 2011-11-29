@@ -2073,4 +2073,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         FatalError.check(markingStack.isEmpty(), "Marking Stack must be empty after special references are processed.");
         markPhase = MARK_PHASE.DONE;
     }
+
+    /**
+     * Contiguous region of memory used by the heap marker for the color map.
+     * @return a non-null {@link MemoryRegion}
+     */
+    public MemoryRegion memory() {
+        return colorMap;
+    }
 }
