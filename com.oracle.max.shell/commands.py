@@ -583,15 +583,18 @@ def graalexample(env, args):
         cp = env.pdb().classpath(project)
         sharedArgs = [mainClass]
         
+        hsPrintArg = '-XX:+PrintCompilation' if verbose else '-XX:-PrintCompilation'
         c1xPrintArg = '-C1X:+PrintCompilation' if verbose else '-C1X:-PrintCompilation'
         graalPrintArg = '-G:+PrintCompilation' if verbose else '-G:-PrintCompilation'
         
         res = []
-        env.log("=== C1X ===")
+        env.log("=== HotSpot Server ===")
+        res.append(env.run(['java', '-server', '-XX:CompileOnly=Main', '-cp', cp, hsPrintArg] + sharedArgs))
+        env.log("=== Maxine C1X ===")
         res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':C1X', '-cp', cp, c1xPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
-        env.log("=== Graal ===")
+        env.log("=== Maxine Graal ===")
         res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:-Extend', '-G:-Inline'] + sharedArgs))
-        env.log("=== Graal with extensions ===")
+        env.log("=== Maxine Graal with extensions ===")
         res.append(env.run([join(env.vmdir, 'maxvm'), '-XX:CompileCommand=' + match + ':Graal', '-cp', cp, graalPrintArg, '-G:+Extend', '-G:-Inline'] + sharedArgs))
         
         if len([x for x in res if x != 0]) != 0:
