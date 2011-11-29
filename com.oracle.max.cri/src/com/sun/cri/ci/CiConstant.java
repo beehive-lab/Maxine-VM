@@ -126,7 +126,7 @@ public final class CiConstant extends CiValue {
 
     @Override
     public String name() {
-        return "const[" + kind.format(boxedValue()) + (kind != CiKind.Object ? "|raw:" + primitive : "") + "]";
+        return "const[" + kind.format(boxedValue()) + (kind != CiKind.Object ? "|0x" + Long.toHexString(primitive) : "") + "]";
     }
 
     /**

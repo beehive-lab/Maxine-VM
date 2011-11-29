@@ -187,7 +187,16 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         // Line 1
-        printStream.println(indentation + entityName());
+        final StringBuilder sb1 = new StringBuilder();
+        sb1.append(indentation + entityName());
+        if (isManaged()) {
+            if (isInEviction()) {
+                sb1.append("  (managed, EVICTION UNDERWAY)");
+            } else {
+                sb1.append(" (managed)");
+            }
+        }
+        printStream.println(sb1.toString());
         // Line 2
         final StringBuilder sb2 = new StringBuilder();
         sb2.append("region: ");
@@ -204,10 +213,7 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
         sb3.append("compilations:  registered=").append(formatter.format(compilationCount()));
         sb3.append(", code loaded=").append(formatter.format(loadedCompilationCount()));
         if (teleCodeRegion.isManaged()) {
-            sb3.append(", evictions=").append(formatter.format(teleCodeRegion.evictionCount()));
-            if (isInEviction()) {
-                sb2.append(" IN EVICTION");
-            }
+            sb3.append(", completed evictions=").append(formatter.format(teleCodeRegion.evictionCount()));
         }
         printStream.println(indentation + "    " + sb3.toString());
         // Line 4

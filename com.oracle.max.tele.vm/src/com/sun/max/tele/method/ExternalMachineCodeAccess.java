@@ -28,22 +28,19 @@ import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
-// Notes:  this class isolates the old system for dealing with external/native code. They simply
-// get registered as discovered, checked to determine that the new region does not overlap any
-// other known region, and then kept in a list.
-//
-// It now includes a manager for creating code pointers, which in this case are treated as constant.
 
 /**
  * The singleton manager for managing information about machine code external to the VM.
  */
-public final class ExternalMachineCodeAccess extends AbstractVmHolder implements AllocationHolder, TeleVMCache {
+public final class ExternalMachineCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxExternalCode, AllocationHolder {
 
     private static final int TRACE_VALUE = 1;
 
@@ -60,6 +57,11 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
 
     private long lastUpdateEpoch = -1L;
 
+    private final String entityName = "External Code";
+
+    private final String entityDescription;
+
+
     /**
      * Contains regions of machine code discovered in the VM process that
      * do not belong to the VM.
@@ -75,52 +77,112 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
      */
     private final List<MaxMemoryRegion> externalMemoryRegions = new ArrayList<MaxMemoryRegion>();
 
-    private final RemoteCodePointerManager codePointerManager;
+    private final List<MaxNativeLibrary> libraries = new ArrayList<MaxNativeLibrary>();
+
+    /**
+     * A manager for code pointers that appear not to refer to any known loaded libraries.
+     */
+    private final DisconnectedRemoteCodePointerManager codePointerManager;
 
     private final Object statsPrinter = new Object() {
+
+        private int oldLoadedLibraryCount = 0;
         @Override
         public String toString() {
+            final int newLoadedLibraryCount = libraries.size();
             final StringBuilder msg = new StringBuilder();
-            // TODO (mlvdv) add some stats?
+            msg.append("#libraries=(").append(newLoadedLibraryCount);
+            msg.append(", new=").append(newLoadedLibraryCount - oldLoadedLibraryCount).append(")");
+            oldLoadedLibraryCount = newLoadedLibraryCount;
             return msg.toString();
         }
     };
 
-    ExternalMachineCodeAccess(TeleVM vm) {
+    public ExternalMachineCodeAccess(TeleVM vm) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-        this.codePointerManager = new FakeRemoteCodePointerManager(vm);
+        this.entityDescription = "External code in dynamically loaded libraries";
+        this.codePointerManager = new DisconnectedRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
-        tracer.end(statsPrinter);
+        tracer.end(null);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * See if any new native libraries have been loaded since the last refresh.
+     */
     public void updateCache(long epoch) {
         if (epoch > lastUpdateEpoch) {
-            MaxNativeLibrary[] libs = TeleNativeLibraries.getLibs(vm());
-            for (MaxNativeLibrary lib : libs) {
-                if (lib.functions() != null) {
-                    registerLibrary(lib);
+            updateTracer.begin();
+            try {
+                TeleNativeLibraries.update(vm());
+                for (TeleNativeLibrary teleNativeLibrary : TeleNativeLibraries.libs()) {
+                    if (teleNativeLibrary.functions() != null && !libraries.contains(teleNativeLibrary)) {
+                        libraries.add(teleNativeLibrary);
+                        externalMemoryRegions.add(teleNativeLibrary.memoryRegion());
+                        Trace.line(TRACE_VALUE, tracePrefix() + "adding dynamically loaded library: " + teleNativeLibrary.entityName());
+                    }
                 }
+                lastUpdateEpoch = epoch;
+            } catch (Exception e) {
+                TeleError.unexpected("Native library update failure", e);
             }
-            lastUpdateEpoch = epoch;
+            updateTracer.end(statsPrinter);
         }
     }
 
-    private void registerLibrary(MaxNativeLibrary nativeLibrary) {
-        MaxEntityMemoryRegion nativeLibraryMemoryRegion = nativeLibrary.memoryRegion();
-        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
-            if (maxMemoryRegion == nativeLibraryMemoryRegion) {
-                // already seen
-                return;
+    public String entityName() {
+        return entityName;
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxExternalCode> memoryRegion() {
+        // The external code access has no memory allocation of its own, but
+        // rather "owns" the memory regions occupied by loaded native libraries.
+        return null;
+    }
+
+
+    public boolean contains(Address address) {
+        return findNativeLibrary(address) != null;
+    }
+
+    public TeleObject representation() {
+        // There is no VM object that represents the external native libraries.
+        return null;
+    }
+
+    public List<MaxNativeLibrary> nativeLibraries() {
+        return libraries;
+    }
+
+    public TeleNativeLibrary findNativeLibrary(Address address) {
+        for (MaxNativeLibrary  maxNativeLibrary : libraries) {
+            if (maxNativeLibrary.memoryRegion().contains(address)) {
+                return (TeleNativeLibrary) maxNativeLibrary;
             }
         }
-        externalMemoryRegions.add(nativeLibraryMemoryRegion);
+        return null;
     }
 
     public List<MaxMemoryRegion> memoryAllocations() {
         return externalMemoryRegions;
     }
+
+    public RemoteCodePointer makeCodePointer(Address address) {
+        final TeleNativeLibrary teleNativeLibrary = findNativeLibrary(address);
+        if (teleNativeLibrary != null) {
+            return teleNativeLibrary.codePointerManager().makeCodePointer(address);
+        }
+        // Code location is not in any known library; create a special disconnected pointer.
+        return codePointerManager.makeCodePointer(address);
+    }
+
 
     MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         if (codeStart == null || codeStart.isZero()) {
@@ -144,25 +206,11 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         }
     }
 
-
-    public RemoteCodePointerManager codePointerManager() {
-        return codePointerManager;
-    }
-
-    @SuppressWarnings("unchecked")
-    MaxNativeFunction findExternalCode(Address address) {
+    TeleNativeFunction findExternalCode(Address address) {
         //look in registered native libraries
-        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
-            MaxEntityMemoryRegion maxEntityMemoryRegion = (MaxEntityMemoryRegion) maxMemoryRegion;
-            if (maxMemoryRegion.contains(address)) {
-                for (int i = 0; i <= maxEntityMemoryRegion.children().size(); i++) {
-                    @SuppressWarnings("unchecked")
-                    MaxEntityMemoryRegion<MaxNativeFunction> functionMemoryRegion = (MaxEntityMemoryRegion<MaxNativeFunction>) maxEntityMemoryRegion.children().get(i);
-                    if (functionMemoryRegion.contains(address)) {
-                        return functionMemoryRegion.owner();
-                    }
-                }
-                return ((MaxEntityMemoryRegion<MaxNativeFunction>) maxMemoryRegion).owner();
+        for (TeleNativeLibrary teleNativeLibrary : TeleNativeLibraries.libs()) {
+            if (teleNativeLibrary.contains(address)) {
+                return teleNativeLibrary.findNativeFunction(address);
             }
         }
         return null;
@@ -187,26 +235,24 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     }
 
     /**
-     * A manager for pointers to machine code not in any known region, presumed to be constant.
+     * A manager for pointers to disconnected machine code not in any known region, presumed to be constant.
      */
-    private class FakeRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
-
-        // TODO (mlvdv) Will need to generalize this in order to manage pointers into dlls.
+    private class DisconnectedRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
         /**
          * Map:  address in VM --> a {@link RemoteCodePointer} that refers to the machine code at that location.
          */
         private Map<Long, WeakReference<RemoteCodePointer>> addressToCodePointer = new HashMap<Long, WeakReference<RemoteCodePointer>>();
 
-        public FakeRemoteCodePointerManager(TeleVM vm) {
+        public DisconnectedRemoteCodePointerManager(TeleVM vm) {
             super(vm);
         }
 
         /**
          * {@inheritDoc}
          * <p>
-         * These regions of native code are external to  the VM, so there is no VM entity
-         * that corresponds to them.
+         * This manager is designed for disconnected code, i.e. code that is not in any
+         * region known.
          */
         public CodeHoldingRegion codeRegion() {
             return null;

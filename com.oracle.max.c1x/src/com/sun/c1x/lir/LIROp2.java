@@ -24,6 +24,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIROp2} class represents a LIR instruction that performs an operation on two operands.
@@ -170,7 +171,7 @@ public class LIROp2 extends LIRInstruction {
      * Prints this instruction.
      */
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         if (code == LIROpcode.Cmove) {
             return condition.toString() + " " + super.operationString(operandFmt);
         }

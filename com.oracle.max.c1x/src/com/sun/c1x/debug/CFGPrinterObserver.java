@@ -65,7 +65,7 @@ public class CFGPrinterObserver implements CompilationObserver {
      * {@link CFGPrinter#cfgFileStream()}.
      */
     public CFGPrinterObserver() {
-        this(CFGPrinter.cfgFileStream());
+        this(CompilationPrinter.globalOut());
     }
 
     /**

@@ -322,7 +322,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
                 Trace.line(TRACE_VALUE, tracePrefix() + "Machine code view removed after code eviction for method " + getToolTip());
             } else {
                 gui().informationMessage("Compilation " + getToolTip() + " evicted, view closed");
-                dispose();
+                close();
                 Trace.line(TRACE_VALUE, tracePrefix() + "Method view removed after code eviction for method " + getToolTip() + "no bytecode available");
 
             }

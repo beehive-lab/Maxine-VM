@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 
 public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibrary> {
@@ -43,7 +42,7 @@ public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibra
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
-        for (MaxNativeLibrary info : TeleNativeLibraries.getLibs((TeleVM) vm())) {
+        for (MaxNativeLibrary info : vm().externalCode().nativeLibraries()) {
             if (filter.endsWith(" ")) {
                 if (info.path().equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     listModel.addElement(info);
