@@ -526,7 +526,9 @@ public abstract class TargetMethod extends MemoryRegion {
         for (DataPatch site : ciTargetMethod.dataReferences) {
             final CiConstant data = site.constant;
             relativeDataPos[z] = currentPos;
-
+            if (site.alignment != 0) {
+                currentPos = (currentPos + (site.alignment - 1)) & ~(site.alignment - 1);
+            }
             try {
                 switch (data.kind) {
                     case Double:

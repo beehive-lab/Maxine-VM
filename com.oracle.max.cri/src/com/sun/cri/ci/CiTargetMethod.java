@@ -128,10 +128,12 @@ public class CiTargetMethod implements Serializable {
      */
     public static final class DataPatch extends Site {
         public final CiConstant constant;
+        public final int alignment;
 
-        DataPatch(int pcOffset, CiConstant data) {
+        DataPatch(int pcOffset, CiConstant data, int alignment) {
             super(pcOffset);
             this.constant = data;
+            this.alignment = 0;
         }
 
         @Override
@@ -381,10 +383,11 @@ public class CiTargetMethod implements Serializable {
      *
      * @param codePos the position in the code where the data reference occurs
      * @param data the data that is referenced
+     * @param alignment the alignment requirement of the data or 0 if there is no alignment requirement
      */
-    public void recordDataReference(int codePos, CiConstant data) {
+    public void recordDataReference(int codePos, CiConstant data, int alignment) {
         assert codePos >= 0 && data != null;
-        dataReferences.add(new DataPatch(codePos, data));
+        dataReferences.add(new DataPatch(codePos, data, alignment));
     }
 
     /**

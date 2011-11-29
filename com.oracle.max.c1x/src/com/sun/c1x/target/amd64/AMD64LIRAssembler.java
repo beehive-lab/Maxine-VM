@@ -1010,7 +1010,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                     masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                 }
-                masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask)));
+                masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask), 16));
                 break;
 
             case Sqrt:
