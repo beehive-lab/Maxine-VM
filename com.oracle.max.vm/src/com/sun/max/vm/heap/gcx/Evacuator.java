@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
@@ -40,6 +41,7 @@ import com.sun.max.vm.type.*;
  *
  */
 public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor {
+    protected static boolean TraceVisitedCell = false;
     /**
      * Indicate whether the cell at the specified origin is in an area under evacuation.
      * @param origin origin of a cell
@@ -148,7 +150,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      */
     abstract protected void evacuateReachables();
 
+    /**
+     * Action to performed before evacuation begins, e.g., making evacuated space iterable, etc, initializing allocation buffers, etc.
+     */
     abstract protected void doBeforeEvacuation();
+    /**
+     * Action to performed once evacuation is complete, e.g., releasing or making allocation buffers iterable, zero-ing out evacuated regions, etc.
+     */
     abstract protected void doAfterEvacuation();
 
     /**
@@ -158,6 +166,13 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         Heap.bootHeapRegion.visitReferences(this);
     }
 
+    void evacuateFromCode() {
+        // References in the boot code region are immutable and only ever refer
+        // to objects in the boot heap region.
+        boolean includeBootCode = false;
+        Code.visitCells(this, includeBootCode);
+    }
+
     /**
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
      *
@@ -165,6 +180,9 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @return pointer to the end of the cell
      */
     final public Pointer visitCell(Pointer cell) {
+        if (MaxineVM.isDebug() && TraceVisitedCell) {
+            Log.print("visitCell "); Log.println(cell);
+        }
         final Pointer origin = Layout.cellToOrigin(cell);
         // Update the hub first so that is can be dereferenced to obtain
         // the reference map needed to find the other references in the object
@@ -252,8 +270,11 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         doBeforeEvacuation();
         evacuateFromRoots();
         evacuateFromBootHeap();
+        evacuateFromCode();
         evacuateFromRSets();
+        // TraceVisitedCell = MaxineVM.isDebug();
         evacuateReachables();
+        // TraceVisitedCell = false;
         doAfterEvacuation();
     }
 
