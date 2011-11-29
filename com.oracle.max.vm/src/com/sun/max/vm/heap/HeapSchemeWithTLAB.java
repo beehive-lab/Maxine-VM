@@ -138,7 +138,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     /**
      * A procedure for resetting the TLAB of a thread.
      */
-    protected static class ResetTLAB implements Pointer.Procedure {
+    public static class ResetTLAB implements Pointer.Procedure {
 
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
             // Default is nothing.
@@ -450,10 +450,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      *
      * @param customAllocator identifier of the enabled custom allocator
      * @param size number of bytes requested to the custom allocator
-     * @param adjustForDebugTag provision space for a debug tag if true
      * @return pointer a the custom allocated space of the requested size
      */
-    protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);
+    protected abstract Pointer customAllocate(Pointer customAllocator, Size size);
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     @NEVER_INLINE
@@ -467,7 +466,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         final Pointer customAllocator = CUSTOM_ALLOCATION_ENABLED.load(etla);
         if (!customAllocator.isZero()) {
-            return customAllocate(customAllocator, size, true);
+            return customAllocate(customAllocator, size);
         }
         globalTlabStats.tlabOverflowCount++;
         // This path will always be taken if TLAB allocation is not enabled.

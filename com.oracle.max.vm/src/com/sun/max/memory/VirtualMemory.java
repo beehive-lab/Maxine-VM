@@ -30,6 +30,8 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Access to the virtual memory facilities of the underlying operating system.
@@ -41,6 +43,10 @@ import com.sun.max.unsafe.*;
  * Also provides the ability to map files into virtual memory and to change page protection.
  */
 public final class VirtualMemory {
+    private static boolean TraceAnonOperations = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceAnonOperations", VirtualMemory.class, "TraceAnonOperations", Phase.PRISTINE);
+    }
 
     public enum Type {
         HEAP,   // for the garbage collected heap
@@ -72,6 +78,9 @@ public final class VirtualMemory {
      * @return {@link Address#zero()} if failed, {@code pointer} otherwise.
      */
     public static Address deallocate(Address pointer, Size size, Type type) {
+        if (TraceAnonOperations) {
+            traceRange("deallocate", pointer, size);
+        }
         return virtualMemory_deallocate(pointer, size, type.ordinal());
     }
 
@@ -153,6 +162,9 @@ public final class VirtualMemory {
     }
 
     public static Pointer reserveMemory(Address address, Size size, Type type) {
+        if (TraceAnonOperations) {
+            traceRange("reserveMemory", address, size);
+        }
         return virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
     }
 
@@ -160,15 +172,21 @@ public final class VirtualMemory {
         if (address.isZero()) {
             return false;
         }
+        if (TraceAnonOperations) {
+            traceRange("commitMemory", address, size);
+        }
         Pointer committed = virtualMemory_allocatePrivateAnon(address, size, true, false, type.ordinal());
-        return !committed.isZero();
+        return committed.equals(address);
     }
 
     public static boolean uncommitMemory(Address address, Size size, Type type) {
         if (address.isZero()) {
             return false;
         }
-        // Remap previously mapped space so the new space isn't backed with swap space and has not protection set (i.e., prevents any access).
+        if (TraceAnonOperations) {
+            traceRange("uncommitMemory", address, size);
+        }
+       // Remap previously mapped space so the new space isn't backed with swap space and all access are prevented (protNone = true).
         Pointer uncommitted = virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
         return !uncommitted.isZero();
     }
@@ -268,4 +286,16 @@ public final class VirtualMemory {
     private static native long virtualMemory_mapFile(long size, int fd, long fileOffset);
 
     private static native long virtualMemory_mapFileIn31BitSpace(int size, int fd, long fileOffset);
+
+    public static void traceRange(String label, Address start, Size size) {
+        Log.print(label);
+        Log.print("[ ");
+        Log.print(start); Log.print(", ");
+        Log.print(start.plus(size));
+        Log.print("]  ");
+        Log.print(size.toLong());
+        Log.print(" (");
+        Log.printToPowerOfTwoUnits(size);
+        Log.println(")");
+    }
 }

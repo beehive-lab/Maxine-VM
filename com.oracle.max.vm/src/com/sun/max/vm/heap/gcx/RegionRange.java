@@ -38,6 +38,10 @@ public abstract class RegionRange extends Word {
     protected static final Word REGION_ID_MASK = Word.allOnes().asAddress().unsignedShiftedRight(REGION_ID_SHIFT);
 
     public static final RegionRange INVALID_RANGE = asRegionRange(-1L << REGION_ID_SHIFT);
+    @HOSTED_ONLY
+    protected RegionRange() {
+        super();
+    }
 
     @INLINE
     protected static RegionRange fromLong(long encodedRange) {

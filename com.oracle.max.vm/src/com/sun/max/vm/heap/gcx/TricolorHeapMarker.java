@@ -87,7 +87,7 @@ import com.sun.max.vm.runtime.*;
  * guaranteeing this property when it uses the fast variant.
  *
  */
-public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
+public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapManagementMemoryRequirement{
 
     // The color encoding is chosen to optimize the mark bitmaps.
     // The tracing algorithm primarily search for grey objects, 64-bits at a time.
