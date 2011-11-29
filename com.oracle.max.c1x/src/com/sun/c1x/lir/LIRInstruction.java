@@ -31,6 +31,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -369,28 +370,9 @@ public abstract class LIRInstruction {
     public abstract void emitCode(LIRAssembler masm);
 
     /**
-     * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
-     * The {@linkplain OperandFormatter#DEFAULT default formatter} returns the value of
-     * {@link CiValue#toString()}.
-     */
-    public static class OperandFormatter {
-        public static final OperandFormatter DEFAULT = new OperandFormatter();
-
-        /**
-         * Formats a given operand as a string.
-         *
-         * @param operand the operand to format
-         * @return {@code operand} as a string
-         */
-        public String format(CiValue operand) {
-            return operand.toString();
-        }
-    }
-
-    /**
      * Gets the operation performed by this instruction in terms of its operands as a string.
      */
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder();
         if (result != ILLEGAL_SLOT) {
             buf.append(operandFmt.format(result.value(this))).append(" = ");
@@ -490,7 +472,7 @@ public abstract class LIRInstruction {
 
     @Override
     public String toString() {
-        return toString(OperandFormatter.DEFAULT);
+        return toString(Formatter.DEFAULT);
     }
 
     public final String toStringWithIdPrefix() {
@@ -500,7 +482,7 @@ public abstract class LIRInstruction {
         return "     " + toString();
     }
 
-    protected static String refMapToString(CiDebugInfo debugInfo, OperandFormatter operandFmt) {
+    protected static String refMapToString(CiDebugInfo debugInfo, Formatter operandFmt) {
         StringBuilder buf = new StringBuilder();
         if (debugInfo.hasStackRefMap()) {
             CiBitMap bm = debugInfo.frameRefMap;
@@ -524,7 +506,7 @@ public abstract class LIRInstruction {
         return buf.toString();
     }
 
-    protected void appendDebugInfo(StringBuilder buf, OperandFormatter operandFmt, LIRDebugInfo info) {
+    protected void appendDebugInfo(StringBuilder buf, Formatter operandFmt, LIRDebugInfo info) {
         if (info != null) {
             buf.append(" [bci:").append(info.state.bci);
             if (info.hasDebugInfo()) {
@@ -538,7 +520,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public String toString(OperandFormatter operandFmt) {
+    public String toString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
         appendDebugInfo(buf, operandFmt, info);
         return buf.toString();

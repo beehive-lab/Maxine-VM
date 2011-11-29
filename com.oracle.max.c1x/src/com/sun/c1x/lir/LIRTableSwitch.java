@@ -24,6 +24,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  */
@@ -55,7 +56,7 @@ public class LIRTableSwitch extends LIRInstruction {
     }
 
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(super.operationString(operandFmt));
         buf.append("\ndefault: [B").append(defaultTarget.blockID).append(']');
         int key = lowKey;

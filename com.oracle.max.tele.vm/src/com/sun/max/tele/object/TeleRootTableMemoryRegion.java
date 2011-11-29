@@ -83,4 +83,9 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
         return new MemoryUsage(-1L, nBytesUsed, getRegionNBytes(), -1L);
     }
 
+    @Override
+    protected boolean isRelocatable() {
+        return false;
+    }
+
 }

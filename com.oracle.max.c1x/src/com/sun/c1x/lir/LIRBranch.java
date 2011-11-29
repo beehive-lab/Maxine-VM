@@ -25,6 +25,7 @@ package com.sun.c1x.lir;
 import com.oracle.max.asm.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  *
@@ -131,7 +132,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     @Override
-    public String operationString(OperandFormatter operandFmt) {
+    public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(cond().operator).append(' ');
         if (block() != null) {
             buf.append("[B").append(block.blockID).append(']');

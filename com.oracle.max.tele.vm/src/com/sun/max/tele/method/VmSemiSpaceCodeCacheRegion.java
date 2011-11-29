@@ -131,7 +131,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
         super(vm, teleSemiSpaceCodeRegion);
         this.teleSemiSpaceCodeRegion = teleSemiSpaceCodeRegion;
         this.codeCache = codeCache;
-        this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
+        this.entityDescription = "The managed allocation area " + teleSemiSpaceCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.objectReferenceManager = new SemispaceCodeCacheRemoteReferenceManager(vm, this);
         this.codePointerManager = new SemispaceCodeCacheRemoteCodePointerManager(vm, this);
