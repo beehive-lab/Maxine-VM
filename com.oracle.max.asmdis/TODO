@@ -1,0 +1,17 @@
+* Fix regressions in AMD64 assembler. These are reproduced by running test.com.sun.max.asm.amd64.RawDisassmblerAndExternalTest.
+
+* Have the disassemblers be generated. This alleviates the startup cost of the disassembler as it would not have to regenerate
+  all the templates. The generated disassemblers could also employ a better algorithm for matching than the brute force
+  technique used by the current template-based disassemblers.
+
+* Complete the ARM port.
+
+* Add support for assembling directly into memory allocated by the client.
+
+* For CISC instruction sets, the raw assembler method for a variable sized, label-based instruction currently gets called:
+    1. To get the size of the instruction based on the smallest label size.
+    2. To get the size of the instruction based on the value of the label once it has been bound.
+    3. To emit the instruction once all the other label instructions have been fixed up.
+  In reality, only the last call is actually needed. The assembler generator could produce the sizing logic
+  for the various label sizes which should be more efficient than calling the raw assembler method.  
+  
