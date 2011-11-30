@@ -28,6 +28,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
@@ -59,17 +60,17 @@ public class WordTypeRewriterPhase extends Phase {
                 ConstantNode c = (ConstantNode) node;
                 return c.value.asObject() instanceof WordUtil.WrappedWord;
             }
-            return isWord(node.declaredType());
+            return isWord(node.declaredType(), node);
         }
         return false;
     }
 
-    public boolean isWord(RiType type) {
+    public boolean isWord(RiType type, ValueNode node) {
         if (!(type instanceof ClassActor)) {
             return false;
         }
         ClassActor actor = (ClassActor) type;
-        assert actor.kind == Kind.REFERENCE || actor.kind == Kind.WORD;
+        assert actor.kind == Kind.REFERENCE || actor.kind == Kind.WORD : node;
         return actor.kind == Kind.WORD;
     }
 
@@ -87,8 +88,7 @@ public class WordTypeRewriterPhase extends Phase {
             assert valueNode.usages().isEmpty();
             valueNode.safeDelete();
         } else {
-            // TODO(tw): Implement this.
-            throw new RuntimeException("must rewrite the full node: " + valueNode + " / " + valueNode.getClass());
+            valueNode.setStamp(StampFactory.forKind(WordUtil.archKind()));
         }
 
         // Propagate word kind.
