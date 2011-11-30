@@ -124,6 +124,8 @@ public class StampFactory {
     }
 
     public static Stamp exactNonNull(final RiResolvedType type) {
+        // (cwi) type can be null for certain Maxine-internal objects such as the static hub. Is this a problem here?
+        assert type == null || type.kind(false) == CiKind.Object;
         return new BasicValueStamp(CiKind.Object, true, type, type);
     }
 
@@ -141,11 +143,13 @@ public class StampFactory {
 
     public static Stamp declared(final RiResolvedType type) {
         assert type != null;
+        assert type.kind(false) == CiKind.Object;
         return new BasicValueStamp(CiKind.Object, false, type, type.exactType());
     }
 
     public static Stamp declaredNonNull(final RiResolvedType type) {
         assert type != null;
+        assert type.kind(false) == CiKind.Object;
         return new BasicValueStamp(CiKind.Object, true, type, type.exactType());
     }
 
