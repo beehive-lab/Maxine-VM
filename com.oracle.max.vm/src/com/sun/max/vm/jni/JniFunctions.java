@@ -138,10 +138,7 @@ public final class JniFunctions {
 
     /**
      * This method implements the epilogue for leaving an JNI upcall. The steps performed are to
-     * reset the thread-local information which stores the last Java caller SP, FP, and IP, and
-     * print a trace if necessary.
-     *
-     * @param name the method which was called (for tracing only)
+     * reset the thread-local information which stores the last Java caller SP, FP, and IP.     *
      */
     @INLINE
     public static void epilogue(Pointer anchor) {
@@ -158,9 +155,9 @@ public final class JniFunctions {
     }
 
     /**
-     * Traces the entry to an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
+     * Traces the entry to an upcall.
      *
-     * @param name the name of the JNI function being entered
+     * @param name the name of the JNI/JVMTI function being entered
      * @param anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub frame
      *            that called out to native code or the native anchor of a thread that attached to the VM.
      */
@@ -188,20 +185,31 @@ public final class JniFunctions {
     }
 
     /**
-     * Traces the exit from an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
+     * Traces the exit from an upcall.
      *
-     * @param name the name of the JNI function being exited
+     * @param name the name of the JNI/JVMTI function being exited
      */
     public static void traceExit(String name, String callType) {
         if (name != null) {
             boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[Thread \"");
-            Log.print(VmThread.current().getName());
-            Log.print("\" <-- "); Log.print(callType); Log.print(" upcall: ");
-            Log.print(name);
-            Log.println("]");
+            traceExitNoLock(name, callType);
             Log.unlock(lockDisabledSafepoints);
         }
+    }
+
+    /**
+     * Traces the exit from an upcall. Assert: Lock.lock has been invoked by caller.
+     *
+     * @param name the name of the JNI/JVMTI function being exited
+     */
+    public static void traceExitNoLock(String name, String callType) {
+        Log.print("[Thread \"");
+        Log.print(VmThread.current().getName());
+        Log.print("\" <-- ");
+        Log.print(callType);
+        Log.print(" upcall: ");
+        Log.print(name);
+        Log.println("]");
     }
 
 
