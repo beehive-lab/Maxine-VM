@@ -145,7 +145,7 @@ class JVMTIThreadFunctions {
 
     static int getThreadInfo(Thread thread, Pointer threadInfoPtr) {
         VmThread vmThread = checkThread(thread);
-        if (vmThread == null ) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         setJVMTIThreadInfo(threadInfoPtr, CString.utf8FromJava(thread.getName()), thread.getPriority(), thread.isDaemon(),
@@ -166,7 +166,7 @@ class JVMTIThreadFunctions {
 
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
         VmThread vmThread = checkThread(thread);
-        if (vmThread == null ) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         FrameBufferStackTraceVisitor stackTraceVisitor = new FrameBufferStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
@@ -508,7 +508,7 @@ class JVMTIThreadFunctions {
 
     static int getFrameCount(Thread thread, Pointer countPtr) {
         VmThread vmThread = checkThread(thread);
-        if (vmThread == null ) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, new FindAppFramesStackTraceVisitor());
@@ -519,7 +519,7 @@ class JVMTIThreadFunctions {
 
     static int getFrameLocation(Thread thread, int depth, Pointer methodPtr, Pointer locationPtr) {
         VmThread vmThread = checkThread(thread);
-        if (vmThread == null ) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         if (depth < 0) {
@@ -539,7 +539,7 @@ class JVMTIThreadFunctions {
 
     private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
         VmThread vmThread = checkThread(thread);
-        if (vmThread == null ) {
+        if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         FindAppFramesStackTraceVisitor stackTraceVisitor = new FindAppFramesStackTraceVisitor();
