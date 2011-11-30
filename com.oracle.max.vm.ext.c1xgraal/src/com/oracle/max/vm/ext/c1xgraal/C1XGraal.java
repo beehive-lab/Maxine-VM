@@ -105,10 +105,9 @@ public class C1XGraal implements RuntimeCompiler {
      */
     boolean forceC1X(final ClassMethodActor method) {
         if (isHosted()) {
-            // !method.isNative(); // disabled until TODO in WordTypeRewriterPhase.changeToWord() is done
-            return true;
+            return !method.isNative();
         }
-        return DisableGraal || method.isNative();
+        return DisableGraal;
     }
 
     public Nature nature() {

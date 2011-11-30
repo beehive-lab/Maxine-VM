@@ -134,7 +134,7 @@ public class Log2RegionToByteMapTable {
         return coveredAddress.minus(coveredAreaStart).unsignedShiftedRight(log2RangeSize).toInt();
     }
 
-    boolean atBoundary(Address address) {
+    final boolean atBoundary(Address address) {
         return address.isAligned(1 << log2RangeSize);
     }
     /**
