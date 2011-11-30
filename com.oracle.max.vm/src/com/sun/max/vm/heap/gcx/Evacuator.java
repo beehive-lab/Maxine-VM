@@ -45,7 +45,10 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
     private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
-    private final int FIRST_ELEMENT_OFFSET = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
+    /**
+     * Word index to the first element of a reference array from its origin.
+     */
+    private final int FIRST_ELEMENT_INDEX = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
 
     protected Hub getHub(Pointer origin) {
         return UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
@@ -59,14 +62,14 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
 
     private void updateReferenceArray(Pointer refArrayOrigin) {
-        final int length = Layout.readArrayLength(refArrayOrigin);
-        updateReferenceArray(refArrayOrigin, 0, length);
+        final int length = Layout.readArrayLength(refArrayOrigin) + FIRST_ELEMENT_INDEX;
+        updateReferenceArray(refArrayOrigin, FIRST_ELEMENT_INDEX, length);
     }
 
 
     private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
         final int length = Layout.readArrayLength(refArrayOrigin);
-        final Address firstElementAddr = refArrayOrigin.plus(FIRST_ELEMENT_OFFSET);
+        final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
         final Address endOfArrayAddr = firstElementAddr.plusWords(length);
         final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
