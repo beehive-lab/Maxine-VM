@@ -181,6 +181,11 @@ public class JVMTI {
                 handle = DynamicLinker.load(path);
             } else {
                 handle = JVMTISystem.load(path);
+                if (CString.equals(info.libStart, "jdwp")) {
+                    if (JVMTIVMOptions.jdwpLogOption.getValue()) {
+                        info.optionStart = CString.append(info.optionStart, ",logfile=/tmp/jdwp.log,logflags=255");
+                    }
+                }
             }
 
             if (handle.isZero()) {

@@ -144,8 +144,9 @@ class JVMTIThreadFunctions {
     }
 
     static int getThreadInfo(Thread thread, Pointer threadInfoPtr) {
-        if (thread == null) {
-            thread = VmThread.current().javaThread();
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null ) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         setJVMTIThreadInfo(threadInfoPtr, CString.utf8FromJava(thread.getName()), thread.getPriority(), thread.isDaemon(),
                         JniHandles.createLocalHandle(thread.getThreadGroup()),
@@ -164,7 +165,10 @@ class JVMTIThreadFunctions {
     // Single thread stack trace
 
     static int getStackTrace(Thread thread, int startDepth, int maxFrameCount, Pointer frameBuffer, Pointer countPtr) {
-        VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null ) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
         FrameBufferStackTraceVisitor stackTraceVisitor = new FrameBufferStackTraceVisitor(vmThread, startDepth, maxFrameCount, frameBuffer);
         SingleThreadStackTraceVmOperation vmOperation = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
         vmOperation.submit();
@@ -295,9 +299,11 @@ class JVMTIThreadFunctions {
                 assert false : "unexpected thread stack layout";
             }
 
+            // discard VM frames below first app frame
             for (int i = 0; i < startIndex; i++) {
                 stackElements.remove();
             }
+            // now 0 is the first app frame
             int endIndex = 0;
             ListIterator<StackElement> iter = stackElements.listIterator();
             while (iter.hasNext()) {
@@ -308,9 +314,12 @@ class JVMTIThreadFunctions {
                 }
                 endIndex++;
             }
+            // endIndex is the first VM frame
             int lastIndex = stackElements.size();
             for (int i = endIndex; i < lastIndex; i++) {
-                stackElements.remove();
+                // this reduces the index of everything after removed item
+                // so we always remove the same index.
+                stackElements.remove(endIndex);
             }
         }
 
@@ -485,9 +494,21 @@ class JVMTIThreadFunctions {
 
     // Frame operations
 
-    static int getFrameCount(Thread thread, Pointer countPtr) {
+    /**
+     * Checks for current thread request ({@code thread == null}, and live state.
+     * @return {@code null} if should return error, the {@link VmThread} otherwise.
+     */
+    private static VmThread checkThread(Thread thread) {
         VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
         if (vmThread == null || vmThread.state() == Thread.State.TERMINATED) {
+            return null;
+        }
+        return vmThread;
+    }
+
+    static int getFrameCount(Thread thread, Pointer countPtr) {
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null ) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, new FindAppFramesStackTraceVisitor());
@@ -497,8 +518,8 @@ class JVMTIThreadFunctions {
     }
 
     static int getFrameLocation(Thread thread, int depth, Pointer methodPtr, Pointer locationPtr) {
-        VmThread vmThread = thread == null ? VmThread.current() : VmThread.fromJava(thread);
-        if (vmThread == null || vmThread.state() == Thread.State.TERMINATED) {
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null ) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         if (depth < 0) {
@@ -517,11 +538,12 @@ class JVMTIThreadFunctions {
     }
 
     private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
-        if (thread == null) {
-            thread = VmThread.current().javaThread();
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null ) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         FindAppFramesStackTraceVisitor stackTraceVisitor = new FindAppFramesStackTraceVisitor();
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), stackTraceVisitor);
+        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
         op.submit();
         if (depth < stackTraceVisitor.stackElements.size()) {
             boolean isSet = valuePtr.isZero();
@@ -535,7 +557,7 @@ class JVMTIThreadFunctions {
                     LocalVariableTable.Entry entry = entries[i];
                     if (entry.slot() == slot) {
                         String slotType = classMethodActor.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
-                        if (slotType.charAt(0) == typedData.tag) {
+                        if (typeMatch(slotType.charAt(0), typedData.tag)) {
                             TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                             if (!targetMethod.isBaseline()) {
                                 return JVMTI_ERROR_INVALID_SLOT; // TODO
@@ -574,6 +596,8 @@ class JVMTIThreadFunctions {
                                         valuePtr.setWord(varPtr.readWord(offset));
                                     }
                             }
+                        } else {
+                            return JVMTI_ERROR_TYPE_MISMATCH;
                         }
                     }
                 }
@@ -582,6 +606,14 @@ class JVMTIThreadFunctions {
             return JVMTI_ERROR_NO_MORE_FRAMES;
         }
         return JVMTI_ERROR_NONE;
+    }
+
+    private static boolean typeMatch(int type, int tagType) {
+        if (tagType == 'L') {
+            return type == '[' || type == 'L';
+        } else {
+            return type == tagType;
+        }
     }
 
     static int getLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, char type) {
