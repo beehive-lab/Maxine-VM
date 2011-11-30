@@ -35,9 +35,9 @@ import com.sun.max.vm.runtime.*;
  *
  * TODO: move allocation and cfotable update code into a wrapper of the FirsFitMarkSweepSpace.
  * The wrapper keeps track of survivor ranges and update the remembered set (mostly the cfo table).
- * This makes the evacuator independent of the detail of survivor rangestracking and imprecise rset subtleties.
+ * This makes the evacuator independent of the detail of survivor ranges tracking and imprecise rset subtleties.
  */
-public final class NoAgingEvacuator extends Evacuator  {
+public final class NoAgingEvacuator extends Evacuator {
     /**
      * Heap Space that is being evacuated.
      */

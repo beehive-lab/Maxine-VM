@@ -40,67 +40,8 @@ import com.sun.max.vm.type.*;
  * the remembered set holdings references to the evacuated area.
  *
  */
-public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor {
+public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor, SpecialReferenceManager.GC  {
     protected static boolean TraceVisitedCell = false;
-    /**
-     * Indicate whether the cell at the specified origin is in an area under evacuation.
-     * @param origin origin of a cell
-     * @return true if the cell is in an evacuation area
-     */
-    abstract boolean inEvacuatedArea(Pointer origin);
-    /**
-     * Evacuate the cell at the specified origin. The destination of the cell is
-     * @param origin origin of the cell to evacuate
-     * @return origin of the cell after evacuation
-     */
-    abstract Pointer evacuate(Pointer origin);
-
-    /**
-     * Remembered set updates to apply to reference a to an evacuated cells.
-     * Default is to do nothing.
-     *
-     * @param refHolderOrigin origin of the reference holder
-     * @param wordIndex
-     * @param ref reference to an evacuated cell
-     */
-    void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
-        // default is doing nothing.
-    }
-
-    /**
-     * Test if a reference in an cell points to the evacuated area. If it does, the referenced cell is
-     * first evacuated if it is still in the evacuated area.
-     * The reference is updated to the evacuated cell's new location.
-     * @param refHolderOrigin origin of the holder of the reference
-     * @param wordIndex index to a reference of the evacuated cell.
-     */
-    final void updateEvacuatedRef(Pointer refHolderOrigin, int wordIndex) {
-        final Reference ref = refHolderOrigin.getReference(wordIndex);
-        Pointer origin = ref.toOrigin();
-        if (inEvacuatedArea(origin)) {
-            final Reference forwardRef = Layout.readForwardRef(origin);
-            if (!forwardRef.isZero()) {
-                refHolderOrigin.setReference(wordIndex, forwardRef);
-                updateRSet(refHolderOrigin, wordIndex, forwardRef);
-                return;
-            }
-            final Pointer toOrigin = evacuate(origin);
-            final Reference toRef = Reference.fromOrigin(toOrigin);
-            HeapScheme.Inspect.notifyObjectRelocated(Layout.originToCell(origin), Layout.originToCell(toOrigin));
-            Layout.writeForwardRef(origin, toRef);
-            refHolderOrigin.setReference(wordIndex, toRef);
-        }
-    }
-
-    /**
-     * Apply the evacuation logic to the reference at the specified index from the origin of a cell.
-     * @param origin origin of the cell holding the visited reference
-     * @param wordIndex  index of the visited reference from the origin
-     */
-    @Override
-    public void visit(Pointer origin, int wordIndex) {
-        updateEvacuatedRef(origin, wordIndex);
-    }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
     private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
@@ -130,6 +71,98 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
+    }
+  /**
+     * Indicate whether the cell at the specified origin is in an area under evacuation.
+     * @param origin origin of a cell
+     * @return true if the cell is in an evacuation area
+     */
+    abstract boolean inEvacuatedArea(Pointer origin);
+    /**
+     * Evacuate the cell at the specified origin. The destination of the cell is
+     * @param origin origin of the cell to evacuate
+     * @return origin of the cell after evacuation
+     */
+    abstract Pointer evacuate(Pointer origin);
+
+    /**
+     * Remembered set updates to apply to reference a to an evacuated cells.
+     * Default is to do nothing.
+     *
+     * @param refHolderOrigin origin of the reference holder
+     * @param wordIndex
+     * @param ref reference to an evacuated cell
+     */
+    void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
+        // default is doing nothing.
+    }
+
+
+    /**
+     * Evacuate a cell of the evacuated area if not already done, and return the reference to the evacuated cell new location.
+     *
+     * @param origin origin of the cell in the evacuated area
+     * @return a reference to the evacuated cell's new location
+     */
+    protected final Reference getForwardRef(Pointer origin) {
+        Reference forwardRef = Layout.readForwardRef(origin);
+        if (forwardRef.isZero()) {
+            final Pointer toOrigin = evacuate(origin);
+            forwardRef = Reference.fromOrigin(toOrigin);
+            HeapScheme.Inspect.notifyObjectRelocated(Layout.originToCell(origin), Layout.originToCell(toOrigin));
+            Layout.writeForwardRef(origin, forwardRef);
+        }
+        return forwardRef;
+    }
+
+    /**
+     * Test if a reference in an cell points to the evacuated area. If it does, the referenced cell is
+     * first evacuated if it is still in the evacuated area.
+     * The reference is updated to the evacuated cell's new location.
+     * @param refHolderOrigin origin of the holder of the reference
+     * @param wordIndex index to a reference of the evacuated cell.
+     */
+    final void updateEvacuatedRef(Pointer refHolderOrigin, int wordIndex) {
+        final Reference ref = refHolderOrigin.getReference(wordIndex);
+        final Pointer origin = ref.toOrigin();
+        if (inEvacuatedArea(origin)) {
+            final Reference forwardRef = getForwardRef(origin);
+            refHolderOrigin.setReference(wordIndex, forwardRef);
+            updateRSet(refHolderOrigin, wordIndex, forwardRef);
+        }
+    }
+
+    /**
+     * Apply the evacuation logic to the reference at the specified index from the origin of a cell.
+     * @param origin origin of the cell holding the visited reference
+     * @param wordIndex  index of the visited reference from the origin
+     */
+    @Override
+    public void visit(Pointer origin, int wordIndex) {
+        updateEvacuatedRef(origin, wordIndex);
+    }
+
+    @Override
+    public boolean isReachable(Reference ref) {
+        final Pointer origin = ref.toOrigin();
+        if (inEvacuatedArea(origin)) {
+            return !Layout.readForwardRef(origin).isZero();
+        }
+        return true;
+    }
+
+    @Override
+    public Reference preserve(Reference ref) {
+        final Pointer origin = ref.toOrigin();
+        if (inEvacuatedArea(origin)) {
+            return getForwardRef(origin);
+        }
+        return ref;
+    }
+
+    @Override
+    public boolean mayRelocateLiveObjects() {
+        return true;
     }
 
     /**
@@ -275,7 +308,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         // TraceVisitedCell = MaxineVM.isDebug();
         evacuateReachables();
         // TraceVisitedCell = false;
+        SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         doAfterEvacuation();
     }
-
 }
