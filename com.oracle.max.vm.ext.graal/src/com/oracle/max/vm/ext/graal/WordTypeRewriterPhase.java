@@ -28,6 +28,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MethodCallTargetNode.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
@@ -87,8 +88,7 @@ public class WordTypeRewriterPhase extends Phase {
             assert valueNode.usages().isEmpty();
             valueNode.safeDelete();
         } else {
-            // TODO(tw): Implement this.
-            throw new RuntimeException("must rewrite the full node: " + valueNode + " / " + valueNode.getClass());
+            valueNode.setStamp(StampFactory.forKind(WordUtil.archKind()));
         }
 
         // Propagate word kind.
