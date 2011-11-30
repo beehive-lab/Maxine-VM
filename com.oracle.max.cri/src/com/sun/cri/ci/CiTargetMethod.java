@@ -133,7 +133,7 @@ public class CiTargetMethod implements Serializable {
         DataPatch(int pcOffset, CiConstant data, int alignment) {
             super(pcOffset);
             this.constant = data;
-            this.alignment = 0;
+            this.alignment = alignment;
         }
 
         @Override
