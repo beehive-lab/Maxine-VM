@@ -105,9 +105,11 @@ public class JVMTIFunctions  {
     @INLINE
     static void traceEpilogue(String name) {
         if (TraceJVMTI) {
+            boolean lockDisabledSafepoints = Log.lock();
             if (methodTraceStates == null || methodTraceStates.get(name)) {
-                JniFunctions.traceExit(name, "JVMTI");
+                JniFunctions.traceExitNoLock(name, "JVMTI");
             }
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 

@@ -25,10 +25,16 @@ package com.sun.max.vm.jvmti;
 import com.sun.max.vm.*;
 
 public class JVMTIVMOptions {
+    /*
+     * Possibly temporary hack to add jdwp logging options when run by debugger, e.g.  Eclipse.
+     */
+    static VMBooleanXXOption jdwpLogOption = new VMBooleanXXOption("-XX:-JDWPLog", "force JDWP logging");
+
     static {
         VMOptions.register(new PathAgentVMOption(), MaxineVM.Phase.PRISTINE);
         VMOptions.register(new LibAgentVMOption(), MaxineVM.Phase.PRISTINE);
         VMOptions.register(new RunAgentVMOption(), MaxineVM.Phase.PRISTINE);
         VMOptions.register(new VMOption("-Xdebug ", "(deprecated) debugging support"), MaxineVM.Phase.PRISTINE);
+        VMOptions.register(jdwpLogOption, MaxineVM.Phase.PRISTINE);
     }
 }
