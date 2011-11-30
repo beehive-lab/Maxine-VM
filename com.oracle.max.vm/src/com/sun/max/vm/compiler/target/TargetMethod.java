@@ -39,7 +39,6 @@ import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -51,6 +50,7 @@ import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -498,61 +498,127 @@ public abstract class TargetMethod extends MemoryRegion {
 
     protected void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        List<Object> objectReferences = new ArrayList<Object>();
-        int[] relativeDataPos = serializeLiterals(ciTargetMethod, output, objectReferences);
-        byte[] scalarLiterals = output.toByteArray();
-        Object[] referenceLiterals = objectReferences.toArray();
+        Literals literals = serializeLiterals(ciTargetMethod);
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
             Code.allocateInHeap(targetBundleLayout, this);
         }
-        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
+
+        if (literals.scalars.length != 0 && literals.scalarsAlignment != 0) {
+            Pointer scalars = targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals);
+            Address alignedScalars = scalars.alignUp(literals.scalarsAlignment);
+            if (!scalars.equals(alignedScalars)) {
+                assert alignedScalars.greaterThan(scalars);
+                literals.relocateScalars(alignedScalars.minus(scalars).toInt());
+            }
+        }
+
+        this.setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
         assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
-        patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
+        patchInstructions(targetBundleLayout, ciTargetMethod, literals.scalarsMap);
     }
 
-    private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
+    /**
+     * Describes the result of serializing a list of {@link DataPatch}es to data structures
+     * that are co-located with the code that accesses the data.
+     */
+    static class Literals {
+        /**
+         * Map from scalar data indexes to the position of the scalar data in {@link #scalars}.
+         */
+        final int[] scalarsMap;
+
+        /**
+         * Serialized scalar literals.
+         */
+        final byte[] scalars;
+
+        /**
+         * The object literals.
+         */
+        final Object[] objects;
+
+        /**
+         * The largest alignment requirement of any data in {@link #scalars}. This will be
+         * 0 if there are no alignment requirements.
+         */
+        final int scalarsAlignment;
+
+        public Literals(Object[] objects, final byte[] scalars, int[] scalarsMap, int scalarsAlignment) {
+            this.objects = objects;
+            this.scalars = scalars;
+            this.scalarsMap = scalarsMap;
+            this.scalarsAlignment = scalarsAlignment;
+        }
+
+        /**
+         * Relocates the scalar literals by shifting the contents of {@link #scalars} by {@code delta}
+         * to the right. This assumes that at least {@code delta} padding was put into the end of {@link #scalars}.
+         */
+        void relocateScalars(int delta) {
+            assert delta > 0;
+            for (int i = 0; i < scalarsMap.length; i++) {
+                if (scalarsMap[i] >= 0) {
+                    scalarsMap[i] += delta;
+                }
+            }
+            for (int i = scalars.length - 1; i >= delta; --i) {
+                scalars[i] = scalars[i - delta];
+            }
+        }
+    }
+
+    private Literals serializeLiterals(CiTargetMethod ciTargetMethod) {
+        ByteArrayOutputStream scalarsBuffer = new ByteArrayOutputStream();
+        List<Object> objectsBuffer = new ArrayList<Object>(ciTargetMethod.dataReferences.size());
         Endianness endianness = platform().endianness();
-        int[] relativeDataPos = new int[ciTargetMethod.dataReferences.size()];
+        int[] scalarsMap = new int[ciTargetMethod.dataReferences.size()];
         int z = 0;
-        int currentPos = 0;
+        int currentScalarsPos = 0;
+        int scalarsAlignment = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
             final CiConstant data = site.constant;
-            relativeDataPos[z] = currentPos;
-            if (site.alignment != 0) {
-                currentPos = (currentPos + (site.alignment - 1)) & ~(site.alignment - 1);
+            if (!data.kind.isObject()) {
+                scalarsMap[z] = currentScalarsPos;
+                if (site.alignment != 0) {
+                    currentScalarsPos = (currentScalarsPos + (site.alignment - 1)) & ~(site.alignment - 1);
+                    if (site.alignment > scalarsAlignment) {
+                        scalarsAlignment = site.alignment;
+                    }
+                }
+            } else {
+                scalarsMap[z] = -1;
             }
             try {
                 switch (data.kind) {
                     case Double:
-                        endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
-                        currentPos += 8;
+                        endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
+                        currentScalarsPos += 8;
                         break;
 
                     case Float:
-                        endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
-                        currentPos += 4;
+                        endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
+                        currentScalarsPos += 4;
                         break;
 
                     case Int:
-                        endianness.writeInt(output, data.asInt());
-                        currentPos += 4;
+                        endianness.writeInt(scalarsBuffer, data.asInt());
+                        currentScalarsPos += 4;
                         break;
 
                     case Long:
-                        endianness.writeLong(output, data.asLong());
-                        currentPos += 8;
+                        endianness.writeLong(scalarsBuffer, data.asLong());
+                        currentScalarsPos += 8;
                         break;
 
                     case Object:
-                        objectReferences.add(data.asObject());
+                        objectsBuffer.add(data.asObject());
                         break;
 
                     default:
@@ -562,17 +628,20 @@ public abstract class TargetMethod extends MemoryRegion {
             } catch (IOException e) {
                 throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
             }
-
-            // Align on double word boundary
-            while (currentPos % (Platform.platform().wordWidth().numberOfBytes * 2) != 0) {
-                output.write(0);
-                currentPos++;
-            }
-
             z++;
         }
 
-        return relativeDataPos;
+        final int guaranteedAlignment = Word.size();
+        int padding = scalarsAlignment - guaranteedAlignment;
+        while (padding > 0) {
+            scalarsBuffer.write(0);
+            padding--;
+        }
+
+        byte[] scalars = scalarsBuffer.toByteArray();
+        Object[] objects = objectsBuffer.toArray();
+
+        return new Literals(objects, scalars, scalarsMap, scalarsAlignment);
     }
 
     private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
@@ -591,8 +660,6 @@ public abstract class TargetMethod extends MemoryRegion {
         }
 
         int objectReferenceIndex = 0;
-        int refSize = Platform.platform().wordWidth().numberOfBytes;
-
         int z = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
 
@@ -606,7 +673,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     break;
 
                 case Object:
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * refSize - site.pcOffset).toInt());
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * Word.size() - site.pcOffset).toInt());
                     objectReferenceIndex++;
                     break;
 
@@ -712,11 +779,11 @@ public abstract class TargetMethod extends MemoryRegion {
      * Completes the definition of this target method as the result of compilation.
      *
      * @param scalarLiterals a byte array encoding the scalar data accessed by this target via code relative offsets
-     * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
+     * @param objectLiterals an object array encoding the object references accessed by this target via code relative
      *            offsets
      * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first {@code this.code.length} bytes of {@code codeBuffer}.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, byte[] codeBuffer) {
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
 
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
@@ -726,9 +793,9 @@ public abstract class TargetMethod extends MemoryRegion {
             System.arraycopy(scalarLiterals, 0, this.scalarLiterals, 0, this.scalarLiterals.length);
         }
 
-        // Copy reference literals
-        if (referenceLiterals != null && referenceLiterals.length > 0) {
-            System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
+        // Copy object literals
+        if (objectLiterals != null && objectLiterals.length > 0) {
+            System.arraycopy(objectLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }
 
         // now copy the code
