@@ -55,7 +55,7 @@ public abstract class ValueNode extends Node implements StampProvider {
         return stamp;
     }
 
-    protected void setStamp(Stamp stamp) {
+    /*protected*/ public void setStamp(Stamp stamp) {
         this.stamp = stamp;
     }
 

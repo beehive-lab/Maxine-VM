@@ -26,18 +26,16 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.runtime.*;
 /**
  * A simple evacuator that evacuates only from one space to another, without aging.
  * The evacuator is parameterized with two heap space.
  *
  * TODO: move allocation and cfotable update code into a wrapper of the FirsFitMarkSweepSpace.
  * The wrapper keeps track of survivor ranges and update the remembered set (mostly the cfo table).
- * This makes the evacuator independent of the detail of survivor rangestracking and imprecise rset subtleties.
+ * This makes the evacuator independent of the detail of survivor ranges tracking and imprecise rset subtleties.
  */
-public final class NoAgingEvacuator extends Evacuator  {
+public final class NoAgingEvacuator extends Evacuator {
     /**
      * Heap Space that is being evacuated.
      */
@@ -216,9 +214,6 @@ public final class NoAgingEvacuator extends Evacuator  {
             lastOverflowAllocatedRangeStart = cell;
         }
         lastOverflowAllocatedRangeEnd = cell.plus(size);
-        if (MaxineVM.isDebug()) {
-            FatalError.check(CardFirstObjectTable.needsUpdate(cell, lastOverflowAllocatedRangeEnd), "large objects must be greater than a singe card");
-        }
         cfoTable.set(cell, lastOverflowAllocatedRangeEnd);
         return cell;
     }
@@ -241,9 +236,7 @@ public final class NoAgingEvacuator extends Evacuator  {
             newTop = top.plus(size);
         }
         top = newTop;
-        if (CardFirstObjectTable.needsUpdate(cell, top)) {
-            cfoTable.set(cell, top);
-        }
+        cfoTable.set(cell, top);
         return cell;
     }
 
