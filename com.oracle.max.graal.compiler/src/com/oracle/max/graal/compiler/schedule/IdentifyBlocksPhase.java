@@ -33,6 +33,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.loop.*;
 import com.oracle.max.graal.nodes.virtual.*;
+import com.sun.cri.ci.*;
 
 
 public class IdentifyBlocksPhase extends Phase {
@@ -532,7 +533,14 @@ public class IdentifyBlocksPhase extends Phase {
                 }
             }
             if (canNotMove) {
-                assert !(b.lastNode() instanceof ControlSplitNode);
+                // (cwi) this was the assertion commented out below.  However, it is failing frequently when the
+                // scheduler is used for debug printing in early compiler phases. This was annoying during debugging
+                // when an excpetion breakpoint is set for assertion errors, so I changed it to a bailout.
+                if (b.lastNode() instanceof ControlSplitNode) {
+                    throw new CiBailout("");
+                }
+                //assert !(b.lastNode() instanceof ControlSplitNode);
+
                 //b.setLastNode(lastSorted);
             } else {
                 sortedInstructions.remove(b.lastNode());
