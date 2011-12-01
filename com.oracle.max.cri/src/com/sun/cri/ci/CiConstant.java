@@ -466,4 +466,34 @@ public final class CiConstant extends CiValue {
         }
         return new CiConstant(CiKind.Object, o);
     }
+
+    /**
+     * Creates a boxed constant for the given kind from an Object.
+     * The object needs to be of the Java boxed type corresponding to the kind.
+     * @param kind the kind of the constant to create
+     * @param value the Java boxed value: a Byte instance for CiKind Byte, etc.
+     * @return the boxed copy of {@code value}
+     */
+    public static CiConstant forBoxed(CiKind kind, Object value) {
+        switch (kind) {
+            case Byte:
+                return forByte((Byte) value);
+            case Char:
+                return forChar((Character) value);
+            case Short:
+                return forShort((Short) value);
+            case Int:
+                return forInt((Integer) value);
+            case Long:
+                return forLong((Long) value);
+            case Float:
+                return forFloat((Float) value);
+            case Double:
+                return forDouble((Double) value);
+            case Object:
+                return forObject(value);
+            default:
+                throw new RuntimeException("cannot create CiConstant for boxed " + kind + " value");
+        }
+    }
 }
