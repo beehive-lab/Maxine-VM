@@ -27,6 +27,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
@@ -88,7 +89,7 @@ public class CanonicalizerPhase extends Phase {
 //       X: must not happen (checked with assertions)
                     if (node instanceof FloatingNode) {
                         // case 1
-                        assert canonical == null || canonical instanceof FloatingNode || (canonical instanceof FixedNode && canonical.predecessor() != null);
+                        assert canonical == null || canonical instanceof FloatingNode || (canonical instanceof FixedNode && canonical.predecessor() != null) || canonical instanceof ReadNode : canonical;
                         node.replaceAndDelete(canonical);
                     } else {
                         assert node instanceof FixedNode && node.predecessor() != null : node + " -> " + canonical + " : node should be fixed & connected (" + node.predecessor() + ")";
