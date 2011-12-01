@@ -159,7 +159,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         this.recursionCount = recursionCount;
 
         if (ownerThread.isOnWaitersList()) {
-            removeFromWaitingList(ownerThread);
+            removeFromWaitingList(ownerThread, null);
         } else {
             assert notifiedThreads > 0;
             notifiedThreads--;
@@ -183,40 +183,58 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
         if (all) {
             while (waitingThreads != null) {
-                notifyAndRemove(waitingThreads);
+                notifyAndRemove(waitingThreads, null);
             }
-        } else {
-            if (waitingThreads != null) {
-                notifyAndRemove(waitingThreads);
+        } else if (waitingThreads != null) {
+            // Notify the last thread of the waiting threads list, i.e., the thread that has been waiting longest.
+            // We cannot notify the first thread of the list because some poorly programmed concurrent benchmarks
+            // are deadlocking in this case: Notify always wakes up a monitoring thread that calls wait immediately,
+            // and the threads actually performing a workload are never notified and thus starved.
+            VmThread prev = null;
+            VmThread cur = waitingThreads;
+            while (cur.nextWaitingThread != null) {
+                prev = cur;
+                cur = cur.nextWaitingThread;
             }
+            notifyAndRemove(cur, prev);
         }
         traceEndMonitorNotify(currentThread);
     }
 
-    private void notifyAndRemove(VmThread waiter) {
-        removeFromWaitingList(waiter);
+    private void notifyAndRemove(VmThread waiter, VmThread previous) {
+        removeFromWaitingList(waiter, previous);
         notifiedThreads++;
         waiter.setState(Thread.State.BLOCKED);
         waiter.waitingCondition().threadNotify(false);
     }
 
-    private void removeFromWaitingList(VmThread toRemove) {
-        // Remove the thread from the waitingThreads list
+    /**
+     * Remove a thread from the waitingThreads list. If the previous thread in the list is specified, then
+     * the removal is performed in constant time.  Otherwise, the whole list of waiting threads might have
+     * to be searched.
+     *
+     * @param toRemove The thread to be removed from the list.
+     * @param previous The previous thread, if available.
+     */
+    private void removeFromWaitingList(VmThread toRemove, VmThread previous) {
         if (toRemove == waitingThreads) {
             // Common case: remove the head of the list
             waitingThreads = toRemove.nextWaitingThread;
             toRemove.unlinkFromWaitersList();
         } else {
-            // Must now search the list and remove thread
-            VmThread previous = waitingThreads;
-            VmThread waiter = previous.nextWaitingThread;
-            while (waiter != toRemove) {
-                if (waiter == null) {
-                    throw FatalError.unexpected("Thread woken from wait not in waiting threads list");
+            if (previous == null) {
+                // Must now search the list and remove thread
+                previous = waitingThreads;
+                VmThread waiter = previous.nextWaitingThread;
+                while (waiter != toRemove) {
+                    if (waiter == null) {
+                        throw FatalError.unexpected("Thread woken from wait not in waiting threads list");
+                    }
+                    previous = waiter;
+                    waiter = waiter.nextWaitingThread;
                 }
-                previous = waiter;
-                waiter = waiter.nextWaitingThread;
             }
+            assert previous.nextWaitingThread == toRemove;
             previous.nextWaitingThread = toRemove.nextWaitingThread;
             toRemove.unlinkFromWaitersList();
         }

@@ -112,7 +112,7 @@ public class JavaMonitorManager {
 
     private static int numberOfBindableMonitors = 0;
 
-    private static boolean inGlobalSafePoint = false;
+    private static boolean inGlobalSafepoint = false;
 
     /**
      * Lockword rewriting for objects in the process of being unbound is delegated to an UnboundMiscWordWriter.
@@ -321,7 +321,7 @@ public class JavaMonitorManager {
      */
     public static ManagedMonitor bindMonitor(Object object) {
         ManagedMonitor monitor;
-        if (inGlobalSafePoint) {
+        if (inGlobalSafepoint) {
             monitor = takeFromUnboundList();
         } else {
             synchronized (LOCK) {
@@ -358,7 +358,7 @@ public class JavaMonitorManager {
     public static void unbindMonitor(JavaMonitor monitor) {
         final ManagedMonitor bindableMonitor = (ManagedMonitor) monitor;
         bindableMonitor.reset();
-        if (inGlobalSafePoint) {
+        if (inGlobalSafepoint) {
             addToUnboundList(bindableMonitor);
         } else {
             synchronized (LOCK) {
@@ -428,7 +428,7 @@ public class JavaMonitorManager {
      * garbage collection has started.
      */
     public static void beforeGarbageCollection() {
-        inGlobalSafePoint = true;
+        inGlobalSafepoint = true;
         unbindUnownedMonitors();
     }
 
@@ -438,7 +438,7 @@ public class JavaMonitorManager {
      */
     public static void afterGarbageCollection() {
         refreshAllBindings();
-        inGlobalSafePoint = false;
+        inGlobalSafepoint = false;
     }
 
     private static class ProtectedMonitorGatherer implements Pointer.Procedure {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.ext;
+package com.sun.max.vm.heap.gcx;
 
-import com.oracle.max.graal.compiler.graphbuilder.*;
-import com.oracle.max.graal.nodes.*;
-import com.sun.cri.bytecode.*;
+import com.sun.max.unsafe.*;
 
-public interface ExtendedBytecodeHandler {
-    boolean handle(int opcode, BytecodeStream s, StructuredGraph graph, FrameStateBuilder frameStateBuilder, GraphBuilderTool tool);
+/**
+ * Interface implemented by components of a heap management that requires a fix amount of memory to cover
+ * a contiguous range of virtual memory. This interface concerns components that have space requirements dependent on the
+ * actual amount of contiguous space that is under control.
+ * Example of components include tracing algorithm that use an external mark bitmap, card tables, etc.
+ *
+ */
+public interface HeapManagementMemoryRequirement {
+    /**
+     * Return the space required to cover a contiguous range of virtual memory.
+     * @param maxCoveredAreaSize the size, in bytes, of the covered contiguous range of virtual memory.
+     * @return
+     */
+    Size memoryRequirement(Size maxCoveredAreaSize);
 }

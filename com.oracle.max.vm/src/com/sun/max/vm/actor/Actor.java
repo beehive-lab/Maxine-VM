@@ -98,7 +98,6 @@ public abstract class Actor {
      * Adoption of flags is a union operation with the existing flags of the substitutee.
      */
     public static final int SUBSTITUTION_ADOPTED_FLAGS =
-        UNSAFE |
         FOLD |
         INLINE |
         NEVER_INLINE;

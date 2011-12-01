@@ -30,6 +30,7 @@ public class Main {
     public static final int N = 10000;
 
     public static void main(String[] args) {
+        testSafeAddLoop();
         long start = System.currentTimeMillis();
         System.out.println("result=" + testSafeAddLoop());
         System.out.println("time=" + (System.currentTimeMillis() - start) + "ms");

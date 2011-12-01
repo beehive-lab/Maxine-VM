@@ -225,7 +225,7 @@ public class CanonicalizerPhase extends Phase {
                 node.replaceFirstInput(input, null);
             } else {
                 for (Node usage : node.usages().snapshot()) {
-                    if (usage instanceof FloatingNode && !usage.isDeleted()) {
+                    if ((usage instanceof FloatingNode || usage instanceof CallTargetNode) && !usage.isDeleted()) {
                         killNonCFG(usage, node);
                     }
                 }

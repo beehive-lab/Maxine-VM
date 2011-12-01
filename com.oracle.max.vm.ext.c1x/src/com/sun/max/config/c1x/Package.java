@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -45,7 +44,7 @@ public class Package extends BootImagePackage {
         public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
             objectMap.put(TTY.out(), new LogStream(Log.os));
             if (C1XOptions.PrintCFGToFile) {
-                objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
+                objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
             }
         }
     }

@@ -30,7 +30,6 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
@@ -109,12 +108,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
-    private ExtendedBytecodeHandler extendedBytecodeHandler;
-
-    public void setExtendedBytecodeHandler(ExtendedBytecodeHandler extendedBytecodeHandler) {
-        this.extendedBytecodeHandler = extendedBytecodeHandler;
-    }
-
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
         this(runtime, method, null);
     }
@@ -181,9 +174,9 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         lastInstr = graph.start();
         if (isSynchronized(method.accessFlags())) {
             // add a monitor enter to the start block
-            graph.start().setStateAfter(frameState.create(FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI));
+            graph.start().setStateAfter(frameState.create(FrameState.BEFORE_BCI));
             methodSynchronizedObject = synchronizedObject(frameState, method);
-            lastInstr = genMonitorEnter(methodSynchronizedObject, FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
+            lastInstr = genMonitorEnter(methodSynchronizedObject);
         }
 
         // finish the start block
@@ -348,10 +341,10 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private BeginNode handleException(ValueNode exceptionObject, int bci) {
-        assert bci == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI || bci == bci() : "invalid bci";
+        assert bci == FrameState.BEFORE_BCI || bci == bci() : "invalid bci";
 
         if (GraalOptions.UseExceptionProbability && method.invocationCount() > GraalOptions.MatureInvocationCount) {
-            if (bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI && exceptionObject == null && method.exceptionProbability(bci) == 0) {
+            if (bci != FrameState.BEFORE_BCI && exceptionObject == null && method.exceptionProbability(bci) == 0) {
                 return null;
             }
         }
@@ -671,13 +664,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode exception = frameState.apop();
         FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(exception, false))));
         append(node);
-
-        FixedNode entry = handleException(exception, bci);
-        if (entry != null) {
-            append(entry);
-        } else {
-            appendGoto(createTarget(unwindBlock(bci), frameState.duplicateWithException(bci, exception)));
-        }
+        append(handleException(exception, bci));
     }
 
     private RiType lookupType(int cpi, int bytecode) {
@@ -1113,7 +1100,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         appendGoto(createTarget(returnBlock(bci()), frameState));
     }
 
-    private MonitorEnterNode genMonitorEnter(ValueNode x, int bci) {
+    private MonitorEnterNode genMonitorEnter(ValueNode x) {
         int lockNumber = frameState.locksSize();
         MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
         frameState.lock(x);
@@ -1121,13 +1108,15 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         return monitorEnter;
     }
 
-    private void genMonitorExit(ValueNode x) {
+    private MonitorExitNode genMonitorExit(ValueNode x) {
         int lockNumber = frameState.locksSize() - 1;
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
-        appendWithBCI(graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0)));
+        MonitorExitNode monitorExit = graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
+        appendWithBCI(monitorExit);
         frameState.unlock();
+        return monitorExit;
     }
 
     private void genJsr(int dest) {
@@ -1393,9 +1382,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private void createUnwindBlock(Block block) {
-        if (Modifier.isSynchronized(method.accessFlags())) {
-            genMonitorExit(methodSynchronizedObject);
-        }
+        synchronizedEpilogue(FrameState.AFTER_EXCEPTION_BCI);
         UnwindNode unwindNode = graph.add(new UnwindNode(frameState.apop()));
         append(unwindNode);
     }
@@ -1408,11 +1395,21 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode x = returnKind == CiKind.Void ? null : frameState.pop(returnKind);
         assert frameState.stackSize() == 0;
 
+        // TODO (gd) remove this when FloatingRead is fixed
         if (Modifier.isSynchronized(method.accessFlags())) {
-            genMonitorExit(methodSynchronizedObject);
+            append(graph.add(new ValueAnchorNode(x)));
         }
+
+        synchronizedEpilogue(FrameState.AFTER_BCI);
         ReturnNode returnNode = graph.add(new ReturnNode(x));
         append(returnNode);
+    }
+
+    private void synchronizedEpilogue(int bci) {
+        if (Modifier.isSynchronized(method.accessFlags())) {
+            MonitorExitNode monitorExit = genMonitorExit(methodSynchronizedObject);
+            monitorExit.setStateAfter(frameState.create(bci));
+        }
     }
 
     private void createExceptionDispatch(ExceptionBlock block) {
@@ -1697,7 +1694,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             case ATHROW         : genThrow(stream.currentBCI()); break;
             case CHECKCAST      : genCheckCast(); break;
             case INSTANCEOF     : genInstanceOf(); break;
-            case MONITORENTER   : genMonitorEnter(frameState.apop(), stream.currentBCI()); break;
+            case MONITORENTER   : genMonitorEnter(frameState.apop()); break;
             case MONITOREXIT    : genMonitorExit(frameState.apop()); break;
             case MULTIANEWARRAY : genNewMultiArray(stream.readCPI()); break;
             case IFNULL         : genIfNull(Condition.EQ); break;
@@ -1707,9 +1704,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                if (extendedBytecodeHandler == null || !extendedBytecodeHandler.handle(opcode, stream, graph, frameState, this)) {
-                    throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
-                }
+                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
         }
         // Checkstyle: resume
     }

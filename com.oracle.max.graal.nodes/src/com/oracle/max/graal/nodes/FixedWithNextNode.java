@@ -41,8 +41,6 @@ public abstract class FixedWithNextNode extends FixedNode {
         next = x;
     }
 
-    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
-
     public FixedWithNextNode(Stamp stamp) {
         super(stamp);
     }

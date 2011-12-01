@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ci;
+package com.sun.max.vm.heap.gcx.gen.mse;
 
-import com.sun.cri.ci.CiAssumptions.ConcreteMethod;
-import com.sun.cri.ci.CiAssumptions.ConcreteSubtype;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
-/**
- * Compiler assumption processor interface between classes implementing set of assumptions and
- * classes needing iteration over assumptions.
- */
-public abstract class CiAssumptionProcessor {
+public class Package extends BootImagePackage {
 
-    /**
-     * Process a unique concrete method assumption.
-     *
-     * @return true if the processor should proceed to next assumption, false if it should stop
-     */
-    public boolean doConcreteMethod(ConcreteMethod cm) {
-        return true;
+    public Package() {
+        registerScheme(HeapScheme.class, GenMSEHeapScheme.class);
     }
-
-    /**
-     * Processes a unique concrete sub-type assumption.
-     *
-     * @return true if the processor should proceed to next assumption, false if it should stop
-     */
-    public boolean doConcreteSubtype(ConcreteSubtype cs) {
-        return true;
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage.equals(this);
     }
 }

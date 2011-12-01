@@ -131,11 +131,10 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
         super(vm, teleSemiSpaceCodeRegion);
         this.teleSemiSpaceCodeRegion = teleSemiSpaceCodeRegion;
         this.codeCache = codeCache;
-        this.entityDescription = "An allocation area for compiled methods in the " + vm.entityName();
+        this.entityDescription = "The managed allocation area " + teleSemiSpaceCodeRegion.getRegionName() + " owned by the VM code cache";
         this.addressToCompilationMap = new AddressToCompilationMap(vm);
         this.objectReferenceManager = new SemispaceCodeCacheRemoteReferenceManager(vm, this);
-        // TODO (mlvdv) put in the right code pointer manager
-        this.codePointerManager = new UnmanagedRemoteCodePointerManager(vm, this);
+        this.codePointerManager = new SemispaceCodeCacheRemoteCodePointerManager(vm, this);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating name=" + teleSemiSpaceCodeRegion.getRegionName());
         Trace.line(TRACE_VALUE, tracePrefix() + "code cache region created for " + teleSemiSpaceCodeRegion.getRegionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
@@ -221,7 +220,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
             if (teleCompilation.teleTargetMethod() == null) {
                 System.out.println(teleCompilation.toString() + "targetmethod=null");
             }
-            if (teleCompilation.teleTargetMethod().isLoaded()) {
+            if (teleCompilation.teleTargetMethod().isCacheLoaded()) {
                 count++;
             }
         }

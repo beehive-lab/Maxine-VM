@@ -422,7 +422,7 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
-        assert pos >= 0 && pos < codeLength() : "pos=" + pos + ", length=" + codeLength() + ", tm=" + toString();
+        assert pos >= 0 && pos < codeLength();
         return CodePointer.from(codeStart.plus(pos));
     }
 
