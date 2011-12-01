@@ -53,7 +53,7 @@ import com.sun.cri.ri.RiType.Representation;
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  */
-public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
+public final class GraphBuilderPhase extends Phase {
 
     /**
      * The minimum value to which {@link GraalOptions#TraceBytecodeParserLevel} must be set to trace
@@ -1213,8 +1213,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         return v;
     }
 
-    @Override
-    public void append(Node node) {
+    private void append(Node node) {
         if (node instanceof FixedNode) {
             append((FixedNode) node);
         } else {
