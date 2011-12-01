@@ -517,7 +517,6 @@ public class InliningUtil {
 
         invoke.node().clearInputs();
         GraphUtil.killCFG(invoke.node());
-        GraphUtil.propagateKill(callTarget, null);
 
 
         // adjust all frame states that were copied
@@ -532,7 +531,7 @@ public class InliningUtil {
         }
 
         if (stateAfter.usages().isEmpty()) {
-            stateAfter.delete();
+            stateAfter.safeDelete();
         }
         return returnValue;
     }

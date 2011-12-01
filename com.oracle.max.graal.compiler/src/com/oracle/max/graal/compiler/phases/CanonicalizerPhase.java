@@ -91,7 +91,7 @@ public class CanonicalizerPhase extends Phase {
                         assert canonical == null || canonical instanceof FloatingNode || (canonical instanceof FixedNode && canonical.predecessor() != null);
                         node.replaceAndDelete(canonical);
                     } else {
-                        assert node instanceof FixedNode && node.predecessor() != null : node + " -> " + canonical + " : node should be Fixed & connected";
+                        assert node instanceof FixedNode && node.predecessor() != null : node + " -> " + canonical + " : node should be fixed & connected (" + node.predecessor() + ")";
                         if (canonical instanceof FixedNode && canonical.predecessor() == null) {
                             // case 2
                             node.replaceAndDelete(canonical);

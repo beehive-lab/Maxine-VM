@@ -450,7 +450,7 @@ public class EscapeAnalysisPhase extends Phase {
                     // nothing to do...
                 } else if (usage instanceof MethodCallTargetNode) {
                     if (usage.usages().size() == 0) {
-                        usage.delete();
+                        usage.safeDelete();
                     } else {
                         invokes.add(((MethodCallTargetNode) usage).invoke());
                     }

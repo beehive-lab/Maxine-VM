@@ -25,6 +25,8 @@ package com.oracle.max.graal.graph;
 import java.lang.annotation.*;
 import java.util.*;
 
+import com.sun.corba.se.impl.ior.*;
+
 
 /**
  * This class is the base class for all nodes, it represent a node which can be inserted in a {@link Graph}.<br>
@@ -47,8 +49,8 @@ import java.util.*;
  */
 public abstract class Node implements Cloneable {
 
-    static final int DELETED_ID = -1;
-    static final int INITIAL_ID = -2;
+    static final int DELETED_ID_START = -1000000000;
+    static final int INITIAL_ID = -1;
     static final int ALIVE_ID_START = 0;
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -143,7 +145,7 @@ public abstract class Node implements Cloneable {
     }
 
     public boolean isDeleted() {
-        return id == DELETED_ID;
+        return id <= DELETED_ID_START;
     }
 
     public boolean isAlive() {
@@ -299,7 +301,7 @@ public abstract class Node implements Cloneable {
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
-        id = DELETED_ID;
+        id = DELETED_ID_START - id;
         assert isDeleted();
     }
 
