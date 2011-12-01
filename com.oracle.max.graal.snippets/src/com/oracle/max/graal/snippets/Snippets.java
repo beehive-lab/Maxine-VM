@@ -23,17 +23,17 @@
 package com.oracle.max.graal.snippets;
 
 import java.lang.reflect.*;
-import java.util.*;
-
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
+import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -60,39 +60,7 @@ public class Snippets {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
                 RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
-                GraphBuilderPhase graphBuilder = new GraphBuilderPhase(runtime, snippetRiMethod, null, false, true);
-                StructuredGraph graph = new StructuredGraph();
-                graphBuilder.apply(graph, context);
-
-                if (plotGraphs) {
-                    IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-                    observer.printSingleGraph(method.getName(), graph);
-                }
-
-                new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
-
-                Collection<Invoke> invokes = new ArrayList<Invoke>();
-                for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-                    invokes.add(invoke);
-                }
-                for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
-                    invokes.add(invoke);
-                }
-                new InliningPhase(target, runtime, invokes, null, plan).apply(graph, context);
-
-                new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
-
-                if (plotGraphs) {
-                    IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-                    observer.printSingleGraph(method.getName(), graph);
-                }
-                new DeadCodeEliminationPhase().apply(graph, context);
-
-                if (plotGraphs) {
-                    IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-                    observer.printSingleGraph(method.getName(), graph);
-                }
-
+                StructuredGraph graph = buildGraph(runtime, target, plotGraphs, plan, context, pool, snippetRiMethod);
                 RiResolvedMethod targetRiMethod = runtime.getRiMethod(method);
                 targetRiMethod.compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
@@ -110,6 +78,43 @@ public class Snippets {
                 throw new RuntimeException("Error when installing snippet for " + obj, t);
             }
         }
+    }
+
+    private static StructuredGraph buildGraph(GraalRuntime runtime, CiTarget target, boolean plotGraphs, PhasePlan plan, GraalContext context, BoxingMethodPool pool, RiResolvedMethod snippetRiMethod) {
+        StructuredGraph graph = new StructuredGraph();
+        GraphBuilderPhase graphBuilder = new GraphBuilderPhase(runtime, snippetRiMethod, null, false, true);
+        graphBuilder.apply(graph, context);
+
+        if (plotGraphs) {
+            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        }
+
+        new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
+
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.callTarget();
+            RiResolvedMethod targetMethod = callTarget.targetMethod();
+            RiResolvedType holder = targetMethod.holder();
+            if (holder.isSubtypeOf(runtime.getType(SnippetsInterface.class))) {
+                InliningUtil.inline(invoke, buildGraph(runtime, target, plotGraphs, plan, context, pool, targetMethod), true);
+                new CanonicalizerPhase(target, runtime, null).apply(graph);
+            }
+        }
+
+        new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
+
+        if (plotGraphs) {
+            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        }
+        new DeadCodeEliminationPhase().apply(graph, context);
+
+        if (plotGraphs) {
+            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        }
+        return graph;
     }
 
 }

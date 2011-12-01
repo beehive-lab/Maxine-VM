@@ -89,7 +89,6 @@ public class WordTypeRewriterPhase extends Phase {
         } else {
             // TODO(tw): Implement this.
             throw new RuntimeException("must rewrite the full node: " + valueNode + " / " + valueNode.getClass());
-            valueNode.stamp().
         }
 
         // Propagate word kind.
