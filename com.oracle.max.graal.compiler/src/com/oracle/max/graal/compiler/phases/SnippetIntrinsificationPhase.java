@@ -31,6 +31,7 @@ import com.oracle.max.graal.graph.Node.NodeIntrinsic;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -155,7 +156,9 @@ public class SnippetIntrinsificationPhase extends Phase {
                                     assert invokeNode.stateAfter().usages().size() == 1;
                                     invokeNode.stateAfter().delete();
                                     invokeNode.node().replaceAndDelete(invokeNode.next());
-                                    return callTarget.arguments().get(0);
+                                    ValueNode result = callTarget.arguments().get(0);
+                                    GraphUtil.propagateKill(callTarget, null);
+                                    return result;
                                 }
                             }
                         }
