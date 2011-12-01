@@ -27,6 +27,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
@@ -41,7 +42,7 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
     private final RiType type;
     private final int offset;
     private final int accessFlags;
-    private CiConstant constant;
+    private CiConstant constant;                // Constant part only valid for static fields.
 
     public HotSpotField(Compiler compiler, RiResolvedType holder, String name, RiType type, int offset, int accessFlags) {
         super(compiler);
