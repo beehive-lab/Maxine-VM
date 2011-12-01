@@ -57,4 +57,12 @@ public class Package extends BootImagePackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return CompilationBroker.optName().contains("Graal");
     }
+
+    @Override
+    protected boolean includesClass(String className) {
+        if (className.startsWith("com.oracle.max.graal.compiler.tests.")) {
+            return false;
+        }
+        return super.includesClass(className);
+    }
 }

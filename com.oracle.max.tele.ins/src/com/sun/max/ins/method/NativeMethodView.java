@@ -22,7 +22,11 @@
  */
 package com.sun.max.ins.method;
 
+import static com.sun.max.ins.gui.AbstractView.MenuKind.*;
+
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 
@@ -33,22 +37,39 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodView extends MethodView<NativeMethodView> {
 
-    private final MaxExternalCodeRoutine externalCode;
+    private final MaxNativeFunction nativeFunction;
     private MachineCodeViewer machineCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxExternalCodeRoutine externalCode) {
+    public NativeMethodView(Inspection inspection, MethodViewContainer container, MaxNativeFunction externalCode) {
         super(inspection, container);
-        this.externalCode = externalCode;
+        this.nativeFunction = externalCode;
         shortName = inspection().nameDisplay().shortName(externalCode);
         longName = inspection().nameDisplay().longName(externalCode);
-        createTabFrame(container);
+        final InspectorFrame frame = createTabFrame(container);
+        // The default menu operates from the perspective of the parent container.
+        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, container));
+
+        frame.makeMenu(EDIT_MENU);
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
+        memoryMenu.add(views().memory().makeViewAction(externalCode.memoryRegion(), externalCode.entityName(), "View memory for machine code"));
+        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        frame.makeMenu(OBJECT_MENU).add(defaultMenuItems(OBJECT_MENU));
+
+        frame.makeMenu(CODE_MENU).add(defaultMenuItems(CODE_MENU));
+
+        frame.makeMenu(DEBUG_MENU).add(defaultMenuItems(DEBUG_MENU));
+
+        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
     }
 
     @Override
-    public MaxExternalCodeRoutine compilation() {
-        return externalCode;
+    public MaxNativeFunction compilation() {
+        return nativeFunction;
     }
 
     @Override
@@ -68,7 +89,7 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
 
     @Override
     public void createViewContent() {
-        machineCodeViewer =  new JTableMachineCodeViewer(inspection(), this, externalCode);
+        machineCodeViewer =  new JTableMachineCodeViewer(inspection(), this, nativeFunction);
         getContentPane().add(machineCodeViewer);
         pack();
     }

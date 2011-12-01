@@ -24,31 +24,30 @@ package com.sun.max.ins.method;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.method.NativeCodeLibraries.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 
 
-public class NativeLibrarySearchDialog extends FilteredListDialog<LibInfo> {
+public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibrary> {
     @Override
-    protected LibInfo noSelectedObject() {
+    protected MaxNativeLibrary noSelectedObject() {
         return null;
     }
 
     @Override
-    protected LibInfo convertSelectedItem(Object listItem) {
-        return (LibInfo) listItem;
+    protected MaxNativeLibrary convertSelectedItem(Object listItem) {
+        return (MaxNativeLibrary) listItem;
     }
 
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
-        for (LibInfo info : NativeCodeLibraries.getLibs((TeleVM) vm())) {
+        for (MaxNativeLibrary info : vm().externalCode().nativeLibraries()) {
             if (filter.endsWith(" ")) {
-                if (info.path.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
+                if (info.path().equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     listModel.addElement(info);
                 }
-            } else if (info.path.toLowerCase().contains(filter)) {
+            } else if (info.path().toLowerCase().contains(filter)) {
                 listModel.addElement(info);
             }
         }
@@ -65,9 +64,9 @@ public class NativeLibrarySearchDialog extends FilteredListDialog<LibInfo> {
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link NativeCodeLibraries.LibInfo}, null if user canceled.
+     * @return references to the selected instances of {@link TeleNativeCLibraries.LibInfo}, null if user canceled.
      */
-    public static NativeCodeLibraries.LibInfo show(Inspection inspection, String title, String actionName) {
+    public static MaxNativeLibrary show(Inspection inspection, String title, String actionName) {
         final NativeLibrarySearchDialog dialog = new NativeLibrarySearchDialog(inspection, title, actionName);
         dialog.setVisible(true);
         return dialog.selectedObject();

@@ -23,6 +23,7 @@
 package com.sun.max.tele.memory;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.math.*;
 import java.text.*;
 import java.util.*;
@@ -116,19 +117,22 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
      * dependency will cause breakage.
      */
     public static VmHeapAccess make(TeleVM vm) {
-        // TODO (mlvdv) Replace this hard-wired GC-specific dispatch with something more sensible.
         if (vmHeap ==  null) {
             final String heapSchemeName = vm.heapScheme().name();
             TeleHeapScheme teleHeapScheme = null;
-            if (heapSchemeName.equals("SemiSpaceHeapScheme")) {
-                teleHeapScheme = new TeleSemiSpaceHeapScheme(vm);
-            } else if (heapSchemeName.equals("MSHeapScheme")) {
-                teleHeapScheme = new TeleMSHeapScheme(vm);
-            } else if (heapSchemeName.equals("MSEHeapScheme")) {
-                teleHeapScheme = new TeleMSEHeapScheme(vm);
-            } else {
+            try {
+                // Reflect a constructor of a TeleHeapScheme implementation based on the name of the HeapScheme for the inspected VM.
+                // The current convention is: the name of the implementation of a TeleHeapScheme is the heap scheme name prefixed with "Tele" and located in the
+                // same package as the VmHeapAccess..
+                String thisClassName = VmHeapAccess.class.getName();
+                String thisPackageName = thisClassName.substring(0, thisClassName.lastIndexOf("."));
+                Class<?> teleHeapSchemeClass = Class.forName(thisPackageName + ".Tele" + heapSchemeName);
+                Constructor c = teleHeapSchemeClass.getDeclaredConstructor(new Class[]  {TeleVM.class});
+                teleHeapScheme = (TeleHeapScheme) c.newInstance(new Object[] {vm});
+            } catch (Exception e) {
                 teleHeapScheme = new TeleUnknownHeapScheme(vm);
-                TeleWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
+                TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
+                e.printStackTrace();
             }
             vmHeap = new VmHeapAccess(vm, teleHeapScheme);
             Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
@@ -530,7 +534,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     }
 
     public boolean providesHeapRegionInfo() {
-        return teleHeapScheme instanceof TeleMSEHeapScheme;
+        return teleHeapScheme instanceof TeleRegionBasedHeapScheme;
     }
 
     /**

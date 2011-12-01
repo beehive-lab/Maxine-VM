@@ -44,7 +44,7 @@ public class InliningUtil {
     public interface InliningCallback {
         StructuredGraph buildGraph(RiResolvedMethod method);
         double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, Invoke invoke);
-        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete);
+        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl);
     }
 
     public static String methodName(RiResolvedMethod method) {
@@ -81,7 +81,19 @@ public class InliningUtil {
             return (weight < o.weight) ? -1 : (weight > o.weight) ? 1 : 0;
         }
 
-        public abstract void inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback);
+        public abstract boolean canDeopt();
+
+        /**
+         * Performs the inlining described by this object and returns the node that represents the return value of the
+         * inlined method (or null for void methods and methods that have no non-exceptional exit).
+         *
+         * @param graph
+         * @param runtime
+         * @param callback
+         * @return The node that represents the return value, or null for void methods and methods that have no
+         *         non-exceptional exit.
+         */
+        public abstract Node inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback);
     }
 
     /**
@@ -96,18 +108,24 @@ public class InliningUtil {
         }
 
         @Override
-        public void inline(StructuredGraph compilerGraph, GraalRuntime runtime, InliningCallback callback) {
-            InliningUtil.inline(invoke, intrinsicGraph, true);
+        public Node inline(StructuredGraph compilerGraph, GraalRuntime runtime, InliningCallback callback) {
+            return InliningUtil.inline(invoke, intrinsicGraph, true);
         }
 
         @Override
         public String toString() {
             return "intrinsic inlining " + CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
         }
+
+        @Override
+        public boolean canDeopt() {
+            return false;
+        }
     }
 
     /**
-     * Represents an inlining opportunity where the compiler can statically determine a monomorphic target method and therefore is able to determine the called method exactly.
+     * Represents an inlining opportunity where the compiler can statically determine a monomorphic target method and
+     * therefore is able to determine the called method exactly.
      */
     private static class ExactInlineInfo extends InlineInfo {
         public final RiResolvedMethod concrete;
@@ -118,7 +136,7 @@ public class InliningUtil {
         }
 
         @Override
-        public void inline(StructuredGraph compilerGraph, GraalRuntime runtime, InliningCallback callback) {
+        public Node inline(StructuredGraph compilerGraph, GraalRuntime runtime, InliningCallback callback) {
             StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(concrete);
             if (graph != null) {
                 if (GraalOptions.TraceInlining) {
@@ -131,18 +149,23 @@ public class InliningUtil {
                 graph = callback.buildGraph(concrete);
             }
 
-            InliningUtil.inline(invoke, graph, true);
+            return InliningUtil.inline(invoke, graph, true);
         }
 
         @Override
         public String toString() {
             return "exact inlining " + CiUtil.format("%H.%n(%p):%r", concrete, false);
         }
+
+        @Override
+        public boolean canDeopt() {
+            return false;
+        }
     }
 
     /**
-     * Represents an inlining opportunity for which profiling information suggests a monomorphic receiver, but for which the receiver type cannot be proven.
-     * A type check guard will be generated if this inlining is performed.
+     * Represents an inlining opportunity for which profiling information suggests a monomorphic receiver, but for which
+     * the receiver type cannot be proven. A type check guard will be generated if this inlining is performed.
      */
     private static class TypeGuardInlineInfo extends ExactInlineInfo {
 
@@ -156,7 +179,7 @@ public class InliningUtil {
         }
 
         @Override
-        public void inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback) {
+        public Node inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback) {
             IsTypeNode isType = graph.unique(new IsTypeNode(invoke.callTarget().receiver(), type));
             FixedGuardNode guard = graph.add(new FixedGuardNode(isType));
             assert invoke.predecessor() != null;
@@ -166,38 +189,51 @@ public class InliningUtil {
             if (GraalOptions.TraceInlining) {
                 TTY.println("inlining with type check, type probability: %5.3f", probability);
             }
-            super.inline(graph, runtime, callback);
+            return super.inline(graph, runtime, callback);
         }
 
         @Override
         public String toString() {
             return "type-checked inlining " + CiUtil.format("%H.%n(%p):%r", concrete, false);
         }
+
+        @Override
+        public boolean canDeopt() {
+            return true;
+        }
     }
 
     /**
-     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method, but for which an assumption has to be registered because of non-final classes.
+     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method,
+     * but for which an assumption has to be registered because of non-final classes.
      */
     private static class AssumptionInlineInfo extends ExactInlineInfo {
+        public final RiResolvedType context;
 
-        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
+        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedType context, RiResolvedMethod concrete) {
             super(invoke, weight, level, concrete);
+            this.context = context;
         }
 
         @Override
-        public void inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback) {
+        public Node inline(StructuredGraph graph, GraalRuntime runtime, InliningCallback callback) {
             if (GraalOptions.TraceInlining) {
                 String targetName = CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
-                TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
+                TTY.println("recording concrete method assumption: %s on receiver type %s -> %s", targetName, context, concreteName);
             }
-            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), concrete);
-            super.inline(graph, runtime, callback);
+            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), context, concrete);
+            return super.inline(graph, runtime, callback);
         }
 
         @Override
         public String toString() {
             return "inlining with assumption " + CiUtil.format("%H.%n(%p):%r", concrete, false);
+        }
+
+        @Override
+        public boolean canDeopt() {
+            return true;
         }
     }
 
@@ -218,7 +254,7 @@ public class InliningUtil {
 
         if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
             if (checkTargetConditions(callTarget.targetMethod(), runtime)) {
-                double weight = callback.inliningWeight(parent, callTarget.targetMethod(), invoke);
+                double weight = callback == null ? 0 : callback.inliningWeight(parent, callTarget.targetMethod(), invoke);
                 return new ExactInlineInfo(invoke, weight, level, callTarget.targetMethod());
             }
             return null;
@@ -228,7 +264,7 @@ public class InliningUtil {
             assert exact.isSubtypeOf(callTarget.targetMethod().holder()) : exact + " subtype of " + callTarget.targetMethod().holder();
             RiResolvedMethod resolved = exact.resolveMethodImpl(callTarget.targetMethod());
             if (checkTargetConditions(resolved, runtime)) {
-                double weight = callback.inliningWeight(parent, resolved, invoke);
+                double weight = callback == null ? 0 : callback.inliningWeight(parent, resolved, invoke);
                 return new ExactInlineInfo(invoke, weight, level, resolved);
             }
             return null;
@@ -250,8 +286,8 @@ public class InliningUtil {
         RiResolvedMethod concrete = holder.uniqueConcreteMethod(callTarget.targetMethod());
         if (concrete != null) {
             if (checkTargetConditions(concrete, runtime)) {
-                double weight = callback.inliningWeight(parent, concrete, invoke);
-                return new AssumptionInlineInfo(invoke, weight, level, concrete);
+                double weight = callback == null ? 0 : callback.inliningWeight(parent, concrete, invoke);
+                return new AssumptionInlineInfo(invoke, weight, level, holder, concrete);
             }
             return null;
         }
@@ -261,7 +297,7 @@ public class InliningUtil {
                 // type check and inlining...
                 concrete = profile.types[0].resolveMethodImpl(callTarget.targetMethod());
                 if (concrete != null && checkTargetConditions(concrete, runtime)) {
-                    double weight = callback.inliningWeight(parent, concrete, invoke);
+                    double weight = callback == null ? 0 : callback.inliningWeight(parent, concrete, invoke);
                     return new TypeGuardInlineInfo(invoke, weight, level, concrete, profile.types[0], profile.probabilities[0]);
                 }
                 return null;
@@ -346,8 +382,9 @@ public class InliningUtil {
      * @param invoke the invoke that will be replaced
      * @param inlineGraph the graph that the invoke will be replaced with
      * @param receiverNullCheck true if a null check needs to be generated for non-static inlinings, false if no such check is required
+     * @return The node that represents the return value, or null for void methods and methods that have no non-exceptional exit.
      */
-    public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
+    public static Node inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         NodeInputList<ValueNode> parameters = invoke.callTarget().arguments();
         Graph graph = invoke.node().graph();
 
@@ -394,60 +431,14 @@ public class InliningUtil {
         }
         invoke.node().replaceAtPredecessors(invokeReplacement);
 
-        FrameState stateBefore = null;
-        double invokeProbability = invoke.node().probability();
-        for (Node node : duplicates.values()) {
-            if (GraalOptions.ProbabilityAnalysis) {
-                if (node instanceof FixedNode) {
-                    FixedNode fixed = (FixedNode) node;
-                    fixed.setProbability(fixed.probability() * invokeProbability);
-                }
-            }
-            if (node instanceof FrameState) {
-                FrameState frameState = (FrameState) node;
-                if (frameState.bci == FrameState.BEFORE_BCI) {
-                    if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters.toArray(new ValueNode[parameters.size()]));
-                    }
-                    frameState.replaceAndDelete(stateBefore);
-                } else if (frameState.bci == FrameState.AFTER_BCI) {
-                    frameState.replaceAndDelete(stateAfter);
-                }
-            }
-        }
-
-        int monitorIndexDelta = stateAfter.locksSize();
-        if (monitorIndexDelta > 0) {
-            for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
-                if (entry.getValue() instanceof AccessMonitorNode) {
-                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
-                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
-                }
-            }
-        }
-
-        if (returnNode != null) {
-            for (Node usage : invoke.node().usages().snapshot()) {
-                if (returnNode.result() instanceof LocalNode) {
-                    usage.replaceFirstInput(invoke.node(), replacements.get(returnNode.result()));
-                } else {
-                    usage.replaceFirstInput(invoke.node(), duplicates.get(returnNode.result()));
-                }
-            }
-            Node returnDuplicate = duplicates.get(returnNode);
-            returnDuplicate.clearInputs();
-            Node n = invoke.next();
-            invoke.setNext(null);
-            returnDuplicate.replaceAndDelete(n);
-        }
-
+        FrameState stateAtExceptionEdge = null;
         if (invoke instanceof InvokeWithExceptionNode) {
             InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
             if (unwindNode != null) {
                 assert unwindNode.predecessor() != null;
                 assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
                 ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
-
+                stateAtExceptionEdge = obj.stateAfter();
                 UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
                 for (Node usage : obj.usages().snapshot()) {
                     usage.replaceFirstInput(obj, unwindDuplicate.exception());
@@ -468,8 +459,66 @@ public class InliningUtil {
             }
         }
 
+        FrameState stateBefore = null;
+        double invokeProbability = invoke.node().probability();
+        for (Node node : duplicates.values()) {
+            if (GraalOptions.ProbabilityAnalysis) {
+                if (node instanceof FixedNode) {
+                    FixedNode fixed = (FixedNode) node;
+                    fixed.setProbability(fixed.probability() * invokeProbability);
+                }
+            }
+            if (node instanceof FrameState) {
+                FrameState frameState = (FrameState) node;
+                if (frameState.bci == FrameState.BEFORE_BCI) {
+                    if (stateBefore == null) {
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.node().kind(), parameters.toArray(new ValueNode[parameters.size()]));
+                    }
+                    frameState.replaceAndDelete(stateBefore);
+                } else if (frameState.bci == FrameState.AFTER_BCI) {
+                    frameState.replaceAndDelete(stateAfter);
+                } else if (frameState.bci == FrameState.AFTER_EXCEPTION_BCI) {
+                    assert stateAtExceptionEdge != null;
+                    frameState.replaceAndDelete(stateAtExceptionEdge);
+                }
+            }
+        }
+
+        int monitorIndexDelta = stateAfter.locksSize();
+        if (monitorIndexDelta > 0) {
+            for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
+                if (entry.getValue() instanceof AccessMonitorNode) {
+                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
+                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
+                }
+            }
+        }
+
+        Node returnValue = null;
+        if (returnNode != null) {
+            if (returnNode.result() instanceof LocalNode) {
+                returnValue = replacements.get(returnNode.result());
+            } else {
+                returnValue = duplicates.get(returnNode.result());
+            }
+            for (Node usage : invoke.node().usages().snapshot()) {
+                if (returnNode.result() instanceof LocalNode) {
+                    usage.replaceFirstInput(invoke.node(), returnValue);
+                } else {
+                    usage.replaceFirstInput(invoke.node(), returnValue);
+                }
+            }
+            Node returnDuplicate = duplicates.get(returnNode);
+            returnDuplicate.clearInputs();
+            Node n = invoke.next();
+            invoke.setNext(null);
+            returnDuplicate.replaceAndDelete(n);
+        }
+
         invoke.node().clearInputs();
         GraphUtil.killCFG(invoke.node());
+        GraphUtil.propagateKill(callTarget, null);
+
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
@@ -485,5 +534,6 @@ public class InliningUtil {
         if (stateAfter.usages().isEmpty()) {
             stateAfter.delete();
         }
+        return returnValue;
     }
 }

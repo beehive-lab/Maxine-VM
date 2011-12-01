@@ -193,7 +193,6 @@ public final class GraalCompilation {
 
             if (graph.start().next() == null) {
                 GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(compiler.runtime, method, stats);
-                graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
                 graphBuilderPhase.apply(graph, context());
 
                 plan.runPhases(PhasePosition.AFTER_PARSING, graph, context());
@@ -238,7 +237,7 @@ public final class GraalCompilation {
                 if (GraalOptions.OptCanonicalizer) {
                     new CanonicalizerPhase(compiler.target, compiler.runtime, true, assumptions).apply(graph, context());
                 }
-                new SafepointPoolingEliminationPhase().apply(graph, context());
+                new SafepointPollingEliminationPhase().apply(graph, context());
             }
 
             if (GraalOptions.EscapeAnalysis && !plan.isPhaseDisabled(EscapeAnalysisPhase.class)) {

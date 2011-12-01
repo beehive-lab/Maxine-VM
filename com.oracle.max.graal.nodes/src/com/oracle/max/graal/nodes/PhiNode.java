@@ -149,23 +149,29 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         values.remove(index);
     }
 
-    @Override
-    public Node canonical(CanonicalizerTool tool) {
-        if (valueCount() == 1) {
-            return valueAt(0);
-        }
-
+    public ValueNode singleValue() {
         ValueNode differentValue = null;
         for (ValueNode n : values()) {
             if (n != this) {
                 if (differentValue == null) {
                     differentValue = n;
                 } else if (differentValue != n) {
-                    return canonicalizeMaterializationPhi();
+                    return null;
                 }
             }
         }
         return differentValue;
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        ValueNode singleValue = singleValue();
+
+        if (singleValue != null) {
+            return singleValue;
+        }
+
+        return canonicalizeMaterializationPhi();
     }
 
     private Node canonicalizeMaterializationPhi() {

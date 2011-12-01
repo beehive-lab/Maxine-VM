@@ -72,6 +72,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     private HeapRegionList tlabAllocationRegions;
 
     /**
+     * Sorted list used to keep track of regions with live objects that are unavailable for allocation.
+     */
+    private HeapRegionList unavailableRegions;
+
+    /**
      * Region currently used for tlab allocation.
      */
     private int currentTLABAllocatingRegion;
@@ -692,6 +697,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         Size regionSize = Size.fromInt(regionSizeInBytes);
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        unavailableRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         int initialNumberOfRegions = numberOfRegions(minSize);
         int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false, true);
         if (result != initialNumberOfRegions) {
@@ -705,6 +711,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
         // Set the iterable to the list of committed regions. This is the default. Any exception to this should
         // reset to the committed region list when done.
+        // WARNING: if the account is shared between multiple heap space, this may be problematic as regions not used by
+        // this heap space will be seen during iterations.
         regionsRangeIterable.initialize(heapAccount.committedRegions());
         regionsRangeIterable.reset();
 
@@ -985,6 +993,18 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     public Size shrinkAfterGC(Size delta) {
         // TODO
         return Size.zero();
+    }
+
+    @Override
+    public void visit(HeapSpaceRangeVisitor visitor) {
+        regionsRangeIterable.initialize(heapAccount.committedRegions());
+        regionsRangeIterable.resetToFirstIterable();
+        while (regionsRangeIterable.hasNext()) {
+            final RegionRange r = regionsRangeIterable.nextIterableRange();
+            final Address start = HeapRegionInfo.fromRegionID(r.firstRegion()).regionStart();
+            final Address end = start.plus(Size.fromInt(r.numRegions()).shiftedLeft(log2RegionSizeInBytes));
+            visitor.visitCells(start, end);
+        }
     }
 
 }

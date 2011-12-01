@@ -50,7 +50,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
     private static final int TRACE_VALUE = 1;
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();
 
-    private final String entityDescription = "An allocation area owned by the VM heap";
+    private final String entityDescription;
     private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
     private final boolean isBootRegion;
     private final MaxEntityMemoryRegion<MaxHeapRegion> memoryRegion;
@@ -67,6 +67,11 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         this.isBootRegion = isBootRegion;
         this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleRuntimeMemoryRegion);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
+        if (isBootRegion) {
+            this.entityDescription = "The boot image area " + memoryRegion.regionName() + " owned by the VM heap";
+        } else {
+            this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
+        }
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 
@@ -81,6 +86,11 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         this.isBootRegion = isBootRegion;
         this.memoryRegion = new FixedHeapRegionMemoryRegion(vm, name, start, nBytes);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
+        if (isBootRegion) {
+            this.entityDescription = "The boot image area " + memoryRegion.regionName() + " owned by the VM heap";
+        } else {
+            this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
+        }
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 

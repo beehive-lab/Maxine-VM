@@ -108,6 +108,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxCodeCache codeCache();
 
     /**
+     * Gets access to information about compiled code in the VM.
+     */
+    MaxExternalCode externalCode();
+
+    /**
      * Gets the manager for locating and managing code related information in the VM.
      * <p>
      * Thread-safe

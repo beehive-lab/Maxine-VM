@@ -69,6 +69,16 @@ public class TTY {
         }
 
         /**
+         * Creates an object that will suppress {@link TTY} for the current thread.
+         * To revert the suppression state to how it was before this call, the
+         * {@link #remove()} method must be called on this filter object.
+         */
+        public Filter() {
+            previous = out();
+            out.set(LogStream.SINK);
+        }
+
+        /**
          * Reverts the suppression state of {@link TTY} to how it was before this object was constructed.
          */
         public void remove() {

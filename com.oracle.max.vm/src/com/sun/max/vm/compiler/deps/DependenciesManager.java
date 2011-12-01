@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -167,14 +168,14 @@ public final class DependenciesManager {
         }
 
         @Override
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
-            RiMethod impl = concreteSubtype.resolveMethodImpl(context);
-            if (impl != method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+            RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
+            if (newImpl != impl) {
                 valid = false;
                 if (TraceDeps) {
-                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(context);
-                    if (context != method) {
-                        sb.append(",").append(method);
+                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(method);
+                    if (method != impl) {
+                        sb.append(",").append(impl);
                     }
                     sb.append("] dependency of " + targetMethod);
                     Log.println(sb.toString());
@@ -208,18 +209,56 @@ public final class DependenciesManager {
         }
     }
 
-    public static Dependencies validateDependencies(CiAssumptions dependencies) {
-        if (dependencies != null) {
-            final DependencyValidator validator = new DependencyValidator();
-            classHierarchyLock.readLock().lock();
-            try {
-                dependencies.visit(validator);
-                return validator.result();
-            } finally {
-                classHierarchyLock.readLock().unlock();
-            }
+    public static Dependencies validateDependencies(CiAssumptions assumptions) {
+        if (assumptions == null) {
+            return null;
         }
-        return null;
+        classHierarchyLock.readLock().lock();
+        try {
+            HashMap<ClassActor, ArrayList<Assumption>> deps = new HashMap<ClassActor, ArrayList<Assumption>>(10);
+            UniqueConcreteMethodSearch ucms = null;
+            int localUCMs = 0;
+            int nonLocalUCMs = 0;
+            for (Assumption a : assumptions) {
+                if (a instanceof ConcreteMethod) {
+                    ConcreteMethod cm = (ConcreteMethod) a;
+                    if (ucms == null) {
+                        ucms = new UniqueConcreteMethodSearch();
+                    }
+                    if (ucms.doIt((ClassActor) cm.context, (MethodActor) cm.impl) != cm.impl) {
+                        return Dependencies.INVALID;
+                    }
+                    add(deps, (ClassActor) cm.context, a);
+                    if (cm.impl == cm.method) {
+                        localUCMs++;
+                    } else {
+                        nonLocalUCMs++;
+                    }
+                } else {
+                    assert a instanceof ConcreteSubtype;
+                    ConcreteSubtype cs = (ConcreteSubtype) a;
+                    final ClassActor context = (ClassActor) cs.context;
+                    final ClassActor subtype = (ClassActor) cs.subtype;
+                    if (context.uniqueConcreteType == subtype.id) {
+                        add(deps, (ClassActor) cs.context, a);
+                    } else {
+                        return Dependencies.INVALID;
+                    }
+                }
+            }
+            return new Dependencies(deps, localUCMs, nonLocalUCMs);
+        } finally {
+            classHierarchyLock.readLock().unlock();
+        }
+    }
+
+    private static void add(HashMap<ClassActor, ArrayList<Assumption>> dependencies, ClassActor type, Assumption a) {
+        ArrayList<Assumption> list = dependencies.get(type);
+        if (list == null) {
+            list = new ArrayList<Assumption>(4);
+            dependencies.put(type, list);
+        }
+        list.add(a);
     }
 
     private static void dump(ClassActor classActor) {

@@ -20,24 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.phases;
+package com.oracle.max.graal.compiler.tests;
 
-import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.graph.iterators.*;
+import java.util.*;
+
+import org.junit.*;
+
+import com.oracle.max.graal.compiler.schedule.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
-public class SafepointPoolingEliminationPhase extends Phase {
+public class GraphScheduleTest extends GraphTest {
+    protected void assertOrderedAfterSchedule(StructuredGraph graph, Node a, Node b) {
+        IdentifyBlocksPhase ibp = new IdentifyBlocksPhase(true);
+        ibp.apply(graph);
+        NodeMap<Block> nodeToBlock = ibp.getNodeToBlock();
+        Block bBlock = nodeToBlock.get(b);
+        Block aBlock = nodeToBlock.get(a);
 
-    @Override
-    protected void run(StructuredGraph graph) {
-        for (LoopEndNode loopEnd : graph.getNodes(LoopEndNode.class)) {
-            NodeIterable<FixedNode> it = NodeIterators.dominators(loopEnd).until(loopEnd.loopBegin());
-            for (FixedNode n : it) {
-                if (n instanceof Invoke) {
-                    loopEnd.setSafePointPooling(false);
+        if (bBlock == aBlock) {
+            List<Node> instructions = bBlock.getInstructions();
+            Assert.assertTrue(instructions.indexOf(b) > instructions.indexOf(a));
+        } else {
+            Block block = bBlock;
+            while (block != null) {
+                if (block == aBlock) {
                     break;
                 }
+                block = block.dominator();
             }
+            Assert.assertTrue(block == aBlock);
         }
     }
 }

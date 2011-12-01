@@ -262,10 +262,12 @@ public class FloatingReadPhase extends Phase {
 
     private void addStartCheckpoint(StructuredGraph graph) {
         BeginNode entryPoint = graph.start();
-        WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
         FixedNode next = entryPoint.next();
-        entryPoint.setNext(checkpoint);
-        checkpoint.setNext(next);
+        if (!(next instanceof MemoryCheckpoint)) {
+            WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
+            entryPoint.setNext(checkpoint);
+            checkpoint.setNext(next);
+        }
     }
 
     private void processBlock(Block b, MemoryMap[] memoryMaps, NodeMap<Block> nodeToBlock, HashMap<Loop, Set<Object>> modifiedValues, LoopInfo loopInfo) {

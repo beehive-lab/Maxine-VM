@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCodeRoutine.InstructionMap;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -70,7 +69,8 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
     }
 
     public final boolean hasAddress() {
-        return codePointer() != null;
+        final RemoteCodePointer codePointer = codePointer();
+        return codePointer != null && codePointer.isLive();
     }
 
     public final Address address() {
@@ -86,10 +86,10 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
     public final CiDebugInfo debugInfo() {
         if (debugInfo == null && codePointer() != null && compilation() != null) {
-            final InstructionMap instructionMap = compilation().getInstructionMap();
-            final int instructionIndex = instructionMap.findInstructionIndex(codePointer().getAddress());
+            final MaxMachineCodeInfo machineCodeInfo = compilation().getMachineCodeInfo();
+            final int instructionIndex = machineCodeInfo.findInstructionIndex(codePointer().getAddress());
             if (instructionIndex >= 0) {
-                debugInfo = instructionMap.debugInfoAt(instructionIndex);
+                debugInfo = machineCodeInfo.debugInfoAt(instructionIndex);
             }
         }
         return debugInfo;
