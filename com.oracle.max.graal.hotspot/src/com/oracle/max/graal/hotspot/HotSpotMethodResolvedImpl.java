@@ -53,7 +53,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     private Map<Object, Object> compilerStorage;
     private RiResolvedType holder;
     private byte[] code;
-    public boolean canIntrinsify;
 
     private HotSpotMethodResolvedImpl() {
         super(null);
@@ -61,7 +60,7 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         accessFlags = -1;
         maxLocals = -1;
         maxStackSize = -1;
-        canIntrinsify = true;
+        throw new IllegalStateException("this constructor is never actually called, because the objects are allocated from within the VM");
     }
 
     @Override

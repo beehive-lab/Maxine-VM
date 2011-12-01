@@ -127,6 +127,7 @@ public final class GraalOptions {
     public static boolean TraceGVN                           = ____;
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean QuietBailout                       = true;
+    public static boolean ExitVMOnException                  = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode             = true;

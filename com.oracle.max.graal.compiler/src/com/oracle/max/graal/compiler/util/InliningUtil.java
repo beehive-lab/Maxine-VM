@@ -251,10 +251,6 @@ public class InliningUtil {
         }
         RiResolvedMethod parent = invoke.stateAfter().method();
         MethodCallTargetNode callTarget = invoke.callTarget();
-        StructuredGraph intrinsicGraph = runtime.intrinsicGraph(parent, invoke.bci(), callTarget.targetMethod(), callTarget.arguments());
-        if (intrinsicGraph != null) {
-            return new IntrinsicInlineInfo(invoke, intrinsicGraph);
-        }
 
         if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
             if (checkTargetConditions(callTarget.targetMethod(), runtime)) {
@@ -521,7 +517,6 @@ public class InliningUtil {
 
         invoke.node().clearInputs();
         GraphUtil.killCFG(invoke.node());
-        GraphUtil.propagateKill(callTarget, null);
 
 
         // adjust all frame states that were copied
@@ -536,7 +531,7 @@ public class InliningUtil {
         }
 
         if (stateAfter.usages().isEmpty()) {
-            stateAfter.delete();
+            stateAfter.safeDelete();
         }
         return returnValue;
     }

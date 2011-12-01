@@ -161,8 +161,10 @@ public class FloatingReadPhase extends Phase {
                 TTY.println("Register read to node " + readNode);
             }
 
-            // Create dependency on previous node that creates the memory state for this location.
-            readNode.addDependency(getLocationForRead(readNode));
+            if (readNode.location().locationIdentity() != LocationNode.FINAL_LOCATION) {
+                // Create dependency on previous node that creates the memory state for this location.
+                readNode.addDependency(getLocationForRead(readNode));
+            }
         }
 
         private Node getLocationForRead(ReadNode readNode) {
@@ -343,21 +345,12 @@ public class FloatingReadPhase extends Phase {
     }
 
     private void print(StructuredGraph graph, LoopInfo loopInfo, HashMap<Loop, Set<Object>> modifiedValues) {
-
         TTY.println();
         TTY.println("Loops:");
         for (Loop loop : loopInfo.loops()) {
             TTY.print(loop + " modified values: " + modifiedValues.get(loop));
             TTY.println();
         }
-//
-//        TTY.println();
-//        TTY.println("nodeToLoop structure:");
-//        for (Node n : graph.getNodes()) {
-//            if (nodeToLoop.get(n) != null) {
-//                TTY.println("Loop " + nodeToLoop.get(n) + " contains " + n);
-//            }
-//        }
     }
 
     private void mark(LoopBeginNode begin, LoopBeginNode outer, NodeMap<LoopBeginNode> nodeToLoop) {
