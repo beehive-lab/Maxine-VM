@@ -402,7 +402,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 klassOop.setNext(ret);
                 return graph;
             }
-        } else if (method.holder().name().equals("Ljava/lang/Class;")) {
+        } else if (holderName.equals("Ljava/lang/Class;")) {
             if (fullName.equals("getModifiers()I")) {
                 StructuredGraph graph = new StructuredGraph();
                 LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
@@ -412,6 +412,13 @@ public class HotSpotRuntime implements GraalRuntime {
                 ReadNode result = graph.unique(new ReadNode(CiKind.Int, klassOop, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Int, config.klassModifierFlagsOffset, graph)));
                 ReturnNode ret = graph.add(new ReturnNode(result));
                 klassOop.setNext(ret);
+                return graph;
+            }
+        } else if (holderName.equals("Ljava/lang/Thread;")) {
+            if (fullName.equals("currentThread()Ljava/lang/Thread;")) {
+                StructuredGraph graph = new StructuredGraph();
+                ReturnNode ret = graph.add(new ReturnNode(graph.unique(new CurrentThread(config.threadObjectOffset))));
+                graph.start().setNext(ret);
                 return graph;
             }
         }
