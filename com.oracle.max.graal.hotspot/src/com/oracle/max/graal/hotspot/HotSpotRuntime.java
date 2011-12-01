@@ -381,10 +381,6 @@ public class HotSpotRuntime implements GraalRuntime {
     @Override
     public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
 
-        if (!((HotSpotMethodResolvedImpl) method).canIntrinsify) {
-            return null;
-        }
-
         if (method.holder().name().equals("Ljava/lang/Object;")) {
             String fullName = method.name() + method.signature().asString();
             if (fullName.equals("getClass()Ljava/lang/Class;")) {
@@ -396,23 +392,6 @@ public class HotSpotRuntime implements GraalRuntime {
                         context.metrics.GetClassForConstant++;
                     }
                     result = ConstantNode.forObject(obj.asConstant().asObject().getClass(), this, graph);
-                    ReturnNode ret = graph.add(new ReturnNode(result));
-                    graph.start().setNext(ret);
-                    return graph;
-                }
-            }
-        } else if (method.holder().name().equals("Lcom/oracle/max/graal/graph/NodeClass;")) {
-            String fullName = method.name() + method.signature().asString();
-            if (fullName.equals("get()Lcom/oracle/max/graal/graph/NodeClass;")) {
-                ValueNode obj = (ValueNode) parameters.get(0);
-                if (obj.isConstant()) {
-                    assert obj.asConstant().asObject() instanceof Class;
-                    StructuredGraph graph = new StructuredGraph();
-                    ValueNode result;
-                    if (GraalOptions.Meter) {
-                        context.metrics.GetClassForConstant++;
-                    }
-                    result = ConstantNode.forObject(NodeClass.get((Class< ? >) obj.asConstant().asObject()), this, graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     graph.start().setNext(ret);
                     return graph;
@@ -648,11 +627,6 @@ public class HotSpotRuntime implements GraalRuntime {
                     }
                     addGraph(method, graph);
                 }
-            }
-
-            if (!containsGraph(method)) {
-                ((HotSpotMethodResolvedImpl) method).canIntrinsify = false;
-                return null;
             }
         }
         return getGraph(method);
