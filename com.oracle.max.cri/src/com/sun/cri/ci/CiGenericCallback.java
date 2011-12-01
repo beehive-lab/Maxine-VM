@@ -25,6 +25,16 @@ package com.sun.cri.ci;
 /**
  * This interface is used for {@link CiRuntimeCall#GenericCallback} runtime calls.
  */
-public interface CiGenericCallback {
-    Object callback(Object arg);
+public abstract class CiGenericCallback {
+
+    private Object callbackInternal(Object arg) {
+        try {
+            return callback(arg);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return null;
+        }
+    }
+
+    public abstract Object callback(Object arg);
 }
