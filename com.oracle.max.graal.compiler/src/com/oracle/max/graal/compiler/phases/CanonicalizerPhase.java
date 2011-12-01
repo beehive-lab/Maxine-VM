@@ -71,7 +71,9 @@ public class CanonicalizerPhase extends Phase {
                 graph.mark();
                 tool.setNode(node);
                 Node canonical = ((Canonicalizable) node).canonical(tool);
-                if (canonical != node) {
+                if (canonical == null) {
+                    node.safeDelete();
+                } else if (canonical != node) {
 //     cases:                                           original node:
 //                                         |Floating|Fixed-unconnected|Fixed-connected|
 //                                         --------------------------------------------

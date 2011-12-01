@@ -106,6 +106,8 @@ public class Snippets {
                     }
                 }
                 throw error;
+            } catch (Throwable t) {
+                throw new RuntimeException("Error when installing snippet for " + obj, t);
             }
         }
     }

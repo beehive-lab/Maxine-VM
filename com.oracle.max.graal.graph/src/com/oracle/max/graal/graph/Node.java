@@ -202,6 +202,7 @@ public abstract class Node implements Cloneable {
         return nodeClass;
     }
 
+    // TODO(tw): Do not allow to replace with null.
     private boolean checkReplaceWith(Node other) {
         assert assertFalse(other == this, "cannot replace a node with itself");
         assert assertFalse(isDeleted(), "cannot replace deleted node");
@@ -233,9 +234,11 @@ public abstract class Node implements Cloneable {
 
     public void replaceAndDelete(Node other) {
         assert checkReplaceWith(other);
-        clearSuccessors();
-        replaceAtUsages(other);
-        replaceAtPredecessors(other);
+        if (other != null) {
+            clearSuccessors();
+            replaceAtUsages(other);
+            replaceAtPredecessors(other);
+        }
         safeDelete();
     }
 
