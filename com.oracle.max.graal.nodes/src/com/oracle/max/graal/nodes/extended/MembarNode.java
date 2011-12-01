@@ -20,10 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.nodes;
+package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
 
@@ -42,5 +41,10 @@ public class MembarNode extends AbstractStateSplit implements LIRLowerable, Memo
     @Override
     public void generate(LIRGeneratorTool generator) {
         generator.emitMembar(barriers);
+    }
+
+    @NodeIntrinsic
+    public static void get(@ConstantNodeParameter int barriers) {
+        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.snippets;
 
+import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.sun.cri.ci.*;
@@ -50,6 +52,13 @@ public class UnsafeSnippets implements SnippetsInterface {
     public Object getObject(Object o, long offset) {
         return UnsafeLoadNode.load(o, offset, CiKind.Object);
     }
+/*
+    public Object getObjectVolatile(Object o, long offset) {
+        MembarNode.get(MemoryBarriers.JMM_PRE_VOLATILE_READ);
+        Object result = UnsafeLoadNode.load(o, offset, CiKind.Object);
+        MembarNode.get(MemoryBarriers.JMM_POST_VOLATILE_READ);
+        return result;
+    }*/
 
     public void putObject(Object o, long offset, Object x) {
         UnsafeStoreNode.store(o, offset, x, CiKind.Object);

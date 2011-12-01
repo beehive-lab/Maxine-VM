@@ -86,7 +86,7 @@ public class SnippetIntrinsificationPhase extends Phase {
             if (param != null) {
                 assert argument instanceof ConstantNode : "parameter " + parameterIndex + " must be compile time constant for " + invoke.callTarget().targetMethod();
                 ConstantNode constantNode = (ConstantNode) argument;
-                Object o = constantNode.asConstant().asObject();
+                Object o = constantNode.asConstant().boxedValue();
                 if (o instanceof Class< ? >) {
                     nodeConstructorArguments[i] = runtime.getType((Class< ? >) o);
                     parameterTypes[i] = RiResolvedType.class;

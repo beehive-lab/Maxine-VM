@@ -112,7 +112,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public CiValue setResult(ValueNode x, CiValue operand) {
-        assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind()) : operand.kind;
+        assert (operand.isVariable() && x.kind() == operand.kind) || (operand.isConstant() && x.kind() == operand.kind.stackKind()) : operand.kind + " for node " + x;
 
         compilation.setOperand(x, operand);
         if (GraalOptions.DetailedAsserts) {
