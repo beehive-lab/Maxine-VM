@@ -26,7 +26,7 @@ import static com.sun.max.vm.heap.gcx.CardTable.CardState.*;
 
 import com.sun.max.unsafe.*;
 /**
- *
+ * A simple, two-valued card table.
  *
  */
 class CardTable extends  Log2RegionToByteMapTable {
@@ -63,9 +63,8 @@ class CardTable extends  Log2RegionToByteMapTable {
         cleanAll();
     }
 
-    @Override
     void initialize(Address coveredAreaStart, Size coveredAreaSize) {
-        super.initialize(coveredAreaStart, coveredAreaSize);
+        super.initialize(coveredAreaStart, coveredAreaSize, true);
         cleanAll();
     }
 

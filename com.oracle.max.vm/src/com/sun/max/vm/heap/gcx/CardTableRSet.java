@@ -22,15 +22,37 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.CardTable.CardState;
-
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 /**
  * A pure card-table based remembered set.
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
+    public static final String CACHED_BIASED_CARD_TABLE_THREAD_LOCAL_NAME = "CACHED_BIASED_CARD_TABLE";
+    public static final VmThreadLocal CACHED_BIASED_CARD_TABLE = new VmThreadLocal(CACHED_BIASED_CARD_TABLE_THREAD_LOCAL_NAME, false, "CardTableRSet: biased based of card table", Nature.Triple) {
+        @Override
+        public void initialize() {
+            HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+            if (heapScheme instanceof ThreadLocalRSetInitializer) {
+                ((ThreadLocalRSetInitializer) heapScheme).initializeRSetThreadLocals(this);
+            }
+        }
+    };
+
     /**
      * Contiguous regions of virtual memory holding the card table data.
      * Mostly used to feed the inspector.
@@ -40,20 +62,56 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     final CardTable cardTable;
     final CardFirstObjectTable cfoTable;
 
-    public void  recordWrite(Address referenceLocation) {
-
+    @HOSTED_ONLY
+    public void genTuplePostWriteBarrier(CiXirAssembler asm, XirOperand tupleCell) {
+        final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
+        asm.shr(temp, tupleCell, asm.i(CardTable.LOG2_CARD_SIZE));
+        if (MaxineVM.isHosted()) {
+            final XirConstant offsetToCardTableCache = asm.i(CACHED_BIASED_CARD_TABLE.offset);
+            final XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), AMD64SafepointPoll.LATCH_REGISTER);
+            final XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+            final XirOperand cachedCardTable = asm.createTemp("ETLA", WordUtil.archKind());
+            asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+            asm.pload(WordUtil.archKind(), cachedCardTable, etla, offsetToCardTableCache, false);
+            asm.pstore(CiKind.Byte, cachedCardTable, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        } else {
+            final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(cardTable.biasedTableAddress));
+            asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        }
     }
 
-    public void recordWrite(Address cell, Offset offset) {
-
+    @HOSTED_ONLY
+    public void genArrayPostWriteBarrier(CiXirAssembler asm, XirOperand arrayCell, XirOperand elemIndex) {
+        final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
+        final Scale scale = Scale.fromInt(Word.size());
+        final int disp = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
+        asm.lea(temp, arrayCell, elemIndex, disp, scale);
+        asm.shr(temp, temp, asm.i(CardTable.LOG2_CARD_SIZE));
+        if (MaxineVM.isHosted()) {
+            final XirConstant offsetToCardTableCache = asm.i(CACHED_BIASED_CARD_TABLE.offset);
+            final XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), AMD64SafepointPoll.LATCH_REGISTER);
+            final XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+            final XirOperand cachedCardTable = asm.createTemp("ETLA", WordUtil.archKind());
+            asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+            asm.pload(WordUtil.archKind(), cachedCardTable, etla, offsetToCardTableCache, false);
+            asm.pstore(CiKind.Byte, cachedCardTable, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        } else {
+            final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(cardTable.biasedTableAddress));
+            asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        }
     }
+
 
 
     public CardTableRSet() {
         cardTable = new CardTable();
         cfoTable = new CardFirstObjectTable();
         cardTableMemory = new MemoryRegion("Card and FOT tables");
+    }
 
+    public void initializeThreadLocals(VmThreadLocal threadLocal) {
+        assert threadLocal == CACHED_BIASED_CARD_TABLE;
+        threadLocal.store3(cardTable.biasedTableAddress);
     }
 
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
@@ -122,4 +180,5 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     public MemoryRegion memory() {
         return cardTableMemory;
     }
+
 }

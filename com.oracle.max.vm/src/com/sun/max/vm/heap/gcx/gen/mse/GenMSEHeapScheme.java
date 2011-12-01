@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.sun.max.vm.heap.gcx.gen.mse;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, ThreadLocalRSetInitializer, XirWriteBarrierSpecification {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -118,6 +120,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            Log2RegionToByteMapTable.hostInitialize();
+        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
+            final Size bootCardTableSize = cardTableRSet.memoryRequirement(Heap.bootHeapRegion.size());
+            final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
+            cardTableRSet.initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
+        }
     }
 
     /**
@@ -364,4 +374,29 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // TODO
     }
 
+    @HOSTED_ONLY
+    @Override
+    public XirWriteBarrierGenAdaptor barrierGenerator(IntBitSet<WriteBarrierSpec> writeBarrierSpec) {
+        if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genTuplePostWriteBarrier(asm, operands[0]);
+                }
+            };
+        } else if (writeBarrierSpec.equals(ARRAY_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genArrayPostWriteBarrier(asm, operands[0], operands[1]);
+                }
+            };
+        }
+        return NULL_WRITE_BARRIER_GEN;
+    }
+
+    @Override
+    public void initializeRSetThreadLocals(VmThreadLocal vmThreadLocal) {
+        cardTableRSet.initializeThreadLocals(vmThreadLocal);
+    }
 }
