@@ -47,6 +47,7 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
     public InstanceOfNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, boolean negated) {
         super(targetClassInstruction, targetClass, object, StampFactory.illegal());
         this.negated = negated;
+        assert targetClass != null;
     }
 
     @Override

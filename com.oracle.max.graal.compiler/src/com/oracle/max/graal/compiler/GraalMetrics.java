@@ -73,7 +73,6 @@ public final class GraalMetrics {
     public int Rematerializations;
     public int GlobalValueNumberingHits;
     public int ExplicitExceptions;
-    public int GetClassForConstant;
     public int GuardsHoisted;
     // Checkstyle: resume
 
