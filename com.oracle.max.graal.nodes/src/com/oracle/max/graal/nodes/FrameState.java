@@ -464,7 +464,7 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
     private void addToPhi(PhiNode phiNode, ValueNode otherValue) {
         if (otherValue == null || otherValue.kind() != phiNode.kind()) {
             phiNode.replaceAtUsages(null);
-            phiNode.delete();
+            phiNode.safeDelete();
         } else {
             phiNode.addInput(otherValue);
         }
