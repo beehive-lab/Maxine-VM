@@ -73,7 +73,6 @@ public class LoopUtil {
             // Loop already processed.
             return;
         }
-        System.out.println("processing loop: " + begin);
         Loop loop = new Loop(begin);
         nodeToLoop.set(begin, loop);
 
