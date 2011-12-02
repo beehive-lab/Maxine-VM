@@ -24,24 +24,31 @@ package com.oracle.max.graal.snippets;
 
 import java.lang.reflect.*;
 
-import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.util.*;
+import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class IntrinsifyArrayCopyPhase extends Phase {
-    private final RiRuntime runtime;
+    private final GraalRuntime runtime;
+    private final CiTarget target;
+    private final PhasePlan plan;
+    private BoxingMethodPool pool;
     private RiResolvedMethod intArrayCopy;
     private RiResolvedMethod arrayCopy;
     private RiResolvedMethod charArrayCopy;
     private RiResolvedMethod longArrayCopy;
 
-
-    public IntrinsifyArrayCopyPhase(RiRuntime runtime) {
+    public IntrinsifyArrayCopyPhase(GraalRuntime runtime, CiTarget target, PhasePlan plan) {
         this.runtime = runtime;
+        this.target = target;
+        this.plan = plan;
+        this.pool = new BoxingMethodPool(runtime);
         try {
             intArrayCopy = getArrayCopySnippet(runtime, int.class);
             charArrayCopy = getArrayCopySnippet(runtime, char.class);
@@ -67,7 +74,7 @@ public class IntrinsifyArrayCopyPhase extends Phase {
             if (targetMethod == arrayCopy) {
                 ValueNode src = methodCallTarget.arguments().get(0);
                 ValueNode dest = methodCallTarget.arguments().get(2);
-                if (src == null || dest == null) {
+                if (src == null || dest == null) { //TODO (gd) this should never be null : check
                     return;
                 }
                 RiResolvedType srcDeclaredType = src.declaredType();
@@ -90,15 +97,11 @@ public class IntrinsifyArrayCopyPhase extends Phase {
 
             if (snippetMethod != null) {
                 StructuredGraph snippetGraph = (StructuredGraph) snippetMethod.compilerStorage().get(Graph.class);
-                if (snippetGraph == null) {
-                    snippetGraph = new StructuredGraph();
-                    new GraphBuilderPhase(runtime, snippetMethod).apply(snippetGraph);
-                    snippetMethod.compilerStorage().put(Graph.class, snippetGraph);
-                }
+                assert snippetGraph != null : "ArrayCopySnippets should be installed";
+                //TTY.println("  >  Intinsify");
                 InliningUtil.inline(methodCallTarget.invoke(), snippetGraph, false);
             }
         }
         new CanonicalizerPhase(null, runtime, null).apply(graph);
     }
-
 }
