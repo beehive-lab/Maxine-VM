@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -217,12 +218,18 @@ public class EscapeAnalysisPhase extends Phase {
     private final GraalRuntime runtime;
     private final CiAssumptions assumptions;
     private final PhasePlan plan;
+    private final GraphBuilderConfiguration config;
 
     public EscapeAnalysisPhase(CiTarget target, GraalRuntime runtime, CiAssumptions assumptions, PhasePlan plan) {
+        this(target, runtime, assumptions, plan, GraphBuilderConfiguration.getDefault(plan));
+    }
+
+    public EscapeAnalysisPhase(CiTarget target, GraalRuntime runtime, CiAssumptions assumptions, PhasePlan plan, GraphBuilderConfiguration config) {
         this.runtime = runtime;
         this.target = target;
         this.assumptions = assumptions;
         this.plan = plan;
+        this.config = config;
     }
 
     public static class EscapeRecord {
@@ -399,7 +406,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(target, runtime, invokes, assumptions, plan).apply(graph, context);
+            new InliningPhase(target, runtime, invokes, assumptions, plan, config).apply(graph, context);
             new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
