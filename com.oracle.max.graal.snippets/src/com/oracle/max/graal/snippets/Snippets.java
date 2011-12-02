@@ -135,6 +135,7 @@ public class Snippets {
             observer.printSingleGraph(snippet.getName(), graph);
         }
         new DeadCodeEliminationPhase().apply(graph, context);
+        new CanonicalizerPhase(target, runtime, null).apply(graph, context);
 
         if (plotGraphs) {
             IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);

@@ -39,9 +39,11 @@ public class IntrinsifyArrayCopyPhase extends Phase {
     private final CiTarget target;
     private final PhasePlan plan;
     private BoxingMethodPool pool;
-    private RiResolvedMethod intArrayCopy;
     private RiResolvedMethod arrayCopy;
+    private RiResolvedMethod byteArrayCopy;
+    private RiResolvedMethod shortArrayCopy;
     private RiResolvedMethod charArrayCopy;
+    private RiResolvedMethod intArrayCopy;
     private RiResolvedMethod longArrayCopy;
 
     public IntrinsifyArrayCopyPhase(GraalRuntime runtime, CiTarget target, PhasePlan plan) {
@@ -50,8 +52,10 @@ public class IntrinsifyArrayCopyPhase extends Phase {
         this.plan = plan;
         this.pool = new BoxingMethodPool(runtime);
         try {
-            intArrayCopy = getArrayCopySnippet(runtime, int.class);
+            byteArrayCopy = getArrayCopySnippet(runtime, byte.class);
             charArrayCopy = getArrayCopySnippet(runtime, char.class);
+            shortArrayCopy = getArrayCopySnippet(runtime, short.class);
+            intArrayCopy = getArrayCopySnippet(runtime, int.class);
             longArrayCopy = getArrayCopySnippet(runtime, long.class);
             arrayCopy = runtime.getRiMethod(System.class.getDeclaredMethod("arraycopy", Object.class, int.class, Object.class, int.class, int.class));
         } catch (SecurityException e) {
@@ -91,6 +95,10 @@ public class IntrinsifyArrayCopyPhase extends Phase {
                         snippetMethod = charArrayCopy;
                     } else if (componentType.equals(long.class)) {
                         snippetMethod = longArrayCopy;
+                    } else if (componentType.equals(byte.class)) {
+                        snippetMethod = byteArrayCopy;
+                    } else if (componentType.equals(short.class)) {
+                        snippetMethod = shortArrayCopy;
                     }
                 }
             }
