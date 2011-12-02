@@ -35,6 +35,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.snippets.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -362,6 +363,8 @@ public class HotSpotRuntime implements GraalRuntime {
             write.setStateAfter(store.stateAfter());
             store.replaceAtPredecessors(write);
             store.safeDelete();
+        } else if (n instanceof ArrayHeaderSizeNode) {
+            n.replaceAndDelete(ConstantNode.forLong(config.getArrayOffset(((ArrayHeaderSizeNode) n).elementKind()), n.graph()));
         }
     }
 

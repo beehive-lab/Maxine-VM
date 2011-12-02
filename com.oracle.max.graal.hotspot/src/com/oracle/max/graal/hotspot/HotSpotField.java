@@ -29,7 +29,7 @@ import java.lang.reflect.*;
 import com.oracle.max.graal.compiler.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.ri.RiType.*;
+import com.sun.cri.ri.RiType.Representation;
 
 /**
  * Represents a field in a HotSpot type.

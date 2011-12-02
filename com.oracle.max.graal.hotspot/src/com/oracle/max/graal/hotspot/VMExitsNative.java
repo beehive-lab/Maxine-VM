@@ -56,11 +56,17 @@ public class VMExitsNative implements VMExits, Remote {
     ThreadFactory daemonThreadFactory = new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
+            Thread t = new CompilerThread(r);
             t.setDaemon(true);
             return t;
         }
     };
+    private static final class CompilerThread extends Thread {
+        public CompilerThread(Runnable r) {
+            super(r);
+            this.setName("CompilerThread-" + this.getId());
+        }
+    }
     private ThreadPoolExecutor compileQueue;
 
     public VMExitsNative(Compiler compiler) {
@@ -147,6 +153,10 @@ public class VMExitsNative implements VMExits, Remote {
     @Override
     public void compileMethod(final HotSpotMethodResolved method, final int entryBCI, boolean blocking) throws Throwable {
         try {
+            if (Thread.currentThread() instanceof CompilerThread && method.holder().name().contains("java/util/concurrent")) {
+                return;
+            }
+
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {

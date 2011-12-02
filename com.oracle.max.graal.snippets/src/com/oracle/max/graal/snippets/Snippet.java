@@ -20,10 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.graphbuilder;
+package com.oracle.max.graal.snippets;
 
-import com.oracle.max.graal.graph.*;
+import java.lang.annotation.*;
 
-public interface GraphBuilderTool {
-    void append(Node node);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Snippet {
+
 }
