@@ -201,7 +201,7 @@ public class Graal implements RuntimeCompiler {
             if (method.compilee().isNative()) {
                 compiledMethod = compileNativeMethod(method);
             } else {
-                compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan).targetMethod();
+                compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan);
             }
 
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
@@ -236,7 +236,7 @@ public class Graal implements RuntimeCompiler {
         NativeStubGraphBuilder nativeStubCompiler = new NativeStubGraphBuilder(method);
         TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
         try {
-            return compiler.compileMethod(method, nativeStubCompiler.build(), plan).targetMethod();
+            return compiler.compileMethod(method, nativeStubCompiler.build(), plan);
         } finally {
             filter.remove();
         }
