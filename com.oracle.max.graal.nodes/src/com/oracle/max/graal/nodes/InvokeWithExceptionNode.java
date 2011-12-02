@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
@@ -76,6 +77,8 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Long) {
             return super.toString(Verbosity.Short) + "(bci=" + bci() + ")";
+        } else if (verbosity == Verbosity.Name) {
+            return "Invoke!#" + callTarget.targetMethod().name();
         } else {
             return super.toString(verbosity);
         }

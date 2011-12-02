@@ -34,6 +34,7 @@ public class Loop {
     private final NodeBitMap exits;
     private final NodeBitMap directCFGNodes;
     private NodeBitMap loopVariant;
+    private boolean finished;
 
     public Loop(LoopBeginNode loopBegin) {
         this.loopBegin = loopBegin;
@@ -48,6 +49,14 @@ public class Loop {
 
     public Loop parent() {
         return parent;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished() {
+        finished = true;
     }
 
     public List<Loop> children() {
@@ -66,8 +75,12 @@ public class Loop {
         return parent == l || (parent != null && parent.isChildOf(l));
     }
 
+    public boolean localContainsFixed(FixedNode n) {
+        return directCFGNodes.isMarked(n);
+    }
+
     public boolean containsFixed(FixedNode n) {
-        if (directCFGNodes.isMarked(n)) {
+        if (localContainsFixed(n)) {
             return true;
         }
         for (Loop child : children()) {
