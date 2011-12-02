@@ -89,8 +89,7 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
      *         invocation does not take a receiver object
      */
     public ValueNode receiver() {
-        assert !isStatic();
-        return arguments().get(0);
+        return isStatic() ? null : arguments().get(0);
     }
 
     /**

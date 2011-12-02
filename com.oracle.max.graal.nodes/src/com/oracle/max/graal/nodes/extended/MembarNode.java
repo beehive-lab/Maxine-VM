@@ -20,35 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.hotspot;
+package com.oracle.max.graal.nodes.extended;
 
-import com.oracle.max.graal.hotspot.nodes.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
- * Builder for HotSpot intrinsic method graphs.
+ * Cretes a memory barrier.
  */
-public class HotSpotIntrinsicGraphBuilder {
+public class MembarNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
-    private final HotSpotRuntime runtime;
+    private final int barriers;
 
-    public HotSpotIntrinsicGraphBuilder(HotSpotRuntime runtime) {
-        this.runtime = runtime;
+    public MembarNode(int barriers) {
+        super(StampFactory.illegal());
+        this.barriers = barriers;
     }
 
-    public StructuredGraph buildGraph(HotSpotIntrinsic intrinsic) {
-        switch (intrinsic) {
-            case Thread_currentThread:
-                return buildCurrentThread();
-        }
-        return null;
+    @Override
+    public void generate(LIRGeneratorTool generator) {
+        generator.emitMembar(barriers);
     }
 
-    private StructuredGraph buildCurrentThread() {
-        StructuredGraph graph = new StructuredGraph();
-        ReturnNode ret = graph.add(new ReturnNode(graph.unique(new CurrentThread(runtime.config.threadObjectOffset))));
-        graph.start().setNext(ret);
-        return graph;
+    @NodeIntrinsic
+    public static void get(@ConstantNodeParameter int barriers) {
+        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
-
 }

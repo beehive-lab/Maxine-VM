@@ -69,6 +69,8 @@ public class Snippets {
                     }
                 }
                 throw error;
+            } catch (Throwable t) {
+                throw new RuntimeException("Error when installing snippet for " + obj, t);
             }
         }
     }
@@ -95,6 +97,8 @@ public class Snippets {
                     }
                 }
                 throw error;
+            } catch (Throwable t) {
+                throw new RuntimeException("Error when installing snippet for " + obj, t);
             }
         }
     }
@@ -115,18 +119,17 @@ public class Snippets {
             observer.printSingleGraph(snippet.getName(), graph);
         }
 
-        new IntrinsificationPhase(runtime).apply(graph, context);
         new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
 
-        Collection<Invoke> invokes = new ArrayList<Invoke>();
-        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            invokes.add(invoke);
+        for (Invoke invoke : graph.getInvokes()) {
+            MethodCallTargetNode callTarget = invoke.callTarget();
+            RiResolvedMethod targetMethod = callTarget.targetMethod();
+            RiResolvedType holder = targetMethod.holder();
+            if (holder.isSubtypeOf(runtime.getType(SnippetsInterface.class))) {
+                InliningUtil.inline(invoke, buildGraph(runtime, target, plotGraphs, plan, context, pool, targetMethod), true);
+                new CanonicalizerPhase(target, runtime, null).apply(graph);
+            }
         }
-        for (InvokeWithExceptionNode invoke : graph.getNodes(InvokeWithExceptionNode.class)) {
-            invokes.add(invoke);
-        }
-        new InliningPhase(target, runtime, invokes, null, plan, config).apply(graph, context);
-        new IntrinsificationPhase(runtime).apply(graph, context);
 
         new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
 

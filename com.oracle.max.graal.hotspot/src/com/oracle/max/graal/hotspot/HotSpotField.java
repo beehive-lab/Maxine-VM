@@ -27,8 +27,10 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiType.*;
 
 /**
  * Represents a field in a HotSpot type.
@@ -40,7 +42,7 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
     private final RiType type;
     private final int offset;
     private final int accessFlags;
-    private CiConstant constant;
+    private CiConstant constant;                // Constant part only valid for static fields.
 
     public HotSpotField(Compiler compiler, RiResolvedType holder, String name, RiType type, int offset, int accessFlags) {
         super(compiler);
@@ -60,33 +62,27 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
     @Override
     public CiConstant constantValue(CiConstant receiver) {
         if (receiver == null) {
-            if (constant == null && holder.isSubtypeOf((RiResolvedType) compiler.getVMEntries().getType(GraalOptions.class))) {
-                Field f;
-                try {
-                    f = GraalOptions.class.getField(name);
-                    f.setAccessible(true);
-                    if (Modifier.isStatic(f.getModifiers())) {
-                        if (f.getType() == int.class) {
-                            constant = CiConstant.forInt(f.getInt(null));
-                        } else if (f.getType() == float.class) {
-                            constant = CiConstant.forFloat(f.getFloat(null));
-                        } else if (f.getType() == boolean.class) {
-                            constant = CiConstant.forBoolean(f.getBoolean(null));
-                        } else if (!f.getType().isPrimitive()) {
-                            constant = CiConstant.forObject(f.get(null));
-                        } else {
-                            assert false : "unsupported type";
-                        }
+            assert Modifier.isStatic(accessFlags);
+            if (constant == null) {
+                if (holder.isInitialized() && holder.toJava() != System.class) {
+                    if (Modifier.isFinal(accessFlags()) || assumeStaticFieldsFinal(holder.toJava())) {
+                        CiConstant encoding = holder.getEncoding(Representation.StaticFields);
+                        constant = this.kind(false).readUnsafeConstant(encoding.asObject(), offset);
                     }
-                } catch (Exception ex) {
-                    return null;
                 }
             }
-
-            // Constant part only valid for static fields.
             return constant;
+        } else {
+            assert !Modifier.isStatic(accessFlags);
+            if (Modifier.isFinal(accessFlags())) {
+                return this.kind(false).readUnsafeConstant(receiver.asObject(), offset);
+            }
         }
         return null;
+    }
+
+    private boolean assumeStaticFieldsFinal(Class< ? > clazz) {
+        return clazz == GraalOptions.class;
     }
 
     @Override

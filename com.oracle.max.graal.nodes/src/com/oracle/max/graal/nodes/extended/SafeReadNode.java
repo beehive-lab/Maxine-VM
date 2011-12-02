@@ -34,6 +34,7 @@ public class SafeReadNode extends SafeAccessNode implements Lowerable {
 
     public SafeReadNode(CiKind kind, ValueNode object, LocationNode location) {
         super(kind, object, location);
+        assert object != null && location != null;
     }
 
     @Override

@@ -37,11 +37,6 @@ public final class FixedGuardNode extends FixedWithNextNode implements Canonical
         this.conditions = new NodeInputList<BooleanNode>(this, new BooleanNode[] {condition});
     }
 
-    public FixedGuardNode() {
-        super(StampFactory.illegal());
-        this.conditions = new NodeInputList<BooleanNode>(this);
-    }
-
     @Override
     public void generate(LIRGeneratorTool gen) {
         for (BooleanNode condition : conditions()) {
