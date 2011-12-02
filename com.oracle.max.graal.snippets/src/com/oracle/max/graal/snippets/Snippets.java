@@ -137,6 +137,11 @@ public class Snippets {
         new DeadCodeEliminationPhase().apply(graph, context);
         new CanonicalizerPhase(target, runtime, null).apply(graph, context);
 
+        // TODO (gd) remove when we have safepoint polling elimination
+        for (LoopEndNode end : graph.getNodes(LoopEndNode.class)) {
+            end.setSafepointPolling(false);
+        }
+
         if (plotGraphs) {
             IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
             observer.printSingleGraph(snippet.getName(), graph);
