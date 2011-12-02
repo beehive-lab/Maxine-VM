@@ -23,15 +23,12 @@
 
 package com.oracle.max.graal.hotspot;
 
-import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.graphbuilder.*;
-import com.oracle.max.graal.hotspot.logging.*;
 import com.oracle.max.graal.hotspot.server.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
@@ -42,7 +39,6 @@ import com.sun.cri.ri.*;
  */
 public class VMExitsNative implements VMExits, Remote {
 
-    public static final boolean LogCompiledMethods = false;
     private boolean installedIntrinsics;
 
     private final Compiler compiler;
@@ -154,37 +150,12 @@ public class VMExitsNative implements VMExits, Remote {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
-                        if (LogCompiledMethods) {
-                            String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
-                            compiledMethods.add(qualifiedName);
-                        }
-
-                        if (result.bailout() != null) {
-                            Throwable cause = result.bailout().getCause();
-                            if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JsrNotSupportedBailout)) {
-                                StringWriter out = new StringWriter();
-                                result.bailout().printStackTrace(new PrintWriter(out));
-                                TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
-                                if (cause != null) {
-                                    Logger.info("Trace for cause: ");
-                                    for (StackTraceElement e : cause.getStackTrace()) {
-                                        String current = e.getClassName() + "::" + e.getMethodName();
-                                        String type = "";
-                                        if (compiledMethods.contains(current)) {
-                                            type = "compiled";
-                                        }
-                                        Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
-                                    }
-                                }
-                            }
-                            String s = result.bailout().getMessage();
-                            if (cause != null) {
-                                s = cause.getMessage();
-                            }
-                            compiler.getVMEntries().recordBailout(s);
-                        } else {
-                            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod(), true);
+                        CiTargetMethod result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
+                        HotSpotTargetMethod.installMethod(compiler, method, result, true);
+                    } catch (CiBailout bailout) {
+                        if (GraalOptions.ExitVMOnBailout) {
+                            bailout.printStackTrace();
+                            System.exit(-1);
                         }
                     } catch (Throwable t) {
                         if (GraalOptions.ExitVMOnException) {
