@@ -20,41 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.snippets.nodes;
 
 import com.oracle.max.graal.cri.*;
-import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
-/**
- * Load of a value from a location specified as an offset relative to an object.
- */
-public class UnsafeLoadIndexedNode extends AbstractStateSplit implements Lowerable, Node.ValueNumberable {
+public class ArrayHeaderSizeNode extends FloatingNode implements Lowerable {
+    @Data private final CiKind elementKind;
 
-    @Input private ValueNode object;
-    @Input private ValueNode index;
-    @Data private final CiKind loadKind;
-
-    public ValueNode object() {
-        return object;
-    }
-
-    public ValueNode index() {
-        return index;
-    }
-
-    public UnsafeLoadIndexedNode(ValueNode object, ValueNode index, CiKind kind) {
-        super(StampFactory.forKind(kind.stackKind()));
-        this.object = object;
-        this.index = index;
-        this.loadKind = kind;
-    }
-
-    public CiKind loadKind() {
-        return loadKind;
+    public ArrayHeaderSizeNode(CiKind elementKind) {
+        super(StampFactory.forKind(CiKind.Long));
+        this.elementKind = elementKind;
     }
 
     @Override
@@ -62,8 +41,12 @@ public class UnsafeLoadIndexedNode extends AbstractStateSplit implements Lowerab
         tool.getRuntime().lower(this, tool);
     }
 
+    public CiKind elementKind() {
+        return elementKind;
+    }
+
     @NodeIntrinsic
-    public static <T> T load(Object object, int index, @ConstantNodeParameter CiKind kind) {
+    public static long sizeFor(@ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

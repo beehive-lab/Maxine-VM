@@ -367,38 +367,8 @@ public class HotSpotRuntime implements GraalRuntime {
             write.setStateAfter(store.stateAfter());
             store.replaceAtPredecessors(write);
             store.safeDelete();
-        } else if (n instanceof UnsafeLoadIndexedNode) {
-            UnsafeLoadIndexedNode loadIndexed = (UnsafeLoadIndexedNode) n;
-            Graph graph = loadIndexed.graph();
-
-            CiKind elementKind = loadIndexed.loadKind();
-            LocationNode arrayLocation = createArrayLocation(graph, elementKind, loadIndexed.index());
-            ReadNode memoryRead = graph.unique(new ReadNode(elementKind.stackKind(), loadIndexed.object(), arrayLocation));
-            FixedNode next = loadIndexed.next();
-            loadIndexed.setNext(null);
-            memoryRead.setNext(next);
-            loadIndexed.replaceAndDelete(memoryRead);
-        } else if (n instanceof UnsafeStoreIndexedNode) {
-            UnsafeStoreIndexedNode storeIndexed = (UnsafeStoreIndexedNode) n;
-            Graph graph = storeIndexed.graph();
-
-            CiKind elementKind = storeIndexed.storeKind();
-            LocationNode arrayLocation = createArrayLocation(graph, elementKind, storeIndexed.index());
-            ValueNode value = storeIndexed.value();
-            ValueNode array = storeIndexed.object();
-            WriteNode memoryWrite = graph.add(new WriteNode(array, value, arrayLocation));
-            memoryWrite.setStateAfter(storeIndexed.stateAfter());
-            FixedNode next = storeIndexed.next();
-            storeIndexed.setNext(null);
-            if (elementKind == CiKind.Object && !value.isNullConstant()) {
-                ArrayWriteBarrier writeBarrier = graph.add(new ArrayWriteBarrier(array, arrayLocation));
-                memoryWrite.setNext(writeBarrier);
-                writeBarrier.setNext(next);
-            } else {
-                memoryWrite.setNext(next);
-            }
-            storeIndexed.replaceAtPredecessors(memoryWrite);
-            storeIndexed.safeDelete();
+        } else if (n instanceof ArrayHeaderSizeNode) {
+            n.replaceAndDelete(ConstantNode.forLong(config.getArrayOffset(((ArrayHeaderSizeNode) n).elementKind()), n.graph()));
         }
     }
 
