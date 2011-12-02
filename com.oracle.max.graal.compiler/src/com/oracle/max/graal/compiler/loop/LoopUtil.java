@@ -99,6 +99,9 @@ public class LoopUtil {
             if (n instanceof LoopBeginNode) {
                 mark((LoopBeginNode) n, loop, nodeToLoop);
             } else {
+                if (oldMark != null) {
+                    loop.directCFGNode().clear(n);
+                }
                 nodeToLoop.set(n, loop);
                 loop.directCFGNode().mark(n);
             }

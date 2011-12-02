@@ -52,9 +52,9 @@ public class FloatingReadPhase extends Phase {
             map.putAll(other.map);
         }
 
-        public void mergeLoopEntryWith(MemoryMap otherMemoryMap) {
+        public void mergeLoopEntryWith(MemoryMap otherMemoryMap, LoopBeginNode begin) {
             for (Object keyInOther : otherMemoryMap.map.keySet()) {
-                assert loopEntryMap.containsKey(keyInOther) || map.get(keyInOther) == otherMemoryMap.map.get(keyInOther) : keyInOther + ", " + map.get(keyInOther) + " vs " + otherMemoryMap.map.get(keyInOther);
+                assert loopEntryMap.containsKey(keyInOther) || map.get(keyInOther) == otherMemoryMap.map.get(keyInOther) : keyInOther + ", " + map.get(keyInOther) + " vs " + otherMemoryMap.map.get(keyInOther) + " " + begin;
             }
 
             for (Map.Entry<Object, Node> entry : loopEntryMap.entrySet()) {
@@ -325,7 +325,7 @@ public class FloatingReadPhase extends Phase {
             MemoryMap memoryMap = memoryMaps[beginBlock.blockID()];
             assert memoryMap != null : beginBlock.name();
             assert memoryMap.getLoopEntryMap() != null;
-            memoryMap.mergeLoopEntryWith(map);
+            memoryMap.mergeLoopEntryWith(map, begin);
         }
     }
 
