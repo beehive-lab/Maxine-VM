@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -123,6 +123,10 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         cardTableRSet.initialize(phase);
     }
 
+    @Override
+    public void initializeCoverage(Address coveredAreaStart, Size coveredAreaSize) {
+
+    }
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
@@ -387,4 +391,5 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         }
         return NULL_WRITE_BARRIER_GEN;
     }
+
 }
