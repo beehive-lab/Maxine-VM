@@ -63,11 +63,11 @@ public class ExtendedUnsafeNode extends AbstractStateSplit {
 
     protected LocationNode createLocation() {
         if (displacement == null) {
-            return IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, valueKind(), 0, index(), graph(), false);
+            return IndexedLocationNode.create(LocationNode.ANY_LOCATION, valueKind(), 0, index(), graph(), false);
         } else if (displacement.isConstant() && displacement.asConstant().asLong() == (int) displacement.asConstant().asLong()) {
-            return IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, valueKind(), (int) displacement.asConstant().asLong(), index(), graph(), true);
+            return IndexedLocationNode.create(LocationNode.ANY_LOCATION, valueKind(), (int) displacement.asConstant().asLong(), index(), graph(), true);
         } else {
-            return ExtendedIndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, valueKind(), displacement(), index(), graph());
+            return ExtendedIndexedLocationNode.create(LocationNode.ANY_LOCATION, valueKind(), displacement(), index(), graph());
         }
     }
 }

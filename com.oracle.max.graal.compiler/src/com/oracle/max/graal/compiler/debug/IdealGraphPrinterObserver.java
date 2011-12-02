@@ -102,7 +102,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
                 name = "null";
             }
 
-            openPrinter(name, compilation.method);
+            openPrinter(name, compilation == null ? null : compilation.method);
         }
     }
 

@@ -116,7 +116,9 @@ public class InliningPhase extends Phase implements InliningCallback {
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
-                    new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    if (GraalOptions.OptCanonicalizer) {
+                        new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    }
                     if (GraalOptions.Intrinsify) {
                         new IntrinsificationPhase(runtime).apply(graph, context);
                     }

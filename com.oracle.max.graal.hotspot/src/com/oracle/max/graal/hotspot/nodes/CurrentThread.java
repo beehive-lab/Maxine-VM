@@ -39,7 +39,7 @@ public final class CurrentThread extends FloatingNode implements LIRLowerable {
 
     @Override
     public void generate(LIRGeneratorTool generator) {
-        generator.setResult(this, generator.emitLoad(new CiAddress(CiKind.Object, AMD64.r15.asValue(generator.target().wordKind), threadObjectOffset), generator.target().wordKind, false));
+        generator.setResult(this, generator.emitLoad(new CiAddress(generator.target().wordKind, AMD64.r15.asValue(generator.target().wordKind), threadObjectOffset), CiKind.Object, false));
     }
 
     @NodeIntrinsic

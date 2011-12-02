@@ -463,7 +463,8 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
 
     private void addToPhi(PhiNode phiNode, ValueNode otherValue) {
         if (otherValue == null || otherValue.kind() != phiNode.kind()) {
-            phiNode.replaceAndDelete(null);
+            phiNode.replaceAtUsages(null);
+            phiNode.safeDelete();
         } else {
             phiNode.addInput(otherValue);
         }
@@ -513,7 +514,8 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
     private void deleteInvalidPhi(PhiNode phiNode) {
         if (!phiNode.isDeleted()) {
             Collection<Node> phiUsages = phiNode.usages().snapshot();
-            phiNode.replaceAndDelete(null);
+            phiNode.replaceAtUsages(null);
+            phiNode.delete();
             for (Node n : phiUsages) {
                 if (n instanceof PhiNode) {
                     deleteInvalidPhi((PhiNode) n);

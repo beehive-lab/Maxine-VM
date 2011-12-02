@@ -27,6 +27,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
@@ -71,7 +72,9 @@ public class CanonicalizerPhase extends Phase {
                 graph.mark();
                 tool.setNode(node);
                 Node canonical = ((Canonicalizable) node).canonical(tool);
-                if (canonical != node) {
+                if (canonical == null) {
+                    node.safeDelete();
+                } else if (canonical != node) {
 //     cases:                                           original node:
 //                                         |Floating|Fixed-unconnected|Fixed-connected|
 //                                         --------------------------------------------
@@ -86,10 +89,10 @@ public class CanonicalizerPhase extends Phase {
 //       X: must not happen (checked with assertions)
                     if (node instanceof FloatingNode) {
                         // case 1
-                        assert canonical == null || canonical instanceof FloatingNode || (canonical instanceof FixedNode && canonical.predecessor() != null);
+                        assert canonical == null || canonical instanceof FloatingNode || (canonical instanceof FixedNode && canonical.predecessor() != null) || canonical instanceof ReadNode : canonical;
                         node.replaceAndDelete(canonical);
                     } else {
-                        assert node instanceof FixedNode && node.predecessor() != null : node + " -> " + canonical + " : node should be Fixed & connected";
+                        assert node instanceof FixedNode && node.predecessor() != null : node + " -> " + canonical + " : node should be fixed & connected (" + node.predecessor() + ")";
                         if (canonical instanceof FixedNode && canonical.predecessor() == null) {
                             // case 2
                             node.replaceAndDelete(canonical);
@@ -223,7 +226,7 @@ public class CanonicalizerPhase extends Phase {
                 node.replaceFirstInput(input, null);
             } else {
                 for (Node usage : node.usages().snapshot()) {
-                    if (usage instanceof FloatingNode && !usage.isDeleted()) {
+                    if ((usage instanceof FloatingNode || usage instanceof CallTargetNode) && !usage.isDeleted()) {
                         killNonCFG(usage, node);
                     }
                 }

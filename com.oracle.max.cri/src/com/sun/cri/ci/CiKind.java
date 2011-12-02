@@ -23,6 +23,7 @@
 package com.sun.cri.ci;
 
 import static com.sun.cri.ci.CiKind.Flags.*;
+import sun.misc.*;
 
 import com.sun.cri.ri.*;
 
@@ -308,4 +309,32 @@ public enum CiKind {
     public final char signatureChar() {
         return Character.toUpperCase(typeChar);
     }
+
+    public CiConstant readUnsafeConstant(Object value, long displacement) {
+        Unsafe u = Unsafe.getUnsafe();
+        switch(this) {
+            case Boolean:
+                return CiConstant.forBoolean(u.getBoolean(value, displacement));
+            case Byte:
+                return CiConstant.forByte(u.getByte(value, displacement));
+            case Char:
+                return CiConstant.forChar(u.getChar(value, displacement));
+            case Short:
+                return CiConstant.forShort(u.getShort(value, displacement));
+            case Int:
+                return CiConstant.forInt(u.getInt(value, displacement));
+            case Long:
+                return CiConstant.forLong(u.getLong(value, displacement));
+            case Float:
+                return CiConstant.forFloat(u.getFloat(value, displacement));
+            case Double:
+                return CiConstant.forDouble(u.getDouble(value, displacement));
+            case Object:
+                return CiConstant.forObject(u.getObject(value, displacement));
+            default:
+                assert false : "unexpected kind: " + this;
+                return null;
+        }
+    }
+
 }
