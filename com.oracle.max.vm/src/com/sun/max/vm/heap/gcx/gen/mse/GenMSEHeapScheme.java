@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.sun.max.vm.heap.gcx.gen.mse;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -118,8 +120,13 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        cardTableRSet.initialize(phase);
     }
 
+    @Override
+    public void initializeCoverage(Address coveredAreaStart, Size coveredAreaSize) {
+
+    }
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
@@ -362,6 +369,27 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     protected void reportTotalGCTimes() {
         // TODO
+    }
+
+    @HOSTED_ONLY
+    @Override
+    public XirWriteBarrierGenAdaptor barrierGenerator(IntBitSet<WriteBarrierSpec> writeBarrierSpec) {
+        if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genTuplePostWriteBarrier(asm, operands[0]);
+                }
+            };
+        } else if (writeBarrierSpec.equals(ARRAY_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genArrayPostWriteBarrier(asm, operands[0], operands[1]);
+                }
+            };
+        }
+        return NULL_WRITE_BARRIER_GEN;
     }
 
 }
