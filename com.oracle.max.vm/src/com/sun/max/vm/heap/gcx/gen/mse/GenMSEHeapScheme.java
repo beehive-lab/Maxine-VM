@@ -122,6 +122,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             Log2RegionToByteMapTable.hostInitialize();
+        } else if (MaxineVM.isHosted() && phase == Phase.SERIALIZING_IMAGE) {
+            // Build a table of indexes to reference literals that point to the card table.
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
             final Size bootCardTableSize = cardTableRSet.memoryRequirement(Heap.bootHeapRegion.size());
