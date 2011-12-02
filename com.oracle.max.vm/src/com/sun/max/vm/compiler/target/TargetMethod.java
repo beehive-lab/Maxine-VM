@@ -498,7 +498,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     protected void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
-        Literals literals = serializeLiterals(ciTargetMethod);
+        Literals literals = new Literals(ciTargetMethod.dataReferences);
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize());
@@ -517,15 +517,15 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        this.setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
+        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
         assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
-        patchInstructions(targetBundleLayout, ciTargetMethod, literals.scalarsMap);
+        patchInstructions(targetBundleLayout, ciTargetMethod, literals);
     }
 
     /**
-     * Describes the result of serializing a list of {@link DataPatch}es to data structures
+     * Used to serialize a list of {@link DataPatch}es to data structures
      * that are co-located with the code that accesses the data.
      */
     static class Literals {
@@ -542,6 +542,7 @@ public abstract class TargetMethod extends MemoryRegion {
         /**
          * The object literals.
          */
+        final IdentityHashMap<Object, Integer> objectPool;
         final Object[] objects;
 
         /**
@@ -550,11 +551,12 @@ public abstract class TargetMethod extends MemoryRegion {
          */
         final int scalarsAlignment;
 
-        public Literals(Object[] objects, final byte[] scalars, int[] scalarsMap, int scalarsAlignment) {
-            this.objects = objects;
-            this.scalars = scalars;
-            this.scalarsMap = scalarsMap;
-            this.scalarsAlignment = scalarsAlignment;
+        /**
+         * Gets the index in {@link TargetMethod#scalarLiterals} of the scalar data at
+         * index {@code index} in {@link CiTargetMethod#dataReferences}.
+         */
+        int scalarPos(int dataIndex) {
+            return scalarsMap[dataIndex];
         }
 
         /**
@@ -572,85 +574,90 @@ public abstract class TargetMethod extends MemoryRegion {
                 scalars[i] = scalars[i - delta];
             }
         }
-    }
 
-    private Literals serializeLiterals(CiTargetMethod ciTargetMethod) {
-        ByteArrayOutputStream scalarsBuffer = new ByteArrayOutputStream();
-        List<Object> objectsBuffer = new ArrayList<Object>(ciTargetMethod.dataReferences.size());
-        Endianness endianness = platform().endianness();
-        int[] scalarsMap = new int[ciTargetMethod.dataReferences.size()];
-        int z = 0;
-        int currentScalarsPos = 0;
-        int scalarsAlignment = 0;
-        for (DataPatch site : ciTargetMethod.dataReferences) {
-            final CiConstant data = site.constant;
-            if (!data.kind.isObject()) {
-                scalarsMap[z] = currentScalarsPos;
-                if (site.alignment != 0) {
-                    currentScalarsPos = (currentScalarsPos + (site.alignment - 1)) & ~(site.alignment - 1);
-                    if (site.alignment > scalarsAlignment) {
-                        scalarsAlignment = site.alignment;
+        public Literals(List<DataPatch> dataReferences) {
+            objectPool = new IdentityHashMap<Object, Integer>(dataReferences.size());
+            ArrayList<Object> objectsBuffer = new ArrayList<Object>(dataReferences.size());
+            ByteArrayOutputStream scalarsBuffer = new ByteArrayOutputStream();
+            Endianness endianness = platform().endianness();
+            scalarsMap = new int[dataReferences.size()];
+            int dataIndex = 0;
+            int currentScalarsPos = 0;
+            int scalarsAlignment = 0;
+            for (DataPatch site : dataReferences) {
+                final CiConstant data = site.constant;
+                if (!data.kind.isObject()) {
+                    scalarsMap[dataIndex] = currentScalarsPos;
+                    if (site.alignment != 0) {
+                        currentScalarsPos = (currentScalarsPos + (site.alignment - 1)) & ~(site.alignment - 1);
+                        if (site.alignment > scalarsAlignment) {
+                            scalarsAlignment = site.alignment;
+                        }
                     }
+                } else {
+                    scalarsMap[dataIndex] = -1;
                 }
-            } else {
-                scalarsMap[z] = -1;
-            }
-            try {
-                switch (data.kind) {
-                    case Double:
-                        endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
-                        currentScalarsPos += 8;
-                        break;
+                try {
+                    switch (data.kind) {
+                        case Double:
+                            endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
+                            currentScalarsPos += 8;
+                            break;
 
-                    case Float:
-                        endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
-                        currentScalarsPos += 4;
-                        break;
+                        case Float:
+                            endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
+                            currentScalarsPos += 4;
+                            break;
 
-                    case Int:
-                        endianness.writeInt(scalarsBuffer, data.asInt());
-                        currentScalarsPos += 4;
-                        break;
+                        case Int:
+                            endianness.writeInt(scalarsBuffer, data.asInt());
+                            currentScalarsPos += 4;
+                            break;
 
-                    case Long:
-                        endianness.writeLong(scalarsBuffer, data.asLong());
-                        currentScalarsPos += 8;
-                        break;
+                        case Long:
+                            endianness.writeLong(scalarsBuffer, data.asLong());
+                            currentScalarsPos += 8;
+                            break;
 
-                    case Object:
-                        objectsBuffer.add(data.asObject());
-                        break;
+                        case Object: {
+                            Object object = data.asObject();
+                            assert object != null;
+                            if (!objectPool.containsKey(object)) {
+                                objectPool.put(object, objectsBuffer.size());
+                                objectsBuffer.add(object);
+                            }
+                            break;
+                        }
+                        default:
+                            throw new IllegalArgumentException("Unknown constant type!");
+                    }
 
-                    default:
-                        throw new IllegalArgumentException("Unknown constant type!");
+                } catch (IOException e) {
+                    throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
                 }
-
-            } catch (IOException e) {
-                throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
+                dataIndex++;
             }
-            z++;
+
+            final int guaranteedAlignment = Word.size();
+            int padding = scalarsAlignment - guaranteedAlignment;
+            while (padding > 0) {
+                scalarsBuffer.write(0);
+                padding--;
+            }
+
+            scalars = scalarsBuffer.toByteArray();
+            this.scalarsAlignment = scalarsAlignment;
+            objects = objectsBuffer.toArray();
         }
-
-        final int guaranteedAlignment = Word.size();
-        int padding = scalarsAlignment - guaranteedAlignment;
-        while (padding > 0) {
-            scalarsBuffer.write(0);
-            padding--;
-        }
-
-        byte[] scalars = scalarsBuffer.toByteArray();
-        Object[] objects = objectsBuffer.toArray();
-
-        return new Literals(objects, scalars, scalarsMap, scalarsAlignment);
     }
 
-    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
+    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, Literals literals) {
         Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
 
-        Offset dataDiff = Offset.zero();
+        Offset scalarDiff = Offset.zero();
         if (this.scalarLiterals != null) {
-            Offset dataStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
-            dataDiff = dataStart.minus(codeStart).asOffset();
+            Offset scalarStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+            scalarDiff = scalarStart.minus(codeStart).asOffset();
         }
 
         Offset referenceDiff = Offset.zero();
@@ -659,29 +666,26 @@ public abstract class TargetMethod extends MemoryRegion {
             referenceDiff = referenceStart.minus(codeStart).asOffset();
         }
 
-        int objectReferenceIndex = 0;
-        int z = 0;
+        int dataIndex = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-
             switch (site.constant.kind) {
-
                 case Double: // fall through
                 case Float: // fall through
                 case Int: // fall through
-                case Long:
-                    patchRelativeInstruction(site.pcOffset, dataDiff.plus(relativeDataPositions[z] - site.pcOffset).toInt());
+                case Long: {
+                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
                     break;
-
-                case Object:
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * Word.size() - site.pcOffset).toInt());
-                    objectReferenceIndex++;
+                }
+                case Object: {
+                    int index = literals.objectPool.get(site.constant.asObject());
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
                     break;
-
+                }
                 default:
                     throw new IllegalArgumentException("Unknown constant type!");
             }
 
-            z++;
+            dataIndex++;
         }
     }
 
