@@ -39,11 +39,26 @@ public class NestedLoopTest extends GraphTest {
         test("test1Snippet");
     }
 
+    @Test
+    public void test2() {
+        test("test2Snippet");
+    }
+
+    @Test
+    public void test3() {
+        test("test3Snippet");
+    }
+
+    @Test
+    public void test4() {
+        test("test4Snippet");
+    }
+
     public static void test1Snippet(int a) {
-        while (test()) {
-            m1: while (test()) {
-                while (test()) {
-                    if (test()) {
+        while (a()) {
+            m1: while (b()) {
+                while (c()) {
+                    if (d()) {
                         break m1;
                     }
                 }
@@ -51,17 +66,98 @@ public class NestedLoopTest extends GraphTest {
         }
     }
 
-    private static boolean test() {
+    public static void test2Snippet(int a) {
+        while (a()) {
+            try {
+                m1: while (b()) {
+                    while (c()) {
+                        if (d()) {
+                            break m1;
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+            }
+        }
+    }
+
+    public static void test3Snippet(int a) {
+        while (a == 0) {
+            try {
+                m1: while (b()) {
+                    while (c()) {
+                        if (d()) {
+                            a();
+                            break m1;
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+            }
+        }
+    }
+
+    public static void test4Snippet(int a) {
+        while (a != 0) {
+            try {
+                m1: while (a != 0) {
+                    b();
+                    while (c()) {
+                        if (d()) {
+                            break m1;
+                        }
+                    }
+                    if (a != 2) {
+                        a();
+                        throw new Exception();
+                    }
+                }
+            } catch (Throwable t) {
+            }
+        }
+    }
+
+    private static boolean a() {
         return false;
+    }
+
+    private static boolean b() {
+        return false;
+    }
+
+    private static boolean c() {
+        return false;
+    }
+
+    private static boolean d() {
+        return false;
+    }
+
+    private Invoke getInvoke(String name, StructuredGraph graph) {
+        for (Invoke invoke : graph.getInvokes()) {
+            if (invoke.callTarget().targetMethod().name().equals(name)) {
+                return invoke;
+            }
+        }
+        return null;
     }
 
     private void test(String snippet) {
         StructuredGraph graph = parse(snippet);
         print(graph);
-
         LoopInfo loopInfo = LoopUtil.computeLoopInfo(graph);
         loopInfo.print();
-
+        Loop rootLoop = loopInfo.rootLoops().get(0);
+        Loop nestedLoop = rootLoop.children().get(0);
+        Loop innerMostLoop = nestedLoop.children().get(0);
+        Invoke a = getInvoke("a", graph);
+        Invoke b = getInvoke("b", graph);
+        Invoke c = getInvoke("c", graph);
+        Invoke d = getInvoke("d", graph);
+        Assert.assertTrue(rootLoop.localContainsFixed((FixedNode) a));
+        Assert.assertTrue(nestedLoop.localContainsFixed((FixedNode) b));
+        Assert.assertTrue(innerMostLoop.localContainsFixed((FixedNode) c));
+        Assert.assertTrue(innerMostLoop.localContainsFixed((FixedNode) d));
         print(graph);
     }
 }
