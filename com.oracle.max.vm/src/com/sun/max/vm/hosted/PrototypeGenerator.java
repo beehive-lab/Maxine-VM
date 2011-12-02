@@ -88,7 +88,6 @@ public final class PrototypeGenerator {
         compiledPrototype.link();
 
         // From now on, no code will be added to the boot regions.
-        // Schemes may use the Phase.SERIALIZING_IMAGE to post-process the code regions.
         vmConfig().initializeSchemes(Phase.SERIALIZING_IMAGE);
 
         graphPrototype = new GraphPrototype(compiledPrototype);
