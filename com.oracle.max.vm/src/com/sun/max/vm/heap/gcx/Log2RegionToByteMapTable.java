@@ -124,7 +124,7 @@ public class Log2RegionToByteMapTable {
         }
         tableAddress = tableOrigin.plus(tableHeaderSize());
         biasedTableAddress = tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
-        assert this.table == table && byteAddressFor(coveredAreaStart).equals(tableAddress);
+        FatalError.check(this.table == table && byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
     }
 
     /**

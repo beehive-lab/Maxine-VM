@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, ThreadLocalRSetInitializer, XirWriteBarrierSpecification {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -120,16 +120,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            Log2RegionToByteMapTable.hostInitialize();
-        } else if (MaxineVM.isHosted() && phase == Phase.SERIALIZING_IMAGE) {
-            // Build a table of indexes to reference literals that point to the card table.
-        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
-            final Size bootCardTableSize = cardTableRSet.memoryRequirement(Heap.bootHeapRegion.size());
-            final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
-            cardTableRSet.initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
-        }
+        cardTableRSet.initialize(phase);
     }
 
     /**
@@ -395,10 +386,5 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             };
         }
         return NULL_WRITE_BARRIER_GEN;
-    }
-
-    @Override
-    public void initializeRSetThreadLocals(VmThreadLocal vmThreadLocal) {
-        cardTableRSet.initializeThreadLocals(vmThreadLocal);
     }
 }
