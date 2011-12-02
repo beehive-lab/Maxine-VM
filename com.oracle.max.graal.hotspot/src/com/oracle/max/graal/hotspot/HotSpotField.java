@@ -27,7 +27,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;

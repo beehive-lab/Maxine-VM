@@ -78,11 +78,11 @@ public class MockExample {
         graph.start().setNext(returnNode);
 
         // Compile and print disassembly.
-        CiResult result = graalCompiler.compileMethod(riMethod, graph, PhasePlan.DEFAULT);
-        System.out.println(runtime.disassemble(result.targetMethod()));
+        CiTargetMethod result = graalCompiler.compileMethod(riMethod, graph, PhasePlan.DEFAULT);
+        System.out.println(runtime.disassemble(result));
 
         // Install method!
-        runtime.installMethod(riMethod, result.targetMethod());
+        runtime.installMethod(riMethod, result);
 
         // And call it!!
         return mockMethod();
