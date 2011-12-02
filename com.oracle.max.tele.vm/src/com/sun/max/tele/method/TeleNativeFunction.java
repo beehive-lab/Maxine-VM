@@ -294,7 +294,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
 
     @Override
     public String qualName() {
-        return lib == null ? name : lib.entityName() + "." + name;
+        return lib == null ? name : lib.entityName() + ":" + name;
     }
 
     @Override
