@@ -103,6 +103,7 @@ public class GraphUtil {
             }
             // null out remaining usages
             node.replaceAtUsages(null);
+            node.replaceAtPredecessors(null);
             node.safeDelete();
         }
     }
