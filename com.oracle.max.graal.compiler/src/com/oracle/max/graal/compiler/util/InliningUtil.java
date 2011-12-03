@@ -448,9 +448,7 @@ public class InliningUtil {
                 obj.setNext(null);
                 unwindDuplicate.replaceAndDelete(n);
             } else {
-                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
-                invokeWithException.setExceptionEdge(null);
-                GraphUtil.killCFG(nodeToDelete);
+                invokeWithException.killExceptionEdge();
             }
         } else {
             if (unwindNode != null) {
