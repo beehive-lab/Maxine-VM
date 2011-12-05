@@ -25,6 +25,7 @@ package com.sun.max.vm.jvmti;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 
@@ -172,6 +173,9 @@ public class JVMTIEvent {
             return JVMTI_ERROR_INVALID_EVENT_TYPE;
         }
         if (eventThread.isZero()) {
+            if (eventType == SINGLE_STEP) {
+                debug();
+            }
             long envMask = EVENTMASK.get(env).asAddress().toLong();
             long maskBit = bitMasks[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
             if (mode == JVMTI_ENABLE) {
@@ -201,6 +205,9 @@ public class JVMTIEvent {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
     }
+
+    @NEVER_INLINE
+    private static void debug() {}
 
     /**
      * Event tracing support.

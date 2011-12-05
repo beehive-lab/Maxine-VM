@@ -28,6 +28,7 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -35,11 +36,11 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIUtil.TypedData;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.*;
-import com.sun.max.vm.runtime.VmOperation;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
@@ -139,6 +140,9 @@ class JVMTIThreadFunctions {
                 case TIMED_WAITING:
                     state = JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT;
             }
+            if (VmOperation.isSuspendRequest(vmThread.tla())) {
+                state |= JVMTI_THREAD_STATE_SUSPENDED;
+            }
         }
         return state;
     }
@@ -176,14 +180,31 @@ class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    private static class FrameAccessWithIP extends FrameAccess {
+        CodePointer ip;
+
+        void setCallerInfo(StackFrameCursor callerCursor) {
+            this.setCallerInfo(callerCursor.sp(), callerCursor.fp());
+        }
+
+        FrameAccessWithIP(StackFrameCursor currentCursor) {
+            super(currentCursor.csl(), currentCursor.csa(), currentCursor.sp(), currentCursor.fp(),
+                            Pointer.zero(), Pointer.zero());
+            if (currentCursor.ip.targetMethod() != null) {
+                this.ip = currentCursor.vmIP();
+            }
+
+        }
+    }
+
     private static class StackElement {
         ClassMethodActor classMethodActor;
         int bci;
-        Pointer fp;
+        FrameAccessWithIP frameAccess;
 
-        StackElement(ClassMethodActor classMethodActor, int bci, Pointer fp) {
+        StackElement(ClassMethodActor classMethodActor, int bci, FrameAccessWithIP frameAccess) {
             this.classMethodActor = classMethodActor;
-            this.fp = fp;
+            this.frameAccess = frameAccess;
             this.bci = bci;
         }
 
@@ -214,7 +235,6 @@ class JVMTIThreadFunctions {
     private static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
         boolean seenNonVMFrame;
         LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
-
         @Override
         public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
             // "trapped" indicates the frame in the safepoint trap handler.
@@ -240,8 +260,12 @@ class JVMTIThreadFunctions {
 
         private void add(ClassMethodActor classMethodActor, int bci) {
             if (!classMethodActor.holder().isReflectionStub()) {
-                stackElements.addFirst(new StackElement(classMethodActor, bci, currentCursor.fp()));
+                stackElements.addFirst(new StackElement(classMethodActor, bci, getFrameAccessWithIP()));
             }
+        }
+
+        protected FrameAccessWithIP getFrameAccessWithIP() {
+            return null;
         }
 
         @Override
@@ -537,83 +561,183 @@ class JVMTIThreadFunctions {
         }
     }
 
+    /**
+     * Visitor for getting/setting local variables in stack frames.
+     */
+    private static class GetSetStackTraceVisitor extends FindAppFramesStackTraceVisitor {
+        int depth;
+        int slot;
+        TypedData typedData;
+        boolean isSet;
+        int returnCode = JVMTI_ERROR_NONE;
+        FrameAccessWithIP calleeFrameAccess;
+
+        GetSetStackTraceVisitor(int depth, int slot, TypedData typedData, boolean isSet) {
+            this.depth = depth;
+            this.slot = slot;
+            this.typedData = typedData;
+            this.isSet = isSet;
+        }
+
+        @Override
+        protected FrameAccessWithIP getFrameAccessWithIP() {
+            // this only changes for physical frames
+            return calleeFrameAccess;
+        }
+
+        @Override
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+            // This is the physical frame visit
+            // since we walk down, we don't know the caller yet, but update the callee caller info to this frame.
+            if (calleeFrameAccess != null) {
+                calleeFrameAccess.setCallerInfo(current);
+            }
+            calleeFrameAccess = new FrameAccessWithIP(current);
+            return super.visitFrame(current, callee);
+        }
+
+        @Override
+        public void walk(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp) {
+            super.walk(walker, ip, sp, fp);
+            if (depth < stackElements.size()) {
+                StackElement stackElement = getStackElement(depth);
+                ClassMethodActor classMethodActor = stackElement.classMethodActor;
+                TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                if (!targetMethod.isBaseline() && isSet) {
+                    returnCode = JVMTI_ERROR_OPAQUE_FRAME; // TODO need dopt
+                    return;
+                }
+                targetMethod.finalizeReferenceMaps();
+                FrameAccessWithIP frameAccess = stackElement.frameAccess;
+                CiFrame ciFrame = targetMethod.debugInfoAt(targetMethod.findSafepointIndex(frameAccess.ip), isSet ? null : frameAccess).frame();
+                if (slot >= ciFrame.numLocals) {
+                    returnCode = JVMTI_ERROR_INVALID_SLOT;
+                    return;
+                }
+                if (!typeCheck(classMethodActor)) {
+                    returnCode = JVMTI_ERROR_TYPE_MISMATCH;
+                    return;
+                }
+
+                CiConstant ciConstant = null;
+                CiAddress ciAddress = null;
+                if (isSet) {
+                    ciAddress = (CiAddress)  ciFrame.getLocalValue(slot);
+                } else {
+                    ciConstant = (CiConstant) ciFrame.getLocalValue(slot);
+                }
+                // The type of ciConstant almost certainly will not be accurate,
+                // for example, T1X only distinguishes reference (object) types; everything else is a long
+
+                // Checkstyle: stop
+                switch (typedData.tag) {
+                    case 'L':
+                        if (ciConstant.kind != CiKind.Object) {
+                            returnCode = JVMTI_ERROR_TYPE_MISMATCH;
+                            return;
+                        }
+                        if (isSet) {
+                        } else {
+                            typedData.objectValue = ciConstant.asObject();
+                        }
+                        break;
+
+                    case 'F':
+                        if (isSet) {
+                        } else {
+                            typedData.floatValue = Float.intBitsToFloat((int) ciConstant.asPrimitive());
+                        }
+                        break;
+
+                    case 'D':
+                        if (isSet) {
+                        } else {
+                            typedData.doubleValue = Double.longBitsToDouble(ciConstant.asPrimitive());
+                        }
+                        break;
+
+                    case 'I':
+                        if (isSet) {
+                            Pointer varPtr = frameSlotAddress(ciAddress, frameAccess);
+                            varPtr.setInt(typedData.intValue);
+                        } else {
+                            typedData.intValue = (int) ciConstant.asPrimitive();
+                        }
+                        break;
+
+                    case 'J':
+                        if (isSet) {
+                        } else {
+                            typedData.longValue = ciConstant.asLong();
+                        }
+                }
+                // Checkstyle: resume
+            } else {
+                returnCode = JVMTI_ERROR_NO_MORE_FRAMES;
+            }
+        }
+
+        @NEVER_INLINE
+        private static Pointer frameSlotAddress(CiAddress address, FrameAccess frameAccess) {
+            Pointer fpVal = frameAccess.fp;
+            return fpVal.plus(address.displacement);
+        }
+
+        private boolean typeCheck(ClassMethodActor classMethodActor) {
+            LocalVariableTable.Entry[] entries = classMethodActor.codeAttribute().localVariableTable().entries();
+            if (entries.length > 0) {
+                for (int i = 0; i < entries.length; i++) {
+                    LocalVariableTable.Entry entry = entries[i];
+                    if (entry.slot() == slot) {
+                        String slotType = classMethodActor.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
+                        return typeMatch(slotType.charAt(0));
+                    }
+                }
+                return false;
+            } else {
+                // no info so assume ok
+                return true;
+            }
+        }
+
+        private boolean typeMatch(int type) {
+            if (typedData.tag == 'L') {
+                return type == 'L' || type == '[';
+            } else {
+                return type == typedData.tag;
+            }
+        }
+    }
+
     private static int getOrSetLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, TypedData typedData) {
         VmThread vmThread = checkThread(thread);
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        FindAppFramesStackTraceVisitor stackTraceVisitor = new FindAppFramesStackTraceVisitor();
+        GetSetStackTraceVisitor stackTraceVisitor = new GetSetStackTraceVisitor(depth, slot, typedData, valuePtr.isZero());
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackTraceVisitor);
         op.submit();
-        if (depth < stackTraceVisitor.stackElements.size()) {
-            boolean isSet = valuePtr.isZero();
-            StackElement stackElement = stackTraceVisitor.getStackElement(depth);
-            ClassMethodActor classMethodActor = stackElement.classMethodActor;
-            LocalVariableTable.Entry[] entries = classMethodActor.codeAttribute().localVariableTable().entries();
-            if (entries.length == 0) {
-                return JVMTI_ERROR_INVALID_SLOT;
-            } else {
-                for (int i = 0; i < entries.length; i++) {
-                    LocalVariableTable.Entry entry = entries[i];
-                    if (entry.slot() == slot) {
-                        String slotType = classMethodActor.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
-                        if (typeMatch(slotType.charAt(0), typedData.tag)) {
-                            TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-                            if (!targetMethod.isBaseline()) {
-                                return JVMTI_ERROR_INVALID_SLOT; // TODO
-                            }
-                            int offset = targetMethod.frameLayout().localVariableOffset(slot);
-                            Pointer varPtr = stackElement.fp;
-                            switch (typedData.tag) {
-                                case 'L':
-                                    if (isSet) {
-                                        varPtr.writeReference(offset, Reference.fromJava(typedData.objectValue));
-                                    } else {
-                                        valuePtr.setWord(JniHandles.createLocalHandle(varPtr.readReference(offset).toJava()));
-                                    }
-                                    break;
-
-                                case 'F':
-                                    if (isSet) {
-                                        varPtr.writeFloat(offset, typedData.floatValue);
-                                    } else {
-                                        valuePtr.setFloat(varPtr.readFloat(offset));
-                                    }
-                                    break;
-
-                                case 'D':
-                                    if (isSet) {
-                                        varPtr.writeDouble(offset, typedData.doubleValue);
-                                    } else {
-                                        valuePtr.setDouble(varPtr.readDouble(offset));
-                                    }
-                                    break;
-
-                                default:
-                                    if (isSet) {
-                                        varPtr.writeWord(offset, typedData.wordValue);
-                                    } else {
-                                        valuePtr.setWord(varPtr.readWord(offset));
-                                    }
-                            }
-                        } else {
-                            return JVMTI_ERROR_TYPE_MISMATCH;
-                        }
-                    }
-                }
+        if (valuePtr.isNotZero()) {
+            switch (typedData.tag) {
+                case 'L':
+                    valuePtr.setWord(JniHandles.createLocalHandle(typedData.objectValue));
+                    break;
+                case 'D':
+                    valuePtr.setDouble(typedData.doubleValue);
+                    break;
+                case 'F':
+                    valuePtr.setFloat(typedData.floatValue);
+                    break;
+                case 'J':
+                    valuePtr.setLong(typedData.longValue);
+                    break;
+                case 'I':
+                    valuePtr.setInt(typedData.intValue);
+                    break;
             }
-        } else {
-            return JVMTI_ERROR_NO_MORE_FRAMES;
         }
-        return JVMTI_ERROR_NONE;
-    }
 
-    private static boolean typeMatch(int type, int tagType) {
-        if (tagType == 'L') {
-            return type == '[' || type == 'L';
-        } else {
-            return type == tagType;
-        }
+        return stackTraceVisitor.returnCode;
     }
 
     static int getLocalValue(Thread thread, int depth, int slot, Pointer valuePtr, char type) {

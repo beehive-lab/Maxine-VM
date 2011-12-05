@@ -297,18 +297,28 @@ public abstract class TargetMethod extends MemoryRegion {
         /**
          * Stack pointer.
          */
-        public final Pointer callerSP;
+        public Pointer callerSP;
 
         /**
          * Frame pointer.
          */
-        public final Pointer callerFP;
+        public Pointer callerFP;
 
         public FrameAccess(CiCalleeSaveLayout csl, Pointer csa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
             this.csl = csl;
             this.csa = csa;
             this.sp = sp;
             this.fp = fp;
+            this.callerSP = callerSP;
+            this.callerFP = callerFP;
+        }
+
+        /**
+         * For use when walking stacks in callee/caller order.
+         * @param callerSP
+         * @param callerFP
+         */
+        public void setCallerInfo(Pointer callerSP, Pointer callerFP) {
             this.callerSP = callerSP;
             this.callerFP = callerFP;
         }
@@ -1095,6 +1105,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param frame an activation frame for this target method
      */
     public abstract Pointer returnAddressPointer(StackFrameCursor frame);
+
+    /**
+     * Finalize reference maps if necessary.
+     */
+    public void finalizeReferenceMaps() {
+
+    }
 
     /**
      * Determines if this a {@link Nature#BASELINE} target method.
