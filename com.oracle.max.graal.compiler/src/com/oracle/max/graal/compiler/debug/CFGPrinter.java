@@ -214,13 +214,13 @@ public class CFGPrinter extends CompilationPrinter {
         }
 
         for (Node node : block.getInstructions()) {
-            printNode((ValueNode) node);
+            printNode(node);
         }
         out.enableIndentation();
         end("IR");
     }
 
-    private void printNode(ValueNode node) {
+    private void printNode(Node node) {
         if (node instanceof FixedWithNextNode) {
             out.print("f ").print(HOVER_START).print("#").print(HOVER_SEP).print("fixed with next").print(HOVER_END).println(COLUMN_END);
         } else if (node instanceof FixedNode) {
@@ -228,9 +228,11 @@ public class CFGPrinter extends CompilationPrinter {
         } else if (node instanceof FloatingNode) {
             out.print("f ").print(HOVER_START).print("~").print(HOVER_SEP).print("floating").print(HOVER_END).println(COLUMN_END);
         }
-        CiValue operand = compilation.operand(node);
-        if (operand != null) {
-            out.print("result ").print(new OperandFormatter(false).format(operand)).println(COLUMN_END);
+        if (compilation.nodeOperands != null && node instanceof ValueNode) {
+            CiValue operand = compilation.operand((ValueNode) node);
+            if (operand != null) {
+                out.print("result ").print(new OperandFormatter(false).format(operand)).println(COLUMN_END);
+            }
         }
         out.print("tid ").print(nodeToString(node)).println(COLUMN_END);
 
@@ -269,7 +271,7 @@ public class CFGPrinter extends CompilationPrinter {
         printNamedNodes(node, node.successors().iterator(), "#", "");
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String key = entry.getKey().toString();
-            if (key.startsWith("data.") && !key.equals("data.kind")) {
+            if (key.startsWith("data.") && !key.equals("data.stamp")) {
                 out.print(key.substring("data.".length())).print(": ").print(entry.getValue() == null ? "[null]" : entry.getValue().toString()).print(" ");
             }
         }
