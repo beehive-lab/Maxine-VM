@@ -134,7 +134,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
                 printer().addOmittedClass(FrameState.class);
             }
             printer().begin();
-            printer().beginGroup(title, title, method, -1);
+            printer().beginGroup(title, title, method, -1, "Graal");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -168,7 +168,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
                 printer().addOmittedClass(FrameState.class);
             }
             printer().begin();
-            printer().beginGroup(title, title, method, -1);
+            printer().beginGroup(title, title, method, -1, "Graal");
             printer().flush();
             if (socket().getInputStream().read() != 'y') {
                 // server declines input for this method
