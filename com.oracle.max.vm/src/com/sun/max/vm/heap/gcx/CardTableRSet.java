@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.CardTable.CardState;
@@ -30,6 +31,11 @@ import com.sun.max.vm.heap.gcx.CardTable.CardState;
  * A pure card-table based remembered set.
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
+    /**
+     * Contiguous regions of virtual memory holding the card table data.
+     * Mostly used to feed the inspector.
+     */
+    final MemoryRegion cardTableMemory;
 
     final CardTable cardTable;
     final CardFirstObjectTable cfoTable;
@@ -46,9 +52,13 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     public CardTableRSet() {
         cardTable = new CardTable();
         cfoTable = new CardFirstObjectTable();
+        cardTableMemory = new MemoryRegion("Card and FOT tables");
+
     }
 
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
+        cardTableMemory.setStart(cardTableDataStart);
+        cardTableMemory.setSize(cardTableDataSize);
         cardTable.initialize(coveredAreaStart, coveredAreaSize, cardTableDataStart);
         final Address cfoTableStart = cardTableDataStart.plus(cardTable.tableSize(coveredAreaSize).wordAligned());
         cfoTable.initialize(coveredAreaStart, coveredAreaSize, cfoTableStart);
@@ -103,5 +113,13 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     @Override
     public Size memoryRequirement(Size maxCoveredAreaSize) {
         return cardTable.tableSize(maxCoveredAreaSize).plus(cfoTable.tableSize(maxCoveredAreaSize));
+    }
+
+    /**
+     * Contiguous region of memory used by the remembered set.
+     * @return a non-null {@link MemoryRegion}
+     */
+    public MemoryRegion memory() {
+        return cardTableMemory;
     }
 }

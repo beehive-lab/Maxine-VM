@@ -73,6 +73,8 @@ public class SpecialReferenceManager {
 
         /**
          * Ensures that the object graph rooted at a given reference survives the current GC.
+         * WARNING: this interface doesn't update remembered sets if the above relocate the object.
+         * FIXME: may be we should change it, which also requires changing
          *
          * @param ref the root of the object graph to be preserved
          * @return a reference to the root of the preserved object graph. Whether or not this is equal to {@code ref}
@@ -292,6 +294,7 @@ public class SpecialReferenceManager {
                         if (ref instanceof java.lang.ref.SoftReference || ref instanceof java.lang.ref.WeakReference) {
                             refAlias.referent = null;
                         } else {
+                            // The following line MUST run the mutator write barrier
                             refAlias.referent = gc.preserve(referent).toJava();
                             preserved = true;
                         }
@@ -311,6 +314,7 @@ public class SpecialReferenceManager {
                 } else if (updateReachableReferent) {
                     // this object is reachable, however the "referent" field was not scanned.
                     // we need to update this field manually
+                    // The following line MUST run the mutator write barrier
                     refAlias.referent = gc.preserve(referent).toJava();
                 }
 

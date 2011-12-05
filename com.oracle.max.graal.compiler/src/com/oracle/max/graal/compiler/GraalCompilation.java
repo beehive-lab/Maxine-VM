@@ -108,6 +108,9 @@ public final class GraalCompilation {
     }
 
     public CiValue operand(ValueNode valueNode) {
+        if (nodeOperands == null) {
+            return null;
+        }
         return nodeOperands.get(valueNode);
     }
 

@@ -160,6 +160,7 @@ public abstract class AbstractGraphBuilder {
 
     static final MethodActor Pointer_writeObject = findMethod(Pointer.class, "writeObject", int.class, Object.class);
     static final MethodActor Snippets_nativeCallPrologue = findMethod(Snippets.class, "nativeCallPrologue", NativeFunction.class);
+    static final MethodActor Snippets_nativeCallPrologueForC = findMethod(Snippets.class, "nativeCallPrologueForC", NativeFunction.class);
     static final MethodActor Intrinsics_alloca = findMethod(Intrinsics.class, "alloca", int.class, boolean.class);
     static final MethodActor JniHandle_unhand = findMethod(JniHandle.class, "unhand");
     static final MethodActor JniHandles_getHandle = findMethod(JniHandles.class, "getHandle", Pointer.class, int.class, Object.class);

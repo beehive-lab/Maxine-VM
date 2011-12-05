@@ -60,17 +60,17 @@ public class WordTypeRewriterPhase extends Phase {
                 ConstantNode c = (ConstantNode) node;
                 return c.value.asObject() instanceof WordUtil.WrappedWord;
             }
-            return isWord(node.declaredType());
+            return isWord(node.declaredType(), node);
         }
         return false;
     }
 
-    public boolean isWord(RiType type) {
+    public boolean isWord(RiType type, ValueNode node) {
         if (!(type instanceof ClassActor)) {
             return false;
         }
         ClassActor actor = (ClassActor) type;
-        assert actor.kind == Kind.REFERENCE || actor.kind == Kind.WORD;
+        assert actor.kind == Kind.REFERENCE || actor.kind == Kind.WORD : node;
         return actor.kind == Kind.WORD;
     }
 

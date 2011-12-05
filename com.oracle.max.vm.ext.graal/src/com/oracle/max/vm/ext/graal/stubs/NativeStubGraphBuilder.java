@@ -59,7 +59,20 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     public NativeStubGraphBuilder(ClassMethodActor nativeMethod) {
         super(nativeMethod);
         assert nativeMethod.isNative();
-        StructuredGraph template = nativeMethod.isCFunction() ? cFunctionTemplate : nativeMethod.isSynchronized() ? synchronizedTemplate : normalTemplate;
+        StructuredGraph template;
+        if (nativeMethod.isCFunction()) {
+            if (NativeInterfaces.needsPrologueAndEpilogue(nativeMethod)) {
+                template = cFunctionTemplate;
+            } else {
+                template = noPrologueOrEpilogueTemplate;
+            }
+        } else {
+            if (nativeMethod.isSynchronized()) {
+                template = synchronizedTemplate;
+            } else {
+                template = normalTemplate;
+            }
+        }
         setGraph(template.copy(nativeMethod.name()));
     }
 
@@ -135,9 +148,24 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
         return result;
     }
 
+    /**
+     * Stub template for a native method that doesn't need a prologue and epilogue around the native function call.
+     *
+     * @see NativeInterfaces#needsPrologueAndEpilogue(MethodActor)
+     */
+    public static Object templateNoPrologueOrEpilogue(NativeFunction nativeFunction, String ignore) {
+        Pointer frame = VMRegister.getCpuStackPointer();
+        Address address = nativeFunction.link();
+        Snippets.nativeCallPrologueForC(nativeFunction);
+        Object result = nativeFunctionCall(address, frame, VmThread.jniEnv());
+        Snippets.nativeCallEpilogueForC();
+        return result;
+    }
+
     static StructuredGraph normalTemplate;
     static StructuredGraph synchronizedTemplate;
     static StructuredGraph cFunctionTemplate;
+    static StructuredGraph noPrologueOrEpilogueTemplate;
 
     /**
      * Builds the graph for the native method stub.
@@ -248,6 +276,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             normalTemplate = createTemplate("template");
             synchronizedTemplate = createTemplate("syncTemplate");
             cFunctionTemplate = createTemplate("templateC");
+            noPrologueOrEpilogueTemplate = createTemplate("templateNoPrologueOrEpilogue");
         }
     }
 

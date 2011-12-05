@@ -282,6 +282,17 @@ public final class CiConstant extends CiValue {
     }
 
     /**
+     * Unchecked access to a primitive value.
+     * @return
+     */
+    public long asPrimitive() {
+        if (kind.isObject()) {
+            throw new Error("Constant is not primitive: " + this);
+        }
+        return primitive;
+    }
+
+    /**
      * Computes the hashcode of this constant.
      * @return a suitable hashcode for this constant
      */

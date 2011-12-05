@@ -31,7 +31,7 @@ import com.sun.max.vm.heap.*;
 
 /**
  * A code manager that reserves and allocates virtual memory immediately after the boot region.
- * Specifically, the code manager allocates a single contiguous range of virtual memory, sized to {@link CodeManager#runtimeCodeRegionSize}, on the
+ * Specifically, the code manager allocates two page-aligned contiguous ranges of virtual memory immediately (one for each of the baseline and optimized code regions) after the
  * first virtual memory page next to the boot heap region highest address.
  * It relies on cooperation with the HeapScheme to reserve up to 1 G of space next to the boot heap region.
  * This guarantees that (1) virtual memory can be allocated at that address, and (2) all code allocated from the code manager will be within a 32-bit displacement from
