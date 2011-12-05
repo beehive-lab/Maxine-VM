@@ -53,7 +53,7 @@ import com.sun.cri.ri.RiType.Representation;
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  */
-public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
+public final class GraphBuilderPhase extends Phase {
 
     /**
      * The minimum value to which {@link GraalOptions#TraceBytecodeParserLevel} must be set to trace
@@ -89,9 +89,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     private ExceptionBlock unwindBlock;
     private Block returnBlock;
 
-    private final boolean useBranchPrediction;
-    private final boolean eagerResolving;
-
     // the worklist of blocks, sorted by depth first number
     private final PriorityQueue<Block> workList = new PriorityQueue<Block>(10, new Comparator<Block>() {
         public int compare(Block o1, Block o2) {
@@ -108,17 +105,18 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
+    private final GraphBuilderConfiguration config;
+
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method) {
         this(runtime, method, null);
     }
 
     public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
-        this(runtime, method, stats, GraalOptions.UseBranchPrediction, false);
+        this(runtime, method, stats, GraphBuilderConfiguration.getDefault());
     }
 
-    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
-        this.useBranchPrediction = useBranchPrediction;
-        this.eagerResolving = eagerResolving;
+    public GraphBuilderPhase(RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, GraphBuilderConfiguration config) {
+        this.config = config;
         this.runtime = runtime;
         this.method = method;
         this.stats = stats;
@@ -142,7 +140,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private BlockMap createBlockMap() {
-        BlockMap map = new BlockMap(method, useBranchPrediction);
+        BlockMap map = new BlockMap(method, config.useBranchPrediction());
         map.build();
         if (stats != null) {
             stats.bytecodeCount += method.code().length;
@@ -670,26 +668,26 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     private RiType lookupType(int cpi, int bytecode) {
         eagerResolving(cpi, bytecode);
         RiType result = constantPool.lookupType(cpi, bytecode);
-        assert !eagerResolving || result instanceof RiResolvedType;
+        assert !config.eagerResolving() || result instanceof RiResolvedType;
         return result;
     }
 
     private RiMethod lookupMethod(int cpi, int opcode) {
         eagerResolving(cpi, opcode);
         RiMethod result = constantPool.lookupMethod(cpi, opcode);
-        assert !eagerResolving || ((result instanceof RiResolvedMethod) && ((RiResolvedMethod) result).holder().isInitialized());
+        assert !config.eagerResolving() || ((result instanceof RiResolvedMethod) && ((RiResolvedMethod) result).holder().isInitialized());
         return result;
     }
 
     private RiField lookupField(int cpi, int opcode) {
         eagerResolving(cpi, opcode);
         RiField result = constantPool.lookupField(cpi, opcode);
-        assert !eagerResolving || (result instanceof RiResolvedField && ((RiResolvedField) result).holder().isInitialized());
+        assert !config.eagerResolving() || (result instanceof RiResolvedField && ((RiResolvedField) result).holder().isInitialized());
         return result;
     }
 
     private void eagerResolving(int cpi, int bytecode) {
-        if (eagerResolving) {
+        if (config.eagerResolving()) {
             constantPool.loadReferencedType(cpi, bytecode);
         }
     }
@@ -1213,8 +1211,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         return v;
     }
 
-    @Override
-    public void append(Node node) {
+    private void append(Node node) {
         if (node instanceof FixedNode) {
             append((FixedNode) node);
         } else {
@@ -1423,7 +1420,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, catchType, (catchType instanceof RiResolvedType) && ((RiResolvedType) catchType).isInitialized());
             if (typeInstruction != null) {
                 Block nextBlock = block.successors.size() == 1 ? unwindBlock(block.deoptBci) : block.successors.get(1);
-
                 FixedNode catchSuccessor = createTarget(block.successors.get(0), frameState);
                 FixedNode nextDispatch = createTarget(nextBlock, frameState);
                 ValueNode exception = frameState.stackAt(0);

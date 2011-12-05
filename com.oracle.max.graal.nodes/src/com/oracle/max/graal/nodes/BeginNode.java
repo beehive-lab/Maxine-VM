@@ -65,7 +65,7 @@ public class BeginNode extends AbstractStateSplit implements LIRLowerable, Canon
                 prevBegin = prevBegin.predecessor();
             }
             this.replaceAtUsages(prevBegin);
-            return null;
+            return next();
         }
     }
 

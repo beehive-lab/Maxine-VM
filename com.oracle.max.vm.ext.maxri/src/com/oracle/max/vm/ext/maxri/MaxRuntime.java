@@ -459,7 +459,7 @@ public class MaxRuntime implements GraalRuntime {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
             Graph graph = load.graph();
             assert load.kind() != CiKind.Illegal;
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
             ReadNode memoryRead = graph.unique(new ReadNode(load.kind(), load.object(), location));
             if (load.object().kind() == CiKind.Object) {
@@ -472,7 +472,7 @@ public class MaxRuntime implements GraalRuntime {
         } else if (n instanceof UnsafeStoreNode) {
             UnsafeStoreNode store = (UnsafeStoreNode) n;
             Graph graph = store.graph();
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.ANY_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
             if (store.object().kind() == CiKind.Object) {

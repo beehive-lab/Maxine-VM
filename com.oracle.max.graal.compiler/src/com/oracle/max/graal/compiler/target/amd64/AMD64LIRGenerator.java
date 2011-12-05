@@ -154,12 +154,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info) {
         emitCompare(left, right);
         switch (left.kind) {
+            case Boolean:
             case Int:
             case Long:
             case Object: append(BRANCH.create(cond, label, info)); break;
             case Float:
             case Double: append(FLOAT_BRANCH.create(cond, unorderedIsTrue, label, info)); break;
-            default: throw Util.shouldNotReachHere();
+            default: throw Util.shouldNotReachHere("" + left.kind);
         }
     }
 
@@ -169,6 +170,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         CiVariable result = newVariable(trueValue.kind);
         switch (left.kind) {
+            case Boolean:
             case Int:
             case Long:
             case Object: append(CMOVE.create(result, cond, load(trueValue), loadNonConst(falseValue))); break;

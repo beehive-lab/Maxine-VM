@@ -47,8 +47,8 @@ import java.util.*;
  */
 public abstract class Node implements Cloneable {
 
-    static final int DELETED_ID = -1;
-    static final int INITIAL_ID = -2;
+    static final int DELETED_ID_START = -1000000000;
+    static final int INITIAL_ID = -1;
     static final int ALIVE_ID_START = 0;
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -143,7 +143,7 @@ public abstract class Node implements Cloneable {
     }
 
     public boolean isDeleted() {
-        return id == DELETED_ID;
+        return id <= DELETED_ID_START;
     }
 
     public boolean isAlive() {
@@ -202,6 +202,7 @@ public abstract class Node implements Cloneable {
         return nodeClass;
     }
 
+    // TODO(tw): Do not allow to replace with null.
     private boolean checkReplaceWith(Node other) {
         assert assertFalse(other == this, "cannot replace a node with itself");
         assert assertFalse(isDeleted(), "cannot replace deleted node");
@@ -233,9 +234,11 @@ public abstract class Node implements Cloneable {
 
     public void replaceAndDelete(Node other) {
         assert checkReplaceWith(other);
-        clearSuccessors();
-        replaceAtUsages(other);
-        replaceAtPredecessors(other);
+        if (other != null) {
+            clearSuccessors();
+            replaceAtUsages(other);
+            replaceAtPredecessors(other);
+        }
         safeDelete();
     }
 
@@ -296,7 +299,7 @@ public abstract class Node implements Cloneable {
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
-        id = DELETED_ID;
+        id = DELETED_ID_START - id;
         assert isDeleted();
     }
 

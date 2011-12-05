@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -217,12 +218,18 @@ public class EscapeAnalysisPhase extends Phase {
     private final GraalRuntime runtime;
     private final CiAssumptions assumptions;
     private final PhasePlan plan;
+    private final GraphBuilderConfiguration config;
 
     public EscapeAnalysisPhase(CiTarget target, GraalRuntime runtime, CiAssumptions assumptions, PhasePlan plan) {
+        this(target, runtime, assumptions, plan, GraphBuilderConfiguration.getDefault(plan));
+    }
+
+    public EscapeAnalysisPhase(CiTarget target, GraalRuntime runtime, CiAssumptions assumptions, PhasePlan plan, GraphBuilderConfiguration config) {
         this.runtime = runtime;
         this.target = target;
         this.assumptions = assumptions;
         this.plan = plan;
+        this.config = config;
     }
 
     public static class EscapeRecord {
@@ -378,7 +385,7 @@ public class EscapeAnalysisPhase extends Phase {
                 }
                 try {
                     context.timers.startScope("Escape Analysis Fixup");
-                    new EscapementFixup(op, graph, node).apply();
+                    removeAllocation(node, op);
                 } finally {
                     context.timers.endScope();
                 }
@@ -399,7 +406,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            new InliningPhase(target, runtime, invokes, assumptions, plan).apply(graph, context);
+            new InliningPhase(target, runtime, invokes, assumptions, plan, config).apply(graph, context);
             new DeadCodeEliminationPhase().apply(graph, context);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
@@ -412,6 +419,27 @@ public class EscapeAnalysisPhase extends Phase {
         } while (iterations++ < 3);
     }
 
+    protected void removeAllocation(FixedWithNextNode node, EscapeOp op) {
+        new EscapementFixup(op, (StructuredGraph) node.graph(), node).apply();
+
+        for (PhiNode phi : node.graph().getNodes(PhiNode.class)) {
+            ValueNode simpleValue = phi;
+            boolean required = false;
+            for (ValueNode value : phi.values()) {
+                if (value != phi && value != simpleValue) {
+                    if (simpleValue != phi) {
+                        required = true;
+                        break;
+                    }
+                    simpleValue = value;
+                }
+            }
+            if (!required) {
+                phi.replaceAndDelete(simpleValue);
+            }
+        }
+    }
+
     protected boolean shouldAnalyze(FixedWithNextNode node) {
         return true;
     }
@@ -422,14 +450,16 @@ public class EscapeAnalysisPhase extends Phase {
 
     private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<Invoke> invokes) {
         double weight = 0;
-        for (Node usage : node.usages()) {
+        for (Node usage : node.usages().snapshot()) {
             boolean escapes = op.escape(node, usage);
             if (escapes) {
                 if (usage instanceof FrameState) {
                     // nothing to do...
-                } else if (usage instanceof CallTargetNode) {
-                    for (Node invoke : ((CallTargetNode) usage).usages()) {
-                        invokes.add((Invoke) invoke);
+                } else if (usage instanceof MethodCallTargetNode) {
+                    if (usage.usages().size() == 0) {
+                        usage.safeDelete();
+                    } else {
+                        invokes.add(((MethodCallTargetNode) usage).invoke());
                     }
                 } else {
                     exits.add(usage);

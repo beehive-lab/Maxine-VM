@@ -43,7 +43,6 @@ public class LocationNode extends FloatingNode implements LIRLowerable, ValueNum
             return "ANY_LOCATION";
         }
     };
-    public static final Object UNSAFE_ACCESS_LOCATION = new Object();
     public static final Object FINAL_LOCATION = new Object();
 
     public static Object getArrayLocation(CiKind elementKind) {

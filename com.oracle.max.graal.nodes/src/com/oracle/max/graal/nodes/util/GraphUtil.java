@@ -74,7 +74,7 @@ public class GraphUtil {
     }
 
     // TODO(tw): Factor this code with other branch deletion code.
-    private static void propagateKill(Node node, Node input) {
+    public static void propagateKill(Node node, Node input) {
         if (node instanceof LoopEndNode) {
             LoopBeginNode loop = ((LoopEndNode) node).loopBegin();
             ((LoopEndNode) node).setLoopBegin(null);
@@ -92,7 +92,7 @@ public class GraphUtil {
             node.replaceFirstInput(input, null);
         } else {
             for (Node usage : node.usages().snapshot()) {
-                if (usage instanceof FloatingNode && !usage.isDeleted()) {
+                if ((usage instanceof FloatingNode || usage instanceof CallTargetNode) && !usage.isDeleted()) {
                     propagateKill(usage, node);
                 }
             }
@@ -103,6 +103,7 @@ public class GraphUtil {
             }
             // null out remaining usages
             node.replaceAtUsages(null);
+            node.replaceAtPredecessors(null);
             node.safeDelete();
         }
     }
