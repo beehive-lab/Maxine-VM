@@ -522,6 +522,8 @@ public class JVMTI {
                     return JVMTI_ERROR_NOT_AVAILABLE;
                 }
                 length = CString.length(propValPtr).toInt();
+            } else {
+                assert false;
             }
         } else {
             try {
@@ -538,7 +540,8 @@ public class JVMTI {
         if (propValCopyPtr.isZero()) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
-        Memory.copyBytes(propValPtr, propValCopyPtr, Size.fromInt(length + 1));
+        Memory.copyBytes(propValPtr, propValCopyPtr, Size.fromInt(length));
+        propValCopyPtr.setByte(length, (byte) 0);
         valuePtr.setWord(propValCopyPtr);
         return JVMTI_ERROR_NONE;
     }
