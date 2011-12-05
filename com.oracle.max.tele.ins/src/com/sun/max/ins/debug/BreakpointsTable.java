@@ -690,7 +690,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + codeLocation().address().toHexString();
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + codeLocation().address().to0xHexString();
         }
 
         Address address() {
