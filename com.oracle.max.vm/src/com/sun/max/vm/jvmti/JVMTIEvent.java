@@ -207,7 +207,9 @@ public class JVMTIEvent {
     }
 
     @NEVER_INLINE
-    private static void debug() {}
+    private static void debug() {
+
+    }
 
     /**
      * Event tracing support.
