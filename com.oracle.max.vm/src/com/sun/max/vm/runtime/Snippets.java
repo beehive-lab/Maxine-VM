@@ -570,10 +570,14 @@ public class Snippets {
 
     @FOLD
     public static ClassMethodActor blockOnThreadLockMethod() {
-        // Note: This code cannot be in a static initializer because of circular initialization problems.
-        if (blockOnThreadLockMethod == null) {
-            CriticalNativeMethod cnm = new CriticalNativeMethod(Snippets.class, "nativeBlockOnThreadLock");
-            blockOnThreadLockMethod = cnm.classMethodActor;
+        if (MaxineVM.isHosted()) {
+            synchronized (Snippets.class) {
+                // Note: This code cannot be in a static initializer because of circular initialization problems.
+                if (blockOnThreadLockMethod == null) {
+                    CriticalNativeMethod cnm = new CriticalNativeMethod(Snippets.class, "nativeBlockOnThreadLock");
+                    blockOnThreadLockMethod = cnm.classMethodActor;
+                }
+            }
         }
         return blockOnThreadLockMethod;
     }

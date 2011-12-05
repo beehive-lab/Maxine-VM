@@ -69,12 +69,6 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
     boolean trapped;
     boolean stopped;
 
-    /**
-     * A way for {@link #visitSourceFrame}to access the frame state.
-     * Perhaps it should be passed as an argument.
-     */
-    protected StackFrameCursor currentCursor;
-
     @Override
     public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
         final TargetMethod targetMethod = current.targetMethod();
@@ -87,7 +81,6 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
             return true;
         }
 
-        this.currentCursor = current;
         frameId = current.sp().toLong() << 16;
         trapped = callee.targetMethod() != null && callee.targetMethod().is(TrapStub);
         stopped = false;

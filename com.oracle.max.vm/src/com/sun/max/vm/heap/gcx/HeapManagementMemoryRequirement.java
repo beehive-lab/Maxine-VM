@@ -22,10 +22,11 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Interface implemented by components of a heap management that requires a fix amount of memory to cover
+ * Interface implemented by components of a heap management that requires a fix amount of contiguous memory to cover
  * a contiguous range of virtual memory. This interface concerns components that have space requirements dependent on the
  * actual amount of contiguous space that is under control.
  * Example of components include tracing algorithm that use an external mark bitmap, card tables, etc.
@@ -37,5 +38,11 @@ public interface HeapManagementMemoryRequirement {
      * @param maxCoveredAreaSize the size, in bytes, of the covered contiguous range of virtual memory.
      * @return
      */
+
     Size memoryRequirement(Size maxCoveredAreaSize);
+    /**
+     * Contiguous region of memory allocated to the component.
+     * @return a non-null {@link MemoryRegion}
+     */
+    MemoryRegion memory();
 }

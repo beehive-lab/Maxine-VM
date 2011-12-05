@@ -34,7 +34,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -284,10 +283,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
             VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
             // Record initial space usage.
             regionAllocator.initialize(startOfManagedSpace, numTotalRegions, initialNumRegions);
-
-            // enable early inspection.
-            InspectableHeapInfo.init(false, regionAllocator.bounds());
-
             RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numTotalRegions);
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);

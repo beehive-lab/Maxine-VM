@@ -365,6 +365,25 @@ class JVMTIClassFunctions {
     @C_FUNCTION
     private static native void setJVMTILineNumberEntry(Pointer table, int index, long location, int lineNumber);
 
+    /**
+     * To order local variable entries by slot index.
+     */
+    private static class EntryComparator implements Comparator<LocalVariableTable.Entry> {
+        public int compare(LocalVariableTable.Entry a, LocalVariableTable.Entry b) {
+            final int aSlot = a.slot();
+            final int bSlot = b.slot();
+            if (aSlot < bSlot) {
+                return -1;
+            } else if (aSlot > bSlot) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    private static final EntryComparator entryComparator = new EntryComparator();
+
     static int getLocalVariableTable(ClassMethodActor classMethodActor, Pointer entryCountPtr, Pointer tablePtr) {
         if (classMethodActor.isNative()) {
             return JVMTI_ERROR_NATIVE_METHOD;
@@ -374,6 +393,9 @@ class JVMTIClassFunctions {
             return JVMTI_ERROR_ABSENT_INFORMATION;
         }
         LocalVariableTable.Entry[] entries = table.entries();
+        // The spec doesn't say anything about ordering but, experimentally, it is important to order by slot
+        // otherwise debuggers show the arguments to a method in the random order returned by table.entries().
+        Arrays.sort(entries, entryComparator);
         ConstantPool constantPool = classMethodActor.holder().constantPool();
         entryCountPtr.setInt(entries.length);
         Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));

@@ -54,6 +54,13 @@ public final class NativeInterfaces {
         checkGenerateSourcesInSync(JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
     }
 
+    /**
+     * A few native functions must not have any prologue and epilogue.  We hand-list them here.
+     */
+    public static boolean needsPrologueAndEpilogue(MethodActor ma) {
+        return ma != JVMTIFunctions.currentJniEnv && ma != Snippets.blockOnThreadLockMethod();
+    }
+
     private NativeInterfaces() {
     }
 

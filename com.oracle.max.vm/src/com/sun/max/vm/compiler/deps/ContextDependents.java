@@ -323,7 +323,7 @@ final class ContextDependents {
                     return true;
                 }
                 @Override
-                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl) {
+                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
                     out.println("    " + impl + " is a unique concrete method [" + deps + "]");
                     return true;
                 }

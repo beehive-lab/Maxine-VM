@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -141,6 +142,9 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public void doAfterGC() {
+        if (MaxineVM.isDebug()) {
+            allocator.zap();
+        }
         allocator.reset();
     }
 
