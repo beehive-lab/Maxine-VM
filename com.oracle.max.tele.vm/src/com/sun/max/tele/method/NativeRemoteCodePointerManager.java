@@ -30,13 +30,13 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A manager for pointers to machine code in an externally loaded library, where::
+ * A manager for pointers to machine code in a loaded library of native functions, where::
  * <ul>
  * <li>The region is assumed not to move during its lifetime; and</li>
  * <li>Code, once created, never moves and is never collected/evicted.</li>
  * </ul>
  */
-public class ExternalRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
+public class NativeRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
 
     private final TeleNativeLibrary teleNativeLibrary;
 
@@ -50,7 +50,7 @@ public class ExternalRemoteCodePointerManager extends AbstractRemoteCodePointerM
      * of memory in the VM, presumed to be an unmanaged region in which code
      * never moves and is never evicted.
      */
-    public ExternalRemoteCodePointerManager(TeleVM vm, TeleNativeLibrary codeCacheRegion) {
+    public NativeRemoteCodePointerManager(TeleVM vm, TeleNativeLibrary codeCacheRegion) {
         super(vm);
         this.teleNativeLibrary = codeCacheRegion;
     }

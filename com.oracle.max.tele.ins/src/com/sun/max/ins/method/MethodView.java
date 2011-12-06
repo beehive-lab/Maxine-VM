@@ -82,7 +82,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
 
     /**
      * Makes a view displaying code for the method pointed to by the instructionPointer. Should always work for Java
-     * methods. For external native methods, only works if the code block is already known to the Inspector or if the
+     * methods. For native functions, only works if the code block is already known to the Inspector or if the
      * user supplies some additional information at an optional prompt.
      *
      * @param address machine code location in the VM.
@@ -98,10 +98,10 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             // Java method
             methodView = make(inspection, compilation, MethodCodeKind.MACHINE_CODE);
         } else {
-            final MaxNativeFunction externalCode = inspection.vm().machineCode().findExternalCode(address);
-            if (externalCode != null) {
-                // Some other kind of known external machine code
-                methodView = make(inspection, externalCode);
+            final MaxNativeFunction nativeFunction = inspection.vm().machineCode().findNativeFunction(address);
+            if (nativeFunction != null) {
+                // Some other kind of known native machine code
+                methodView = make(inspection, nativeFunction);
             } else if (interactive) {
                 // Code location is not in a Java method or runtime stub or native library.
                 // Give the user a chance to guess at its length so we can register and view it
@@ -116,11 +116,11 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                             if (name == null || name.equals("")) {
                                 name = defaultDescription;
                             }
-                            final MaxNativeFunction externalCode = vm().machineCode().registerExternalCode(nativeAddress, nBytes, name);
-                            result.setValue(MethodView.make(inspection, externalCode));
+                            final MaxNativeFunction nativeFunction = vm().machineCode().registerNativeFunction(nativeAddress, nBytes, name);
+                            result.setValue(MethodView.make(inspection, nativeFunction));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
-                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
+                            inspection.gui().errorMessage("Specified native function code range overlaps region already registered in Inpsector");
                         } catch (MaxVMBusyException maxVMBusyException) {
                             inspection.announceVMBusyFailure("View native code");
                         } catch (MaxInvalidAddressException e) {
@@ -250,17 +250,17 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return A possibly new view for a block of native code in the VM already known to the Inspector.
      * @throws MaxVMBusyException if a new view cannot be created because the VM is unavailable
      */
-    private static NativeMethodView make(Inspection inspection, MaxNativeFunction maxExternalCode) throws MaxVMBusyException {
+    private static NativeMethodView make(Inspection inspection, MaxNativeFunction nativeFunction) throws MaxVMBusyException {
         NativeMethodView nativeMethodView = null;
-        MethodView methodView = machineCodeToMethodView.get(maxExternalCode);
+        MethodView methodView = machineCodeToMethodView.get(nativeFunction);
         if (methodView == null) {
             inspection.vm().acquireLegacyVMAccess();
             try {
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
                 final MethodViewContainer container = methodViewManager.activateView();
-                nativeMethodView = new NativeMethodView(inspection, container, maxExternalCode);
+                nativeMethodView = new NativeMethodView(inspection, container, nativeFunction);
                 container.add(nativeMethodView);
-                machineCodeToMethodView.put(maxExternalCode, nativeMethodView);
+                machineCodeToMethodView.put(nativeFunction, nativeMethodView);
             } finally {
                 inspection.vm().releaseLegacyVMAccess();
             }

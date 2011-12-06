@@ -41,7 +41,7 @@ import com.sun.max.unsafe.*;
 public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFunction, Comparable<TeleNativeFunction> {
 
     /**
-     * Description of a region of external native code discovered in the VM's process.
+     * Description of a region of native function code discovered in the VM's process.
      * <p>
      * This region has no children.
      */
@@ -79,7 +79,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     }
 
     /**
-     * Summary information about a sequence of external disassembled machine code instructions about
+     * Summary information about a sequence of native disassembled machine code instructions about
      * which little is known.
      *
      */
@@ -99,7 +99,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             final List<Integer> labels = new ArrayList<Integer>();
             for (int index = 0; index < length; index++) {
                 final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
+                locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "native function code instruction"));
                 if (targetCodeInstruction.label != null) {
                     labels.add(index);
                 }
@@ -346,7 +346,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
 
     public void writeSummary(PrintStream printStream) {
         printStream.println("External native code: " + entityName());
-        printStream.println(" ***UNIMPLEMENTED*** for external native methods");
+        printStream.println(" ***UNIMPLEMENTED*** for native functions");
     }
 
     private List<TargetCodeInstruction> getInstructions() throws MaxInvalidAddressException {
