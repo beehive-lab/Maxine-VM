@@ -347,6 +347,25 @@ public final class Inspection implements InspectionHolder {
                     Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                 }
             };
+            runNotification(runnable);
+        }
+
+
+        public void breakpointToBeDeleted(final MaxBreakpoint breakpoint, final String reason) {
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint being deleted notification");
+                    for (InspectionListener listener : copyInspectionListeners()) {
+                        listener.breakpointToBeDeleted(breakpoint, reason);
+                    }
+                    Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint being deleted notification");
+                }
+            };
+            runNotification(runnable);
+        }
+
+
+        private void runNotification(Runnable runnable) {
             if (java.awt.EventQueue.isDispatchThread()) {
                 runnable.run();
             } else {

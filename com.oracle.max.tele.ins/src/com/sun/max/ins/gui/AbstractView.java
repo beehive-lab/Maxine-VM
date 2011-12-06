@@ -559,6 +559,9 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
     public void breakpointStateChanged() {
     }
 
+    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+    }
+
     public void watchpointSetChanged() {
     }
 

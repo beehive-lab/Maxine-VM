@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.tele.*;
+
 
 /**
  * Notification service for changes to state in the VM and inspection session.
@@ -39,6 +41,17 @@ public interface InspectionListener {
      * Notifies that the set and/or status (enabled/disabled) of breakpoints in the VM has changed.
      */
     void breakpointStateChanged();
+
+    /**
+     * Notifies listener that a breakpoint is about to be deleted for some reason
+     * not involving an explicit client request.  This notification precedes
+     * the general notification {@code #breakpointStateChanged()} that gets triggered
+     * by the deletion.
+     *
+     * @param breakpoint a breakpoint that is about to be deleted
+     * @param reason the reason it is being deleted.
+     */
+    void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason);
 
     /**
      * Notifies that the set of watchpoints in the VM has changed.

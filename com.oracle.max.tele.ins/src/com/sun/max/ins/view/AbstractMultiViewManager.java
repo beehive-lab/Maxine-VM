@@ -31,6 +31,7 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.tele.*;
 
 
 /**
@@ -185,6 +186,9 @@ public abstract class AbstractMultiViewManager<View_Kind extends AbstractView>
     }
 
     public void breakpointStateChanged() {
+    }
+
+    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
     }
 
     public void watchpointSetChanged() {

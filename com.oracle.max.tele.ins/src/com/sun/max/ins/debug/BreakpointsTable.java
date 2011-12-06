@@ -94,6 +94,23 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
+    /**
+     * Receives notification that a breakpoint is about to be deleted, and communicates this
+     * to the user.  No state change is needed here because a subsequent notification will
+     * announce the general change in the breakpoint set.
+     *
+     * @param breakpoint the breakpoint about to be deleted
+     * @param reason a short explanation for the deletion
+     */
+    void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+        MachineCodeBreakpointData breakpointData = tableModel.findMachineCodeBreakpoint(breakpoint.codeLocation().address());
+        final String name = breakpointData == null ? breakpoint.toString() : breakpointData.longName();
+        final Object[] message = new Object[2];
+        message[0] = "Breakpoint deleted: " + name;
+        message[1] = reason;
+        gui().warningMessage(message);
+    }
+
     @Override
     protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1) {
