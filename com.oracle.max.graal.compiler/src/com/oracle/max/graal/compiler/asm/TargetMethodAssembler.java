@@ -168,10 +168,6 @@ public class TargetMethodAssembler {
         targetMethod.recordSafepoint(pos, debugInfo);
     }
 
-    public CiAddress recordDataReferenceInCode(CiConstant data) {
-        return recordDataReferenceInCode(data, 0);
-    }
-
     public CiAddress recordDataReferenceInCode(CiConstant data, int alignment) {
         assert data != null;
 
@@ -237,16 +233,24 @@ public class TargetMethodAssembler {
      * Returns the address of a float constant that is embedded as a data references into the code.
      */
     public CiAddress asFloatConstRef(CiValue value) {
+        return asFloatConstRef(value, 4);
+    }
+
+    public CiAddress asFloatConstRef(CiValue value, int alignment) {
         assert value.kind == CiKind.Float && value.isConstant();
-        return recordDataReferenceInCode((CiConstant) value);
+        return recordDataReferenceInCode((CiConstant) value, alignment);
     }
 
     /**
      * Returns the address of a double constant that is embedded as a data references into the code.
      */
     public CiAddress asDoubleConstRef(CiValue value) {
+        return asDoubleConstRef(value, 8);
+    }
+
+    public CiAddress asDoubleConstRef(CiValue value, int alignment) {
         assert value.kind == CiKind.Double && value.isConstant();
-        return recordDataReferenceInCode((CiConstant) value);
+        return recordDataReferenceInCode((CiConstant) value, alignment);
     }
 
     public CiAddress asAddress(CiValue value) {

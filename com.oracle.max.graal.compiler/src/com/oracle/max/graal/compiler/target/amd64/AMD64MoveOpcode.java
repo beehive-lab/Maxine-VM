@@ -281,10 +281,10 @@ public class AMD64MoveOpcode {
                 if (c.isNull()) {
                     masm.movq(tasm.asRegister(result), 0x0L);
                 } else if (tasm.target.inlineObjects) {
-                    tasm.recordDataReferenceInCode(c);
+                    tasm.recordDataReferenceInCode(c, 0);
                     masm.movq(tasm.asRegister(result), 0xDEADDEADDEADDEADL);
                 } else {
-                    masm.movq(tasm.asRegister(result), tasm.recordDataReferenceInCode(c));
+                    masm.movq(tasm.asRegister(result), tasm.recordDataReferenceInCode(c, 0));
                 }
                 break;
             default:
