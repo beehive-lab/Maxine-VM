@@ -373,19 +373,27 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public void informationMessage(String message, String title) {
+    public void informationMessage(Object message, String title) {
         JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void informationMessage(String message) {
+    public void informationMessage(Object message) {
         informationMessage(message, inspection.currentActionTitle());
     }
 
-    public void errorMessage(String message, String title) {
+    public void warningMessage(Object message, String title) {
+        JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.WARNING_MESSAGE);
+    }
+
+    public void warningMessage(Object message) {
+        warningMessage(message, inspection.currentActionTitle());
+    }
+
+    public void errorMessage(Object message, String title) {
         JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    public void errorMessage(String message) {
+    public void errorMessage(Object message) {
         errorMessage(message, inspection.currentActionTitle());
     }
 
