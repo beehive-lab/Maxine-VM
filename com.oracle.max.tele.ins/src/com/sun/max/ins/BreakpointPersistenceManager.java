@@ -96,6 +96,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         inspection.settings().save();
     }
 
+    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+    }
+
     public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         final List<MaxBreakpoint> machineCodeBreakpoints = new LinkedList<MaxBreakpoint>();
         final List<MaxBreakpoint> bytecodeBreakpoints = new LinkedList<MaxBreakpoint>();

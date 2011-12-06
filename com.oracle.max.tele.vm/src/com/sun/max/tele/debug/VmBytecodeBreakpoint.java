@@ -296,7 +296,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
      * compilation of the specified method, current and future.
      *
      */
-    public static final class BytecodeBreakpointManager extends AbstractVmHolder {
+    public static final class BytecodeBreakpointManager extends AbstractVmHolder implements TeleVMCache {
 
         /**
          *
@@ -404,6 +404,9 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             parameter2 = args[2];
             parameter3 = args[3];
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
+        }
+
+        public void updateCache(long epoch) {
         }
 
         /**
@@ -661,8 +664,9 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                     TeleError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
                 }
             }
-            if (targetBreakpointManager.getTargetBreakpointAt(address) == null) {
-                final CodeLocation location = vm().codeLocationFactory().createMachineCodeLocation(address, "For bytecode breapoint=" + owner.codeLocation());
+            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
+            if (targetBreakpointManager.getTargetBreakpointAt(codePointer) == null) {
+                final CodeLocation location = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
                 if (bci == -1) {
                     targetBreakpointManager.makeTransientBreakpoint(location);
                 } else {

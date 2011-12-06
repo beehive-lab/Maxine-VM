@@ -32,4 +32,15 @@ public interface MaxBreakpointListener {
      */
     void breakpointsChanged();
 
+    /**
+     * Notifies listener that a breakpoint is about to be deleted for some reason
+     * not involving an explicit client request.  This notification precedes
+     * the general notification {@code #breakpointsChanged()} that gets triggered
+     * by the deletion.
+     *
+     * @param breakpoint a breakpoint that is about to be deleted
+     * @param reason the reason it is being deleted.
+     */
+    void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason);
+
 }
