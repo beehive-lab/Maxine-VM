@@ -30,6 +30,7 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64LogicFloatOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1Opcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOpcode.*;
@@ -202,8 +203,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
         switch (input.kind) {
             case Int:    append(INEG.create(result)); break;
             case Long:   append(LNEG.create(result)); break;
-            case Float:  append(FNEG.create(result)); break;
-            case Double: append(DNEG.create(result)); break;
+            case Float:  append(FXOR.create(result, CiConstant.forFloat(Float.intBitsToFloat(0x80000000)))); break;
+            case Double: append(DXOR.create(result, CiConstant.forDouble(Double.longBitsToDouble(0x8000000000000000L)))); break;
             default: throw Util.shouldNotReachHere();
         }
         return result;
