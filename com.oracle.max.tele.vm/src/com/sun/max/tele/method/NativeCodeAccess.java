@@ -38,44 +38,41 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * The singleton manager for managing information about machine code external to the VM.
+ * The singleton manager for managing information about native function code in libraries external to the VM.
  */
-public final class ExternalMachineCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxExternalCode, AllocationHolder {
+public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxNativeCode, AllocationHolder {
 
     private static final int TRACE_VALUE = 1;
 
-    private static ExternalMachineCodeAccess externalMachineCodeAccess;
+    private static NativeCodeAccess nativeCodeAccess;
 
-    static ExternalMachineCodeAccess make(TeleVM vm) {
-        if (externalMachineCodeAccess == null) {
-            externalMachineCodeAccess = new ExternalMachineCodeAccess(vm);
+    static NativeCodeAccess make(TeleVM vm) {
+        if (nativeCodeAccess == null) {
+            nativeCodeAccess = new NativeCodeAccess(vm);
         }
-        return externalMachineCodeAccess;
+        return nativeCodeAccess;
     }
 
     private final TimedTrace updateTracer;
 
     private long lastUpdateEpoch = -1L;
 
-    private final String entityName = "External Code";
+    private final String entityName = "Native function code";
 
     private final String entityDescription;
 
 
     /**
-     * Contains regions of machine code discovered in the VM process that
-     * do not belong to the VM.
-     *
-     * Information about external machine code regions discovered in the VM process.
+     * Information about native function code regions discovered in the VM process.
      * Presumed invariants:
      * <ul>
-     * <li>The external code regions do not intersect any memory regions allocated by the VM.</li>
-     * <li>The external code regions do not intersect any other registered external code regions.</li>
+     * <li>The native function regions do not intersect any memory regions allocated by the VM.</li>
+     * <li>The native function code regions do not intersect any other registered native function code regions.</li>
      * <li>The number of transactions against the collection is small.</li>
      * <li>The number of registered regions is small, so linear lookup suffices</li>
      * <ul>
      */
-    private final List<MaxMemoryRegion> externalMemoryRegions = new ArrayList<MaxMemoryRegion>();
+    private final List<MaxMemoryRegion> nativeFunctionMemoryRegions = new ArrayList<MaxMemoryRegion>();
 
     private final List<MaxNativeLibrary> libraries = new ArrayList<MaxNativeLibrary>();
 
@@ -98,11 +95,11 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         }
     };
 
-    public ExternalMachineCodeAccess(TeleVM vm) {
+    public NativeCodeAccess(TeleVM vm) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-        this.entityDescription = "External code in dynamically loaded libraries";
+        this.entityDescription = "Native functions in dynamically loaded libraries";
         this.codePointerManager = new DisconnectedRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(null);
@@ -121,7 +118,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
                 for (TeleNativeLibrary teleNativeLibrary : TeleNativeLibraries.libs()) {
                     if (teleNativeLibrary.functions() != null && !libraries.contains(teleNativeLibrary)) {
                         libraries.add(teleNativeLibrary);
-                        externalMemoryRegions.add(teleNativeLibrary.memoryRegion());
+                        nativeFunctionMemoryRegions.add(teleNativeLibrary.memoryRegion());
                         Trace.line(TRACE_VALUE, tracePrefix() + "adding dynamically loaded library: " + teleNativeLibrary.entityName());
                     }
                 }
@@ -141,8 +138,8 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         return entityDescription;
     }
 
-    public MaxEntityMemoryRegion<MaxExternalCode> memoryRegion() {
-        // The external code access has no memory allocation of its own, but
+    public MaxEntityMemoryRegion<MaxNativeCode> memoryRegion() {
+        // The native function code access has no memory allocation of its own, but
         // rather "owns" the memory regions occupied by loaded native libraries.
         return null;
     }
@@ -153,7 +150,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     }
 
     public TeleObject representation() {
-        // There is no VM object that represents the external native libraries.
+        // There is no VM object that represents the native function libraries.
         return null;
     }
 
@@ -171,7 +168,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     }
 
     public List<MaxMemoryRegion> memoryAllocations() {
-        return externalMemoryRegions;
+        return nativeFunctionMemoryRegions;
     }
 
     public RemoteCodePointer makeCodePointer(Address address) {
@@ -184,14 +181,14 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     }
 
 
-    MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+    MaxNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         if (codeStart == null || codeStart.isZero()) {
             throw new MaxInvalidAddressException(codeStart, "Null or zero address");
         }
         final TeleFixedMemoryRegion newCodeRegion = new TeleFixedMemoryRegion(vm(), "temp", codeStart, nBytes);
         for (MaxMemoryRegion vmAllocation : vm().state().memoryAllocations()) {
             if (newCodeRegion.overlaps(vmAllocation)) {
-                throw new IllegalArgumentException("proposed external code region overlaps VM region: " + vmAllocation.regionName());
+                throw new IllegalArgumentException("proposed native function region overlaps VM region: " + vmAllocation.regionName());
             }
         }
         if (!vm().tryLock()) {
@@ -199,14 +196,14 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
         }
         try {
             final TeleNativeFunction teleNativeFunction = new TeleNativeFunction(vm(), name, codeStart, nBytes);
-            externalMemoryRegions.add(teleNativeFunction.memoryRegion());
+            nativeFunctionMemoryRegions.add(teleNativeFunction.memoryRegion());
             return teleNativeFunction;
         } finally {
             vm().unlock();
         }
     }
 
-    TeleNativeFunction findExternalCode(Address address) {
+    TeleNativeFunction findNativeFunction(Address address) {
         //look in registered native libraries
         for (TeleNativeLibrary teleNativeLibrary : TeleNativeLibraries.libs()) {
             if (teleNativeLibrary.contains(address)) {
@@ -219,12 +216,12 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "External machine code regions registered: " + formatter.format(externalMemoryRegions.size()) + "\n");
+        printStream.print(indentation + "Native function code regions registered: " + formatter.format(nativeFunctionMemoryRegions.size()) + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (MaxMemoryRegion maxMemoryRegion : externalMemoryRegions) {
+        for (MaxMemoryRegion maxMemoryRegion : nativeFunctionMemoryRegions) {
             final String name = maxMemoryRegion.regionName();
             if (lastEndAddress != null && !lastEndAddress.equals(maxMemoryRegion.start())) {
                 printStream.println(lastEndAddress.toHexString() + "--" + maxMemoryRegion.start().minus(1).toHexString() + ": ");
@@ -272,7 +269,7 @@ public final class ExternalMachineCodeAccess extends AbstractVmHolder implements
             final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
             if (memoryRegion != null) {
                 final StringBuffer sb = new StringBuffer();
-                sb.append(" Creating external code pointer=" + address.to0xHexString());
+                sb.append(" Creating native function code pointer=" + address.to0xHexString());
                 sb.append(", points into region=\"" + memoryRegion.regionName() + "\"");
                 TeleWarning.message(sb.toString());
             }

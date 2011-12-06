@@ -110,7 +110,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * Gets access to information about compiled code in the VM.
      */
-    MaxExternalCode externalCode();
+    MaxNativeCode nativeCode();
 
     /**
      * Gets the manager for locating and managing code related information in the VM.

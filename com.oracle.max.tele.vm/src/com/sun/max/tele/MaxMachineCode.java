@@ -30,14 +30,14 @@ import com.sun.max.unsafe.*;
 
 /**
  * Access to machine code in the VM, consisting of either {@linkplain MaxCompilation method compilations} in the
- * {@linkplain MaxCodeCache code cache} or {@linkplain MaxNativeFunction external code} that has been identified by
+ * {@linkplain MaxCodeCache code cache} or {@linkplain MaxNativeFunction native function code} that has been identified by
  * various means.
  */
 public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
 
     /**
      * Gets the existing machine code, if known, that contains a given address in the VM; the result could be either a
-     * VM method compilation or a block of external native code about which little is known.
+     * VM method compilation or a block of native function code about which little is known.
      * <p>
      * A result is returned <em>only</em> if there is machine code at the location. If the memory location falls within
      * the code cache memory allocated to a method compilation, but does <em>not</em> point to machine code in that
@@ -73,7 +73,7 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
     MaxCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
 
     /**
-     * Create a new MaxNativeFunction to represent a block of external native code in the VM that has not yet been
+     * Create a new MaxNativeFunction to represent a block of native function code in the VM that has not yet been
      * registered, and keep information about it in a registry for subsequent reference.
      *
      * @param codeStart starting address of the machine code in VM memory, not in any VM allocated memory
@@ -85,19 +85,19 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
      *             is in a VM-allocated code region.
      * @throws MaxInvalidAddressException if he address cannot be read
      */
-    MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
+    MaxNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
-     * Get the block of known external native code, if any, that contains a given address in the VM.
+     * Get the block of known native functino code, if any, that contains a given address in the VM process.
      *
      * @param address memory location in the VM
-     * @return known external native code that includes the address, null if none
+     * @return known native functin code that includes the address, null if none
      */
-    MaxNativeFunction findExternalCode(Address address);
+    MaxNativeFunction findNativeFunction(Address address);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCodeRoutine} known to the VM, including
-     * compilations created by the VM and external blocks of native code about which less is known.
+     * compilations created by the VM and blocks of native function code about which less is known.
      */
     void writeSummary(PrintStream printStream);
 
