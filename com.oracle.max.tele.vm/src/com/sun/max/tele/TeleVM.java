@@ -862,11 +862,11 @@ public abstract class TeleVM implements MaxVM {
             heapAccess.updateCache(epoch);
             memoryAllocations.addAll(heapAccess.memoryAllocations());
 
-            // Update status of the code cache, including eviction status and any new allocations.
+            // Update the general status of the code cache, including eviction status and any new allocations.
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-            // Update the statys of any external, dynamically loaded libraries.
+            // Update the general status of any external, dynamically loaded libraries.
             externalCodeAccess.updateCache(epoch);
             memoryAllocations.addAll(externalCodeAccess.memoryAllocations());
 
@@ -879,8 +879,11 @@ public abstract class TeleVM implements MaxVM {
             // Update every local surrogate for a VM object
             objectAccess.updateCache(epoch);
 
-            // Update every local surrogate for a VM compilation
+            // Detailed update of the contents of every code cache region, as well as external native code.
             machineCodeAccess.updateCache(epoch);
+
+            // Check the status of breakpoints, for example if any are set in recently evicted compilations.
+            breakpointManager.updateCache(epoch);
 
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.

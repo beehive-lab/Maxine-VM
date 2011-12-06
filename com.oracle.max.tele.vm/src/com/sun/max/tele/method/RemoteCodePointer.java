@@ -24,27 +24,25 @@ package com.sun.max.tele.method;
 
 import com.sun.max.unsafe.*;
 
-
 /**
  * Represents a machine code location in the VM.
  * <p>
- * The absolute location may change, or may become
- * obsolete in a managed code region.
+ * The absolute location may change, or may become obsolete in a managed code region.
  */
 public interface RemoteCodePointer {
 
     /**
      * Gets the current absolute location in VM memory of a byte in an area of machine code.
      *
-     * @return the current memory location of the code, {@link Address#zero()} if not live.
+     * @return non-null: the current memory location of the code if live, {@link Address#zero()} if not live.
      */
     Address getAddress();
 
     /**
      * Gets the status of the machine code with respect to possible code eviction.
      *
-     * @return {@code true} if the machine code is still used by the VM, {@code false} if it has been evicted
+     * @return non-null:  {@code true} if the machine code is still used by the VM, {@code false} if it has been evicted
      * and is no longer used.
      */
-    boolean isLive();
+    boolean isCodeLive();
 }

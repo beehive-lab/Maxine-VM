@@ -157,8 +157,8 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
             return Address.zero();
         }
 
-        public boolean isLive() {
-            return teleTargetMethod.isLive();
+        public boolean isCodeLive() {
+            return !teleTargetMethod.isCodeEvicted();
         }
 
     }
