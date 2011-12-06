@@ -321,10 +321,12 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
                 reconstructView();
                 Trace.line(TRACE_VALUE, tracePrefix() + "Machine code view removed after code eviction for method " + getToolTip());
             } else {
-                gui().informationMessage("Compilation " + getToolTip() + " evicted, view closed");
+                Object[] message = new Object[2];
+                message[0] = "Method view closed on \"" + getToolTip() + "\".";
+                message[1] = "The compilation was evicted from the code cache";
+                gui().warningMessage(message);
                 close();
                 Trace.line(TRACE_VALUE, tracePrefix() + "Method view removed after code eviction for method " + getToolTip() + "no bytecode available");
-
             }
         } else if (compilation != null && compilation.codeVersion() > vmCodeGeneration) {
             // The compiled code has been changed in some way; reconstruct the view with the same viewers.
