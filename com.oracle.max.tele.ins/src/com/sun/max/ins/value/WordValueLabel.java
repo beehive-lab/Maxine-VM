@@ -32,12 +32,15 @@ import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.value.*;
 
+// TODO (mlvdv) the design of this class has long gotten out of control; there are much better alternatives,
+// for example reifying a subset of the display modes using the State patter.
 /**
  * A textual label for a word of machine data from the VM,
  * with multiple display modes and user interaction affordances.
@@ -73,12 +76,6 @@ public class WordValueLabel extends ValueLabel {
      * The actual kind of word value, determined empirically by reading from the VM; this may change after update.
      * Possible visual presentations of a word, constrained by the {@linkplain ValueMode valueMode} of the
      * label and its value.
-     */
-    /**
-     *
-     */
-    /**
-     *
      */
     private enum DisplayMode {
 
@@ -143,8 +140,26 @@ public class WordValueLabel extends ValueLabel {
         CLASS_ACTOR_ID,
 
         CLASS_ACTOR,
+
+        /**
+         * Numeric display of a valid pointer into a method in compiled code, not at the entry.
+         */
         CALL_RETURN_POINT,
+
+        /**
+         * Textual display of a valid pointer into a method in compiled code, not at the entry.
+         */
         CALL_RETURN_POINT_TEXT,
+
+        /**
+         * Numeric display of a valid pointer into a native function.
+         */
+        NATIVE_FUNCTION,
+
+        /**
+         * Textual display of a valid pointer into a native function.
+         */
+        NATIVE_FUNCTION_TEXT,
 
         /**
          * Display of bits interpreted as flags.
@@ -310,8 +325,11 @@ public class WordValueLabel extends ValueLabel {
     /** Non-null if a Class ID. */
     private TeleClassActor teleClassActor;
 
-    /** Non-null if a code pointer. */
+    /** Non-null if a pointer into a method compilation. */
     private MaxCompilation compilation;
+
+    /** Non-null if a pointer into a native function. */
+    TeleNativeFunction nativeFunction;
 
     /** Non-null if a stack reference. */
     private MaxThread thread;
@@ -371,6 +389,7 @@ public class WordValueLabel extends ValueLabel {
                     } else {
                         compilation = vm().machineCode().findCompilation(address);
                         if (compilation != null) {
+                            // The word points at a method compilation
                             final Address codeStart = compilation.getCodeStart();
                             final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());
                             final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
@@ -379,13 +398,19 @@ public class WordValueLabel extends ValueLabel {
                             } else {
                                 displayMode = (valueMode == ValueMode.CALL_RETURN_POINT || forceTxt) ? DisplayMode.CALL_RETURN_POINT_TEXT : DisplayMode.CALL_RETURN_POINT;
                             }
-                        } else if (valueMode == ValueMode.ITABLE_ENTRY) {
-                            final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(address.toInt());
-                            if (teleClassActor != null) {
-                                this.teleClassActor = teleClassActor;
-                                displayMode = DisplayMode.CLASS_ACTOR;
-                            } else {
-                                displayMode = DisplayMode.CLASS_ACTOR_ID;
+                        } else {
+                            nativeFunction = vm().machineCode().findNativeFunction(address);
+                            if (nativeFunction != null) {
+                                // The word points into a native function
+                                displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT || forceTxt) ? DisplayMode.NATIVE_FUNCTION_TEXT : DisplayMode.NATIVE_FUNCTION;
+                            } else if (valueMode == ValueMode.ITABLE_ENTRY) {
+                                final TeleClassActor teleClassActor = vm().classes().findTeleClassActor(address.toInt());
+                                if (teleClassActor != null) {
+                                    this.teleClassActor = teleClassActor;
+                                    displayMode = DisplayMode.CLASS_ACTOR;
+                                } else {
+                                    displayMode = DisplayMode.CLASS_ACTOR_ID;
+                                }
                             }
                         }
                     }
@@ -615,6 +640,23 @@ public class WordValueLabel extends ValueLabel {
                                 "<br>" + htmlify(nameDisplay.longName(compilation)));
                 break;
             }
+            case NATIVE_FUNCTION: {
+                setFont(wordDataFont);
+                setForeground(style.wordCallEntryPointColor());
+                setWrappedText(hexString);
+                setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
+                                "<br>Points into native function " + nameDisplay.longName(nativeFunction));
+                break;
+            }
+            case NATIVE_FUNCTION_TEXT: {
+                setFont(style.wordAlternateTextFont());
+                setForeground(style.wordCallEntryPointColor());
+                setWrappedText(nameDisplay.veryShortName(nativeFunction));
+                setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
+                                "<br>Points into native function " + nameDisplay.longName(nativeFunction));
+
+                break;
+            }
             case CLASS_ACTOR_ID: {
                 setFont(wordDataFont);
                 setForeground(null);
@@ -802,6 +844,14 @@ public class WordValueLabel extends ValueLabel {
             }
             case CALL_ENTRY_POINT_TEXT: {
                 alternateValueKind = DisplayMode.CALL_ENTRY_POINT;
+                break;
+            }
+            case NATIVE_FUNCTION: {
+                alternateValueKind = DisplayMode.NATIVE_FUNCTION_TEXT;
+                break;
+            }
+            case NATIVE_FUNCTION_TEXT: {
+                alternateValueKind = DisplayMode.NATIVE_FUNCTION;
                 break;
             }
             case CLASS_ACTOR_ID: {
