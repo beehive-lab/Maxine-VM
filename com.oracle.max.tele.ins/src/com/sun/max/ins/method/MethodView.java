@@ -32,6 +32,7 @@ import com.sun.max.ins.method.MethodViewContainer.MethodViewManager;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -98,7 +99,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             // Java method
             methodView = make(inspection, compilation, MethodCodeKind.MACHINE_CODE);
         } else {
-            final MaxNativeFunction nativeFunction = inspection.vm().machineCode().findNativeFunction(address);
+            final TeleNativeFunction nativeFunction = inspection.vm().machineCode().findNativeFunction(address);
             if (nativeFunction != null) {
                 // Some other kind of known native machine code
                 methodView = make(inspection, nativeFunction);
@@ -116,7 +117,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                             if (name == null || name.equals("")) {
                                 name = defaultDescription;
                             }
-                            final MaxNativeFunction nativeFunction = vm().machineCode().registerNativeFunction(nativeAddress, nBytes, name);
+                            final TeleNativeFunction nativeFunction = vm().machineCode().registerNativeFunction(nativeAddress, nBytes, name);
                             result.setValue(MethodView.make(inspection, nativeFunction));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.vm(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
