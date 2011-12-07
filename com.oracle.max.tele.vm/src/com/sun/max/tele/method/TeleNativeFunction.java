@@ -35,6 +35,7 @@ import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 
@@ -237,7 +238,6 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
         this(vm, name, base);
         this.length = (int) length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
-        this.machineCodeInfo = new NativeFunctionMachineCodeInfo();
     }
 
     public void updateAddress() {
@@ -248,7 +248,6 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     public void updateLength(int length) throws MaxInvalidAddressException {
         this.length = length;
         this.nativeFunctionMemoryRegion = new NativeFunctionMemoryRegion(vm(), this);
-        this.machineCodeInfo = new NativeFunctionMachineCodeInfo();
     }
 
     @Override
@@ -315,7 +314,15 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             }
         }
     }
+
     public MaxMachineCodeInfo getMachineCodeInfo() {
+        if (machineCodeInfo == null) {
+            try {
+                machineCodeInfo = new NativeFunctionMachineCodeInfo();
+            } catch (MaxInvalidAddressException ex) {
+                TeleError.unexpected("error accessing native function memory", ex);
+            }
+        }
         return machineCodeInfo;
     }
 

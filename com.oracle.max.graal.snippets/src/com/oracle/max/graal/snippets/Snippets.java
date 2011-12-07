@@ -33,6 +33,7 @@ import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -45,6 +46,7 @@ public class Snippets {
         Class<? extends SnippetsInterface> clazz = obj.getClass();
         Class<?> original = clazz.getAnnotation(ClassSubstitution.class).value();
         GraalContext context = new GraalContext("Installing Snippet");
+        BoxingMethodPool pool = new BoxingMethodPool(runtime);
 
         for (Method snippet : clazz.getDeclaredMethods()) {
             try {
@@ -67,7 +69,7 @@ public class Snippets {
                     observer.printSingleGraph(method.getName(), graph);
                 }
 
-                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
+                new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
 
                 Collection<Invoke> invokes = new ArrayList<Invoke>();
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
@@ -78,7 +80,7 @@ public class Snippets {
                 }
                 new InliningPhase(target, runtime, invokes, null, plan).apply(graph, context);
 
-                new SnippetIntrinsificationPhase(runtime).apply(graph, context);
+                new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
 
                 if (plotGraphs) {
                     IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);

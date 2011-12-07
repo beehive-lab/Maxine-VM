@@ -26,6 +26,7 @@ import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.target.amd64.*;
 import com.sun.cri.ci.*;
 
@@ -41,7 +42,7 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
     @Data private final Op op;
 
     public SafepointNode(Op op) {
-        super(op == Op.HERE ? CiKind.Long : CiKind.Illegal);
+        super(StampFactory.forKind(op == Op.HERE ? CiKind.Long : CiKind.Illegal));
         this.op = op;
     }
 
@@ -54,13 +55,13 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
             }
             case HERE: {
                 gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
-                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
                 LIRDebugInfo info = new LIRDebugInfo(stateDuring);
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;
             }
             case INFO: {
-                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind);
+                FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
                 LIRDebugInfo info = new LIRDebugInfo(stateDuring);
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;

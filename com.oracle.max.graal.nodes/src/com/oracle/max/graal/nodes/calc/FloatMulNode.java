@@ -37,13 +37,13 @@ public final class FloatMulNode extends FloatArithmeticNode implements Canonical
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && !y().isConstant()) {
-            return graph().unique(new FloatMulNode(kind, y(), x(), isStrictFP()));
+            return graph().unique(new FloatMulNode(kind(), y(), x(), isStrictFP()));
         }
         if (x().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 return ConstantNode.forFloat(x().asConstant().asFloat() * y().asConstant().asFloat(), graph());
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 return ConstantNode.forDouble(x().asConstant().asDouble() * y().asConstant().asDouble(), graph());
             }
         }
@@ -54,7 +54,7 @@ public final class FloatMulNode extends FloatArithmeticNode implements Canonical
     public void generate(LIRGeneratorTool gen) {
         CiValue op1 = gen.operand(x());
         CiValue op2 = gen.operand(y());
-        if (!FloatAddNode.livesLonger(this, y(), gen)) {
+        if (!y().isConstant() && !FloatAddNode.livesLonger(this, y(), gen)) {
             CiValue op = op1;
             op1 = op2;
             op2 = op;

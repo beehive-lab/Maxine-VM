@@ -41,16 +41,16 @@ public final class IntegerRemNode extends IntegerArithmeticNode implements Canon
             if (yConst == 0) {
                 return this; // this will trap, can not canonicalize
             }
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 return ConstantNode.forInt(x().asConstant().asInt() % (int) yConst, graph());
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 return ConstantNode.forLong(x().asConstant().asLong() % yConst, graph());
             }
         } else if (y().isConstant()) {
             long c = y().asConstant().asLong();
             if (c == 1 || c == -1) {
-                return ConstantNode.forIntegerKind(kind, 0, graph());
+                return ConstantNode.forIntegerKind(kind(), 0, graph());
             }
         }
         return this;

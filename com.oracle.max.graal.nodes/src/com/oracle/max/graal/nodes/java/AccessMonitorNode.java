@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code AccessMonitorNode} is the base class of both monitor acquisition and release.
@@ -61,7 +61,7 @@ public abstract class AccessMonitorNode extends AbstractStateSplit implements Me
      * @param monitorStackSlots determines if space on the stack should be reserved for each monitor
      */
     public AccessMonitorNode(ValueNode object, int monitorIndex, boolean monitorStackSlots) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.object = object;
         this.monitorIndex = monitorIndex;
         this.monitorStackSlots = monitorStackSlots;

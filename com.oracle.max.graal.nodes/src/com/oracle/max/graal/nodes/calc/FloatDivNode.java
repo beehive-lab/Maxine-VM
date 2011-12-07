@@ -37,10 +37,10 @@ public final class FloatDivNode extends FloatArithmeticNode implements Canonical
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && y().isConstant()) {
-            if (kind == CiKind.Float) {
+            if (kind() == CiKind.Float) {
                 return ConstantNode.forFloat(x().asConstant().asFloat() / y().asConstant().asFloat(), graph());
             } else {
-                assert kind == CiKind.Double;
+                assert kind() == CiKind.Double;
                 return ConstantNode.forDouble(x().asConstant().asDouble() / y().asConstant().asDouble(), graph());
             }
         }

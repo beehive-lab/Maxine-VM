@@ -167,14 +167,14 @@ public final class DependenciesManager {
         }
 
         @Override
-        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
-            RiMethod impl = concreteSubtype.resolveMethodImpl(context);
-            if (impl != method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
+            RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
+            if (newImpl != impl) {
                 valid = false;
                 if (TraceDeps) {
-                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(context);
-                    if (context != method) {
-                        sb.append(",").append(method);
+                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(method);
+                    if (method != impl) {
+                        sb.append(",").append(impl);
                     }
                     sb.append("] dependency of " + targetMethod);
                     Log.println(sb.toString());
@@ -208,18 +208,16 @@ public final class DependenciesManager {
         }
     }
 
-    public static Dependencies validateDependencies(CiAssumptions dependencies) {
-        if (dependencies != null) {
-            final DependencyValidator validator = new DependencyValidator();
-            classHierarchyLock.readLock().lock();
-            try {
-                dependencies.visit(validator);
-                return validator.result();
-            } finally {
-                classHierarchyLock.readLock().unlock();
-            }
+    /**
+     * Validates a given set of assumptions and returns them encoded in a {@link Dependencies} object
+     * if validation succeeds. If validation fails, {@link Dependencies#INVALID} is returned instead.
+     * If {@code assumptions == null}, then {@code null} is returned.
+     */
+    public static Dependencies validateDependencies(CiAssumptions assumptions) {
+        if (assumptions == null) {
+            return null;
         }
-        return null;
+        return Dependencies.validate(assumptions);
     }
 
     private static void dump(ClassActor classActor) {

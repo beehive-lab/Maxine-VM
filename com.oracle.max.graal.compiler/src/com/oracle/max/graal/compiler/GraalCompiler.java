@@ -109,7 +109,7 @@ public class GraalCompiler implements CiCompiler  {
                                     time / 10,
                                     time % 10,
                                     compilation.graph.getNodeCount(),
-                                    result.targetMethod().targetCodeSize()));
+                                    (result != null ? result.targetMethod().targetCodeSize() : -1)));
                 }
             }
 

@@ -30,7 +30,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Simple debug  utility class to atomically count pin/unpin requests and track unbalanced pinned requests.
  */
-public final class AtomicPinnedCounter {
+public final class AtomicPinCounter {
     private volatile int pinnedCounter = 0;
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -38,7 +38,7 @@ public final class AtomicPinnedCounter {
 
     @HOSTED_ONLY
     public static void hostInitialize() {
-        pinnedCounterOffset = ClassActor.fromJava(AtomicPinnedCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
+        pinnedCounterOffset = ClassActor.fromJava(AtomicPinCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
     }
 
     public void increment() {

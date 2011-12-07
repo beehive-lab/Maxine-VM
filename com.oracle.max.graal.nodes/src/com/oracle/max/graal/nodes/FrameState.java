@@ -35,7 +35,7 @@ import com.sun.cri.ri.*;
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
  * operand stack) at a particular point in the abstract interpretation.
  */
-public final class FrameState extends ValueNode implements FrameStateAccess, Node.IterableNodeType, LIRLowerable {
+public final class FrameState extends Node implements FrameStateAccess, Node.IterableNodeType, LIRLowerable {
 
     protected final int localsSize;
 
@@ -48,20 +48,27 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     /**
      * This BCI should be used for frame states that are built for code with no meaningful BCI.
      */
-    public static final int UNKNOWN_BCI = -1;
+    public static final int UNKNOWN_BCI = -4;
 
     /**
      * When a node whose frame state has this BCI value is inlined, its frame state
      * will be replaced with the frame state before the inlined invoke node.
      */
-    public static final int BEFORE_BCI = -2;
+    public static final int BEFORE_BCI = -1;
 
     /**
      * When a node whose frame state has this BCI value is inlined, its frame state
      * will be replaced with the frame state {@linkplain Invoke#stateAfter() after}
      * the inlined invoke node.
      */
-    public static final int AFTER_BCI = -3;
+    public static final int AFTER_BCI = -2;
+
+    /**
+     * When a node whose frame state has this BCI value is inlined, its frame state
+     * will be replaced with the frame state at the exception edge of the inlined
+     * invoke node.
+     */
+    public static final int AFTER_EXCEPTION_BCI = -3;
 
     @Input private FrameState outerFrameState;
 
@@ -110,7 +117,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
      * @param rethrowException if true the VM should re-throw the exception on top of the stack when deopt'ing using this framestate
      */
     public FrameState(RiResolvedMethod method, int bci, int localsSize, int stackSize, int locksSize, boolean rethrowException) {
-        super(CiKind.Illegal);
         assert stackSize >= 0;
         this.method = method;
         this.bci = bci;
@@ -123,7 +129,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<ValueNode> locks, boolean rethrowException) {
-        super(CiKind.Illegal);
         this.method = method;
         this.bci = bci;
         this.localsSize = locals.length;
@@ -310,14 +315,14 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         assert i < localsSize : "local variable index out of range: " + i;
         invalidateLocal(i);
         setValueAt(i, x);
-        if (isTwoSlot(x.kind)) {
+        if (isTwoSlot(x.kind())) {
             // (tw) if this was a double word then kill i+1
             setValueAt(i + 1, null);
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it
             ValueNode p = localAt(i - 1);
-            if (p != null && isTwoSlot(p.kind)) {
+            if (p != null && isTwoSlot(p.kind())) {
                 setValueAt(i - 1, null);
             }
         }
@@ -369,7 +374,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
                     return phi;
                 }
             }
-            PhiNode phi = graph().unique(new PhiNode(p.kind, block, PhiType.Value));
+            PhiNode phi = graph().unique(new PhiNode(p.kind(), block, PhiType.Value));
             setValueAt(localsSize + i, phi);
             return phi;
         }
@@ -389,7 +394,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
                 return phi;
             }
         }
-        PhiNode phi = graph().unique(new PhiNode(p.kind, block, PhiType.Value));
+        PhiNode phi = graph().unique(new PhiNode(p.kind(), block, PhiType.Value));
         storeLocal(i, phi);
         return phi;
     }
@@ -421,50 +426,98 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         return localsSize + stackSize;
     }
 
-    private void checkSize(FrameStateAccess other) {
-        if (other.stackSize() != stackSize()) {
-            throw new CiBailout("stack sizes do not match");
-        } else if (other.localsSize() != localsSize) {
-            throw new CiBailout("local sizes do not match");
-        }
+    private boolean checkSize(FrameStateAccess other) {
+        assert other.stackSize() == stackSize() : "stack sizes do not match";
+        assert other.localsSize() == localsSize : "local sizes do not match";
+        return true;
     }
 
     public void merge(MergeNode block, FrameStateAccess other) {
-        checkSize(other);
+        assert checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
-            ValueNode x = valueAt(i);
-            if (x != null) {
-                ValueNode y = other.valueAt(i);
-                if (x != y || block.isPhiAtMerge(x)) {
-                    if (ValueUtil.typeMismatch(x, y)) {
-                        if (block.isPhiAtMerge(x)) {
-                            x.replaceAtUsages(null);
-                            x.delete();
-                        }
-                        setValueAt(i, null);
-                        continue;
-                    }
-                    PhiNode phi = null;
-                    if (i < localsSize) {
-                        // this a local
-                        phi = setupPhiForLocal(block, i);
-                    } else {
-                        // this is a stack slot
-                        phi = setupPhiForStack(block, i - localsSize);
-                    }
+            ValueNode currentValue = valueAt(i);
+            ValueNode otherValue = other.valueAt(i);
+            if (currentValue != otherValue) {
+                if (block.isPhiAtMerge(currentValue)) {
+                    addToPhi((PhiNode) currentValue, otherValue);
+                } else {
+                    setValueAt(i, combineValues(currentValue, otherValue, block));
+                }
+            }
+        }
+    }
 
-                    if (phi.valueCount() == 0) {
-                        int size = block.phiPredecessorCount();
-                        for (int j = 0; j < size; ++j) {
-                            phi.addInput(x);
-                        }
-                        phi.addInput((x == y) ? phi : y);
-                    } else {
-                        phi.addInput((x == y) ? phi : y);
-                    }
+    private ValueNode combineValues(ValueNode currentValue, ValueNode otherValue, MergeNode block) {
+        if (currentValue == null || otherValue == null || currentValue.kind() != otherValue.kind()) {
+            return null;
+        }
 
-                    assert phi.valueCount() == block.phiPredecessorCount() + (block instanceof LoopBeginNode ? 0 : 1) : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
-               }
+        PhiNode phi = graph().unique(new PhiNode(currentValue.kind(), block, PhiType.Value));
+        for (int j = 0; j < block.phiPredecessorCount(); ++j) {
+            phi.addInput(currentValue);
+        }
+        phi.addInput(otherValue);
+        assert phi.valueCount() == block.phiPredecessorCount() + 1 : "valueCount=" + phi.valueCount() + " predSize= " + block.phiPredecessorCount();
+        return phi;
+    }
+
+    private void addToPhi(PhiNode phiNode, ValueNode otherValue) {
+        if (otherValue == null || otherValue.kind() != phiNode.kind()) {
+            phiNode.replaceAndDelete(null);
+        } else {
+            phiNode.addInput(otherValue);
+        }
+    }
+
+    public void mergeLoop(LoopBeginNode block, FrameStateAccess other) {
+        assert checkSize(other);
+        for (int i = 0; i < valuesSize(); i++) {
+            PhiNode currentValue = (PhiNode) valueAt(i);
+            if (currentValue != null) {
+                assert currentValue.merge() == block;
+                assert currentValue.valueCount() == 1;
+                ValueNode otherValue = other.valueAt(i);
+                if (otherValue == currentValue) {
+                    deleteRedundantPhi(currentValue, currentValue.firstValue());
+                } else if (otherValue == null || otherValue.kind() != currentValue.kind()) {
+                    deleteInvalidPhi(currentValue);
+                } else {
+                    currentValue.addInput(otherValue);
+                }
+            }
+        }
+    }
+
+    public void deleteRedundantPhi(PhiNode redundantPhi, ValueNode phiValue) {
+        Collection<Node> phiUsages = redundantPhi.usages().snapshot();
+        redundantPhi.replaceAndDelete(phiValue);
+        for (Node n : phiUsages) {
+            if (n instanceof PhiNode) {
+                PhiNode phiNode = (PhiNode) n;
+                checkRedundantPhi(phiNode);
+            }
+        }
+    }
+
+    private void checkRedundantPhi(PhiNode phiNode) {
+        if (phiNode.isDeleted() || phiNode.valueCount() == 1) {
+            return;
+        }
+
+        ValueNode singleValue = phiNode.singleValue();
+        if (singleValue != null) {
+            deleteRedundantPhi(phiNode, singleValue);
+        }
+    }
+
+    private void deleteInvalidPhi(PhiNode phiNode) {
+        if (!phiNode.isDeleted()) {
+            Collection<Node> phiUsages = phiNode.usages().snapshot();
+            phiNode.replaceAndDelete(null);
+            for (Node n : phiUsages) {
+                if (n instanceof PhiNode) {
+                    deleteInvalidPhi((PhiNode) n);
+                }
             }
         }
     }
@@ -592,28 +645,38 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             do {
                 HashSet<VirtualObjectNode> vobjsCopy = new HashSet<VirtualObjectNode>(vobjs);
                 for (VirtualObjectNode vobj : vobjsCopy) {
-                    if (vobj.fields().length > 0) {
-                        boolean[] fieldState = new boolean[vobj.fields().length];
-                        ValueNode currentField = objectStates.get(vobj);
-                        assert currentField != null : this;
-                        do {
-                            if (currentField instanceof VirtualObjectFieldNode) {
-                                int index = ((VirtualObjectFieldNode) currentField).index();
-                                ValueNode value = ((VirtualObjectFieldNode) currentField).input();
-                                if (!fieldState[index]) {
-                                    fieldState[index] = true;
-                                    if (value instanceof VirtualObjectNode) {
-                                        vobjs.add((VirtualObjectNode) value);
-                                    } else {
-                                        proc.doValue(value);
-                                    }
-                                }
-                                currentField = ((VirtualObjectFieldNode) currentField).lastState();
-                            } else {
-                                assert currentField instanceof PhiNode : currentField;
-                                currentField = ((PhiNode) currentField).valueAt(0);
+                    if (vobj.fieldsCount() > 0) {
+                        boolean[] fieldState = new boolean[vobj.fieldsCount()];
+                        if (vobj instanceof BoxedVirtualObjectNode) {
+                            BoxedVirtualObjectNode boxedVirtualObjectNode = (BoxedVirtualObjectNode) vobj;
+                            ValueNode value = boxedVirtualObjectNode.getUnboxedValue();
+                            if (!fieldState[0]) {
+                                fieldState[0] = true;
+                                proc.doValue(value);
                             }
-                        } while (currentField != null);
+                        } else {
+                            ValueNode currentField = objectStates.get(vobj);
+
+                            assert currentField != null : this + ", vobj=" + vobj;
+                            do {
+                                if (currentField instanceof VirtualObjectFieldNode) {
+                                    int index = ((VirtualObjectFieldNode) currentField).index();
+                                    ValueNode value = ((VirtualObjectFieldNode) currentField).input();
+                                    if (!fieldState[index]) {
+                                        fieldState[index] = true;
+                                        if (value instanceof VirtualObjectNode) {
+                                            vobjs.add((VirtualObjectNode) value);
+                                        } else {
+                                            proc.doValue(value);
+                                        }
+                                    }
+                                    currentField = ((VirtualObjectFieldNode) currentField).lastState();
+                                } else {
+                                    assert currentField instanceof PhiNode : currentField;
+                                    currentField = ((PhiNode) currentField).valueAt(0);
+                                }
+                            } while (currentField != null);
+                        }
                     }
                     vobjs.remove(vobj);
                 }
@@ -632,15 +695,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         sb.append(nl);
         for (int i = 0; i < localsSize(); ++i) {
             ValueNode value = localAt(i);
-            sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         for (int i = 0; i < stackSize(); ++i) {
             ValueNode value = stackAt(i);
-            sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         for (int i = 0; i < locksSize(); ++i) {
             ValueNode value = lockAt(i);
-            sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
         }
         return sb.toString();
     }
@@ -657,15 +720,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
             CiUtil.appendLocation(sb, fs.method, fs.bci).append(nl);
             for (int i = 0; i < fs.localsSize(); ++i) {
                 ValueNode value = fs.localAt(i);
-                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < fs.stackSize(); ++i) {
                 ValueNode value = fs.stackAt(i);
-                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             for (int i = 0; i < fs.locksSize(); ++i) {
                 ValueNode value = fs.lockAt(i);
-                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind().javaName, value));
             }
             fs = fs.outerFrameState();
         }
@@ -730,15 +793,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     @Override
-    public void delete() {
-        FrameState outerFrameState = outerFrameState();
-        super.delete();
-        if (outerFrameState != null && outerFrameState.usages().isEmpty()) {
-            outerFrameState.delete();
-        }
-    }
-
-    @Override
     public void setRethrowException(boolean b) {
         rethrowException = b;
     }
@@ -755,7 +809,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     @Override
     public boolean verify() {
         for (ValueNode value : values) {
-            assert assertTrue(value == null || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
+            assert assertTrue(value == null || value instanceof VirtualObjectNode || (value.kind() != CiKind.Void && value.kind() != CiKind.Illegal), "unexpected value: %s", value);
         }
         return super.verify();
     }

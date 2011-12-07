@@ -23,7 +23,7 @@
 package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code SwitchNode} class is the base of both lookup and table switches.
@@ -43,7 +43,7 @@ public abstract class SwitchNode extends ControlSplitNode {
      * @param stateAfter the state after the switch
      */
     public SwitchNode(ValueNode value, BeginNode[] successors, double[] probability) {
-        super(CiKind.Illegal, successors, probability);
+        super(StampFactory.illegal(), successors, probability);
         this.value = value;
     }
 

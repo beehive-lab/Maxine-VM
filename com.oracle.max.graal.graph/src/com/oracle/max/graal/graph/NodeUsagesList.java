@@ -22,20 +22,26 @@
  */
 package com.oracle.max.graal.graph;
 
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
-public final class NodeUsagesList implements Iterable<Node> {
+import com.oracle.max.graal.graph.iterators.*;
+
+public final class NodeUsagesList extends NodeIterable<Node> {
 
     protected static final Node[] EMPTY_NODE_ARRAY = new Node[0];
 
     protected Node[] nodes = EMPTY_NODE_ARRAY;
-    private int size = 0;
-    private int modCount = 0;
+    private int size;
+    private int modCount;
 
     NodeUsagesList() {
         this.size = 0;
         this.nodes = EMPTY_NODE_ARRAY;
+    }
+
+    NodeUsagesList(Node[] nodes) {
+        this.size = nodes.length;
+        this.nodes = nodes;
     }
 
     public int size() {
@@ -137,8 +143,9 @@ public final class NodeUsagesList implements Iterable<Node> {
         return false;
     }
 
-    public Node[] snapshot() {
-        return Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size);
+    @Override
+    public Collection<Node> snapshot() {
+        return Arrays.asList(Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size));
     }
 
     @Override

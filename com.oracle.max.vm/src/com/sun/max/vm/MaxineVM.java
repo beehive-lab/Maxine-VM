@@ -561,7 +561,9 @@ public final class MaxineVM {
         Log.print(operation);
         Log.print(' ');
         Log.print(numberOfBytes.toLong());
-        Log.print(" bytes of memory for ");
+        Log.print(" bytes (");
+        Log.printlnToPowerOfTwoUnits(numberOfBytes);
+        Log.print(") of memory for ");
         Log.println(memoryAreaName);
         MaxineVM.native_exit(1);
     }

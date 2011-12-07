@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 public class VirtualObjectFieldNode extends ValueNode implements LIRLowerable {
 
@@ -49,7 +49,7 @@ public class VirtualObjectFieldNode extends ValueNode implements LIRLowerable {
     }
 
     public VirtualObjectFieldNode(VirtualObjectNode object, ValueNode lastState, ValueNode input, int index) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.index = index;
         this.object = object;
         this.lastState = lastState;
@@ -74,7 +74,7 @@ public class VirtualObjectFieldNode extends ValueNode implements LIRLowerable {
 
     @Override
     public String toString(Verbosity verbosity) {
-        if (verbosity == Verbosity.Name) {
+        if (verbosity == Verbosity.Name && object().fields() != null) {
             return super.toString(Verbosity.Name) + " " + object().fields()[index].name();
         } else {
             return super.toString(verbosity);

@@ -40,7 +40,7 @@ public class GraphUtil {
             EndNode end = (EndNode) node;
             MergeNode merge = end.merge();
             if (merge instanceof LoopBeginNode) {
-                for (PhiNode phi : merge.phis()) {
+                for (PhiNode phi : merge.phis().snapshot()) {
                     ValueNode value = phi.valueAt(0);
                     phi.replaceAndDelete(value);
                 }
@@ -48,7 +48,7 @@ public class GraphUtil {
             } else {
                 merge.removeEnd(end);
                 if (merge.phiPredecessorCount() == 1) {
-                    for (PhiNode phi : merge.phis()) {
+                    for (PhiNode phi : merge.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                     }
@@ -58,8 +58,8 @@ public class GraphUtil {
                     FixedNode next = merge.next();
                     merge.setNext(null);
                     pred.replaceFirstSuccessor(replacedSux, next);
-                    merge.delete();
-                    replacedSux.delete();
+                    merge.safeDelete();
+                    replacedSux.safeDelete();
                 }
             }
         }
@@ -86,7 +86,7 @@ public class GraphUtil {
             FixedNode next = loop.next();
             loop.setNext(null);
             endNode.replaceAndDelete(next);
-            loop.delete();
+            loop.safeDelete();
         }
         if (node instanceof PhiNode) {
             node.replaceFirstInput(input, null);
@@ -96,16 +96,21 @@ public class GraphUtil {
                     propagateKill(usage, node);
                 }
             }
+            for (Node curInput : node.inputs()) {
+                if (curInput.isAlive() && curInput.usages().size() == 1) {
+                    curInput.delete();
+                }
+            }
             // null out remaining usages
             node.replaceAtUsages(null);
-            node.delete();
+            node.safeDelete();
         }
     }
 
     public static void killFloating(FloatingNode node) {
         if (node.usages().size() == 0) {
             node.clearInputs();
-            node.delete();
+            node.safeDelete();
         }
     }
 }

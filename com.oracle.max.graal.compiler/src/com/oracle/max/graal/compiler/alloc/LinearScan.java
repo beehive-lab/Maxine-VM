@@ -632,7 +632,7 @@ public final class LinearScan {
                     assert info.state != null;
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(ValueNode value) {
-                            CiValue operand = value.operand();
+                            CiValue operand = compilation.operand(value);
                             if (operand.isVariable()) {
                                 int operandNum = operandNumber(operand);
                                 if (!liveKill.get(operandNum)) {
@@ -849,7 +849,7 @@ public final class LinearScan {
                                 assert info.state != null;
                                 info.state.forEachLiveStateValue(new ValueProcedure() {
                                     public void doValue(ValueNode value) {
-                                        CiValue operand = value.operand();
+                                        CiValue operand = compilation.operand(value);
                                         TTY.println("   operand=" + operand);
                                     }
                                 });
@@ -1209,8 +1209,8 @@ public final class LinearScan {
                 if (info != null) {
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(ValueNode value) {
-                            CiValue operand = value.operand();
-                            if (operand.isVariableOrRegister()) {
+                            CiValue operand = compilation.operand(value);
+                            if (operand != null && operand.isVariableOrRegister()) {
                                 addUse(operand, blockFrom, (opId + 1), RegisterPriority.None, null);
                             }
                         }
@@ -1831,8 +1831,8 @@ public final class LinearScan {
                     virtualObjects.put(obj, ciObj);
                 }
                 return ciObj;
-            } else if (value != null && value.operand() != CiValue.IllegalValue) {
-                CiValue operand = value.operand();
+            } else if (value != null && compilation.operand(value) != null) {
+                CiValue operand = compilation.operand(value);
                 ConstantNode con = null;
                 if (value instanceof ConstantNode) {
                     con = (ConstantNode) value;
@@ -1938,24 +1938,29 @@ public final class LinearScan {
                     for (Entry<VirtualObjectNode, CiVirtualObject> entry : virtualObjectsCopy.entrySet()) {
                         if (entry.getValue().values() == null) {
                             VirtualObjectNode vobj = entry.getKey();
-                            CiValue[] values = new CiValue[vobj.fields().length];
-                            entry.getValue().setValues(values);
-                            if (vobj.fields().length > 0) {
-                                changed = true;
-                                ValueNode currentField = objectStates.get(vobj);
-                                assert currentField != null;
-                                do {
-                                    if (currentField instanceof VirtualObjectFieldNode) {
-                                        int index = ((VirtualObjectFieldNode) currentField).index();
-                                        if (values[index] == null) {
-                                            values[index] = toCiValue(((VirtualObjectFieldNode) currentField).input());
+                            if (vobj instanceof BoxedVirtualObjectNode) {
+                                BoxedVirtualObjectNode boxedVirtualObjectNode = (BoxedVirtualObjectNode) vobj;
+                                entry.getValue().setValues(new CiValue[]{toCiValue(boxedVirtualObjectNode.getUnboxedValue())});
+                            } else {
+                                CiValue[] values = new CiValue[vobj.fieldsCount()];
+                                entry.getValue().setValues(values);
+                                if (values.length > 0) {
+                                    changed = true;
+                                    ValueNode currentField = objectStates.get(vobj);
+                                    assert currentField != null;
+                                    do {
+                                        if (currentField instanceof VirtualObjectFieldNode) {
+                                            int index = ((VirtualObjectFieldNode) currentField).index();
+                                            if (values[index] == null) {
+                                                values[index] = toCiValue(((VirtualObjectFieldNode) currentField).input());
+                                            }
+                                            currentField = ((VirtualObjectFieldNode) currentField).lastState();
+                                        } else {
+                                            assert currentField instanceof PhiNode : currentField;
+                                            currentField = ((PhiNode) currentField).valueAt(0);
                                         }
-                                        currentField = ((VirtualObjectFieldNode) currentField).lastState();
-                                    } else {
-                                        assert currentField instanceof PhiNode : currentField;
-                                        currentField = ((PhiNode) currentField).valueAt(0);
-                                    }
-                                } while (currentField != null);
+                                    } while (currentField != null);
+                                }
                             }
                         }
                     }

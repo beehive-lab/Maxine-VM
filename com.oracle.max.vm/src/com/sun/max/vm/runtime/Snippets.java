@@ -530,8 +530,8 @@ public class Snippets {
     }
 
     /**
-     * Makes the transition from the 'in native' state to the 'in Java' state, blocking on a
-     * spin lock if the current thread is {@linkplain VmOperation frozen}.
+     * Makes the transition from the 'in native' state to the 'in Java' state, blocking on
+     * {@link VmThreadMap#THREAD_LOCK} if current thread is {@linkplain VmOperation frozen}.
      *
      * @param etla the safepoints-triggered TLA for the current thread
      * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after
@@ -539,7 +539,7 @@ public class Snippets {
      */
     @INLINE
     public static void nativeCallEpilogue0(Pointer etla, Pointer anchor) {
-        spinWhileFrozen(etla);
+        blockWhileFrozen(etla);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
         while (SUSPEND.load(etla).equals(VmOperation.SUSPEND_REQUEST)) {
             // In particular SUSPEND_JAVA is not set, so this is a thread returning from native code
@@ -553,7 +553,7 @@ public class Snippets {
 
     /**
      * Acquire and immediately release the {@link VmThreadMap#THREAD_LOCK}. We only call this when we assume
-     * that the VM is still at a safepoint, i.e., that the VM Operation thread holds the thread lock.  Therfore,
+     * that the VM is still at a safepoint, i.e., that the VM Operation thread holds the thread lock.  Therefore,
      * our thread will be blocked until the end of the safepoint, and we avoid a spin loop while waiting for the
      * safepoint to end.
      * <br>
@@ -570,20 +570,24 @@ public class Snippets {
 
     @FOLD
     public static ClassMethodActor blockOnThreadLockMethod() {
-        // Note: This code cannot be in a static initializer because of circular initialization problems.
-        if (blockOnThreadLockMethod == null) {
-            CriticalNativeMethod cnm = new CriticalNativeMethod(Snippets.class, "nativeBlockOnThreadLock");
-            blockOnThreadLockMethod = cnm.classMethodActor;
+        if (MaxineVM.isHosted()) {
+            synchronized (Snippets.class) {
+                // Note: This code cannot be in a static initializer because of circular initialization problems.
+                if (blockOnThreadLockMethod == null) {
+                    CriticalNativeMethod cnm = new CriticalNativeMethod(Snippets.class, "nativeBlockOnThreadLock");
+                    blockOnThreadLockMethod = cnm.classMethodActor;
+                }
+            }
         }
         return blockOnThreadLockMethod;
     }
 
     /**
-     * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
+     * This methods is blocked on {@link VmThreadMap#THREAD_LOCK} while the current thread is {@linkplain VmOperation frozen}.
      */
     @INLINE
     @NO_SAFEPOINT_POLLS("Cannot take a trap while frozen")
-    private static void spinWhileFrozen(Pointer etla) {
+    private static void blockWhileFrozen(Pointer etla) {
         if (UseCASBasedThreadFreezing) {
             while (true) {
                 if (etla.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
@@ -609,10 +613,9 @@ public class Snippets {
                 }
 
                 // Current thread is frozen so above state transition is invalid
-                // so undo it and spin until freezer thread thaws the current thread then retry transition
+                // so undo it and wait until freezer thread thaws the current thread then retry transition
                 MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
                 while (!FROZEN.load(etla).isZero()) {
-                    // Spin without doing unnecessary stores
                     nativeBlockOnThreadLock();
                 }
             }

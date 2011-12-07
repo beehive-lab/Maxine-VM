@@ -24,21 +24,29 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code AnchorNode} can be used a lower bound for a Guard. It can also be used as an upper bound if no other FixedNode can be used for that purpose.
  */
-public final class AnchorNode extends FixedWithNextNode implements LIRLowerable {
+public final class AnchorNode extends FixedWithNextNode implements LIRLowerable, Canonicalizable {
 
     @Input(notDataflow = true) private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
 
     public AnchorNode() {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
     }
 
     public void addGuard(GuardNode x) {
         guards.add(x);
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (this.usages().size() == 0 && guards.size() == 0) {
+            return null;
+        }
+        return this;
     }
 
     @Override

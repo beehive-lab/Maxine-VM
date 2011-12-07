@@ -44,7 +44,7 @@ public class InliningUtil {
     public interface InliningCallback {
         StructuredGraph buildGraph(RiResolvedMethod method);
         double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, Invoke invoke);
-        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete);
+        void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl);
     }
 
     public static String methodName(RiResolvedMethod method) {
@@ -176,12 +176,15 @@ public class InliningUtil {
     }
 
     /**
-     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method, but for which an assumption has to be registered because of non-final classes.
+     * Represents an inlining opportunity where the current class hierarchy leads to a monomorphic target method,
+     * but for which an assumption has to be registered because of non-final classes.
      */
     private static class AssumptionInlineInfo extends ExactInlineInfo {
+        public final RiResolvedType context;
 
-        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedMethod concrete) {
+        public AssumptionInlineInfo(Invoke invoke, double weight, int level, RiResolvedType context, RiResolvedMethod concrete) {
             super(invoke, weight, level, concrete);
+            this.context = context;
         }
 
         @Override
@@ -189,9 +192,9 @@ public class InliningUtil {
             if (GraalOptions.TraceInlining) {
                 String targetName = CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
-                TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
+                TTY.println("recording concrete method assumption: %s on receiver type %s -> %s", targetName, context, concreteName);
             }
-            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), concrete);
+            callback.recordConcreteMethodAssumption(invoke.callTarget().targetMethod(), context, concrete);
             super.inline(graph, runtime, callback);
         }
 
@@ -255,7 +258,7 @@ public class InliningUtil {
         if (concrete != null) {
             if (checkTargetConditions(concrete, runtime)) {
                 double weight = callback.inliningWeight(parent, concrete, invoke);
-                return new AssumptionInlineInfo(invoke, weight, level, concrete);
+                return new AssumptionInlineInfo(invoke, weight, level, holder, concrete);
             }
             return null;
         }
@@ -284,12 +287,6 @@ public class InliningUtil {
     }
 
     private static boolean checkInvokeConditions(Invoke invoke) {
-        if (!invoke.canInline()) {
-            if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke is manually set to be non-inlinable", methodName(invoke.callTarget().targetMethod(), invoke));
-            }
-            return false;
-        }
         if (invoke.stateAfter() == null) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because the invoke has no after state", methodName(invoke.callTarget().targetMethod(), invoke));
@@ -359,7 +356,7 @@ public class InliningUtil {
      */
     public static void inline(Invoke invoke, StructuredGraph inlineGraph, boolean receiverNullCheck) {
         NodeInputList<ValueNode> parameters = invoke.callTarget().arguments();
-        StructuredGraph graph = invoke.node().graph();
+        Graph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
 
@@ -404,6 +401,34 @@ public class InliningUtil {
         }
         invoke.node().replaceAtPredecessors(invokeReplacement);
 
+        FrameState stateAtExceptionEdge = null;
+        if (invoke instanceof InvokeWithExceptionNode) {
+            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
+            if (unwindNode != null) {
+                assert unwindNode.predecessor() != null;
+                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
+                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
+                stateAtExceptionEdge = obj.stateAfter();
+                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
+                for (Node usage : obj.usages().snapshot()) {
+                    usage.replaceFirstInput(obj, unwindDuplicate.exception());
+                }
+                unwindDuplicate.clearInputs();
+                Node n = obj.next();
+                obj.setNext(null);
+                unwindDuplicate.replaceAndDelete(n);
+            } else {
+                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
+                invokeWithException.setExceptionEdge(null);
+                GraphUtil.killCFG(nodeToDelete);
+            }
+        } else {
+            if (unwindNode != null) {
+                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
+                unwindDuplicate.replaceAndDelete(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
+            }
+        }
+
         FrameState stateBefore = null;
         double invokeProbability = invoke.node().probability();
         for (Node node : duplicates.values()) {
@@ -422,6 +447,9 @@ public class InliningUtil {
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
                     frameState.replaceAndDelete(stateAfter);
+                } else if (frameState.bci == FrameState.AFTER_EXCEPTION_BCI) {
+                    assert stateAtExceptionEdge != null;
+                    frameState.replaceAndDelete(stateAtExceptionEdge);
                 }
             }
         }
@@ -451,33 +479,6 @@ public class InliningUtil {
             returnDuplicate.replaceAndDelete(n);
         }
 
-        if (invoke instanceof InvokeWithExceptionNode) {
-            InvokeWithExceptionNode invokeWithException = ((InvokeWithExceptionNode) invoke);
-            if (unwindNode != null) {
-                assert unwindNode.predecessor() != null;
-                assert invokeWithException.exceptionEdge().successors().explicitCount() == 1;
-                ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge().next();
-
-                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
-                for (Node usage : obj.usages().snapshot()) {
-                    usage.replaceFirstInput(obj, unwindDuplicate.exception());
-                }
-                unwindDuplicate.clearInputs();
-                Node n = obj.next();
-                obj.setNext(null);
-                unwindDuplicate.replaceAndDelete(n);
-            } else {
-                FixedNode nodeToDelete = invokeWithException.exceptionEdge();
-                invokeWithException.setExceptionEdge(null);
-                GraphUtil.killCFG(nodeToDelete);
-            }
-        } else {
-            if (unwindNode != null) {
-                UnwindNode unwindDuplicate = (UnwindNode) duplicates.get(unwindNode);
-                unwindDuplicate.replaceAndDelete(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-            }
-        }
-
         invoke.node().clearInputs();
         GraphUtil.killCFG(invoke.node());
 
@@ -495,6 +496,5 @@ public class InliningUtil {
         if (stateAfter.usages().isEmpty()) {
             stateAfter.delete();
         }
-
     }
 }

@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -71,7 +72,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
      * @param graph
      */
     public CompareNode(ValueNode x, Condition condition, boolean unorderedIsTrue, ValueNode y) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         assert (x == null && y == null) || x.kind() == y.kind();
         this.condition = condition;
         this.unorderedIsTrue = unorderedIsTrue;
@@ -198,6 +199,12 @@ public final class CompareNode extends BooleanNode implements Canonicalizable, L
             }
             if (object != null) {
                 return graph().unique(new NullCheckNode(object, condition == Condition.EQ));
+            } else {
+                Stamp xStamp = x.stamp();
+                Stamp yStamp = y.stamp();
+                if (xStamp.alwaysDistinct(yStamp)) {
+                    return ConstantNode.forBoolean(condition == Condition.NE, graph());
+                }
             }
         }
         return this;

@@ -23,13 +23,13 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.nodes.calc.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 
 public abstract class BooleanNode extends FloatingNode {
 
-    public BooleanNode(CiKind kind) {
-        super(kind);
+    public BooleanNode(Stamp stamp) {
+        super(stamp);
     }
 
     public abstract BooleanNode negate();

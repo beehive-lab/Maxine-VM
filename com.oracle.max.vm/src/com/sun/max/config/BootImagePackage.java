@@ -201,7 +201,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         final ClassSearch classSearch = new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className))) {
+                if (!className.endsWith("package-info") && !classNames.contains(className) && includesClass(className)) {
                     classNames.add(className);
                 }
                 return true;
@@ -209,6 +209,14 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         };
         classSearch.run(classpath, name.replace('.', '/'));
         return classNames.toArray(new String[classNames.size()]);
+    }
+
+    /**
+     * Determines if this package includes a given class.
+     * This can be overridden to implement class exclusion.
+     */
+    protected boolean includesClass(String className) {
+        return name.equals(getPackageName(className));
     }
 
     /**

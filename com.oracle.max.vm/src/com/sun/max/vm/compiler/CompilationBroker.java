@@ -403,23 +403,26 @@ public class CompilationBroker {
                 reason = "nature:opt";
                 compiler = optimizingCompiler;
             } else {
+                // The -XX:CompileCommand is only considered if a specific nature was not specified
+                String compilerName = compilerFor(cma);
                 reason = null;
-                if (isHosted()) {
-                    // at prototyping time, default to the opt compiler
-                    compiler = optimizingCompiler;
-                } else {
-                    compiler = defaultCompiler;
+                compiler = null;
+                if (compilerName != null) {
+                    if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                        compiler = optimizingCompiler;
+                        reason = "CompileCommand";
+                    } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                        compiler = baselineCompiler;
+                        reason = "CompileCommand";
+                    }
                 }
-            }
-
-            String compilerName = compilerFor(cma);
-            if (compilerName != null) {
-                if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
-                    compiler = optimizingCompiler;
-                    reason = "CompileCommand";
-                } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
-                    compiler = baselineCompiler;
-                    reason = "CompileCommand";
+                if (reason == null) {
+                    if (isHosted()) {
+                        // at prototyping time, default to the opt compiler
+                        compiler = optimizingCompiler;
+                    } else {
+                        compiler = defaultCompiler;
+                    }
                 }
             }
         }

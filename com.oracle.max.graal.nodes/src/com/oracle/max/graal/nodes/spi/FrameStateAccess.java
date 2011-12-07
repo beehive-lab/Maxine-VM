@@ -48,7 +48,7 @@ public interface FrameStateAccess {
 
     void setRethrowException(boolean b);
 
-    ValueNode outerFrameState();
+    FrameState outerFrameState();
 
     FrameState duplicateWithException(int bci, ValueNode exceptionObject);
 

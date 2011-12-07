@@ -165,7 +165,7 @@ public interface RiResolvedType extends RiType {
      * Returns the instance fields declared in this class sorted by field offset.
      * @return an array of instance fields
      */
-    RiField[] declaredFields();
+    RiResolvedField[] declaredFields();
 
     /**
      * Returns this type's annotation of a specified type.

@@ -27,6 +27,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "[+]")
@@ -35,7 +36,7 @@ public final class SafeAddNode extends FloatingNode implements LIRLowerable {
     @Input private ValueNode y;
 
     public SafeAddNode(ValueNode x, ValueNode y) {
-        super(CiKind.Int);
+        super(StampFactory.forKind(CiKind.Int));
         this.x = x;
         this.y = y;
     }

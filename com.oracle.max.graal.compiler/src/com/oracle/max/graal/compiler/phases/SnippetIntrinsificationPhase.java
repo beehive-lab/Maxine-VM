@@ -37,9 +37,11 @@ import com.sun.cri.ri.*;
 public class SnippetIntrinsificationPhase extends Phase {
 
     private final RiRuntime runtime;
+    private final BoxingMethodPool pool;
 
-    public SnippetIntrinsificationPhase(RiRuntime runtime) {
+    public SnippetIntrinsificationPhase(RiRuntime runtime, BoxingMethodPool pool) {
         this.runtime = runtime;
+        this.pool = pool;
     }
 
     @Override
@@ -144,12 +146,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                             if (node instanceof Invoke) {
                                 Invoke invokeNode = (Invoke) node;
                                 MethodCallTargetNode callTarget = invokeNode.callTarget();
-                                if (BoxingEliminationPhase.isBoxingMethod(runtime, callTarget.targetMethod())) {
+                                if (pool.isBoxingMethod(callTarget.targetMethod())) {
                                     if (invokeNode instanceof InvokeWithExceptionNode) {
                                         // Destroy exception edge & clear stateAfter.
                                         InvokeWithExceptionNode invokeWithExceptionNode = (InvokeWithExceptionNode) invokeNode;
                                         invokeWithExceptionNode.killExceptionEdge();
                                     }
+                                    assert invokeNode.stateAfter().usages().size() == 1;
+                                    invokeNode.stateAfter().delete();
                                     invokeNode.node().replaceAndDelete(invokeNode.next());
                                     return callTarget.arguments().get(0);
                                 }
@@ -188,7 +192,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                             valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
                         } else if (checkCastUsage instanceof MethodCallTargetNode) {
                             MethodCallTargetNode checkCastCallTarget = (MethodCallTargetNode) checkCastUsage;
-                            assert BoxingEliminationPhase.isUnboxingMethod(runtime, checkCastCallTarget.targetMethod());
+                            assert pool.isUnboxingMethod(checkCastCallTarget.targetMethod());
                             Invoke invokeNode = checkCastCallTarget.invoke();
                             if (invokeNode instanceof InvokeWithExceptionNode) {
                                 // Destroy exception edge & clear stateAfter.
@@ -197,14 +201,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                             }
                             invokeNode.node().replaceAtUsages(newInstance);
                             invokeNode.node().replaceAndDelete(invokeNode.next());
-                            checkCastCallTarget.delete();
+                            checkCastCallTarget.safeDelete();
                         } else if (checkCastUsage instanceof FrameState) {
                             checkCastUsage.replaceFirstInput(checkCastNode, null);
                         } else {
                             assert false : "unexpected checkcast usage: " + checkCastUsage;
                         }
                     }
-                    checkCastNode.delete();
+                    checkCastNode.safeDelete();
                 }
             }
         }

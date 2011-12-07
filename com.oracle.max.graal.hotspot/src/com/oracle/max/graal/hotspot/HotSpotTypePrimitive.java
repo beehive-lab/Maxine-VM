@@ -148,7 +148,7 @@ public final class HotSpotTypePrimitive extends HotSpotType implements RiResolve
     }
 
     @Override
-    public RiField[] declaredFields() {
+    public RiResolvedField[] declaredFields() {
         return null;
     }
 

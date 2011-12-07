@@ -2491,13 +2491,13 @@ public final class GraphBuilder {
             }
 
             if (C1XOptions.UseAssumptions) {
-                RiResolvedMethod assumed = resolvedMethod.holder().uniqueConcreteMethod(resolvedMethod);
-                if (assumed != null) {
+                RiResolvedMethod concrete = resolvedMethod.holder().uniqueConcreteMethod(resolvedMethod);
+                if (concrete != null) {
                     if (C1XOptions.PrintAssumptions) {
-                        TTY.println("Recording concrete method assumption in context of " + method.holder().name() + ": " + assumed.name());
+                        TTY.println("Recording concrete method assumption in context of " + method.holder().name() + ": " + concrete.name());
                     }
-                    compilation.assumptions.recordConcreteMethod(resolvedMethod, assumed);
-                    return assumed;
+                    compilation.assumptions.recordConcreteMethod(resolvedMethod, resolvedMethod.holder(), concrete);
+                    return concrete;
                 } else {
                     if (C1XOptions.PrintAssumptions) {
                         TTY.println("Did not find unique concrete method for " + method);

@@ -27,13 +27,14 @@ import java.util.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * The {@code NewArrayNode} class is the base of all instructions that allocate arrays.
  */
-public abstract class NewArrayNode extends FixedWithNextNode {
+public abstract class NewArrayNode extends FixedWithNextNode implements EscapeAnalyzable{
 
     @Input private ValueNode length;
 
@@ -47,8 +48,8 @@ public abstract class NewArrayNode extends FixedWithNextNode {
      * Constructs a new NewArrayNode.
      * @param length the node that produces the length for this allocation
      */
-    protected NewArrayNode(ValueNode length) {
-        super(CiKind.Object);
+    protected NewArrayNode(Stamp stamp, ValueNode length) {
+        super(stamp);
         this.length = length;
     }
 

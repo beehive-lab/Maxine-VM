@@ -42,7 +42,7 @@ import com.sun.max.vm.runtime.*;
 public class StackFrameCursor {
 
     private final StackFrameWalker walker;
-    final NativeOrVmIP ip;
+    public final NativeOrVmIP ip;
     Pointer sp = Pointer.zero();
     Pointer fp = Pointer.zero();
     private CiCalleeSaveLayout csl;

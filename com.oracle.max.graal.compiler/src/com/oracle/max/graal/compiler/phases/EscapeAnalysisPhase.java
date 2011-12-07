@@ -45,7 +45,7 @@ public class EscapeAnalysisPhase extends Phase {
         public final ValueNode[] fieldState;
         public final VirtualObjectNode virtualObject;
         public ValueNode virtualObjectField;
-        public final StructuredGraph graph;
+        public final Graph graph;
 
         public BlockExitState(EscapeField[] fields, VirtualObjectNode virtualObject) {
             this.fieldState = new ValueNode[fields.length];
@@ -385,8 +385,6 @@ public class EscapeAnalysisPhase extends Phase {
                 if (context.isObserved()) {
                     context.observable.fireCompilationEvent("After escape", graph);
                 }
-                new PhiSimplificationPhase().apply(graph, context);
-
                 break;
             }
             if (weight < minimumWeight) {

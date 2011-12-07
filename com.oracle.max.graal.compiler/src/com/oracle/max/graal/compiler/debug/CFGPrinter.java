@@ -214,7 +214,9 @@ public class CFGPrinter extends CompilationPrinter {
         }
 
         for (Node node : block.getInstructions()) {
-            printNode((ValueNode) node);
+            if (node instanceof ValueNode) {
+                printNode((ValueNode) node);
+            }
         }
         out.enableIndentation();
         end("IR");
@@ -228,8 +230,9 @@ public class CFGPrinter extends CompilationPrinter {
         } else if (node instanceof FloatingNode) {
             out.print("f ").print(HOVER_START).print("~").print(HOVER_SEP).print("floating").print(HOVER_END).println(COLUMN_END);
         }
-        if (node.operand().isLegal()) {
-            out.print("result ").print(new OperandFormatter(false).format(node.operand())).println(COLUMN_END);
+        CiValue operand = compilation.operand(node);
+        if (operand != null) {
+            out.print("result ").print(new OperandFormatter(false).format(operand)).println(COLUMN_END);
         }
         out.print("tid ").print(nodeToString(node)).println(COLUMN_END);
 
@@ -333,7 +336,7 @@ public class CFGPrinter extends CompilationPrinter {
         if (value == null) {
             return "-";
         }
-        return operandFmt.format(value.operand());
+        return operandFmt.format(compilation.operand(value));
     }
 
     /**

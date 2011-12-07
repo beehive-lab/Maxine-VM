@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 @NodeInfo(shortName = "Deopt")
 public class DeoptimizeNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
@@ -41,7 +41,7 @@ public class DeoptimizeNode extends FixedNode implements Node.IterableNodeType, 
     @Data private final DeoptAction action;
 
     public DeoptimizeNode(DeoptAction action) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.action = action;
     }
 

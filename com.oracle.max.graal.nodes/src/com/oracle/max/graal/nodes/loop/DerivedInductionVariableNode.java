@@ -95,7 +95,7 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
             stride = scale();
             counter = (LoopCounterNode) base;
         }
-        BasicInductionVariableNode newBIV = graph().add(new BasicInductionVariableNode(kind, init, stride, counter));
+        BasicInductionVariableNode newBIV = graph().add(new BasicInductionVariableNode(kind(), init, stride, counter));
         this.replaceAndDelete(newBIV);
         return newBIV;
     }
@@ -111,7 +111,7 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
             DerivedInductionVariableNode divBase = (DerivedInductionVariableNode) base();
             IntegerArithmeticNode newOffset = IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), divBase.offset()));
             IntegerArithmeticNode newScale = IntegerArithmeticNode.mul(scale(), divBase.scale());
-            return graph().add(new DerivedInductionVariableNode(kind, newOffset, newScale, divBase.base()));
+            return graph().add(new DerivedInductionVariableNode(kind(), newOffset, newScale, divBase.base()));
         }
         return this;
     }
@@ -136,15 +136,74 @@ public class DerivedInductionVariableNode extends LinearInductionVariableNode  i
 
     @Override
     public StrideDirection strideDirection() {
-        ValueNode stride = a();
+        switch (scaleDirection()) {
+            case Up:
+                return base().strideDirection();
+            case Down:
+                return StrideDirection.opposite(base().strideDirection());
+        }
+        return null;
+    }
+
+    public StrideDirection scaleDirection() {
+        ValueNode stride = scale();
         if (stride.isConstant()) {
             long val = stride.asConstant().asLong();
             if (val > 0) {
-                return base().strideDirection();
+                return StrideDirection.Up;
             }
             if (val < 0) {
-                return StrideDirection.opposite(base().strideDirection());
+                return StrideDirection.Down;
             }
+        }
+        return null;
+    }
+
+    @Override
+    public ValueNode stride() {
+        return IntegerArithmeticNode.mul(scale(), base().stride());
+    }
+
+    @Override
+    public ValueNode minValue(FixedNode point) {
+        StrideDirection strideDirection = strideDirection();
+        if (strideDirection == StrideDirection.Up) {
+            StrideDirection scaleDirection = scaleDirection();
+            if (scaleDirection == StrideDirection.Up) {
+                ValueNode baseMinValue = base().minValue(point);
+                if (baseMinValue != null) {
+                    return IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), baseMinValue));
+                }
+            } else if (scaleDirection == StrideDirection.Down) {
+                ValueNode baseMaxValue = base().maxValue(point);
+                if (baseMaxValue != null) {
+                    return IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), baseMaxValue));
+                }
+            }
+        } else if (strideDirection == StrideDirection.Down) {
+            return searchExtremum(point, StrideDirection.Down);
+        }
+        return null;
+    }
+
+    @Override
+    public ValueNode maxValue(FixedNode point) {
+        StrideDirection strideDirection = strideDirection();
+        if (strideDirection == StrideDirection.Down) {
+            StrideDirection scaleDirection = scaleDirection();
+            if (scaleDirection == StrideDirection.Up) {
+                ValueNode baseMaxValue = base().maxValue(point);
+                if (baseMaxValue != null) {
+                    return IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), baseMaxValue));
+                }
+            } else if (scaleDirection == StrideDirection.Down) {
+                ValueNode baseMinValue = base().minValue(point);
+                if (baseMinValue != null) {
+                    return IntegerArithmeticNode.add(offset(), IntegerArithmeticNode.mul(scale(), baseMinValue));
+                }
+            }
+        } else if (strideDirection == StrideDirection.Up) {
+            return searchExtremum(point, StrideDirection.Up);
         }
         return null;
     }

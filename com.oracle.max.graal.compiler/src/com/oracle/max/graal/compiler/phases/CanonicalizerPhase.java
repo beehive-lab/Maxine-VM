@@ -169,14 +169,14 @@ public class CanonicalizerPhase extends Phase {
                     assert loopBegin.endCount() == 1;
                     EndNode predEnd = loopBegin.endAt(0);
 
-                    for (PhiNode phi : loopBegin.phis()) {
+                    for (PhiNode phi : loopBegin.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                         nodeWorkList.replaced(value, phi, false);
                     }
                     FixedNode next = loopBegin.next();
                     loopEnd.setLoopBegin(null);
-                    loopBegin.delete();
+                    loopBegin.safeDelete();
 
                     predEnd.replaceAndDelete(next);
                 }
@@ -184,7 +184,7 @@ public class CanonicalizerPhase extends Phase {
                 EndNode end = (EndNode) node;
                 MergeNode merge = end.merge();
                 if (merge instanceof LoopBeginNode) {
-                    for (PhiNode phi : merge.phis()) {
+                    for (PhiNode phi : merge.phis().snapshot()) {
                         ValueNode value = phi.valueAt(0);
                         phi.replaceAndDelete(value);
                         nodeWorkList.replaced(value, phi, false);
@@ -196,7 +196,7 @@ public class CanonicalizerPhase extends Phase {
                 } else {
                     merge.removeEnd(end);
                     if (merge.phiPredecessorCount() == 1) {
-                        for (PhiNode phi : merge.phis()) {
+                        for (PhiNode phi : merge.phis().snapshot()) {
                             ValueNode value = phi.valueAt(0);
                             phi.replaceAndDelete(value);
                             nodeWorkList.replaced(value, phi, false);
@@ -207,8 +207,11 @@ public class CanonicalizerPhase extends Phase {
                         FixedNode next = merge.next();
                         merge.setNext(null);
                         pred.replaceFirstSuccessor(replacedSux, next);
-                        merge.delete();
-                        replacedSux.delete();
+                        if (merge.stateAfter().usages().size() == 1) {
+                            merge.stateAfter().delete();
+                        }
+                        merge.safeDelete();
+                        replacedSux.safeDelete();
                     }
                 }
             }
@@ -226,7 +229,7 @@ public class CanonicalizerPhase extends Phase {
                 }
                 // null out remaining usages
                 node.replaceAtUsages(null);
-                node.delete();
+                node.safeDelete();
             }
         }
 

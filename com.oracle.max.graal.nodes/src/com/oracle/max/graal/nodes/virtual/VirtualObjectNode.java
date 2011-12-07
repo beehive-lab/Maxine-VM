@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 
@@ -34,11 +34,19 @@ public class VirtualObjectNode extends ValueNode implements LIRLowerable {
 
     @Data private RiType type;
     private EscapeField[] fields;
+    private int fieldsCount;
 
     public VirtualObjectNode(RiType type, EscapeField[] fields) {
-        super(CiKind.Int);
+        super(StampFactory.illegal());
         this.type = type;
         this.fields = fields;
+        this.fieldsCount = fields.length;
+    }
+
+    public VirtualObjectNode(RiType type, int fieldCount) {
+        super(StampFactory.illegal());
+        this.type = type;
+        this.fieldsCount = fieldCount;
     }
 
     public RiType type() {
@@ -68,5 +76,9 @@ public class VirtualObjectNode extends ValueNode implements LIRLowerable {
         } else {
             return super.toString(verbosity);
         }
+    }
+
+    public int fieldsCount() {
+        return fieldsCount;
     }
 }

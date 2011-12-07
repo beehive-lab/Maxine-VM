@@ -93,10 +93,14 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
     private void openPrinter(GraalCompilation compilation, boolean error) {
         assert (context().stream == null && printer() == null);
         if ((!TTY.isSuppressed() && GraalOptions.Plot) || (GraalOptions.PlotOnError && error)) {
-            String name = null;
-            name = compilation.method.holder().name();
-            name = name.substring(1, name.length() - 1).replace('/', '.');
-            name = name + "." + compilation.method.name();
+            String name;
+            if (compilation != null) {
+                name = compilation.method.holder().name();
+                name = name.substring(1, name.length() - 1).replace('/', '.');
+                name = name + "." + compilation.method.name();
+            } else {
+                name = "null";
+            }
 
             openPrinter(name, compilation.method);
         }
@@ -109,9 +113,9 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
             TTY.Filter filter = new TTY.Filter();
             try {
                 if (host != null) {
-                    openNetworkPrinter(title, null);
+                    openNetworkPrinter(title, method);
                 } else {
-                    openFilePrinter(title, null);
+                    openFilePrinter(title, method);
                 }
             } finally {
                 filter.remove();
@@ -149,8 +153,6 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
 
     private void openNetworkPrinter(String title, RiResolvedMethod method) {
         try {
-
-
             context().socket = new Socket(host, port);
             if (socket().getInputStream().read() == 'y') {
                 context().stream = new BufferedOutputStream(socket().getOutputStream(), 0x4000);

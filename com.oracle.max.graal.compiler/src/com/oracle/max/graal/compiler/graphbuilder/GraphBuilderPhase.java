@@ -36,7 +36,6 @@ import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -172,45 +171,37 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
         nextBlockNumber = blockMap.blocks.size();
 
-        // create the start block
-        Block startBlock = nextBlock(FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
-        markOnWorkList(startBlock);
-        lastInstr = (FixedWithNextNode) createTarget(startBlock, frameState);
-        graph.start().setNext(lastInstr);
-
+        lastInstr = graph.start();
         if (isSynchronized(method.accessFlags())) {
-            graph.start().setStateAfter(frameState.create(FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI));
             // add a monitor enter to the start block
+            graph.start().setStateAfter(frameState.create(FrameState.BEFORE_BCI));
             methodSynchronizedObject = synchronizedObject(frameState, method);
-            genMonitorEnter(methodSynchronizedObject, FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI);
-        } else {
-            graph.start().setStateAfter(frameState.create(0));
+            lastInstr = genMonitorEnter(methodSynchronizedObject);
         }
 
         // finish the start block
-        appendGoto(createTarget(blockMap.startBlock, frameState));
+        ((AbstractStateSplit) lastInstr).setStateAfter(frameState.create(0));
+        if (blockMap.startBlock.isLoopHeader) {
+            appendGoto(createTarget(blockMap.startBlock, frameState));
+        } else {
+            blockMap.startBlock.firstInstruction = lastInstr;
+        }
+        addToWorkList(blockMap.startBlock);
+
         unwindHandler = new CiExceptionHandler(0, method.code().length, -2, 0, null);
 
-        // do the normal parsing
         iterateAllBlocks();
-
-        List<Loop> loops = LoopUtil.computeLoops(graph);
-        NodeBitMap loopExits = graph.createNodeBitMap();
-        for (Loop loop : loops) {
-            loopExits.setUnion(loop.exits());
-        }
+        connectLoopEndToBegin();
 
         // remove Placeholders (except for loop exits)
         for (PlaceholderNode n : graph.getNodes(PlaceholderNode.class)) {
-            if (!loopExits.isMarked(n)) {
-                n.replaceAndDelete(n.next());
-            }
+            n.replaceAndDelete(n.next());
         }
 
         // remove dead FrameStates
         for (Node n : graph.getNodes(FrameState.class)) {
             if (n.usages().size() == 0 && n.predecessor() == null) {
-                n.delete();
+                n.safeDelete();
             }
         }
 
@@ -350,10 +341,10 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private BeginNode handleException(ValueNode exceptionObject, int bci) {
-        assert bci == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI || bci == bci() : "invalid bci";
+        assert bci == FrameState.BEFORE_BCI || bci == bci() : "invalid bci";
 
         if (GraalOptions.UseExceptionProbability && method.invocationCount() > GraalOptions.MatureInvocationCount) {
-            if (bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI && exceptionObject == null && method.exceptionProbability(bci) == 0) {
+            if (bci != FrameState.BEFORE_BCI && exceptionObject == null && method.exceptionProbability(bci) == 0) {
                 return null;
             }
         }
@@ -673,13 +664,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode exception = frameState.apop();
         FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(exception, false))));
         append(node);
-
-        FixedNode entry = handleException(exception, bci);
-        if (entry != null) {
-            append(entry);
-        } else {
-            appendGoto(createTarget(unwindBlock(bci), frameState.duplicateWithException(bci, exception)));
-        }
+        append(handleException(exception, bci));
     }
 
     private RiType lookupType(int cpi, int bytecode) {
@@ -985,9 +970,8 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             if (!holder.isInitialized() && GraalOptions.ResolveClassBeforeStaticInvoke) {
                 genInvokeDeopt(target, false);
             } else {
-                FrameState stateBefore = frameState.duplicate(bci());
                 ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
-                appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool, stateBefore);
+                appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool);
             }
         } else {
             genInvokeDeopt(target, false);
@@ -996,9 +980,8 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     private void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            FrameState stateBefore = frameState.duplicate(bci());
             ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
-            genInvokeIndirect(InvokeKind.Interface, (RiResolvedMethod) target, args, cpi, constantPool, stateBefore);
+            genInvokeIndirect(InvokeKind.Interface, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
         }
@@ -1006,9 +989,8 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     private void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            FrameState stateBefore = frameState.duplicate(bci());
             ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
-            genInvokeIndirect(InvokeKind.Virtual, (RiResolvedMethod) target, args, cpi, constantPool, stateBefore);
+            genInvokeIndirect(InvokeKind.Virtual, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
         }
@@ -1019,9 +1001,8 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         if (target instanceof RiResolvedMethod) {
             assert target != null;
             assert target.signature() != null;
-            FrameState stateBefore = frameState.duplicate(bci());
             ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
-            invokeDirect((RiResolvedMethod) target, args, knownHolder, cpi, constantPool, stateBefore);
+            invokeDirect((RiResolvedMethod) target, args, knownHolder, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
         }
@@ -1036,7 +1017,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
     }
 
-    private void genInvokeIndirect(InvokeKind invokeKind, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    private void genInvokeIndirect(InvokeKind invokeKind, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
         ValueNode receiver = args[0];
         // attempt to devirtualize the call
         RiResolvedType klass = target.holder();
@@ -1044,25 +1025,25 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         // 0. check for trivial cases
         if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
             // check for trivial cases (e.g. final methods, nonvirtual methods)
-            invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
+            invokeDirect(target, args, target.holder(), cpi, constantPool);
             return;
         }
         // 1. check if the exact type of the receiver can be determined
         RiResolvedType exact = getExactType(klass, receiver);
         if (exact != null) {
             // either the holder class is exact, or the receiver object has an exact type
-            invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
+            invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
             return;
         }
         // devirtualization failed, produce an actual invokevirtual
-        appendInvoke(invokeKind, target, args, cpi, constantPool, stateBefore);
+        appendInvoke(invokeKind, target, args, cpi, constantPool);
     }
 
-    private void invokeDirect(RiResolvedMethod target, ValueNode[] args, RiType knownHolder, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
-        appendInvoke(InvokeKind.Special, target, args, cpi, constantPool, stateBefore);
+    private void invokeDirect(RiResolvedMethod target, ValueNode[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
+        appendInvoke(InvokeKind.Special, target, args, cpi, constantPool);
     }
 
-    private void appendInvoke(InvokeKind invokeKind, RiResolvedMethod targetMethod, ValueNode[] args, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    private void appendInvoke(InvokeKind invokeKind, RiResolvedMethod targetMethod, ValueNode[] args, int cpi, RiConstantPool constantPool) {
         CiKind resultType = targetMethod.signature().returnKind(false);
         if (GraalOptions.DeoptALot) {
             DeoptimizeNode deoptimize = graph.add(new DeoptimizeNode(DeoptAction.None));
@@ -1119,23 +1100,23 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         appendGoto(createTarget(returnBlock(bci()), frameState));
     }
 
-    private void genMonitorEnter(ValueNode x, int bci) {
+    private MonitorEnterNode genMonitorEnter(ValueNode x) {
         int lockNumber = frameState.locksSize();
         MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
-        appendWithBCI(monitorEnter);
         frameState.lock(x);
-        if (bci == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) {
-            monitorEnter.setStateAfter(frameState.create(0));
-        }
+        appendWithBCI(monitorEnter);
+        return monitorEnter;
     }
 
-    private void genMonitorExit(ValueNode x) {
+    private MonitorExitNode genMonitorExit(ValueNode x) {
         int lockNumber = frameState.locksSize() - 1;
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
-        appendWithBCI(graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0)));
+        MonitorExitNode monitorExit = graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
+        appendWithBCI(monitorExit);
         frameState.unlock();
+        return monitorExit;
     }
 
     private void genJsr(int dest) {
@@ -1285,7 +1266,6 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         }
 
         assert result instanceof MergeNode || result instanceof PlaceholderNode : result;
-
         if (result instanceof MergeNode) {
             if (result instanceof LoopBeginNode) {
                 result = ((LoopBeginNode) result).forwardEdge();
@@ -1354,32 +1334,39 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
                 }
             }
         }
-        for (Block b : blocksVisited) {
-            if (b.isLoopHeader) {
-                LoopBeginNode begin = loopBegin(b);
-                LoopEndNode loopEnd = begin.loopEnd();
-                AbstractStateSplit loopEndPred = (AbstractStateSplit) loopEnd.predecessor();
+    }
 
+    private void connectLoopEndToBegin() {
+        for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
+            LoopEndNode loopEnd = begin.loopEnd();
+            AbstractStateSplit loopEndStateSplit = (AbstractStateSplit) loopEnd.predecessor();
+            if (loopEndStateSplit.stateAfter() != null) {
+                begin.stateAfter().mergeLoop(begin, loopEndStateSplit.stateAfter());
+            } else {
 //              This can happen with degenerated loops like this one:
-//                for (;;) {
-//                    try {
-//                        break;
-//                    } catch (UnresolvedException iioe) {
-//                    }
-//                }
-                if (loopEndPred.stateAfter() != null) {
-                    begin.stateAfter().merge(begin, loopEndPred.stateAfter());
-                } else {
-                    loopEndPred.delete();
-                    loopEnd.delete();
-                    MergeNode merge = graph.add(new MergeNode());
-                    merge.addEnd(begin.forwardEdge());
-                    FixedNode next = begin.next();
-                    begin.setNext(null);
-                    merge.setNext(next);
-                    merge.setStateAfter(begin.stateAfter());
-                    begin.replaceAndDelete(merge);
+//              for (;;) {
+//                  try {
+//                      break;
+//                  } catch (UnresolvedException iioe) {
+//                  }
+//              }
+                // Delete the phis (all of them must have exactly one input).
+                for (PhiNode phi : begin.phis().snapshot()) {
+                    assert phi.valueCount() == 1;
+                    begin.stateAfter().deleteRedundantPhi(phi, phi.firstValue());
                 }
+
+                // Delete the loop end.
+                loopEndStateSplit.safeDelete();
+                loopEnd.safeDelete();
+
+                // Remove the loop begin.
+                EndNode loopEntryEnd = begin.forwardEdge();
+                FixedNode beginSucc = begin.next();
+                FrameState stateAfter = begin.stateAfter();
+                stateAfter.delete();
+                begin.safeDelete();
+                loopEntryEnd.replaceAndDelete(beginSucc);
             }
         }
     }
@@ -1395,9 +1382,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
     }
 
     private void createUnwindBlock(Block block) {
-        if (Modifier.isSynchronized(method.accessFlags())) {
-            genMonitorExit(methodSynchronizedObject);
-        }
+        synchronizedEpilogue(FrameState.AFTER_EXCEPTION_BCI);
         UnwindNode unwindNode = graph.add(new UnwindNode(frameState.apop()));
         append(unwindNode);
     }
@@ -1410,11 +1395,21 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
         ValueNode x = returnKind == CiKind.Void ? null : frameState.pop(returnKind);
         assert frameState.stackSize() == 0;
 
+        // TODO (gd) remove this when FloatingRead is fixed
         if (Modifier.isSynchronized(method.accessFlags())) {
-            genMonitorExit(methodSynchronizedObject);
+            append(graph.add(new ValueAnchorNode(x)));
         }
+
+        synchronizedEpilogue(FrameState.AFTER_BCI);
         ReturnNode returnNode = graph.add(new ReturnNode(x));
         append(returnNode);
+    }
+
+    private void synchronizedEpilogue(int bci) {
+        if (Modifier.isSynchronized(method.accessFlags())) {
+            MonitorExitNode monitorExit = genMonitorExit(methodSynchronizedObject);
+            monitorExit.setStateAfter(frameState.create(bci));
+        }
     }
 
     private void createExceptionDispatch(ExceptionBlock block) {
@@ -1425,7 +1420,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             assert frameState.stackSize() == 1 : frameState;
 
             RiType catchType = block.handler.catchType();
-            ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, catchType, catchType instanceof RiResolvedType);
+            ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, catchType, (catchType instanceof RiResolvedType) && ((RiResolvedType) catchType).isInitialized());
             if (typeInstruction != null) {
                 Block nextBlock = block.successors.size() == 1 ? unwindBlock(block.deoptBci) : block.successors.get(1);
 
@@ -1700,7 +1695,7 @@ public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
             case ATHROW         : genThrow(stream.currentBCI()); break;
             case CHECKCAST      : genCheckCast(); break;
             case INSTANCEOF     : genInstanceOf(); break;
-            case MONITORENTER   : genMonitorEnter(frameState.apop(), stream.currentBCI()); break;
+            case MONITORENTER   : genMonitorEnter(frameState.apop()); break;
             case MONITOREXIT    : genMonitorExit(frameState.apop()); break;
             case MULTIANEWARRAY : genNewMultiArray(stream.readCPI()); break;
             case IFNULL         : genIfNull(Condition.EQ); break;

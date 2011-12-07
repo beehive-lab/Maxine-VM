@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import java.util.*;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code AbstractStateSplit} class is the abstract base class of all instructions
@@ -41,7 +41,7 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
 
     @Override
     public void setStateAfter(FrameState x) {
-        assert x.isAlive() : "frame state must be in a graph";
+        assert x == null || x.isAlive() : "frame state must be in a graph";
         updateUsages(stateAfter, x);
         stateAfter = x;
     }
@@ -50,24 +50,13 @@ public abstract class AbstractStateSplit extends FixedWithNextNode implements St
      * Creates a new state split with the specified value type.
      * @param kind the type of the value that this instruction produces
      */
-    public AbstractStateSplit(CiKind kind) {
-        super(kind);
+    public AbstractStateSplit(Stamp stamp) {
+        super(stamp);
     }
 
     @Override
     public boolean needsStateAfter() {
         return true;
-    }
-
-    @Override
-    public void delete() {
-        FrameState stateAfter = stateAfter();
-        super.delete();
-        if (stateAfter != null) {
-            if (stateAfter.usages().isEmpty()) {
-                stateAfter.delete();
-            }
-        }
     }
 
     @Override
