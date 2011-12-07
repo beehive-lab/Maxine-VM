@@ -70,7 +70,7 @@ static Address check_mmap_result(void *result) {
 
 /* Generic virtual space allocator.
  * If the address parameters is specified, allocate at the specified address and fail if it cannot be allocated.
- * Use MAP_NORESERVE if reserveSwap is true
+ * Use MAP_NORESERVE if reserveSwap is false
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
