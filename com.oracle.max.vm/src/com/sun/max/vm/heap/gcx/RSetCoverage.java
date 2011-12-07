@@ -24,6 +24,11 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 
+/**
+ * Interface to the heap region manager to request coverage of all heap spaces by remembered set.
+ * This is called by the heap region manager before the first assignment to a reference location, so that code
+ * generated with write barriers doesn't fail. Depending on the Remembered Set implementation this may be do nothing.
+ */
 
 public interface RSetCoverage {
     void initializeCoverage(Address coveredAreaStart, Size coveredAreaSize);

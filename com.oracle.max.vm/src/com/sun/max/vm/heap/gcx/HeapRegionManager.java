@@ -204,8 +204,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     /**
      * Initialize the region manager with enough regions to satisfy a specified maximum of heap space.
-     * The total number of regions should covers both the specified maximum heap space and the need of the region manager.
-     * The region size is obtained from the HeapRegionInfo class.
+     * The total number of regions should covers both the specified maximum heap space and the needs of the region manager.
      *
      * The region manager is provided with a contiguous range of virtual memory that should be large enough to cover the space needed both for the heap space and
      * the region manager's book-keeping data structure.
@@ -273,14 +272,17 @@ public final class HeapRegionManager implements HeapAccountOwner {
         }
 
         unreserved = numTotalRegions;
-
+        final HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme instanceof RSetCoverage) {
+            ((RSetCoverage) heapScheme).initializeCoverage(startOfManagedSpace, managedSpaceSize);
+        }
         // initialize the bootstrap allocator. The rest of the initialization code needs to allocate heap region management
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
         // boot heap account.
         managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize);
         try {
-            VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
+            heapScheme.enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
             // Record initial space usage.
             regionAllocator.initialize(startOfManagedSpace, numTotalRegions, initialNumRegions);
             RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numTotalRegions);
