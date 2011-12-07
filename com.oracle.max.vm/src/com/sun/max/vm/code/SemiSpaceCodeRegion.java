@@ -241,7 +241,8 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
      */
     public boolean doNewTargetMethods(TargetMethod.Closure c) {
         TargetMethod[] targetMethods = this.targetMethods;
-        for (int i = 0; i < length && i < targetMethods.length; i++) {
+        assert length < targetMethods.length;
+        for (int i = 0; i < length; i++) {
             TargetMethod targetMethod = targetMethods[i];
             if (targetMethod != null && isInToSpace(targetMethod.codeStart().toAddress()) && !c.doTargetMethod(targetMethod)) {
                 return false;
@@ -255,7 +256,8 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
      */
     public boolean doOldTargetMethods(TargetMethod.Closure c) {
         TargetMethod[] tms = this.fromTargetMethods;
-        for (int i = 0; i < fromLength && i < tms.length; i++) {
+        assert fromLength < tms.length;
+        for (int i = 0; i < fromLength; i++) {
             TargetMethod targetMethod = tms[i];
             if (targetMethod != null && isInFromSpace(targetMethod.codeStart().toAddress()) && !c.doTargetMethod(targetMethod)) {
                 return false;

@@ -135,7 +135,7 @@ public class JavaMonitorManager {
      * @param phase the current VM phase
      */
     public static void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             LOCK = newVmLock("MONITOR_MANAGER_LOCK");
             int unboundListImageQty = UNBOUNDLIST_IMAGE_QTY;
             final String  unBoundListImageQtyProperty = System.getProperty(UNBOUNDLIST_IMAGE_QTY_PROPERTY);

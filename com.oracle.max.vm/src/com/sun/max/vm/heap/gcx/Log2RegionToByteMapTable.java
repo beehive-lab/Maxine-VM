@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -38,6 +39,17 @@ import com.sun.max.vm.type.*;
  * Regions have a size that is a power of two and are aligned on that power of 2.
  */
 public class Log2RegionToByteMapTable {
+    /**
+     * Offset to the {@link #table} variable. This is in order to bypass write-barrier when setting the field.
+     *
+     */
+    private static int TABLE_OFFSET;
+
+    @HOSTED_ONLY
+    public static void hostInitialize() {
+        TABLE_OFFSET = ClassRegistry.findField(Log2RegionToByteMapTable.class, "table").offset();
+    }
+
     final int log2RangeSize;
     /**
      * Start of the contiguous range of virtual memory covered by this byte map table.
@@ -53,7 +65,7 @@ public class Log2RegionToByteMapTable {
     /**
      * Table containing a single byte of information per region.
      */
-    byte [] table;
+    private byte [] table;
     /**
      * Address of the first element of the table.
      */
@@ -89,24 +101,30 @@ public class Log2RegionToByteMapTable {
         return tableSize(tableLength(coveredAreaSize));
     }
 
-    void initialize(Address coveredAreaStart, Size coveredAreaSize) {
-        initialize(coveredAreaStart, coveredAreaSize, new byte[tableLength(coveredAreaSize)]);
+
+    void initialize(Address coveredAreaStart, Size coveredAreaSize, boolean noWriteBarrier) {
+        initialize(coveredAreaStart, coveredAreaSize, new byte[tableLength(coveredAreaSize)], noWriteBarrier);
     }
 
     void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
         final byte [] table =  (byte[]) Cell.plantArray(storageArea.asPointer(), ClassRegistry.BYTE_ARRAY.dynamicHub(), tableLength(coveredAreaSize));
-        initialize(coveredAreaStart, coveredAreaSize, table);
+        initialize(coveredAreaStart, coveredAreaSize, table, true);
     }
 
-    void initialize(Address coveredAreaStart, Size coveredAreaSize, byte [] table) {
+    void initialize(Address coveredAreaStart, Size coveredAreaSize, byte [] table, boolean noWriteBarrier) {
         this.coveredAreaStart = coveredAreaStart;
         this.coveredAreaEnd = coveredAreaStart.plus(coveredAreaSize);
         assert coveredAreaStart.isAligned(1 << log2RangeSize) : "start of covered area must be aligned to specified power of 2";
         assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
-        this.table = table;
-        tableAddress = Reference.fromJava(table).toOrigin().plus(tableHeaderSize());
+        final Pointer tableOrigin = Reference.fromJava(table).toOrigin();
+        if (noWriteBarrier) {
+            Reference.fromJava(this).toOrigin().writeWord(TABLE_OFFSET, tableOrigin);
+        } else {
+            this.table = table;
+        }
+        tableAddress = tableOrigin.plus(tableHeaderSize());
         biasedTableAddress = tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
-        assert byteAddressFor(coveredAreaStart).equals(tableAddress);
+        FatalError.check(this.table == table && byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
     }
 
     /**
@@ -194,7 +212,7 @@ public class Log2RegionToByteMapTable {
 
     /**
      * Set all the entries of the table to the specified value.
-     * @param value the value to set all entrie to.
+     * @param value byte value to set all entries of the table to.
      */
     void fill(byte value) {
         Arrays.fill(table, value);
