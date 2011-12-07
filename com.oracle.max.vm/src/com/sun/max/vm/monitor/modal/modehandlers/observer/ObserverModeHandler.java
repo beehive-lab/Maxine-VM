@@ -25,6 +25,7 @@ package com.sun.max.vm.monitor.modal.modehandlers.observer;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.DelegatedThreadHoldsMonitorResult;
@@ -52,7 +53,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
             JavaMonitorManager.bindStickyMonitor(this);
         }
     }

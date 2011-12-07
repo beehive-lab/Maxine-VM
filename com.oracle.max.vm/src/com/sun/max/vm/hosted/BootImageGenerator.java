@@ -202,7 +202,7 @@ public final class BootImageGenerator {
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
 
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
+            DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 
