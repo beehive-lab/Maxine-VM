@@ -196,7 +196,7 @@ public class AMD64ControlFlowOpcode {
 
         public LIRInstruction create(CiVariable result, final Condition condition, final boolean unorderedIsTrue, CiVariable trueValue, CiVariable falseValue) {
             CiValue[] inputs = new CiValue[] {trueValue, falseValue};
-            CiValue[] temps = new CiValue[] {trueValue};
+            CiValue[] temps = new CiValue[] {trueValue, falseValue};
 
             return new AMD64LIRInstruction(this, result, null, inputs, temps) {
                 @Override
@@ -355,10 +355,14 @@ public class AMD64ControlFlowOpcode {
             case aboveEqual:
             case notEqual:
             case above:
+            case less:
+            case overflow:
                 return false;
             case equal:
             case belowEqual:
             case below:
+            case greaterEqual:
+            case noOverflow:
                 return true;
             default:
                 throw Util.shouldNotReachHere();

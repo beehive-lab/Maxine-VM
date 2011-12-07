@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes.calc;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -48,7 +49,7 @@ public abstract class BinaryNode extends FloatingNode {
      * @param y the second input instruction
      */
     public BinaryNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind);
+        super(StampFactory.forKind(kind));
         this.x = x;
         this.y = y;
     }

@@ -20,49 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.graph.iterators;
 
 import java.util.*;
 
-public final class FilteringNodeIterator implements Iterator<Node> {
+import com.oracle.max.graal.graph.*;
 
-    private final Iterator< ? extends Node> input;
-    private Node next;
-    private Class< ? > clazz;
-
-    public FilteringNodeIterator(Iterator< ? extends Node> input, Class< ? > clazz) {
-        this.input = input;
-        this.clazz = clazz;
+public abstract class NodeIterator<T extends Node> implements Iterator<T>{
+    protected T current;
+    protected final NodePredicate until;
+    public NodeIterator(NodePredicate until) {
+        this.until = until;
     }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Node next() {
-        forward();
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-        Node res = next;
-        next = null;
-        return res;
-    }
-
+    protected abstract void forward();
     @Override
     public boolean hasNext() {
         forward();
-        return next != null;
+        return current != null && !until.apply(current);
     }
-
-    private void forward() {
-        while (next == null && input.hasNext()) {
-            next = input.next();
-            if (clazz.isInstance(next)) {
-                next = null;
-            }
+    @Override
+    public T next() {
+        forward();
+        T ret = current;
+        if (current == null || until.apply(current)) {
+            throw new NoSuchElementException();
         }
+        current = null;
+        return ret;
+    }
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
     }
 }

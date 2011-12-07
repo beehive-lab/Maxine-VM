@@ -50,12 +50,10 @@ public class DeadCodeEliminationPhase extends Phase {
                 replacePhis(merge);
                 EndNode endNode = merge.endAt(0);
                 FixedNode next = merge.next();
-                merge.delete();
+                merge.safeDelete();
                 endNode.replaceAndDelete(next);
             }
         }
-
-        new PhiSimplificationPhase().apply(graph, context);
     }
 
     private void iterateSuccessors() {
@@ -97,16 +95,15 @@ public class DeadCodeEliminationPhase extends Phase {
                     FixedNode next = loop.next();
                     loop.setNext(null);
                     endNode.replaceAndDelete(next);
-                    loop.delete();
+                    loop.safeDelete();
                 }
             }
         }
     }
 
     private void replacePhis(MergeNode merge) {
-        for (Node usage : merge.usages().snapshot()) {
-            assert usage instanceof PhiNode;
-            usage.replaceAndDelete(((PhiNode) usage).valueAt(0));
+        for (PhiNode phi : merge.phis().snapshot()) {
+            phi.replaceAndDelete((phi).valueAt(0));
         }
     }
 
@@ -119,7 +116,7 @@ public class DeadCodeEliminationPhase extends Phase {
         }
         for (Node node : graph.getNodes()) {
             if (!flood.isMarked(node)) {
-                node.delete();
+                node.safeDelete();
             }
         }
     }

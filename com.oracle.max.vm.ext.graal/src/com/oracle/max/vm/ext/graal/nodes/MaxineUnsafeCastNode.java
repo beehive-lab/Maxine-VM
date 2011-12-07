@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -42,14 +43,9 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     }
 
     public MaxineUnsafeCastNode(ValueNode x, RiResolvedType toType) {
-        super(toType.kind(false).stackKind());
+        super(toType.kind(false) != CiKind.Object ? StampFactory.forKind(toType.kind(false)) : StampFactory.declared(toType));
         this.x = x;
         this.toType = toType;
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return toType;
     }
 
     @NodeIntrinsic
@@ -62,7 +58,7 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
         if (x != null && x.declaredType() != null && x.declaredType().isSubtypeOf(toType)) {
             return x;
         }
-        if (kind != CiKind.Object && x.kind() == kind) {
+        if (kind() != CiKind.Object && x.kind() == kind()) {
             return x;
         }
         if (x instanceof MaxineUnsafeCastNode) {
@@ -75,8 +71,8 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     @Override
     public void generate(LIRGeneratorTool gen) {
         CiValue operand = gen.operand(x);
-        if (this.kind != operand.kind || x instanceof ConstantNode) {
-            CiValue dest = gen.newVariable(this.kind);
+        if (this.kind() != operand.kind || x instanceof ConstantNode) {
+            CiValue dest = gen.newVariable(this.kind());
             gen.emitMove(operand, dest);
             gen.setResult(this, dest);
         } else {

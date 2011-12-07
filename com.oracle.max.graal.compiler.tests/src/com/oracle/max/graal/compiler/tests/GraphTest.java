@@ -66,7 +66,6 @@ public abstract class GraphTest {
         if (o.networkAvailable()) {
             observer = o;
         }
-        //System.out.println("constructor called");
     }
 
     protected void assertEquals(StructuredGraph expected, StructuredGraph graph) {

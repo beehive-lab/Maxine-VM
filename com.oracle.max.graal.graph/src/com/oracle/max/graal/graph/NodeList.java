@@ -355,4 +355,9 @@ public abstract class NodeList<T extends Node> implements Iterable<T>, List<T> {
     public List<T> subList(int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not implemented");
     }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(nodes);
+    }
 }

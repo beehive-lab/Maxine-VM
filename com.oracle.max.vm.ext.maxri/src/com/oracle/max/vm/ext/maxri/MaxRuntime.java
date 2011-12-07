@@ -457,7 +457,7 @@ public class MaxRuntime implements GraalRuntime {
     public void lower(Node n, CiLoweringTool tool) {
         if (n instanceof UnsafeLoadNode) {
             UnsafeLoadNode load = (UnsafeLoadNode) n;
-            StructuredGraph graph = load.graph();
+            Graph graph = load.graph();
             assert load.kind() != CiKind.Illegal;
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
@@ -471,7 +471,7 @@ public class MaxRuntime implements GraalRuntime {
             load.replaceAndDelete(memoryRead);
         } else if (n instanceof UnsafeStoreNode) {
             UnsafeStoreNode store = (UnsafeStoreNode) n;
-            StructuredGraph graph = store.graph();
+            Graph graph = store.graph();
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
@@ -487,7 +487,7 @@ public class MaxRuntime implements GraalRuntime {
             write.setNext(next);
             write.setStateAfter(store.stateAfter());
             store.replaceAtPredecessors(write);
-            store.delete();
+            store.safeDelete();
         }
     }
 

@@ -567,21 +567,17 @@ public final class JniFunctionsSource {
     }
 
     private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments, Kind expectedReturnKind) throws Exception {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
-        if (!(classActor instanceof TupleClassActor)) {
-            throw new NoSuchMethodException();
-        }
-        final TupleClassActor tupleClassActor = (TupleClassActor) classActor;
-
+        // Following Hotspot, the javaClass argument is ignored; we only need the methodId
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
+        if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer()) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor.name, methodActor.descriptor());
-        if (virtualMethodActor == null) {
+        VirtualMethodActor virtualMethodActor;
+        try {
+            virtualMethodActor = (VirtualMethodActor) methodActor;
+        } catch (ClassCastException ex) {
             throw new NoSuchMethodException();
         }
-
         final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());

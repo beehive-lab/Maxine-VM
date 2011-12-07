@@ -26,6 +26,7 @@ import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -55,7 +56,7 @@ public class UnsafeLoadNode extends AbstractStateSplit implements Lowerable, Nod
     }
 
     public UnsafeLoadNode(ValueNode object, int displacement, ValueNode offset, CiKind kind) {
-        super(kind.stackKind());
+        super(StampFactory.forKind(kind.stackKind()));
         this.object = object;
         this.displacement = displacement;
         this.offset = offset;

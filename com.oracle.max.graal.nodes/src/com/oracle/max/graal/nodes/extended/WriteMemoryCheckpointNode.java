@@ -24,17 +24,17 @@ package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 
 public final class WriteMemoryCheckpointNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
 
     public WriteMemoryCheckpointNode() {
-        this(CiKind.Illegal);
+        this(StampFactory.illegal());
     }
 
-    public WriteMemoryCheckpointNode(CiKind result) {
-        super(result);
+    public WriteMemoryCheckpointNode(Stamp stamp) {
+        super(stamp);
     }
 
     @Override

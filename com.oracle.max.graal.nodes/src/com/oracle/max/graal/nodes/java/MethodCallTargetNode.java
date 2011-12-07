@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes.java;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -39,6 +40,8 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
     @Data private final RiType returnType;
     @Data private RiResolvedMethod targetMethod;
     @Data private InvokeKind invokeKind;
+    private final Stamp returnStamp;
+
     /**
      * @param arguments
      */
@@ -47,6 +50,12 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
         this.invokeKind = invokeKind;
         this.returnType = returnType;
         this.targetMethod = targetMethod;
+        CiKind returnKind = targetMethod.signature().returnKind(false);
+        if (returnKind == CiKind.Object && returnType instanceof RiResolvedType) {
+            returnStamp = StampFactory.declared((RiResolvedType) returnType);
+        } else {
+            returnStamp = StampFactory.forKind(returnKind);
+        }
     }
 
     @Override
@@ -133,5 +142,9 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
             }
         }
         return this;
+    }
+
+    public Stamp returnStamp() {
+        return returnStamp;
     }
 }

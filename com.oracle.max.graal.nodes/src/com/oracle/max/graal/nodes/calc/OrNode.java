@@ -40,17 +40,17 @@ public final class OrNode extends LogicNode implements Canonicalizable, LIRLower
             return x();
         }
         if (x().isConstant() && !y().isConstant()) {
-            return graph().unique(new OrNode(kind, y(), x()));
+            return graph().unique(new OrNode(kind(), y(), x()));
         }
         if (x().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 return ConstantNode.forInt(x().asConstant().asInt() | y().asConstant().asInt(), graph());
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 return ConstantNode.forLong(x().asConstant().asLong() | y().asConstant().asLong(), graph());
             }
         } else if (y().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 int c = y().asConstant().asInt();
                 if (c == -1) {
                     return ConstantNode.forInt(-1, graph());
@@ -59,7 +59,7 @@ public final class OrNode extends LogicNode implements Canonicalizable, LIRLower
                     return x();
                 }
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 long c = y().asConstant().asLong();
                 if (c == -1) {
                     return ConstantNode.forLong(-1, graph());

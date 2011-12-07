@@ -57,8 +57,7 @@ public class FindInductionVariablesPhase extends Phase {
     private void findInductionVariables(Loop loop) {
         LoopBeginNode loopBegin = loop.loopBegin();
         NodeBitMap loopNodes = loop.nodes();
-        List<PhiNode> phis = new ArrayList<PhiNode>(loopBegin.phis());
-        for (PhiNode phi : phis) {
+        for (PhiNode phi : loopBegin.phis().snapshot()) {
             ValueNode init = phi.valueAt(loopBegin.forwardEdge());
             ValueNode backEdge = phi.valueAt(loopBegin.loopEnd());
             if (loopNodes.isNew(init) || loopNodes.isNew(backEdge)) {
@@ -80,7 +79,7 @@ public class FindInductionVariablesPhase extends Phase {
                     continue;
                 }
                 if (loopNodes.isNotNewNotMarked(stride)) {
-                    StructuredGraph graph = loopBegin.graph();
+                    Graph graph = loopBegin.graph();
                     if (backEdge instanceof IntegerSubNode) {
                         stride = graph.unique(new NegateNode(stride));
                     }
@@ -93,13 +92,13 @@ public class FindInductionVariablesPhase extends Phase {
                         phi.replaceAndDelete(biv1);
                     } else {
                         phi.replaceFirstInput(binary, null);
-                        phi.delete();
+                        phi.safeDelete();
                     }
                     if (backEdge.usages().size() > 0) {
                         biv2 = graph.add(new BasicInductionVariableNode(kind, IntegerArithmeticNode.add(init, stride), stride, counter));
                         backEdge.replaceAndDelete(biv2);
                     } else {
-                        backEdge.delete();
+                        backEdge.safeDelete();
                     }
                     if (biv1 != null) {
                         findDerivedInductionVariable(biv1, kind, loopNodes);

@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -49,25 +50,43 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     private final PhiType type;
 
-    public PhiNode(CiKind kind, MergeNode merge, PhiType type) {
-        super(kind);
-        this.type = type;
-        this.merge = merge;
+    private PhiNode(CiKind kind, PhiType type) {
+        this(kind, null, type);
     }
 
-    private PhiNode(CiKind kind, PhiType type) {
-        super(kind);
+    public PhiNode(CiKind kind, MergeNode merge, PhiType type) {
+        super(StampFactory.forKind(kind));
         this.type = type;
+        this.merge = merge;
     }
 
     public PhiType type() {
         return type;
     }
 
+    public NodeInputList<ValueNode> values() {
+        return values;
+    }
+
+    public boolean inferStamp() {
+        Stamp newStamp = StampFactory.or(values());
+        if (stamp().equals(newStamp)) {
+            return false;
+        } else {
+            setStamp(newStamp);
+            return true;
+        }
+    }
+
     @Override
     public boolean verify() {
         assertTrue(merge() != null, "missing merge");
         assertTrue(merge().phiPredecessorCount() == valueCount(), "mismatch between merge predecessor count and phi value count: %d != %d", merge().phiPredecessorCount(), valueCount());
+        if (type == PhiType.Value) {
+            for (ValueNode v : values()) {
+                assertTrue(v.kind() == kind(), "all phi values must have same kind");
+            }
+        }
         return super.verify();
     }
 
@@ -130,8 +149,32 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         values.remove(index);
     }
 
+    public ValueNode singleValue() {
+        ValueNode differentValue = null;
+        for (ValueNode n : values()) {
+            if (n != this) {
+                if (differentValue == null) {
+                    differentValue = n;
+                } else if (differentValue != n) {
+                    return null;
+                }
+            }
+        }
+        return differentValue;
+    }
+
     @Override
     public Node canonical(CanonicalizerTool tool) {
+        ValueNode singleValue = singleValue();
+
+        if (singleValue != null) {
+            return singleValue;
+        }
+
+        return canonicalizeMaterializationPhi();
+    }
+
+    private Node canonicalizeMaterializationPhi() {
         if (merge().endCount() != 2 || merge() instanceof LoopBeginNode) {
             return this;
         }
@@ -143,16 +186,19 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         Node end1 = merge().endAt(1);
         Node endPred0 = end0.predecessor();
         Node endPred1 = end1.predecessor();
-        if (endPred0 != endPred1 || !(endPred0 instanceof IfNode)) {
+        if (!(endPred0 instanceof BeginNode) || !(endPred1 instanceof BeginNode)) {
+            return this;
+        }
+        if (endPred0.predecessor() != endPred1.predecessor() || !(endPred0.predecessor() instanceof IfNode)) {
             return this;
         }
 
         // Get true/false value.
-        IfNode ifNode = (IfNode) endPred0;
-        boolean inverted = ifNode.trueSuccessor() == end1;
+        IfNode ifNode = (IfNode) endPred0.predecessor();
+        boolean inverted = ifNode.trueSuccessor() == endPred1;
         ValueNode trueValue = valueAt(inverted ? 1 : 0);
         ValueNode falseValue = valueAt(inverted ? 0 : 1);
-        if (trueValue.kind() != falseValue.kind) {
+        if (trueValue.kind() != falseValue.kind()) {
             return this;
         }
 
@@ -173,12 +219,26 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
         MergeNode merge = this.merge;
         EndNode end1 = merge.endAt(0);
         EndNode end2 = merge.endAt(1);
+        BeginNode trueSuccessor = ifNode.trueSuccessor();
+        BeginNode falseSuccessor = ifNode.falseSuccessor();
         merge().setNext(null);
+        ifNode.setTrueSuccessor(null);
+        ifNode.setFalseSuccessor(null);
         ifNode.replaceAndDelete(next);
         updateUsages(this.merge, null);
         this.merge = null;
-        merge.delete();
-        end1.delete();
-        end2.delete();
+        merge.safeDelete();
+        trueSuccessor.safeDelete();
+        falseSuccessor.safeDelete();
+        end1.safeDelete();
+        end2.safeDelete();
+    }
+
+    public ValueNode firstValue() {
+        return valueAt(0);
+    }
+
+    public boolean isLoopPhi() {
+        return merge() instanceof LoopBeginNode;
     }
 }

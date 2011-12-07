@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -41,7 +42,7 @@ public final class ValueAnchorNode extends FixedWithNextNode implements Canonica
     }
 
     public ValueAnchorNode(ValueNode object) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.object = object;
     }
 
@@ -52,6 +53,9 @@ public final class ValueAnchorNode extends FixedWithNextNode implements Canonica
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
+        if (object == null) {
+            return null;
+        }
         if (object instanceof ConstantNode) {
             return null;
         }

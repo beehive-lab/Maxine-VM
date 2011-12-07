@@ -27,6 +27,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -42,14 +43,9 @@ public final class UnsafeCastNode extends FloatingNode implements Canonicalizabl
     }
 
     public UnsafeCastNode(ValueNode x, RiResolvedType toType) {
-        super(toType.kind(false).stackKind());
+        super(StampFactory.declared(toType));
         this.x = x;
         this.toType = toType;
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return toType;
     }
 
     @Override

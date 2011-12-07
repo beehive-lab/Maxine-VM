@@ -32,6 +32,7 @@ import com.oracle.max.graal.hotspot.*;
 import com.oracle.max.graal.hotspot.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -49,7 +50,7 @@ public class TailcallNode extends FixedWithNextNode implements LIRLowerable {
      * @param frameState the parameters will be taken from this FrameState
      */
     public TailcallNode(ValueNode target, FrameState frameState) {
-        super(CiKind.Illegal);
+        super(StampFactory.illegal());
         this.target = target;
         this.frameState = frameState;
     }

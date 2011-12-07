@@ -22,8 +22,8 @@
  */
 package com.oracle.max.graal.nodes;
 
-import com.oracle.max.graal.nodes.calc.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * Base class of all nodes that are fixed within the control flow graph and have an immediate successor.
@@ -41,16 +41,22 @@ public abstract class FixedWithNextNode extends FixedNode {
         next = x;
     }
 
-    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
-
-    public FixedWithNextNode(CiKind kind) {
-        super(kind);
+    public FixedWithNextNode(Stamp stamp) {
+        super(stamp);
     }
 
-    public void replaceWithFloating(FloatingNode other) {
+    public void replaceAndUnlink(Node other) {
         FixedNode next = this.next();
         setNext(null);
         replaceAtPredecessors(next);
         replaceAtUsages(other);
+        delete();
+    }
+
+    public void replaceWithFixedWithNext(FixedWithNextNode other) {
+        FixedNode next = this.next();
+        setNext(null);
+        other.setNext(next);
+        replaceAndDelete(other);
     }
 }

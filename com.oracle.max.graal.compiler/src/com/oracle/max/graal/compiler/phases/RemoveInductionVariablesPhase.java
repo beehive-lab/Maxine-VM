@@ -87,7 +87,7 @@ public class RemoveInductionVariablesPhase extends Phase {
                     usage.replaceFirstInput(iv, null);
                 }
             }
-            iv.delete();
+            iv.safeDelete();
         }
     }
 

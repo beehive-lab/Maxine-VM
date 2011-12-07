@@ -81,6 +81,12 @@ public interface HeapScheme extends VMScheme {
      */
     int reservedVirtualSpaceKB();
 
+    /**
+     * Indicate to the boot image loader where the boot image should be located in virtual space with respect to the contiguous range of virtual space
+     * that the boot image loader may have reserved for the heap scheme based on the result of {@link #reservedVirtualSpaceKB()}.
+     *
+     * @return a boot image constraint.
+     */
     BootRegionMappingConstraint bootRegionMappingConstraint();
 
     /**

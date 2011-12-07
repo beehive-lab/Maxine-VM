@@ -145,16 +145,27 @@ public class T1XTemplate {
     public final T1XSafepoint[] safepoints;
 
     /**
-     * The object literals in this template or {@code null} if there are none.
+     * An object literal and the patch positions of the instructions that load it.
      */
-    public final Object[] objectLiterals;
+    public static class ObjectLiteral {
+        public final Object value;
+        /**
+         * The interpretation of the position is platform dependent.
+         * For example, on AMD64, it is the displacement operand of a MOVQ instruction.
+         */
+        public final int[] patchPosns;
+
+        public ObjectLiteral(Object value, int[] patchPosns) {
+            super();
+            this.value = value;
+            this.patchPosns = patchPosns;
+        }
+    }
 
     /**
-     * Entry {@code i} indicates a position in {@code code} that must be {@linkplain T1XCompilation#fixup() patched}
-     * to load entry {@code i} from {@link #objectLiterals}. The exact interpretation of the position is
-     * platform dependent. For example, on AMD64, it is the displacement operand of a MOVQ instruction.
+     * The object literals in this template or {@code null} if there are none.
      */
-    public final int[] objectLiteralDataPatches;
+    public final ObjectLiteral[] objectLiterals;
 
     /**
      * Describes the signature of a {@linkplain T1X_TEMPLATE template}
@@ -522,17 +533,18 @@ public class T1XTemplate {
 
         sig = initSig(method);
 
-        objectLiterals = source.referenceLiterals();
-        if (objectLiterals != null) {
-            objectLiteralDataPatches = new int[objectLiterals.length];
-            for (int i = 0; i < objectLiterals.length; i++) {
-                int dispFromCodeStart = dispFromCodeStart(objectLiterals.length, 0, i, true);
-                int patchPos = findDataPatchPos(source, dispFromCodeStart);
-                FatalError.check(patchPos >= 0, source + ": could not find load of reference literal " + i + "\"" + objectLiterals[i] + "\"");
-                objectLiteralDataPatches[i] = patchPos;
+        if (source.referenceLiterals() != null) {
+            Object[] sourceLiterals = source.referenceLiterals();
+            List<ObjectLiteral> buf = new ArrayList<ObjectLiteral>(source.referenceLiterals().length);
+            for (int i = 0; i < sourceLiterals.length; i++) {
+                int dispFromCodeStart = dispFromCodeStart(sourceLiterals.length, 0, i, true);
+                int[] patchPosns = findDataPatchPosns(source, dispFromCodeStart);
+                FatalError.check(patchPosns.length > 0, source + ": could not find load of reference literal " + i + " \"" + sourceLiterals[i] + "\"");
+                buf.add(new ObjectLiteral(sourceLiterals[i], patchPosns));
             }
+            this.objectLiterals = buf.toArray(new ObjectLiteral[buf.size()]);
         } else {
-            objectLiteralDataPatches = null;
+            objectLiterals = null;
         }
 
     }
@@ -550,13 +562,13 @@ public class T1XTemplate {
     }
 
     /**
-     * Finds the platform dependent position needed to patch an instruction that loads
-     * an object from the array immediately preceding the code array in memory.
+     * Finds the platform dependent positions needed to patch instructions that load
+     * an object from the object literals array immediately preceding the code array in memory.
      */
     @HOSTED_ONLY
-    static int findDataPatchPos(MaxTargetMethod source, int dispFromCodeStart) {
+    static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
         if (T1X.isAMD64()) {
-            return AMD64T1XCompilation.findDataPatchPos(source, dispFromCodeStart);
+            return AMD64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
         } else {
             throw T1X.unimplISA();
         }

@@ -25,14 +25,61 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 
 /**
- * Heap Space interface. A given heap may be made of one or more such spaces.
+ * Heap Space interface. A heap may be made of one or more heap spaces.
+ * Space may be made of one or multiple contiguous ranges of virtual memory.
+ * This interface is an attempt to front various space implementation with a common interface to
+ * ease composition of heap management components.
+ * WORK IN PROGRESS.
  */
 public interface HeapSpace extends ResizableSpace {
+    /**
+     * Allocate a cell of exactly the specified size.
+     * @param size size in bytes
+     * @return a pointer to raw heap space of exactly the requested size
+     */
     Pointer allocate(Size size);
+
+    /**
+     * Allocate a cell for a TLAB refill.
+     * @param size
+     * @return a pointer to a cell formatted as a {@link HeapFreeChunk}
+     */
     Pointer allocateTLAB(Size size);
+    /**
+     * Indicate whether an address points to this heap space.
+     * @param address
+     * @return true if the address points to the heap space.
+     */
     boolean contains(Address address);
+
+    /**
+     * Action to be done on the space before GC take place.
+     * TODO: specify precisely when GC should invoke this method
+     */
     void doBeforeGC();
+
+    /**
+     * Action to be done on the space after GC is done.
+     * TODO: specify precisely when GC should invoke this method
+    */
     void doAfterGC();
+
+    /**
+     * Amount of space available for allocation.
+     * @return a size in bytes
+     */
     Size freeSpace();
+    /**
+     * Amount of space occupied by allocated cells.
+     * @return  a size in bytes
+     */
     Size usedSpace();
+
+    /**
+     * Visit all the ranges of contiguous virtual memory of the heap space that may comprise allocated objects.
+     * The ranges must be iterable, i.e., formatted as a sequence of cells whose size can be queried by visitors and such that
+     * the address of the cell plus its size gives the address of the next cell.
+     * @param visitor a visitor that can iterate over iterable ranges of contiguous heap space.
+     */
+    void visit(HeapSpaceRangeVisitor visitor);
 }

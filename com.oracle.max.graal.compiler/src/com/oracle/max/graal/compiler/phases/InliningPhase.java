@@ -110,7 +110,6 @@ public class InliningPhase extends Phase implements InliningCallback {
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
                     new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
-                    new PhiSimplificationPhase().apply(graph, context);
                     if (GraalOptions.Intrinsify) {
                         new IntrinsificationPhase(runtime).apply(graph, context);
                     }
@@ -170,7 +169,9 @@ public class InliningPhase extends Phase implements InliningCallback {
         StructuredGraph graph = new StructuredGraph();
         new GraphBuilderPhase(runtime, method).apply(graph, context, true, false);
 
-        plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);
+        if (plan != null) {
+            plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);
+        }
 
         if (GraalOptions.ProbabilityAnalysis) {
             new DeadCodeEliminationPhase().apply(graph, context, true, false);
@@ -294,8 +295,8 @@ public class InliningPhase extends Phase implements InliningCallback {
 
 
     @Override
-    public void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedMethod concrete) {
-        assumptions.recordConcreteMethod(method, concrete);
+    public void recordConcreteMethodAssumption(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
+        assumptions.recordConcreteMethod(method, context, impl);
     }
 
 }

@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -44,7 +45,7 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
      * @param object the instruction producing the object input to this instruction
      */
     public InstanceOfNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, boolean negated) {
-        super(targetClassInstruction, targetClass, object, CiKind.Illegal);
+        super(targetClassInstruction, targetClass, object, StampFactory.illegal());
         this.negated = negated;
     }
 

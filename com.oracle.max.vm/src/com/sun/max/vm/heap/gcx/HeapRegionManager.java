@@ -34,7 +34,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -88,7 +87,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     /**
      * Return the address of the HeapRegionManager's own allocator.
-     * This is the allocated used to allocate the HeapRegionManager's objects at startup.
+     * This is the allocator used to allocate the HeapRegionManager's objects at startup.
      * The address as an allocator identifier for custom allocation.
      * @see HeapScheme#enableCustomAllocation(Address)
      *
@@ -204,31 +203,49 @@ public final class HeapRegionManager implements HeapAccountOwner {
     }
 
     /**
-     * Initialize the region manager with the supplied space.
-     * As many regions as possible are carved out from this space, while preserving alignment constraints.
+     * Initialize the region manager with enough regions to satisfy a specified maximum of heap space.
+     * The total number of regions should covers both the specified maximum heap space and the need of the region manager.
      * The region size is obtained from the HeapRegionInfo class.
      *
-     * @param reservedSpace address to the first byte of the virtual memory reserved for the heap space
-     * @param maxHeapSize size in byte of the heap space
+     * The region manager is provided with a contiguous range of virtual memory that should be large enough to cover the space needed both for the heap space and
+     * the region manager's book-keeping data structure.
+     * After initialization succeeds, the effective amount of space managed by the region manager can be obtained by invoking {@link #bounds()}.
+     * The space left over from the supplied reserved space is uncommitted.
+     * TODO: currently, the space is provided committed, and the heap manager is responsible for uncommitting what it doesn't use. It should be the other way around:
+     * provide uncommitted space and the region manager commits what it needs.
+     *
+     * TODO: we need a better way to capture the extra space requirements a heap scheme needs for the boot heap account.
+     * Or may be we just need to add an additional VM/GC heap account, so that the boot heap account is strictly for the heap region manager
+     * while the GC (or each GC) create it's own.
+     *
+     * @param reservedSpace start of the virtual memory reserved for the managed space
+     * @param endOfReservedSpace end of the reserved space
+     * @param heapSpaceSize size in byte of the heap space
      * @param regionInfoClass the sub-class of HeapRegionInfo used for region management.
+     *
      */
-    public void initialize(Address reservedSpace, Size maxHeapSize, Class<HeapRegionInfo> regionInfoClass) {
+    public void initialize(Address reservedSpace, Address endOfReservedSpace, Size heapSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
         // Initialize region constants (size and log constants).
         // The size of regions is computed from the requested heap size so as to keep the region table bounded and adapt region size to the heap size
         // (in particular, very large heap command large region size).
-        HeapRegionConstants.initializeConstants(maxHeapSize);
+        HeapRegionConstants.initializeConstants(heapSpaceSize);
         // Adjust reserved space to region boundaries.
         final Address startOfManagedSpace = reservedSpace.alignUp(regionSizeInBytes);
-        final Address endOfManagedSpace = startOfManagedSpace.plus(maxHeapSize).alignUp(regionSizeInBytes);
+        final Address endOfManagedSpace = startOfManagedSpace.plus(heapSpaceSize).alignUp(regionSizeInBytes);
+        // The managedSpaceSize is the maxHeapSize, aligned up to an integral number of regions.
         final Size managedSpaceSize = endOfManagedSpace.minus(startOfManagedSpace).asSize();
         final int numHeapRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        // Always count 10K of extra space for the odd objects
+        // (e.g., the OutgoingReferenceChecker instance, the MemoryRegion [] created by the var args of InspectableHeapInfo, etc...
+        final Size extraSpace = Size.K.times(10);
+        int numExtraBootRegions = extraSpace.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
-        // We must add to this number of regions the regions to cover the space needed for the boot heap which allocate the region manager's data.
+       // We must add to this number of regions the regions to cover the space needed for the boot heap which allocate the region manager's data.
         // Per region book-keeping space: region descriptor plus links in region lists (2 links per region per list, two lists -- ownership and accounting).
         int perRegionSpaceRequirement = tupleSize(regionInfoClass).toInt() + 4 * Kind.INT.width.numberOfBytes;
         int numRegionsPerBootRegion = regionSizeInBytes / perRegionSpaceRequirement;
-        int numTotalRegions = numHeapRegions; // At least one extra region for the boot heap.
-        int numBootKeepingRegions = 1 + (numHeapRegions * perRegionSpaceRequirement) /  regionSizeInBytes;
+        int numTotalRegions = numHeapRegions + numExtraBootRegions;
+        int numBootKeepingRegions =  (numTotalRegions * perRegionSpaceRequirement) /  regionSizeInBytes;
 
         while (numBootKeepingRegions > numRegionsPerBootRegion) {
             numTotalRegions += numBootKeepingRegions;
@@ -236,13 +253,11 @@ public final class HeapRegionManager implements HeapAccountOwner {
         }
         numTotalRegions += numBootKeepingRegions;
 
-        // Final count of space needed for the VM startup heap: add the Empty region table plus empty region lists plus 10K of extra space for the odd objects
-        // (e.g., the OutgoingReferenceChecker instance, the MemoryRegion [] created by the var args of InspectableHeapInfo, etc...
-        Size extraSpace = Size.K.times(10);
-        Size bootHeapSize =  extraSpace.plus(tupleSize(RegionTable.class).plus(Layout.getArraySize(Kind.INT, 0).times(2)).plus(perRegionSpaceRequirement * numTotalRegions)).alignUp(regionSizeInBytes);
+        // Final count of space needed for the VM startup heap: add the Empty region table plus empty region lists plus 1
+        Size bootHeapSize = extraSpace.plus(tupleSize(RegionTable.class).plus(Layout.getArraySize(Kind.INT, 0).times(2)).plus(perRegionSpaceRequirement * numTotalRegions)).alignUp(regionSizeInBytes);
 
-        // TODO (ld): may have to add other book-keeping info: mark-bitmap, marking stack, rset, etc..., if we allocate them in the boot heap.
-        // FIXME (ld) have we committed the space that is going to be used by the boot allocator ?
+        FatalError.check(startOfManagedSpace.plus(Size.fromInt(numTotalRegions).shiftedLeft(log2RegionSizeInBytes)).lessEqual(endOfReservedSpace),
+                        "Not enough reserved space to initialize managed space");
 
         // Estimate conservatively how much space the heap manager needs initially. This is to commit
         // enough memory to get started.
@@ -253,7 +268,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             Log.print("Initialize heap region manager's boot allocator with ");
             Log.print(initialNumRegions);
             Log.print(" regions (");
-            Log.print(bootHeapSize.toInt());
+            Log.printToPowerOfTwoUnits(bootHeapSize);
             Log.println(" bytes)");
         }
 
@@ -266,13 +281,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
         managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize);
         try {
             VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
-
-            // Commit space
+            // Record initial space usage.
             regionAllocator.initialize(startOfManagedSpace, numTotalRegions, initialNumRegions);
-
-            // enable early inspection.
-            InspectableHeapInfo.init(false, regionAllocator.bounds());
-
             RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numTotalRegions);
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);
@@ -291,6 +301,18 @@ public final class HeapRegionManager implements HeapAccountOwner {
             // Now fix up the boot heap account to records the regions used up to now.
             // They are recorded committed
             HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions);
+
+            // First, uncommit reserved space after the fact. All the space between the end of the initial boot heap and the end of the provided reserved space should be uncommitted.
+            final Address endOfInitialBootHeap = startOfManagedSpace.plus(bootHeapSize);
+            final Address endOfRegions = bounds().end();
+            Size uncommitedSpaceSize = endOfRegions.minus(endOfInitialBootHeap).asSize();
+            if (!VirtualMemory.uncommitMemory(endOfInitialBootHeap, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("uncommitted regions", "uncommit", uncommitedSpaceSize);
+            }
+            uncommitedSpaceSize = endOfReservedSpace.minus(endOfRegions).asSize();
+            if (!VirtualMemory.uncommitMemory(endOfRegions, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("leftover reserved space", "uncommit", uncommitedSpaceSize);
+            }
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
         }
@@ -358,6 +380,14 @@ public final class HeapRegionManager implements HeapAccountOwner {
                 FatalError.crash("Must not happen");
             }
         }
+    }
+
+    public boolean supportsTagging() {
+        return false;
+    }
+
+    public boolean isGcThread(Thread thread) {
+        return false;
     }
 }
 

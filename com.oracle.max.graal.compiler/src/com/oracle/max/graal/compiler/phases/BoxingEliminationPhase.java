@@ -24,14 +24,17 @@ package com.oracle.max.graal.compiler.phases;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.PhiNode.*;
+import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.virtual.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class BoxingEliminationPhase extends Phase {
 
-    private static final HashMap<RiRuntime, Set<RiMethod>> boxingMethodsMap = new HashMap<RiRuntime, Set<RiMethod>>();
-    private static final HashMap<RiRuntime, Set<RiMethod>> unboxingMethodsMap = new HashMap<RiRuntime, Set<RiMethod>>();
-    private final RiRuntime runtime;
+    private RiRuntime runtime;
 
     public BoxingEliminationPhase(RiRuntime runtime) {
         this.runtime = runtime;
@@ -39,58 +42,101 @@ public class BoxingEliminationPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        // TODO: Implement
+        if (graph.getNodes(UnboxNode.class).iterator().hasNext()) {
+
+            Map<PhiNode, PhiNode> phiReplacements = new HashMap<PhiNode, PhiNode>();
+            for (UnboxNode unboxNode : graph.getNodes(UnboxNode.class)) {
+                tryEliminate(unboxNode, graph, phiReplacements);
+            }
+
+            new DeadCodeEliminationPhase().apply(graph);
+
+            for (BoxNode boxNode : graph.getNodes(BoxNode.class)) {
+                tryEliminate(boxNode, graph);
+            }
+        }
     }
 
-    public static synchronized boolean isUnboxingMethod(RiRuntime runtime, RiMethod method) {
-        if (!unboxingMethodsMap.containsKey(runtime)) {
-            unboxingMethodsMap.put(runtime, createUnboxingMethodSet(runtime));
+    private void tryEliminate(UnboxNode unboxNode, StructuredGraph graph, Map<PhiNode, PhiNode> phiReplacements) {
+        ValueNode unboxedValue = unboxedValue(unboxNode.source(), unboxNode.destinationKind(), phiReplacements);
+        if (unboxedValue != null) {
+            assert unboxedValue.kind() == unboxNode.destinationKind();
+            unboxNode.replaceAndUnlink(unboxedValue);
         }
-        return unboxingMethodsMap.get(runtime).contains(method);
     }
 
-    public static synchronized boolean isBoxingMethod(RiRuntime runtime, RiMethod method) {
-        if (!boxingMethodsMap.containsKey(runtime)) {
-            boxingMethodsMap.put(runtime, createBoxingMethodSet(runtime));
+    private PhiNode getReplacementPhi(PhiNode phiNode, CiKind kind, Map<PhiNode, PhiNode> phiReplacements) {
+        if (!phiReplacements.containsKey(phiNode)) {
+            PhiNode result = null;
+            if (phiNode.stamp().nonNull()) {
+                RiResolvedType exactType = phiNode.stamp().exactType();
+                if (exactType != null && exactType.toJava() == kind.toUnboxedJavaClass()) {
+                    result = phiNode.graph().add(new PhiNode(kind, phiNode.merge(), PhiType.Value));
+                    phiReplacements.put(phiNode, result);
+                    virtualizeUsages(phiNode, result, exactType);
+                    int i = 0;
+                    for (ValueNode n : phiNode.values()) {
+                        ValueNode unboxedValue = unboxedValue(n, kind, phiReplacements);
+                        if (unboxedValue != null) {
+                            assert unboxedValue.kind() == kind;
+                            result.addInput(unboxedValue);
+                        } else {
+                            UnboxNode unboxNode = phiNode.graph().add(new UnboxNode(kind, n));
+                            FixedNode pred = phiNode.merge().phiPredecessorAt(i);
+                            pred.replaceAtPredecessors(unboxNode);
+                            unboxNode.setNext(pred);
+                            result.addInput(unboxNode);
+                        }
+                        ++i;
+                    }
+                }
+            }
         }
-        return boxingMethodsMap.get(runtime).contains(method);
+        return phiReplacements.get(phiNode);
     }
 
-    private static Set<RiMethod> createBoxingMethodSet(RiRuntime runtime) {
-        Set<RiMethod> boxingMethods = new HashSet<RiMethod>();
-        try {
-            boxingMethods.add(runtime.getRiMethod(Boolean.class.getDeclaredMethod("valueOf", Boolean.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Byte.class.getDeclaredMethod("valueOf", Byte.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Character.class.getDeclaredMethod("valueOf", Character.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Short.class.getDeclaredMethod("valueOf", Short.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Integer.class.getDeclaredMethod("valueOf", Integer.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Long.class.getDeclaredMethod("valueOf", Long.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Float.class.getDeclaredMethod("valueOf", Float.TYPE)));
-            boxingMethods.add(runtime.getRiMethod(Double.class.getDeclaredMethod("valueOf", Double.TYPE)));
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+    private ValueNode unboxedValue(ValueNode n, CiKind kind, Map<PhiNode, PhiNode> phiReplacements) {
+        if (n instanceof BoxNode) {
+            BoxNode boxNode = (BoxNode) n;
+            return boxNode.source();
+        } else if (n instanceof PhiNode) {
+            PhiNode phiNode = (PhiNode) n;
+            return getReplacementPhi(phiNode, kind, phiReplacements);
+        } else {
+            return null;
         }
-        return boxingMethods;
     }
 
-    private static Set<RiMethod> createUnboxingMethodSet(RiRuntime runtime) {
-        Set<RiMethod> unboxingMethods = new HashSet<RiMethod>();
-        try {
-            unboxingMethods.add(runtime.getRiMethod(Boolean.class.getDeclaredMethod("booleanValue")));
-            unboxingMethods.add(runtime.getRiMethod(Byte.class.getDeclaredMethod("byteValue")));
-            unboxingMethods.add(runtime.getRiMethod(Character.class.getDeclaredMethod("charValue")));
-            unboxingMethods.add(runtime.getRiMethod(Short.class.getDeclaredMethod("shortValue")));
-            unboxingMethods.add(runtime.getRiMethod(Integer.class.getDeclaredMethod("intValue")));
-            unboxingMethods.add(runtime.getRiMethod(Long.class.getDeclaredMethod("longValue")));
-            unboxingMethods.add(runtime.getRiMethod(Float.class.getDeclaredMethod("floatValue")));
-            unboxingMethods.add(runtime.getRiMethod(Double.class.getDeclaredMethod("doubleValue")));
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+    private void tryEliminate(BoxNode boxNode, StructuredGraph graph) {
+
+        virtualizeUsages(boxNode, boxNode.source(), boxNode.exactType());
+
+        for (Node n : boxNode.usages()) {
+            if (!(n instanceof FrameState) && !(n instanceof VirtualObjectFieldNode)) {
+                // Elimination failed, because boxing object escapes.
+                return;
+            }
         }
-        return unboxingMethods;
+
+        FrameState stateAfter = boxNode.stateAfter();
+        boxNode.setStateAfter(null);
+        stateAfter.safeDelete();
+        FixedNode next = boxNode.next();
+        boxNode.setNext(null);
+        boxNode.replaceAtPredecessors(next);
+        boxNode.safeDelete();
+    }
+
+    private void virtualizeUsages(ValueNode boxNode, ValueNode replacement, RiResolvedType exactType) {
+        ValueNode virtualValueNode = null;
+        VirtualObjectNode virtualObjectNode = null;
+        for (Node n : boxNode.usages().snapshot()) {
+            if (n instanceof FrameState || n instanceof VirtualObjectFieldNode) {
+                if (virtualValueNode == null) {
+                    virtualObjectNode = n.graph().unique(new BoxedVirtualObjectNode(exactType, replacement));
+                }
+                n.replaceFirstInput(boxNode, virtualObjectNode);
+            }
+        }
     }
 }

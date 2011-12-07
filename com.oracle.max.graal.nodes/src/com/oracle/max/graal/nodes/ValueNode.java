@@ -22,10 +22,8 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.virtual.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -33,15 +31,13 @@ import com.sun.cri.ri.*;
  * This class represents a value within the graph, including local variables, phis, and
  * all other instructions.
  */
-public abstract class ValueNode extends Node {
+public abstract class ValueNode extends Node implements StampProvider {
 
     /**
      * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
      * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
      */
-    @Data protected CiKind kind;
-
-    protected CiValue operand = CiValue.IllegalValue;
+    @Data private Stamp stamp;
 
     /**
      * Creates a new value with the specified kind.
@@ -50,17 +46,21 @@ public abstract class ValueNode extends Node {
      * @param successorCount
      * @param graph
      */
-    public ValueNode(CiKind kind) {
-        assert kind != null && kind == kind.stackKind() : kind + " != " + kind.stackKind();
-        setKind(kind);
+    public ValueNode(Stamp stamp) {
+        this.stamp = stamp;
+        assert kind() != null && kind() == kind().stackKind() : kind() + " != " + kind().stackKind();
+    }
+
+    public Stamp stamp() {
+        return stamp;
+    }
+
+    /*protected*/ public void setStamp(Stamp stamp) {
+        this.stamp = stamp;
     }
 
     public CiKind kind() {
-        return kind;
-    }
-
-    public void setKind(CiKind kind) {
-        this.kind = kind;
+        return stamp.kind();
     }
 
     /**
@@ -92,51 +92,18 @@ public abstract class ValueNode extends Node {
     }
 
     /**
-     * Gets the LIR operand associated with this instruction.
-     * @return the LIR operand for this instruction
-     */
-    public final CiValue operand() {
-        return operand;
-    }
-
-    /**
-     * Sets the LIR operand associated with this instruction.
-     * @param operand the operand to associate with this instruction
-     */
-    public final void setOperand(CiValue operand) {
-        assert this.operand.isIllegal() : "operand cannot be set twice";
-        assert operand != null && operand.isLegal() : "operand must be legal";
-        assert operand.kind.stackKind() == this.kind;
-        assert !(this instanceof VirtualObjectNode);
-        this.operand = operand;
-    }
-
-    /**
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiResolvedType exactType() {
-        return null; // default: unknown exact type
+    public final RiResolvedType exactType() {
+        return stamp.exactType();
     }
 
     /**
      * Computes the declared type of the result of this node, if possible.
      * @return the declared type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiResolvedType declaredType() {
-        return null; // default: unknown declared type
-    }
-
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("operand", operand == null ? "null" : operand.toString());
-        return properties;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public StructuredGraph graph() {
-        return (StructuredGraph) super.graph();
+    public final RiResolvedType declaredType() {
+        return stamp.declaredType();
     }
 }

@@ -1834,7 +1834,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return DependenciesManager.getUniqueConcreteMethod(this, (MethodActor) method);
     }
 
-    public RiField[] declaredFields() {
+    public RiResolvedField[] declaredFields() {
         FieldActor[] fields = this.localInstanceFieldActors;
         boolean unsorted = false;
         for (int i = 0; i < fields.length - 1; ++i) {
@@ -1852,7 +1852,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                     return o1.offset() - o2.offset();
                 }
             });
-            return sortedFields.toArray(new RiField[0]);
+            return sortedFields.toArray(new RiResolvedField[0]);
         }
         return fields;
     }

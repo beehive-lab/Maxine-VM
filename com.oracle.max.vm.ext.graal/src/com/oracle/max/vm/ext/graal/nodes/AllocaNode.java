@@ -27,6 +27,7 @@ import static com.oracle.max.vm.ext.graal.target.amd64.AMD64StackAllocateOpcode.
 import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -38,25 +39,18 @@ public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLower
 
     @Data public final int size;
     @Data public final boolean refs;
-    @Data public final RiResolvedType declaredType;
 
     public AllocaNode(int size, boolean refs, RiResolvedType declaredType) {
-        super(declaredType.kind(false));
+        super(StampFactory.declared(declaredType));
         this.size = size;
         this.refs = refs;
-        this.declaredType = declaredType;
     }
 
     @Override
     public void generateAmd64(AMD64LIRGenerator gen) {
-        CiVariable result = gen.newVariable(kind);
+        CiVariable result = gen.newVariable(kind());
         StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
         gen.append(STACK_ALLOCATE.create(result, stackBlock));
         gen.setResult(this, result);
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return declaredType;
     }
 }

@@ -58,8 +58,13 @@ public final class LoopCounterNode extends InductionVariableNode {
     }
 
     @Override
+    public ValueNode stride() {
+        return ConstantNode.forIntegerKind(kind(), 1, graph());
+    }
+
+    @Override
     public ValueNode lowerInductionVariable() {
-        return BasicInductionVariableNode.ivToPhi(loopBegin(), ConstantNode.forIntegerKind(kind, 0, graph()), ConstantNode.forIntegerKind(kind, 1, graph()), kind);
+        return BasicInductionVariableNode.ivToPhi(loopBegin(), minValue(null), stride(), kind());
     }
 
     @Override
@@ -77,7 +82,7 @@ public final class LoopCounterNode extends InductionVariableNode {
 
     @Override
     public ValueNode minValue(FixedNode point) {
-        return ConstantNode.forIntegerKind(kind, 0, graph());
+        return ConstantNode.forIntegerKind(kind(), 0, graph());
     }
 
     @Override
@@ -91,6 +96,6 @@ public final class LoopCounterNode extends InductionVariableNode {
     }
 
     private BasicInductionVariableNode createBasicInductionVariable() {
-        return graph().add(new BasicInductionVariableNode(kind, ConstantNode.forIntegerKind(kind, 0, graph()), ConstantNode.forIntegerKind(kind, 1, graph()), this));
+        return graph().add(new BasicInductionVariableNode(kind(), minValue(null), stride(), this));
     }
 }

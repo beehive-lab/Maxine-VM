@@ -37,13 +37,13 @@ public final class IntegerMulNode extends IntegerArithmeticNode implements Canon
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (x().isConstant() && !y().isConstant()) {
-            return graph().unique(new IntegerMulNode(kind, y(), x()));
+            return graph().unique(new IntegerMulNode(kind(), y(), x()));
         }
         if (x().isConstant()) {
-            if (kind == CiKind.Int) {
+            if (kind() == CiKind.Int) {
                 return ConstantNode.forInt(x().asConstant().asInt() * y().asConstant().asInt(), graph());
             } else {
-                assert kind == CiKind.Long;
+                assert kind() == CiKind.Long;
                 return ConstantNode.forLong(x().asConstant().asLong() * y().asConstant().asLong(), graph());
             }
         } else if (y().isConstant()) {
@@ -55,7 +55,7 @@ public final class IntegerMulNode extends IntegerArithmeticNode implements Canon
                 return ConstantNode.forInt(0, graph());
             }
             if (c > 0 && CiUtil.isPowerOf2(c)) {
-                return graph().unique(new LeftShiftNode(kind, x(), ConstantNode.forInt(CiUtil.log2(c), graph())));
+                return graph().unique(new LeftShiftNode(kind(), x(), ConstantNode.forInt(CiUtil.log2(c), graph())));
             }
         }
         return this;
@@ -65,7 +65,7 @@ public final class IntegerMulNode extends IntegerArithmeticNode implements Canon
     public void generate(LIRGeneratorTool gen) {
         CiValue op1 = gen.operand(x());
         CiValue op2 = gen.operand(y());
-        if (!FloatAddNode.livesLonger(this, y(), gen)) {
+        if (!y().isConstant() && !FloatAddNode.livesLonger(this, y(), gen)) {
             CiValue op = op1;
             op1 = op2;
             op2 = op;

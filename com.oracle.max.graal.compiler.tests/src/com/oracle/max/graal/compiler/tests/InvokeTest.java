@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.compiler.tests;
 
+import java.util.*;
+
 import org.junit.*;
 
 import com.oracle.max.graal.compiler.phases.*;
@@ -54,6 +56,15 @@ public class InvokeTest extends GraphTest {
         return const1();
     }
 
+    @Test
+    public void test2() {
+        test("test2Snippet");
+    }
+
+    public static int test2Snippet(int a) {
+        return const1() + const1() + const1() + const1() + const1() + const1() + const1();
+    }
+
     private void test(String snippet) {
         StructuredGraph graph = parse(snippet);
         LocalNode local = graph.getNodes(LocalNode.class).iterator().next();
@@ -65,9 +76,13 @@ public class InvokeTest extends GraphTest {
                 n.replaceFirstInput(local, constant);
             }
         }
-        print(graph);
+        Collection<Invoke> hints = new ArrayList<Invoke>();
+        for (Invoke invoke : graph.getInvokes()) {
+            hints.add(invoke);
+        }
+        new InliningPhase(null, runtime(), hints, null, PhasePlan.DEFAULT).apply(graph);
         new CanonicalizerPhase(null, runtime(), null).apply(graph);
-        new InliningPhase(null, runtime(), null, null, PhasePlan.DEFAULT).apply(graph);
+        new DeadCodeEliminationPhase().apply(graph);
         StructuredGraph referenceGraph = parse(REFERENCE_SNIPPET);
         assertEquals(referenceGraph, graph);
     }

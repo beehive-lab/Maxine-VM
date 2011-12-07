@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 /**
  * The {@code IfNode} represents a branch that can go one of two directions depending on the outcome of a
@@ -41,12 +41,12 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
     }
 
     public IfNode(BooleanNode condition, FixedNode trueSuccessor, FixedNode falseSuccessor, double probability) {
-        super(CiKind.Illegal, new BeginNode[] {BeginNode.begin(trueSuccessor), BeginNode.begin(falseSuccessor)}, new double[] {probability, 1 - probability});
+        super(StampFactory.illegal(), new BeginNode[] {BeginNode.begin(trueSuccessor), BeginNode.begin(falseSuccessor)}, new double[] {probability, 1 - probability});
         this.compare = condition;
     }
 
     public IfNode(BooleanNode condition, double probability) {
-        super(CiKind.Illegal, EMPTY_IF_SUCCESSORS, new double[] {probability, 1 - probability});
+        super(StampFactory.illegal(), EMPTY_IF_SUCCESSORS, new double[] {probability, 1 - probability});
         this.compare = condition;
     }
 
@@ -115,17 +115,17 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable, L
             EndNode trueEnd = (EndNode) trueSuccessor().next();
             EndNode falseEnd = (EndNode) falseSuccessor().next();
             MergeNode merge = trueEnd.merge();
-            if (merge == falseEnd.merge() && merge.phis().size() == 0 && merge.endCount() == 2) {
+            if (merge == falseEnd.merge() && !merge.phis().iterator().hasNext() && merge.endCount() == 2) {
                 FixedNode next = merge.next();
-                merge.delete();
+                merge.safeDelete();
                 BeginNode falseSuccessor = this.falseSuccessor();
                 BeginNode trueSuccessor = this.trueSuccessor();
                 this.setTrueSuccessor(null);
                 this.setFalseSuccessor(null);
-                trueSuccessor.delete();
-                falseSuccessor.delete();
-                trueEnd.delete();
-                falseEnd.delete();
+                trueSuccessor.safeDelete();
+                falseSuccessor.safeDelete();
+                trueEnd.safeDelete();
+                falseEnd.safeDelete();
                 return next;
             }
         }

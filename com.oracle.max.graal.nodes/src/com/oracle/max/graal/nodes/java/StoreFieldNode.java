@@ -24,7 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -45,7 +45,7 @@ public final class StoreFieldNode extends AccessFieldNode implements LIRLowerabl
      * @param value the node representing the value to store to the field
      */
     public StoreFieldNode(ValueNode object, RiResolvedField field, ValueNode value) {
-        super(CiKind.Void, object, field);
+        super(StampFactory.illegal(), object, field);
         this.value = value;
     }
 

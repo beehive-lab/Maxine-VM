@@ -22,12 +22,10 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
  * The {@code Local} instruction is a placeholder for an incoming argument
@@ -38,18 +36,13 @@ public final class LocalNode extends FloatingNode implements Node.IterableNodeTy
 
     @Data private final int index;
 
-    // TODO(tw): Create a class representing information about a value.
-    @Data private RiResolvedType declaredType;
-    @Data private boolean canBeNull;
-
     public LocalNode(CiKind kind, int index) {
-        this(kind, index, true);
+        this(index, StampFactory.forKind(kind));
     }
 
-    public LocalNode(CiKind kind, int index, boolean canBeNull) {
-        super(kind);
+    public LocalNode(int index, Stamp stamp) {
+        super(stamp);
         this.index = index;
-        this.canBeNull = canBeNull;
     }
 
     /**
@@ -58,30 +51,6 @@ public final class LocalNode extends FloatingNode implements Node.IterableNodeTy
      */
     public int index() {
         return index;
-    }
-
-    /**
-     * Sets the declared type of this local, e.g. derived from the signature of the method.
-     * @param declaredType the declared type of the local variable
-     */
-    public void setDeclaredType(RiResolvedType declaredType) {
-        this.declaredType = declaredType;
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return declaredType;
-    }
-
-    @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("index", index());
-        return properties;
-    }
-
-    public boolean canBeNull() {
-        return canBeNull;
     }
 
     @Override

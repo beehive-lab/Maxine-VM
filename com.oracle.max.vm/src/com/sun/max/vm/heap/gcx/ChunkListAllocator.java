@@ -82,6 +82,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
                         if (!cell.isZero()) {
                             return cell;
                         }
+                        cell = top.asPointer();
                     }
                     // Otherwise, we lost the race to refill the TLAB. loop back to try again.
                     newTop = cell.plus(tlabSize);

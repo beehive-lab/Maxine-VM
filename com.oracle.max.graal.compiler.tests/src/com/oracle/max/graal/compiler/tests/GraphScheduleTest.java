@@ -20,28 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.compiler.tests;
 
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import java.util.*;
 
+import org.junit.*;
 
-public final class CastNode extends FloatingNode implements LIRLowerable {
+import com.oracle.max.graal.compiler.schedule.*;
+import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 
-    @Input private ValueNode value;
+public class GraphScheduleTest extends GraphTest {
+    protected void assertOrderedAfterSchedule(StructuredGraph graph, Node a, Node b) {
+        IdentifyBlocksPhase ibp = new IdentifyBlocksPhase(true);
+        ibp.apply(graph);
+        NodeMap<Block> nodeToBlock = ibp.getNodeToBlock();
+        Block bBlock = nodeToBlock.get(b);
+        Block aBlock = nodeToBlock.get(a);
 
-    public ValueNode value() {
-        return value;
-    }
-
-    public CastNode(CiKind kind, ValueNode value) {
-        super(kind);
-        this.value = value;
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool gen) {
-        gen.setResult(this, gen.operand(value()));
+        if (bBlock == aBlock) {
+            List<Node> instructions = bBlock.getInstructions();
+            Assert.assertTrue(instructions.indexOf(b) > instructions.indexOf(a));
+        } else {
+            Block block = bBlock;
+            while (block != null) {
+                if (block == aBlock) {
+                    break;
+                }
+                block = block.dominator();
+            }
+            Assert.assertTrue(block == aBlock);
+        }
     }
 }

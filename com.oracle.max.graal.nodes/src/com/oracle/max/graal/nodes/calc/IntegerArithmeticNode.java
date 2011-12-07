@@ -34,7 +34,7 @@ public abstract class IntegerArithmeticNode extends ArithmeticNode {
         assert kind == CiKind.Int || kind == CiKind.Long;
     }
 
-    public static IntegerArithmeticNode add(ValueNode v1, ValueNode v2) {
+    public static IntegerAddNode add(ValueNode v1, ValueNode v2) {
         assert v1.kind() == v2.kind() && v1.graph() == v2.graph();
         Graph graph = v1.graph();
         //TODO (gd) handle conversions here instead of strong assert ?
@@ -48,7 +48,7 @@ public abstract class IntegerArithmeticNode extends ArithmeticNode {
         }
     }
 
-    public static IntegerArithmeticNode mul(ValueNode v1, ValueNode v2) {
+    public static IntegerMulNode mul(ValueNode v1, ValueNode v2) {
         assert v1.kind() == v2.kind() && v1.graph() == v2.graph();
         Graph graph = v1.graph();
         //TODO (gd) handle conversions here instead of strong assert ?

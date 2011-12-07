@@ -38,7 +38,6 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     private final AbstractView view;
     private final TabbedView parent;
-    private final InspectorMenuBar menuBar;
 
     private String title = null;
 
@@ -100,7 +99,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public void clearMenus() {
-        menuBar.clearAll();
+        menuBar.removeAll();
     }
 
     public void setSelected() {

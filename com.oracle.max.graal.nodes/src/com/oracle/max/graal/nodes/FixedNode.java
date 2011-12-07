@@ -24,14 +24,14 @@ package com.oracle.max.graal.nodes;
 
 import java.util.*;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.graal.nodes.type.*;
 
 public abstract class FixedNode extends ValueNode {
 
     private double probability;
 
-    public FixedNode(CiKind kind) {
-        super(kind);
+    public FixedNode(Stamp stamp) {
+        super(stamp);
     }
 
     public double probability() {

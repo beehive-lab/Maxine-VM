@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.nodes.spi.*;
+import com.oracle.max.graal.nodes.type.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -37,7 +38,7 @@ public final class UnwindNode extends FixedNode implements LIRLowerable {
     }
 
     public UnwindNode(ValueNode exception) {
-        super(CiKind.Object);
+        super(StampFactory.forKind(CiKind.Object));
         assert exception == null || exception.kind() == CiKind.Object;
         this.exception = exception;
     }
