@@ -149,8 +149,10 @@ public final class Heap {
 
     /**
      * Start of the virtual space requested by the heap scheme and reserved at boot-load time.
+     * The reserved space isn't backed yet by swap space (i.e., the memory is uncommitted).
+     * The start or end of the reserved virtual space may comprise the boot image.
      *
-     * @return Address of reserved virtual space (not yet backed by swap space).
+     * @return Address of reserved virtual space.
      */
     public static Address startOfReservedVirtualSpace() {
         return reservedVirtualSpace;

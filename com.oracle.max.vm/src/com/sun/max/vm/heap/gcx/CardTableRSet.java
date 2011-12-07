@@ -126,6 +126,9 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         // The GC will need to carefully skip reference table entries holding the biased base of the card table.
         final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        if (MaxineVM.isDebug()) {
+            asm.lea(temp, biasedCardTableAddress, temp, 0, Scale.Times1);
+        }
     }
 
     @HOSTED_ONLY

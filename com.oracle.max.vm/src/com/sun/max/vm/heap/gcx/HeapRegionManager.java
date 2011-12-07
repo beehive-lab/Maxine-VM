@@ -231,9 +231,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // Adjust reserved space to region boundaries.
         final Address startOfManagedSpace = reservedSpace.alignUp(regionSizeInBytes);
         final Address endOfManagedSpace = startOfManagedSpace.plus(heapSpaceSize).alignUp(regionSizeInBytes);
-        // The managedSpaceSize is the maxHeapSize, aligned up to an integral number of regions.
-        final Size managedSpaceSize = endOfManagedSpace.minus(startOfManagedSpace).asSize();
-        final int numHeapRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        final int numHeapRegions = endOfManagedSpace.minus(startOfManagedSpace).asSize().unsignedShiftedRight(log2RegionSizeInBytes).toInt();
         // Always count 10K of extra space for the odd objects
         // (e.g., the OutgoingReferenceChecker instance, the MemoryRegion [] created by the var args of InspectableHeapInfo, etc...
         final Size extraSpace = Size.K.times(10);
@@ -253,9 +251,9 @@ public final class HeapRegionManager implements HeapAccountOwner {
         numTotalRegions += numBootKeepingRegions;
 
         // Final count of space needed for the VM startup heap: add the Empty region table plus empty region lists plus 1
-        Size bootHeapSize = extraSpace.plus(tupleSize(RegionTable.class).plus(Layout.getArraySize(Kind.INT, 0).times(2)).plus(perRegionSpaceRequirement * numTotalRegions)).alignUp(regionSizeInBytes);
-
-        FatalError.check(startOfManagedSpace.plus(Size.fromInt(numTotalRegions).shiftedLeft(log2RegionSizeInBytes)).lessEqual(endOfReservedSpace),
+        final Size bootHeapSize = extraSpace.plus(tupleSize(RegionTable.class).plus(Layout.getArraySize(Kind.INT, 0).times(2)).plus(perRegionSpaceRequirement * numTotalRegions)).alignUp(regionSizeInBytes);
+        final Size managedSpaceSize = Size.fromInt(numTotalRegions).shiftedLeft(log2RegionSizeInBytes);
+        FatalError.check(startOfManagedSpace.plus(managedSpaceSize).lessEqual(endOfReservedSpace),
                         "Not enough reserved space to initialize managed space");
 
         // Estimate conservatively how much space the heap manager needs initially. This is to commit
@@ -310,10 +308,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
             Size uncommitedSpaceSize = endOfRegions.minus(endOfInitialBootHeap).asSize();
             if (!VirtualMemory.uncommitMemory(endOfInitialBootHeap, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
                 MaxineVM.reportPristineMemoryFailure("uncommitted regions", "uncommit", uncommitedSpaceSize);
-            }
-            uncommitedSpaceSize = endOfReservedSpace.minus(endOfRegions).asSize();
-            if (!VirtualMemory.uncommitMemory(endOfRegions, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("leftover reserved space", "uncommit", uncommitedSpaceSize);
             }
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
