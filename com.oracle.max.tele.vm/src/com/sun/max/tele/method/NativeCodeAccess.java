@@ -181,7 +181,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
     }
 
 
-    MaxNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+    TeleNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         if (codeStart == null || codeStart.isZero()) {
             throw new MaxInvalidAddressException(codeStart, "Null or zero address");
         }

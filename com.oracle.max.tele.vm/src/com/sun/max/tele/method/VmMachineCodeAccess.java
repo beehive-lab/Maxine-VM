@@ -225,11 +225,11 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
     }
 
-    public MaxNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+    public TeleNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         return vm().nativeCode().registerNativeFunction(codeStart, nBytes, name);
     }
 
-    public MaxNativeFunction findNativeFunction(Address address) {
+    public TeleNativeFunction findNativeFunction(Address address) {
         return vm().nativeCode().findNativeFunction(address);
     }
 

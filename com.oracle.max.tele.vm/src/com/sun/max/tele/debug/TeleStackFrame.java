@@ -261,7 +261,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
 
-        private MaxNativeFunction nativeFunction = null;
+        private TeleNativeFunction nativeFunction = null;
 
         private NativeFrame(TeleVM vm, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
             super(vm, teleStack, position, nativeStackFrame);
