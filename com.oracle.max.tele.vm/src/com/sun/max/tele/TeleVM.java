@@ -603,8 +603,6 @@ public abstract class TeleVM implements MaxVM {
      */
     private final VmBreakpointManager breakpointManager;
 
-    private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
-
     private final VmWatchpoint.WatchpointManager watchpointManager;
 
     private final VmThreadAccess threadAccess;
@@ -772,8 +770,7 @@ public abstract class TeleVM implements MaxVM {
         this.javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
-        this.bytecodeBreakpointManager = new VmBytecodeBreakpoint.BytecodeBreakpointManager(this);
-        this.breakpointManager = new VmBreakpointManager(this, this.bytecodeBreakpointManager);
+        this.breakpointManager = VmBreakpointManager.make(this);
         this.watchpointManager = teleProcess.getWatchpointManager();
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 

@@ -31,11 +31,20 @@ import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.util.*;
 
 /**
- * Access to breakpoint creation and management in the VM.
+ * Singleton access to breakpoint creation and management in the VM.
  */
 public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpointManager, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+
+    private static VmBreakpointManager breakpointManager;
+
+    public static VmBreakpointManager make(TeleVM vm) {
+        if (breakpointManager == null) {
+            breakpointManager = new VmBreakpointManager(vm);
+        }
+        return breakpointManager;
+    }
 
     private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
     private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
@@ -44,9 +53,9 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
     // Thread-safe, immutable list.  Will be read many, many more times than will change.
     private volatile List<MaxBreakpoint> breakpointCache = Collections.emptyList();
 
-    public VmBreakpointManager(TeleVM vm, VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager) {
+    private VmBreakpointManager(TeleVM vm) {
         super(vm);
-        this.bytecodeBreakpointManager = bytecodeBreakpointManager;
+        this.bytecodeBreakpointManager = new VmBytecodeBreakpoint.BytecodeBreakpointManager(vm);
         this.targetBreakpointManager = vm.teleProcess().targetBreakpointManager();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
         rebuildBreakpointCache();
