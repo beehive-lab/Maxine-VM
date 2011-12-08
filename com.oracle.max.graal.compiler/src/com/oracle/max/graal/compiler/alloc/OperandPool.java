@@ -276,4 +276,8 @@ public final class OperandPool {
     public int maxRegisterNumber() {
         return firstVariableNumber - 1;
     }
+
+    public int numVariables() {
+        return variables.size();
+    }
 }

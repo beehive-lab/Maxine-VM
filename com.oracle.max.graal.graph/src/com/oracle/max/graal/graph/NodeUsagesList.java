@@ -144,7 +144,7 @@ public final class NodeUsagesList extends NodeIterable<Node> {
     }
 
     @Override
-    public Collection<Node> snapshot() {
+    public List<Node> snapshot() {
         return Arrays.asList(Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size));
     }
 

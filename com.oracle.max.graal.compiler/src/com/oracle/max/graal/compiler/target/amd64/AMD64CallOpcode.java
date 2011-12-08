@@ -37,8 +37,8 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public enum AMD64CallOpcode implements StandardOpcode.CallOpcode {
     DIRECT_CALL, INDIRECT_CALL, NATIVE_CALL;
 
-    public LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        return new LIRCall(this, target, result, arguments, targetAddress, info, marks, pointerSlots) {
+    public LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks) {
+        return new LIRCall(this, target, result, arguments, targetAddress, info, marks) {
             @Override
             public void emitCode(TargetMethodAssembler tasm) {
                 emit(tasm, (AMD64MacroAssembler) tasm.asm, this);

@@ -360,11 +360,10 @@ public class CFGPrinter extends CompilationPrinter {
                 int level = out.indentationLevel();
                 out.adjustIndentation(-level);
                 String state;
-                if (inst.info.debugInfo != null) {
-                    // Use register-allocator output if available
-                    state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
+                if (inst.info.hasDebugInfo()) {
+                    state = debugInfoToString(inst.info.debugInfo().codePos, inst.info.debugInfo().registerRefMap, inst.info.debugInfo().frameRefMap, new OperandFormatter(false), target.arch);
                 } else {
-                    state = stateToString(inst.info.state, new OperandFormatter(false));
+                    state = debugInfoToString(inst.info.topFrame, null, null, new OperandFormatter(false), target.arch);
                 }
                 if (state != null) {
                     out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);

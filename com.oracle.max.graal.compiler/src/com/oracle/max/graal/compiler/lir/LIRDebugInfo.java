@@ -22,47 +22,127 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.nodes.*;
+import java.util.*;
+
 import com.sun.cri.ci.*;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
  */
 public class LIRDebugInfo {
+    public final CiFrame topFrame;
+    private final List<CiStackSlot> pointerSlots;
+    public final LabelRef exceptionEdge;
+    private CiDebugInfo debugInfo;
 
-    public abstract static class ValueLocator {
-        public abstract CiValue getLocation(ValueNode value);
-    }
-
-    public final FrameState state;
-    private LabelRef exceptionEdge;
-    public CiDebugInfo debugInfo;
-
-    public LIRDebugInfo(FrameState state) {
-        assert state != null;
-        this.state = state;
-    }
-
-    public LabelRef exceptionEdge() {
-        return exceptionEdge;
-    }
-
-    public void setExceptionEdge(LabelRef exceptionEdge) {
+    public LIRDebugInfo(CiFrame topFrame, List<CiStackSlot> pointerSlots, LabelRef exceptionEdge) {
+        this.topFrame = topFrame;
+        this.pointerSlots = pointerSlots;
         this.exceptionEdge = exceptionEdge;
     }
 
-    private LIRDebugInfo(LIRDebugInfo info) {
-        this.state = info.state;
-        this.exceptionEdge = info.exceptionEdge;
+    public CiDebugInfo debugInfo() {
+        assert debugInfo != null : "debug info not allocated yet";
+        return debugInfo;
     }
 
-    public LIRDebugInfo copy() {
-        return new LIRDebugInfo(this);
+    public boolean hasDebugInfo() {
+        return debugInfo != null;
     }
 
-    public void setOop(CiValue location, GraalCompilation compilation, CiBitMap frameRefMap, CiBitMap regRefMap) {
-        CiTarget target = compilation.compiler.target;
+
+    public static class MonitorIndex extends CiValue {
+        public final int index;
+
+        public MonitorIndex(int index) {
+            super(CiKind.Illegal);
+            this.index = index;
+        }
+
+        @Override
+        public String name() {
+            return "monitorIndex";
+        }
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof MonitorIndex && ((MonitorIndex) obj).index == index;
+        }
+        @Override
+        public boolean equalsIgnoringKind(CiValue other) {
+            return equals(other);
+        }
+        @Override
+        public int hashCode() {
+            return index;
+        }
+    }
+
+    public interface ValueProcedure {
+        CiValue doValue(CiVariable value);
+    }
+
+
+    public void forEachLiveStateValue(ValueProcedure proc) {
+        CiBitMap processedObjects = null;
+        for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
+            processedObjects = processValues(cur.values, proc, processedObjects);
+        }
+    }
+
+    private CiBitMap processValues(CiValue[] values, ValueProcedure proc, CiBitMap processedObjects) {
+        for (int i = 0; i < values.length; i++) {
+            CiValue value = values[i];
+            if (value instanceof CiVariable) {
+                CiValue newValue = proc.doValue((CiVariable) value);
+                if (newValue != null) {
+                    values[i] = newValue;
+                }
+            } else if (value instanceof CiVirtualObject) {
+                CiVirtualObject obj = (CiVirtualObject) value;
+                if (processedObjects == null) {
+                    processedObjects = new CiBitMap();
+                }
+                processedObjects.grow(obj.id());
+                if (!processedObjects.get(obj.id())) {
+                    processedObjects.set(obj.id());
+                    processedObjects = processValues(obj.values(), proc, processedObjects);
+                }
+            } else {
+                // Nothing to do for these types.
+                assert value == CiValue.IllegalValue || value instanceof CiConstant || value instanceof CiStackSlot || value instanceof MonitorIndex;
+            }
+        }
+        return processedObjects;
+    }
+
+
+    public void initDebugInfo(LIRInstruction op, FrameMap frameMap) {
+        CiBitMap frameRefMap = frameMap.initFrameRefMap();
+        CiBitMap regRefMap = op.hasCall() ? null : new CiBitMap(frameMap.target.arch.registerReferenceMapBitCount);
+
+        // Add locks that are in the designated frame area.
+        for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
+            for (int i = 0; i < cur.numLocks; i++) {
+                CiValue lock = cur.values[i + cur.numLocals + cur.numStack];
+                if (lock instanceof MonitorIndex) {
+                    int index = ((MonitorIndex) lock).index;
+                    cur.values[i + cur.numLocals + cur.numStack] = frameMap.toMonitorBaseStackAddress(index);
+                    setOop(frameMap.toMonitorObjectStackAddress(index), frameMap.target, frameRefMap, regRefMap);
+                }
+            }
+        }
+
+        // Add additional stack slots for outoing method parameters.
+        if (pointerSlots != null) {
+            for (CiStackSlot v : pointerSlots) {
+                setOop(v, frameMap.target, frameRefMap, regRefMap);
+            }
+        }
+
+        debugInfo = new CiDebugInfo(topFrame, regRefMap, frameRefMap);
+    }
+
+    public void setOop(CiValue location, CiTarget target, CiBitMap frameRefMap, CiBitMap regRefMap) {
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
             assert stackLocation.index.isIllegal();
@@ -87,22 +167,13 @@ public class LIRDebugInfo {
         }
     }
 
-    public CiDebugInfo debugInfo() {
-        assert debugInfo != null : "debug info not allocated yet";
-        return debugInfo;
-    }
-
-    public boolean hasDebugInfo() {
-        return debugInfo != null;
-    }
-
-    public static void setBit(CiBitMap refMap, int bit) {
+    private static void setBit(CiBitMap refMap, int bit) {
         assert !refMap.get(bit) : "Ref map entry " + bit + " is already set.";
         refMap.set(bit);
     }
 
     @Override
     public String toString() {
-        return state.toString();
+        return debugInfo != null ? debugInfo.toString() : topFrame.toString();
     }
 }
