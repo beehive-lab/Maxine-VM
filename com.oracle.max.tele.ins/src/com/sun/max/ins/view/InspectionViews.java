@@ -52,6 +52,7 @@ import com.sun.max.ins.memory.MemoryView.MemoryViewManager;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.method.MethodViewContainer.MethodViewManager;
 import com.sun.max.ins.object.HeapRegionInfoView.HeapRegionInfoViewManager;
+import com.sun.max.ins.object.JVMTILogView.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
@@ -234,6 +235,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public WatchpointsViewManager viewManager() {
                 final WatchpointsViewManager viewManager = WatchpointsView.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        JVMTILOG(true, false, "JVMTI Log View") {
+
+            @Override
+            public JVMTILogViewManager viewManager() {
+                final JVMTILogViewManager viewManager = JVMTILogView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
