@@ -37,7 +37,6 @@ public abstract class LIRXirInstruction extends LIRInstruction {
     public final int[] tempOperandIndices;
     public final XirSnippet snippet;
     public final RiMethod method;
-    public final List<CiValue> pointerSlots;
     public final LIRDebugInfo infoAfter;
     private LabelRef trueSuccessor;
     private LabelRef falseSuccessor;
@@ -51,12 +50,9 @@ public abstract class LIRXirInstruction extends LIRInstruction {
                              int outputOperandIndex,
                              LIRDebugInfo info,
                              LIRDebugInfo infoAfter,
-                             RiMethod method,
-                             List<CiValue> pointerSlots) {
+                             RiMethod method) {
         super(opcode, outputOperand, info, inputs, temps);
         this.infoAfter = infoAfter;
-        this.pointerSlots = pointerSlots;
-        assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
         this.method = method;
         this.snippet = snippet;
         this.inputOperandIndices = inputOperandIndices;

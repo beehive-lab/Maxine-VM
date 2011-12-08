@@ -174,4 +174,14 @@ public final class GraalOptions {
     public static boolean OptReorderLoops                    = true;
     public static boolean OptEliminateGuards                 = true;
     public static boolean OptImplicitNullChecks              = true;
+
+    /**
+     * Flag to turn on SSA-based register allocation, which is currently under development.
+     */
+    public static boolean AllocSSA                           = false;
+
+    static {
+        // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
+        assert (DetailedAsserts = true) == true;
+    }
 }

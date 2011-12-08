@@ -186,7 +186,7 @@ public abstract class LIRInstruction {
     public final void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
-        assert operandAt(mode, index).isVariable();
+        assert operandAt(mode, index).isVariable() && operandAt(mode, index).kind == location.kind;
         switch (mode) {
             case Output: result = location; break;
             case Input:  inputs[index] = location; break;
@@ -294,7 +294,7 @@ public abstract class LIRInstruction {
 
     protected void appendDebugInfo(StringBuilder buf, Formatter operandFmt, LIRDebugInfo info) {
         if (info != null) {
-            buf.append(" [bci:").append(info.state.bci);
+            buf.append(" [bci:").append(info.topFrame.bci);
             if (info.hasDebugInfo()) {
                 CiDebugInfo debugInfo = info.debugInfo();
                 String refmap = refMapToString(debugInfo, operandFmt);

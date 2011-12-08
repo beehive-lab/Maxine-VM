@@ -53,6 +53,7 @@ public final class LIRBlock extends Block {
 
     private int linearScanNumber;
 
+    public LIRPhiMapping phis;
 
     /**
      * Bit map specifying which {@linkplain OperandPool operands} are live upon entry to this block.

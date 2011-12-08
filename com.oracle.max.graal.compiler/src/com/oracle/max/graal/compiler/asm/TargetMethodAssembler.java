@@ -127,11 +127,11 @@ public class TargetMethodAssembler {
 
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
-            if (info.exceptionEdge() != null) {
+            if (info.exceptionEdge != null) {
                 if (exceptionInfoList == null) {
                     exceptionInfoList = new ArrayList<ExceptionInfo>(4);
                 }
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionEdge(), info.state.bci));
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionEdge, info.topFrame.bci));
             }
         }
     }
@@ -142,7 +142,7 @@ public class TargetMethodAssembler {
             assert lastSafepointPos < pcOffset : lastSafepointPos + "<" + pcOffset;
             lastSafepointPos = pcOffset;
             targetMethod.recordSafepoint(pcOffset, info.debugInfo());
-            assert info.exceptionEdge() == null;
+            assert info.exceptionEdge == null;
         }
     }
 

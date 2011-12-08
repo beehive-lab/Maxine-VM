@@ -88,8 +88,8 @@ import com.sun.cri.ri.*;
  */
 public final class FrameMap {
 
-    private final GraalRuntime runtime;
-    private final CiTarget target;
+    public final GraalRuntime runtime;
+    public final CiTarget target;
     private final RiRegisterConfig registerConfig;
     private final CiCallingConvention incomingArguments;
 
