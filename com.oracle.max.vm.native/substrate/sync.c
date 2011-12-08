@@ -54,6 +54,14 @@ jboolean nativeMutexUnlock(Mutex mutex) {
     return mutex_exit(mutex) == 0;
 }
 
+jboolean nativeMutexTryLock(Mutex mutex) {
+    if (mutex_try_enter(mutex) != 0) {
+        return false;
+    } else {
+        return  true;
+    }
+}
+
 jint nativeConditionSize(void) {
     return sizeof(condition_Struct);
 }

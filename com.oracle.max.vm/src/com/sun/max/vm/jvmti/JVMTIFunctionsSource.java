@@ -331,30 +331,35 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
         // PHASES: ANY
+        // LOG: rawMonitor
         return JVMTIRawMonitor.enter(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
         // PHASES: ANY
+        // LOG: rawMonitor
         return JVMTIRawMonitor.exit(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
         // PHASES: ANY
+        // LOG: rawMonitor
         return JVMTIRawMonitor.wait(rawMonitor, millis);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
         // PHASES: ANY
+        // LOG: rawMonitor
         return JVMTIRawMonitor.notify(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
         // PHASES: ANY
+        // LOG: rawMonitor
         return JVMTIRawMonitor.notifyAll(rawMonitor);
     }
 
@@ -781,6 +786,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // NULLCHECK: request_list,results
+        // LOG: Address.fromInt(request_count)
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
@@ -792,6 +798,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // NULLCHECK: request_list,results
+        // LOG: Address.fromInt(request_count)
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }

@@ -37,6 +37,7 @@ public class OSMonitor {
         new CriticalNativeMethod(OSMonitor.class, "nativeConditionInitialize");
         new CriticalNativeMethod(OSMonitor.class, "nativeMutexUnlock");
         new CriticalNativeMethod(OSMonitor.class, "nativeMutexLock");
+        new CriticalNativeMethod(OSMonitor.class, "nativeMutexTryLock");
         new CriticalNativeMethod(OSMonitor.class, "nativeConditionNotify");
         new CriticalNativeMethod(OSMonitor.class, "nativeConditionWait");
         new CriticalNativeMethod(OSMonitor.class, "nativeTakeLockAndNotify");
@@ -149,6 +150,9 @@ public class OSMonitor {
 
     @C_FUNCTION
     public static native boolean nativeMutexUnlock(Word mutex);
+
+    @C_FUNCTION
+    public static native boolean nativeMutexTryLock(Word mutex);
 
     // May block so JNI
     public static native boolean nativeMutexLock(Word mutex);

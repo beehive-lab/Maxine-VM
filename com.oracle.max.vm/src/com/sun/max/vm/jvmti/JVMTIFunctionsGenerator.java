@@ -41,6 +41,7 @@ public class JVMTIFunctionsGenerator {
     private static final String CAPABILITIES = "// CAPABILITIES: ";
     private static final String MEMBERID = "// MEMBERID: ";
     private static final String ENVCHECK = "// ENVCHECK";
+    private static final String LOG = "// LOG: ";
     private static final String INDENT8 = "        ";
     private static final String INDENT12 = INDENT8 + "    ";
     private static final String INDENT16 = INDENT12 + "    ";
@@ -50,6 +51,8 @@ public class JVMTIFunctionsGenerator {
     public static class JVMTICustomizer extends Customizer {
 
         static ArrayList<String> methodNames = new ArrayList<String>();
+        static String currentMethod;
+        static boolean currentMethodLogged;
 
         @Override
         public String customizeBody(String line) {
@@ -78,6 +81,12 @@ public class JVMTIFunctionsGenerator {
             if (result != null) {
                 return result;
             }
+            // if we get here this a real statement in the body
+            // check for logging
+            result = checkLogging(line);
+            if (result != null) {
+                return result;
+            }
             return line;
         }
 
@@ -92,7 +101,7 @@ public class JVMTIFunctionsGenerator {
                 return null;
             }
             if (tagArgs[0].equals("ANY")) {
-                return null;
+                return "";
             }
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
             sb.append("if (!(");
@@ -274,23 +283,56 @@ public class JVMTIFunctionsGenerator {
         @Override
         public void startFunction(JniFunctionDeclaration decl) {
             methodNames.add(decl.name);
+            currentMethod = decl.name;
+            currentMethodLogged = false;
         }
 
         @Override
         public void close(PrintWriter out) {
-            out.println("    private static final String[] methodNames = new String[] {");
+            out.println("    public static enum Methods {");
             for (int i = 0; i < methodNames.size(); i++) {
                 String methodName = methodNames.get(i);
                 if (i > 0) {
                     out.println(",");
                 }
-                out.printf("        \"%s\"", methodName);
+                out.printf("        %s(%d, \"%s\")", methodName, i, methodName);
             }
-            out.println("};");
+            out.println(";\n");
+            out.println("        public final int index;");
+            out.println("        public final String name;\n");
+            out.println("        Methods(int index, String name) {");
+            out.println("            this.index = index;");
+            out.println("            this.name = name;");
+            out.println("        }");
+            out.println("}");
         }
 
         private static String toFirstLower(String s) {
             return s.substring(0, 1).toLowerCase() + s.substring(1);
+        }
+
+        private static String checkLogging(String line) {
+            if (!currentMethodLogged) {
+                String[] tagArgs = getTagArgs(line, LOG);
+                if (tagArgs == null) {
+                    return null;
+                }
+                StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
+                sb.append("JVMTILog.add(JVMTIFunctions.Methods.");
+                sb.append(currentMethod);
+                sb.append('.');
+                sb.append("index");
+                for (int i = 0; i < tagArgs.length; i++) {
+                    String tag = tagArgs[i];
+                    sb.append(", ");
+                    sb.append(tag);
+                }
+                sb.append(");");
+                currentMethodLogged = true;
+                return sb.toString();
+            } else {
+                return null;
+            }
         }
     }
 
@@ -311,7 +353,6 @@ public class JVMTIFunctionsGenerator {
         sb.append(";\n" + INDENT12 + "}");
         return sb.toString();
     }
-
 
     public static void main(String[] args) throws Exception {
         boolean updated = false;

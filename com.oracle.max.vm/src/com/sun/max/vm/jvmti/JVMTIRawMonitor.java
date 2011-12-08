@@ -37,13 +37,13 @@ public class JVMTIRawMonitor {
 
     private static final long RM_MAGIC = ('T' << 24) + ('I' << 16) + ('R' << 8) + 'M';
 
-    enum Struct {
+    public enum Struct {
         MAGIC(0),
         NAME(8),
         MUTEX(16),
         CONDITION(24);
 
-        private int offset;
+        public final int offset;
         private static final Size SIZE = Size.fromInt(32);
 
         Struct(int offset) {
@@ -73,19 +73,22 @@ public class JVMTIRawMonitor {
         new CriticalMethod(JVMTIRawMonitor.class, "notifyAll", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
-    static int create(Pointer name, Pointer rawMonitorPtr) {
+    static int create(Pointer namePtr, Pointer rawMonitorPtr) {
         Pointer rawMonitor = Memory.allocate(Struct.SIZE);
         Word nativeMutex = OSMonitor.newMutex(false);
         Word nativeCondition = OSMonitor.newCondition(false);
+        Word namePtrCopy = CString.copy(namePtr);
 
-        if (rawMonitor.isZero() || nativeCondition.isZero() || nativeMutex.isZero()) {
+        if (rawMonitor.isZero() || nativeCondition.isZero() || nativeMutex.isZero() || namePtrCopy.isZero()) {
             // Checkstyle: stop
             if (!rawMonitor.isZero()) { Memory.deallocate(rawMonitor); }
             if (!nativeMutex.isZero()) { Memory.deallocate(nativeMutex.asPointer()); }
             if (!nativeCondition.isZero()) { Memory.deallocate(nativeCondition.asPointer()); }
+            if (!namePtrCopy.isZero()) { Memory.deallocate(namePtrCopy.asPointer()); }
             // Checkstyle: resume
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
+        Struct.NAME.set(rawMonitor, namePtrCopy);
         Struct.CONDITION.set(rawMonitor, nativeCondition);
         Struct.MUTEX.set(rawMonitor, nativeMutex);
         Struct.MAGIC.set(rawMonitor, Address.fromLong(RM_MAGIC));
@@ -106,7 +109,6 @@ public class JVMTIRawMonitor {
     }
 
     static int enter(Word rawMonitor) {
-        // TODO check ownership
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
@@ -118,11 +120,14 @@ public class JVMTIRawMonitor {
     }
 
     static int exit(Word rawMonitor) {
-        // TODO check ownership
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (OSMonitor.nativeMutexUnlock(Struct.MUTEX.get(rawMonitor))) {
+        Word mutex = checkOwnerShip(rawMonitor);
+        if (mutex.isZero()) {
+            return JVMTI_ERROR_NOT_MONITOR_OWNER;
+        }
+        if (OSMonitor.nativeMutexUnlock(mutex)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -131,15 +136,18 @@ public class JVMTIRawMonitor {
     }
 
     static int wait(Word rawMonitor, long millis) {
-        // TODO check ownership
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
+        }
+        Word mutex = checkOwnerShip(rawMonitor);
+        if (mutex.isZero()) {
+            return JVMTI_ERROR_NOT_MONITOR_OWNER;
         }
         if (millis == -1) {
             // jdwp seems to use -1 when it means 0
             millis = 0;
         }
-        if (OSMonitor.nativeConditionWait(Struct.MUTEX.get(rawMonitor), Struct.CONDITION.get(rawMonitor), millis)) {
+        if (OSMonitor.nativeConditionWait(mutex, Struct.CONDITION.get(rawMonitor), millis)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -147,9 +155,11 @@ public class JVMTIRawMonitor {
     }
 
     static int notify(Word rawMonitor) {
-        // TODO check ownership
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
+        }
+        if (checkOwnerShip(rawMonitor).isZero()) {
+            return JVMTI_ERROR_NOT_MONITOR_OWNER;
         }
         if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), false)) {
             return JVMTI_ERROR_NONE;
@@ -159,14 +169,35 @@ public class JVMTIRawMonitor {
     }
 
     static int notifyAll(Word rawMonitor) {
-        // TODO check ownership
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
+        }
+        if (checkOwnerShip(rawMonitor).isZero()) {
+            return JVMTI_ERROR_NOT_MONITOR_OWNER;
         }
         if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), true)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
+        }
+    }
+
+    /**
+     * Check that this thread owns the monitor.
+     * @param rawMonitor
+     * @return the mutex component if owner, {@code Pointer.zero()} if not.
+     */
+    private static Word checkOwnerShip(Word rawMonitor) {
+        // since native mutexes support recursion, we can
+        // check for ownership just by trying to get the lock again.
+        // If this fails, we don't own it, otherwise we just release it,
+        // thereby decrementing the recursion count back to where we came in.
+        Word mutex = Struct.MUTEX.get(rawMonitor);
+        if (OSMonitor.nativeMutexTryLock(mutex)) {
+            OSMonitor.nativeMutexUnlock(mutex);
+            return mutex;
+        } else {
+            return Pointer.zero();
         }
     }
 
