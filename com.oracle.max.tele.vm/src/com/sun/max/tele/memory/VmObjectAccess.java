@@ -402,7 +402,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *
      * @param kind identifies one of the basic VM value types
      * @param origin location in VM memory presumed (but not checked) to be an array origin of the specified kind
-     * @param index identifies a specific array element
+     * @param id identifies a specific array element
      * @return address of the array element in VM memory
      */
     public int unsafeArrayElementAddressToIndex(Kind kind, Address origin, Address address) {
