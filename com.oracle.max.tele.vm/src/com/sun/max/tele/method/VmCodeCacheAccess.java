@@ -151,13 +151,12 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     /**
      * {@inheritDoc}
      * <p>
-     * Refresh enough state to understand the state of the code cache, for example whether
-     * new code cache regions have been created and whether
-     * eviction is underway; this all gets done without necessarily doing any other cache updates.
+     * Refresh only enough state to understand the general status of the code cache, for example whether new code cache
+     * regions have been created and whether eviction is underway.  This all gets done without necessarily doing any
+     * other cache updates, which happen later in the update cycle.
      * <p>
-     * This must be done before heap objects are refreshed, in particular so that the
-     * code cache region status can be used to determine refresh behavior in instances of
-     * {@link TargetMethod}.
+     * This must be done before heap objects are refreshed, in particular so that the code cache region status can be
+     * used to determine refresh behavior in instances of {@link TargetMethod}.
      */
     public void updateCache(long epoch) {
         updateTracer.begin();

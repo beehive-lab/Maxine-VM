@@ -400,17 +400,25 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
-    public String shortName(MaxNativeFunction externalCode) {
-        final String title = externalCode.entityName();
-        return title == null ? "@0x" + externalCode.getCodeStart().toHexString() : title;
+    public String veryShortName(MaxNativeFunction nativeFunction) {
+        final String title = nativeFunction.name();
+        return title == null ? "@0x" + nativeFunction.getCodeStart().toHexString() : title;
+    }
+
+    /**
+     * E.g. user supplied name or "@0xffffffffffffffff"
+     */
+    public String shortName(MaxNativeFunction nativeFunction) {
+        final String title = nativeFunction.qualName();
+        return title == null ? "@0x" + nativeFunction.getCodeStart().toHexString() : title;
     }
 
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
-    public String longName(MaxNativeFunction externalCode) {
-        final String title = externalCode.entityName();
-        return title == null ? "Native code @" + externalCode.getCodeStart().to0xHexString() : "Native code: " + title;
+    public String longName(MaxNativeFunction nativeFunction) {
+        final String title = nativeFunction.qualName();
+        return title == null ? "Native function @" + nativeFunction.getCodeStart().to0xHexString() : "Native function: " + title;
     }
 
     /**
@@ -454,7 +462,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append("MachineCode{").append(address.to0xHexString());
-            if (vm().machineCode().findExternalCode(address) != null) {
+            if (vm().machineCode().findNativeFunction(address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {

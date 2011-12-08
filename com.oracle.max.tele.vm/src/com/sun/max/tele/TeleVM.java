@@ -591,7 +591,7 @@ public abstract class TeleVM implements MaxVM {
 
     private VmCodeCacheAccess codeCacheAccess = null;
 
-    private ExternalMachineCodeAccess externalCodeAccess = null;
+    private NativeCodeAccess nativeCodeAccess = null;
 
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
@@ -846,7 +846,7 @@ public abstract class TeleVM implements MaxVM {
                 codeCacheAccess.initialize(epoch);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-                externalCodeAccess = new ExternalMachineCodeAccess(this);
+                nativeCodeAccess = new NativeCodeAccess(this);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
                 if (isAttaching()) {
@@ -862,13 +862,13 @@ public abstract class TeleVM implements MaxVM {
             heapAccess.updateCache(epoch);
             memoryAllocations.addAll(heapAccess.memoryAllocations());
 
-            // Update status of the code cache, including eviction status and any new allocations.
+            // Update the general status of the code cache, including eviction status and any new allocations.
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-            // Update the statys of any external, dynamically loaded libraries.
-            externalCodeAccess.updateCache(epoch);
-            memoryAllocations.addAll(externalCodeAccess.memoryAllocations());
+            // Update the general status of any native, dynamically loaded libraries.
+            nativeCodeAccess.updateCache(epoch);
+            memoryAllocations.addAll(nativeCodeAccess.memoryAllocations());
 
             // A hook for any other memory regions that might be getting allocated for special platforms
             memoryAllocations.addAll(platformMemoryRegions());
@@ -879,8 +879,11 @@ public abstract class TeleVM implements MaxVM {
             // Update every local surrogate for a VM object
             objectAccess.updateCache(epoch);
 
-            // Update every local surrogate for a VM compilation
+            // Detailed update of the contents of every code cache region, as well as information about native code.
             machineCodeAccess.updateCache(epoch);
+
+            // Check the status of breakpoints, for example if any are set in recently evicted compilations.
+            breakpointManager.updateCache(epoch);
 
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
@@ -981,8 +984,8 @@ public abstract class TeleVM implements MaxVM {
         return codeCacheAccess;
     }
 
-    public final ExternalMachineCodeAccess externalCode() {
-        return externalCodeAccess;
+    public final NativeCodeAccess nativeCode() {
+        return nativeCodeAccess;
     }
 
     public final CodeLocationFactory codeLocationFactory() {

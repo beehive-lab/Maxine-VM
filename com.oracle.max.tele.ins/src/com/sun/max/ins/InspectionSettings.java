@@ -254,7 +254,7 @@ public class InspectionSettings {
      * @param saveSettingsListener a listener for events that should cause important settings to be
      * saved
      */
-    public void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
+    public synchronized void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
@@ -277,7 +277,7 @@ public class InspectionSettings {
         }
     }
 
-    public void removeSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
+    public synchronized void removeSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
         clients.remove(saveSettingsListener.name());
     }
 

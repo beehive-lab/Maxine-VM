@@ -40,8 +40,8 @@ public final class TeleSemiSpaceCodeRegion extends TeleCodeRegion {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
-            sb.append("evictions=(").append(evictionStartedCount);
-            sb.append(",").append(evictionCompletedCount).append(")");
+            sb.append("evictions(started=").append(evictionStartedCount);
+            sb.append(", completed").append(evictionCompletedCount).append(")");
             if (isInEviction()) {
                 sb.append(" in EVICTION");
             }

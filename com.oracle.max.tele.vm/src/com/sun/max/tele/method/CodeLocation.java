@@ -70,7 +70,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
     public final boolean hasAddress() {
         final RemoteCodePointer codePointer = codePointer();
-        return codePointer != null && codePointer.isLive();
+        return codePointer != null && codePointer.isCodeLive();
     }
 
     public final Address address() {
@@ -114,7 +114,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         return description;
     }
 
-    protected abstract RemoteCodePointer codePointer();
+    public abstract RemoteCodePointer codePointer();
 
     @Override
     public String toString() {
@@ -514,6 +514,10 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
             final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
             return new ClassMethodActorAddressLocation(vm(), codePointer, teleClassMethodActor, bci, description);
+        }
+
+        public MachineCodeLocation createMachineCodeLocation(RemoteCodePointer codePointer, String description) throws TeleError {
+            return new AddressCodeLocation(vm(), codePointer, description);
         }
 
         /**

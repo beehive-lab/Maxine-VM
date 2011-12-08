@@ -90,9 +90,8 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         super(LOG2_CARD_SIZE);
     }
 
-    @Override
     void initialize(Address coveredAreaStart, Size coveredAreaSize) {
-        super.initialize(coveredAreaStart, coveredAreaSize);
+        super.initialize(coveredAreaStart, coveredAreaSize, true);
         fill(ZERO);
     }
 

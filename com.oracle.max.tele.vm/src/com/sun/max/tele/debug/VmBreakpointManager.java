@@ -28,14 +28,18 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.util.*;
 
 /**
  * Access to breakpoint creation and management in the VM.
  */
-public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpointManager {
+public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpointManager, TeleVMCache {
+
+    private static final int TRACE_VALUE = 1;
 
     private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
     private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
+    private final TimedTrace updateTracer;
 
     // Thread-safe, immutable list.  Will be read many, many more times than will change.
     private volatile List<MaxBreakpoint> breakpointCache = Collections.emptyList();
@@ -44,12 +48,17 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
         super(vm);
         this.bytecodeBreakpointManager = bytecodeBreakpointManager;
         this.targetBreakpointManager = vm.teleProcess().targetBreakpointManager();
-        updateBreakpointCache();
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
+        rebuildBreakpointCache();
         addListener(new MaxBreakpointListener() {
 
             public void breakpointsChanged() {
-                updateBreakpointCache();
+                rebuildBreakpointCache();
             }
+
+            public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+            }
+
         });
     }
 
@@ -89,6 +98,13 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
         bytecodeBreakpointManager.writeSummaryToStream(printStream);
     }
 
+    public void updateCache(long epoch) {
+        updateTracer.begin();
+        targetBreakpointManager.updateCache(epoch);
+        bytecodeBreakpointManager.updateCache(epoch);
+        updateTracer.end();
+    }
+
     public VmTargetBreakpoint makeTransientTargetBreakpoint(MaxCodeLocation maxCodeLocation) throws MaxVMBusyException {
         final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
         return targetBreakpointManager.makeTransientBreakpoint(codeLocation);
@@ -97,7 +113,7 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
     /**
      * Recomputes the immutable list cache of all client breakpoints.
      */
-    private void updateBreakpointCache() {
+    private void rebuildBreakpointCache() {
         final List<MaxBreakpoint> newBreakpointsCache = new  ArrayList<MaxBreakpoint>(targetBreakpointManager.clientBreakpoints());
         for (MaxBreakpoint breakpoint : bytecodeBreakpointManager.clientBreakpoints()) {
             newBreakpointsCache.add(breakpoint);

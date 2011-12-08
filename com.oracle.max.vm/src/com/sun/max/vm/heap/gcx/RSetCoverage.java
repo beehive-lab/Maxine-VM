@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.vm.heap.gcx;
+
+import com.sun.max.unsafe.*;
 
 /**
- * Interface for listening to changes in the watchpoints set in the VM.
+ * Interface to the heap region manager to request coverage of all heap spaces by remembered set.
+ * This is called by the heap region manager before the first assignment to a reference location, so that code
+ * generated with write barriers doesn't fail. Depending on the Remembered Set implementation this may be do nothing.
  */
-public interface MaxBreakpointListener {
 
-    /**
-     * Notifies listener that the set/settings of breakpoints in the VM have changed.
-     */
-    void breakpointsChanged();
-
-    /**
-     * Notifies listener that a breakpoint is about to be deleted for some reason
-     * not involving an explicit client request.  This notification precedes
-     * the general notification {@code #breakpointsChanged()} that gets triggered
-     * by the deletion.
-     *
-     * @param breakpoint a breakpoint that is about to be deleted
-     * @param reason the reason it is being deleted.
-     */
-    void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason);
-
+public interface RSetCoverage {
+    void initializeCoverage(Address coveredAreaStart, Size coveredAreaSize);
 }

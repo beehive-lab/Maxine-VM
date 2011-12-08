@@ -38,37 +38,61 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * Target code breakpoints.
+ * A breakpoint set at a machine code location in VM memory.
+ * <p>
+ * If the breakpoint location is known to point, expressed as an instance of {@link RemoteCodePointer}, into compiled
+ * code in a managed region of the VM's code cache, then the breakpoint will be relocated automatically should the method
+ * compilation be relocated.
+ *
+ * @see RemoteCodePointer
+ *
  */
 public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
     protected final TargetBreakpointManager manager;
 
     /**
-     * The original code from the target code in the VM that was present before
-     * the breakpoint code was patched in.
+     * A copy of the code in the VM that was replaced when the breakpoint code was patched in, saved so that it can be
+     * restored when the breakpoint becomes inactive.
+     * <p>
+     * Assumes that the code does not change, although its original location in memory might if a compilation is relocated.
      */
     protected final byte[] originalCodeAtBreakpoint;
 
     /**
-     * Whether the breakpoint is actually active in the VM at the moment.
+     * Records whether the breakpoint is active in the VM, and if so where.
+     * <ul>
+     * <li>{@code null} if the breakpoint is <em>inactive</em>;</li>
+     * <li>the absolute location of the breakpoint in VM memory if <em>active</em>.</li>
+     * </ul>
+     * Note that this is the <em>only state</em> concerning code location that is held as a concrete {@link Address},
+     * since it corresponds directly to an operation (writing and restoring breakpoint code in VM memory) at a specific
+     * memory location. All other references to code are expressed in terms of {@link RemoteCodePointer}s, which track
+     * relocated code and are canonical.
      */
-    private boolean isActive;
+    private Address activeAddress;
 
     /**
-     * Creates a target code breakpoint for a given address in the VM.
+     * Is the location of the breakpoint in a managed code cache region.
+     */
+    private final boolean codeLocationIsManaged;
+
+    /**
+     * Creates a target code breakpoint for a given code location in the VM.
      *
      * @param vm the VM
      * @param manager the manager responsible for managing these breakpoints
-     * @param codeLocation  the location at which the breakpoint is to be created, by address
-     * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
-     *            instruction. If this value is null, then the code will be read from {@code address}.
+     * @param codeLocation  the location at which the breakpoint is to be created
+     * @param originalCode the machine code at the breakpoint location that will be overwritten by the breakpoint
+     *            instruction. If this value is null, then the code will be read from the current code location.
      * @param owner the bytecode breakpoint for which this is being created, null if none.
      * @param the kind of breakpoint
      */
     private VmTargetBreakpoint(TeleVM vm, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, VmBytecodeBreakpoint owner) {
         super(vm, codeLocation, kind, owner);
         this.manager = manager;
+        final VmCodeCacheRegion codeCacheRegion = vm.codeCache().findCodeCacheRegion(codeLocation.address());
+        this.codeLocationIsManaged = codeCacheRegion != null && codeCacheRegion.isManaged();
         this.originalCodeAtBreakpoint = originalCode == null ? vm.memory().readBytes(codeLocation.address(), manager.codeSize()) : originalCode;
     }
 
@@ -76,17 +100,10 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         return false;
     }
 
-    /**
-     * @return address of this breakpoint in the VM.
-     */
-    private Address address() {
-        return codeLocation().address();
-    }
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Target breakpoint");
-        sb.append("{0x").append(address().toHexString()).append(", ");
+        sb.append("{0x").append(codeLocation().address().toHexString()).append(", ");
         sb.append(kind().toString()).append(", ");
         sb.append(isEnabled() ? "enabled" : "disabled").append(", ");
         sb.append(isActive() ? "active" : "inactive");
@@ -97,9 +114,22 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         return sb.toString();
     }
 
+    // TODO (mlvdv) remove dependence on address; identity?
+    /**
+     * {@inheritDoc}
+     * <br>
+     * Thread-safe; synchronizes on the VM lock.
+     */
     @Override
     public void remove() throws MaxVMBusyException {
-        manager.removeNonTransientBreakpointAt(address());
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            manager.removeNonTransientBreakpointAt(codeLocation().codePointer());
+        } finally {
+            vm().unlock();
+        }
     }
 
     /**
@@ -107,31 +137,34 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
      * platform-dependent target instructions implementing a breakpoint.
      */
     boolean isActive() {
-        return isActive;
+        return activeAddress != null;
     }
 
     /**
-     * Sets the activation state of the breakpoint in the VM.
+     * Sets the activation state of the breakpoint in the VM; no-op if breakpoint already in that state.
      *
      * @param active new activation state for the breakpoint
      */
     void setActive(boolean active) {
-        if (active != isActive) {
+        if (active != isActive()) {
             if (active) {
+                // Make the breakpoint active, using the current absolute memory address of the code location.
                 // Patches the target code in the VM at this breakpoint's address with platform-dependent target instructions implementing a breakpoint.
-                memory().writeBytes(address(), manager.code());
+                final Address newActiveAddress = codeLocation().address();
+                memory().writeBytes(newActiveAddress, manager.code());
+                activeAddress = newActiveAddress;
             } else {
-                // Patches the target code in the VM at this breakpoint's address with the original code that was compiled at that address.
-                memory().writeBytes(address(), originalCodeAtBreakpoint);
+                // Make the breakpoint inactive:  patch the memory at the original breakpoint location with code originally there.
+                memory().writeBytes(activeAddress, originalCodeAtBreakpoint);
+                activeAddress = null;
             }
-            isActive = active;
         }
     }
 
     /**
-     * A target breakpoint set explicitly by a client.
-     * <br>
-     * It will be visible to clients and can be explicitly enabled/disabled/removed by the client.
+     * A target breakpoint set explicitly by a client, with an optional <em>condition</em>.
+     * <p>
+     * This kind of breakpoint is visible to clients and can be explicitly enabled/disabled/removed by the client.
      */
     private static final class ClientTargetBreakpoint extends VmTargetBreakpoint {
 
@@ -139,11 +172,11 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         private BreakpointCondition condition;
 
         /**
-         * A client-created breakpoint for a given target code address, enabled by default.
+         * A client-created breakpoint for a given machine code location in VM memory, enabled by default.
          *
          * @param vm the VM
          * @param manager the manager that manages these breakpoints.
-         * @param codeLocation the location at which the breakpoint is to be created, by address
+         * @param codeLocation the location at which the breakpoint is to be created
          * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
@@ -190,8 +223,8 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
     }
 
     /**
-     * A target breakpoint set for internal use by the inspection's implementation.
-     * <br>
+     * A target breakpoint set for internal use by other inspection services, with optional condition.
+     * <p>
      * It may or may not be visible to clients, but can be explicitly enabled/disabled/removed by the internal
      * service for which it was created.
      */
@@ -205,7 +238,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         * There is by default no special handling, but this can be changed by overriding
         * {@link #handleTriggerEvent(TeleNativeThread)}.
         *
-        * @param codeLocation the location at which the breakpoint will be created, by address
+        * @param codeLocation the location at which the breakpoint will be created
         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
@@ -295,15 +328,17 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
     }
 
-    public static final class TargetBreakpointManager extends AbstractVmHolder {
+    // TODO (mlvdv) make this a singleton, then can access the manager directly, no argument.
+    public static final class TargetBreakpointManager extends AbstractVmHolder implements TeleVMCache {
 
         private final byte[] code;
 
+        // Maps:  RemoteCodePointer --> TargetBreakpoint
+        // This relies on RemoteCodePointers being canonical
         // The map implementations are not thread-safe; the manager must take care of that.
-        private final Map<Long, ClientTargetBreakpoint> clientBreakpoints = new HashMap<Long, ClientTargetBreakpoint>();
-        private final Map<Long, SystemTargetBreakpoint> systemBreakpoints = new HashMap<Long, SystemTargetBreakpoint>();
-        private final Map<Long, TransientTargetBreakpoint> transientBreakpoints = new HashMap<Long, TransientTargetBreakpoint>();
-
+        private final Map<RemoteCodePointer, ClientTargetBreakpoint> clientBreakpoints = new HashMap<RemoteCodePointer, ClientTargetBreakpoint>();
+        private final Map<RemoteCodePointer, SystemTargetBreakpoint> systemBreakpoints = new HashMap<RemoteCodePointer, SystemTargetBreakpoint>();
+        private final Map<RemoteCodePointer, TransientTargetBreakpoint> transientBreakpoints = new HashMap<RemoteCodePointer, TransientTargetBreakpoint>();
 
         // Thread-safe, immutable versions of the client map. Will be read many, many more times than will change.
         private volatile List<ClientTargetBreakpoint> clientBreakpointsCache = Collections.emptyList();
@@ -313,6 +348,25 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         TargetBreakpointManager(TeleVM vm) {
             super(vm);
             this.code = TargetBreakpoint.createBreakpointCode(platform().isa);
+        }
+
+        public void updateCache(long epoch) {
+            // Review client breakpoints, those set explicitly in machine code only, and handle evictions.
+            final List<VmTargetBreakpoint> evictedBreakpoints = new ArrayList<VmTargetBreakpoint>();
+            for (VmTargetBreakpoint breakpoint : clientBreakpoints.values()) {
+                if (!breakpoint.codeLocation().codePointer().isCodeLive()) {
+                    evictedBreakpoints.add(breakpoint);
+                }
+            }
+            for (VmTargetBreakpoint evictedBreakpoint : evictedBreakpoints) {
+                final String reason = "The compilation has been evicted from the code cache";
+                TeleWarning.message("Breakpoint removed: " + evictedBreakpoint + "(" + reason + ")");
+                for (final MaxBreakpointListener listener : breakpointListeners) {
+                    listener.breakpointToBeDeleted(evictedBreakpoint, reason);
+                }
+                removeNonTransientBreakpointAt(evictedBreakpoint.codeLocation().codePointer());
+            }
+            // TODO (mlvdv) handle transient breakpoints associated with bytecode breakpoints
         }
 
         /**
@@ -342,6 +396,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             return code.clone();
         }
 
+        // TODO (mlvdv) inline
         /**
          * Gets number of bytes that encode the platform dependent instruction(s) representing a breakpoint.
          */
@@ -367,24 +422,24 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          *
          * @return the target code breakpoint a the specified address, if it exists, null otherwise.
          */
-        synchronized VmTargetBreakpoint getTargetBreakpointAt(Address address) {
-            final ClientTargetBreakpoint clientBreakpoint = clientBreakpoints.get(address.toLong());
+        synchronized VmTargetBreakpoint getTargetBreakpointAt(RemoteCodePointer codePointer) {
+            final ClientTargetBreakpoint clientBreakpoint = clientBreakpoints.get(codePointer);
             if (clientBreakpoint != null) {
                 return clientBreakpoint;
             }
-            final SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(address.toLong());
+            final SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(codePointer);
             if (systemBreakpoint != null) {
                 return systemBreakpoint;
             }
-            TransientTargetBreakpoint transientTargetBreakpoint = transientBreakpoints.get(address.toLong());
+            TransientTargetBreakpoint transientTargetBreakpoint = transientBreakpoints.get(codePointer);
             if (transientTargetBreakpoint != null) {
                 return transientTargetBreakpoint;
             }
             try {
                 byte[] c = new byte[code.length];
-                memory().readBytes(address, c);
+                memory().readBytes(codePointer.getAddress(), c);
                 if (Arrays.equals(c, code)) {
-                    CodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(address, "discovered bkpt");
+                    final MachineCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(codePointer.getAddress(), "discovered breakpoint");
                     return new TransientTargetBreakpoint(vm(), this, codeLocation, null);
                 }
             } catch (DataIOError e) {
@@ -395,7 +450,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
         public synchronized VmTargetBreakpoint findClientBreakpoint(MachineCodeLocation compiledCodeLocation) {
             assert compiledCodeLocation.hasAddress();
-            return clientBreakpoints.get(compiledCodeLocation.address().toLong());
+            return clientBreakpoints.get(compiledCodeLocation.codePointer());
         }
 
         /**
@@ -414,10 +469,10 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             }
             VmTargetBreakpoint breakpoint;
             try {
-                breakpoint = getTargetBreakpointAt(codeLocation.address());
+                breakpoint = getTargetBreakpointAt(codeLocation.codePointer());
                 if (breakpoint == null || breakpoint.isTransient()) {
                     final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(vm(), this, codeLocation, null);
-                    final VmTargetBreakpoint oldBreakpoint = clientBreakpoints.put(codeLocation.address().toLong(), clientBreakpoint);
+                    final VmTargetBreakpoint oldBreakpoint = clientBreakpoints.put(codeLocation.codePointer(), clientBreakpoint);
                     assert oldBreakpoint == null;
                     breakpoint = clientBreakpoint;
                     updateAfterBreakpointChanges(true);
@@ -440,17 +495,16 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         VmTargetBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler, VmBytecodeBreakpoint owner) throws MaxVMBusyException {
             vm().lock();
             assert codeLocation.hasAddress();
-            final Address address = codeLocation.address();
-            TeleError.check(address.isNotZero());
+            TeleError.check(codeLocation.codePointer().isCodeLive());
 
             SystemTargetBreakpoint systemBreakpoint;
             try {
-                systemBreakpoint = systemBreakpoints.get(address.toLong());
+                systemBreakpoint = systemBreakpoints.get(codeLocation.codePointer());
                 // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
                 if (systemBreakpoint == null) {
                     systemBreakpoint = new SystemTargetBreakpoint(vm(), this, codeLocation, null, owner);
                     systemBreakpoint.setTriggerEventHandler(handler);
-                    final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
+                    final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(codeLocation.codePointer(), systemBreakpoint);
                     assert oldBreakpoint == null;
                     updateAfterBreakpointChanges(false);
                 }
@@ -475,16 +529,15 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          */
         VmTargetBreakpoint makeTransientBreakpoint(CodeLocation codeLocation) throws MaxVMBusyException {
             assert codeLocation.hasAddress();
-            final Address address = codeLocation.address();
-            TeleError.check(address.isNotZero());
+            TeleError.check(codeLocation.address().isNotZero());
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             try {
-                VmTargetBreakpoint breakpoint = getTargetBreakpointAt(address);
+                VmTargetBreakpoint breakpoint = getTargetBreakpointAt(codeLocation.codePointer());
                 if (breakpoint == null || !breakpoint.isTransient()) {
                     final TransientTargetBreakpoint transientBreakpoint = new TransientTargetBreakpoint(vm(), this, codeLocation, null);
-                    final VmTargetBreakpoint oldBreakpoint = transientBreakpoints.put(address.toLong(), transientBreakpoint);
+                    final VmTargetBreakpoint oldBreakpoint = transientBreakpoints.put(codeLocation.codePointer(), transientBreakpoint);
                     assert oldBreakpoint == null;
                     breakpoint = transientBreakpoint;
                     updateAfterBreakpointChanges(false);
@@ -496,28 +549,15 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         }
 
         /**
-         * Removes the client or system breakpoint, if it exists, at specified target code address in the VM.
-         * <br>
-         * Thread-safe; synchronizes on the VM lock
-         *
-         * @param address
-         * @throws MaxVMBusyException
+         * Removes the client or system breakpoint, if it exists, at specified target code location in the VM.
          */
-        private void removeNonTransientBreakpointAt(Address address) throws MaxVMBusyException {
-            if (!vm().tryLock()) {
-                throw new MaxVMBusyException();
-            }
-            try {
-                final long addressLong = address.toLong();
-                if (clientBreakpoints.remove(addressLong) != null) {
-                    updateAfterBreakpointChanges(true);
-                } else {
-                    if (systemBreakpoints.remove(addressLong) != null) {
-                        updateAfterBreakpointChanges(false);
-                    }
+        private void removeNonTransientBreakpointAt(RemoteCodePointer codePointer) {
+            if (clientBreakpoints.remove(codePointer) != null) {
+                updateAfterBreakpointChanges(true);
+            } else {
+                if (systemBreakpoints.remove(codePointer) != null) {
+                    updateAfterBreakpointChanges(false);
                 }
-            } finally {
-                vm().unlock();
             }
         }
 
@@ -613,7 +653,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         }
 
         private String describeLocation(VmTargetBreakpoint targetBreakpoint) {
-            final MaxMachineCodeRoutine maxMachineCode = vm().machineCode().findMachineCode(targetBreakpoint.address());
+            final MaxMachineCodeRoutine maxMachineCode = vm().machineCode().findMachineCode(targetBreakpoint.codeLocation().codePointer().getAddress());
             if (maxMachineCode != null) {
                 return " in " + maxMachineCode.entityName();
             }

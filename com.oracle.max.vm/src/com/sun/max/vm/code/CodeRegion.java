@@ -151,10 +151,17 @@ public class CodeRegion extends LinearAllocatorRegion {
     protected int[] findIndex;
 
     /**
+     * Number of target methods in the code regions.
+     */
+    public int numTargetMethods() {
+        return length;
+    }
+    /**
      * Gets a copy of the sorted target method list.
      */
     public TargetMethod[] copyOfTargetMethods() {
         int length = this.length;
+        assert length <= targetMethods.length;
         TargetMethod[] result = new TargetMethod[length];
         System.arraycopy(targetMethods, 0, result, 0, length);
         return result;
@@ -243,7 +250,8 @@ public class CodeRegion extends LinearAllocatorRegion {
      */
     public boolean doAllTargetMethods(TargetMethod.Closure c) {
         TargetMethod[] targetMethods = this.targetMethods;
-        for (int i = 0; i < length && i < targetMethods.length; i++) {
+        assert length <= targetMethods.length;
+        for (int i = 0; i < length; i++) {
             TargetMethod targetMethod = targetMethods[i];
             if (targetMethod != null && !c.doTargetMethod(targetMethod)) {
                 return false;

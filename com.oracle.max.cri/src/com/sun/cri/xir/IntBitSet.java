@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +20,44 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins;
+package com.sun.cri.xir;
 
-import com.sun.max.tele.*;
 
-/**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
- */
-public abstract class InspectionListenerAdapter implements InspectionListener {
-
-    public void vmStateChanged(boolean force) {
+public class IntBitSet<T extends Enum> {
+    private int bits;
+    private static <T extends Enum>int bitmask(T bit) {
+        return 1 << bit.ordinal();
     }
 
-    public void breakpointStateChanged() {
+    public boolean isSet(T bit) {
+        return (bits & bitmask(bit)) != 0L;
+    }
+    public boolean isClear(T bit) {
+        return (bits & bitmask(bit)) == 0L;
     }
 
-    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+    public IntBitSet<T>  set(T bit) {
+        bits |= bitmask(bit);
+        return this;
+    }
+    public IntBitSet<T >  clear(T bit) {
+        bits &= ~bitmask(bit);
+        return this;
     }
 
-    public void watchpointSetChanged() {
+    public static <T extends Enum> int set(T bit, int bits) {
+        return bits | bitmask(bit);
     }
 
-    public void viewConfigurationChanged() {
+    public static <T extends Enum> int clear(T bit, int bits) {
+        return bits & ~bitmask(bit);
     }
 
-    public void vmProcessTerminated() {
+    public int value() {
+        return bits;
     }
 
-    public void inspectionEnding() {
+    public boolean equals(IntBitSet<T> set) {
+        return bits == set.bits;
     }
 }
