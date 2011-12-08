@@ -127,6 +127,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
         if (MaxineVM.isDebug()) {
+            // Just so that we get the address of the card entry in a register when inspecting...
             asm.lea(temp, biasedCardTableAddress, temp, 0, Scale.Times1);
         }
     }
