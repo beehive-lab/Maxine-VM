@@ -38,6 +38,7 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
@@ -186,7 +187,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
 
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
             collectHeap = new CollectHeap();
         }
 
