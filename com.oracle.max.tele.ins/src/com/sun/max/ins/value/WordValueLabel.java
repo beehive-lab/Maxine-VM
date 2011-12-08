@@ -908,6 +908,8 @@ public class WordValueLabel extends ValueLabel {
             case CALL_ENTRY_POINT_TEXT:
             case CALL_RETURN_POINT:
             case CALL_RETURN_POINT_TEXT:
+            case NATIVE_FUNCTION:
+            case NATIVE_FUNCTION_TEXT:
             case UNCHECKED_CALL_POINT: {
                 final Address address = value.toWord().asAddress();
                 action = new InspectorAction(inspection(), "View Code at address") {
@@ -962,6 +964,8 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
+                case NATIVE_FUNCTION:
+                case NATIVE_FUNCTION_TEXT:
                 case UNCHECKED_CALL_POINT: {
                     action = views().memory().makeViewAction(address, null);
                     break;
