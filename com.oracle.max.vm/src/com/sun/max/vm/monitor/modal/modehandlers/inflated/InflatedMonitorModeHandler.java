@@ -25,6 +25,7 @@ package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
@@ -140,7 +141,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(false);
             }
         }
@@ -325,7 +326,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(true);
             }
         }
@@ -379,7 +380,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(true);
             }
         }

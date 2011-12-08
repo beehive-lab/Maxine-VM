@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.sun.max.vm.heap.gcx.gen.mse;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
-final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner {
+final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
      /**
      * Number of heap words covered by a single mark.
      */
@@ -118,8 +120,34 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        cardTableRSet.initialize(phase);
     }
 
+    /**
+     * Interface to the heap region manager to request coverage of all heap spaces by remembered set.
+     * This must be called before the first assignment to a reference location so that code
+     * generated with write barrier doesn't fail.
+     */
+    @Override
+    public void initializeCoverage(Address coveredAreaStart, Size coveredAreaSize) {
+        final int pageSize = Platform.platform().pageSize;
+        final Address endOfCoveredArea = coveredAreaStart.plus(coveredAreaSize);
+        final Size cardTableCoveredAreaSize = endOfCoveredArea.minus(Heap.bootHeapRegion.start()).asSize();
+
+        // Allocate Card Table Data at the end of the covered area (i.e., space reserved to the heap regions).
+        final Address cardTableDataStart =  endOfCoveredArea.roundedUpBy(pageSize);
+
+        // We want the card table to cover not just the dynamic heap, but also the boot image and code cache to avoid testing
+        // for boundaries in the write barrier. Note that covering these with the card table doesn't mean we will iterate over these
+        // cards to find references to young objects (i.e., it may be cheaper to use the reference maps for the boot image).
+        final Size cardTableDataSize = cardTableRSet.memoryRequirement(cardTableCoveredAreaSize);
+
+        if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
+            MaxineVM.reportPristineMemoryFailure("card table space", "commit", cardTableDataSize);
+        }
+        cardTableRSet.initialize(Heap.bootHeapRegion.start(), cardTableCoveredAreaSize, cardTableDataStart, cardTableDataSize);
+
+    }
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
@@ -150,30 +178,15 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // The boot image isn't traced (it is assumed a permanent root of collection).
             final Size heapMarkerDatasize = heapMarker.memoryRequirement(heapBounds.size());
 
-            // Heap Marker Data are allocated at end of the space reserved to the heap regions.
-            final Address heapMarkerDataStart = heapBounds.end().roundedUpBy(pageSize);
-
-            // Card Table Data are allocated at end of the space reserved to the heap regions.
-            final Address cardTableDataStart =  heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
-
-            // We want the card table to cover not just the dynamic heap, but also the boot image and code cache to avoid testing
-            // for boundaries in the write barrier. Note that covering these with the card table doesn't mean we will iterate over these
-            // cards to find references to young objects (i.e., it may be cheaper to use the reference maps for the boot image).
-            final Size cardTableCoveredAreaSize = heapBounds.end().minus(Heap.bootHeapRegion.start()).asSize();
-            final Size cardTableDataSize = cardTableRSet.memoryRequirement(cardTableCoveredAreaSize);
+            // Heap Marker Data are allocated after the remembered set's.
+            final Address heapMarkerDataStart = cardTableRSet.memory().end().roundedUpBy(pageSize);
 
             // Address to the first reserved byte unused by the heap scheme.
-            Address unusedReservedSpaceStart = cardTableDataStart.plus(cardTableDataSize).roundedUpBy(pageSize);
+            Address unusedReservedSpaceStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
 
-            if (!unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace())) {
-                MaxineVM.reportPristineMemoryFailure("out of heap data (heap marker + card table", "reserve", heapMarkerDatasize.plus(cardTableDataSize));
+            if (unusedReservedSpaceStart.greaterThan(endOfReservedSpace)) {
+                MaxineVM.reportPristineMemoryFailure("Can't allocate heap marker", "reserve", heapMarkerDatasize);
             }
-
-            // Initialize card table as early as possible since bootstrapping code may modify reference.
-            if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("card table space", "commit", heapMarkerDatasize);
-            }
-            cardTableRSet.initialize(Heap.bootHeapRegion.start(), cardTableCoveredAreaSize, cardTableDataStart, cardTableDataSize);
 
             if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
                 MaxineVM.reportPristineMemoryFailure("heap marker space", "commit", heapMarkerDatasize);
@@ -362,6 +375,27 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     protected void reportTotalGCTimes() {
         // TODO
+    }
+
+    @HOSTED_ONLY
+    @Override
+    public XirWriteBarrierGenAdaptor barrierGenerator(IntBitSet<WriteBarrierSpec> writeBarrierSpec) {
+        if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genTuplePostWriteBarrier(asm, operands[0]);
+                }
+            };
+        } else if (writeBarrierSpec.equals(ARRAY_POST_BARRIER)) {
+            return new XirWriteBarrierGenAdaptor() {
+                @Override
+                public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
+                    cardTableRSet.genArrayPostWriteBarrier(asm, operands[0], operands[1]);
+                }
+            };
+        }
+        return NULL_WRITE_BARRIER_GEN;
     }
 
 }

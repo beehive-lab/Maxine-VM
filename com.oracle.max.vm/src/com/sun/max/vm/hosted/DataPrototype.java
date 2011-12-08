@@ -39,6 +39,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -1164,6 +1165,14 @@ public final class DataPrototype extends Prototype {
         adjustMemoryRegions();
 
         MaxineVM vm = vm();
+        // From now on, all objects have been assigned their final cells location.
+        // This is where scheme can do last minute adjustments to data in the boot image and compute relative offsets
+        // for whatever startup purposes.
+        vm.phase = MaxineVM.Phase.WRITING_IMAGE;
+        // Makes the object to cell map visible to the prototyped VM. Schemes might need it for their WRITING_IMAGE phase.
+        Heap.initObjectToCell(allocationMap());
+        vmConfig().initializeSchemes(Phase.WRITING_IMAGE);
+        // This is the phase the image will be in when loaded by the boot image loader. We set it now before writing the image.
         vm.phase = MaxineVM.Phase.PRIMORDIAL;
         heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion, "heap");
         codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion(), "code");
