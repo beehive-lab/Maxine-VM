@@ -211,6 +211,7 @@ public class JniFunctionsGenerator {
                 out.println("        // Source: " + decl.sourcePos);
 
                 if (!decl.isNative) {
+                    customizer.startFunction(decl);
                     StringBuilder bodyBuffer = new StringBuilder();
                     String body = null;
                     while ((line = lr.readLine()) != null) {
@@ -277,7 +278,6 @@ public class JniFunctionsGenerator {
     private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
-        customizer.startFunction(decl);
         out.println("        Pointer anchor = prologue(env);");
         out.println("        tracePrologue(\"" + decl.name + "\", anchor);");
         if (insertTimers) {
