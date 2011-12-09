@@ -1660,7 +1660,7 @@ public final class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
         if (GraalOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating oop map at opId %d", op.id());
         }
@@ -1687,11 +1687,7 @@ public final class LinearScan {
                 // caller-save registers must not be included into oop-maps at calls
                 assert !op.hasCall() || !operand.isRegister() || !isCallerSave(operand) : "interval is in a caller-save register at a call . register will be overwritten";
 
-                CiValue location = interval.location();
-                if (location.isStackSlot()) {
-                    location = frameMap.toStackAddress((CiStackSlot) location);
-                }
-                info.setOop(location, compilation.compiler.target, frameRefMap, regRefMap);
+                info.setReference(interval.location(), frameMap);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
@@ -1699,7 +1695,7 @@ public final class LinearScan {
                     assert interval.spillDefinitionPos() > 0 : "position not set correctly";
                     assert interval.spillSlot() != null : "no spill slot assigned";
                     assert !interval.operand.isRegister() : "interval is on stack :  so stack slot is registered twice";
-                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation.compiler.target, frameRefMap, regRefMap);
+                    info.setReference(interval.spillSlot(), frameMap);
                 }
             }
         }
@@ -1725,7 +1721,7 @@ public final class LinearScan {
 
     private void computeDebugInfo(IntervalWalker iw, final LIRInstruction op, LIRDebugInfo info) {
         info.initDebugInfo(op, frameMap);
-        computeOopMap(iw, op, info, info.debugInfo().frameRefMap, info.debugInfo().registerRefMap);
+        computeOopMap(iw, op, info);
 
         info.forEachLiveStateValue(new ValueProcedure() {
             @Override
