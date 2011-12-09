@@ -251,9 +251,9 @@ public class CFGPrinter extends CompilationPrinter {
             out.print(entry.getKey().toString()).print(": ").print(entry.getValue() == null ? "[null]" : entry.getValue().toString()).println();
         }
         out.println("=== Inputs ===");
-        printNamedNodes(node, node.inputs().iterator(), "", "\n");
+        printNamedNodes(node, node.inputs().iterator(), "", "\n", null);
         out.println("=== Succesors ===");
-        printNamedNodes(node, node.successors().iterator(), "", "\n");
+        printNamedNodes(node, node.successors().iterator(), "", "\n", null);
         out.println("=== Usages ===");
         if (!node.usages().isEmpty()) {
             for (Node usage : node.usages()) {
@@ -267,8 +267,8 @@ public class CFGPrinter extends CompilationPrinter {
 
         out.print("instruction ");
         out.print(HOVER_START).print(node.getNodeClass().shortName()).print(HOVER_SEP).print(node.getClass().getName()).print(HOVER_END).print(" ");
-        printNamedNodes(node, node.inputs().iterator(), "", "");
-        printNamedNodes(node, node.successors().iterator(), "#", "");
+        printNamedNodes(node, node.inputs().iterator(), "", "", "#NDF");
+        printNamedNodes(node, node.successors().iterator(), "#", "", "#NDF");
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String key = entry.getKey().toString();
             if (key.startsWith("data.") && !key.equals("data.stamp")) {
@@ -278,10 +278,14 @@ public class CFGPrinter extends CompilationPrinter {
         out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 
-    private void printNamedNodes(Node node, NodeClassIterator iter, String prefix, String suffix) {
+    private void printNamedNodes(Node node, NodeClassIterator iter, String prefix, String suffix, String hideSuffix) {
         int lastIndex = -1;
         while (iter.hasNext()) {
             Position pos = iter.nextPosition();
+            if (hideSuffix != null && node.getNodeClass().getName(pos).endsWith(hideSuffix)) {
+                continue;
+            }
+
             if (pos.index != lastIndex) {
                 if (lastIndex != -1) {
                     out.print(suffix);
