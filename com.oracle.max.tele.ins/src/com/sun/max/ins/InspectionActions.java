@@ -1481,7 +1481,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodCodeByAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Method compilation by address...";
+        private static final String DEFAULT_TITLE = "Method compilation...";
 
         public ViewMethodCodeByAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1669,7 +1669,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodBytecodeByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View bytecode...";
+        private static final String DEFAULT_TITLE = "Bytecode...";
 
         public ViewMethodBytecodeByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1718,7 +1718,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodCompilationByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View compiled code...";
+        private static final String DEFAULT_TITLE = "Method compilation...";
 
         public ViewMethodCompilationByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1752,7 +1752,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewNativeFunctionByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View native function by name...";
+        private static final String DEFAULT_TITLE = "Native function...";
 
         public ViewNativeFunctionByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1760,9 +1760,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxNativeLibrary maxNativeLibrary = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
-            if (maxNativeLibrary != null) {
-                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), maxNativeLibrary, "View Native Function...", "View Code", false);
+            final MaxNativeLibrary nativeLibrary = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
+            if (nativeLibrary != null) {
+                final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), nativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
                     focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
                 }
@@ -1914,22 +1914,22 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Action:  displays a body of native code whose location contains
      * an interactively specified address.
      */
-    final class ViewNativeCodeByAddressAction extends InspectorAction {
+    final class ViewNativeFunctionByAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Native method by address...";
+        private static final String DEFAULT_TITLE = "Native function...";
 
-        public ViewNativeCodeByAddressAction(String actionTitle) {
+        public ViewNativeFunctionByAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            // Most likely situation is that we are just aboutMaxine to call a native method in which case RAX is the address
+            // Most likely situation is that we are just about to call a function method in which case RAX is the address
             final MaxThread thread = focus().thread();
             assert thread != null;
             final Address indirectCallAddress = thread.registers().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? vm().bootImageStart() : indirectCallAddress;
-            new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
+            new AddressInputDialog(inspection(), initialAddress, "View native function containing code address...", "View Code") {
                 @Override
                 public void entered(Address address) {
                     focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "native code address specified by user"), true);
@@ -1938,14 +1938,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewNativeCodeByAddressAction = new ViewNativeCodeByAddressAction(null);
+    private final InspectorAction viewNativeFunctinByAddressAction = new ViewNativeFunctionByAddressAction(null);
 
     /**
       * @return Singleton interactive action that displays in the {@link MethodView} a body of native code whose
      * location contains the specified address in the VM.
      */
-    public final InspectorAction viewNativeCodeByAddress() {
-        return viewNativeCodeByAddressAction;
+    public final InspectorAction viewNativeFunctionByAddress() {
+        return viewNativeFunctinByAddressAction;
     }
 
     /**
@@ -1953,8 +1953,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return an interactive action that displays in the {@link MethodView} a body of native code whose
      * location contains the specified address in the VM.
      */
-    public final InspectorAction viewNativeCodeByAddress(String actionTitle) {
-        return new ViewNativeCodeByAddressAction(actionTitle);
+    public final InspectorAction viewNativeFunctionByAddress(String actionTitle) {
+        return new ViewNativeFunctionByAddressAction(actionTitle);
     }
 
     /**
@@ -4279,11 +4279,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists to the console all method compilations and external routines.
+     * Action:  lists to the console all method compilations and native functions.
      */
     final class ListMachineCodeAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List compilations & external routines";
+        private static final String DEFAULT_TITLE = "List compilations & native functions";
 
         ListMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4305,11 +4305,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists all method compilations and external routines to an interactively specified file.
+     * Action:  lists all method compilations and native functions to an interactively specified file.
      */
     final class ListMachineCodeToFileAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "List compilations & external routines to a file...";
+        private static final String DEFAULT_TITLE = "List compilations & native functions to a file...";
 
         ListMachineCodeToFileAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4481,19 +4481,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().viewMethodCodeAtSelection());
                 menu.add(actions().viewMethodCodeAtIP());
                 menu.add(actions().viewMethodMachineCode());
-                final JMenu methodSub = new JMenu("View method code by name");
-                methodSub.add(actions().viewMethodBytecodeByName());
-                methodSub.add(actions().viewMethodCompilationByName());
-                menu.add(methodSub);
+                final JMenu byNameSub = new JMenu("View code by name");
+                byNameSub.add(actions().viewMethodBytecodeByName());
+                byNameSub.add(actions().viewMethodCompilationByName());
+                byNameSub.add(actions().viewNativeFunctionByName());
+                menu.add(byNameSub);
+                final JMenu byAddressSub = new JMenu("View code by address");
+                byAddressSub.add(actions().viewMethodCodeByAddress());
+                byAddressSub.add(actions().viewNativeFunctionByAddress());
+                menu.add(byAddressSub);
                 final JMenu bootMethodSub = new JMenu("View boot image method code");
                 bootMethodSub.add(actions().viewRunMethodCodeInBootImage());
                 bootMethodSub.add(actions().viewThreadRunMethodCodeInBootImage());
                 menu.add(bootMethodSub);
-                final JMenu byAddressSub = new JMenu("View method code by address");
-                byAddressSub.add(actions().viewMethodCodeByAddress());
-                byAddressSub.add(actions().viewNativeCodeByAddress());
-                menu.add(byAddressSub);
-                menu.add(actions().viewNativeFunctionByName());
             }
         };
     }
