@@ -32,7 +32,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.VmFieldAccess.InspectedMemberReifier;
 import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
@@ -48,7 +50,7 @@ import com.sun.max.vm.type.*;
  * by executing the {@link #main(String[])} method in this class (ensuring that the VM
  * class path contains all the {@code com.sun.max} classes).
  */
-public class VmMethodAccess extends AbstractVmHolder {
+public final class VmMethodAccess extends AbstractVmHolder {
 
     private static final int TRACE_VALUE = 1;
 
@@ -129,50 +131,74 @@ public class VmMethodAccess extends AbstractVmHolder {
      *
      * @return methods suitable for setting client-requested breakpoints.
      */
-    public final List<CodeLocation> clientInspectableMethods() {
+    public List<CodeLocation> clientInspectableMethods() {
         return clientInspectableMethods;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called when a method compilation starts
      */
-    public CodeLocation compilationStarted() {
+    public CodeLocation compilationStartedMethodLocation() {
         return compilationStarted;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called when a method compilation finishes.
      */
-    public CodeLocation compilationCompleted() {
+    public CodeLocation compilationCompletedMethodLocation() {
         return compilationCompleted;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called whenever a thread enter its run method (equivalent to whenever a new thread is running) .
      */
-    public CodeLocation vmThreadRun() {
+    public CodeLocation vmThreadRunMethodLocation() {
         return vmThreadRunning;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called whenever a VmThread has detached itself from the active list.
      */
-    public CodeLocation vmThreadDetached() {
+    public CodeLocation vmThreadDetachedMethodLocation() {
         return vmThreadDetached;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called just after each GC starts.
      */
-    public CodeLocation gcStarted() {
+    public CodeLocation gcStartedMethodLocation() {
         return gcStarted;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called just after each GC end.
      */
-    public CodeLocation gcCompleted() {
+    public CodeLocation gcCompletedMethodLocation() {
         return gcCompleted;
+    }
+
+    /**
+     * Gets a representation of a method in the VM matching a particular key, null if not loaded.
+     */
+    public TeleClassMethodActor findClassMathodActor(MethodKey methodKey) {
+        if (vm().tryLock()) {
+            try {
+                final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
+                if (teleClassActor != null) {
+                    // the class has been loaded; find a matching method
+                    final String methodKeyString = methodKey.signature().toJavaString(true, true);
+                    for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
+                        if (teleClassMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
+                            return teleClassMethodActor;
+                        }
+                    }
+                }
+
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) {

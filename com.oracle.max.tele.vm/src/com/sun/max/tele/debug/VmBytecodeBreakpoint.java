@@ -49,13 +49,13 @@ import com.sun.max.vm.tele.*;
 /**
  * A breakpoint located at the beginning of a bytecode instruction
  * in a method in the VM.
- * <br>
+ * <p>
  * When enabled, a bytecode breakpoint creates a machine code
  * breakpoint in each compilation of the specified method.   This
  * is true for compilations that exist when the breakpoint is created,
  * as well as all subsequent compilations.  When
  * disabled, all related target code breakpoints are removed.
- * <br>
+ * <p>
  * Conditions are supported; they are set in each target code
  * breakpoint created for this breakpoint.
  */
@@ -76,15 +76,15 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
     private boolean enabled = true;
 
-    // Breakpoints are unconditional by default.
+    // Breakpoint is unconditional by default.
     private BreakpointCondition condition = null;
 
     // Private key used by the manager.
     private MethodPositionKey methodPositionKey;
 
     /**
-     * All target code breakpoints created in compilations of the method in the VM.
-     * Non-null iff this breakpoint is enabled; null if disabled.
+     * All machine code breakpoints created in compilations of the method in the VM.
+     * Non-null if this breakpoint is enabled; null if disabled.
      */
     private List<VmTargetBreakpoint> targetBreakpoints = new ArrayList<VmTargetBreakpoint>();
 
@@ -108,8 +108,9 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     }
 
     /**
-     * Creates a target code breakpoint in a compilation of this method in the VM, at a location
-     * corresponding to the bytecode location for which this breakpoint was created.
+     * Creates a machine code breakpoint in a specific compilation of this method in the VM, at a location
+     * corresponding to the bytecode location for which this breakpoint was created.  Note that in some
+     * cases there may be more than one.
      *
      * @param teleTargetMethod a compilation in the VM of the method for which this breakpoint was created.
      * @throws MaxVMBusyException
@@ -117,21 +118,21 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     private void createTargetBreakpointForMethod(TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
         assert enabled;
         // Delegate creation of the target breakpoints to the manager.
-        final List<VmTargetBreakpoint> newBreakpoints = bytecodeBreakpointManager.createTargetBreakpoints(this, teleTargetMethod);
-        if (newBreakpoints.isEmpty()) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "failed to create targetBreakpoint for " + this);
+        final List<VmTargetBreakpoint> newTargetBreakpoints = bytecodeBreakpointManager.createTargetBreakpoints(this, teleTargetMethod);
+        if (newTargetBreakpoints.isEmpty()) {
+            TeleWarning.message(tracePrefix() + "failed to create targetBreakpoint for " + this);
         } else {
             // TODO (mlvdv) If we support conditions, need to combine it with the trigger handler added by factory method.
-            for (VmTargetBreakpoint newBreakpoint : newBreakpoints) {
-                targetBreakpoints.add(newBreakpoint);
-                Trace.line(TRACE_VALUE, tracePrefix() + "created " + newBreakpoint + " for " + this);
+            for (VmTargetBreakpoint newTargetBreakpoint : newTargetBreakpoints) {
+                targetBreakpoints.add(newTargetBreakpoint);
+                Trace.line(TRACE_VALUE, tracePrefix() + "created " + newTargetBreakpoint + " for " + this);
             }
         }
     }
 
     /**
      * Handle notification that the method for which this breakpoint was created has just been compiled, possibly
-     * but not necessarily the first of several compilations.
+     * but not necessarily the first of more than one.
      *
      * @param teleTargetMethod a just completed compilation in the VM of the method for which this breakpoint was created.
      * @throws MaxVMBusyException
@@ -161,10 +162,10 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             this.enabled = enabled;
             if (enabled) {
                 assert targetBreakpoints == null;
-                // Create a target code breakpoint in every existing compilation at the location
+                // Create a machine code breakpoint in every existing compilation at the location
                 // best corresponding to the bytecode location of this breakpoint.
                 targetBreakpoints = new ArrayList<VmTargetBreakpoint>();
-                for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(vm(), codeLocation().methodKey())) {
+                for (TeleTargetMethod teleTargetMethod : vm().machineCode().findCompilations(codeLocation().methodKey())) {
                     createTargetBreakpointForMethod(teleTargetMethod);
                 }
             } else {
@@ -212,6 +213,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         try {
             Trace.line(TRACE_VALUE, tracePrefix() + "removing breakpoint=" + this);
             if (enabled) {
+                // Be sure to clear any associated machine code breakpoints.
                 setEnabled(false);
             }
             bytecodeBreakpointManager.removeBreakpoint(this);
@@ -238,12 +240,11 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     /**
      * A key for recording abstract bytecode instruction location in a method;
      * defines equality to be same method descriptor, same offset.
-     *
      */
     private static final class MethodPositionKey extends DefaultMethodKey {
 
         /**
-         * Create a key that uniquely identifies a method and bytecode position.
+         * Creates a key that uniquely identifies a method and bytecode position.
          * Equality defined in terms of equivalence of the method key and position.
          *
          * @param codeLocation a code location that must have a method key defined.
@@ -288,19 +289,15 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
     /**
      * A manager that creates, tracks, and removes bytecode breakpoints from the VM.
-     * <br>
+     * <p>
      * Bytecodes breakpoints can be created before a specified method is compiled
-     * or even loaded.
-     * <br>
+     * or even loaded, in which case they are described by an abstract key (descriptor).
+     * <p>
      * A bytecode breakpoint causes a target code breakpoint to be created for every
      * compilation of the specified method, current and future.
-     *
      */
     public static final class BytecodeBreakpointManager extends AbstractVmHolder implements TeleVMCache {
 
-        /**
-         *
-         */
         protected final class CompilationEventHandler implements VMTriggerEventHandler {
             final boolean preCompilationEvent;
 
@@ -330,7 +327,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                         // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                         final Reference targetMethodReference = referenceManager().makeReference(teleIntegerRegisters.getValue(parameter3));
                         if (targetMethodReference.isZero()) {
-                            ProgramWarning.message("targetMethod parameter to post-compilation trigger method was null");
+                            TeleWarning.message("targetMethod parameter to post-compilation trigger method was null");
                             continue;
                         }
                         TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
@@ -411,7 +408,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
         /**
          * Adds a listener for breakpoint changes.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param listener a breakpoint listener
@@ -423,7 +420,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
         /**
          * Removes a listener for breakpoint changes.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param listener a breakpoint listener
@@ -464,7 +461,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
          * Returns a clientBreakpoint matching a method location described
          * abstractly, newly created if one does not already exist for the location.
          * Fails if there is a system breakpoint already at that location.
-         * <br>
+         * <p>
          * Thread-safe; synchronizes on VM lock
          *
          * @param codeLocation description of a bytecode position in a method
@@ -497,7 +494,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
          * Returns a system breakpoint at the entry of a method location described
          * abstractly, newly created if one does not already exist for the location.
          * Fails if there is a client breakpoint already at that location.
-         * <br>
+         * <p>
          * Thread-safe; synchronizes on VM lock
          *
          * @param codeLocation description of a bytecode position in a method
@@ -561,7 +558,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
         /**
          * Removes a breakpoint at the described position, if one exists.
-         * <br>
+         * <p>
          * Assumes that all state related to the breakpoint has already
          * been removed.
          *
@@ -587,7 +584,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         /**
          * Sets target code breakpoints on methods known to be called before and after of each method
          * compilation in the VM.  Arguments identify the method being compiled.
-         * <br>
+         * <p>
          * The arguments are read using low-level, type-unsafe techniques.  The order and types
          * of arguments processed here must match those of the compiler method where the
          * breakpoint is set.
@@ -599,12 +596,12 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             assert compilationStartedBreakpoint == null;
             assert compilationCompletedBreakpoint == null;
             if (usePrecompilationBreakpoints) {
-                compilationStartedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationStarted(), null);
+                compilationStartedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationStartedMethodLocation(), null);
                 compilationStartedBreakpoint.setDescription("System trap for compilation start");
                 compilationStartedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(true));
                 Trace.line(TRACE_VALUE, tracePrefix + "creating compilation started breakpoint=" + compilationStartedBreakpoint);
             }
-            compilationCompletedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationCompleted(), null);
+            compilationCompletedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationCompletedMethodLocation(), null);
             compilationCompletedBreakpoint.setDescription("System trap for compilation end");
             compilationCompletedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(false));
             Trace.line(TRACE_VALUE, tracePrefix + "creating compilation completed breakpoint=" + compilationCompletedBreakpoint);
@@ -633,15 +630,15 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
          * but in the special case where bytecode index is -1, which specifies the beginning
          * of the compiled method's prologue, there may be more than one for different kinds
          * of calls.
-         * <br>
+         * <p>
          * May fail when it is not possible to map the bytecode location into a target code location,
          * for example in optimized code where deoptimization is not supported.
-         * <br>
+         * <p>
          * Trigger events are delegated to the owning bytecode breakpoint.
          *
          * @param owner the breakpoint on whose behalf this breakpoint is being created.
          * @param teleTargetMethod a compilation in the VM of the method specified in the key
-         * @return a target code breakpoint at a location in the compiled method corresponding
+         * @return  machine code breakpoints at a location in the compiled method corresponding
          * to the bytecode location specified in the key; null if unable to create.
          * @throws MaxVMBusyException
          */
@@ -724,7 +721,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         /**
          * Writes a description of every bytecode breakpoint to the stream, including those usually not shown to clients,
          * with more detail than typically displayed.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param printStream

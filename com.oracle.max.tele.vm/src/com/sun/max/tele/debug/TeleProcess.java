@@ -194,9 +194,9 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                                     teleBreakpointEvents.add(new TeleBreakpointEvent(breakpoint, thread));
                                     resumeExecution = false;
                                 } else {
-                                    if (breakpoint.codeLocation().equals(methods().vmThreadRun())) {
+                                    if (breakpoint.codeLocation().equals(methods().vmThreadRunMethodLocation())) {
                                         newlystarted++;
-                                    } else if (breakpoint.codeLocation().equals(methods().vmThreadDetached())) {
+                                    } else if (breakpoint.codeLocation().equals(methods().vmThreadDetachedMethodLocation())) {
                                         newlydetached++;
                                     }
                                     Trace.line(TRACE_VALUE, tracePrefix() + (resumeExecution ? " RESUMING" : " STOPPING") + " execution after thread [id=" + thread.id() + "] triggered breakpoint");
