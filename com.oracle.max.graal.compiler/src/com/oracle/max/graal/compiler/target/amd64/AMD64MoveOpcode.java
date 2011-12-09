@@ -37,7 +37,7 @@ public class AMD64MoveOpcode {
         MOVE;
 
         @Override
-        public LIRInstruction create(CiValue result, final CiValue input) {
+        public LIRInstruction create(CiValue result, CiValue input) {
             assert !result.isAddress() && !input.isAddress();
             assert result.kind == result.kind.stackKind() && result.kind != CiKind.Illegal;
             CiValue[] inputs = new CiValue[] {input};

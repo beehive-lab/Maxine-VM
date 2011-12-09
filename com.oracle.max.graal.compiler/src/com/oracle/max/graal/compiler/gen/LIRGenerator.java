@@ -109,7 +109,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      */
     @Override
     public CiVariable newVariable(CiKind kind) {
-        return operands.newVariable(kind);
+        return operands.newVariable(kind.stackKind());
     }
 
     @Override
@@ -637,8 +637,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     public CiVariable emitConditional(BooleanNode node, CiValue trueValue, CiValue falseValue) {
-        assert trueValue instanceof CiConstant && trueValue.kind == CiKind.Int;
-        assert falseValue instanceof CiConstant && falseValue.kind == CiKind.Int;
+        assert trueValue instanceof CiConstant && trueValue.kind.stackKind() == CiKind.Int;
+        assert falseValue instanceof CiConstant && falseValue.kind.stackKind() == CiKind.Int;
 
         if (node instanceof NullCheckNode) {
             return emitNullCheckConditional((NullCheckNode) node, trueValue, falseValue);
@@ -1082,9 +1082,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
                 if (setInstructionResult) {
-                    outputOperand = newVariable(instruction.kind().stackKind());
+                    outputOperand = newVariable(instruction.kind());
                 } else {
-                    outputOperand = newVariable(resultOperand.kind.stackKind());
+                    outputOperand = newVariable(resultOperand.kind);
                 }
                 assert operands[resultOperand.index] == null;
             }

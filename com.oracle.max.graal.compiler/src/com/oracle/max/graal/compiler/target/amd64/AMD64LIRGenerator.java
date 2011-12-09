@@ -110,7 +110,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitMove(CiValue input) {
-        CiVariable result = newVariable(input.kind.stackKind());
+        CiVariable result = newVariable(input.kind);
         append(MOVE.create(result, input));
         return result;
     }
@@ -122,7 +122,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, boolean canTrap) {
-        CiVariable result = newVariable(kind.stackKind());
+        CiVariable result = newVariable(kind);
         append(LOAD.create(result, loadAddress.base, loadAddress.index, loadAddress.scale, loadAddress.displacement, kind, canTrap ? state() : null));
         return result;
     }
@@ -199,12 +199,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitNegate(CiValue input) {
         CiVariable result = newVariable(input.kind);
-        append(MOVE.create(result, input));
         switch (input.kind) {
-            case Int:    append(INEG.create(result)); break;
-            case Long:   append(LNEG.create(result)); break;
-            case Float:  append(FXOR.create(result, CiConstant.forFloat(Float.intBitsToFloat(0x80000000)))); break;
-            case Double: append(DXOR.create(result, CiConstant.forDouble(Double.longBitsToDouble(0x8000000000000000L)))); break;
+            case Int:    append(INEG.create(result, input)); break;
+            case Long:   append(LNEG.create(result, input)); break;
+            case Float:  append(FXOR.create(result, input, CiConstant.forFloat(Float.intBitsToFloat(0x80000000)))); break;
+            case Double: append(DXOR.create(result, input, CiConstant.forDouble(Double.longBitsToDouble(0x8000000000000000L)))); break;
             default: throw Util.shouldNotReachHere();
         }
         return result;
@@ -213,12 +212,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitAdd(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(IADD.create(result, loadNonConst(b))); break;
-            case Long:   append(LADD.create(result, loadNonConst(b))); break;
-            case Float:  append(FADD.create(result, loadNonConst(b))); break;
-            case Double: append(DADD.create(result, loadNonConst(b))); break;
+            case Int:    append(IADD.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LADD.create(result, a, loadNonConst(b))); break;
+            case Float:  append(FADD.create(result, a, loadNonConst(b))); break;
+            case Double: append(DADD.create(result, a, loadNonConst(b))); break;
             default:     throw Util.shouldNotReachHere();
         }
         return result;
@@ -227,13 +225,12 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitSub(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(ISUB.create(result, loadNonConst(b))); break;
-            case Long:   append(LSUB.create(result, loadNonConst(b))); break;
-            case Float:  append(FSUB.create(result, loadNonConst(b))); break;
-            case Double: append(DSUB.create(result, loadNonConst(b))); break;
-            default:     throw Util.shouldNotReachHere("kind=" + a.kind);
+            case Int:    append(ISUB.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LSUB.create(result, a, loadNonConst(b))); break;
+            case Float:  append(FSUB.create(result, a, loadNonConst(b))); break;
+            case Double: append(DSUB.create(result, a, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
         }
         return result;
     }
@@ -241,12 +238,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitMul(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(IMUL.create(result, loadNonConst(b))); break;
-            case Long:   append(LMUL.create(result, loadNonConst(b))); break;
-            case Float:  append(FMUL.create(result, loadNonConst(b))); break;
-            case Double: append(DMUL.create(result, loadNonConst(b))); break;
+            case Int:    append(IMUL.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LMUL.create(result, a, loadNonConst(b))); break;
+            case Float:  append(FMUL.create(result, a, loadNonConst(b))); break;
+            case Double: append(DMUL.create(result, a, loadNonConst(b))); break;
             default:     throw Util.shouldNotReachHere();
         }
         return result;
@@ -254,41 +250,39 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
-                append(MOVE.create(RAX_I, load(a)));
+                append(MOVE.create(RAX_I, a));
                 append(IDIV.create(RAX_I, state(), RAX_I, load(b)));
-                append(MOVE.create(result, RAX_I));
-                break;
+                return emitMove(RAX_I);
             case Long:
-                append(MOVE.create(RAX_L, load(a)));
+                append(MOVE.create(RAX_L, a));
                 append(LDIV.create(RAX_L, state(), RAX_L, load(b)));
-                append(MOVE.create(result, RAX_L));
-                break;
-            case Float:
-                append(MOVE.create(result, a));
-                append(FDIV.create(result, loadNonConst(b)));
-                break;
-            case Double:
-                append(MOVE.create(result, a));
-                append(DDIV.create(result, loadNonConst(b)));
-                break;
+                return emitMove(RAX_L);
+            case Float: {
+                CiVariable result = newVariable(a.kind);
+                append(FDIV.create(result, a, loadNonConst(b)));
+                return result;
+            }
+            case Double: {
+                CiVariable result = newVariable(a.kind);
+                append(DDIV.create(result, a, loadNonConst(b)));
+                return result;
+            }
             default:
                 throw Util.shouldNotReachHere();
         }
-        return result;
     }
 
     @Override
     public CiVariable emitRem(CiValue a, CiValue b) {
         switch(a.kind) {
             case Int:
-                append(MOVE.create(RAX_I, load(a)));
+                append(MOVE.create(RAX_I, a));
                 append(IREM.create(RDX_I, state(), RAX_I, load(b)));
                 return emitMove(RDX_I);
             case Long:
-                append(MOVE.create(RAX_L, load(a)));
+                append(MOVE.create(RAX_L, a));
                 append(LREM.create(RDX_L, state(), RAX_L, load(b)));
                 return emitMove(RDX_L);
             case Float:
@@ -302,52 +296,43 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitUDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
                 append(UIDIV.create(RAX_I, state(), RAX_I, load(b)));
-                append(MOVE.create(result, RAX_I));
-                break;
+                return emitMove(RAX_I);
             case Long:
                 append(MOVE.create(RAX_L, load(a)));
                 append(ULDIV.create(RAX_L, state(), RAX_L, load(b)));
-                append(MOVE.create(result, RAX_L));
-                break;
+                return emitMove(RAX_L);
             default:
                 throw Util.shouldNotReachHere();
         }
-        return result;
     }
 
     @Override
     public CiVariable emitURem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
                 append(UIREM.create(RDX_I, state(), RAX_I, load(b)));
-                append(MOVE.create(result, RDX_I));
-                break;
+                return emitMove(RDX_I);
             case Long:
                 append(MOVE.create(RAX_L, load(a)));
                 append(ULREM.create(RDX_L, state(), RAX_L, load(b)));
-                append(MOVE.create(result, RDX_L));
-                break;
+                return emitMove(RDX_L);
             default:
                 throw Util.shouldNotReachHere();
         }
-        return result;
     }
 
 
     @Override
     public CiVariable emitAnd(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(IAND.create(result, loadNonConst(b))); break;
-            case Long:   append(LAND.create(result, loadNonConst(b))); break;
+            case Int:    append(IAND.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LAND.create(result, a, loadNonConst(b))); break;
             default:     throw Util.shouldNotReachHere();
         }
         return result;
@@ -356,10 +341,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitOr(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(IOR.create(result, loadNonConst(b))); break;
-            case Long:   append(LOR.create(result, loadNonConst(b))); break;
+            case Int:    append(IOR.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LOR.create(result, a, loadNonConst(b))); break;
             default:     throw Util.shouldNotReachHere();
         }
         return result;
@@ -368,10 +352,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitXor(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch(a.kind) {
-            case Int:    append(IXOR.create(result, loadNonConst(b))); break;
-            case Long:   append(LXOR.create(result, loadNonConst(b))); break;
+            case Int:    append(IXOR.create(result, a, loadNonConst(b))); break;
+            case Long:   append(LXOR.create(result, a, loadNonConst(b))); break;
             default:     throw Util.shouldNotReachHere();
         }
         return result;
@@ -381,10 +364,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitShl(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch (a.kind) {
-            case Int:    append(ISHL.create(result, loadShiftCount(b))); break;
-            case Long:   append(LSHL.create(result, loadShiftCount(b))); break;
+            case Int:    append(ISHL.create(result, a, loadShiftCount(b))); break;
+            case Long:   append(LSHL.create(result, a, loadShiftCount(b))); break;
             default: Util.shouldNotReachHere();
         }
         return result;
@@ -393,10 +375,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitShr(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch (a.kind) {
-            case Int:    append(ISHR.create(result, loadShiftCount(b))); break;
-            case Long:   append(LSHR.create(result, loadShiftCount(b))); break;
+            case Int:    append(ISHR.create(result, a, loadShiftCount(b))); break;
+            case Long:   append(LSHR.create(result, a, loadShiftCount(b))); break;
             default: Util.shouldNotReachHere();
         }
         return result;
@@ -405,10 +386,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitUShr(CiValue a, CiValue b) {
         CiVariable result = newVariable(a.kind);
-        append(MOVE.create(result, a));
         switch (a.kind) {
-            case Int:    append(UISHR.create(result, loadShiftCount(b))); break;
-            case Long:   append(ULSHR.create(result, loadShiftCount(b))); break;
+            case Int:    append(UISHR.create(result, a, loadShiftCount(b))); break;
+            case Long:   append(ULSHR.create(result, a, loadShiftCount(b))); break;
             default: Util.shouldNotReachHere();
         }
         return result;
@@ -427,7 +407,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitConvert(ConvertNode.Op opcode, CiValue inputVal) {
         CiVariable input = load(inputVal);
-        CiVariable result = newVariable(opcode.to.stackKind());
+        CiVariable result = newVariable(opcode.to);
         switch (opcode) {
             case I2L: append(I2L.create(result, input)); break;
             case L2I: append(L2I.create(result, input)); break;

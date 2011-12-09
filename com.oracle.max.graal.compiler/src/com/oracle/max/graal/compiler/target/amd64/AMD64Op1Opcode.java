@@ -31,13 +31,25 @@ import com.sun.cri.ci.*;
 public enum AMD64Op1Opcode implements LIROpcode {
     INEG, LNEG;
 
-    public LIRInstruction create(CiVariable inputAndResult) {
-        CiValue[] inputs = new CiValue[] {inputAndResult};
+    public LIRInstruction create(CiVariable result, CiValue input) {
+        CiValue[] inputs = new CiValue[] {input};
+        CiValue[] temps = new CiValue[] {input};
 
-        return new AMD64LIRInstruction(this, inputAndResult, null, inputs) {
+        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                AMD64MoveOpcode.move(tasm, masm, result(), input(0));
                 emit(tasm, masm, result());
+            }
+
+            @Override
+            public boolean inputCanBeMemory(int index) {
+                return true;
+            }
+
+            @Override
+            public int registerHint() {
+                return 0;
             }
         };
     }

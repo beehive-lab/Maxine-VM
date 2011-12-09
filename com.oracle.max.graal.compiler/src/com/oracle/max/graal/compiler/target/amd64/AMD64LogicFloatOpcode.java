@@ -32,15 +32,29 @@ public enum AMD64LogicFloatOpcode implements LIROpcode {
     FAND, FOR, FXOR,
     DAND, DOR, DXOR;
 
-    public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        assert (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)
-            || (name().startsWith("D") && leftAndResult.kind == CiKind.Double && right.kind == CiKind.Double);
+    public LIRInstruction create(CiVariable result, CiValue left, CiValue right) {
+        assert (name().startsWith("F") && result.kind == CiKind.Float && left.kind == CiKind.Float && right.kind == CiKind.Float)
+            || (name().startsWith("D") && result.kind == CiKind.Double && left.kind == CiKind.Double && right.kind == CiKind.Double);
 
-        CiValue[] inputs = new CiValue[] {leftAndResult, right};
-        return new AMD64LIRInstruction(this, leftAndResult, null, inputs) {
+        CiValue[] inputs = new CiValue[] {left, right};
+        CiValue[] temps = new CiValue[] {right};
+
+        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                assert !(input(1) instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(input(1)) : "result and right must be different registers";
+                AMD64MoveOpcode.move(tasm, masm, result(), input(0));
                 emit(tasm, masm, result(), input(1));
+            }
+
+            @Override
+            public boolean inputCanBeMemory(int index) {
+                return true;
+            }
+
+            @Override
+            public int registerHint() {
+                return 0;
             }
         };
     }
