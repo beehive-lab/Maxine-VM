@@ -398,27 +398,19 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * E.g. user supplied name or "@0xffffffffffffffff"
+     * E.g. "virtualMemory_pageAlign" if known, default "@0xffffffffffffffff"
      */
-    public String veryShortName(MaxNativeFunction nativeFunction) {
+    public String shortName(MaxNativeFunction nativeFunction) {
         final String title = nativeFunction.name();
         return title == null ? "@0x" + nativeFunction.getCodeStart().toHexString() : title;
     }
 
     /**
-     * E.g. user supplied name or "@0xffffffffffffffff"
-     */
-    public String shortName(MaxNativeFunction nativeFunction) {
-        final String title = nativeFunction.qualName();
-        return title == null ? "@0x" + nativeFunction.getCodeStart().toHexString() : title;
-    }
-
-    /**
-     * E.g. user supplied name or "Native code @0xffffffffffffffff"
+     * E.g. "libjvmlinkage:virtualMemory_pageAlign" if known, default "@0xffffffffffffffff"
      */
     public String longName(MaxNativeFunction nativeFunction) {
         final String title = nativeFunction.qualName();
-        return title == null ? "Native function @" + nativeFunction.getCodeStart().to0xHexString() : "Native function: " + title;
+        return title == null ? "Native function @" + nativeFunction.getCodeStart().to0xHexString() : title;
     }
 
     /**
