@@ -123,6 +123,6 @@ public interface TeleVMAccess {
      * @return the singleton factory for creating and managing VM watchpoints, or
      * null if watchpoints not supported.
      */
-    VmWatchpoint.WatchpointManager watchpointManager();
+    VmWatchpoint.VmWatchpointManager watchpointManager();
 
 }
