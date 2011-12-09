@@ -255,16 +255,16 @@ public abstract class LIRInstruction {
             buf.append(")");
         }
 
-        if (temps.length > 1) {
-            buf.append("{");
+        if (temps.length > 0) {
+            buf.append(" [");
         }
         sep = "";
         for (CiValue temp : temps) {
             buf.append(sep).append(operandFmt.format(temp));
             sep = ", ";
         }
-        if (temps.length > 1) {
-            buf.append("}");
+        if (temps.length > 0) {
+            buf.append("]");
         }
         return buf.toString();
     }
