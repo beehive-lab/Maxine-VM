@@ -775,28 +775,28 @@ public abstract class TeleVM implements MaxVM {
         this.watchpointManager = teleProcess.watchpointsEnabled() ? VmWatchpointManager.make(this, teleProcess) : null;
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
-        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStarted(), "before gc begins") {
+        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStartedMethodLocation(), "before gc begins") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
                 listener.gcStarted();
             }
         };
 
-        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompleted(), "after gc completion") {
+        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompletedMethodLocation(), "after gc completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
                 listener.gcCompleted();
             }
         };
 
-        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(methodAccess.vmThreadRun(), "at VmThread entry") {
+        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(methodAccess.vmThreadRunMethodLocation(), "at VmThread entry") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadEntryListener listener) {
                 listener.entered(thread);
             }
         };
 
-        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(methodAccess.vmThreadDetached(), "after VmThread detach") {
+        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(methodAccess.vmThreadDetachedMethodLocation(), "after VmThread detach") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadDetachedListener listener) {
                 listener.detached(thread);

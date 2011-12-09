@@ -33,6 +33,8 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
@@ -270,6 +272,29 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
 
     public TeleCompilation findCompilation(RemoteCodePointer codePointer) {
         return findCompilation(codePointer.getAddress());
+    }
+
+
+    /**
+     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
+     * as a result of inlining.
+     *
+     * TODO: Once inlining dependencies are tracked, this method needs to use them.
+     *
+     * @param methodKey the key denoting a method for which the target methods are being requested
+     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the method
+     *         matching {@code methodKey}
+     */
+    public List<TeleTargetMethod> findCompilations(MethodKey methodKey) {
+        final TeleClassMethodActor teleClassMethodActor = methods().findClassMathodActor(methodKey);
+        if (teleClassMethodActor != null) {
+            final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
+            for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
+                result.add(teleTargetMethod);
+            }
+            return result;
+        }
+        return Collections.emptyList();
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {

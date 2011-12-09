@@ -156,36 +156,6 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
     }
 
     /**
-     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
-     * as a result of inlining.
-     *
-     * TODO: Once inlining dependencies are tracked, this method needs to use them.
-     *
-     * @param vm the VM to search
-     * @param methodKey the key denoting a method for which the target methods are being requested
-     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the method
-     *         matching {@code methodKey}
-     */
-    public static List<TeleTargetMethod> get(MaxVM vm, MethodKey methodKey) {
-        TeleClassActor teleClassActor = vm.classes().findTeleClassActor(methodKey.holder());
-        if (teleClassActor != null) {
-            final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
-            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-                if (teleClassMethodActor.compilationCount() > 0) {
-                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-                    if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
-                        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-                            result.add(teleTargetMethod);
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-        return Collections.emptyList();
-    }
-
-    /**
      * The location in VM memory of the fixed sentinel assigned to the code field of the target method when the code is
      * evicted. Holds the value {@link Address#zero()} until the sentinel is discovered.
      *
