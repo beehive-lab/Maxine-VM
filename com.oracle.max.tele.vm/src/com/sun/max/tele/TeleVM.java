@@ -47,6 +47,7 @@ import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.VmBytecodeBreakpoint.BytecodeBreakpointManager;
+import com.sun.max.tele.debug.VmWatchpoint.VmWatchpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -603,7 +604,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private final VmBreakpointManager breakpointManager;
 
-    private final VmWatchpoint.WatchpointManager watchpointManager;
+    private final VmWatchpoint.VmWatchpointManager watchpointManager;
 
     private final VmThreadAccess threadAccess;
 
@@ -771,7 +772,7 @@ public abstract class TeleVM implements MaxVM {
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
         this.breakpointManager = VmBreakpointManager.make(this);
-        this.watchpointManager = teleProcess.getWatchpointManager();
+        this.watchpointManager = teleProcess.watchpointsEnabled() ? VmWatchpointManager.make(this, teleProcess) : null;
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
         this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStarted(), "before gc begins") {
@@ -997,7 +998,7 @@ public abstract class TeleVM implements MaxVM {
         return breakpointManager;
     }
 
-    public final VmWatchpoint.WatchpointManager watchpointManager() {
+    public final VmWatchpoint.VmWatchpointManager watchpointManager() {
         return watchpointManager;
     }
 
