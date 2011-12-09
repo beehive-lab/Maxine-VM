@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -51,6 +52,11 @@ public class LIRDebugInfo {
     }
 
 
+    /**
+     * Helper class to register a monitor index in the debug information.
+     * The {@link CiStackSlot} of the monitor location can only be computed when the frame size has
+     * been fixed, i.e., after register allocation.  Until then, the monitor index is stored using this class.
+     */
     public static class MonitorIndex extends CiValue {
         public final int index;
 
@@ -77,11 +83,25 @@ public class LIRDebugInfo {
         }
     }
 
+    /**
+     * Iterator interface for iterating all variables of a frame state.
+     */
     public interface ValueProcedure {
+        /**
+         * The iterator method.
+         *
+         * @param value The variable that is iterated.
+         * @return The new value that should replace variable, or {@code null} if the variable should remain unchanged.
+         */
         CiValue doValue(CiVariable value);
     }
 
 
+    /**
+     * Iterates the frame state and calls the {@link ValueProcedure} for every variable.
+     *
+     * @param proc The procedure called for variables.
+     */
     public void forEachLiveStateValue(ValueProcedure proc) {
         CiBitMap processedObjects = null;
         for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
@@ -116,9 +136,19 @@ public class LIRDebugInfo {
     }
 
 
+    /**
+     * Create the initial {@link CiDebugInfo} object. This initializes the reference maps.
+     * This method requires the size of the stack frame to be known, i.e., this method must be called
+     * after the register allocator has allocated all spill slots and finalized the frame.
+     *
+     * @param op The instruction that contains this debug info.
+     * @param frameMap The frame map used for the compilation.
+     */
     public void initDebugInfo(LIRInstruction op, FrameMap frameMap) {
         CiBitMap frameRefMap = frameMap.initFrameRefMap();
         CiBitMap regRefMap = op.hasCall() ? null : new CiBitMap(frameMap.target.arch.registerReferenceMapBitCount);
+
+        debugInfo = new CiDebugInfo(topFrame, regRefMap, frameRefMap);
 
         // Add locks that are in the designated frame area.
         for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
@@ -127,48 +157,47 @@ public class LIRDebugInfo {
                 if (lock instanceof MonitorIndex) {
                     int index = ((MonitorIndex) lock).index;
                     cur.values[i + cur.numLocals + cur.numStack] = frameMap.toMonitorBaseStackAddress(index);
-                    setOop(frameMap.toMonitorObjectStackAddress(index), frameMap.target, frameRefMap, regRefMap);
+                    setReference(frameMap.toMonitorObjectStackAddress(index), frameMap);
                 }
             }
         }
 
-        // Add additional stack slots for outoing method parameters.
+        // Add additional stack slots for outgoing method parameters.
         if (pointerSlots != null) {
             for (CiStackSlot v : pointerSlots) {
-                setOop(v, frameMap.target, frameRefMap, regRefMap);
+                setReference(v, frameMap);
             }
         }
-
-        debugInfo = new CiDebugInfo(topFrame, regRefMap, frameRefMap);
     }
 
-    public void setOop(CiValue location, CiTarget target, CiBitMap frameRefMap, CiBitMap regRefMap) {
-        if (location.isAddress()) {
-            CiAddress stackLocation = (CiAddress) location;
-            assert stackLocation.index.isIllegal();
-            if (stackLocation.base == CiRegister.Frame.asValue()) {
-                int offset = stackLocation.displacement;
-                assert offset % target.wordSize == 0 : "must be aligned";
-                int stackMapIndex = offset / target.wordSize;
-                setBit(frameRefMap, stackMapIndex);
-            }
-        } else if (location.isStackSlot()) {
+    /**
+     * Marks the specified location as a reference in the reference map of the debug information.
+     * The location must be a {@link CiRegisterValue} or a {@link CiStackSlot}. Note that a {@link CiAddress}
+     * cannot be tracked by reference maps, and that a {@link CiConstant} does not have to be added
+     * manually because it is automatically tracked.
+     *
+     * @param location The stack slot or register to be added to the reference map.
+     * @param frameMap The frame map used for the compilation.
+     */
+    public void setReference(CiValue location, FrameMap frameMap) {
+        if (location instanceof CiStackSlot) {
             CiStackSlot stackSlot = (CiStackSlot) location;
-            assert !stackSlot.inCallerFrame();
-            assert target.spillSlotSize == target.wordSize;
-            setBit(frameRefMap, stackSlot.index());
+            int offset = frameMap.offsetForStackSlot(stackSlot);
+            assert offset % frameMap.target.wordSize == 0 : "must be aligned";
+            setBit(debugInfo.frameRefMap, offset / frameMap.target.wordSize);
+
+        } else if (location instanceof CiRegisterValue) {
+            CiRegister register = ((CiRegisterValue) location).reg;
+            setBit(debugInfo.registerRefMap, register.number);
+
         } else {
-            assert location.isRegister() : "objects can only be in a register";
-            CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int reg = registerLocation.reg.number;
-            assert reg >= 0 : "object cannot be in non-object register " + registerLocation.reg;
-            assert reg < target.arch.registerReferenceMapBitCount;
-            setBit(regRefMap, reg);
+            throw Util.shouldNotReachHere();
         }
     }
 
     private static void setBit(CiBitMap refMap, int bit) {
-        assert !refMap.get(bit) : "Ref map entry " + bit + " is already set.";
+        assert bit >= 0 && bit < refMap.size() : "register out of range";
+        assert !refMap.get(bit) : "Ref map entry already set";
         refMap.set(bit);
     }
 

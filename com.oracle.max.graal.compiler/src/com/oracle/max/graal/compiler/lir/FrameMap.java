@@ -229,22 +229,33 @@ public final class FrameMap {
     }
 
     /**
+     * Computes the offset of a stack slot relative to the frame register.
+     * This is also the bit index of stack slots in the reference map.
+     *
+     * @param slot a stack slot
+     * @return the offset of the stack slot
+     */
+    public int offsetForStackSlot(CiStackSlot slot) {
+        assert frameSize >= 0 : "fame size not computed yet";
+        if (slot.inCallerFrame()) {
+            int callerFrame = frameSize() + target.arch.returnAddressSize;
+            int callerFrameOffset = slot.index() * target.spillSlotSize;
+            return callerFrame + callerFrameOffset;
+        } else {
+            int offset = slot.index() * target.spillSlotSize;
+            assert offset <= frameSize() - target.spillSlotSize : "slot outside of frame";
+            return offset;
+        }
+    }
+
+    /**
      * Converts a stack slot into a stack address.
      *
      * @param slot a stack slot
      * @return a stack address
      */
     public CiAddress toStackAddress(CiStackSlot slot) {
-        int size = target.sizeInBytes(slot.kind);
-        if (slot.inCallerFrame()) {
-            int callerFrame = frameSize() + target.arch.returnAddressSize;
-            final int callerFrameOffset = slot.index() * target.spillSlotSize;
-            int offset = callerFrame + callerFrameOffset;
-            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
-        } else {
-            int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
-            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
-        }
+        return new CiAddress(slot.kind, registerConfig.getFrameRegister().asValue(), offsetForStackSlot(slot));
     }
 
     /**
@@ -343,20 +354,6 @@ public final class FrameMap {
         assert stackBlock.offset >= 0 && stackBlock.offset + stackBlock.size <= stackBlocksSize : "invalid stack block";
         int offset = offsetToStackBlocks() + stackBlock.offset;
         assert offset <= (frameSize() - stackBlock.size) : "stack block outside of frame";
-        return offset;
-    }
-
-    /**
-     * Gets the stack pointer offset for a outgoing stack argument or compiler spill slot.
-     *
-     * @param slotIndex the index of the stack slot within the slot index space reserved for
-     * @param size
-     * @return
-     */
-    private int offsetForOutgoingOrSpillSlot(int slotIndex, int size) {
-        assert slotIndex >= 0 && slotIndex < (initialSpillSlot() + spillSlotCount) : "invalid spill slot";
-        int offset = slotIndex * target.spillSlotSize;
-        assert offset <= (frameSize() - size) : "slot outside of frame";
         return offset;
     }
 
