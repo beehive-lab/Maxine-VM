@@ -78,7 +78,7 @@ import com.sun.max.vm.thread.*;
  *  where Ti are one of Member,Method,Field and SomeActor is the appropriate {@link Actor} subclass
  *
  *  Generally, the method implementations are delegated to other classes, unless the
- *  implementation is trivial.
+ *  implementation is completely trivial.
  */
 @HOSTED_ONLY
 @SuppressWarnings("null")
@@ -102,6 +102,7 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
         // PHASES: ONLOAD,LIVE
+        // LOG: Address.fromInt(mode),Address.fromInt(event_type),event_thread
         return JVMTIEvent.setEventNotificationMode(env, mode, event_type, event_thread);
     }
 

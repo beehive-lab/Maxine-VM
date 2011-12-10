@@ -81,19 +81,23 @@ Java_com_sun_max_vm_monitor_modal_sync_nat_NativeConditionVariable_nativeConditi
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_runtime_OSMonitor_nativeTakeLockAndWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition) {
+Java_com_sun_max_vm_runtime_OSMonitor_nativeTakeLockAndWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
     c_ASSERT(mutex_enter(mutex) == 0);
-    jboolean result = condition_wait(condition, mutex);
+    jboolean result = condition_timedWait(condition, mutex, timeoutMilliSeconds);
     c_ASSERT(mutex_exit(mutex) == 0);
     c_ASSERT(result == true);
     return result;
 }
 
-jboolean nativeTakeLockAndNotify(Mutex mutex, Condition condition) {
+jboolean nativeTakeLockAndNotify(Mutex mutex, Condition condition, jboolean all) {
     if (mutex_try_enter(mutex) != 0) {
         return false;
     }
-    c_ASSERT(condition_notify(condition) == true);
+    if (all) {
+        c_ASSERT(condition_notifyAll(condition) == true);
+    } else {
+        c_ASSERT(condition_notify(condition) == true);
+    }
     c_ASSERT(mutex_exit(mutex) == 0);
     return true;
 }

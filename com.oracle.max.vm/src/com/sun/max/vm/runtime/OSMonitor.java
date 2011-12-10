@@ -122,7 +122,7 @@ public class OSMonitor {
 
         @INLINE
         public void suspend() {
-            nativeTakeLockAndWait(mutex, condition);
+            nativeTakeLockAndWait(mutex, condition, 0);
         }
 
         @INLINE
@@ -131,7 +131,7 @@ public class OSMonitor {
          * If the lock associated with the monitor cannot be acquired return false.
          */
         public boolean resume() {
-            return nativeTakeLockAndNotify(mutex, condition);
+            return nativeTakeLockAndNotify(mutex, condition, false);
         }
 
     }
@@ -172,12 +172,12 @@ public class OSMonitor {
      * Check mutex, if locked return false, else take it and notify condition.
      * I.e., this function does not block.
      */
-    public static native boolean nativeTakeLockAndNotify(Word mutex, Word condition);
+    public static native boolean nativeTakeLockAndNotify(Word mutex, Word condition, boolean all);
 
     /**
      * Take the mutex and wait on the condition.
      * This is JNI so that a suspended thread is THREAD_IN_NATIVE for VmOperation.
      */
-    public static native boolean nativeTakeLockAndWait(Word mutex, Word condition);
+    public static native boolean nativeTakeLockAndWait(Word mutex, Word condition, long millis);
 
 }
