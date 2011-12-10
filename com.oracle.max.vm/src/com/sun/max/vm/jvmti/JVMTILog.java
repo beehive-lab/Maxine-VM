@@ -44,13 +44,29 @@ public class JVMTILog {
         public int id;
         @INSPECTED
         public Word arg1;
+        @INSPECTED
+        public Word arg2;
+        @INSPECTED
+        public Word arg3;
 
         @HOSTED_ONLY
-        public Record(int op, int threadId, int startIndex, Word arg1) {
+        public Record(int op, int threadId, int startIndex, Word arg1, Word arg2, Word arg3) {
             this.op = op;
             this.threadId = threadId;
             this.id = startIndex;
             this.arg1 = arg1;
+            this.arg2 = arg2;
+            this.arg3 = arg3;
+        }
+
+        @HOSTED_ONLY
+        public Record(int op, int threadId, int startIndex, Word arg1, Word arg2) {
+            this(op, threadId, startIndex, arg1, arg2, Word.zero());
+        }
+
+        @HOSTED_ONLY
+        public Record(int op, int threadId, int startIndex, Word arg1) {
+            this(op, threadId, startIndex, arg1, Word.zero(), Word.zero());
         }
 
         private Record() {
@@ -75,16 +91,36 @@ public class JVMTILog {
         }
     }
 
-    static void add(int op, Word arg1) {
+    static Record add(int op) {
         int myId = singleton.nextId;
         while (Reference.fromJava(singleton).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
             myId = singleton.nextId;
         }
         Record record = singleton.buffer[myId % 8192];
         record.op = op;
-        record.arg1 = arg1;
         record.threadId = VmThread.current().id();
         record.id = myId;
+        return record;
+
+    }
+    static Record add(int op, Word arg1) {
+        Record r = add(op);
+        r.arg1 = arg1;
+        return r;
     }
 
+    static Record add(int op, Word arg1, Word arg2) {
+        Record r = add(op);
+        r.arg1 = arg1;
+        r.arg2 = arg2;
+        return r;
+    }
+
+    static Record add(int op, Word arg1, Word arg2, Word arg3) {
+        Record r = add(op);
+        r.arg1 = arg1;
+        r.arg2 = arg2;
+        r.arg3 = arg3;
+        return r;
+    }
 }

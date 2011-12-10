@@ -23,45 +23,85 @@
 package com.sun.max.vm.jvmti;
 
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIVmThreadLocal.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
- * Simple implementation of the JVMTI Raw Monitor functionality.
- * For now just use native monitors and condition variables.
+ * Implementation of the JVMTI Raw Monitor functionality.
+ * This is a hybrid implementation that does some synchronization
+ * explicitly and some using native mutex/condition variables.
+ *
+ * The primary reason for not simply using native mutex/condition variables directly
+ * is to finesse a deadlock that was observed in JDWP relating to the way
+ * Maxine threads are suspended. For example:
+ *
+ * <ul>
+ * <li>Thread 1 calls RawMonitorEnter(M)
+ * <li>Thread 1 calls RawMonitorWait(M)
+ * <li>Thread 2 calls SuspendThreadList({M,...})
+ * <li>Thread 2 calls RawMonitorEnter(M)
+ * <li>Thread 2 calls RawMonitorNotify(M)
+ * <li>Thread 2 calls RawMonitorExit(M)
+ * <li>Thread 1 wakes up in native thread library, re-acquires M then suspends on return
+ * <li>Thread 2 or other thread calls RawMonitorEnter(M) and blocks => deadlock if that thread
+ * was the one about to do the ResumeThreadList({M,...});
+ * </ul>
+ * Evidently the suspend really needs to happen "inside" the native threads library, but this
+ * is not possible to achieve in general. Maxine suspends threads that are in native code
+ * if and only if they return from the native method while the suspend is in effect, which
+ * means that actions (like re-acquiring a mutex) in the native method cannot be prevented.
+ *
+ * This implementation finesses this by using spinlocks and denoting monitor acquisition by an "owner" field.
+ * Native mutex/condition variables are only used internally for blocking/notification purposes.
+ * Therefore a RawMonitorNotify to a suspended thread in native will only cause re-acquisition of the internal mutex
+ * and not the actual RawMonitor. This internal re-acquisition is harmless. It can only effect another thread
+ * trying to enter the monitor; that thread will block on the internal mutex before waiting on the ENTER condition.
+ *
+ * Note on use nativeConditionNotify. This is always called with {@code notifyAll==true} because although we pick
+ * which thread is notified, we would have no actual control on which thread the OS layer would actually choose to release
+ * if we just notified one thread. So we have to release all of them, even though only one will end up matching the
+ * "while" condition. Since there are only few agent threads, this is not a big performance deal.
  */
 public class JVMTIRawMonitor {
 
     private static final long RM_MAGIC = ('T' << 24) + ('I' << 16) + ('R' << 8) + 'M';
 
-    public enum Struct {
-        MAGIC(0),
-        NAME(8),
-        MUTEX(16),
-        CONDITION(24);
+    public static class Monitor {
+        long magic = RM_MAGIC;
+        @INSPECTED
+        Pointer name;
+        volatile int spinLock;
+        @INSPECTED
+        volatile VmThread owner;
+        int rcount;
+        VmThread[] entryWaiters = new VmThread[8];
+        VmThread[] waitWaiters = new VmThread[8];
+        Word enterMutex;
+        Word enterCondition;
+        Word waitMutex;
+        Word waitCondition;
+    }
 
-        public final int offset;
-        private static final Size SIZE = Size.fromInt(32);
+    private static int spinLockOffset = ClassActor.fromJava(Monitor.class).findLocalInstanceFieldActor("spinLock").offset();
 
-        Struct(int offset) {
-            this.offset = offset;
-        }
+    private static Monitor[] monitors = new Monitor[32];
 
-        void set(Word base, Word value) {
-            base.asPointer().writeWord(offset, value);
-        }
-
-        Word get(Word base) {
-            return base.asPointer().readWord(offset);
-        }
-
-        static boolean validate(Word rawMonitor) {
-            return Struct.MAGIC.get(rawMonitor).asAddress().toLong() == RM_MAGIC;
+    static {
+        for (int i = 0; i < monitors.length; i++) {
+            monitors[i] = new Monitor();
         }
     }
+
 
     static {
         new CriticalMethod(JVMTIRawMonitor.class, "create", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -73,132 +113,264 @@ public class JVMTIRawMonitor {
         new CriticalMethod(JVMTIRawMonitor.class, "notifyAll", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
-    static int create(Pointer namePtr, Pointer rawMonitorPtr) {
-        Pointer rawMonitor = Memory.allocate(Struct.SIZE);
-        Word nativeMutex = OSMonitor.newMutex(false);
-        Word nativeCondition = OSMonitor.newCondition(false);
-        Word namePtrCopy = CString.copy(namePtr);
+    private static Monitor getFreeMonitor() {
+        // TODO sync
+        for (int i = 0; i < monitors.length; i++) {
+            if (monitors[i].name.isZero()) {
+                return monitors[i];
+            }
+        }
+        return null;
+    }
 
-        if (rawMonitor.isZero() || nativeCondition.isZero() || nativeMutex.isZero() || namePtrCopy.isZero()) {
-            // Checkstyle: stop
-            if (!rawMonitor.isZero()) { Memory.deallocate(rawMonitor); }
-            if (!nativeMutex.isZero()) { Memory.deallocate(nativeMutex.asPointer()); }
-            if (!nativeCondition.isZero()) { Memory.deallocate(nativeCondition.asPointer()); }
-            if (!namePtrCopy.isZero()) { Memory.deallocate(namePtrCopy.asPointer()); }
-            // Checkstyle: resume
+    static int create(Pointer namePtr, Pointer rawMonitorPtr) {
+        Monitor m = getFreeMonitor();
+        if (m == null) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
-        Struct.NAME.set(rawMonitor, namePtrCopy);
-        Struct.CONDITION.set(rawMonitor, nativeCondition);
-        Struct.MUTEX.set(rawMonitor, nativeMutex);
-        Struct.MAGIC.set(rawMonitor, Address.fromLong(RM_MAGIC));
+        Pointer namePtrCopy = CString.copy(namePtr);
+        if (namePtrCopy.isZero()) {
+            return JVMTI_ERROR_OUT_OF_MEMORY;
+        }
 
-        rawMonitorPtr.setWord(rawMonitor);
+        m.name = namePtrCopy;
+
+        int ms = OSMonitor.nativeMutexSize();
+        int cs = OSMonitor.nativeConditionSize();
+
+        Pointer base = Memory.allocate(Size.fromInt(2 * (ms + cs)));
+        Pointer enterMutex = base;
+        Pointer enterCondition = enterMutex.plus(ms);
+        Pointer waitMutex = enterCondition.plus(cs);
+        Pointer waitCondition = waitMutex.plus(ms);
+        OSMonitor.nativeMutexInitialize(enterMutex);
+        OSMonitor.nativeConditionInitialize(enterCondition);
+        OSMonitor.nativeMutexInitialize(waitMutex);
+        OSMonitor.nativeConditionInitialize(waitCondition);
+
+        m.enterMutex = enterMutex;
+        m.enterCondition = enterCondition;
+        m.waitMutex = waitMutex;
+        m.waitCondition = waitCondition;
+
+        rawMonitorPtr.setWord(Reference.fromJava(m).toOrigin());
         return JVMTI_ERROR_NONE;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native Monitor asMonitor(Object o);
+
+    private static Monitor validate(Word rawMonitor) {
+        Monitor m = asMonitor(Reference.fromOrigin(rawMonitor.asPointer()).toJava());
+        if (m.magic == RM_MAGIC) {
+            return m;
+        } else {
+            return null;
+        }
     }
 
     static int destroy(Word rawMonitor) {
         // TODO check ownership
-        if (!Struct.validate(rawMonitor)) {
+        Monitor m = validate(rawMonitor);
+        if (m == null) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        Memory.deallocate(Struct.CONDITION.get(rawMonitor).asPointer());
-        Memory.deallocate(Struct.MUTEX.get(rawMonitor).asPointer());
-        Memory.deallocate(rawMonitor.asPointer());
+        Memory.deallocate(m.name);
+        m.name = Pointer.zero();
         return JVMTI_ERROR_NONE;
     }
 
     static int enter(Word rawMonitor) {
-        if (!Struct.validate(rawMonitor)) {
+        return enter(rawMonitor, true);
+    }
+
+    static int enter(Word rawMonitor, boolean unlock) {
+        Monitor m = validate(rawMonitor);
+        if (m == null) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (OSMonitor.nativeMutexLock(Struct.MUTEX.get(rawMonitor))) {
-            return JVMTI_ERROR_NONE;
+        VmThread self = VmThread.current();
+        spinLock(m);
+        if (m.owner == null) {
+            // not owned before, now we own it
+            m.owner = self;
+        } else if (m.owner == self) {
+            // we already owned it, inc recursion count
+            m.rcount++;
         } else {
-            return JVMTI_ERROR_INTERNAL; // TODO be more specific
+            // someone else owns it, block on enter condition
+            addWaiter(m.entryWaiters, self);
+            spinUnlock(m);
+            // having released the spin lock (which is required since we are expecting to block)
+            // must use OS mutex protection
+            OSMonitor.nativeMutexLock(m.enterMutex);
+            while (m.owner != self) {
+                OSMonitor.nativeConditionWait(m.enterMutex, m.enterCondition, 0);
+            }
+            OSMonitor.nativeMutexUnlock(m.enterMutex);
+            // now we own it
+            unlock = false;
         }
+        if (unlock) {
+            spinUnlock(m);
+        }
+        return JVMTI_ERROR_NONE;
     }
 
     static int exit(Word rawMonitor) {
-        if (!Struct.validate(rawMonitor)) {
+        Monitor m = validate(rawMonitor);
+        if (m == null) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        Word mutex = checkOwnerShip(rawMonitor);
-        if (mutex.isZero()) {
-            return JVMTI_ERROR_NOT_MONITOR_OWNER;
-        }
-        if (OSMonitor.nativeMutexUnlock(mutex)) {
-            return JVMTI_ERROR_NONE;
+        int result = JVMTI_ERROR_NONE;
+        spinLock(m);
+        if (notOwner(m)) {
+            result = JVMTI_ERROR_NOT_MONITOR_OWNER;
+        } else if (m.rcount > 0) {
+            m.rcount--;
         } else {
-            return JVMTI_ERROR_INTERNAL; // TODO be more specific
+            // final release
+            // anyone waiting?
+            releaseEnterWaiter(m);
         }
+        spinUnlock(m);
+        return result;
+    }
 
+    private static void releaseEnterWaiter(Monitor m) {
+        VmThread newOwner = null;
+        OSMonitor.nativeMutexLock(m.enterMutex);
+        for (int i = 0; i < m.entryWaiters.length; i++) {
+            VmThread r = m.entryWaiters[i];
+            if (r != null) {
+                for (int j = i; j < m.entryWaiters.length - 1; j++) {
+                    m.entryWaiters[j] = m.entryWaiters[j + 1];
+                }
+                m.entryWaiters[m.entryWaiters.length - 1] =  null;
+                newOwner = r;
+                break;
+            }
+        }
+        m.owner = newOwner;
+        OSMonitor.nativeConditionNotify(m.enterCondition, true);
+        OSMonitor.nativeMutexUnlock(m.enterMutex);
+    }
+
+    private static void addWaiter(VmThread[] waiters, VmThread vmThread) {
+        for (int i = 0; i < waiters.length; i++) {
+            if (waiters[i] == null) {
+                waiters[i] = vmThread;
+                return;
+            }
+        }
+        Log.println("JVMTIRawMonitor too many waiting threads");
+        MaxineVM.native_exit(-1);
     }
 
     static int wait(Word rawMonitor, long millis) {
-        if (!Struct.validate(rawMonitor)) {
+        Monitor m = validate(rawMonitor);
+        if (m == null) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        Word mutex = checkOwnerShip(rawMonitor);
-        if (mutex.isZero()) {
-            return JVMTI_ERROR_NOT_MONITOR_OWNER;
-        }
-        if (millis == -1) {
-            // jdwp seems to use -1 when it means 0
-            millis = 0;
-        }
-        if (OSMonitor.nativeConditionWait(mutex, Struct.CONDITION.get(rawMonitor), millis)) {
-            return JVMTI_ERROR_NONE;
+        int result = JVMTI_ERROR_NONE;
+        spinLock(m);
+        if (notOwner(m)) {
+            result = JVMTI_ERROR_NOT_MONITOR_OWNER;
         } else {
-            return JVMTI_ERROR_INTERNAL; // TODO be more specific
+            if (millis == -1) {
+                // JDWP seems to use -1 when it means 0
+                millis = 0;
+            }
+            addWaiter(m.waitWaiters, VmThread.current());
+            // save recursion count
+            int rcount = m.rcount;
+            releaseEnterWaiter(m);
+            spinUnlock(m);
+            // wait for notify
+            OSMonitor.nativeMutexLock(m.waitMutex);
+            Pointer tla = VmThread.currentTLA();
+            while (JVMTI.load(tla).and(JVMTI_RAW_NOTIFY).isZero()) {
+                OSMonitor.nativeConditionWait(m.waitMutex, m.waitCondition, millis);
+            }
+            JVMTI.store(tla, JVMTI.load(tla).and(~JVMTI_RAW_NOTIFY));
+            OSMonitor.nativeMutexUnlock(m.waitMutex);
+            // re-acquire monitor but hold spinlock
+            enter(rawMonitor, false);
+            // reset our recursion count
+            m.rcount = rcount;
         }
+        spinUnlock(m);
+        return result;
     }
 
     static int notify(Word rawMonitor) {
-        if (!Struct.validate(rawMonitor)) {
-            return JVMTI_ERROR_INVALID_MONITOR;
-        }
-        if (checkOwnerShip(rawMonitor).isZero()) {
-            return JVMTI_ERROR_NOT_MONITOR_OWNER;
-        }
-        if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), false)) {
-            return JVMTI_ERROR_NONE;
-        } else {
-            return JVMTI_ERROR_INTERNAL; // TODO be more specific
-        }
+        return notify(rawMonitor, false);
     }
 
     static int notifyAll(Word rawMonitor) {
-        if (!Struct.validate(rawMonitor)) {
+        return notify(rawMonitor, true);
+    }
+
+    static int notify(Word rawMonitor, boolean all) {
+        Monitor m = validate(rawMonitor);
+        if (m == null) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (checkOwnerShip(rawMonitor).isZero()) {
+        int result = JVMTI_ERROR_NONE;
+        spinLock(m);
+        if (notOwner(m)) {
             return JVMTI_ERROR_NOT_MONITOR_OWNER;
-        }
-        if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), true)) {
-            return JVMTI_ERROR_NONE;
         } else {
-            return JVMTI_ERROR_INTERNAL; // TODO be more specific
+            boolean listChanged = false;
+            OSMonitor.nativeMutexLock(m.waitMutex);
+            for (int i = 0; i < m.waitWaiters.length; i++) {
+                VmThread r = m.waitWaiters[i];
+                if (r != null) {
+                    listChanged = true;
+                    // mark as notified
+                    JVMTI.store(r.tla(), JVMTI.load(r.tla()).or(JVMTI_RAW_NOTIFY));
+                    m.waitWaiters[i] = null;
+                    if (!all) {
+                        break;
+                    }
+                }
+            }
+            OSMonitor.nativeConditionNotify(m.waitCondition, true);
+            OSMonitor.nativeMutexUnlock(m.waitMutex);
+            if (listChanged) {
+                // collapse list
+                for (int i = 0; i < m.waitWaiters.length - 1; i++) {
+                    if (m.waitWaiters[i] == null) {
+                        m.waitWaiters[i] = m.waitWaiters[i + 1];
+                    }
+                }
+                m.waitWaiters[m.waitWaiters.length - 1] = null;
+            }
+
         }
+        spinUnlock(m);
+        return result;
+
     }
 
     /**
      * Check that this thread owns the monitor.
      * @param rawMonitor
-     * @return the mutex component if owner, {@code Pointer.zero()} if not.
      */
-    private static Word checkOwnerShip(Word rawMonitor) {
-        // since native mutexes support recursion, we can
-        // check for ownership just by trying to get the lock again.
-        // If this fails, we don't own it, otherwise we just release it,
-        // thereby decrementing the recursion count back to where we came in.
-        Word mutex = Struct.MUTEX.get(rawMonitor);
-        if (OSMonitor.nativeMutexTryLock(mutex)) {
-            OSMonitor.nativeMutexUnlock(mutex);
-            return mutex;
-        } else {
-            return Pointer.zero();
+    private static boolean notOwner(Monitor m) {
+        return m.owner != VmThread.current();
+    }
+
+    @INLINE
+    private static void spinLock(Monitor m) {
+        while (Reference.fromJava(m).compareAndSwapInt(spinLockOffset, 0, 1) != 0) {
+            Intrinsics.pause();
         }
+    }
+
+    @INLINE
+    private static void spinUnlock(Monitor m) {
+        m.spinLock = 0;
     }
 
 }

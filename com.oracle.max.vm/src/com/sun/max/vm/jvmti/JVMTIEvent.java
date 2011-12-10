@@ -216,7 +216,7 @@ public class JVMTIEvent {
      * @param id
      * @return
      */
-    static String name(int id) {
+    public static String name(int id) {
         switch (id) {
             // Checkstyle: stop
             case JVMTI_EVENT_VM_INIT: return "VM_INIT";
