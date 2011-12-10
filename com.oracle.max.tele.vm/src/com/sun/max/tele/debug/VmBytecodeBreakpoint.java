@@ -66,7 +66,15 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     // Traces each compilation completed in the VM
     private static final int COMPILATION_TRACE_VALUE = 1;
 
-    private final BytecodeBreakpointManager bytecodeBreakpointManager;
+
+    private static BytecodeBreakpointManager bytecodeBreakpointManager;
+
+    public static BytecodeBreakpointManager makeManager(TeleVM vm) {
+        if (bytecodeBreakpointManager == null) {
+            bytecodeBreakpointManager = new BytecodeBreakpointManager(vm);
+        }
+        return bytecodeBreakpointManager;
+    }
 
     // Cached string representations of the three parts of a method key
     // for fast comparison when comparing with a method key in the VM.
@@ -92,13 +100,11 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
      * A new bytecode breakpoint, enabled by default, at a specified location.
      *
      * @param vm the VM
-     * @param bytecodeBreakpointManager the associated bytecode breakpoint manager
-     * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      * @param kind the kind of breakpoint to create
+     * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      */
-    private VmBytecodeBreakpoint(TeleVM vm, BytecodeBreakpointManager bytecodeBreakpointManager, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
+    private VmBytecodeBreakpoint(TeleVM vm, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
         super(vm, codeLocation, kind, null);
-        this.bytecodeBreakpointManager = bytecodeBreakpointManager;
         this.methodPositionKey = methodPositionKey;
         final MethodKey methodKey = codeLocation.methodKey();
         this.holderTypeDescriptorString = methodKey.holder().string;
@@ -288,7 +294,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
     }
 
     /**
-     * A manager that creates, tracks, and removes bytecode breakpoints from the VM.
+     * A singleton manager that creates, tracks, and removes bytecode breakpoints from the VM.
      * <p>
      * Bytecodes breakpoints can be created before a specified method is compiled
      * or even loaded, in which case they are described by an abstract key (descriptor).
@@ -347,7 +353,6 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
 
         private static final List<VmBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Collections.emptyList();
 
-        private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
         private final String tracePrefix;
 
         // Platform-specific access to method invocation parameters in the VM.
@@ -388,12 +393,11 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
          */
         private int breakpointClassDescriptorsEpoch = 0;
 
-        public BytecodeBreakpointManager(TeleVM vm) {
+        private BytecodeBreakpointManager(TeleVM vm) {
             super(vm);
             this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
             Trace.begin(TRACE_VALUE, tracePrefix + "initializing");
             final long startTimeMillis = System.currentTimeMillis();
-            this.targetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
             CiRegister[] args = MaxineVM.vm().registerConfigs.standard.getCallingConventionRegisters(JavaCall, RegisterFlag.CPU);
             parameter0 = args[0];
@@ -545,7 +549,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             if (breakpoints.size() == 0) {
                 createCompilerBreakpoints();
             }
-            final VmBytecodeBreakpoint breakpoint = new VmBytecodeBreakpoint(vm(), this, codeLocation, kind, key);
+            final VmBytecodeBreakpoint breakpoint = new VmBytecodeBreakpoint(vm(), codeLocation, kind, key);
             breakpoint.setDescription(codeLocation.description());
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
@@ -596,12 +600,12 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             assert compilationStartedBreakpoint == null;
             assert compilationCompletedBreakpoint == null;
             if (usePrecompilationBreakpoints) {
-                compilationStartedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationStartedMethodLocation(), null);
+                compilationStartedBreakpoint = breakpointManager().targetBreakpoints().makeSystemBreakpoint(methods().compilationStartedMethodLocation(), null);
                 compilationStartedBreakpoint.setDescription("System trap for compilation start");
                 compilationStartedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(true));
                 Trace.line(TRACE_VALUE, tracePrefix + "creating compilation started breakpoint=" + compilationStartedBreakpoint);
             }
-            compilationCompletedBreakpoint = targetBreakpointManager.makeSystemBreakpoint(methods().compilationCompletedMethodLocation(), null);
+            compilationCompletedBreakpoint = breakpointManager().targetBreakpoints().makeSystemBreakpoint(methods().compilationCompletedMethodLocation(), null);
             compilationCompletedBreakpoint.setDescription("System trap for compilation end");
             compilationCompletedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(false));
             Trace.line(TRACE_VALUE, tracePrefix + "creating compilation completed breakpoint=" + compilationCompletedBreakpoint);
@@ -625,7 +629,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         }
 
         /**
-         * Creates special system target code breakpoints in a compiled method in the VM
+         * Creates special system machine code breakpoints in a compiled method in the VM
          * at location specified abstractly by a key.  Normally there is exactly one such location,
          * but in the special case where bytecode index is -1, which specifies the beginning
          * of the compiled method's prologue, there may be more than one for different kinds
@@ -662,10 +666,10 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                 }
             }
             final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
-            if (targetBreakpointManager.getTargetBreakpointAt(codePointer) == null) {
+            if (breakpointManager().targetBreakpoints().find(codePointer) == null) {
                 final CodeLocation location = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
                 if (bci == -1) {
-                    targetBreakpointManager.makeTransientBreakpoint(location);
+                    breakpointManager().targetBreakpoints().makeTransientBreakpoint(location);
                 } else {
                     final VMTriggerEventHandler vmTriggerEventHandler;
                     vmTriggerEventHandler = new VMTriggerEventHandler() {
@@ -673,7 +677,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                             return owner.handleTriggerEvent(teleNativeThread);
                         }
                     };
-                    targetBreakpoints.add(targetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                    targetBreakpoints.add(breakpointManager().targetBreakpoints().makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
                 }
             } else {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);

@@ -49,7 +49,14 @@ import com.sun.max.vm.tele.*;
  */
 public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
-    protected final TargetBreakpointManager manager;
+    private static TargetBreakpointManager manager;
+
+    public static TargetBreakpointManager makeManager(TeleVM vm) {
+        if (manager == null) {
+            manager = new TargetBreakpointManager(vm);
+        }
+        return manager;
+    }
 
     /**
      * A copy of the code in the VM that was replaced when the breakpoint code was patched in, saved so that it can be
@@ -81,16 +88,14 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
      * Creates a target code breakpoint for a given code location in the VM.
      *
      * @param vm the VM
-     * @param manager the manager responsible for managing these breakpoints
      * @param codeLocation  the location at which the breakpoint is to be created
      * @param originalCode the machine code at the breakpoint location that will be overwritten by the breakpoint
      *            instruction. If this value is null, then the code will be read from the current code location.
      * @param owner the bytecode breakpoint for which this is being created, null if none.
      * @param the kind of breakpoint
      */
-    private VmTargetBreakpoint(TeleVM vm, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, VmBytecodeBreakpoint owner) {
+    private VmTargetBreakpoint(TeleVM vm, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, VmBytecodeBreakpoint owner) {
         super(vm, codeLocation, kind, owner);
-        this.manager = manager;
         final VmCodeCacheRegion codeCacheRegion = vm.codeCache().findCodeCacheRegion(codeLocation.address());
         this.codeLocationIsManaged = codeCacheRegion != null && codeCacheRegion.isManaged();
         this.originalCodeAtBreakpoint = originalCode == null ? vm.memory().readBytes(codeLocation.address(), manager.codeSize()) : originalCode;
@@ -181,7 +186,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
         ClientTargetBreakpoint(TeleVM vm, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode) {
-            super(vm, manager, codeLocation, originalCode, BreakpointKind.CLIENT, null);
+            super(vm, codeLocation, originalCode, BreakpointKind.CLIENT, null);
         }
 
         @Override
@@ -243,7 +248,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
         SystemTargetBreakpoint(TeleVM vm, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode, VmBytecodeBreakpoint owner) {
-            super(vm, manager, codeLocation, originalCode, BreakpointKind.SYSTEM, owner);
+            super(vm, codeLocation, originalCode, BreakpointKind.SYSTEM, owner);
         }
 
         @Override
@@ -301,7 +306,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
         TransientTargetBreakpoint(TeleVM vm, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode) {
-            super(vm, manager, codeLocation, originalCode, BreakpointKind.TRANSIENT, null);
+            super(vm, codeLocation, originalCode, BreakpointKind.TRANSIENT, null);
         }
 
         @Override
@@ -328,7 +333,6 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
     }
 
-    // TODO (mlvdv) make this a singleton, then can access the manager directly, no argument.
     public static final class TargetBreakpointManager extends AbstractVmHolder implements TeleVMCache {
 
         private final byte[] code;
@@ -345,7 +349,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
         private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
 
-        TargetBreakpointManager(TeleVM vm) {
+        private TargetBreakpointManager(TeleVM vm) {
             super(vm);
             this.code = TargetBreakpoint.createBreakpointCode(platform().isa);
         }
@@ -422,7 +426,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          *
          * @return the target code breakpoint a the specified address, if it exists, null otherwise.
          */
-        synchronized VmTargetBreakpoint getTargetBreakpointAt(RemoteCodePointer codePointer) {
+        synchronized VmTargetBreakpoint find(RemoteCodePointer codePointer) {
             final ClientTargetBreakpoint clientBreakpoint = clientBreakpoints.get(codePointer);
             if (clientBreakpoint != null) {
                 return clientBreakpoint;
@@ -448,9 +452,8 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             return null;
         }
 
-        public synchronized VmTargetBreakpoint findClientBreakpoint(MachineCodeLocation compiledCodeLocation) {
-            assert compiledCodeLocation.hasAddress();
-            return clientBreakpoints.get(compiledCodeLocation.codePointer());
+        synchronized VmTargetBreakpoint findClientBreakpoint(RemoteCodePointer codePointer) {
+            return clientBreakpoints.get(codePointer);
         }
 
         /**
@@ -469,7 +472,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             }
             VmTargetBreakpoint breakpoint;
             try {
-                breakpoint = getTargetBreakpointAt(codeLocation.codePointer());
+                breakpoint = find(codeLocation.codePointer());
                 if (breakpoint == null || breakpoint.isTransient()) {
                     final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(vm(), this, codeLocation, null);
                     final VmTargetBreakpoint oldBreakpoint = clientBreakpoints.put(codeLocation.codePointer(), clientBreakpoint);
@@ -489,6 +492,8 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
          * Thread-safe (synchronizes on the VM lock)
          *
          * @param codeLocation location (with address) for the breakpoint
+         * @param handler an optional handler to be invoked when the breakpoint triggers
+         * @param owner a bytecode breakpoint for which this breakpoint is being created.
          * @return a possibly new target code breakpoint
          * @throws MaxVMBusyException
          */
@@ -514,9 +519,20 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
             return systemBreakpoint;
         }
 
-        public VmTargetBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler) throws MaxVMBusyException {
+        /**
+         * Return a client-invisible target code breakpoint, creating a new one if none exists at that location.
+         * <br>
+         * Thread-safe (synchronizes on the VM lock)
+         *
+         * @param codeLocation location (with address) for the breakpoint
+         * @param handler an optional handler to be invoked when the breakpoint triggers
+         * @return a possibly new target code breakpoint
+         * @throws MaxVMBusyException
+         */
+        VmTargetBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler) throws MaxVMBusyException {
             return makeSystemBreakpoint(codeLocation, handler, null);
         }
+
 
         /**
          * Return a client-invisible transient breakpoint at a specified target code address in the VM, creating a new one first if needed.
@@ -534,7 +550,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
                 throw new MaxVMBusyException();
             }
             try {
-                VmTargetBreakpoint breakpoint = getTargetBreakpointAt(codeLocation.codePointer());
+                VmTargetBreakpoint breakpoint = find(codeLocation.codePointer());
                 if (breakpoint == null || !breakpoint.isTransient()) {
                     final TransientTargetBreakpoint transientBreakpoint = new TransientTargetBreakpoint(vm(), this, codeLocation, null);
                     final VmTargetBreakpoint oldBreakpoint = transientBreakpoints.put(codeLocation.codePointer(), transientBreakpoint);
