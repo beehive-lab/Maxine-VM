@@ -173,7 +173,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                     }
 
                     // Clear all breakpoints before we refresh, so the breakpoints don't show up as real patches to compiled code
-                    targetBreakpointManager().setActiveAll(false);
+                    breakpointManager().targetBreakpoints().setActiveAll(false);
 
                     // Read VM memory and update various bits of cached state about the VM state
                     updateVMCaches(request, epoch);
@@ -256,7 +256,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                     }
                 } while (resumeExecution);
                 // Finished with these now
-                targetBreakpointManager().removeTransientBreakpoints();
+                breakpointManager().targetBreakpoints().removeTransientBreakpoints();
                 Trace.end(TRACE_VALUE /*+ 1*/, tracePrefix() + " e(" + epoch + ") " + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
@@ -385,8 +385,6 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
 
     private final Platform platform;
 
-    private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
-
     private final int maximumWatchpointCount;
 
     private final RequestHandlingThread requestHandlingThread;
@@ -459,7 +457,6 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
         this.platform = platform;
         this.processState = initialState;
         this.epoch = 0;
-        this.targetBreakpointManager = new VmTargetBreakpoint.TargetBreakpointManager(vm);
         this.maximumWatchpointCount = platformWatchpointCount();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
@@ -641,10 +638,10 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
                 updateWatchpointCaches();
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
-                VmTargetBreakpoint breakpoint = targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
+                VmTargetBreakpoint breakpoint = breakpointManager().targetBreakpoints().findClientBreakpoint(compiledCodeLocation.codePointer());
                 if (breakpoint == null || !breakpoint.isEnabled()) {
                     try {
-                        breakpoint = breakpointManager().makeTransientTargetBreakpoint(compiledCodeLocation);
+                        breakpoint = breakpointManager().targetBreakpoints().makeTransientBreakpoint(compiledCodeLocation);
                     } catch (MaxVMBusyException e) {
                         TeleError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
                     }
@@ -801,13 +798,6 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
-     * @return manager for creation and management of target breakpoints in the process,
-     */
-    public final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager() {
-        return targetBreakpointManager;
-    }
-
-    /**
      * @return platform-specific limit on how many memory watchpoints can be
      * simultaneously active; 0 if memory watchpoints are not supported on the platform.
      */
@@ -916,9 +906,9 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
             thread.evadeBreakpoint();
         }
         if (withClientBreakpoints) {
-            targetBreakpointManager.setActiveAll(true);
+            breakpointManager().targetBreakpoints().setActiveAll(true);
         } else {
-            targetBreakpointManager.setActiveNonClient(true);
+            breakpointManager().targetBreakpoints().setActiveNonClient(true);
         }
         resume();
     }

@@ -40,7 +40,7 @@ public abstract class VMEventDispatcher<T> {
      * An system breakpoint set on a code location corresponding to the even being listen to.
      * The breakpoint is set only if there is at least one listener.
      */
-    private MaxBreakpoint breakpoint;
+    private VmBreakpoint breakpoint;
     /**
      * The code location where the breakpoint used to capture the event is set.
      */
@@ -72,7 +72,7 @@ public abstract class VMEventDispatcher<T> {
 
         if (!listeners.isEmpty() && breakpoint == null) {
             try {
-                breakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(codeLocation, triggerEventHandler);
+                breakpoint = teleProcess.vm().breakpointManager().makeSystemTargetBreakpoint(codeLocation, triggerEventHandler);
                 breakpoint.setDescription(description);
             } catch (MaxVMBusyException maxVMBusyException) {
                 listeners.remove(listener);
@@ -81,7 +81,7 @@ public abstract class VMEventDispatcher<T> {
         }
     }
 
-    public void remove(T listener)  throws MaxVMBusyException {
+    public void remove(T listener) throws MaxVMBusyException {
         assert listener != null;
         listeners.remove(listener);
         if (listeners.isEmpty() && breakpoint != null) {
