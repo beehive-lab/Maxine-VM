@@ -65,13 +65,29 @@ public abstract class Node implements Cloneable {
     @Target(ElementType.FIELD)
     public static @interface Data {}
 
+    /**
+     * Denotes that a parameter of an {@linkplain NodeIntrinsic intrinsic} method
+     * must be a compile time constant at all call sites to the intrinic method.
+     */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public static @interface ConstantNodeParameter {}
 
+    /**
+     * Annotates a method that can be replaced by a compiler intrinsic.
+     * That is, a (resolved) call to the annotated method can be replaced
+     * with an instance of the node class denoted by {@link #value()}.
+     * For this reason, the signature of the annotated method must match
+     * the signature of a constructor in the node class.
+     */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public static @interface NodeIntrinsic {
+        /**
+         * Gets the {@link Node} subclass instantiated when intrinsifyng a call to the annotated method.
+         * If not specified, then the class in which the annotated method is declared is used
+         * (and is assumed to be a {@link Node} subclass).
+         */
         Class value() default NodeIntrinsic.class;
     }
 

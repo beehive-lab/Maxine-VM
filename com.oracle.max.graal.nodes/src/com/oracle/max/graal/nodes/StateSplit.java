@@ -24,10 +24,20 @@ package com.oracle.max.graal.nodes;
 
 public interface StateSplit {
 
+    /**
+     * Gets the state of the JVM frame after execution of this node.
+     */
     FrameState stateAfter();
 
+    /**
+     * Sets the state of the JVM frame after execution of this node.
+     */
     void setStateAfter(FrameState x);
 
+    /**
+     * Determines if the caller should create an {@link #stateAfter() after}
+     * frame state for this node if it doesn't already have one.
+     */
     boolean needsStateAfter();
 
 }
