@@ -235,6 +235,18 @@ final class RegisterVerifier {
                     assert checkState(inputState, interval.location(), interval.splitParent());
                 }
             }
+            n = op.operandCount(LIRInstruction.OperandMode.Alive);
+            for (int j = 0; j < n; j++) {
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.Alive, j);
+                if (operand.isVariableOrRegister() && allocator.isProcessed(operand)) {
+                    Interval interval = intervalAt(operand);
+                    if (op.id() != -1) {
+                        interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.Input, allocator);
+                    }
+
+                    assert checkState(inputState, interval.location(), interval.splitParent());
+                }
+            }
 
             // invalidate all caller save registers at calls
             if (op.hasCall()) {

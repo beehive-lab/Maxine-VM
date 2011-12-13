@@ -93,7 +93,7 @@ public class LIRDebugInfo {
          * @param value The variable that is iterated.
          * @return The new value that should replace variable, or {@code null} if the variable should remain unchanged.
          */
-        CiValue doValue(CiVariable value);
+        CiValue doValue(CiValue value);
     }
 
 
@@ -113,7 +113,7 @@ public class LIRDebugInfo {
         for (int i = 0; i < values.length; i++) {
             CiValue value = values[i];
             if (value instanceof CiVariable) {
-                CiValue newValue = proc.doValue((CiVariable) value);
+                CiValue newValue = proc.doValue(value);
                 if (newValue != null) {
                     values[i] = newValue;
                 }

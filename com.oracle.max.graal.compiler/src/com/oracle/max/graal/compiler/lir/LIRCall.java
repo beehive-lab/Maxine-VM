@@ -64,7 +64,7 @@ public abstract class LIRCall extends LIRInstruction {
                    CiValue targetAddress,
                    LIRDebugInfo info,
                    Map<XirMark, Mark> marks) {
-        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
+        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS);
         this.marks = marks;
         if (targetAddress == null) {
             this.targetAddressIndex = -1;
@@ -100,7 +100,7 @@ public abstract class LIRCall extends LIRInstruction {
         if (targetAddressIndex >= 0) {
             buf.append(operandFmt.format(targetAddress()));
         }
-        if (inputs.length > 1) {
+        if (inputs.length + alives.length > 1) {
             buf.append("(");
         }
         String sep = "";
@@ -110,7 +110,13 @@ public abstract class LIRCall extends LIRInstruction {
                 sep = ", ";
             }
         }
-        if (inputs.length > 1) {
+        for (CiValue input : alives) {
+            if (input != targetAddress()) {
+                buf.append(sep).append(operandFmt.format(input)).append(" ~");
+                sep = ", ";
+            }
+        }
+        if (inputs.length + alives.length > 1) {
             buf.append(")");
         }
         return buf.toString();

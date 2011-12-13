@@ -32,15 +32,17 @@ public enum AMD64MulOpcode implements LIROpcode {
     IMUL, LMUL;
 
     public LIRInstruction create(CiVariable result, CiValue left, CiValue right) {
-        CiValue[] inputs = new CiValue[] {left, right};
-        CiValue[] temps = new CiValue[] {right};
+        CiValue[] inputs = new CiValue[] {left};
+        CiValue[] alives = new CiValue[] {right};
 
-        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
+        return new AMD64LIRInstruction(this, result, null, inputs, alives, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                assert !(input(1) instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(input(1)) : "result and right must be different registers";
-                AMD64MoveOpcode.move(tasm, masm, result(), input(0));
-                emit(tasm, masm, result(), input(1));
+                CiValue left = input(0);
+                CiValue right = alive(0);
+                assert !(right instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(right) : "result and right must be different registers";
+                AMD64MoveOpcode.move(tasm, masm, result(), left);
+                emit(tasm, masm, result(), right);
             }
 
             @Override
@@ -49,8 +51,8 @@ public enum AMD64MulOpcode implements LIROpcode {
             }
 
             @Override
-            public int registerHint() {
-                return 0;
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }

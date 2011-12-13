@@ -33,12 +33,12 @@ public enum AMD64Op1Opcode implements LIROpcode {
 
     public LIRInstruction create(CiVariable result, CiValue input) {
         CiValue[] inputs = new CiValue[] {input};
-        CiValue[] temps = new CiValue[] {input};
 
-        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
+        return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                AMD64MoveOpcode.move(tasm, masm, result(), input(0));
+                CiValue input = input(0);
+                AMD64MoveOpcode.move(tasm, masm, result(), input);
                 emit(tasm, masm, result());
             }
 
@@ -48,8 +48,8 @@ public enum AMD64Op1Opcode implements LIROpcode {
             }
 
             @Override
-            public int registerHint() {
-                return 0;
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }
