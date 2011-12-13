@@ -38,15 +38,16 @@ public enum AMD64ConvertOpcode implements LIROpcode {
     public LIRInstruction create(CiVariable result, CiVariable input) {
         CiValue[] inputs = new CiValue[] {input};
 
-        return new AMD64LIRInstruction(this, result, null, inputs) {
+        return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, result(), input(0));
+                CiValue input = input(0);
+                emit(tasm, masm, result(), input);
             }
 
             @Override
-            public int registerHint() {
-                return 0;
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }

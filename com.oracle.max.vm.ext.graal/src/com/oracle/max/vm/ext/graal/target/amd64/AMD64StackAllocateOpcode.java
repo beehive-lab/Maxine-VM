@@ -33,9 +33,7 @@ public enum AMD64StackAllocateOpcode implements LIROpcode {
     STACK_ALLOCATE;
 
     public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
-        CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-        return new AMD64LIRInstruction(this, result, null, inputs) {
+        return new AMD64LIRInstruction(this, result, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
                 masm.leaq(tasm.asRegister(result()), tasm.compilation.frameMap().toStackAddress(stackBlock));

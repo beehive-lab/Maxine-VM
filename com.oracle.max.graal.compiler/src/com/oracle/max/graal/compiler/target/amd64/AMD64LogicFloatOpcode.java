@@ -36,15 +36,17 @@ public enum AMD64LogicFloatOpcode implements LIROpcode {
         assert (name().startsWith("F") && result.kind == CiKind.Float && left.kind == CiKind.Float && right.kind == CiKind.Float)
             || (name().startsWith("D") && result.kind == CiKind.Double && left.kind == CiKind.Double && right.kind == CiKind.Double);
 
-        CiValue[] inputs = new CiValue[] {left, right};
-        CiValue[] temps = new CiValue[] {right};
+        CiValue[] inputs = new CiValue[] {left};
+        CiValue[] alives = new CiValue[] {right};
 
-        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
+        return new AMD64LIRInstruction(this, result, null, inputs, alives, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                assert !(input(1) instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(input(1)) : "result and right must be different registers";
-                AMD64MoveOpcode.move(tasm, masm, result(), input(0));
-                emit(tasm, masm, result(), input(1));
+                CiValue left = input(0);
+                CiValue right = alive(0);
+                assert !(right instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(right) : "result and right must be different registers";
+                AMD64MoveOpcode.move(tasm, masm, result(), left);
+                emit(tasm, masm, result(), right);
             }
 
             @Override
@@ -53,8 +55,8 @@ public enum AMD64LogicFloatOpcode implements LIROpcode {
             }
 
             @Override
-            public int registerHint() {
-                return 0;
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }

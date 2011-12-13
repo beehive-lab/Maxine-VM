@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.lir;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.lir.LIRDebugInfo.ValueProcedure;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
@@ -32,7 +33,7 @@ public class LIRPhiMapping {
     private final LIRBlock block;
 
     private final CiValue[][] inputs;
-    private final CiVariable[] results;
+    private final CiValue[] results;
 
     public LIRPhiMapping(LIRBlock block, LIRGenerator gen) {
         this.block = block;
@@ -44,7 +45,7 @@ public class LIRPhiMapping {
         int numPhis = phis.size();
         int numPreds = block.numberOfPreds();
 
-        results = new CiVariable[numPhis];
+        results = new CiValue[numPhis];
         for (int i = 0; i < numPhis; i++) {
             CiVariable opd = gen.newVariable(phis.get(i).kind());
             gen.setResult(phis.get(i), opd);
@@ -60,12 +61,31 @@ public class LIRPhiMapping {
         }
     }
 
-    public CiVariable[] results() {
+    public CiValue[] results() {
         return results;
     }
 
     public CiValue[] inputs(LIRBlock pred) {
         assert pred.numberOfSux() == 1 && pred.suxAt(0) == block;
         return inputs[block.getPredecessors().indexOf(pred)];
+    }
+
+    public void forEachInput(LIRBlock pred, ValueProcedure proc) {
+        CiValue[] predInputs = inputs(pred);
+        for (int i = 0; i < predInputs.length; i++) {
+            CiValue newValue = proc.doValue(predInputs[i]);
+            if (newValue != null) {
+                predInputs[i] = newValue;
+            }
+        }
+    }
+
+    public void forEachOutput(ValueProcedure proc) {
+        for (int i = 0; i < results.length; i++) {
+            CiValue newValue = proc.doValue(results[i]);
+            if (newValue != null) {
+                results[i] = newValue;
+            }
+        }
     }
 }

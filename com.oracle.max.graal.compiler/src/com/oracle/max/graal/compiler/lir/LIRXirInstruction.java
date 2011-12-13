@@ -51,7 +51,9 @@ public abstract class LIRXirInstruction extends LIRInstruction {
                              LIRDebugInfo info,
                              LIRDebugInfo infoAfter,
                              RiMethod method) {
-        super(opcode, outputOperand, info, inputs, temps);
+        // Note that we register the XIR input operands as Alive, because the XIR specification allows that input operands
+        // are used at any time, even when the temp operands and the actual output operands have already be assigned.
+        super(opcode, outputOperand, info, LIRInstruction.NO_OPERANDS, inputs, temps);
         this.infoAfter = infoAfter;
         this.method = method;
         this.snippet = snippet;
@@ -81,7 +83,7 @@ public abstract class LIRXirInstruction extends LIRInstruction {
 
     public CiValue[] getOperands() {
         for (int i = 0; i < inputOperandIndices.length; i++) {
-            originalOperands[inputOperandIndices[i]] = input(i);
+            originalOperands[inputOperandIndices[i]] = alive(i);
         }
         for (int i = 0; i < tempOperandIndices.length; i++) {
             originalOperands[tempOperandIndices[i]] = temp(i);

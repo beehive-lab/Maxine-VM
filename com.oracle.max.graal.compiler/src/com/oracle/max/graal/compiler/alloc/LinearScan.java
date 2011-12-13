@@ -588,12 +588,34 @@ public final class LinearScan {
                     }
                 }
 
+                n = op.operandCount(LIRInstruction.OperandMode.Alive);
+                for (int k = 0; k < n; k++) {
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Alive, k);
+
+                    if (operand.isVariable()) {
+                        int operandNum = operandNumber(operand);
+                        if (!liveKill.get(operandNum)) {
+                            liveGen.set(operandNum);
+                            if (GraalOptions.TraceLinearScanLevel >= 4) {
+                                TTY.println("  Setting liveGen for operand %d at instruction %d", operandNum, op.id());
+                            }
+                        }
+                        if (block.loopIndex() >= 0) {
+                            localIntervalInLoop.setBit(operandNum, block.loopIndex());
+                        }
+                    }
+
+                    if (GraalOptions.DetailedAsserts) {
+                        verifyInput(block, liveKill, operand);
+                    }
+                }
+
                 // Add uses of live locals from interpreter's point of view for proper debug information generation
                 LIRDebugInfo info = op.info;
                 if (info != null) {
                     info.forEachLiveStateValue(new ValueProcedure() {
                         @Override
-                        public CiValue doValue(CiVariable operand) {
+                        public CiValue doValue(CiValue operand) {
                             int operandNum = operandNumber(operand);
                             if (!liveKill.get(operandNum)) {
                                 liveGen.set(operandNum);
@@ -803,7 +825,7 @@ public final class LinearScan {
                             LIRDebugInfo info = ins.info;
                             if (info != null) {
                                 info.forEachLiveStateValue(new ValueProcedure() {
-                                    public CiValue doValue(CiVariable operand) {
+                                    public CiValue doValue(CiValue operand) {
                                         TTY.println("   operand=" + operand);
                                         return null;
                                     }
@@ -843,9 +865,9 @@ public final class LinearScan {
         TTY.println(block.liveOut.toString());
     }
 
-    Interval addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
+    void addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
         if (!isProcessed(operand)) {
-            return null;
+            return;
         }
         if (GraalOptions.TraceLinearScanLevel >= 2 && kind == null) {
             TTY.println(" use %s from %d to %d (%s)", operand, from, to, registerPriority.name());
@@ -869,8 +891,8 @@ public final class LinearScan {
             interval.addRange(from, to);
         }
 
-        interval.addUsePos(to, registerPriority);
-        return interval;
+        // Register use position at even instruction id.
+        interval.addUsePos(to & ~1, registerPriority);
     }
 
     void addTemp(CiValue operand, int tempPos, RegisterPriority registerPriority, CiKind kind) {
@@ -1038,9 +1060,8 @@ public final class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
-        int hintOperand = op.registerHint();
-        if (hintOperand != -1) {
-            CiValue moveFrom = op.input(hintOperand);
+        CiValue moveFrom = op.registerHint();
+        if (moveFrom != null) {
             CiValue moveTo = op.result();
 
             if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
@@ -1139,20 +1160,21 @@ public final class LinearScan {
                     }
                 }
 
+                n = op.operandCount(LIRInstruction.OperandMode.Alive);
+                for (k = 0; k < n; k++) {
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Alive, k);
+                    if (operand.isVariableOrRegister()) {
+                        addUse(operand, blockFrom, opId + 1, RegisterPriority.MustHaveRegister, null);
+                    }
+                }
+
                 // visit uses (input operands)
                 n = op.operandCount(LIRInstruction.OperandMode.Input);
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
                     if (operand.isVariableOrRegister()) {
                         RegisterPriority p = registerPriorityOfInputOperand(op, k, operand);
-                        Interval interval = addUse(operand, blockFrom, opId, p, null);
-                        if (interval != null && op instanceof LIRXirInstruction) {
-                            Range range = interval.first();
-                            // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
-                            if (range.to == opId) {
-                                range.to++;
-                            }
-                        }
+                        addUse(operand, blockFrom, opId, p, null);
                     }
                 }
 
@@ -1163,7 +1185,7 @@ public final class LinearScan {
                 LIRDebugInfo info = op.info;
                 if (info != null) {
                     info.forEachLiveStateValue(new ValueProcedure() {
-                        public CiValue doValue(CiVariable operand) {
+                        public CiValue doValue(CiValue operand) {
                             addUse(operand, blockFrom, (opId + 1), RegisterPriority.None, null);
                             return null;
                         }
@@ -1725,7 +1747,7 @@ public final class LinearScan {
 
         info.forEachLiveStateValue(new ValueProcedure() {
             @Override
-            public CiValue doValue(CiVariable operand) {
+            public CiValue doValue(CiValue operand) {
                 int tempOpId = op.id();
                 OperandMode mode = OperandMode.Input;
                 LIRBlock block = blockForId(tempOpId);
@@ -1747,7 +1769,7 @@ public final class LinearScan {
                 // Get current location of operand
                 // The operand must be live because debug information is considered when building the intervals
                 // if the interval is not live, colorLirOperand will cause an assert on failure
-                CiValue result = colorLirOperand(operand, tempOpId, mode);
+                CiValue result = colorLirOperand((CiVariable) operand, tempOpId, mode);
                 assert !hasCall(tempOpId) || result.isStackSlot() || !isCallerSave(result) : "cannot have caller-save register operands at calls";
                 return result;
             }

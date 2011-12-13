@@ -1118,9 +1118,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirOperand[] tempOperands = snippet.template.tempOperands;
 
         CiValue[] inputOperandArray = new CiValue[inputOperands.length + inputTempOperands.length];
-        CiValue[] tempOperandArray = new CiValue[inputTempOperands.length + tempOperands.length];
+        CiValue[] tempOperandArray = new CiValue[tempOperands.length];
         int[] inputOperandIndicesArray = new int[inputOperands.length + inputTempOperands.length];
-        int[] tempOperandIndicesArray = new int[inputTempOperands.length + tempOperands.length];
+        int[] tempOperandIndicesArray = new int[tempOperands.length];
         for (int i = 0; i < inputOperands.length; i++) {
             XirOperand x = inputOperands[i];
             CiValue op = allocateOperand(snippet, x);
@@ -1138,20 +1138,20 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             CiValue newOp = emitMove(op);
             operands[x.index] = newOp;
             inputOperandArray[i + inputOperands.length] = newOp;
-            inputOperandIndicesArray[i] = x.index;
-            tempOperandArray[i + inputOperands.length] = newOp;
-            tempOperandIndicesArray[i] = x.index;
+            inputOperandIndicesArray[i + inputOperands.length] = x.index;
             if (GraalOptions.PrintXirTemplates) {
                 TTY.println("InputTemp operand: " + x);
             }
+
+            throw new InternalError("cwi: I think this code is never used.  If you see this exception being thrown, please tell me...");
         }
 
         for (int i = 0; i < tempOperands.length; i++) {
             XirOperand x = tempOperands[i];
             CiValue op = allocateOperand(snippet, x);
             operands[x.index] = op;
-            tempOperandArray[i + inputTempOperands.length] = op;
-            tempOperandIndicesArray[i + inputTempOperands.length] = x.index;
+            tempOperandArray[i] = op;
+            tempOperandIndicesArray[i] = x.index;
             if (GraalOptions.PrintXirTemplates) {
                 TTY.println("Temp operand: " + x);
             }
