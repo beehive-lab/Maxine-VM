@@ -628,22 +628,37 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  copies a string version of a {@link Value} to the system clipboard.
+     */
+    final class CopyValueAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Copy value to clipboard";
+        private final Value value;
+
+        private CopyValueAction(Value value, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.value = value;
+        }
+
+        @Override
+        public void procedure() {
+            final Kind kind = value.kind();
+            if (kind == Kind.REFERENCE || kind == Kind.WORD) {
+                gui().postToClipboard(value.asWord().toHexString());
+            } else {
+                gui().postToClipboard(value.toString());
+            }
+        }
+    }
+
+    /**
      * @param a {@link Word} wrapped as a {@link Value} from the VM.
      * @param actionTitle a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard,
      * null if not a word.
      */
     public final InspectorAction copyValue(Value value, String actionTitle) {
-        Word word = Word.zero();
-        try {
-            word = value.asWord();
-        } catch (Throwable throwable) {
-        }
-        final InspectorAction action = new CopyWordAction(word, actionTitle);
-        if (word.isZero()) {
-            action.setEnabled(false);
-        }
-        return action;
+        return new CopyValueAction(value, actionTitle);
     }
 
     /**
