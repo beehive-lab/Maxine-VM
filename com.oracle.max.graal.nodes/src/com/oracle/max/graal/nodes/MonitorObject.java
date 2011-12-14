@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.java;
+package com.oracle.max.graal.nodes;
 
-import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 
 /**
- * The {@code MonitorEnterNode} represents the acquisition of a monitor.
+ * Encapsulates the object that is locked and unlocked. This node is referenced by a {@link MonitorEnterNode},
+ * all {@link MonitorExitNode} that correspond to this monitor enter, and in all {@link FrameState}s in between
+ * the monitor enter and monitor exits.
  */
-public final class MonitorEnterNode extends AccessMonitorNode implements LIRLowerable {
+public class MonitorObject extends ValueNode implements LIRLowerable {
+    @Input private ValueNode owner;
+
+    public ValueNode owner() {
+        return owner;
+    }
 
     /**
-     * Creates a new MonitorEnterNode.
+     * Creates a new MonitorObjectNode.
      *
-     * @param object the instruction producing the object
+     * @param object The object that is processed by the monitor operation.
      */
-    public MonitorEnterNode(MonitorObject object) {
-        super(object);
+    public MonitorObject(ValueNode object) {
+        super(object.stamp());
+        this.owner = object;
     }
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitMonitorEnter(this);
+        // Nothing to do, monitor objects are processed as part of the monitor enter / monitor exit nodes.
     }
 }

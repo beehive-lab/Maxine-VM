@@ -28,6 +28,7 @@ import static java.lang.Float.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
@@ -108,6 +109,24 @@ public class AMD64MoveOpcode {
                     CiValue addrBase = input(0);
                     CiValue addrIndex = input(1);
                     masm.leaq(tasm.asLongReg(result()), new CiAddress(CiKind.Illegal, addrBase, addrIndex, addrScale, addrDisplacement));
+                }
+            };
+        }
+    }
+
+
+    // Note: This LIR operation is similar to a LEA, so reusing the LEA op would be desirable.
+    // However, the address that is loaded depends on the stack slot, and the stack slot numbers are
+    // only fixed after register allocation when the number of spill slots is known. Therefore, the address
+    // is not known when the LIR is generated.
+    public enum LeaStackBlockOpcode implements LIROpcode {
+        LEA_STACK_BLOCK;
+
+        public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
+            return new AMD64LIRInstruction(this, result, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
+                @Override
+                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    masm.leaq(tasm.asRegister(result()), tasm.compilation.frameMap().toStackAddress(stackBlock));
                 }
             };
         }

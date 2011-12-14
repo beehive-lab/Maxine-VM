@@ -28,7 +28,6 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
@@ -54,16 +53,12 @@ import com.sun.cri.ri.*;
  *          |                                |                   ^
  *          : callee save area               :                   |
  *          |                                |                   |
- *          +--------------------------------+                   |
+ *          +--------------------------------+ Current frame     |
  *          | alignment padding              |                   |
  *          +--------------------------------+                   |
  *          | ALLOCA block n                 |                   |
  *          :     ...                        :                   |
- *          | ALLOCA block 0                 | Current frame     |
- *          +--------------------------------+                   |
- *          | monitor n                      |                   |
- *          :     ...                        :                   |
- *          | monitor 0                      |                   |
+ *          | ALLOCA block 0                 |                   |
  *          +--------------------------------+    ---            |
  *          | spill slot n                   |     ^           frame
  *          :     ...                        :     |           size
@@ -79,7 +74,7 @@ import com.sun.cri.ri.*;
  *   -------+--------------------------------+----------------  ---
  *
  * </pre>
- * Note that the size of {@link Bytecodes#ALLOCA ALLOCA} blocks and {@code monitor}s in
+ * Note that the size of stack allocated memory block (ALLOCA block) in
  * the frame may be greater than the size of a {@linkplain CiTarget#spillSlotSize spill slot}.
  * Note also that the layout of the caller frame shown only applies if the caller
  * was also compiled with Graal. In particular, native frames won't have
@@ -92,11 +87,6 @@ public final class FrameMap {
     public final CiTarget target;
     private final RiRegisterConfig registerConfig;
     private final CiCallingConvention incomingArguments;
-
-    /**
-     * Number of monitors used in this frame.
-     */
-    private final int monitorCount;
 
     /**
      * The final frame size.
@@ -115,7 +105,7 @@ public final class FrameMap {
     private int spillSlotCount;
 
     /**
-     * The amount of memory allocated within the frame for uses of {@link Bytecodes#ALLOCA}.
+     * The amount of memory allocated within the frame for uses of stack allocated memory blocks.
      */
     private int stackBlocksSize;
 
@@ -135,17 +125,14 @@ public final class FrameMap {
      *
      * @param compilation the compilation context
      * @param method the outermost method being compiled
-     * @param monitors the number of monitors allocated on the stack for this method
      */
-    public FrameMap(GraalCompilation compilation, RiResolvedMethod method, int monitors) {
+    public FrameMap(GraalCompilation compilation, RiResolvedMethod method) {
         this.runtime = compilation.compiler.runtime;
         this.target = compilation.compiler.target;
         this.registerConfig = compilation.registerConfig;
         this.frameSize = -1;
         this.spillSlotCount = -2;
 
-        assert monitors >= 0 : "not set";
-        monitorCount = monitors;
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
@@ -268,28 +255,8 @@ public final class FrameMap {
         return new CiAddress(target.wordKind, registerConfig.getFrameRegister().asValue(target.wordKind), offsetForStackBlock(stackBlock));
     }
 
-    /**
-     * Converts the monitor index into the stack address of the object reference in the on-stack monitor.
-     *
-     * @param monitorIndex the monitor index
-     * @return a representation of the stack address
-     */
-    public CiStackSlot toMonitorObjectStackAddress(int monitorIndex) {
-        int byteIndex = offsetForMonitorObject(monitorIndex);
-        assert byteIndex % target.wordSize == 0;
-        return CiStackSlot.get(CiKind.Object, byteIndex / target.wordSize);
-    }
-
-    /**
-     * Converts the monitor index into the stack address of the on-stack monitor.
-     *
-     * @param monitorIndex the monitor index
-     * @return a representation of the stack address
-     */
-    public CiStackSlot toMonitorBaseStackAddress(int monitorIndex) {
-        int byteIndex = offsetForMonitorBase(monitorIndex);
-        assert byteIndex % target.wordSize == 0;
-        return CiStackSlot.get(CiKind.Object, byteIndex / target.wordSize);
+    public CiStackSlot toStackSlot(StackBlock stackBlock) {
+        return CiStackSlot.get(stackBlock.kind, offsetForStackBlock(stackBlock) / target.spillSlotSize);
     }
 
     /**
@@ -307,29 +274,42 @@ public final class FrameMap {
     /**
      * Encapsulates the details of a stack block reserved by a call to {@link FrameMap#reserveStackBlock(int, boolean)}.
      */
-    public static final class StackBlock {
+    public static final class StackBlock extends CiValue {
         /**
          * The size of this stack block.
          */
-        public final int size;
+        private final int size;
 
         /**
          * The offset of this stack block within the frame space reserved for stack blocks.
          */
-        public final int offset;
+        private final int offset;
 
-        /**
-         * Specifies if this block holds object values.
-         */
-        public final boolean refs;
+        private final StackBlock next;
 
-        public final StackBlock next;
-
-        public StackBlock(StackBlock next, int size, int offset, boolean refs) {
+        public StackBlock(StackBlock next, int size, int offset, CiKind kind) {
+            super(kind);
+            this.next = next;
             this.size = size;
             this.offset = offset;
-            this.next = next;
-            this.refs = refs;
+        }
+
+        @Override
+        public String name() {
+            return "StackBlock " + offset;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this == obj;
+        }
+        @Override
+        public boolean equalsIgnoringKind(CiValue other) {
+            return this == other;
+        }
+        @Override
+        public int hashCode() {
+            return offset;
         }
     }
 
@@ -342,9 +322,8 @@ public final class FrameMap {
      *         allocation is complete and the size of the frame has been {@linkplain #finalizeFrame(int) finalized}.
      */
     public StackBlock reserveStackBlock(int size, boolean refs) {
-        int wordSize = target.sizeInBytes(target.wordKind);
-        assert (size % wordSize) == 0;
-        StackBlock block = new StackBlock(stackBlocks, size, stackBlocksSize, refs);
+        assert size % target.wordSize == 0;
+        StackBlock block = new StackBlock(stackBlocks, size, stackBlocksSize, refs ? CiKind.Object : target.wordKind);
         stackBlocksSize += size;
         stackBlocks = block;
         return block;
@@ -357,25 +336,12 @@ public final class FrameMap {
         return offset;
     }
 
-    private int offsetForMonitorBase(int index) {
-        assert index >= 0 && index < monitorCount : "invalid monitor index: " + index + " (monitorCount: " + monitorCount + ")";
-        int size = runtime.sizeOfBasicObjectLock();
-        assert size != 0 : "monitors are not on the stack in this VM";
-        int offset = offsetToMonitors() + index * size;
-        assert offset <= (frameSize() - size) : "monitor outside of frame";
-        return offset;
-    }
-
     private int offsetToSpillArea() {
         return outgoingSize + customAreaSize();
     }
 
     private int offsetToSpillEnd() {
         return offsetToSpillArea() + spillSlotCount * target.spillSlotSize;
-    }
-
-    private int offsetToMonitors() {
-        return offsetToSpillEnd();
     }
 
     public int customAreaSize() {
@@ -386,12 +352,8 @@ public final class FrameMap {
         return 0;
     }
 
-    private int offsetToMonitorsEnd() {
-        return offsetToMonitors() + (monitorCount * runtime.sizeOfBasicObjectLock());
-    }
-
     private int offsetToStackBlocks() {
-        return offsetToMonitorsEnd();
+        return offsetToSpillEnd();
     }
 
     private int offsetToStackBlocksEnd() {
@@ -409,10 +371,6 @@ public final class FrameMap {
 
     public int offsetToCalleeSaveAreaEnd() {
         return frameSize;
-    }
-
-    private int offsetForMonitorObject(int index)  {
-        return offsetForMonitorBase(index) + runtime.basicObjectLockOffsetInBytes();
     }
 
     /**
@@ -436,7 +394,7 @@ public final class FrameMap {
         int frameWords = frameSize / target.spillSlotSize;
         CiBitMap frameRefMap = new CiBitMap(frameWords);
         for (StackBlock sb = stackBlocks; sb != null; sb = sb.next) {
-            if (sb.refs) {
+            if (sb.kind == CiKind.Object) {
                 int firstSlot = offsetForStackBlock(sb) / target.wordSize;
                 int words = sb.size / target.wordSize;
                 for (int i = 0; i < words; i++) {
@@ -446,5 +404,4 @@ public final class FrameMap {
         }
         return frameRefMap;
     }
-
 }
