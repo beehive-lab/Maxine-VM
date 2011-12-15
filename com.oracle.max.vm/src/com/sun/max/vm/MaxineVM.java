@@ -133,6 +133,11 @@ public final class MaxineVM {
         SERIALIZING_IMAGE,
 
         /**
+         * Starting writing the serialized graph (with all address set a relative offset) into byte streams.
+         */
+        WRITING_IMAGE,
+
+        /**
          * Executing target VM code, but many features do not work yet.
          */
         PRIMORDIAL,

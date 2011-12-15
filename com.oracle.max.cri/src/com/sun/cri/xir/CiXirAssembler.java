@@ -64,6 +64,10 @@ public abstract class CiXirAssembler {
         this.target = target;
     }
 
+    public CiKind wordKind() {
+        return target.wordKind;
+    }
+
     public static class RuntimeCallInformation {
         public final Object target;
         public final boolean useInfoAfter;

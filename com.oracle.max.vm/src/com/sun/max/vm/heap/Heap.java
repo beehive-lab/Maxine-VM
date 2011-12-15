@@ -24,9 +24,11 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.heap.HeapSchemeAdaptor.GC_DISABLING_COUNT;
+
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -55,6 +57,19 @@ public final class Heap {
     // TODO: clean up. Just for indicating that boot image should be generated with inline TLAB allocation if heap scheme supports TLAB.
     @HOSTED_ONLY
     public static boolean genInlinedTLAB;
+
+    @HOSTED_ONLY
+    private static Map<Object, Address> objectToCell;
+
+    @HOSTED_ONLY
+    public static Address objectToCell(Object object) {
+        return objectToCell.get(object);
+    }
+
+    @HOSTED_ONLY
+    public static void initObjectToCell(Map<Object, Address> map) {
+        objectToCell = map;
+    }
 
     private Heap() {
     }
@@ -134,8 +149,10 @@ public final class Heap {
 
     /**
      * Start of the virtual space requested by the heap scheme and reserved at boot-load time.
+     * The reserved space isn't backed yet by swap space (i.e., the memory is uncommitted).
+     * The start or end of the reserved virtual space may comprise the boot image.
      *
-     * @return Address of reserved virtual space (not yet backed by swap space).
+     * @return Address of reserved virtual space.
      */
     public static Address startOfReservedVirtualSpace() {
         return reservedVirtualSpace;
