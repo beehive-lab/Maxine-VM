@@ -22,11 +22,23 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.cri.ci.CiAddress.Scale;
+import com.sun.cri.ci.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.CardTable.CardState;
-
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.layout.*;
 /**
  * A pure card-table based remembered set.
  */
@@ -40,20 +52,59 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     final CardTable cardTable;
     final CardFirstObjectTable cfoTable;
 
-    public void  recordWrite(Address referenceLocation) {
+    /**
+     * Dummy object used to find card table literal constants in boot code region.
+     * The biased card table address is initialize with the origin of this object, so that
+     * during the serializing phase of boot image generation we can identify easily the location
+     * in the boot code region holding it.
+     * See {@link #recordLiteralsLocations()}
+     * See {@link #patchBootCodeLiterals()}
+     */
+    @HOSTED_ONLY
+    byte [] dummyCardTable = new byte[0];
 
+    @HOSTED_ONLY
+    ReferenceLiteralLocationRecorder literalRecorder;
+
+    /**
+     * Table holding all the locations in the boot code region of reference literals to the biased card table.
+     * This allows to patch these literals with the actual correct value of the biased card table, known only at
+     * heap scheme pristine initialization.
+     * The index are word indexes relative to the start of the boot code region.
+     */
+    private int [] bootCardTableLiterals;
+
+    private void patchBootCodeLiterals() {
+        final Pointer base = Code.bootCodeRegion().start().asPointer();
+        final Address biasedTableAddress = cardTable.biasedTableAddress;
+        for (int literalPos : bootCardTableLiterals) {
+            base.setWord(literalPos, biasedTableAddress);
+        }
     }
-
-    public void recordWrite(Address cell, Offset offset) {
-
-    }
-
 
     public CardTableRSet() {
         cardTable = new CardTable();
         cfoTable = new CardFirstObjectTable();
         cardTableMemory = new MemoryRegion("Card and FOT tables");
+    }
 
+    public void initialize(MaxineVM.Phase phase) {
+        if (MaxineVM.isHosted()) {
+            if (phase == Phase.BOOTSTRAPPING) {
+                Log2RegionToByteMapTable.hostInitialize();
+            } else if (phase == Phase.SERIALIZING_IMAGE) {
+                // Build a table of indexes to reference literals that point to the card table.
+                literalRecorder = new ReferenceLiteralLocationRecorder(Code.bootCodeRegion(), dummyCardTable);
+                bootCardTableLiterals = literalRecorder.getLiteralLocations();
+            } else if (phase == MaxineVM.Phase.WRITING_IMAGE) {
+                literalRecorder.fillLiteralLocations();
+            }
+        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            final Size reservedSpace = Size.K.times(VMConfiguration.vmConfig().heapScheme().reservedVirtualSpaceKB());
+            final Size bootCardTableSize = memoryRequirement(Heap.bootHeapRegion.size()).roundedUpBy(Platform.platform().pageSize);
+            final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
+            initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
+        }
     }
 
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
@@ -62,6 +113,34 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         cardTable.initialize(coveredAreaStart, coveredAreaSize, cardTableDataStart);
         final Address cfoTableStart = cardTableDataStart.plus(cardTable.tableSize(coveredAreaSize).wordAligned());
         cfoTable.initialize(coveredAreaStart, coveredAreaSize, cfoTableStart);
+        if (bootCardTableLiterals != null) {
+            patchBootCodeLiterals();
+        }
+    }
+
+    @HOSTED_ONLY
+    public void genTuplePostWriteBarrier(CiXirAssembler asm, XirOperand tupleCell) {
+        final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
+        asm.shr(temp, tupleCell, asm.i(CardTable.LOG2_CARD_SIZE));
+        // Watch out: this create a reference literal that will not point to an object!
+        // The GC will need to carefully skip reference table entries holding the biased base of the card table.
+        final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+        if (MaxineVM.isDebug()) {
+            // Just so that we get the address of the card entry in a register when inspecting...
+            asm.lea(temp, biasedCardTableAddress, temp, 0, Scale.Times1);
+        }
+    }
+
+    @HOSTED_ONLY
+    public void genArrayPostWriteBarrier(CiXirAssembler asm, XirOperand arrayCell, XirOperand elemIndex) {
+        final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
+        final Scale scale = Scale.fromInt(Word.size());
+        final int disp = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
+        asm.lea(temp, arrayCell, elemIndex, disp, scale);
+        asm.shr(temp, temp, asm.i(CardTable.LOG2_CARD_SIZE));
+        final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
     }
 
     /**
@@ -122,4 +201,5 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     public MemoryRegion memory() {
         return cardTableMemory;
     }
+
 }
