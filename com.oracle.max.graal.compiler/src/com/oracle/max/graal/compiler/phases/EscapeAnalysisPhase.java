@@ -176,9 +176,7 @@ public class EscapeAnalysisPhase extends Phase {
 
         @Override
         public void loopBegin(LoopBeginNode loopBegin) {
-            if (virtualObjectField == null) {
-                throw new VerificationError("null virtualObjectField").addContext(loopBegin);
-            }
+            assert virtualObjectField != null : "unexpected null virtualObjectField";
             PhiNode vobjPhi = null;
             vobjPhi = graph.add(new PhiNode(CiKind.Illegal, loopBegin, PhiType.Virtual));
             vobjPhi.addInput(virtualObjectField);
@@ -250,22 +248,24 @@ public class EscapeAnalysisPhase extends Phase {
             final FixedNode next = node.next();
             node.replaceAndDelete(next);
 
-            final BlockExitState startState = new BlockExitState(escapeFields, virtual);
-            final PostOrderNodeIterator<?> iterator = new PostOrderNodeIterator<BlockExitState>(next, startState) {
-                @Override
-                protected void node(FixedNode node) {
-                    int changedField = op.updateState(virtual, node, fields, state.fieldState);
-                    if (changedField != -1) {
-                        state.updateField(changedField);
-                    }
-                    if (!node.isDeleted() && node instanceof StateSplit && ((StateSplit) node).stateAfter() != null) {
-                        if (state.virtualObjectField != null) {
-                            ((StateSplit) node).stateAfter().addVirtualObjectMapping(state.virtualObjectField);
+            if (virtual.fieldsCount() > 0) {
+                final BlockExitState startState = new BlockExitState(escapeFields, virtual);
+                final PostOrderNodeIterator<?> iterator = new PostOrderNodeIterator<BlockExitState>(next, startState) {
+                    @Override
+                    protected void node(FixedNode node) {
+                        int changedField = op.updateState(virtual, node, fields, state.fieldState);
+                        if (changedField != -1) {
+                            state.updateField(changedField);
+                        }
+                        if (!node.isDeleted() && node instanceof StateSplit && ((StateSplit) node).stateAfter() != null) {
+                            if (state.virtualObjectField != null) {
+                                ((StateSplit) node).stateAfter().addVirtualObjectMapping(state.virtualObjectField);
+                            }
                         }
                     }
-                }
-            };
-            iterator.apply();
+                };
+                iterator.apply();
+            }
         }
 
         private void process() {
