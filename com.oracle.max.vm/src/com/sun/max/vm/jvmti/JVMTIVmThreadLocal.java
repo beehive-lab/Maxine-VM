@@ -22,13 +22,68 @@
  */
 package com.sun.max.vm.jvmti;
 
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 
+/**
+ * Efficient state storage for thread related JVMTI information.
+ *
+ * Bits 0-7 are status bits:
+ * Bits 8-23 record the depth for frame pop events.
+ * Bits 24-63 hold the per-thread event mask
+ *
+ */
 public class JVMTIVmThreadLocal {
-    public static final VmThreadLocal JVMTI = new VmThreadLocal(
+    public static final VmThreadLocal JVMTI_STATE = new VmThreadLocal(
                     "JVMTI", false, "For use by JVMTI");
 
+    /**
+     * Bit is set when a {@link JVMTIRawMonitor#notify()} has occurred on this thread.
+     */
     static final int JVMTI_RAW_NOTIFY = 1;
 
+    /**
+     * Bit is set when frame pop event requested.
+     */
+    static final int JVMTI_FRAME_POP = 2;
+
+    private static final int STATUS_BIT_MASK = 0xFF;
+
+    private static final int EVENT_SHIFT = 24;
+    private static final long EVENT_MASK = 0xFFFF000000L;
+
+    private static final int DEPTH_SHIFT = 8;
+
+    private static final int DEPTH_MASK = 0xFFFF00;
+
+    static boolean bitIsSet(Pointer tla, int bit) {
+        return JVMTI_STATE.load(tla).and(bit).isNotZero();
+    }
+
+    static void setBit(Pointer tla, int bit, boolean setting) {
+        if (setting) {
+            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
+        } else {
+            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
+        }
+    }
+
+    static int getDepth(Pointer tla) {
+        return (int) (JVMTI_STATE.load(tla).toLong() & DEPTH_MASK) >> DEPTH_SHIFT;
+    }
+
+    static void setDepth(Pointer tla, int depth) {
+        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
+    }
+
+    static void setEventBits(Pointer tla, long bits) {
+        long newBits = bits << EVENT_SHIFT;
+        long otherBits = JVMTI_STATE.load(tla).toLong() & ~EVENT_MASK;
+        JVMTI_STATE.store(tla, Address.fromLong(otherBits | newBits));
+    }
+
+    static long getEventBits(Pointer tla) {
+        return JVMTI_STATE.load(tla).toLong() >> EVENT_SHIFT;
+    }
 
 }

@@ -42,11 +42,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
  * A custom singleton viewer for JVMTI log records.
- * Essentially a hyrbid array/object viewer.
+ * Essentially a hybrid array/object viewer.
  */
+@SuppressWarnings("unused")
 public class JVMTILogView extends AbstractView<JVMTILogView> {
     private static final ViewKind VIEW_KIND = ViewKind.JVMTILOG;
     private static final String SHORT_NAME = "JVMTI Log";
@@ -329,6 +329,9 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             int index = (Integer) value;
             setText(Integer.toString(index));
             return this;
@@ -341,6 +344,9 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             int threadID = (Integer) value;
             setText(vm().threadManager().getThread(threadID).vmThreadName());
             return this;
@@ -353,6 +359,9 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             int op = (Integer) value;
             setText(JVMTIFunctions.Methods.values()[op].name);
             return this;
@@ -368,6 +377,9 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             long longValue = ((Boxed) value).value();
             int op = tableModel.logCache.buffer[row].op;
             switch (JVMTIFunctions.Methods.values()[op]) {
@@ -383,6 +395,7 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
                     }
                     setText(text);
                     break;
+
                 case RawMonitorEnter:
                 case RawMonitorExit:
                 case RawMonitorWait:

@@ -531,7 +531,7 @@ public class Deoptimization extends VmOperation {
         /**
          * Method being deoptimized.
          */
-        final TargetMethod tm;
+        public final TargetMethod tm;
 
         // The following are initially the details of the frame being deoptimized.
         // Just before unrolling, they are then modified to reflect the top

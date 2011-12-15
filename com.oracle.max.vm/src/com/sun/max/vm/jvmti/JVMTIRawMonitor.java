@@ -289,10 +289,10 @@ public class JVMTIRawMonitor {
             // wait for notify
             OSMonitor.nativeMutexLock(m.waitMutex);
             Pointer tla = VmThread.currentTLA();
-            while (JVMTI.load(tla).and(JVMTI_RAW_NOTIFY).isZero()) {
+            while (!JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_RAW_NOTIFY)) {
                 OSMonitor.nativeConditionWait(m.waitMutex, m.waitCondition, millis);
             }
-            JVMTI.store(tla, JVMTI.load(tla).and(~JVMTI_RAW_NOTIFY));
+            JVMTIVmThreadLocal.setBit(tla, JVMTI_RAW_NOTIFY, false);
             OSMonitor.nativeMutexUnlock(m.waitMutex);
             // re-acquire monitor but hold spinlock
             enter(rawMonitor, false);
@@ -328,7 +328,7 @@ public class JVMTIRawMonitor {
                 if (r != null) {
                     listChanged = true;
                     // mark as notified
-                    JVMTI.store(r.tla(), JVMTI.load(r.tla()).or(JVMTI_RAW_NOTIFY));
+                    JVMTIVmThreadLocal.setBit(r.tla(), JVMTI_RAW_NOTIFY, true);
                     m.waitWaiters[i] = null;
                     if (!all) {
                         break;

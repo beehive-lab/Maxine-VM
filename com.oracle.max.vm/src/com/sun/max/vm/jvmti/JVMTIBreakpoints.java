@@ -36,6 +36,9 @@ import com.sun.max.vm.jni.*;
  *
  * Breakpoints are encoded as a 64-bit long value. The low 32 bits are from the MethodID
  * and the high 16 bits are the location in the method.
+ *
+ * Single stepping is handled as a pseudo-breakpoint that has bit {@value JVMTIBreakpoints#SINGLE_STEP} set.
+ * Single stepping at a breakpoint is denoted by setting bit {@value JVMTIBreakpoints#SINGLE_STEP_AND_BREAK} as well.
  */
 public class JVMTIBreakpoints {
 
@@ -57,9 +60,12 @@ public class JVMTIBreakpoints {
     private static final int LOCATION_MASK = 0x0000ffff;
     private static final int DEFAULT_INITIAL_TABLE_SIZE = 16;
     private static final long UNSET = -1;
+    private static final long SINGLE_STEP = 1L << 63;
+    public static final long SINGLE_STEP_AND_BREAK = 1L << 62;
 
     private static long[] table;
     private static EventArgThreadLocal eventArg = new EventArgThreadLocal();
+    private static boolean singleStep;
 
     /**
      * Used in T1X template, so no inlining.
@@ -67,10 +73,33 @@ public class JVMTIBreakpoints {
      */
     @NEVER_INLINE
     public static void event(long id) {
+        // if single step and breakpoint deliver both, single step first
+        if ((id & SINGLE_STEP) != 0) {
+            event(JVMTI_EVENT_SINGLE_STEP, id);
+            if ((id & SINGLE_STEP_AND_BREAK) == 0) {
+                return;
+            }
+        }
+        event(JVMTI_EVENT_BREAKPOINT, id);
+    }
+
+    private static void event(int eventType, long id) {
         EventBreakpointID eventID = eventArg.get();
         eventID.methodID = getMethodID(id);
         eventID.location = getLocation(id);
-        JVMTI.event(JVMTI_EVENT_BREAKPOINT, eventID);
+        JVMTI.event(eventType, eventID);
+    }
+
+    static void setSingleStep(boolean setting) {
+        singleStep = setting;
+    }
+
+    public static boolean isSingleStepEnabled() {
+        return singleStep;
+    }
+
+    public static long createSingleStepId(MethodID methodID, int location) {
+        return createBreakpointID(methodID, location) | SINGLE_STEP;
     }
 
     static int setBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {
@@ -85,6 +114,24 @@ public class JVMTIBreakpoints {
 
     static int clearBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {
         return JVMTI_ERROR_NONE;
+    }
+
+    /**
+     * Used during deoptimzation to check whether a given location in a given method has a breakpoint set.
+     * @param classMethodActor
+     * @param bci
+     * @return
+     */
+    public static boolean isBreakpoint(ClassMethodActor classMethodActor, int bci) {
+        long methodID = MethodID.fromMethodActor(classMethodActor).asAddress().toLong();
+        for (int i = 0; i < table().length; i++) {
+            if (getMethodID(table[i]) == methodID) {
+                if (getLocation(table[i]) == bci) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -146,7 +193,7 @@ public class JVMTIBreakpoints {
     }
 
     public static int getLocation(long breakpointID) {
-        return (int) (breakpointID >> LOCATION_SHIFT);
+        return (int) (breakpointID >> LOCATION_SHIFT) & LOCATION_MASK;
     }
 
     static private int tryRecordBreakpoint(long id) {
