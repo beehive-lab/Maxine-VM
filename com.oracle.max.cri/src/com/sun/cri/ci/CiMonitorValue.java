@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.target.amd64;
+package com.sun.cri.ci;
 
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.graal.compiler.asm.*;
-import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.compiler.lir.FrameMap.*;
-import com.oracle.max.graal.compiler.target.amd64.*;
-import com.sun.cri.ci.*;
+public final class CiMonitorValue extends CiValue {
+    public final CiValue owner;
+    public final CiValue lockData;
+    public final boolean eliminated;
 
-public enum AMD64StackAllocateOpcode implements LIROpcode {
-    STACK_ALLOCATE;
+    public CiMonitorValue(CiValue owner, CiValue lockData, boolean eliminated) {
+        super(CiKind.Illegal);
 
-    public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
-        return new AMD64LIRInstruction(this, result, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
-            @Override
-            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                masm.leaq(tasm.asRegister(result()), tasm.compilation.frameMap().toStackAddress(stackBlock));
-            }
-        };
+        this.owner = owner;
+        this.lockData = lockData;
+        this.eliminated = eliminated;
+    }
+
+    @Override
+    public String name() {
+        return "monitor";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj;
+    }
+
+    @Override
+    public boolean equalsIgnoringKind(CiValue other) {
+        return this == other;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }

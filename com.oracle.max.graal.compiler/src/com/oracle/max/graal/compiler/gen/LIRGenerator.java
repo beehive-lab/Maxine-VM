@@ -36,6 +36,7 @@ import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
 import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.stub.*;
@@ -387,21 +388,21 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitMonitorEnter(MonitorEnterNode x) {
-        XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = x.monitorStackSlots() ? toXirArgument(createMonitorAddress(x.monitorIndex())) : null;
+        XirArgument obj = toXirArgument(x.object().owner());
+        XirArgument lockAddress = toXirArgument(emitLea(debugInfoBuilder.lockDataFor(x.object(), true)));
         XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
         emitXir(snippet, x, state(), stateFor(x.stateAfter()), null, true);
     }
 
     @Override
     public void visitMonitorExit(MonitorExitNode x) {
-        XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = x.monitorStackSlots() ? toXirArgument(createMonitorAddress(x.monitorIndex())) : null;
+        XirArgument obj = toXirArgument(x.object().owner());
+        XirArgument lockAddress = toXirArgument(emitLea(debugInfoBuilder.lockDataFor(x.object(), false)));
         XirSnippet snippet = xir.genMonitorExit(site(x), obj, lockAddress);
         emitXir(snippet, x, state(), null, true);
     }
 
-    public abstract CiValue createMonitorAddress(int monitorIndex);
+    protected abstract CiVariable emitLea(StackBlock stackBlock);
 
     @Override
     public void visitLoadField(LoadFieldNode x) {
