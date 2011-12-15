@@ -26,16 +26,27 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.VmTargetBreakpoint.TargetBreakpointManager;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.util.*;
 
 /**
- * Access to breakpoint creation and management in the VM.
+ * Singleton access to breakpoint creation and management in the VM.
  */
 public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpointManager, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+
+    private static VmBreakpointManager breakpointManager;
+
+    public static VmBreakpointManager make(TeleVM vm) {
+        if (breakpointManager == null) {
+            breakpointManager = new VmBreakpointManager(vm);
+        }
+        return breakpointManager;
+    }
 
     private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
     private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
@@ -44,10 +55,10 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
     // Thread-safe, immutable list.  Will be read many, many more times than will change.
     private volatile List<MaxBreakpoint> breakpointCache = Collections.emptyList();
 
-    public VmBreakpointManager(TeleVM vm, VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager) {
+    private VmBreakpointManager(TeleVM vm) {
         super(vm);
-        this.bytecodeBreakpointManager = bytecodeBreakpointManager;
-        this.targetBreakpointManager = vm.teleProcess().targetBreakpointManager();
+        this.bytecodeBreakpointManager = VmBytecodeBreakpoint.makeManager(vm);
+        this.targetBreakpointManager = VmTargetBreakpoint.makeManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
         rebuildBreakpointCache();
         addListener(new MaxBreakpointListener() {
@@ -80,10 +91,10 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
         return bytecodeBreakpointManager.makeClientBreakpoint(codeLocation);
     }
 
-    public  VmBreakpoint findBreakpoint(MaxCodeLocation maxCodeLocation) {
+    public VmBreakpoint findBreakpoint(MaxCodeLocation maxCodeLocation) {
         if (maxCodeLocation instanceof MachineCodeLocation) {
             final MachineCodeLocation compiledCodeLocation = (MachineCodeLocation) maxCodeLocation;
-            return targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
+            return targetBreakpointManager.findClientBreakpoint(compiledCodeLocation.codePointer());
         }
         final BytecodeLocation methodCodeLocation = (BytecodeLocation) maxCodeLocation;
         return bytecodeBreakpointManager.findClientBreakpoint(methodCodeLocation);
@@ -94,7 +105,7 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
     }
 
     public void writeSummary(PrintStream printStream) {
-        vm().teleProcess().targetBreakpointManager().writeSummaryToStream(printStream);
+        targetBreakpointManager.writeSummaryToStream(printStream);
         bytecodeBreakpointManager.writeSummaryToStream(printStream);
     }
 
@@ -105,9 +116,15 @@ public class VmBreakpointManager extends AbstractVmHolder implements MaxBreakpoi
         updateTracer.end();
     }
 
-    public VmTargetBreakpoint makeTransientTargetBreakpoint(MaxCodeLocation maxCodeLocation) throws MaxVMBusyException {
-        final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
-        return targetBreakpointManager.makeTransientBreakpoint(codeLocation);
+    public VmTargetBreakpoint makeSystemTargetBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler triggerEventHandler) throws MaxVMBusyException {
+        return targetBreakpointManager.makeSystemBreakpoint(codeLocation, triggerEventHandler);
+    }
+
+    /**
+     * @return access to low level functionality concerning machine code breakpoints.
+     */
+    TargetBreakpointManager targetBreakpoints() {
+        return targetBreakpointManager;
     }
 
     /**

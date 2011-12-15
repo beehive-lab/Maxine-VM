@@ -84,7 +84,7 @@ public final class NativeMethodView extends MethodView<NativeMethodView> {
 
     @Override
     public String getToolTip() {
-        return longName;
+        return "native function:  " + longName;
     }
 
     @Override
