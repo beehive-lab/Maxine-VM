@@ -27,6 +27,7 @@ import java.lang.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
@@ -208,7 +209,17 @@ public interface HeapScheme extends VMScheme {
     boolean isAllocationDisabledForCurrentThread();
 
     @INLINE
-    void writeBarrier(Reference from, Reference to);
+    @FOLD
+    boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec);
+
+    @INLINE
+    void preWriteBarrier(Reference ref, Offset offset, Reference value);
+    @INLINE
+    void postWriteBarrier(Reference ref, Offset offset, Reference value);
+    @INLINE
+    void preWriteBarrier(Reference ref,  int displacement, int index, Reference value);
+    @INLINE
+    void postWriteBarrier(Reference ref,  int displacement, int index, Reference value);
 
     enum PIN_SUPPORT_FLAG {
         /**

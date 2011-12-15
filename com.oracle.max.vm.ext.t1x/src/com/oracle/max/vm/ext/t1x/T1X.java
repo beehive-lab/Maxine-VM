@@ -606,6 +606,9 @@ public class T1X implements RuntimeCompiler {
         } else {
             distance += objectLiteralsLength * Word.size();
             distance += Layout.referenceArrayLayout().headerSize();
+            if (DebugHeap.isTagging()) {
+                distance += Word.size();
+            }
             distance += scalarLiteralsLength - dataIndex;
         }
         return -distance;

@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
@@ -282,20 +283,31 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
     @Override
     public Size reportFreeSpace() {
-        // TODO Auto-generated method stub
-        return Size.zero();
+        return oldSpace.freeSpace().plus(youngSpace.freeSpace());
     }
 
     @Override
     public Size reportUsedSpace() {
-        // TODO Auto-generated method stub
-        return Size.zero();
+        return oldSpace.usedSpace().plus(youngSpace.usedSpace());
     }
 
+    @INLINE(override = true)
+    @FOLD
     @Override
-    public void writeBarrier(Reference from, Reference to) {
-        // TODO Auto-generated method stub
+    public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
+        return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);
+    }
 
+    @INLINE(override = true)
+    @Override
+    public void postWriteBarrier(Reference ref, Offset offset, Reference value) {
+        cardTableRSet.record(ref, offset);
+    }
+
+    @INLINE(override = true)
+    @Override
+    public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
+        cardTableRSet.record(ref, displacement, index);
     }
 
     /**
@@ -379,23 +391,23 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
     @HOSTED_ONLY
     @Override
-    public XirWriteBarrierGenAdaptor barrierGenerator(IntBitSet<WriteBarrierSpec> writeBarrierSpec) {
+    public XirWriteBarrierGenerator barrierGenerator(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {
-            return new XirWriteBarrierGenAdaptor() {
+            return new XirWriteBarrierGenerator() {
                 @Override
                 public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
                     cardTableRSet.genTuplePostWriteBarrier(asm, operands[0]);
                 }
             };
         } else if (writeBarrierSpec.equals(ARRAY_POST_BARRIER)) {
-            return new XirWriteBarrierGenAdaptor() {
+            return new XirWriteBarrierGenerator() {
                 @Override
                 public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
                     cardTableRSet.genArrayPostWriteBarrier(asm, operands[0], operands[1]);
                 }
             };
         }
-        return NULL_WRITE_BARRIER_GEN;
+        return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
     }
 
 }

@@ -32,7 +32,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
@@ -177,7 +179,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
             OBJECT_HUB = ClassRegistry.OBJECT.dynamicHub();
             BYTE_ARRAY_HUB = ClassRegistry.BYTE_ARRAY.dynamicHub();
             MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
@@ -262,6 +264,29 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public boolean supportsPinning(PIN_SUPPORT_FLAG flag) {
         return flag.isSet(pinningSupportFlags);
+    }
+
+    @INLINE(override = true)
+    @FOLD
+    public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
+        return false;
+    }
+
+    @INLINE(override = true)
+    public void preWriteBarrier(Reference ref, Offset offset, Reference value) {
+        // do nothing
+    }
+    @INLINE(override = true)
+    public void postWriteBarrier(Reference ref, Offset offset, Reference value) {
+        // do nothing
+    }
+    @INLINE(override = true)
+    public void preWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
+        // do nothing
+    }
+    @INLINE(override = true)
+    public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
+        // do nothing
     }
 
     public boolean isPinned(Object object) {
