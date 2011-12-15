@@ -22,10 +22,7 @@
  */
 package com.sun.max.tele.method;
 
-import java.util.*;
-
 import com.sun.cri.ci.*;
-import com.sun.max.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
@@ -239,30 +236,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
         public TeleClassMethodActor teleClassMethodActor() {
             if (teleClassMethodActor == null) {
-                if (vm().tryLock()) {
-                    try {
-                        final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
-                        if (teleClassActor != null) {
-                            // find a matching method
-                            final String methodKeyString = methodKey.signature().toJavaString(true, true);
-                            for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                                if (teleMethodActor instanceof TeleClassMethodActor) {
-                                    if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
-                                        teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                                    }
-                                }
-                            }
-                        }
-                        // TODO (mlvdv) when the class registry is complete, this should not be necessary
-                        // Try to locate TeleClassMethodActor via compiled methods in the VM.
-                        final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
-                        if (teleTargetMethods.size() > 0) {
-                            teleClassMethodActor = Utils.first(teleTargetMethods).getTeleClassMethodActor();
-                        }
-                    } finally {
-                        vm().unlock();
-                    }
-                }
+                teleClassMethodActor = vm().methods().findClassMathodActor(methodKey);
             }
             return teleClassMethodActor;
         }

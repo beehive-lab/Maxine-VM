@@ -88,10 +88,10 @@ public interface MaxMachineCode extends MaxEntity<MaxMachineCode> {
     MaxNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
-     * Get the block of known native functino code, if any, that contains a given address in the VM process.
+     * Get the block of known native function code, if any, that contains a given address in the VM process.
      *
      * @param address memory location in the VM
-     * @return known native functin code that includes the address, null if none
+     * @return known native function code that includes the address, null if none
      */
     MaxNativeFunction findNativeFunction(Address address);
 

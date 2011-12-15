@@ -49,6 +49,7 @@ Xen
 Yamauchi
 abi
 accessor
+accessors
 affordance
 affordances
 allocatable

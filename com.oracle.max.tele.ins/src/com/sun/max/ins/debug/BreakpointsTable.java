@@ -669,7 +669,7 @@ public final class BreakpointsTable extends InspectorTable {
                     codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
                     shortName = inspection().nameDisplay().shortName(externalCode);
-                    longName = inspection().nameDisplay().longName(externalCode);
+                    longName = "native function:  " + inspection().nameDisplay().longName(externalCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = address.to0xHexString();

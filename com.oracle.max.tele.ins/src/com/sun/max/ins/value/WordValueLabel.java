@@ -645,15 +645,15 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(hexString);
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points into native function " + nameDisplay.longName(nativeFunction));
+                                "<br>Points into native function:  " + nameDisplay.longName(nativeFunction));
                 break;
             }
             case NATIVE_FUNCTION_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallEntryPointColor());
-                setWrappedText(nameDisplay.veryShortName(nativeFunction));
+                setWrappedText(nameDisplay.shortName(nativeFunction));
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points into native function " + nameDisplay.longName(nativeFunction));
+                                "<br>Points into native function:  " + nameDisplay.longName(nativeFunction));
 
                 break;
             }
