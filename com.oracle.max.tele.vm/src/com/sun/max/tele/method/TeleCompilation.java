@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -59,7 +58,7 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         private final boolean isBootCode;
         private final VmCodeCacheAccess codeCache;
 
-        private CompiledCodeMemoryRegion(MaxVM vm, TeleCompilation owner, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
+        private CompiledCodeMemoryRegion(TeleVM vm, TeleCompilation owner, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
             super(vm, teleTargetMethod);
             this.owner = owner;
             this.isBootCode = isBootCode;
@@ -88,7 +87,6 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
     private final TeleTargetMethod teleTargetMethod;
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
-    private List<MachineCodeLocation> instructionLocations;
 
     /**
      * Creates an object that describes a region of VM memory used to hold a single compiled method.
@@ -169,8 +167,12 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         return !teleTargetMethod.isCodeEvicted();
     }
 
-    public boolean isBaseline() {
-        return teleTargetMethod.isBaseline();
+    public String shortDesignator() {
+        return teleTargetMethod.shortDesignator();
+    }
+
+    public String longDesignator() {
+        return teleTargetMethod.longDesignator();
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {

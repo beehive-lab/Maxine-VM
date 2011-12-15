@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.ci.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -38,6 +37,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.reference.*;
@@ -468,14 +468,43 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         return machineCodeInfoCache.machineCodeInfo().codeVersion();
     }
 
+//    public boolean isBaseline() {
+//        if (compilationClass == null) {
+//            compilationClass = classActorForObjectType().javaClass();
+//        }
+//        return compilationClass == T1XTargetMethod.class;
+//    }
+
     /**
-     * Determines whether this is a baseline compilation; if not, it can be assumed to be an optimized compilation.
+     * @see MaxCompilation#shortDesignator()
      */
-    public boolean isBaseline() {
-        if (compilationClass == null) {
-            compilationClass = classActorForObjectType().javaClass();
+    public String shortDesignator() {
+        if (teleClassMethodActor == null) {
+            return "?";
         }
-        return compilationClass == T1XTargetMethod.class;
+        if (teleClassMethodActor.getCompilation(Nature.BASELINE) == this) {
+            return "B";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.OPT) == this) {
+            return "O";
+        }
+        return "?";
+    }
+
+    /**
+     * @see MaxCompilation#longDesignator()
+     */
+    public String longDesignator() {
+        if (teleClassMethodActor == null) {
+            return "<?>";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.BASELINE) == this) {
+            return "BASELINE";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.OPT) == this) {
+            return "OPTIMIZED";
+        }
+        return "OTHER";
     }
 
     /**
