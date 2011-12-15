@@ -25,7 +25,6 @@ package com.oracle.max.graal.compiler.tests;
 import org.junit.*;
 
 import com.oracle.max.graal.compiler.phases.*;
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 
 /**
