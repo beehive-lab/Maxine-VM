@@ -62,9 +62,10 @@ public class Snippets {
                 if (Modifier.isAbstract(modifiers) || Modifier.isNative(modifiers)) {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
-                StructuredGraph graph = buildSnippetGraph(runtime.getRiMethod(snippet), runtime, target, context, pool, plotGraphs, plan);
-                RiResolvedMethod targetRiMethod = runtime.getRiMethod(snippet);
-                targetRiMethod.compilerStorage().put(Graph.class, graph);
+                RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
+                if (snippetRiMethod.compilerStorage().get(Graph.class) == null) {
+                    buildSnippetGraph(snippetRiMethod, runtime, target, context, pool, plotGraphs, plan);
+                }
             } catch (GraalInternalError error) {
                 if (context.isObserved()) {
                     if (error.node() != null) {
@@ -92,9 +93,9 @@ public class Snippets {
                 if (Modifier.isAbstract(modifiers) || Modifier.isNative(modifiers)) {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
-                StructuredGraph graph = buildSnippetGraph(runtime.getRiMethod(snippet), runtime, target, context, pool, plotGraphs, plan);
-                RiResolvedMethod targetRiMethod = runtime.getRiMethod(method);
-                targetRiMethod.compilerStorage().put(Graph.class, graph);
+                RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
+                StructuredGraph graph = buildSnippetGraph(snippetRiMethod, runtime, target, context, pool, plotGraphs, plan);
+                runtime.getRiMethod(method).compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("Could not resolve method to substitute with: " + snippet.getName(), e);
             } catch (GraalInternalError error) {
@@ -112,16 +113,28 @@ public class Snippets {
         }
     }
 
-    public static StructuredGraph buildSnippetGraph(RiResolvedMethod snippetRiMethod, GraalRuntime runtime, CiTarget target, GraalContext context, BoxingMethodPool pool, boolean plotGraphs, PhasePlan plan) {
+    private static StructuredGraph buildSnippetGraph(RiResolvedMethod snippetRiMethod, GraalRuntime runtime, CiTarget target, GraalContext context, BoxingMethodPool pool, boolean plotGraphs, PhasePlan plan) {
+        IdealGraphPrinterObserver observer = null;
+        if (plotGraphs) {
+            observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
+            observer.compilationStarted(CiUtil.format("snippet:%h.%n(%p)", snippetRiMethod));
+        }
+        StructuredGraph graph = buildSnippetGraph(snippetRiMethod, runtime, target, context, pool, plan, observer);
+        if (observer != null) {
+            observer.compilationFinished(null);
+        }
+        return graph;
+    }
+
+    private static StructuredGraph buildSnippetGraph(RiResolvedMethod snippetRiMethod, GraalRuntime runtime, CiTarget target, GraalContext context, BoxingMethodPool pool, PhasePlan plan, IdealGraphPrinterObserver observer) {
 
         GraphBuilderConfiguration config = GraphBuilderConfiguration.getDeoptFreeDefault();
         GraphBuilderPhase graphBuilder = new GraphBuilderPhase(runtime, snippetRiMethod, null, config);
         StructuredGraph graph = new StructuredGraph();
         graphBuilder.apply(graph, context);
 
-        if (plotGraphs) {
-            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        if (observer != null) {
+            observer.printGraph(snippetRiMethod.name() + ":" + GraphBuilderPhase.class.getSimpleName(), graph);
         }
 
         new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
@@ -131,16 +144,19 @@ public class Snippets {
             RiResolvedMethod targetMethod = callTarget.targetMethod();
             RiResolvedType holder = targetMethod.holder();
             if (holder.isSubtypeOf(runtime.getType(SnippetsInterface.class))) {
-                InliningUtil.inline(invoke, buildSnippetGraph(targetMethod, runtime, target, context, pool, plotGraphs, plan), true);
+                StructuredGraph targetGraph = (StructuredGraph) targetMethod.compilerStorage().get(Graph.class);
+                if (targetGraph == null) {
+                    targetGraph = buildSnippetGraph(targetMethod, runtime, target, context, pool, plan, observer);
+                }
+                InliningUtil.inline(invoke, targetGraph, true);
                 new CanonicalizerPhase(target, runtime, null).apply(graph);
             }
         }
 
         new SnippetIntrinsificationPhase(runtime, pool).apply(graph, context);
 
-        if (plotGraphs) {
-            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        if (observer != null) {
+            observer.printGraph(snippetRiMethod.name() + ":" + SnippetIntrinsificationPhase.class.getSimpleName(), graph);
         }
         new DeadCodeEliminationPhase().apply(graph, context);
         new CanonicalizerPhase(target, runtime, null).apply(graph, context);
@@ -150,10 +166,11 @@ public class Snippets {
             end.setSafepointPolling(false);
         }
 
-        if (plotGraphs) {
-            IdealGraphPrinterObserver observer = new IdealGraphPrinterObserver(GraalOptions.PrintIdealGraphAddress, GraalOptions.PrintIdealGraphPort);
-            observer.printSingleGraph(snippetRiMethod.name(), graph);
+        if (observer != null) {
+            observer.printGraph(snippetRiMethod.name() + ":" + "Final", graph);
         }
+
+        snippetRiMethod.compilerStorage().put(Graph.class, graph);
 
         return graph;
     }
