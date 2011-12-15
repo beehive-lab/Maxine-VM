@@ -22,35 +22,12 @@
  */
 package com.sun.max.vm.jvmti;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
 
-/**
- * Names and offsets to the C struct (jvmtiEnv) used on the native side of the implementation.
- * Must match the definition in jvmti.c
- */
-enum JVMTIEnvNativeStruct {
-    FUNCTIONS(0),
-    CALLBACKS(8),
-    CAPABILITIES(16); // the capabilities that are active for this environment
 
-    int offset;
-
-    JVMTIEnvNativeStruct(int offset) {
-        this.offset = offset;
+public class Package extends BootImagePackage {
+    public Package() {
+        BootImagePackage.registerThreadLocal(JVMTIVmThreadLocal.JVMTI_STATE);
     }
 
-    /**
-     * Return the value of the field at our offset from {@code base}.
-     */
-    Word get(Pointer base) {
-        return base.readWord(offset);
-    }
-
-    Pointer getPtr(Pointer base) {
-        return base.readWord(offset).asPointer();
-    }
-
-    void set(Pointer base, Word value) {
-        base.writeWord(offset, value);
-    }
 }

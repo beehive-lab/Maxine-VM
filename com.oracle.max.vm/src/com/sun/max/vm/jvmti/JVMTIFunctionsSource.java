@@ -102,8 +102,9 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
         // PHASES: ONLOAD,LIVE
+        // HANDLECHECK_NULLOK: event_thread=Thread
         // LOG: Address.fromInt(mode),Address.fromInt(event_type),event_thread
-        return JVMTIEvent.setEventNotificationMode(env, mode, event_type, event_thread);
+        return JVMTIEvent.setEventNotificationMode(env, mode, event_type, handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -228,7 +229,10 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: LIVE
+        // HANDLECHECK_NULLOK: thread=Thread
+        // LOG: Address.fromInt(depth)
+        return JVMTIThreadFunctions.notifyFramePop(handleAsThread, depth);
     }
 
     @VM_ENTRY_POINT
@@ -332,35 +336,35 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // LOG: rawMonitor
+        // @LOG: rawMonitor
         return JVMTIRawMonitor.enter(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // LOG: rawMonitor
+        // @LOG: rawMonitor
         return JVMTIRawMonitor.exit(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
         // PHASES: ANY
-        // LOG: rawMonitor
+        // @LOG: rawMonitor
         return JVMTIRawMonitor.wait(rawMonitor, millis);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // LOG: rawMonitor
+        // @LOG: rawMonitor
         return JVMTIRawMonitor.notify(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // LOG: rawMonitor
+        // @LOG: rawMonitor
         return JVMTIRawMonitor.notifyAll(rawMonitor);
     }
 

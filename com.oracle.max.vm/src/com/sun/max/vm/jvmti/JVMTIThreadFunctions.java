@@ -24,6 +24,7 @@ package com.sun.max.vm.jvmti;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIVmThreadLocal.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -35,6 +36,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.jni.*;
@@ -47,7 +49,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Support for the JVMTI functions related to {@link Thread}.
  */
-class JVMTIThreadFunctions {
+public class JVMTIThreadFunctions {
     private static ClassActor vmThreadClassActor;
     private static ClassActor jniFunctionsClassActor;
     private static ClassActor vmThreadMapClassActor;
@@ -411,6 +413,20 @@ class JVMTIThreadFunctions {
         }
     }
 
+    /**
+     * Convenience class for commonly used operation.
+     */
+    private static class FindAppFramesStackTraceOperation extends SingleThreadStackTraceVmOperation {
+        FindAppFramesStackTraceOperation(VmThread vmThread) {
+            super(vmThread, new FindAppFramesStackTraceVisitor());
+        }
+
+        FindAppFramesStackTraceOperation submitOp() {
+            super.submit();
+            return this;
+        }
+    }
+
     // Stack traces for all threads
 
     static int getAllStackTraces(int maxFrameCount, Pointer stackInfoPtrPtr, Pointer threadCountPtr) {
@@ -535,8 +551,7 @@ class JVMTIThreadFunctions {
         if (vmThread == null) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, new FindAppFramesStackTraceVisitor());
-        op.submit();
+        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
         countPtr.setInt(op.stackTraceVisitor.stackElements.size());
         return JVMTI_ERROR_NONE;
     }
@@ -549,16 +564,76 @@ class JVMTIThreadFunctions {
         if (depth < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        FindAppFramesStackTraceVisitor stackVisitor = new FindAppFramesStackTraceVisitor();
-        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(vmThread, stackVisitor);
-        op.submit();
-        if (depth < stackVisitor.stackElements.size()) {
-            methodPtr.setWord(MethodID.fromMethodActor(stackVisitor.getStackElement(depth).classMethodActor));
-            locationPtr.setLong(stackVisitor.getStackElement(depth).bci);
+        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
+        if (depth < op.stackTraceVisitor.stackElements.size()) {
+            methodPtr.setWord(MethodID.fromMethodActor(op.stackTraceVisitor.getStackElement(depth).classMethodActor));
+            locationPtr.setLong(op.stackTraceVisitor.getStackElement(depth).bci);
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;
         }
+    }
+
+    /**
+     * Used to carry the frame pop data from here through the event dispatch machinery.
+     */
+    static class FramePopEventData {
+        MethodID methodID;
+        boolean wasPoppedByException;
+    }
+
+    static class FramePopEventDataThreadLocal extends ThreadLocal<FramePopEventData> {
+        @Override
+        public FramePopEventData initialValue() {
+            return new FramePopEventData();
+        }
+    }
+
+    private static FramePopEventDataThreadLocal framePopEventDataTL = new FramePopEventDataThreadLocal();
+
+    public static void framePopEvent(boolean wasPoppedByException) {
+        VmThread vmThread = VmThread.current();
+        Pointer tla = vmThread.tla();
+        if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
+            // only really need the top frame
+            SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread);
+            op.submit();
+            FramePopEventData framePopEventData = framePopEventDataTL.get();
+            framePopEventData.methodID = MethodID.fromMethodActor(op.stackTraceVisitor.getStackElement(0).classMethodActor);
+            framePopEventData.wasPoppedByException = wasPoppedByException;
+            JVMTI.event(JVMTI_EVENT_FRAME_POP, framePopEventData);
+        }
+    }
+
+    static int notifyFramePop(Thread thread, int depth) {
+        VmThread vmThread = checkThread(thread);
+        if (vmThread == null) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        if (depth < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        if (depth > 0) {
+            // need deopt for frames below us, else we won't get the frame pop events
+            assert false;
+        }
+        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
+        if (depth < op.stackTraceVisitor.stackElements.size()) {
+            Pointer tla = vmThread.tla();
+            JVMTIVmThreadLocal.setDepth(tla, depth);
+            JVMTIVmThreadLocal.setBit(tla, JVMTI_FRAME_POP, true);
+            return JVMTI_ERROR_NONE;
+        } else {
+            return JVMTI_ERROR_NO_MORE_FRAMES;
+        }
+    }
+
+    static int interruptThread(Thread thread) {
+        if (!thread.isAlive()) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        VmThread.fromJava(thread).interrupt0();
+        return JVMTI_ERROR_NONE;
     }
 
     /**
@@ -768,6 +843,36 @@ class JVMTIThreadFunctions {
         return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_OBJECT, value));
     }
 
+    // deopt support
+
+    /**
+     * Handle any change in compiled code for the methods on the (logical) call stack, using deopt.
+     * N.B. This method may be called multiple times for different events on the same (suspended) thread
+     */
+    static void deOptForEvent(int eventType, int mode, Thread thread) {
+        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(VmThread.fromJava(thread)).submitOp();
+        if (mode == JVMTI_ENABLE) {
+            // its not clear whether we should deopt every frame at this point.
+            // currently there is a bug walking stacks containing a deopt stub so
+            // we only deopt the top frame
+            ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
+            for (int i = 0; i < op.stackTraceVisitor.stackElements.size(); i++) {
+                ClassMethodActor methodActor = op.stackTraceVisitor.getStackElement(i).classMethodActor;
+                TargetMethod targetMethod = methodActor.currentTargetMethod();
+                targetMethod.finalizeReferenceMaps();
+                targetMethods.add(targetMethod);
+                // just top frame for now
+                break;
+            }
+            // Calling this multiple times before the thread resumes is harmless as it takes care to
+            // filter out already invalidated methods. However, it would be better to be able to detect
+            // the multiple calls and just do all this once.
+            new Deoptimization(targetMethods).go();
+        } else {
+            // is it worth re-opting.
+        }
+    }
+
     // Thread suspend/resume/stop/interrupt
 
     static int suspendThread(Thread thread) {
@@ -819,14 +924,6 @@ class JVMTIThreadFunctions {
 
     static int resumeThreadList(int requestCount, Pointer requestList, Pointer results) {
         return suspendOrResumeThreadList(requestCount, requestList, results, false);
-    }
-
-    static int interruptThread(Thread thread) {
-        if (!thread.isAlive()) {
-            return JVMTI_ERROR_THREAD_NOT_ALIVE;
-        }
-        VmThread.fromJava(thread).interrupt0();
-        return JVMTI_ERROR_NONE;
     }
 
     // ThreadGroup functions

@@ -58,6 +58,7 @@ import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
@@ -990,6 +991,12 @@ public final class T1XTargetMethod extends TargetMethod {
         assert classMethodActor == frame.method : classMethodActor + " != " + frame.method;
         CodePointer ip = findContinuationIP(exception, bci, reexecute);
 
+        // Need to check if we are deopting from a baseline method where the thread is at a JVMTI breakpoint.
+        // If so, the ip needs adjusting, as findContinuationIP had no knowledge of that
+        if (info.tm.isBaseline() && JVMTIBreakpoints.isBreakpoint(info.tm.classMethodActor, bci)) {
+            ip = adjustIPForBreakpoint(ip, bci);
+        }
+
         // record continuation instruction pointer
         cont.setIP(info, ip.toPointer());
 
@@ -1069,6 +1076,32 @@ public final class T1XTargetMethod extends TargetMethod {
         }
 
         return new CallerContinuation(callerFPIndex, -1, returnAddressIndex);
+    }
+
+    private CodePointer adjustIPForBreakpoint(CodePointer ip, int bci) {
+        int curPos = bciToPos[bci];
+        byte[] bytecode = classMethodActor.code();
+        int opcode = bytecode[bci] & 0xFF;
+        final int invokeSize = Bytecodes.lengthOf(opcode);
+        int succBCI = bci + invokeSize;
+        int succPos = bciToPos[succBCI];
+        assert succPos > curPos;
+
+        // The breakpoint call will have an asssociated safepoint associated with "bci".
+        for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+            int safepointPos = safepoints.posAt(safepointIndex);
+            if (curPos <= safepointPos && safepointPos < succPos) {
+                if (safepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
+                    if (isAMD64()) {
+                        // On x86 the safepoint position of a call *is* the return position
+                        return codeAt(safepointPos);
+                    } else {
+                        throw unimplISA();
+                    }
+                }
+            }
+        }
+        return ip;
     }
 
     /**
