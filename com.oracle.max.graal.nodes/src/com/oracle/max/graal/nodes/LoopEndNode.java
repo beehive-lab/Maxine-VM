@@ -59,4 +59,10 @@ public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIR
     public void generate(LIRGeneratorTool gen) {
         gen.visitLoopEnd(this);
     }
+
+    @Override
+    public boolean verify() {
+        assertTrue(loopBegin != null, "must have a loop begin");
+        return super.verify();
+    }
 }

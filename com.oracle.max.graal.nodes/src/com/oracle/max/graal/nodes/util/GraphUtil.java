@@ -22,96 +22,95 @@
  */
 package com.oracle.max.graal.nodes.util;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.calc.*;
 
 public class GraphUtil {
 
     public static void killCFG(FixedNode node) {
-        for (Node successor : node.successors()) {
-            if (successor != null) {
-                node.replaceFirstSuccessor(successor, null);
-                assert !node.isDeleted();
+        assert node.isAlive();
+        if (node instanceof EndNode) {
+            // We reached a control flow end.
+            EndNode end = (EndNode) node;
+            killEnd(end);
+        } else if (node instanceof LoopEndNode) {
+            // We reached a loop end.
+            killLoopEnd(node);
+        } else {
+            // Normal control flow node.
+            for (Node successor : node.successors().snapshot()) {
                 killCFG((FixedNode) successor);
             }
         }
-        if (node instanceof EndNode) {
-            EndNode end = (EndNode) node;
-            MergeNode merge = end.merge();
-            if (merge instanceof LoopBeginNode) {
-                for (PhiNode phi : merge.phis().snapshot()) {
-                    ValueNode value = phi.valueAt(0);
-                    phi.replaceAndDelete(value);
-                }
-                killCFG(merge);
-            } else {
-                merge.removeEnd(end);
-                if (merge.phiPredecessorCount() == 1) {
-                    for (PhiNode phi : merge.phis().snapshot()) {
-                        ValueNode value = phi.valueAt(0);
-                        phi.replaceAndDelete(value);
-                    }
-                    Node replacedSux = merge.phiPredecessorAt(0);
-                    Node pred = replacedSux.predecessor();
-                    assert replacedSux instanceof EndNode;
-                    FixedNode next = merge.next();
-                    merge.setNext(null);
-                    pred.replaceFirstSuccessor(replacedSux, next);
-                    merge.safeDelete();
-                    replacedSux.safeDelete();
-                }
-            }
-        }
-        propagateKill(node, null);
+        propagateKill(node);
     }
 
-    private static void replacePhis(MergeNode merge) {
+    private static void killLoopEnd(FixedNode node) {
+        LoopEndNode loopEndNode = (LoopEndNode) node;
+        LoopBeginNode loop = loopEndNode.loopBegin();
+        loopEndNode.setLoopBegin(null);
+        EndNode endNode = loop.endAt(0);
+        assert endNode.predecessor() != null;
+        replaceLoopPhis(loop);
+        loop.removeEnd(endNode);
+
+        FixedNode next = loop.next();
+        loop.setNext(null);
+        endNode.replaceAndDelete(next);
+        loop.safeDelete();
+    }
+
+    private static void replaceLoopPhis(MergeNode merge) {
         for (Node usage : merge.usages().snapshot()) {
             assert usage instanceof PhiNode;
             usage.replaceAndDelete(((PhiNode) usage).valueAt(0));
         }
     }
 
-    // TODO(tw): Factor this code with other branch deletion code.
-    public static void propagateKill(Node node, Node input) {
-        if (node instanceof LoopEndNode) {
-            LoopBeginNode loop = ((LoopEndNode) node).loopBegin();
-            ((LoopEndNode) node).setLoopBegin(null);
-            EndNode endNode = loop.endAt(0);
-            assert endNode.predecessor() != null;
-            replacePhis(loop);
-            loop.removeEnd(endNode);
-
-            FixedNode next = loop.next();
-            loop.setNext(null);
-            endNode.replaceAndDelete(next);
-            loop.safeDelete();
-        }
-        if (node instanceof PhiNode) {
-            node.replaceFirstInput(input, null);
+    private static void killEnd(EndNode end) {
+        MergeNode merge = end.merge();
+        if (merge instanceof LoopBeginNode) {
+            for (PhiNode phi : merge.phis().snapshot()) {
+                ValueNode value = phi.valueAt(0);
+                phi.replaceAndDelete(value);
+            }
+            killCFG(merge);
         } else {
-            for (Node usage : node.usages().snapshot()) {
-                if ((usage instanceof FloatingNode || usage instanceof CallTargetNode) && !usage.isDeleted()) {
-                    propagateKill(usage, node);
+            merge.removeEnd(end);
+            if (merge.phiPredecessorCount() == 1) {
+                for (PhiNode phi : merge.phis().snapshot()) {
+                    ValueNode value = phi.valueAt(0);
+                    phi.replaceAndDelete(value);
                 }
+                Node replacedSux = merge.phiPredecessorAt(0);
+                Node pred = replacedSux.predecessor();
+                assert replacedSux instanceof EndNode;
+                FixedNode next = merge.next();
+                merge.setNext(null);
+                pred.replaceFirstSuccessor(replacedSux, next);
+                merge.safeDelete();
+                replacedSux.safeDelete();
             }
-            for (Node curInput : node.inputs()) {
-                if (curInput.isAlive() && curInput.usages().size() == 1) {
-                    curInput.delete();
-                }
-            }
+        }
+    }
+
+    // TODO(tw): Factor this code with other branch deletion code.
+    public static void propagateKill(Node node) {
+        if (node != null && node.isAlive()) {
+            List<Node> usagesSnapshot = node.usages().snapshot();
+
             // null out remaining usages
             node.replaceAtUsages(null);
             node.replaceAtPredecessors(null);
             node.safeDelete();
-        }
-    }
 
-    public static void killFloating(FloatingNode node) {
-        if (node.usages().size() == 0) {
-            node.clearInputs();
-            node.safeDelete();
+            for (Node usage : usagesSnapshot) {
+                if (!usage.isDeleted()) {
+                    propagateKill(usage);
+                }
+            }
         }
     }
 }
