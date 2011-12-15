@@ -746,6 +746,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
         int[] result = {};
+
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : AMD64.cpuxmmRegisters) {
                 // Compute displacement operand position for a movq at 'pos'
@@ -760,7 +761,6 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.movq(reg, src);
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
-//                    System.out.println(pos + ": movq " + reg + ", " + src + "  " + toHexString(pattern));
                 if (Arrays.equals(pattern, instr)) {
                     result = Arrays.copyOf(result, result.length + 1);
                     result[result.length - 1] = dispPos;
