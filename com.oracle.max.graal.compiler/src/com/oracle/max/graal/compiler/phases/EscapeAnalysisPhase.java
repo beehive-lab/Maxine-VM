@@ -41,6 +41,67 @@ import com.sun.cri.ci.*;
 
 
 public class EscapeAnalysisPhase extends Phase {
+    public static class GraphOrder implements Iterable<Node> {
+
+        private final ArrayList<Node> nodes = new ArrayList<Node>();
+
+        public GraphOrder(Graph graph) {
+            NodeBitMap visited = graph.createNodeBitMap();
+
+            for (ReturnNode node : graph.getNodes(ReturnNode.class)) {
+                visit(visited, node);
+            }
+            for (UnwindNode node : graph.getNodes(UnwindNode.class)) {
+                visit(visited, node);
+            }
+            for (DeoptimizeNode node : graph.getNodes(DeoptimizeNode.class)) {
+                visit(visited, node);
+            }
+        }
+
+        private void visit(NodeBitMap visited, Node node) {
+            if (node != null && !visited.isMarked(node)) {
+                visited.mark(node);
+                for (Node input : node.inputs()) {
+                    visit(visited, input);
+                }
+                if (node.predecessor() != null) {
+                    visit(visited, node.predecessor());
+                }
+                nodes.add(node);
+            }
+        }
+
+        @Override
+        public Iterator<Node> iterator() {
+            return new Iterator<Node>() {
+
+                private int pos = 0;
+
+                private void removeDeleted() {
+                    while (pos < nodes.size() && nodes.get(pos).isDeleted()) {
+                        pos++;
+                    }
+                }
+
+                @Override
+                public boolean hasNext() {
+                    removeDeleted();
+                    return pos < nodes.size();
+                }
+
+                @Override
+                public Node next() {
+                    return nodes.get(pos++);
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+    }
 
     public static class BlockExitState implements MergeableState<BlockExitState> {
         public final ValueNode[] fieldState;
@@ -115,9 +176,7 @@ public class EscapeAnalysisPhase extends Phase {
 
         @Override
         public void loopBegin(LoopBeginNode loopBegin) {
-            if (virtualObjectField == null) {
-                throw new VerificationError("null virtualObjectField").addContext(loopBegin);
-            }
+            assert virtualObjectField != null : "unexpected null virtualObjectField";
             PhiNode vobjPhi = null;
             vobjPhi = graph.add(new PhiNode(CiKind.Illegal, loopBegin, PhiType.Virtual));
             vobjPhi.addInput(virtualObjectField);
@@ -189,22 +248,24 @@ public class EscapeAnalysisPhase extends Phase {
             final FixedNode next = node.next();
             node.replaceAndDelete(next);
 
-            final BlockExitState startState = new BlockExitState(escapeFields, virtual);
-            final PostOrderNodeIterator<?> iterator = new PostOrderNodeIterator<BlockExitState>(next, startState) {
-                @Override
-                protected void node(FixedNode node) {
-                    int changedField = op.updateState(virtual, node, fields, state.fieldState);
-                    if (changedField != -1) {
-                        state.updateField(changedField);
-                    }
-                    if (!node.isDeleted() && node instanceof StateSplit && ((StateSplit) node).stateAfter() != null) {
-                        if (state.virtualObjectField != null) {
-                            ((StateSplit) node).stateAfter().addVirtualObjectMapping(state.virtualObjectField);
+            if (virtual.fieldsCount() > 0) {
+                final BlockExitState startState = new BlockExitState(escapeFields, virtual);
+                final PostOrderNodeIterator<?> iterator = new PostOrderNodeIterator<BlockExitState>(next, startState) {
+                    @Override
+                    protected void node(FixedNode node) {
+                        int changedField = op.updateState(virtual, node, fields, state.fieldState);
+                        if (changedField != -1) {
+                            state.updateField(changedField);
+                        }
+                        if (!node.isDeleted() && node instanceof StateSplit && ((StateSplit) node).stateAfter() != null) {
+                            if (state.virtualObjectField != null) {
+                                ((StateSplit) node).stateAfter().addVirtualObjectMapping(state.virtualObjectField);
+                            }
                         }
                     }
-                }
-            };
-            iterator.apply();
+                };
+                iterator.apply();
+            }
         }
 
         private void process() {
@@ -333,7 +394,7 @@ public class EscapeAnalysisPhase extends Phase {
 
     @Override
     protected void run(StructuredGraph graph) {
-        for (Node node : graph.getNodes()) {
+        for (Node node : new GraphOrder(graph)) {
             if (node != null && node instanceof FixedWithNextNode && node instanceof EscapeAnalyzable) {
                 FixedWithNextNode fixedNode = (FixedWithNextNode) node;
                 EscapeOp op = ((EscapeAnalyzable) node).getEscapeOp();

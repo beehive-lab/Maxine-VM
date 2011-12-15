@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -36,18 +37,42 @@ import com.sun.cri.ci.*;
 public class DebugInfoBuilder {
     public final GraalCompilation compilation;
 
+    private final NodeMap<StackBlock> lockDataMap;
+
     public DebugInfoBuilder(GraalCompilation compilation) {
         this.compilation = compilation;
+        if (needLockData()) {
+            lockDataMap = new NodeMap<StackBlock>(compilation.graph);
+        } else {
+            lockDataMap = null;
+        }
     }
 
-    public LIRDebugInfo build(FrameState state, List<CiStackSlot> pointerSlots, LabelRef exceptionEdge) {
-        return new LIRDebugInfo(computeFrame(state), pointerSlots, exceptionEdge);
+    public boolean needLockData() {
+        return compilation.compiler.runtime.sizeOfLockData() > 0;
+    }
+
+    public StackBlock lockDataFor(MonitorObject object, boolean create) {
+        if (!needLockData()) {
+            return null;
+        }
+
+        if (create) {
+            assert lockDataMap.get(object) == null : "lock data must be created once when processing monitor enter node";
+            StackBlock result = compilation.frameMap().reserveStackBlock(compilation.compiler.runtime.sizeOfLockData(), false);
+            lockDataMap.set(object, result);
+            return result;
+        } else {
+            StackBlock result = lockDataMap.get(object);
+            assert result != null : "lock data must be created once when processing monitor enter node";
+            return result;
+        }
     }
 
 
     private HashMap<VirtualObjectNode, CiVirtualObject> virtualObjects = new HashMap<VirtualObjectNode, CiVirtualObject>();
 
-    private CiFrame computeFrame(FrameState topState) {
+    public LIRDebugInfo build(FrameState topState, List<CiStackSlot> pointerSlots, LabelRef exceptionEdge) {
         if (compilation.placeholderState != null) {
             return null;
         }
@@ -55,6 +80,7 @@ public class DebugInfoBuilder {
         assert virtualObjects.size() == 0;
         CiFrame frame = computeFrameForState(topState);
 
+        CiVirtualObject[] virtualObjectsArray = null;
         if (virtualObjects.size() != 0) {
             // collect all VirtualObjectField instances:
             IdentityHashMap<VirtualObjectNode, VirtualObjectFieldNode> objectStates = new IdentityHashMap<VirtualObjectNode, VirtualObjectFieldNode>();
@@ -106,9 +132,11 @@ public class DebugInfoBuilder {
                 }
             } while (changed);
 
+            virtualObjectsArray = virtualObjects.values().toArray(new CiVirtualObject[virtualObjects.size()]);
             virtualObjects.clear();
         }
-        return frame;
+
+        return new LIRDebugInfo(frame, virtualObjectsArray, pointerSlots, exceptionEdge);
     }
 
     private CiFrame computeFrameForState(FrameState state) {
@@ -120,23 +148,14 @@ public class DebugInfoBuilder {
         }
 
         for (int i = 0; i < state.locksSize(); i++) {
-            ValueNode lock = state.lockAt(i);
-            if (compilation.compiler.runtime.sizeOfBasicObjectLock() != 0) {
-                if (!(lock instanceof VirtualObjectNode)) {
-                    CiValue monitorAddress = new LIRDebugInfo.MonitorIndex(i);
-                    values[valueIndex++] = monitorAddress;
-                } else {
-                    values[valueIndex++] = CiValue.IllegalValue;
-                }
-            } else {
-                if (lock.isConstant() && compilation.compiler.runtime.asJavaClass(lock.asConstant()) != null) {
-                    // lock on class for synchronized static method
-                    values[valueIndex++] = lock.asConstant();
-                } else {
-                    values[valueIndex++] = toCiValue(lock);
-                }
-            }
+            MonitorObject monitorObject = state.lockAt(i);
+            CiValue owner = toCiValue(monitorObject.owner());
+            CiValue lockData = lockDataFor(monitorObject, false);
+            boolean eliminated = owner instanceof CiVirtualObject;
+
+            values[valueIndex++] = new CiMonitorValue(owner, lockData, eliminated);
         }
+
         CiFrame caller = null;
         if (state.outerFrameState() != null) {
             caller = computeFrameForState(state.outerFrameState());

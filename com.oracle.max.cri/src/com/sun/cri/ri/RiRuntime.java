@@ -60,6 +60,8 @@ public interface RiRuntime {
 
     /**
      * Offset of the lock within the lock object on the stack.
+
+     * Note: superseded by sizeOfLockData() in Graal.
      *
      * @return the offset in bytes
      */
@@ -67,8 +69,15 @@ public interface RiRuntime {
 
     /**
      * Get the size in bytes of a lock object on the stack.
+     *
+     * Note: superseded by sizeOfLockData() in Graal.
      */
     int sizeOfBasicObjectLock();
+
+    /**
+     * Get the size in bytes for locking information on the stack.
+     */
+    int sizeOfLockData();
 
     /**
      * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.

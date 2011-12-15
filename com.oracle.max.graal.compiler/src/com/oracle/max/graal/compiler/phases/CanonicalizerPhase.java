@@ -29,7 +29,6 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.oracle.max.graal.nodes.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -129,9 +128,17 @@ public class CanonicalizerPhase extends Phase {
         while (graph.getUsagesDroppedNodesCount() > 0) {
             for (Node n : graph.getAndCleanUsagesDroppedNodes()) {
                 if (!n.isDeleted() && n.usages().size() == 0 && n instanceof FloatingNode) {
-                    GraphUtil.killFloating((FloatingNode) n);
+                    killFloating((FloatingNode) n);
                 }
             }
+        }
+    }
+
+
+    private static void killFloating(FloatingNode node) {
+        if (node.usages().size() == 0) {
+            node.clearInputs();
+            node.safeDelete();
         }
     }
 

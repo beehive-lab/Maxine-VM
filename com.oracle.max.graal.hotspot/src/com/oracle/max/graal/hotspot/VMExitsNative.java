@@ -164,12 +164,12 @@ public class VMExitsNative implements VMExits, Remote {
                         HotSpotTargetMethod.installMethod(compiler, method, result, true);
                     } catch (CiBailout bailout) {
                         if (GraalOptions.ExitVMOnBailout) {
-                            bailout.printStackTrace();
+                            bailout.printStackTrace(TTY.cachedOut);
                             System.exit(-1);
                         }
                     } catch (Throwable t) {
                         if (GraalOptions.ExitVMOnException) {
-                            t.printStackTrace();
+                            t.printStackTrace(TTY.cachedOut);
                             System.exit(-1);
                         }
                     }

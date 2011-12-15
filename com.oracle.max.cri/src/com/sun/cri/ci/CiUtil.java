@@ -275,7 +275,7 @@ public class CiUtil {
     public static String format(String format, RiMethod method) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
-        RiSignature sig = method.signature();
+        RiSignature sig = null;
         while (index < format.length()) {
             final char ch = format.charAt(index++);
             if (ch == '%') {
@@ -289,6 +289,9 @@ public class CiUtil {
                         qualified = true;
                         // fall through
                     case 'r': {
+                        if (sig == null) {
+                            sig = method.signature();
+                        }
                         sb.append(toJavaName(sig.returnType(null), qualified));
                         break;
                     }
@@ -307,6 +310,9 @@ public class CiUtil {
                         qualified = true;
                         // fall through
                     case 'p': {
+                        if (sig == null) {
+                            sig = method.signature();
+                        }
                         for (int i = 0; i < sig.argumentCount(false); i++) {
                             if (i != 0) {
                                 sb.append(", ");
