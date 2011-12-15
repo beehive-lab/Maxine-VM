@@ -659,7 +659,7 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
     public void writeSummary(PrintStream printStream) {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
         writer.println("code for: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
-        writer.println("compilation: " + (teleTargetMethod.isBaseline() ? "BASELINE" : "OPTIMIZED"));
+        writer.println("compilation: " + (teleTargetMethod.longDesignator()));
         writer.flush();
         final Platform platform = platform();
         final TargetMethodMachineCodeInfo tmCache = machineCodeInfo;
