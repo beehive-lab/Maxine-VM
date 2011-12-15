@@ -173,7 +173,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Byte);
         for (long i = length - 1; i >= 0; i--) {
             Byte a = UnsafeLoadNode.load(src, i + (srcPos + header), CiKind.Byte);
-            UnsafeStoreNode.store(dest, i + (destPos + header), a, CiKind.Byte);
+            UnsafeStoreNode.store(dest, i + (destPos + header), a.byteValue(), CiKind.Byte);
         }
     }
 
@@ -182,7 +182,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Short);
         for (long i = (length - 1) * 2; i >= 0; i -= 2) {
             Character a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Short);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Short);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.charValue(), CiKind.Short);
         }
     }
 
@@ -191,7 +191,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Short);
         for (long i = (length - 1) * 4; i >= 0; i -= 4) {
             Integer a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Int);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Int);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.intValue(), CiKind.Int);
         }
     }
 
@@ -200,7 +200,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Short);
         for (long i = (length - 1) * 8; i >= 0; i -= 8) {
             Long a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Long);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Long);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.longValue(), CiKind.Long);
         }
     }
 
@@ -217,7 +217,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Byte);
         for (long i = 0; i < length; i++) {
             Byte a = UnsafeLoadNode.load(src, i + (srcPos + header), CiKind.Byte);
-            UnsafeStoreNode.store(dest, i + (destPos + header), a, CiKind.Byte);
+            UnsafeStoreNode.store(dest, i + (destPos + header), a.byteValue(), CiKind.Byte);
         }
     }
 
@@ -234,7 +234,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Short);
         for (long i = 0; i < length * 2; i += 2) {
             Character a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Short);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Short);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.charValue(), CiKind.Short);
         }
     }
 
@@ -243,7 +243,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Int);
         for (long i = 0; i < length * 4; i += 4) {
             Integer a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Int);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Int);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.intValue(), CiKind.Int);
         }
     }
 
@@ -252,7 +252,7 @@ public class ArrayCopySnippets implements SnippetsInterface{
         long header = ArrayHeaderSizeNode.sizeFor(CiKind.Long);
         for (long i = 0; i < length * 8; i += 8) {
             Long a = UnsafeLoadNode.load(src, i + (srcOffset + header), CiKind.Long);
-            UnsafeStoreNode.store(dest, i + (destOffset + header), a, CiKind.Long);
+            UnsafeStoreNode.store(dest, i + (destOffset + header), a.longValue(), CiKind.Long);
         }
     }
 }
