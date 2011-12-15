@@ -84,6 +84,8 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
      */
     private final boolean codeLocationIsManaged;
 
+    private final VmBytecodeBreakpoint owner;
+
     /**
      * Creates a target code breakpoint for a given code location in the VM.
      *
@@ -95,8 +97,9 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
      * @param the kind of breakpoint
      */
     private VmTargetBreakpoint(TeleVM vm, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, VmBytecodeBreakpoint owner) {
-        super(vm, codeLocation, kind, owner);
+        super(vm, codeLocation, kind);
         final VmCodeCacheRegion codeCacheRegion = vm.codeCache().findCodeCacheRegion(codeLocation.address());
+        this.owner = owner;
         this.codeLocationIsManaged = codeCacheRegion != null && codeCacheRegion.isManaged();
         this.originalCodeAtBreakpoint = originalCode == null ? vm.memory().readBytes(codeLocation.address(), manager.codeSize()) : originalCode;
     }
@@ -119,7 +122,11 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         return sb.toString();
     }
 
-    // TODO (mlvdv) remove dependence on address; identity?
+
+    public VmBytecodeBreakpoint owner() {
+        return owner;
+    }
+
     /**
      * {@inheritDoc}
      * <br>
@@ -356,21 +363,33 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
 
         public void updateCache(long epoch) {
             // Review client breakpoints, those set explicitly in machine code only, and handle evictions.
-            final List<VmTargetBreakpoint> evictedBreakpoints = new ArrayList<VmTargetBreakpoint>();
-            for (VmTargetBreakpoint breakpoint : clientBreakpoints.values()) {
-                if (!breakpoint.codeLocation().codePointer().isCodeLive()) {
-                    evictedBreakpoints.add(breakpoint);
+            final List<VmTargetBreakpoint> evictedClientBreakpoints = new ArrayList<VmTargetBreakpoint>();
+            for (VmTargetBreakpoint clientBreakpoint : clientBreakpoints.values()) {
+                if (!clientBreakpoint.codeLocation().codePointer().isCodeLive()) {
+                    evictedClientBreakpoints.add(clientBreakpoint);
                 }
             }
-            for (VmTargetBreakpoint evictedBreakpoint : evictedBreakpoints) {
+            for (VmTargetBreakpoint evictedClientBreakpoint : evictedClientBreakpoints) {
                 final String reason = "The compilation has been evicted from the code cache";
-                TeleWarning.message("Breakpoint removed: " + evictedBreakpoint + "(" + reason + ")");
+                TeleWarning.message("Breakpoint removed: " + evictedClientBreakpoint + "(" + reason + ")");
                 for (final MaxBreakpointListener listener : breakpointListeners) {
-                    listener.breakpointToBeDeleted(evictedBreakpoint, reason);
+                    listener.breakpointToBeDeleted(evictedClientBreakpoint, reason);
                 }
-                removeNonTransientBreakpointAt(evictedBreakpoint.codeLocation().codePointer());
+                removeNonTransientBreakpointAt(evictedClientBreakpoint.codeLocation().codePointer());
             }
-            // TODO (mlvdv) handle transient breakpoints associated with bytecode breakpoints
+            // Check for system breakpoint set on behalf of a bytecode breakpoint
+            final List<VmTargetBreakpoint> evictedSystemBreakpoints = new ArrayList<VmTargetBreakpoint>();
+            for (VmTargetBreakpoint systemBreakpoint : systemBreakpoints.values()) {
+                if (systemBreakpoint.owner != null && !systemBreakpoint.codeLocation().codePointer().isCodeLive()) {
+                    // The compilation in which this breakpoint is set has been evicted and is no longer live.
+                    evictedSystemBreakpoints.add(systemBreakpoint);
+                }
+            }
+            for (VmTargetBreakpoint evictedSystemBreakpoint : evictedSystemBreakpoints) {
+                removeNonTransientBreakpointAt(evictedSystemBreakpoint.codeLocation().codePointer());
+                // Notify the bytecode breakpoint for which this breakpoint was originally created.
+                evictedSystemBreakpoint.owner().notifyCompilationEvicted(evictedSystemBreakpoint);
+            }
         }
 
         /**
@@ -509,6 +528,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
                 if (systemBreakpoint == null) {
                     systemBreakpoint = new SystemTargetBreakpoint(vm(), this, codeLocation, null, owner);
                     systemBreakpoint.setTriggerEventHandler(handler);
+                    systemBreakpoint.setDescription(codeLocation.description());
                     final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(codeLocation.codePointer(), systemBreakpoint);
                     assert oldBreakpoint == null;
                     updateAfterBreakpointChanges(false);

@@ -104,7 +104,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
      * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      */
     private VmBytecodeBreakpoint(TeleVM vm, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
-        super(vm, codeLocation, kind, null);
+        super(vm, codeLocation, kind);
         this.methodPositionKey = methodPositionKey;
         final MethodKey methodKey = codeLocation.methodKey();
         this.holderTypeDescriptorString = methodKey.holder().string;
@@ -126,7 +126,9 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         // Delegate creation of the target breakpoints to the manager.
         final List<VmTargetBreakpoint> newTargetBreakpoints = bytecodeBreakpointManager.createTargetBreakpoints(this, teleTargetMethod);
         if (newTargetBreakpoints.isEmpty()) {
-            TeleWarning.message(tracePrefix() + "failed to create targetBreakpoint for " + this);
+            // This will always return true in the current implementation of method entry breakpoints, because only
+            // transient breakpoints are created.  They go away immediately after one execution cycle.
+            //TeleWarning.message(tracePrefix() + "failed to create targetBreakpoint for " + this);
         } else {
             // TODO (mlvdv) If we support conditions, need to combine it with the trigger handler added by factory method.
             for (VmTargetBreakpoint newTargetBreakpoint : newTargetBreakpoints) {
@@ -211,6 +213,15 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Bytecode breakpoints don't have an owner; they only own other (target) breakpoints.
+     */
+    public VmBreakpoint owner() {
+        return null;
+    }
+
     @Override
     public void remove() throws MaxVMBusyException {
         if (!vm().tryLock()) {
@@ -225,6 +236,23 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             bytecodeBreakpointManager.removeBreakpoint(this);
         } finally {
             vm().unlock();
+        }
+    }
+
+    /**
+     * Receives notification that a machine code breakpoint, created in a compilation of the method
+     * covered by this bytecode breakpoint, has been removed because the compilation was evicted
+     * from the code cache.
+     *
+     * @param evictedSystemBreakpoint a target breakpoint that was created for the purpose of implementing this breakpoint in a particular compilation.
+     */
+    public void notifyCompilationEvicted(VmTargetBreakpoint evictedSystemBreakpoint) {
+        Trace.line(TRACE_VALUE, tracePrefix() + " bytecode breakpoint removing target breakpoint due to code eviction;" + evictedSystemBreakpoint);
+        if (!targetBreakpoints.remove(evictedSystemBreakpoint)) {
+            // This will always return false under the current implementation of bytecode breakpoints at method entry, with bci=-1,
+            // since the policy is to create only a transient target breakpoint, which will have disappeared by the time this
+            // notification happens.
+            TeleWarning.message(tracePrefix() + " failed to handle removal of target breakpoint because of code eviction, breakpoint=" + this);
         }
     }
 
@@ -494,43 +522,6 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             return breakpoint;
         }
 
-        /**
-         * Returns a system breakpoint at the entry of a method location described
-         * abstractly, newly created if one does not already exist for the location.
-         * Fails if there is a client breakpoint already at that location.
-         * <p>
-         * Thread-safe; synchronizes on VM lock
-         *
-         * @param codeLocation description of a bytecode position in a method
-         * @param handler handler to be invoked when breakpoint triggers
-         * @return a possibly new, enabled bytecode breakpoint at method entry,
-         * null if a client breakpoint is already at the location.
-         * @throws MaxVMBusyException
-         */
-        public VmBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler) throws MaxVMBusyException {
-            assert codeLocation.hasMethodKey();
-            if (!vm().tryLock()) {
-                throw new MaxVMBusyException();
-            }
-            VmBytecodeBreakpoint breakpoint;
-            try {
-                final MethodPositionKey key = MethodPositionKey.make(codeLocation);
-                breakpoint = breakpoints.get(key);
-                if (breakpoint == null) {
-                    breakpoint = createBreakpoint(codeLocation, key, BreakpointKind.SYSTEM);
-                    breakpoint.setTriggerEventHandler(handler);
-                    breakpoint.setDescription(codeLocation.description());
-                } else if (breakpoint.kind() != BreakpointKind.SYSTEM) {
-                    TeleWarning.message("Can't create system bytecode breakpoint - client breakpoint already exists: " + codeLocation);
-                    breakpoint = null;
-                }
-            } finally {
-                vm().unlock();
-            }
-            return breakpoint;
-        }
-
-
         private void updateBreakpointCache() {
             if (breakpoints.size() == 0) {
                 breakpointCache = EMPTY_BREAKPOINT_SEQUENCE;
@@ -654,7 +645,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
             if (bci == -1) {
                 int pos = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());
                 address = teleTargetMethod.getCodeStart().plus(pos);
-                Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
+                Trace.line(TRACE_VALUE, tracePrefix + "creating transient target breakpoint at method entry in " + teleTargetMethod);
             } else {
                 int[] bciToPosMap = teleTargetMethod.bciToPosMap();
                 if (bciToPosMap != null && bci < bciToPosMap.length) {
