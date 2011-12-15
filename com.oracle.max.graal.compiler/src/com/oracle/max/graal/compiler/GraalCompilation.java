@@ -353,7 +353,7 @@ public final class GraalCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-        frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
+        frameMap = this.compiler.backend.newFrameMap(this, method);
     }
 
     private void emitLIR(RiXirGenerator xir) {

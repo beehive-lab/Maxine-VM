@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,47 +22,33 @@
  */
 package com.oracle.max.graal.nodes;
 
-import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.oracle.max.graal.nodes.type.*;
 
+/**
+ * Encapsulates the object that is locked and unlocked. This node is referenced by a {@link MonitorEnterNode},
+ * all {@link MonitorExitNode} that correspond to this monitor enter, and in all {@link FrameState}s in between
+ * the monitor enter and monitor exits.
+ */
+public class MonitorObject extends ValueNode implements LIRLowerable {
+    @Input private ValueNode owner;
 
-public class LoopEndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
-
-    @Input(notDataflow = true) private LoopBeginNode loopBegin;
-    @Data private boolean safepointPolling;
-
-    public LoopEndNode() {
-        super(StampFactory.illegal());
-        this.safepointPolling = true;
+    public ValueNode owner() {
+        return owner;
     }
 
-    public LoopBeginNode loopBegin() {
-        return loopBegin;
-    }
-
-    public void setLoopBegin(LoopBeginNode x) {
-        updateUsages(this.loopBegin, x);
-        this.loopBegin = x;
-    }
-
-
-    public void setSafepointPolling(boolean safePointPolling) {
-        this.safepointPolling = safePointPolling;
-    }
-
-    public boolean hasSafepointPolling() {
-        return safepointPolling;
+    /**
+     * Creates a new MonitorObjectNode.
+     *
+     * @param object The object that is processed by the monitor operation.
+     */
+    public MonitorObject(ValueNode object) {
+        super(object.stamp());
+        this.owner = object;
     }
 
     @Override
     public void generate(LIRGeneratorTool gen) {
-        gen.visitLoopEnd(this);
-    }
-
-    @Override
-    public boolean verify() {
-        assertTrue(loopBegin != null, "must have a loop begin");
-        return super.verify();
+        // Nothing to do, monitor objects are processed as part of the monitor enter / monitor exit nodes.
     }
 }

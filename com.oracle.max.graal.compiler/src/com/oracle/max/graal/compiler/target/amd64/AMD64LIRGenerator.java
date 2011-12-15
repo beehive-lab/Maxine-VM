@@ -41,6 +41,7 @@ import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -140,6 +141,12 @@ public class AMD64LIRGenerator extends LIRGenerator {
         return result;
     }
 
+    @Override
+    public CiVariable emitLea(StackBlock stackBlock) {
+        CiVariable result = newVariable(target().wordKind);
+        append(LEA_STACK_BLOCK.create(result, stackBlock));
+        return result;
+    }
 
     @Override
     public void emitLabel(Label label, boolean align) {
@@ -506,14 +513,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
         if (kind == CiKind.Object) {
             postGCWriteBarrier(addrBase, newValue);
         }
-    }
-
-    // TODO HotSpot-specific
-    @Override
-    public CiValue createMonitorAddress(int monitorIndex) {
-        CiVariable result = newVariable(target().wordKind);
-        append(AMD64HotSpotOpcode.MonitorAddressOpcode.MONITOR_ADDRESS.create(result, monitorIndex));
-        return result;
     }
 
     // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.

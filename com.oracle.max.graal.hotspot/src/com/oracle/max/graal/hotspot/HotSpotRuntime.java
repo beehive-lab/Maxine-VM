@@ -177,6 +177,12 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
+    public int sizeOfLockData() {
+        // TODO shouldn't be hard coded
+        return 8;
+    }
+
+    @Override
     public int sizeOfBasicObjectLock() {
         // TODO shouldn't be hard coded
         return 2 * 8;

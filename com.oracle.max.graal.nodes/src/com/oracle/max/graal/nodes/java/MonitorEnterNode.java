@@ -34,11 +34,9 @@ public final class MonitorEnterNode extends AccessMonitorNode implements LIRLowe
      * Creates a new MonitorEnterNode.
      *
      * @param object the instruction producing the object
-     * @param monitorIndex the number of the lock
-     * @param monitorStackSlots determines if space on the stack should be reserved for each monitor
      */
-    public MonitorEnterNode(ValueNode object, int monitorIndex, boolean monitorStackSlots) {
-        super(object, monitorIndex, monitorStackSlots);
+    public MonitorEnterNode(MonitorObject object) {
+        super(object);
     }
 
     @Override

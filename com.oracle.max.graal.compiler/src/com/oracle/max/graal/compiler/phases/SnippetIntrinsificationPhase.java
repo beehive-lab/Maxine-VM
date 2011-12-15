@@ -157,7 +157,7 @@ public class SnippetIntrinsificationPhase extends Phase {
                                     invokeNode.stateAfter().delete();
                                     invokeNode.node().replaceAndDelete(invokeNode.next());
                                     ValueNode result = callTarget.arguments().get(0);
-                                    GraphUtil.propagateKill(callTarget, null);
+                                    GraphUtil.propagateKill(callTarget);
                                     return result;
                                 }
                             }

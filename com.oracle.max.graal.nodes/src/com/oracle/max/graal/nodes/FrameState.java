@@ -93,7 +93,6 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
         return fs;
     }
 
-    @Override
     public void setValueAt(int i, ValueNode x) {
         values.set(i, x);
     }
@@ -128,7 +127,7 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
         this.rethrowException = rethrowException;
     }
 
-    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<ValueNode> locks, boolean rethrowException) {
+    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<MonitorObject> locks, boolean rethrowException) {
         this.method = method;
         this.bci = bci;
         this.localsSize = locals.length;
@@ -355,9 +354,9 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
-    public ValueNode lockAt(int i) {
+    public MonitorObject lockAt(int i) {
         assert i >= 0;
-        return valueAt(localsSize + stackSize + i);
+        return (MonitorObject) valueAt(localsSize + stackSize + i);
     }
 
     /**

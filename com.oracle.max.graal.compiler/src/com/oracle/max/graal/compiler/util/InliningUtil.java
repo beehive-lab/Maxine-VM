@@ -389,6 +389,7 @@ public class InliningUtil {
         Graph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
+        assert stateAfter.isAlive();
 
         IdentityHashMap<Node, Node> replacements = new IdentityHashMap<Node, Node>();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -422,7 +423,7 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object) {
+        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object || parameters.get(0).stamp().nonNull()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters.get(0), false))));
@@ -482,16 +483,6 @@ public class InliningUtil {
             }
         }
 
-        int monitorIndexDelta = stateAfter.locksSize();
-        if (monitorIndexDelta > 0) {
-            for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
-                if (entry.getValue() instanceof AccessMonitorNode) {
-                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
-                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
-                }
-            }
-        }
-
         Node returnValue = null;
         if (returnNode != null) {
             if (returnNode.result() instanceof LocalNode) {
@@ -514,8 +505,8 @@ public class InliningUtil {
         }
 
         invoke.node().clearInputs();
+        invoke.node().replaceAtUsages(null);
         GraphUtil.killCFG(invoke.node());
-
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {

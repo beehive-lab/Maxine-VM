@@ -204,6 +204,11 @@ public class MaxRuntime implements GraalRuntime {
         return 0;
     }
 
+    public int sizeOfLockData() {
+        // locks are not placed on the stack
+        return 0;
+    }
+
     public int codeOffset() {
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset();
     }

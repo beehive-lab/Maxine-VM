@@ -1099,21 +1099,26 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private MonitorEnterNode genMonitorEnter(ValueNode x) {
-        int lockNumber = frameState.locksSize();
-        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
-        frameState.lock(x);
+        MonitorObject monitorObject = graph.add(new MonitorObject(x));
+        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(monitorObject));
+        frameState.lock(monitorObject);
         appendWithBCI(monitorEnter);
         return monitorEnter;
     }
 
     private MonitorExitNode genMonitorExit(ValueNode x) {
-        int lockNumber = frameState.locksSize() - 1;
-        if (lockNumber < 0) {
+        if (frameState.locksSize() <= 0) {
             throw new CiBailout("monitor stack underflow");
         }
-        MonitorExitNode monitorExit = graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
+        MonitorObject monitorObject = frameState.lockAt(frameState.locksSize() - 1);
+
+        // We only compile methods with balanced monitors.  However, x might be a phi function
+        // that can be optimized away later on, so we have to disable the check for phi functions.
+        assert x == monitorObject.owner() || x instanceof PhiNode;
+
+        MonitorExitNode monitorExit = graph.add(new MonitorExitNode(monitorObject));
         appendWithBCI(monitorExit);
-        frameState.unlock();
+        frameState.unlock(monitorObject);
         return monitorExit;
     }
 

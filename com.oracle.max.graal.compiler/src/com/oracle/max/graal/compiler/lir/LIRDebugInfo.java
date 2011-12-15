@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
@@ -32,12 +33,14 @@ import com.sun.cri.ci.*;
  */
 public class LIRDebugInfo {
     public final CiFrame topFrame;
+    private final CiVirtualObject[] virtualObjects;
     private final List<CiStackSlot> pointerSlots;
     public final LabelRef exceptionEdge;
     private CiDebugInfo debugInfo;
 
-    public LIRDebugInfo(CiFrame topFrame, List<CiStackSlot> pointerSlots, LabelRef exceptionEdge) {
+    public LIRDebugInfo(CiFrame topFrame, CiVirtualObject[] virtualObjects, List<CiStackSlot> pointerSlots, LabelRef exceptionEdge) {
         this.topFrame = topFrame;
+        this.virtualObjects = virtualObjects;
         this.pointerSlots = pointerSlots;
         this.exceptionEdge = exceptionEdge;
     }
@@ -51,37 +54,6 @@ public class LIRDebugInfo {
         return debugInfo != null;
     }
 
-
-    /**
-     * Helper class to register a monitor index in the debug information.
-     * The {@link CiStackSlot} of the monitor location can only be computed when the frame size has
-     * been fixed, i.e., after register allocation.  Until then, the monitor index is stored using this class.
-     */
-    public static class MonitorIndex extends CiValue {
-        public final int index;
-
-        public MonitorIndex(int index) {
-            super(CiKind.Illegal);
-            this.index = index;
-        }
-
-        @Override
-        public String name() {
-            return "monitorIndex";
-        }
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof MonitorIndex && ((MonitorIndex) obj).index == index;
-        }
-        @Override
-        public boolean equalsIgnoringKind(CiValue other) {
-            return equals(other);
-        }
-        @Override
-        public int hashCode() {
-            return index;
-        }
-    }
 
     /**
      * Iterator interface for iterating all variables of a frame state.
@@ -103,38 +75,42 @@ public class LIRDebugInfo {
      * @param proc The procedure called for variables.
      */
     public void forEachLiveStateValue(ValueProcedure proc) {
-        CiBitMap processedObjects = null;
         for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
-            processedObjects = processValues(cur.values, proc, processedObjects);
+            processValues(cur.values, proc);
         }
-    }
-
-    private CiBitMap processValues(CiValue[] values, ValueProcedure proc, CiBitMap processedObjects) {
-        for (int i = 0; i < values.length; i++) {
-            CiValue value = values[i];
-            if (value instanceof CiVariable) {
-                CiValue newValue = proc.doValue(value);
-                if (newValue != null) {
-                    values[i] = newValue;
-                }
-            } else if (value instanceof CiVirtualObject) {
-                CiVirtualObject obj = (CiVirtualObject) value;
-                if (processedObjects == null) {
-                    processedObjects = new CiBitMap();
-                }
-                processedObjects.grow(obj.id());
-                if (!processedObjects.get(obj.id())) {
-                    processedObjects.set(obj.id());
-                    processedObjects = processValues(obj.values(), proc, processedObjects);
-                }
-            } else {
-                // Nothing to do for these types.
-                assert value == CiValue.IllegalValue || value instanceof CiConstant || value instanceof CiStackSlot || value instanceof MonitorIndex;
+        if (virtualObjects != null) {
+            for (CiVirtualObject obj : virtualObjects) {
+                processValues(obj.values(), proc);
             }
         }
-        return processedObjects;
     }
 
+    private void processValues(CiValue[] values, ValueProcedure proc) {
+        for (int i = 0; i < values.length; i++) {
+            CiValue value = values[i];
+            if (value instanceof CiMonitorValue) {
+                CiMonitorValue monitor = (CiMonitorValue) value;
+
+                if (monitor.owner instanceof CiVariable) {
+                    CiValue newValue = proc.doValue(monitor.owner);
+                    if (newValue != null) {
+                        values[i] = new CiMonitorValue(newValue, monitor.lockData, monitor.eliminated);
+                    }
+                }
+
+            } else {
+                if (value instanceof CiVariable) {
+                    CiValue newValue = proc.doValue(value);
+                    if (newValue != null) {
+                        values[i] = newValue;
+                    }
+                } else {
+                    // Nothing to do for these types.
+                    assert value == CiValue.IllegalValue || value instanceof CiConstant || value instanceof CiStackSlot || (value instanceof CiVirtualObject && Arrays.asList(virtualObjects).contains(value));
+                }
+            }
+        }
+    }
 
     /**
      * Create the initial {@link CiDebugInfo} object. This initializes the reference maps.
@@ -153,11 +129,9 @@ public class LIRDebugInfo {
         // Add locks that are in the designated frame area.
         for (CiFrame cur = topFrame; cur != null; cur = cur.caller()) {
             for (int i = 0; i < cur.numLocks; i++) {
-                CiValue lock = cur.values[i + cur.numLocals + cur.numStack];
-                if (lock instanceof MonitorIndex) {
-                    int index = ((MonitorIndex) lock).index;
-                    cur.values[i + cur.numLocals + cur.numStack] = frameMap.toMonitorBaseStackAddress(index);
-                    setReference(frameMap.toMonitorObjectStackAddress(index), frameMap);
+                CiMonitorValue lock = (CiMonitorValue) cur.values[i + cur.numLocals + cur.numStack];
+                if (lock.lockData != null) {
+                    cur.values[i + cur.numLocals + cur.numStack] = new CiMonitorValue(lock.owner, frameMap.toStackSlot((StackBlock) lock.lockData), lock.eliminated);
                 }
             }
         }
