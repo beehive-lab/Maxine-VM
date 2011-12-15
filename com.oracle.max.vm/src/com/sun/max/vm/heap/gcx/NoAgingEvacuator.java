@@ -27,6 +27,7 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 /**
  * A simple evacuator that evacuates only from one space to another, without aging.
  * The evacuator is parameterized with two heap space.
@@ -238,6 +239,10 @@ public final class NoAgingEvacuator extends Evacuator {
         top = newTop;
         cfoTable.set(cell, top);
         return cell;
+    }
+
+    @Override
+    void updateRSet(Pointer refHolderOrigin, int wordIndex, Reference ref) {
     }
 
     @Override

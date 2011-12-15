@@ -28,7 +28,6 @@ import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirConstant;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
