@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.Arg;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.ObjectLiteral;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.Sig;
 import com.sun.cri.bytecode.*;
@@ -688,11 +689,13 @@ public abstract class T1XCompilation {
         }
 
         if (template.objectLiterals != null) {
-            for (int i = 0; i < template.objectLiterals.length; i++) {
+            for (ObjectLiteral literal : template.objectLiterals) {
                 int index = objectLiterals.size();
-                objectLiterals.add(template.objectLiterals[i]);
-                int patchPos = template.objectLiteralDataPatches[i] + buf.position();
-                addObjectLiteralPatch(index, patchPos);
+                objectLiterals.add(literal.value);
+                for (int pos : literal.patchPosns) {
+                    int patchPos = pos + buf.position();
+                    addObjectLiteralPatch(index, patchPos);
+                }
             }
         }
         buf.emitBytes(template.code, 0, template.code.length);

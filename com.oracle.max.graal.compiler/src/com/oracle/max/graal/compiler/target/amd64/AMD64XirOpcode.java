@@ -49,8 +49,8 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
     XIR;
 
     public LIRInstruction create(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, CiValue[] inputs, CiValue[] temps, int[] inputOperandIndices, int[] tempOperandIndices, int outputOperandIndex,
-                        LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots) {
-        return new LIRXirInstruction(this, snippet, operands, outputOperand, inputs, temps, inputOperandIndices, tempOperandIndices, outputOperandIndex, info, infoAfter, method, pointerSlots) {
+                        LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method) {
+        return new LIRXirInstruction(this, snippet, operands, outputOperand, inputs, temps, inputOperandIndices, tempOperandIndices, outputOperandIndex, info, infoAfter, method) {
             @Override
             public void emitCode(TargetMethodAssembler tasm) {
                 emit(tasm, (AMD64MacroAssembler) tasm.asm, this);

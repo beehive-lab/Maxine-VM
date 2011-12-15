@@ -105,31 +105,26 @@ public class CompilationPrinter {
     /**
      * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
      */
-    protected String debugInfoToString(CiDebugInfo info, OperandFormatter fmt, CiArchitecture arch) {
-        if (info == null) {
-            return null;
-        }
+    protected String debugInfoToString(CiCodePos codePos, CiBitMap registerRefMap, CiBitMap frameRefMap, OperandFormatter fmt, CiArchitecture arch) {
         StringBuilder sb = new StringBuilder();
 
-        if (info.hasRegisterRefMap()) {
+        if (registerRefMap != null) {
             sb.append("reg-ref-map:");
-            for (int reg = info.registerRefMap.nextSetBit(0); reg >= 0; reg = info.registerRefMap.nextSetBit(reg + 1)) {
+            for (int reg = registerRefMap.nextSetBit(0); reg >= 0; reg = registerRefMap.nextSetBit(reg + 1)) {
                 sb.append(' ').append(arch == null ? "reg" + reg : arch.registers[reg]);
             }
             sb.append("\n");
         }
 
-        if (info.hasStackRefMap()) {
+        if (frameRefMap != null) {
             sb.append("frame-ref-map:");
-            CiBitMap bm = info.frameRefMap;
-            for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
-                sb.append(' ').append(CiStackSlot.get(CiKind.Object, i));
+            for (int reg = frameRefMap.nextSetBit(0); reg >= 0; reg = frameRefMap.nextSetBit(reg + 1)) {
+                sb.append(' ').append(CiStackSlot.get(CiKind.Object, reg));
             }
             sb.append("\n");
         }
 
-        if (info.codePos != null) {
-            CiCodePos codePos = info.codePos;
+        if (codePos != null) {
             do {
                 sb.append(CiUtil.toLocation(codePos.method, codePos.bci));
                 sb.append('\n');

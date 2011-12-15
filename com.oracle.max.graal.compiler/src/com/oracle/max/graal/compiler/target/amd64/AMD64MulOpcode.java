@@ -31,13 +31,28 @@ import com.sun.cri.ci.*;
 public enum AMD64MulOpcode implements LIROpcode {
     IMUL, LMUL;
 
-    public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        CiValue[] inputs = {leftAndResult, right};
+    public LIRInstruction create(CiVariable result, CiValue left, CiValue right) {
+        CiValue[] inputs = new CiValue[] {left};
+        CiValue[] alives = new CiValue[] {right};
 
-        return new AMD64LIRInstruction(this, leftAndResult, null, inputs) {
+        return new AMD64LIRInstruction(this, result, null, inputs, alives, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, result(), input(1));
+                CiValue left = input(0);
+                CiValue right = alive(0);
+                assert !(right instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(right) : "result and right must be different registers";
+                AMD64MoveOpcode.move(tasm, masm, result(), left);
+                emit(tasm, masm, result(), right);
+            }
+
+            @Override
+            public boolean inputCanBeMemory(int index) {
+                return index == 0;
+            }
+
+            @Override
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }

@@ -39,8 +39,7 @@ public abstract class NodeIterable<T extends Node> implements Iterable<T> {
     public <F extends T> FilteredNodeIterable<F> filter(Class<F> clazz) {
         return new FilteredNodeIterable<T>(this).and(clazz);
     }
-    @SuppressWarnings("unchecked")
-    public Collection<T> snapshot() {
+    public List<T> snapshot() {
         ArrayList<T> list = new ArrayList<T>();
         for (T n : this) {
             list.add(n);

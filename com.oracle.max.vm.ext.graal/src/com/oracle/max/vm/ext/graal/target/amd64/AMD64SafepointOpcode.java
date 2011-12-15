@@ -32,9 +32,7 @@ public enum AMD64SafepointOpcode implements LIROpcode {
     SAFEPOINT;
 
     public LIRInstruction create(LIRDebugInfo info) {
-        CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-        return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
+        return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
                 tasm.recordSafepoint(masm.codeBuffer.position(), info);

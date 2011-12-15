@@ -24,6 +24,8 @@ package com.oracle.max.graal.hotspot.logging;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.max.graal.hotspot.server.*;
 
@@ -37,7 +39,7 @@ public class CountingProxy<T> implements InvocationHandler {
 
     private T delegate;
 
-    private Map<Method, Long> calls = new HashMap<Method, Long>();
+    private ConcurrentHashMap<Method, AtomicLong> calls = new ConcurrentHashMap<Method, AtomicLong>();
 
     public CountingProxy(T delegate) {
         assert ENABLED;
@@ -53,8 +55,11 @@ public class CountingProxy<T> implements InvocationHandler {
             throw new RuntimeException("wrong parameter count");
         }
         final Object result;
-        long count = calls.containsKey(method) ? calls.get(method) : 0;
-        calls.put(method, count + 1);
+        if (!calls.containsKey(method)) {
+            calls.putIfAbsent(method, new AtomicLong(0));
+        }
+        AtomicLong count = calls.get(method);
+        count.incrementAndGet();
         try {
             if (args == null) {
                 result = method.invoke(delegate);
@@ -91,9 +96,9 @@ public class CountingProxy<T> implements InvocationHandler {
 
     protected void print() {
         long sum = 0;
-        for (Map.Entry<Method, Long> entry : calls.entrySet()) {
+        for (Map.Entry<Method, AtomicLong> entry : calls.entrySet()) {
             Method method = entry.getKey();
-            long count = entry.getValue();
+            long count = entry.getValue().get();
             sum += count;
             System.out.println(delegate.getClass().getSimpleName() + "." + method.getName() + ": " + count);
         }

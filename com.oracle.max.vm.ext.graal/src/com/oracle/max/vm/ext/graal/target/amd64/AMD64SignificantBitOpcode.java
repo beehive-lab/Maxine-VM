@@ -33,13 +33,13 @@ public enum AMD64SignificantBitOpcode implements LIROpcode {
     MSB, LSB;
 
     public LIRInstruction create(CiVariable result, CiVariable input) {
-        CiValue[] inputs = new CiValue[] {input};
-        CiValue[] temps = new CiValue[] {input};
+        CiValue[] alives = new CiValue[] {input};
 
-        return new AMD64LIRInstruction(this, result, null, inputs, temps) {
+        return new AMD64LIRInstruction(this, result, null, LIRInstruction.NO_OPERANDS, alives, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, result(), input(0));
+                CiValue input = alive(0);
+                emit(tasm, masm, result(), input);
             }
 
             @Override

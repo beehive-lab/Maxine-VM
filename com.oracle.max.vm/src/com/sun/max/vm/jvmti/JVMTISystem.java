@@ -128,8 +128,8 @@ public class JVMTISystem {
             case LINUX:
             case SOLARIS: {
                 FatalError.check(CString.endsWith(javaHome, "jre"), "The java.home system property should end with \"/jre\"");
-                final Pointer jreLibPath = CString.append(javaHome, "lib");
-                return CString.append(jreLibPath, "amd64");
+                final Pointer jreLibPath = CString.append(javaHome, "/lib");
+                return CString.append(jreLibPath, "/amd64");
             }
             case WINDOWS:
             case MAXVE:

@@ -93,7 +93,6 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
         return fs;
     }
 
-    @Override
     public void setValueAt(int i, ValueNode x) {
         values.set(i, x);
     }
@@ -128,7 +127,7 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
         this.rethrowException = rethrowException;
     }
 
-    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<ValueNode> locks, boolean rethrowException) {
+    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, List<MonitorObject> locks, boolean rethrowException) {
         this.method = method;
         this.bci = bci;
         this.localsSize = locals.length;
@@ -355,9 +354,9 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
-    public ValueNode lockAt(int i) {
+    public MonitorObject lockAt(int i) {
         assert i >= 0;
-        return valueAt(localsSize + stackSize + i);
+        return (MonitorObject) valueAt(localsSize + stackSize + i);
     }
 
     /**
@@ -597,94 +596,6 @@ public final class FrameState extends Node implements FrameStateAccess, Node.Ite
             }
         }
         return false;
-    }
-
-    /**
-     * The interface implemented by a client of {@link FrameState#forEachLiveStateValue(ValueProcedure)}.
-     */
-    public interface ValueProcedure {
-        void doValue(ValueNode value);
-    }
-
-    /**
-     * Traverses all {@linkplain ValueNode#isLive() live values} of this frame state.
-     *
-     * @param proc the call back called to process each live value traversed
-     */
-    public void forEachLiveStateValue(ValueProcedure proc) {
-        HashSet<VirtualObjectNode> vobjs = null;
-        FrameState current = this;
-        do {
-            for (int i = 0; i < current.valuesSize(); i++) {
-                ValueNode value = current.valueAt(i);
-                if (value instanceof VirtualObjectNode) {
-                    if (vobjs == null) {
-                        vobjs = new HashSet<VirtualObjectNode>();
-                    }
-                    vobjs.add((VirtualObjectNode) value);
-                } else if (value != null) {
-                    proc.doValue(value);
-                }
-            }
-            current = current.outerFrameState();
-        } while (current != null);
-
-        if (vobjs != null) {
-            // collect all VirtualObjectField instances:
-            HashMap<VirtualObjectNode, VirtualObjectFieldNode> objectStates = new HashMap<VirtualObjectNode, VirtualObjectFieldNode>();
-            current = this;
-            do {
-                for (int i = 0; i < current.virtualObjectMappingCount(); i++) {
-                    VirtualObjectFieldNode field = (VirtualObjectFieldNode) current.virtualObjectMappingAt(i);
-                    // null states occur for objects with 0 fields
-                    if (field != null && !objectStates.containsKey(field.object())) {
-                        objectStates.put(field.object(), field);
-                    }
-                }
-                current = current.outerFrameState();
-            } while (current != null);
-
-            do {
-                HashSet<VirtualObjectNode> vobjsCopy = new HashSet<VirtualObjectNode>(vobjs);
-                for (VirtualObjectNode vobj : vobjsCopy) {
-                    if (vobj.fieldsCount() > 0) {
-                        boolean[] fieldState = new boolean[vobj.fieldsCount()];
-                        if (vobj instanceof BoxedVirtualObjectNode) {
-                            BoxedVirtualObjectNode boxedVirtualObjectNode = (BoxedVirtualObjectNode) vobj;
-                            ValueNode value = boxedVirtualObjectNode.getUnboxedValue();
-                            if (!fieldState[0]) {
-                                fieldState[0] = true;
-                                proc.doValue(value);
-                            }
-                        } else {
-                            ValueNode currentField = objectStates.get(vobj);
-
-                            assert currentField != null : this + ", vobj=" + vobj;
-                            do {
-                                if (currentField instanceof VirtualObjectFieldNode) {
-                                    int index = ((VirtualObjectFieldNode) currentField).index();
-                                    ValueNode value = ((VirtualObjectFieldNode) currentField).input();
-                                    if (!fieldState[index]) {
-                                        fieldState[index] = true;
-                                        if (value instanceof VirtualObjectNode) {
-                                            vobjs.add((VirtualObjectNode) value);
-                                        } else {
-                                            proc.doValue(value);
-                                        }
-                                    }
-                                    currentField = ((VirtualObjectFieldNode) currentField).lastState();
-                                } else {
-                                    assert currentField instanceof PhiNode : currentField;
-                                    currentField = ((PhiNode) currentField).valueAt(0);
-                                }
-                            } while (currentField != null);
-                        }
-                    }
-                    vobjs.remove(vobj);
-                }
-            } while (!vobjs.isEmpty());
-            assert vobjs.isEmpty() : "at FrameState " + this;
-        }
     }
 
     public String toDetailedString() {

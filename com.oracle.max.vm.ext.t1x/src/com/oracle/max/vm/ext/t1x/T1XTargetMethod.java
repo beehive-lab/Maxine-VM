@@ -467,7 +467,31 @@ public final class T1XTargetMethod extends TargetMethod {
         CiBitMap regRefMap = new CiBitMap(referenceMaps(), (safepointIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
         int bci = bciForPos(safepoints.posAt(safepointIndex));
         CiFrame debugFrame = frame.asFrame(classMethodActor, bci, frameRefMap);
+        if (fa != null) {
+            CiValue[] actualValues = new CiValue[debugFrame.values.length];
+            // somewhat wasteful as we just replace all the recipe values with the actual values
+            for (int i = 0; i < debugFrame.values.length; i++) {
+                CiValue accessValue = debugFrame.values[i];
+                actualValues[i] = toLiveSlot(fa, accessValue);
+            }
+            debugFrame = new CiFrame(debugFrame.caller(), debugFrame.method, debugFrame.bci,
+                            debugFrame.rethrowException, actualValues,
+                            debugFrame.numLocals, debugFrame.numStack, debugFrame.numLocks);
+        }
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
+    }
+
+    private static CiValue toLiveSlot(FrameAccess fa, CiValue value) {
+        CiAddress address = (CiAddress) value;
+        Pointer fp = fa.fp;
+        if (value.kind.isObject()) {
+            Reference ref = fp.readReference(address.displacement);
+            value = CiConstant.forObject(ref.toJava());
+        } else {
+            Word w = fp.readWord(address.displacement);
+            value = WordUtil.archConstant(w);
+        }
+        return value;
     }
 
     @Override
@@ -546,6 +570,7 @@ public final class T1XTargetMethod extends TargetMethod {
      * for GC, then safepoints are currently disabled and so there is no need to use the {@link NO_SAFEPOINTS}
      * annotation on this method.
      */
+    @Override
     public void finalizeReferenceMaps() {
         Object object = this.refMapEditor.get();
         if (object != null) {

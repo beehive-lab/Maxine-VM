@@ -422,7 +422,7 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object) {
+        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object || parameters.get(0).stamp().nonNull()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters.get(0), false))));
@@ -478,16 +478,6 @@ public class InliningUtil {
                 } else if (frameState.bci == FrameState.AFTER_EXCEPTION_BCI) {
                     assert stateAtExceptionEdge != null;
                     frameState.replaceAndDelete(stateAtExceptionEdge);
-                }
-            }
-        }
-
-        int monitorIndexDelta = stateAfter.locksSize();
-        if (monitorIndexDelta > 0) {
-            for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
-                if (entry.getValue() instanceof AccessMonitorNode) {
-                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
-                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
                 }
             }
         }
