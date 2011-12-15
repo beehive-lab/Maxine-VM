@@ -20,15 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.xir;
+package com.sun.max.util;
 
-
+/**
+ * A specialized bit set implementation to use with enum types.
+ * The ordinal of the enumerated values are used as bit position in a bit set of width no larger than the width of an int.
+ * Each enum value is treated as a bit in the bit set.
+ * This allows implementing set of flags over a single int and perform flag setting / clearing / checking.
+ *
+ * @param <T> an enum type
+ */
 public class IntBitSet<T extends Enum> {
+    /**
+     * Storage for the bit set.
+     */
     private int bits;
     private static <T extends Enum>int bitmask(T bit) {
         return 1 << bit.ordinal();
     }
 
+    /**
+     * Test if the bit corresponding to an enum value is set.
+     * @param bit an enum value
+     * @return true if the bit is set, false otherwise.
+     */
     public boolean isSet(T bit) {
         return (bits & bitmask(bit)) != 0L;
     }

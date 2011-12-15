@@ -69,10 +69,6 @@ public abstract class VmBreakpoint extends AbstractVmHolder implements VMTrigger
     private final CodeLocation codeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
     private String description = null;
-    /**
-     * A bytecode breakpoint for which this target breakpoint was created, null if none.
-     */
-    protected final VmBreakpoint owner;
 
     /**
      * A VM breakpoint.
@@ -81,13 +77,11 @@ public abstract class VmBreakpoint extends AbstractVmHolder implements VMTrigger
      *
      * @param codeLocation location in the VM's code where the breakpoint should be set
      * @param kind  the kind of breakpoint
-     * @param owner another breakpoint, the implementation of which caused this breakpoint to be created; null if none
      */
-    protected VmBreakpoint(TeleVM vm, CodeLocation codeLocation, BreakpointKind kind, VmBreakpoint owner) {
+    protected VmBreakpoint(TeleVM vm, CodeLocation codeLocation, BreakpointKind kind) {
         super(vm);
         this.codeLocation = codeLocation;
         this.kind = kind;
-        this.owner = owner;
     }
 
     /**
@@ -149,10 +143,6 @@ public abstract class VmBreakpoint extends AbstractVmHolder implements VMTrigger
         final boolean handleTriggerEvent = triggerEventHandler.handleTriggerEvent(teleNativeThread);
         Trace.end(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
         return handleTriggerEvent;
-    }
-
-    public VmBreakpoint owner() {
-        return owner;
     }
 
 }

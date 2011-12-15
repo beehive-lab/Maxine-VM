@@ -22,9 +22,11 @@
  */
 package com.sun.max.ins.value;
 
+import java.awt.event.*;
+
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  *
@@ -33,46 +35,160 @@ import com.sun.max.vm.value.*;
 public class PrimitiveValueLabel extends ValueLabel {
 
     private final Kind kind;
+    private String displayText;
 
-    public Kind kind() {
-        return kind;
-    }
+    private boolean textDisplayMode = true;
 
-    // TODO (mlvdv) this class is very hard to subclass because it does all its work
-    // in the constructor, which keeps subclasses from having access to their
-    // local state variables when the other methods get called.
     public PrimitiveValueLabel(Inspection inspection, Kind kind) {
         super(inspection, null);
         this.kind = kind;
         initializeValue();
         redisplay();
-    }
+        addMouseListener(new InspectorMouseClickAdapter(inspection()) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                switch (inspection().gui().getButton(mouseEvent)) {
+                    case MouseEvent.BUTTON1: {
+                        break;
+                    }
+                    case MouseEvent.BUTTON2: {
+                        cycleDisplay();
+                        break;
+                    }
+                    case MouseEvent.BUTTON3: {
+                        final InspectorPopupMenu menu = new InspectorPopupMenu();
+                        menu.add(actions().copyValue(value(), "Copy value to clipboard"));
+                        menu.add(new InspectorAction(inspection(), "Cycle display (Middle-Button)") {
 
-    public PrimitiveValueLabel(Inspection inspection, Value value) {
-        super(inspection, value);
-        this.kind = value.kind();
-        initializeValue();
-        redisplay();
+                            @Override
+                            protected void procedure() {
+                                cycleDisplay();
+                            }
+
+                        });
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    }
+                }
+            }
+        });
     }
 
     public void redisplay() {
-        setFont(preference().style().primitiveDataFont());
+        setModeFont();
         updateText();
     }
 
     @Override
     public void updateText() {
         assert value() != null;
-        if (kind == Kind.CHAR) {
-            setText("'" + value().toString() + "'");
-            setWrappedToolTipHtmlText("Int: " + Integer.toString(value().toInt()) + ", " + intTo0xHex(value().toInt()));
+        setModeFont();
+
+        final String asString = value().toString();
+
+        if (kind == Kind.BOOLEAN) {
+            final int asInt = value().toInt();
+            final String asHex = intTo0xHex(asInt);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("boolean '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
+
+        } else if (kind == Kind.BYTE) {
+            final short asShort = value().toShort();
+            final String asHex = intTo0xHex(asShort);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("byte '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
+
+        } else if (kind == Kind.CHAR) {
+            final short asShort = value().toShort();
+            final String asHex = intTo0xHex(asShort);
+            if (textDisplayMode) {
+                displayText = "'" + asString + "'";
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("char '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
+
+        } else if (kind == Kind.DOUBLE) {
+            final long asLong = value().toLong();
+            final String asHex = longTo0xHex(asLong);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("double '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+
+        } else if (kind == Kind.FLOAT) {
+            final long asLong = value().toLong();
+            final String asHex = longTo0xHex(asLong);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("float '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+
         } else if (kind == Kind.INT) {
-            setText(value().toString());
-            setWrappedToolTipHtmlText(intTo0xHex(value().toInt()));
+            final int asInt = value().toInt();
+            final String asHex = intTo0xHex(asInt);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("int '" + asString + "' <br>as int: " + Integer.toString(asInt) + ", " + asHex);
+
+        } else if (kind == Kind.LONG) {
+            final long asLong = value().toLong();
+            final String asHex = longTo0xHex(asLong);
+            if (textDisplayMode) {
+                displayText = asString;
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("long '" + asString + "' <br>as int: " + Long.toString(asLong) + ", " + asHex);
+
+        } else if (kind == Kind.SHORT) {
+            final short asShort = value().toShort();
+            final String asHex = intTo0xHex(asShort);
+            if (textDisplayMode) {
+                displayText = "'" + asString + "'";
+            } else {
+                displayText = asHex;
+            }
+            setText(displayText);
+            setWrappedToolTipHtmlText("short '" + asString + "' <br>as int: " + Short.toString(asShort) + ", " + asHex);
         } else {
-            setText(value().toString());
-            setWrappedToolTipHtmlText(value().toString());
+            setText(asString);
+            setWrappedToolTipHtmlText(asString);
         }
+    }
+
+    private void setModeFont() {
+        if (textDisplayMode) {
+            setFont(preference().style().primitiveDataFont());
+        } else {
+            setFont(preference().style().hexDataFont());
+        }
+    }
+
+    private void cycleDisplay() {
+        textDisplayMode = !textDisplayMode;
+        updateText();
     }
 
 }

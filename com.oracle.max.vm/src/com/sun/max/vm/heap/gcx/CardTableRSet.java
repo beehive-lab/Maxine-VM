@@ -39,6 +39,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.CardTable.CardState;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 /**
  * A pure card-table based remembered set.
  */
@@ -141,6 +142,14 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         asm.shr(temp, temp, asm.i(CardTable.LOG2_CARD_SIZE));
         final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+    }
+
+    public void record(Reference ref, Offset offset) {
+        cardTable.dirtyCovered(ref.toOrigin().plus(offset));
+    }
+
+    public void record(Reference ref,  int displacement, int index) {
+        cardTable.dirtyCovered(ref.toOrigin().plus(Address.fromInt(index).shiftedLeft(Word.widthValue().log2numberOfBytes).plus(displacement)));
     }
 
     /**

@@ -40,39 +40,39 @@ import com.sun.max.vm.type.*;
 
 /**
  * <strong>Watchpoints</strong>.
- * <br>
+ * <p>
  * A watchpoint triggers <strong>after</strong> a specified event has occurred: read, write, or exec.  So-called "before"
  * watchpoints are not supported.
- * <br>
+ * <p>
  * Watchpoint creation may fail for platform-specific reasons, for example if watchpoints are not supported at all, or are
  * only supported in limited numbers, or only permitted in certain sizes or locations.
- * <br>
+ * <p>
  * A new watchpoint is "alive" and remains so until removed (deleted), at which time it become permanently inert.  Any attempt
  * to enable or otherwise manipulate a removed watchpoint will cause a TeleError to be thrown.
- * <br>
+ * <p>
  * A watchpoint is by definition "enabled" (client concept) if it is alive and one or more of the three trigger settings
  * is true:  <strong>trapOnRead</strong>, <strong>trapOnWrite</strong>, or <strong>trapOnExec</strong>.
  * If none is true, then the watchpoint is by definition "disabled" and can have no effect on VM execution.
- * <br>
+ * <p>
  * A watchpoint is "active" (implementation concept) if it has been installed in the process running the VM, something that may
  * happen when when it is enabled.  If a watchpoint becomes disabled, it will be deactivated (removed from the process).
  * A watchpoint may also be deactivated/reactivated transparently to the client for implementation purposes.
- * <br>
+ * <p>
  * A watchpoint with <strong>enabledDuringGC</strong> set to false will be effectively disabled during any period of time when
  * the VM is performing GC.  In practice, the watchpoint may trigger if an event takes place during GC, but execution will then
  * resume silently when it is determined that GC is underway.  This is true whether the watchpoint is relocatable or not.
- * <br>
+ * <p>
  * A <strong>relocatable</strong> watchpoint is set on a location that is part of an object's representation.  Such a watchpoint
  * follows the object should its representation be moved during GC to a different location. The life cycle of a relocatable watchpoint
  * depends on the state of the object when first created, on the treatment of the object by the GC in the VM, and by the timing
  * in which the Inspector is able to update its state in response to GC actions.
- * <br>
+ * <p>
  * A watchpoint may only be created on an object known to the inspector as live (neither collected/dead nor forwarded/obsolete).
  * Attempting to set a watchpoint on an object known to the inspector to be not live will cause a TeleError to be thrown.
- * <br>
+ * <p>
  * A relocatable watchpoint associated with an object that is eventually determined to have been collected will be removed and
  * replaced with a non-relocatable watchpoint covering the same memory region.
- * <br>
+ * <p>
  * <strong>Concurrency:</strong> operations that modify a watchpoint must necessarily be implemented by directly affecting
  * the VM processes.  Such operations fail if they are unable to acquire the VM lock held during the execution of VM commands.
  */
@@ -99,7 +99,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * to catch certain events in the VM so that state can be synchronized for
          * some purpose.  Presumed to be managed completely by the service using it.  These
          * are generally not visible to clients.
-         * <br>
+         * <p>
          * Not relocatable.
          */
         SYSTEM;
@@ -116,7 +116,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
     /**
      * Watchpoints manager.
      */
-    protected final WatchpointManager watchpointManager;
+    protected final VmWatchpointManager watchpointManager;
 
     /**
      * Is this watchpoint still alive (not yet removed) and available for activation/deactivation?
@@ -127,9 +127,9 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
     /**
      * Is this watchpoint currently active in the process?
-     * <br>
+     * <p>
      * This is an implementation issue, which should not be visible to clients.
-     * <br>
+     * <p>
      * Only "live" watchpoints may be activated.
      */
     private boolean active = false;
@@ -146,7 +146,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
 
-    private VmWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, Address start, long nBytes, WatchpointSettings settings) {
+    private VmWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, Address start, long nBytes, WatchpointSettings settings) {
         super(watchpointManager.vm());
         this.kind = kind;
         this.watchpointManager = watchpointManager;
@@ -155,7 +155,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         this.description = description;
     }
 
-    private VmWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MaxMemoryRegion memoryRegion, WatchpointSettings settings) {
+    private VmWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxMemoryRegion memoryRegion, WatchpointSettings settings) {
         this(kind, watchpointManager, description, memoryRegion.start(), memoryRegion.nBytes(), settings);
     }
 
@@ -419,7 +419,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
     /**
      * Relocates a watchpoint by deactivating it and then reactivating
      * at a new start location.
-     * <br>
+     * <p>
      * Note that the location of a watchpoint should <strong>only</strong> be changed
      * via this method, since it must first be deactivated at its old location before the
      * new location is set.
@@ -465,7 +465,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleRegionWatchpoint extends VmWatchpoint {
 
-        private TeleRegionWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MaxMemoryRegion memoryRegion, WatchpointSettings settings) {
+        private TeleRegionWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxMemoryRegion memoryRegion, WatchpointSettings settings) {
             super(kind, watchpointManager, description, memoryRegion.start(), memoryRegion.nBytes(), settings);
         }
 
@@ -486,7 +486,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleVmThreadLocalWatchpoint extends VmWatchpoint {
 
-        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings) {
+        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings) {
             super(kind, watchpointManager,  description, threadLocalVariable.memoryRegion(), settings);
         }
 
@@ -529,7 +529,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          */
         private VmWatchpoint relocationWatchpoint = null;
 
-        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
+        private TeleObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
             super(kind, watchpointManager, description, teleObject.origin().plus(offset), nBytes, settings);
             TeleError.check(teleObject.memoryStatus().isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
@@ -664,7 +664,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleWholeObjectWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleWholeObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
+        private TeleWholeObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
             super(kind, watchpointManager, description, teleObject, 0, teleObject.objectMemoryRegion().nBytes(), settings);
         }
@@ -675,7 +675,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleFieldWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleFieldWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+        private TeleFieldWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
             super(kind, watchpointManager, description, teleObject, fieldActor.offset(), teleObject.fieldSize(fieldActor), settings);
         }
@@ -686,7 +686,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleArrayElementWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleArrayElementWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        private TeleArrayElementWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
             super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), elementKind.width.numberOfBytes, settings);
         }
@@ -697,19 +697,28 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
      */
     private static final class TeleHeaderWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleHeaderWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+        private TeleHeaderWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
             super(kind, watchpointManager, description, teleObject, teleObject.headerOffset(headerField), teleObject.headerSize(headerField), settings);
         }
     }
 
     /**
-     * A manager for creating and managing process watchpoints.
-     * <br>
+     * Singleton manager for creating and managing process watchpoints.
+     * <p>
      * Overlapping watchpoints are not permitted.
      *
      */
-    public static final class WatchpointManager extends AbstractVmHolder implements MaxWatchpointManager {
+    public static final class VmWatchpointManager extends AbstractVmHolder implements MaxWatchpointManager {
+
+        private static VmWatchpointManager vmWatchpointManager;
+
+        public static VmWatchpointManager make(TeleVM vm, TeleProcess teleProcess) {
+            if (vmWatchpointManager == null) {
+                vmWatchpointManager = new VmWatchpointManager(vm, teleProcess);
+            }
+            return vmWatchpointManager;
+        }
 
         private final TeleProcess teleProcess;
 
@@ -749,7 +758,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
          * Creates a manager for creating and managing watchpoints in the VM.
          *
          */
-        WatchpointManager(TeleVM vm, TeleProcess teleProcess) {
+        private VmWatchpointManager(TeleVM vm, TeleProcess teleProcess) {
             super(vm);
             this.teleProcess = teleProcess;
             vm().addVMStateListener(new MaxVMStateListener() {
@@ -766,7 +775,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Adds a listener for watchpoint changes.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param listener a watchpoint listener
@@ -778,7 +787,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Removes a listener for watchpoint changes.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param listener a watchpoint listener
@@ -790,7 +799,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Creates a new, active watchpoint that covers a given memory region in the VM.
-         * <br>
+         * <p>
          * The trigger occurs <strong>after</strong> the specified event.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -852,7 +861,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         /**
          * Creates a new, active watchpoint that covers a heap object's field in the VM. If the object is live,
          * than this watchpoint will track the object's location during GC.
-         * <br>
+         * <p>
          * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -926,7 +935,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         /**
          * Creates a new, active watchpoint that covers a field in an object's header in the VM.  If the object is live,
          * than this watchpoint will track the object's location during GC.
-         * <br>
+         * <p>
          * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
@@ -988,7 +997,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Find existing <strong>client</strong> watchpoints in the VM by location.
-         * <br>
+         * <p>
          * Returns an immutable collection; membership is thread-safe
          *
          * @param memoryRegion a memory region in the VM
@@ -1009,7 +1018,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Find an existing client watchpoint set in the VM.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param address a memory address in the VM
@@ -1047,7 +1056,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Find an system watchpoint set at a particular location.
-         * <br>
+         * <p>
          * Thread-safe
          *
          * @param address a location in VM memory
@@ -1121,7 +1130,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Adds a watchpoint to the list of current client watchpoints, and activates this watchpoint.
-         * <br>
+         * <p>
          * If the addition fails, the watchpoint is not activated.
          *
          * @param watchpoint the new client watchpoint, presumed to be inactive and not to have been added before.
@@ -1170,8 +1179,8 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Add a system watchpoint, assumed to be newly created.
-         * <br>Does <strong>not</strong> activate the watchpoint.
-         * <br>Does <strong>not</strong> check for overlap with existing watchpoints.
+         * <p>Does <strong>not</strong> activate the watchpoint.
+         * <p>Does <strong>not</strong> check for overlap with existing watchpoints.
          *
          * @param watchpoint
          * @return the watchpoint
@@ -1189,7 +1198,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
 
         /**
          * Removes a memory watchpoint from the VM.
-         * <br>
+         * <p>
          * Notifies observers if a client watchpoint.
          *
          * @param watchpoint an existing, inactive watchpoint in the VM

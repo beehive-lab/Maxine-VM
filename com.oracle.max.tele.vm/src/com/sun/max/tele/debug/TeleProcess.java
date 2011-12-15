@@ -173,7 +173,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                     }
 
                     // Clear all breakpoints before we refresh, so the breakpoints don't show up as real patches to compiled code
-                    targetBreakpointManager().setActiveAll(false);
+                    breakpointManager().targetBreakpoints().setActiveAll(false);
 
                     // Read VM memory and update various bits of cached state about the VM state
                     updateVMCaches(request, epoch);
@@ -194,9 +194,9 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                                     teleBreakpointEvents.add(new TeleBreakpointEvent(breakpoint, thread));
                                     resumeExecution = false;
                                 } else {
-                                    if (breakpoint.codeLocation().equals(methods().vmThreadRun())) {
+                                    if (breakpoint.codeLocation().equals(methods().vmThreadRunMethodLocation())) {
                                         newlystarted++;
-                                    } else if (breakpoint.codeLocation().equals(methods().vmThreadDetached())) {
+                                    } else if (breakpoint.codeLocation().equals(methods().vmThreadDetachedMethodLocation())) {
                                         newlydetached++;
                                     }
                                     Trace.line(TRACE_VALUE, tracePrefix() + (resumeExecution ? " RESUMING" : " STOPPING") + " execution after thread [id=" + thread.id() + "] triggered breakpoint");
@@ -205,7 +205,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final VmWatchpoint systemWatchpoint = watchpointManager.findSystemWatchpoint(triggeredWatchpointAddress);
+                                final VmWatchpoint systemWatchpoint = vm().watchpointManager().findSystemWatchpoint(triggeredWatchpointAddress);
                                 if (systemWatchpoint != null && systemWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -214,7 +214,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                                     resumeExecution = false;
                                     break;
                                 }
-                                final VmWatchpoint clientWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
+                                final VmWatchpoint clientWatchpoint = vm().watchpointManager().findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientWatchpoint != null && clientWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -256,7 +256,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                     }
                 } while (resumeExecution);
                 // Finished with these now
-                targetBreakpointManager().removeTransientBreakpoints();
+                breakpointManager().targetBreakpoints().removeTransientBreakpoints();
                 Trace.end(TRACE_VALUE /*+ 1*/, tracePrefix() + " e(" + epoch + ") " + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
@@ -385,17 +385,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
 
     private final Platform platform;
 
-    private final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
-
     private final int maximumWatchpointCount;
-
-    /**
-     * A manager for creating and managing memory watchpoints in the VM;
-     * null if watchpoints are not supported on this platform.
-     *
-     * @see #watchpointsEnabled()
-     */
-    private final VmWatchpoint.WatchpointManager watchpointManager;
 
     private final RequestHandlingThread requestHandlingThread;
 
@@ -467,9 +457,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
         this.platform = platform;
         this.processState = initialState;
         this.epoch = 0;
-        this.targetBreakpointManager = new VmTargetBreakpoint.TargetBreakpointManager(vm);
         this.maximumWatchpointCount = platformWatchpointCount();
-        this.watchpointManager = watchpointsEnabled() ? new VmWatchpoint.WatchpointManager(vm, this) : null;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         //Initiate the thread that continuously waits on the running process.
@@ -548,17 +536,6 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
         instructionPointers = newInstructionPointers;
 
         updateTracer.end(statsPrinter);
-    }
-
-
-    /**
-     * Gets the singleton for creating and managing VM watchpoints; null if not enabled
-     * on this platform.
-     *
-     * @return the creator/manager of watchpoints; null watchpoints not supported on platform.
-     */
-    public final VmWatchpoint.WatchpointManager getWatchpointManager() {
-        return watchpointManager;
     }
 
     /**
@@ -661,10 +638,10 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
                 updateWatchpointCaches();
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
-                VmTargetBreakpoint breakpoint = targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
+                VmTargetBreakpoint breakpoint = breakpointManager().targetBreakpoints().findClientBreakpoint(compiledCodeLocation.codePointer());
                 if (breakpoint == null || !breakpoint.isEnabled()) {
                     try {
-                        breakpoint = breakpointManager().makeTransientTargetBreakpoint(compiledCodeLocation);
+                        breakpoint = breakpointManager().targetBreakpoints().makeTransientBreakpoint(compiledCodeLocation);
                     } catch (MaxVMBusyException e) {
                         TeleError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
                     }
@@ -821,13 +798,6 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
     }
 
     /**
-     * @return manager for creation and management of target breakpoints in the process,
-     */
-    public final VmTargetBreakpoint.TargetBreakpointManager targetBreakpointManager() {
-        return targetBreakpointManager;
-    }
-
-    /**
      * @return platform-specific limit on how many memory watchpoints can be
      * simultaneously active; 0 if memory watchpoints are not supported on the platform.
      */
@@ -936,9 +906,9 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
             thread.evadeBreakpoint();
         }
         if (withClientBreakpoints) {
-            targetBreakpointManager.setActiveAll(true);
+            breakpointManager().targetBreakpoints().setActiveAll(true);
         } else {
-            targetBreakpointManager.setActiveNonClient(true);
+            breakpointManager().targetBreakpoints().setActiveNonClient(true);
         }
         resume();
     }
@@ -1140,8 +1110,8 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
     }
 
     private void updateWatchpointCaches() {
-        if (watchpointManager != null) {
-            watchpointManager.updateWatchpointMemoryCaches();
+        if (vm().watchpointManager() != null) {
+            vm().watchpointManager().updateWatchpointMemoryCaches();
         }
     }
 }

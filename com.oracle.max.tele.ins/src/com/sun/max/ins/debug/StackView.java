@@ -147,7 +147,7 @@ public final class StackView extends AbstractView<StackView> {
                 if (externalCode != null) {
                     // native that we know something about
                     methodName += inspection().nameDisplay().shortName(externalCode);
-                    toolTip = inspection().nameDisplay().longName(externalCode);
+                    toolTip = "native function:  " + inspection().nameDisplay().longName(externalCode);
                 } else {
                     methodName += "nativeMethod:" + instructionPointer.to0xHexString();
                     toolTip = "nativeMethod";

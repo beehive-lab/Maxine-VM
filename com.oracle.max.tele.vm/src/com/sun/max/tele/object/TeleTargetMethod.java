@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.ci.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -38,6 +37,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.reference.*;
@@ -153,36 +153,6 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
             final String regionName = codeCacheRegion == null ? "<?>" : codeCacheRegion.entityName();
             return tracePrefix() + event + ":  " + name + " in " + regionName;
         }
-    }
-
-    /**
-     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
-     * as a result of inlining.
-     *
-     * TODO: Once inlining dependencies are tracked, this method needs to use them.
-     *
-     * @param vm the VM to search
-     * @param methodKey the key denoting a method for which the target methods are being requested
-     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the method
-     *         matching {@code methodKey}
-     */
-    public static List<TeleTargetMethod> get(MaxVM vm, MethodKey methodKey) {
-        TeleClassActor teleClassActor = vm.classes().findTeleClassActor(methodKey.holder());
-        if (teleClassActor != null) {
-            final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
-            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-                if (teleClassMethodActor.compilationCount() > 0) {
-                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-                    if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
-                        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-                            result.add(teleTargetMethod);
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-        return Collections.emptyList();
     }
 
     /**
@@ -498,14 +468,43 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
         return machineCodeInfoCache.machineCodeInfo().codeVersion();
     }
 
+//    public boolean isBaseline() {
+//        if (compilationClass == null) {
+//            compilationClass = classActorForObjectType().javaClass();
+//        }
+//        return compilationClass == T1XTargetMethod.class;
+//    }
+
     /**
-     * Determines whether this is a baseline compilation; if not, it can be assumed to be an optimized compilation.
+     * @see MaxCompilation#shortDesignator()
      */
-    public boolean isBaseline() {
-        if (compilationClass == null) {
-            compilationClass = classActorForObjectType().javaClass();
+    public String shortDesignator() {
+        if (teleClassMethodActor == null) {
+            return "?";
         }
-        return compilationClass == T1XTargetMethod.class;
+        if (teleClassMethodActor.getCompilation(Nature.BASELINE) == this) {
+            return "B";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.OPT) == this) {
+            return "O";
+        }
+        return "?";
+    }
+
+    /**
+     * @see MaxCompilation#longDesignator()
+     */
+    public String longDesignator() {
+        if (teleClassMethodActor == null) {
+            return "<?>";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.BASELINE) == this) {
+            return "BASELINE";
+        }
+        if (teleClassMethodActor.getCompilation(Nature.OPT) == this) {
+            return "OPTIMIZED";
+        }
+        return "OTHER";
     }
 
     /**
