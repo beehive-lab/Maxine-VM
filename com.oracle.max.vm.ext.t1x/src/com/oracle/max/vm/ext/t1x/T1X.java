@@ -57,6 +57,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -597,11 +598,17 @@ public class T1X implements RuntimeCompiler {
      */
     public static int dispFromCodeStart(int objectLiteralsLength, int scalarLiteralsLength, int dataIndex, boolean isObject) {
         int distance = Layout.byteArrayLayout().headerSize();
+        if (DebugHeap.isTagging()) {
+            distance += Word.size();
+        }
         if (isObject) {
             distance += (objectLiteralsLength - dataIndex) * Word.size();
         } else {
             distance += objectLiteralsLength * Word.size();
             distance += Layout.referenceArrayLayout().headerSize();
+            if (DebugHeap.isTagging()) {
+                distance += Word.size();
+            }
             distance += scalarLiteralsLength - dataIndex;
         }
         return -distance;
