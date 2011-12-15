@@ -39,6 +39,7 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -161,6 +162,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
+            // Make the heap inspectable
+            InspectableHeapInfo.init(false, heapBounds, heapMarker.memory());
         } finally {
             disableCustomAllocation();
         }

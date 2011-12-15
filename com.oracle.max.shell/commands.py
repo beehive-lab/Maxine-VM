@@ -339,6 +339,30 @@ def copycheck(env, args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
     env.run_java(['-cp', env.pdb().classpath('com.oracle.max.base', resolve=False), 'com.sun.max.tools.CheckCopyright'] + args)
 
+def eclipse(env, args):
+    """launch Eclipse with the Maxine VM
+
+    Run Eclipse with the Maxine VM, by-passing the native Eclipse launcher.
+    The ECLIPSE_HOME environment variable must be set and point to
+    the parent of the 'plugins' directory in an Eclipse installation."""
+    
+    # see http://wiki.eclipse.org/FAQ_How_do_I_run_Eclipse%3F
+    # and http://wiki.eclipse.org/Starting_Eclipse_Commandline_With_Equinox_Launcher
+    
+    eclipse = os.environ.get('ECLIPSE_HOME')
+    if eclipse is None:
+        env.abort('The ECLIPSE_HOME environment variable must be set')
+    plugins = join(eclipse, 'plugins')
+    if not exists(plugins):
+        env.abort('The ECLIPSE_HOME variable must denote the parent of the "plugins" directory in an Eclipse installation')
+        
+    launchers = fnmatch.filter(os.listdir(plugins), 'org.eclipse.equinox.launcher_*.jar')
+    if len(launchers) == 0: 
+        env.abort('Could not find org.eclipse.equinox.launcher_*.jar in ' + plugins)
+
+    launcher = join(plugins, sorted(launchers)[0])
+    return env.run([join(env.vmdir, 'maxvm'), '-Xms1g', '-Xmx3g', '-XX:+ShowConfiguration'] + args + ['-jar', launcher])
+    
 def eclipseprojects(env, args):
     """(re)generate Eclipse project configurations
 
@@ -878,9 +902,10 @@ def makejdk(env, args):
     shutil.copytree(env.java_home, maxjdk)
 
     for f in os.listdir(env.vmdir):
-        if isfile(f):
-            shutil.copy(join(env.vmdir, f), join(maxjdk, 'bin'))
-            shutil.copy(join(env.vmdir, f), join(maxjdk, 'jre', 'bin'))
+        fpath = join(env.vmdir, f)
+        if isfile(fpath):
+            shutil.copy(fpath, join(maxjdk, 'bin'))
+            shutil.copy(fpath, join(maxjdk, 'jre', 'bin'))
                 
     os.unlink(join(maxjdk, 'bin', 'java'))
     os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
@@ -1100,6 +1125,7 @@ table = {
     'clean': [clean, ''],
     'configs': [configs, ''],
     'copycheck': [copycheck, ''],
+    'eclipse': [eclipse, '[VM options]'],
     'eclipseprojects': [eclipseprojects, ''],
     'gate': [gate, '[options]'],
     'graal': [graal, '[options] patterns...'],

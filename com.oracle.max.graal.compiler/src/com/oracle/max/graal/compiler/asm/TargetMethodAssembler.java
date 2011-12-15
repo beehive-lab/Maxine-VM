@@ -127,11 +127,11 @@ public class TargetMethodAssembler {
 
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
-            if (info.exceptionEdge() != null) {
+            if (info.exceptionEdge != null) {
                 if (exceptionInfoList == null) {
                     exceptionInfoList = new ArrayList<ExceptionInfo>(4);
                 }
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionEdge(), info.state.bci));
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionEdge, info.topFrame.bci));
             }
         }
     }
@@ -142,7 +142,7 @@ public class TargetMethodAssembler {
             assert lastSafepointPos < pcOffset : lastSafepointPos + "<" + pcOffset;
             lastSafepointPos = pcOffset;
             targetMethod.recordSafepoint(pcOffset, info.debugInfo());
-            assert info.exceptionEdge() == null;
+            assert info.exceptionEdge == null;
         }
     }
 
@@ -168,7 +168,7 @@ public class TargetMethodAssembler {
         targetMethod.recordSafepoint(pos, debugInfo);
     }
 
-    public CiAddress recordDataReferenceInCode(CiConstant data) {
+    public CiAddress recordDataReferenceInCode(CiConstant data, int alignment) {
         assert data != null;
 
         int pos = asm.codeBuffer.position();
@@ -177,7 +177,7 @@ public class TargetMethodAssembler {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
         }
 
-        targetMethod.recordDataReference(pos, data);
+        targetMethod.recordDataReference(pos, data, alignment);
         return CiAddress.Placeholder;
     }
 
@@ -233,16 +233,24 @@ public class TargetMethodAssembler {
      * Returns the address of a float constant that is embedded as a data references into the code.
      */
     public CiAddress asFloatConstRef(CiValue value) {
+        return asFloatConstRef(value, 4);
+    }
+
+    public CiAddress asFloatConstRef(CiValue value, int alignment) {
         assert value.kind == CiKind.Float && value.isConstant();
-        return recordDataReferenceInCode((CiConstant) value);
+        return recordDataReferenceInCode((CiConstant) value, alignment);
     }
 
     /**
      * Returns the address of a double constant that is embedded as a data references into the code.
      */
     public CiAddress asDoubleConstRef(CiValue value) {
+        return asDoubleConstRef(value, 8);
+    }
+
+    public CiAddress asDoubleConstRef(CiValue value, int alignment) {
         assert value.kind == CiKind.Double && value.isConstant();
-        return recordDataReferenceInCode((CiConstant) value);
+        return recordDataReferenceInCode((CiConstant) value, alignment);
     }
 
     public CiAddress asAddress(CiValue value) {

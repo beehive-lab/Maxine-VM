@@ -39,7 +39,6 @@ import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -51,6 +50,7 @@ import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -297,18 +297,28 @@ public abstract class TargetMethod extends MemoryRegion {
         /**
          * Stack pointer.
          */
-        public final Pointer callerSP;
+        public Pointer callerSP;
 
         /**
          * Frame pointer.
          */
-        public final Pointer callerFP;
+        public Pointer callerFP;
 
         public FrameAccess(CiCalleeSaveLayout csl, Pointer csa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
             this.csl = csl;
             this.csa = csa;
             this.sp = sp;
             this.fp = fp;
+            this.callerSP = callerSP;
+            this.callerFP = callerFP;
+        }
+
+        /**
+         * For use when walking stacks in callee/caller order.
+         * @param callerSP
+         * @param callerFP
+         */
+        public void setCallerInfo(Pointer callerSP, Pointer callerFP) {
             this.callerSP = callerSP;
             this.callerFP = callerFP;
         }
@@ -498,88 +508,167 @@ public abstract class TargetMethod extends MemoryRegion {
 
     protected void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        List<Object> objectReferences = new ArrayList<Object>();
-        int[] relativeDataPos = serializeLiterals(ciTargetMethod, output, objectReferences);
-        byte[] scalarLiterals = output.toByteArray();
-        Object[] referenceLiterals = objectReferences.toArray();
+        Literals literals = new Literals(ciTargetMethod.dataReferences);
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
             Code.allocateInHeap(targetBundleLayout, this);
         }
-        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
+
+        if (literals.scalars.length != 0 && literals.scalarsAlignment != 0) {
+            Pointer scalars = targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals);
+            Address alignedScalars = scalars.alignUp(literals.scalarsAlignment);
+            if (!scalars.equals(alignedScalars)) {
+                assert alignedScalars.greaterThan(scalars);
+                literals.relocateScalars(alignedScalars.minus(scalars).toInt());
+            }
+        }
+
+        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
         assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
-        patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
+        patchInstructions(targetBundleLayout, ciTargetMethod, literals);
     }
 
-    private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
-        Endianness endianness = platform().endianness();
-        int[] relativeDataPos = new int[ciTargetMethod.dataReferences.size()];
-        int z = 0;
-        int currentPos = 0;
-        for (DataPatch site : ciTargetMethod.dataReferences) {
-            final CiConstant data = site.constant;
-            relativeDataPos[z] = currentPos;
+    /**
+     * Used to serialize a list of {@link DataPatch}es to data structures
+     * that are co-located with the code that accesses the data.
+     */
+    static class Literals {
+        /**
+         * Map from scalar data indexes to the position of the scalar data in {@link #scalars}.
+         */
+        final int[] scalarsMap;
 
-            try {
-                switch (data.kind) {
-                    case Double:
-                        endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
-                        currentPos += 8;
-                        break;
+        /**
+         * Serialized scalar literals.
+         */
+        final byte[] scalars;
 
-                    case Float:
-                        endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
-                        currentPos += 4;
-                        break;
+        /**
+         * The object literals.
+         */
+        final IdentityHashMap<Object, Integer> objectPool;
+        final Object[] objects;
 
-                    case Int:
-                        endianness.writeInt(output, data.asInt());
-                        currentPos += 4;
-                        break;
+        /**
+         * The largest alignment requirement of any data in {@link #scalars}. This will be
+         * 0 if there are no alignment requirements.
+         */
+        final int scalarsAlignment;
 
-                    case Long:
-                        endianness.writeLong(output, data.asLong());
-                        currentPos += 8;
-                        break;
-
-                    case Object:
-                        objectReferences.add(data.asObject());
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown constant type!");
-                }
-
-            } catch (IOException e) {
-                throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
-            }
-
-            // Align on double word boundary
-            while (currentPos % (Platform.platform().wordWidth().numberOfBytes * 2) != 0) {
-                output.write(0);
-                currentPos++;
-            }
-
-            z++;
+        /**
+         * Gets the index in {@link TargetMethod#scalarLiterals} of the scalar data at
+         * index {@code index} in {@link CiTargetMethod#dataReferences}.
+         */
+        int scalarPos(int dataIndex) {
+            return scalarsMap[dataIndex];
         }
 
-        return relativeDataPos;
+        /**
+         * Relocates the scalar literals by shifting the contents of {@link #scalars} by {@code delta}
+         * to the right. This assumes that at least {@code delta} padding was put into the end of {@link #scalars}.
+         */
+        void relocateScalars(int delta) {
+            assert delta > 0;
+            for (int i = 0; i < scalarsMap.length; i++) {
+                if (scalarsMap[i] >= 0) {
+                    scalarsMap[i] += delta;
+                }
+            }
+            for (int i = scalars.length - 1; i >= delta; --i) {
+                scalars[i] = scalars[i - delta];
+            }
+        }
+
+        public Literals(List<DataPatch> dataReferences) {
+            objectPool = new IdentityHashMap<Object, Integer>(dataReferences.size());
+            ArrayList<Object> objectsBuffer = new ArrayList<Object>(dataReferences.size());
+            ByteArrayOutputStream scalarsBuffer = new ByteArrayOutputStream();
+            Endianness endianness = platform().endianness();
+            scalarsMap = new int[dataReferences.size()];
+            int dataIndex = 0;
+            int currentScalarsPos = 0;
+            int scalarsAlignment = 0;
+            for (DataPatch site : dataReferences) {
+                final CiConstant data = site.constant;
+                if (!data.kind.isObject()) {
+                    scalarsMap[dataIndex] = currentScalarsPos;
+                    if (site.alignment != 0) {
+                        currentScalarsPos = (currentScalarsPos + (site.alignment - 1)) & ~(site.alignment - 1);
+                        if (site.alignment > scalarsAlignment) {
+                            scalarsAlignment = site.alignment;
+                        }
+                    }
+                } else {
+                    assert site.alignment == 0 : "Alignment for object literals not supported";
+                    scalarsMap[dataIndex] = -1;
+                }
+                try {
+                    switch (data.kind) {
+                        case Double:
+                            endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
+                            currentScalarsPos += 8;
+                            break;
+
+                        case Float:
+                            endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
+                            currentScalarsPos += 4;
+                            break;
+
+                        case Int:
+                            endianness.writeInt(scalarsBuffer, data.asInt());
+                            currentScalarsPos += 4;
+                            break;
+
+                        case Long:
+                            endianness.writeLong(scalarsBuffer, data.asLong());
+                            currentScalarsPos += 8;
+                            break;
+
+                        case Object: {
+                            Object object = data.asObject();
+                            assert object != null;
+                            if (!objectPool.containsKey(object)) {
+                                objectPool.put(object, objectsBuffer.size());
+                                objectsBuffer.add(object);
+                            }
+                            break;
+                        }
+                        default:
+                            throw new IllegalArgumentException("Unknown constant type!");
+                    }
+
+                } catch (IOException e) {
+                    throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
+                }
+                dataIndex++;
+            }
+
+            final int guaranteedAlignment = Word.size();
+            int padding = scalarsAlignment - guaranteedAlignment;
+            while (padding > 0) {
+                scalarsBuffer.write(0);
+                padding--;
+            }
+
+            scalars = scalarsBuffer.toByteArray();
+            this.scalarsAlignment = scalarsAlignment;
+            objects = objectsBuffer.toArray();
+        }
     }
 
-    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
+    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, Literals literals) {
         Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
 
-        Offset dataDiff = Offset.zero();
+        Offset scalarDiff = Offset.zero();
         if (this.scalarLiterals != null) {
-            Offset dataStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
-            dataDiff = dataStart.minus(codeStart).asOffset();
+            Offset scalarStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+            scalarDiff = scalarStart.minus(codeStart).asOffset();
         }
 
         Offset referenceDiff = Offset.zero();
@@ -588,31 +677,26 @@ public abstract class TargetMethod extends MemoryRegion {
             referenceDiff = referenceStart.minus(codeStart).asOffset();
         }
 
-        int objectReferenceIndex = 0;
-        int refSize = Platform.platform().wordWidth().numberOfBytes;
-
-        int z = 0;
+        int dataIndex = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-
             switch (site.constant.kind) {
-
                 case Double: // fall through
                 case Float: // fall through
                 case Int: // fall through
-                case Long:
-                    patchRelativeInstruction(site.pcOffset, dataDiff.plus(relativeDataPositions[z] - site.pcOffset).toInt());
+                case Long: {
+                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
                     break;
-
-                case Object:
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * refSize - site.pcOffset).toInt());
-                    objectReferenceIndex++;
+                }
+                case Object: {
+                    int index = literals.objectPool.get(site.constant.asObject());
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
                     break;
-
+                }
                 default:
                     throw new IllegalArgumentException("Unknown constant type!");
             }
 
-            z++;
+            dataIndex++;
         }
     }
 
@@ -710,11 +794,11 @@ public abstract class TargetMethod extends MemoryRegion {
      * Completes the definition of this target method as the result of compilation.
      *
      * @param scalarLiterals a byte array encoding the scalar data accessed by this target via code relative offsets
-     * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
+     * @param objectLiterals an object array encoding the object references accessed by this target via code relative
      *            offsets
      * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first {@code this.code.length} bytes of {@code codeBuffer}.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, byte[] codeBuffer) {
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
 
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
@@ -724,9 +808,9 @@ public abstract class TargetMethod extends MemoryRegion {
             System.arraycopy(scalarLiterals, 0, this.scalarLiterals, 0, this.scalarLiterals.length);
         }
 
-        // Copy reference literals
-        if (referenceLiterals != null && referenceLiterals.length > 0) {
-            System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
+        // Copy object literals
+        if (objectLiterals != null && objectLiterals.length > 0) {
+            System.arraycopy(objectLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }
 
         // now copy the code
@@ -1022,6 +1106,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param frame an activation frame for this target method
      */
     public abstract Pointer returnAddressPointer(StackFrameCursor frame);
+
+    /**
+     * Finalize reference maps if necessary.
+     */
+    public void finalizeReferenceMaps() {
+
+    }
 
     /**
      * Determines if this a {@link Nature#BASELINE} target method.

@@ -261,9 +261,9 @@ public class AMD64CompilerStubEmitter {
     private void emitCOMISSD(boolean isDouble, boolean isInt) {
         convertPrologue();
         if (isDouble) {
-            asm.ucomisd(convertArgument, tasm.recordDataReferenceInCode(CiConstant.DOUBLE_0));
+            asm.ucomisd(convertArgument, tasm.asDoubleConstRef(CiConstant.DOUBLE_0));
         } else {
-            asm.ucomiss(convertArgument, tasm.recordDataReferenceInCode(CiConstant.FLOAT_0));
+            asm.ucomiss(convertArgument, tasm.asFloatConstRef(CiConstant.FLOAT_0));
         }
         Label nan = new Label();
         Label ret = new Label();

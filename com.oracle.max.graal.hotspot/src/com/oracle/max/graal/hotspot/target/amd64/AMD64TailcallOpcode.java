@@ -45,7 +45,7 @@ public enum AMD64TailcallOpcode implements LIROpcode {
         CiValue[] temps = callingConvention.clone();
         assert inputs.length == temps.length + 1;
 
-        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs, temps) {
+        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs, LIRInstruction.NO_OPERANDS, temps) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
                 emit(tasm, masm, inputs, temps);
@@ -57,6 +57,7 @@ public enum AMD64TailcallOpcode implements LIROpcode {
         switch (this) {
             case TAILCALL: {
                 // move all parameters to the correct positions, according to the calling convention
+                // TODO: These moves should not be part of the TAILCALL opcode, but emitted as separate MOVE instructions before.
                 for (int i = 0; i < inputs.length - 1; i++) {
                     assert inputs[i].kind == CiKind.Object || inputs[i].kind == CiKind.Int || inputs[i].kind == CiKind.Long : "only Object, int and long supported for now";
                     assert temps[i].isRegister() : "too many parameters";

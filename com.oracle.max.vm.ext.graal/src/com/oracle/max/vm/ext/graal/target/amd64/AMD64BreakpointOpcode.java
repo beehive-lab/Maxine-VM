@@ -32,9 +32,7 @@ public enum AMD64BreakpointOpcode implements LIROpcode {
     BREAKPOINT;
 
     public LIRInstruction create() {
-        CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs) {
+        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
                 masm.int3();

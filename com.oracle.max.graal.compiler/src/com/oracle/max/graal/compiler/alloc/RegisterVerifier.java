@@ -226,7 +226,19 @@ final class RegisterVerifier {
             int n = op.operandCount(LIRInstruction.OperandMode.Input);
             for (int j = 0; j < n; j++) {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, j);
-                if (allocator.isProcessed(operand)) {
+                if (operand.isVariableOrRegister() && allocator.isProcessed(operand)) {
+                    Interval interval = intervalAt(operand);
+                    if (op.id() != -1) {
+                        interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.Input, allocator);
+                    }
+
+                    assert checkState(inputState, interval.location(), interval.splitParent());
+                }
+            }
+            n = op.operandCount(LIRInstruction.OperandMode.Alive);
+            for (int j = 0; j < n; j++) {
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.Alive, j);
+                if (operand.isVariableOrRegister() && allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id() != -1) {
                         interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.Input, allocator);
@@ -247,7 +259,7 @@ final class RegisterVerifier {
             n = op.operandCount(LIRInstruction.OperandMode.Temp);
             for (int j = 0; j < n; j++) {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, j);
-                if (allocator.isProcessed(operand)) {
+                if (operand.isVariableOrRegister() && allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     assert interval != null : "Could not find interval for operand " + operand;
                     if (op.id() != -1) {
@@ -262,7 +274,7 @@ final class RegisterVerifier {
             n = op.operandCount(LIRInstruction.OperandMode.Output);
             for (int j = 0; j < n; j++) {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.Output, j);
-                if (allocator.isProcessed(operand)) {
+                if (operand.isVariableOrRegister() && allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id() != -1) {
                         interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.Output, allocator);

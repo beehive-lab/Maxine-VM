@@ -61,10 +61,7 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, 
         CiVariable input = gen.load(gen.operand(x()));
         CiVariable result = gen.newVariable(kind());
         switch (operation()) {
-            case ABS:
-                gen.emitMove(input, result);
-                gen.append(AMD64Op1Opcode.DABS.create(result));
-                break;
+            case ABS:   gen.append(AMD64LogicFloatOpcode.DAND.create(result, input, CiConstant.forDouble(Double.longBitsToDouble(0x7FFFFFFFFFFFFFFFL)))); break;
             case SQRT:  gen.append(AMD64MathIntrinsicOpcode.SQRT.create(result, input)); break;
             case LOG:   gen.append(AMD64MathIntrinsicOpcode.LOG.create(result, input)); break;
             case LOG10: gen.append(AMD64MathIntrinsicOpcode.LOG10.create(result, input)); break;

@@ -375,7 +375,7 @@ public class CFGPrinter extends CompilationPrinter {
                     String state;
                     if (inst.info.debugInfo != null) {
                         // Use register-allocator output if available
-                        state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
+                        state = debugInfoToString(inst.info.debugInfo.codePos, inst.info.debugInfo.registerRefMap, inst.info.debugInfo.frameRefMap, new OperandFormatter(false), target.arch);
                     } else {
                         state = stateToString(inst.info.state, new OperandFormatter(false));
                     }

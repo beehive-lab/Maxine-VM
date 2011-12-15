@@ -160,6 +160,10 @@ public class TargetMethodAssembler {
     }
 
     public CiAddress recordDataReferenceInCode(CiConstant data) {
+        return recordDataReferenceInCode(data, 0);
+    }
+
+    public CiAddress recordDataReferenceInCode(CiConstant data, int alignment) {
         assert data != null;
 
         int pos = asm.codeBuffer.position();
@@ -168,7 +172,7 @@ public class TargetMethodAssembler {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
         }
 
-        targetMethod.recordDataReference(pos, data);
+        targetMethod.recordDataReference(pos, data, alignment);
         return CiAddress.Placeholder;
     }
 }
