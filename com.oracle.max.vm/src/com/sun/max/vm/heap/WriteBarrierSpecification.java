@@ -20,20 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.xir;
+package com.sun.max.vm.heap;
 
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.max.util.*;
 
-/**
- * Reference write-barrier specification. Interface between HeapScheme and Xir.
- * WORK IN PROGRESS
- *
- * Barrier generators only take two arguments: An CiXirAssembler and an array of XirOperand.
- * The arguments needed are specified via an argument specification, so the generator can take the
- * requirement into account to factor some operations (mostly, computing a field address), and to pass only the necessary arguments.
- * This would requires some parsing of the argument specifications though.
- */
-public interface XirWriteBarrierSpecification {
+
+public interface WriteBarrierSpecification {
 
     public enum WriteBarrierSpec {
         /**
@@ -44,7 +36,7 @@ public interface XirWriteBarrierSpecification {
          * Indicate that the barrier applies to a reference held by a array.
          */
         ARRAY_CELL,
-       /**
+        /**
          * Indicates that the barrier must be generated before the store.
          */
         PRE_WRITE,
@@ -84,20 +76,9 @@ public interface XirWriteBarrierSpecification {
          */
         NEEDS_NEW_VALUE;
     }
-
-    public interface XirWriteBarrierGenAdaptor {
-        void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands);
-    }
-
     IntBitSet<WriteBarrierSpec> TUPLE_PRE_BARRIER = new IntBitSet<WriteBarrierSpec>().set(WriteBarrierSpec.TUPLE_CELL).set(WriteBarrierSpec.PRE_WRITE);
     IntBitSet<WriteBarrierSpec> TUPLE_POST_BARRIER = new IntBitSet<WriteBarrierSpec>().set(WriteBarrierSpec.TUPLE_CELL).set(WriteBarrierSpec.POST_WRITE);
     IntBitSet<WriteBarrierSpec> ARRAY_PRE_BARRIER = new IntBitSet<WriteBarrierSpec>().set(WriteBarrierSpec.ARRAY_CELL).set(WriteBarrierSpec.PRE_WRITE);
     IntBitSet<WriteBarrierSpec> ARRAY_POST_BARRIER = new IntBitSet<WriteBarrierSpec>().set(WriteBarrierSpec.ARRAY_CELL).set(WriteBarrierSpec.POST_WRITE);
 
-    XirWriteBarrierGenAdaptor barrierGenerator(IntBitSet<WriteBarrierSpec> writeBarrierSpec);
-
-    XirWriteBarrierGenAdaptor NULL_WRITE_BARRIER_GEN = new XirWriteBarrierGenAdaptor() {
-        public void genWriteBarrier(CiXirAssembler asm, XirOperand ... operands) {
-        }
-    };
 }

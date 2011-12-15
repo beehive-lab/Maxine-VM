@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -41,8 +42,10 @@ import com.sun.max.vm.type.*;
  *
  */
 public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor, SpecialReferenceManager.GC  {
-    protected static boolean TraceVisitedCell = false;
-
+    protected static boolean TraceEvacVisitedCell = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceEvacVisitedCell", Evacuator.class, "Trace cells visited by the evacuator (Debug mode only)", Phase.PRISTINE);
+    }
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
     private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
     /**
@@ -216,7 +219,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
      * @return pointer to the end of the cell
      */
     final public Pointer visitCell(Pointer cell) {
-        if (MaxineVM.isDebug() && TraceVisitedCell) {
+        if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
             Log.print("visitCell "); Log.println(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);

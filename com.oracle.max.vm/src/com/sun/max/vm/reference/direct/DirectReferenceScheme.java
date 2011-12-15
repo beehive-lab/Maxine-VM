@@ -363,20 +363,23 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
 
     @INLINE
     public void writeReference(Reference ref, Offset offset, Reference value) {
-        heapScheme().writeBarrier(ref, value);
+        heapScheme().preWriteBarrier(ref, offset, value);
         toOrigin(ref).writeReference(offset, value);
+        heapScheme().postWriteBarrier(ref, offset, value);
     }
 
     @INLINE
     public void writeReference(Reference ref, int offset, Reference value) {
-        heapScheme().writeBarrier(ref, value);
+        heapScheme().preWriteBarrier(ref, Offset.fromInt(offset), value);
         toOrigin(ref).writeReference(offset, value);
+        heapScheme().postWriteBarrier(ref, Offset.fromInt(offset), value);
     }
 
     @INLINE
     public void setReference(Reference ref, int displacement, int index, Reference value) {
-        heapScheme().writeBarrier(ref, value);
+        heapScheme().preWriteBarrier(ref, displacement, index, value);
         toOrigin(ref).setReference(displacement, index, value);
+        heapScheme().postWriteBarrier(ref, displacement, index, value);
     }
 
     @INLINE
@@ -401,14 +404,20 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
 
     @INLINE
     public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
-        heapScheme().writeBarrier(ref, newValue);
-        return toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
+        heapScheme().preWriteBarrier(ref, offset, newValue);
+        final Reference result = toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
+        heapScheme().postWriteBarrier(ref, offset, newValue);
+        return result;
     }
 
     @INLINE
     public Reference compareAndSwapReference(Reference ref, int offset, Reference expectedValue, Reference newValue) {
-        heapScheme().writeBarrier(ref, newValue);
-        return toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
+        heapScheme().preWriteBarrier(ref, Offset.fromInt(offset), newValue);
+        final Reference result = toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);
+        if (newValue.equals(result)) {
+            heapScheme().postWriteBarrier(ref,  Offset.fromInt(offset), newValue);
+        }
+        return result;
     }
 
     @HOSTED_ONLY

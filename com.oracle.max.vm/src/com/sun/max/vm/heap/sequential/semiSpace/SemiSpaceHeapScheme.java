@@ -1163,11 +1163,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return growHeap.result;
     }
 
-    @INLINE(override = true)
-    public void writeBarrier(Reference from, Reference to) {
-        // do nothing.
-    }
-
     @Override
     public void walkHeap(CallbackCellVisitor visitor) {
         ImmortalHeap.visitCells(visitor);
