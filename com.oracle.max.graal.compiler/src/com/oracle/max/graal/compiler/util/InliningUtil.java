@@ -422,7 +422,7 @@ public class InliningUtil {
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
         MethodCallTargetNode callTarget = invoke.callTarget();
-        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object) {
+        if (callTarget.isStatic() || !receiverNullCheck || parameters.get(0).kind() != CiKind.Object || parameters.get(0).stamp().nonNull()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters.get(0), false))));
