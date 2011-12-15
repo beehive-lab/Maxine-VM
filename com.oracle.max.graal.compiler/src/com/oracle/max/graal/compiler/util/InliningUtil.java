@@ -389,6 +389,7 @@ public class InliningUtil {
         Graph graph = invoke.node().graph();
 
         FrameState stateAfter = invoke.stateAfter();
+        assert stateAfter.isAlive();
 
         IdentityHashMap<Node, Node> replacements = new IdentityHashMap<Node, Node>();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -504,8 +505,8 @@ public class InliningUtil {
         }
 
         invoke.node().clearInputs();
+        invoke.node().replaceAtUsages(null);
         GraphUtil.killCFG(invoke.node());
-
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
