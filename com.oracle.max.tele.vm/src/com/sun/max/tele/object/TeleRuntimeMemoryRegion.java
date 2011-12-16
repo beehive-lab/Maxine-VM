@@ -24,6 +24,7 @@ package com.sun.max.tele.object;
 
 import java.lang.management.*;
 
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
@@ -72,6 +73,9 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     @Override
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
+        if (reference().readWord(0).asAddress().equals(Memory.zappedMarker())) {
             return false;
         }
         statsPrinter.addStat(localStatsPrinter);
