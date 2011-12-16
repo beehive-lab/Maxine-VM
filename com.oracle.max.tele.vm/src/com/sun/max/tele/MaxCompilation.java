@@ -40,9 +40,18 @@ public interface MaxCompilation extends MaxMachineCodeRoutine<MaxCompilation> {
     boolean isCodeLive();
 
     /**
-     * @return {@code true} if this is a baseline compilation, {@code false} if optimized.
+     * @return a single character designator that conveys useful information about this
+     * particular compilation, and which distinguishes it from other compilations of the
+     * same method.
      */
-    boolean isBaseline();
+    String shortDesignator();
+
+    /**
+     * @return a short string designator that conveys useful information about this
+     * particular compilation, and which distinguishes it from other compilations of the
+     * same method.
+     */
+    String longDesignator();
 
     /**
      * Gets accessor to the method descriptor in the VM for this compilation.

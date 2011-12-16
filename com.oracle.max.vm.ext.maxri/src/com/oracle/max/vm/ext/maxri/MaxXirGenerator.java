@@ -46,6 +46,7 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,6 +57,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -72,6 +74,18 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     // (tw) TODO: Up this to 255 / make a loop in the template
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
+
+    static XirWriteBarrierSpecification writeBarrierSpecification() {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme instanceof XirWriteBarrierSpecification) {
+            return (XirWriteBarrierSpecification) heapScheme;
+        }
+        return new XirWriteBarrierSpecification() {
+            public XirWriteBarrierGenerator barrierGenerator(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
+                return XirWriteBarrierSpecification.NULL_WRITE_BARRIER_GEN;
+            }
+        };
+    }
 
     public static class XirPair {
         public final XirTemplate resolved;
@@ -715,6 +729,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @HOSTED_ONLY
     private XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
+        XirWriteBarrierSpecification writeBarrierSpecification = writeBarrierSpecification();
         asm.restart(CiKind.Void);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
@@ -744,9 +759,12 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.bindInline(store);
         int elemSize = target().sizeInBytes(kind);
+        if (genWriteBarrier) {
+            writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_PRE_BARRIER).genWriteBarrier(asm, array, index);
+        }
         asm.pstore(kind, array, index, value, offsetOfFirstArrayElement(), Scale.fromInt(elemSize), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
-            writeBarrier(asm, array, value);
+            writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
@@ -1168,6 +1186,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.mov(result, cell);
     }
 
+    @HOSTED_ONLY
     private void buildTLABLogging(XirOperand etla, XirOperand cellSize, XirOperand cell) {
         XirLabel flushLog = asm.createOutOfLineLabel("flushLog");
         XirLabel recordInLog = asm.createInlineLabel("recordInLog");
@@ -1306,6 +1325,8 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @HOSTED_ONLY
     private XirTemplate buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic, boolean resolved) {
+        XirWriteBarrierSpecification writeBarrierSpecification = writeBarrierSpecification();
+
         XirTemplate xirTemplate;
         if (resolved) {
             // resolved case
@@ -1313,9 +1334,12 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter value = asm.createInputParameter("value", kind);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
+            if (genWriteBarrier) {
+                writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_PRE_BARRIER).genWriteBarrier(asm, object);
+            }
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
-                writeBarrier(asm, object, value);
+                writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
@@ -1332,7 +1356,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
-                writeBarrier(asm, object, value);
+                writeBarrier(asm, object, null, value);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
@@ -1702,7 +1726,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return template;
     }
 
-    private void writeBarrier(CiXirAssembler asm, XirOperand object, XirOperand value) {
+    private void writeBarrier(CiXirAssembler asm, XirOperand object, XirOperand fieldOffset, XirOperand value) {
         // XXX: add write barrier mechanism
     }
 
@@ -1920,9 +1944,9 @@ public class MaxXirGenerator implements RiXirGenerator {
          */
         public static Pointer slowPathAllocate(int size, Pointer etla) {
             if (MaxineVM.isDebug()) {
-                FatalError.check(VMConfiguration.vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
+                FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            return ((HeapSchemeWithTLAB) VMConfiguration.vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+            return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
         }
 
         public static Pointer flushLog(Pointer logTail) {

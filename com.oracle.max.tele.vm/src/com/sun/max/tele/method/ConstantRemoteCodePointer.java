@@ -33,6 +33,7 @@ class ConstantRemoteCodePointer implements RemoteCodePointer {
     private final Address address;
 
     public ConstantRemoteCodePointer(Address address) {
+        assert address != null;
         this.address = address;
     }
 
@@ -40,7 +41,7 @@ class ConstantRemoteCodePointer implements RemoteCodePointer {
         return address;
     }
 
-    public boolean isLive() {
+    public boolean isCodeLive() {
         return true;
     }
 

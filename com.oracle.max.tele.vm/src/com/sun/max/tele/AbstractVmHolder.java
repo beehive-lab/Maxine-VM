@@ -96,7 +96,7 @@ public abstract class AbstractVmHolder implements TeleVMAccess {
         return vm.breakpointManager();
     }
 
-    public final VmWatchpoint.WatchpointManager watchpointManager() {
+    public final VmWatchpoint.VmWatchpointManager watchpointManager() {
         return vm.watchpointManager();
     }
 }

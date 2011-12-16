@@ -315,7 +315,7 @@ static void mapHeapAndCode(int fd) {
         // The following will create a mapping in virtual space of the requested size.
         // The address returned might subsequently be used to memory map various regions, including the
         // boot heap region, automatically splitting this mapping.
-        // In any case,  the VM (mostly the heap scheme) is responsible for reserved space.
+        // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
@@ -328,7 +328,7 @@ static void mapHeapAndCode(int fd) {
         // Map the boot heap region at the end of the reserved space. The start of the boot heap region is page-aligned.
         theHeap = reservedVirtualSpace + virtualSpaceSize - heapAndCodeSize;
     } else {
-        // Map the boot heap region anywhere.
+        // Map the boot heap region anywhere outside of the reserved space.
         theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
         if (theHeap == ALLOC_FAILED) {
             log_exit(4, "could not reserve virtual space for boot image");

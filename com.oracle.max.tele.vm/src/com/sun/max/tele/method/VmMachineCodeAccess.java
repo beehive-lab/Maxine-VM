@@ -33,12 +33,14 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
  * The singleton manager for representations of machine code locations, both VM method
- * compilations in the VM's code cache and blocks of external native code about which less is known.
+ * compilations in the VM's code cache and blocks of native function code about which less is known.
  */
 public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMachineCode, TeleVMCache {
 
@@ -111,9 +113,9 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             for (VmCodeCacheRegion region : codeCache().vmCodeCacheRegions()) {
                 region.updateCache(epoch);
             }
-            // Don't need to update the details separately of external code for
+            // Don't need to update the details separately of native function code for
             // each TeleNativeLibrary; that
-            // happens as part of the general update for external code.
+            // happens as part of the general update for native function code.
             lastUpdateEpoch = epoch;
             updateTracer.end(null);
         } else {
@@ -146,7 +148,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
 
     public MaxMachineCodeRoutine<? extends MaxMachineCodeRoutine> findMachineCode(Address address) {
         TeleCompilation compilation = findCompilation(address);
-        return (compilation != null) ? compilation : findExternalCode(address);
+        return (compilation != null) ? compilation : findNativeFunction(address);
     }
 
     /**
@@ -225,12 +227,12 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
     }
 
-    public MaxNativeFunction registerExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
-        return vm().externalCode().registerExternalCode(codeStart, nBytes, name);
+    public TeleNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
+        return vm().nativeCode().registerNativeFunction(codeStart, nBytes, name);
     }
 
-    public MaxNativeFunction findExternalCode(Address address) {
-        return vm().externalCode().findExternalCode(address);
+    public TeleNativeFunction findNativeFunction(Address address) {
+        return vm().nativeCode().findNativeFunction(address);
     }
 
     /**
@@ -264,12 +266,35 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         if (codeCacheRegion != null) {
             return codeCacheRegion.codePointerManager().makeCodePointer(address);
         }
-        return vm().externalCode().makeCodePointer(address);
+        return vm().nativeCode().makeCodePointer(address);
     }
 
 
     public TeleCompilation findCompilation(RemoteCodePointer codePointer) {
         return findCompilation(codePointer.getAddress());
+    }
+
+
+    /**
+     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
+     * as a result of inlining.
+     *
+     * TODO: Once inlining dependencies are tracked, this method needs to use them.
+     *
+     * @param methodKey the key denoting a method for which the target methods are being requested
+     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the method
+     *         matching {@code methodKey}
+     */
+    public List<TeleTargetMethod> findCompilations(MethodKey methodKey) {
+        final TeleClassMethodActor teleClassMethodActor = methods().findClassMathodActor(methodKey);
+        if (teleClassMethodActor != null) {
+            final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
+            for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
+                result.add(teleTargetMethod);
+            }
+            return result;
+        }
+        return Collections.emptyList();
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
@@ -294,14 +319,14 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             sb.append(", code loaded=" + formatter.format(codeCacheRegion.loadedCompilationCount()));
             printStream.println(indentation + "    " + sb.toString());
         }
-        vm().externalCode().printSessionStats(printStream, indent + 4, verbose);
+        vm().nativeCode().printSessionStats(printStream, indent + 4, verbose);
     }
 
     public void writeSummary(PrintStream printStream) {
         for (VmCodeCacheRegion codeCacheRegion : codeCache().vmCodeCacheRegions()) {
             codeCacheRegion.writeSummary(printStream);
         }
-        vm().externalCode().writeSummary(printStream);
+        vm().nativeCode().writeSummary(printStream);
     }
 
 }

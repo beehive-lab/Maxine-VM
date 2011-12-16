@@ -24,14 +24,12 @@ package com.sun.max.vm.heap.hosted;
 
 import java.lang.reflect.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -119,11 +117,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     public Pointer gcBumpAllocate(MemoryRegion region, Size size) {
         return Pointer.zero();
-    }
-
-    @INLINE
-    public void writeBarrier(Reference from, Reference to) {
-        // do nothing.
     }
 
     public boolean pin(Object object) {

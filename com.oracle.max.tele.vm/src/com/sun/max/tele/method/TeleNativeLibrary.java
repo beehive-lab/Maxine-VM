@@ -101,7 +101,7 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
         super(vm);
         this.path = path;
         this.base = base;
-        this.codePointerManager = new ExternalRemoteCodePointerManager(vm, this);
+        this.codePointerManager = new NativeRemoteCodePointerManager(vm, this);
     }
 
     public RemoteCodePointerManager codePointerManager() {

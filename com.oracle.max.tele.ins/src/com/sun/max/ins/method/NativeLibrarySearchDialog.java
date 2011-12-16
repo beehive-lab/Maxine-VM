@@ -42,7 +42,7 @@ public class NativeLibrarySearchDialog extends FilteredListDialog<MaxNativeLibra
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
-        for (MaxNativeLibrary info : vm().externalCode().nativeLibraries()) {
+        for (MaxNativeLibrary info : vm().nativeCode().nativeLibraries()) {
             if (filter.endsWith(" ")) {
                 if (info.path().equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     listModel.addElement(info);

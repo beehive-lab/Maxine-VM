@@ -55,23 +55,54 @@ public interface InspectorGUI {
 
     /**
      * Displays an information message in a modal dialog with specified frame title.
+     *
+     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param title a title to display on the dialog frame
+     * @see JOptionPane#showMessageDialog(Component, Object)
      */
-    void informationMessage(String message, String title);
+    void informationMessage(Object message, String title);
 
     /**
      * Displays an information message in a modal dialog with default frame title.
+     *
+     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @see JOptionPane#showMessageDialog(Component, Object)
      */
-    void informationMessage(String message);
+    void informationMessage(Object message);
+
+    /**
+     * Displays a warning message in a modal dialog with specified frame title.
+     *
+     * @param message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param title a title to display on the dialog frame
+     * @see JOptionPane#showMessageDialog(Component, Object)
+     */
+    void warningMessage(Object message, String title);
+
+    /**
+     * Displays a warning message in a modal dialog with default frame title.
+     *
+     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @see JOptionPane#showMessageDialog(Component, Object)
+     */
+    void warningMessage(Object message);
 
     /**
      * Displays an error message in a modal dialog with specified frame title.
+     *
+     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @param title a title to display on the dialog frame
+     * @see JOptionPane#showMessageDialog(Component, Object)
      */
-    void errorMessage(String message, String title);
+    void errorMessage(Object message, String title);
 
     /**
      * Displays an error message in a modal dialog with default frame title.
+     *
+     * @param message message a {@link String}, {@link String[]}, or {@link Object} to be converted to text
+     * @see JOptionPane#showMessageDialog(Component, Object)
      */
-    void errorMessage(String message);
+    void errorMessage(Object message);
 
     /**
      * Collects textual input from user.

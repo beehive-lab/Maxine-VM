@@ -47,6 +47,7 @@ import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.VmBytecodeBreakpoint.BytecodeBreakpointManager;
+import com.sun.max.tele.debug.VmWatchpoint.VmWatchpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -591,7 +592,7 @@ public abstract class TeleVM implements MaxVM {
 
     private VmCodeCacheAccess codeCacheAccess = null;
 
-    private ExternalMachineCodeAccess externalCodeAccess = null;
+    private NativeCodeAccess nativeCodeAccess = null;
 
     // TODO (mlvdv) to be replaced
     private final CodeLocationFactory codeLocationFactory;
@@ -603,9 +604,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private final VmBreakpointManager breakpointManager;
 
-    private final VmBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
-
-    private final VmWatchpoint.WatchpointManager watchpointManager;
+    private final VmWatchpoint.VmWatchpointManager watchpointManager;
 
     private final VmThreadAccess threadAccess;
 
@@ -772,33 +771,32 @@ public abstract class TeleVM implements MaxVM {
         this.javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
-        this.bytecodeBreakpointManager = new VmBytecodeBreakpoint.BytecodeBreakpointManager(this);
-        this.breakpointManager = new VmBreakpointManager(this, this.bytecodeBreakpointManager);
-        this.watchpointManager = teleProcess.getWatchpointManager();
+        this.breakpointManager = VmBreakpointManager.make(this);
+        this.watchpointManager = teleProcess.watchpointsEnabled() ? VmWatchpointManager.make(this, teleProcess) : null;
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
-        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStarted(), "before gc begins") {
+        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStartedMethodLocation(), "before gc begins") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
                 listener.gcStarted();
             }
         };
 
-        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompleted(), "after gc completion") {
+        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompletedMethodLocation(), "after gc completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
                 listener.gcCompleted();
             }
         };
 
-        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(methodAccess.vmThreadRun(), "at VmThread entry") {
+        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(methodAccess.vmThreadRunMethodLocation(), "at VmThread entry") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadEntryListener listener) {
                 listener.entered(thread);
             }
         };
 
-        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(methodAccess.vmThreadDetached(), "after VmThread detach") {
+        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(methodAccess.vmThreadDetachedMethodLocation(), "after VmThread detach") {
             @Override
             protected void listenerDo(MaxThread thread, MaxVMThreadDetachedListener listener) {
                 listener.detached(thread);
@@ -846,7 +844,7 @@ public abstract class TeleVM implements MaxVM {
                 codeCacheAccess.initialize(epoch);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-                externalCodeAccess = new ExternalMachineCodeAccess(this);
+                nativeCodeAccess = new NativeCodeAccess(this);
                 memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
                 if (isAttaching()) {
@@ -862,13 +860,13 @@ public abstract class TeleVM implements MaxVM {
             heapAccess.updateCache(epoch);
             memoryAllocations.addAll(heapAccess.memoryAllocations());
 
-            // Update status of the code cache, including eviction status and any new allocations.
+            // Update the general status of the code cache, including eviction status and any new allocations.
             codeCacheAccess.updateCache(epoch);
             memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
-            // Update the statys of any external, dynamically loaded libraries.
-            externalCodeAccess.updateCache(epoch);
-            memoryAllocations.addAll(externalCodeAccess.memoryAllocations());
+            // Update the general status of any native, dynamically loaded libraries.
+            nativeCodeAccess.updateCache(epoch);
+            memoryAllocations.addAll(nativeCodeAccess.memoryAllocations());
 
             // A hook for any other memory regions that might be getting allocated for special platforms
             memoryAllocations.addAll(platformMemoryRegions());
@@ -879,8 +877,11 @@ public abstract class TeleVM implements MaxVM {
             // Update every local surrogate for a VM object
             objectAccess.updateCache(epoch);
 
-            // Update every local surrogate for a VM compilation
+            // Detailed update of the contents of every code cache region, as well as information about native code.
             machineCodeAccess.updateCache(epoch);
+
+            // Check the status of breakpoints, for example if any are set in recently evicted compilations.
+            breakpointManager.updateCache(epoch);
 
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
@@ -981,8 +982,8 @@ public abstract class TeleVM implements MaxVM {
         return codeCacheAccess;
     }
 
-    public final ExternalMachineCodeAccess externalCode() {
-        return externalCodeAccess;
+    public final NativeCodeAccess nativeCode() {
+        return nativeCodeAccess;
     }
 
     public final CodeLocationFactory codeLocationFactory() {
@@ -997,7 +998,7 @@ public abstract class TeleVM implements MaxVM {
         return breakpointManager;
     }
 
-    public final VmWatchpoint.WatchpointManager watchpointManager() {
+    public final VmWatchpoint.VmWatchpointManager watchpointManager() {
         return watchpointManager;
     }
 

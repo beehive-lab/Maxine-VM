@@ -414,12 +414,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder
      * instruction on which the breakpoint was set.
      */
     private void refreshBreakpoint() {
-        final VmTargetBreakpoint.TargetBreakpointManager breakpointManager = teleProcess().targetBreakpointManager();
+
         VmTargetBreakpoint breakpoint = null;
 
         try {
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-            breakpoint = breakpointManager.getTargetBreakpointAt(breakpointAddress);
+            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(breakpointAddress);
+            if (codePointer != null) {
+                breakpoint = breakpointManager().targetBreakpoints().find(codePointer);
+            }
         } catch (TerminatedProcessIOException terminatedProcessIOException) {
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
@@ -495,7 +498,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         if (breakpointIsAtInstructionPointer) {
             return instructionPointer;
         }
-        return instructionPointer.minus(teleProcess().targetBreakpointManager().codeSize());
+        return instructionPointer.minus(breakpointManager().targetBreakpoints().codeSize());
     }
 
     @Override

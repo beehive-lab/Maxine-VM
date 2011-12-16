@@ -94,6 +94,23 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
+    /**
+     * Receives notification that a breakpoint is about to be deleted, and communicates this
+     * to the user.  No state change is needed here because a subsequent notification will
+     * announce the general change in the breakpoint set.
+     *
+     * @param breakpoint the breakpoint about to be deleted
+     * @param reason a short explanation for the deletion
+     */
+    void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+        MachineCodeBreakpointData breakpointData = tableModel.findMachineCodeBreakpoint(breakpoint.codeLocation().address());
+        final String name = breakpointData == null ? breakpoint.toString() : breakpointData.longName();
+        final Object[] message = new Object[2];
+        message[0] = "Breakpoint deleted: " + name;
+        message[1] = reason;
+        gui().warningMessage(message);
+    }
+
     @Override
     protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1) {
@@ -647,12 +664,12 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = compilation.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final MaxNativeFunction externalCode = vm().machineCode().findExternalCode(address);
+                final MaxNativeFunction externalCode = vm().machineCode().findNativeFunction(address);
                 if (externalCode != null) {
                     codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
                     shortName = inspection().nameDisplay().shortName(externalCode);
-                    longName = inspection().nameDisplay().longName(externalCode);
+                    longName = "native function:  " + inspection().nameDisplay().longName(externalCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = address.to0xHexString();
@@ -690,7 +707,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + codeLocation().address().toHexString();
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + codeLocation().address().to0xHexString();
         }
 
         Address address() {

@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.tele.*;
+
 /**
  * An abstract adapter class for receiving inspection events.
  * The methods in this class are empty.  This class exists
@@ -38,6 +40,9 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     }
 
     public void breakpointStateChanged() {
+    }
+
+    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
     }
 
     public void watchpointSetChanged() {

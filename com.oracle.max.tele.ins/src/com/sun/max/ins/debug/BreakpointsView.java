@@ -126,6 +126,11 @@ public final class BreakpointsView extends AbstractView<BreakpointsView> impleme
     }
 
     @Override
+    public void breakpointToBeDeleted(MaxBreakpoint breakpoint, String reason) {
+        table.breakpointToBeDeleted(breakpoint, reason);
+    }
+
+    @Override
     public  void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint) {
         if (table != null) {
             table.updateFocusSelection();

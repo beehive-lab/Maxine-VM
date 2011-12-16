@@ -749,9 +749,9 @@ public class VmThreadLocal implements FormatWithToString {
      */
     @INLINE
     public final Pointer load(Pointer tla) {
-        if (MaxineVM.isDebug()) {
+  /*      if (MaxineVM.isDebug()) {
             checkLoad(tla);
-        }
+        }*/
         return tla.readWord(offset).asPointer();
     }
 
