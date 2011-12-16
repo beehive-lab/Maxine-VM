@@ -285,9 +285,18 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      */
     @Override
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        // FIXME: the following is incorrect.
+        // The TargetMethod object may have been relocated by a moving collector. Or it may be garbage (due to a cache eviction for instance).
+        // In both case, the space occupied by the TargetMethod may be smashed and reading any piece of it (as done by super.updateObjectCache() below)
+        // may give arbitrary result.
+        // In particular, it is common in debug mode to "zap" the dead area to fast-fail.
+        // So before updating, on may need to consider first in the location referenced by this TeleTargetMethod is valid!
+        // See changes in updateObjectCache that at least check against Memory.ZAPPED_MARKER. This only protect against debug zapping.
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
+        // FIXME: this should move above: if the code is evicted, there's a chance that the corresponding target method was GC-ed too.
+        // The code below doesn't take this into account!
         if (isCodeEvicted) {
             // Once the compilation has been evicted from the code cache it is dead; the cache has been nulled
             // and no more updates are needed.
