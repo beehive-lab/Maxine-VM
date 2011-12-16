@@ -28,6 +28,7 @@ import static java.lang.Float.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
@@ -37,20 +38,21 @@ public class AMD64MoveOpcode {
         MOVE;
 
         @Override
-        public LIRInstruction create(CiValue result, final CiValue input) {
+        public LIRInstruction create(CiValue result, CiValue input) {
             assert !result.isAddress() && !input.isAddress();
             assert result.kind == result.kind.stackKind() && result.kind != CiKind.Illegal;
             CiValue[] inputs = new CiValue[] {input};
 
-            return new AMD64LIRInstruction(this, result, null, inputs) {
+            return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    move(tasm, masm, result(), input(0));
+                    CiValue input = input(0);
+                    move(tasm, masm, result(), input);
                 }
 
                 @Override
-                public int registerHint() {
-                    return 0;
+                public CiValue registerHint() {
+                    return input(0);
                 }
             };
         }
@@ -63,10 +65,12 @@ public class AMD64MoveOpcode {
         public LIRInstruction create(CiVariable result, CiValue addrBase, CiValue addrIndex, final CiAddress.Scale addrScale, final int addrDisplacement, final CiKind kind, LIRDebugInfo info) {
             CiValue[] inputs = new CiValue[] {addrBase, addrIndex};
 
-            return new AMD64LIRInstruction(this, result, info, inputs) {
+            return new AMD64LIRInstruction(this, result, info, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    load(tasm, masm, result(), new CiAddress(CiKind.Illegal, input(0), input(1), addrScale, addrDisplacement), kind, info);
+                    CiValue addrBase = input(0);
+                    CiValue addrIndex = input(1);
+                    load(tasm, masm, result(), new CiAddress(CiKind.Illegal, addrBase, addrIndex, addrScale, addrDisplacement), kind, info);
                 }
             };
         }
@@ -79,10 +83,14 @@ public class AMD64MoveOpcode {
         public LIRInstruction create(CiValue addrBase, CiValue addrIndex, final CiAddress.Scale addrScale, final int addrDisplacement, CiValue input, final CiKind kind, LIRDebugInfo info) {
             CiValue[] inputs = new CiValue[] {addrBase, addrIndex, input};
 
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
+            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    store(tasm, masm, new CiAddress(CiKind.Illegal, input(0), input(1), addrScale, addrDisplacement), input(2), kind, info);
+                    CiValue addrBase = input(0);
+                    CiValue addrIndex = input(1);
+                    CiValue input = input(2);
+
+                    store(tasm, masm, new CiAddress(CiKind.Illegal, addrBase, addrIndex, addrScale, addrDisplacement), input, kind, info);
                 }
             };
         }
@@ -95,10 +103,30 @@ public class AMD64MoveOpcode {
         public LIRInstruction create(CiVariable result, CiValue addrBase, CiValue addrIndex, final CiAddress.Scale addrScale, final int addrDisplacement) {
             CiValue[] inputs = new CiValue[] {addrBase, addrIndex};
 
-            return new AMD64LIRInstruction(this, result, null, inputs) {
+            return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    masm.leaq(tasm.asLongReg(result()), new CiAddress(CiKind.Illegal, input(0), input(1), addrScale, addrDisplacement));
+                    CiValue addrBase = input(0);
+                    CiValue addrIndex = input(1);
+                    masm.leaq(tasm.asLongReg(result()), new CiAddress(CiKind.Illegal, addrBase, addrIndex, addrScale, addrDisplacement));
+                }
+            };
+        }
+    }
+
+
+    // Note: This LIR operation is similar to a LEA, so reusing the LEA op would be desirable.
+    // However, the address that is loaded depends on the stack slot, and the stack slot numbers are
+    // only fixed after register allocation when the number of spill slots is known. Therefore, the address
+    // is not known when the LIR is generated.
+    public enum LeaStackBlockOpcode implements LIROpcode {
+        LEA_STACK_BLOCK;
+
+        public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
+            return new AMD64LIRInstruction(this, result, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
+                @Override
+                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    masm.leaq(tasm.asRegister(result()), tasm.compilation.frameMap().toStackAddress(stackBlock));
                 }
             };
         }
@@ -109,9 +137,7 @@ public class AMD64MoveOpcode {
         MEMBAR;
 
         public LIRInstruction create(final int barriers) {
-            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs) {
+            return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
                     masm.membar(barriers);
@@ -128,11 +154,12 @@ public class AMD64MoveOpcode {
         public LIRInstruction create(CiVariable input, LIRDebugInfo info) {
             CiValue[] inputs = new CiValue[] {input};
 
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
+            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    CiValue input = input(0);
                     tasm.recordImplicitException(masm.codeBuffer.position(), info);
-                    masm.nullCheck(tasm.asRegister(input(0)));
+                    masm.nullCheck(tasm.asRegister(input));
                 }
             };
         }
@@ -145,10 +172,15 @@ public class AMD64MoveOpcode {
         public LIRInstruction create(CiRegisterValue result, CiValue addrBase, CiValue addrIndex, final CiAddress.Scale addrScale, final int addrDisplacement, CiRegisterValue cmpValue, CiVariable newValue) {
             CiValue[] inputs = new CiValue[] {addrBase, addrIndex, cmpValue, newValue};
 
-            return new AMD64LIRInstruction(this, result, null, inputs) {
+            return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    compareAndSwap(tasm, masm, result(), new CiAddress(CiKind.Illegal, input(0), input(1), addrScale, addrDisplacement), input(2), input(3));
+                    CiValue addrBase = input(0);
+                    CiValue addrIndex = input(1);
+                    CiValue cmpValue = input(2);
+                    CiValue newValue = input(3);
+
+                    compareAndSwap(tasm, masm, result(), new CiAddress(CiKind.Illegal, addrBase, addrIndex, addrScale, addrDisplacement), cmpValue, newValue);
                 }
             };
         }
@@ -281,10 +313,10 @@ public class AMD64MoveOpcode {
                 if (c.isNull()) {
                     masm.movq(tasm.asRegister(result), 0x0L);
                 } else if (tasm.target.inlineObjects) {
-                    tasm.recordDataReferenceInCode(c);
+                    tasm.recordDataReferenceInCode(c, 0);
                     masm.movq(tasm.asRegister(result), 0xDEADDEADDEADDEADL);
                 } else {
-                    masm.movq(tasm.asRegister(result), tasm.recordDataReferenceInCode(c));
+                    masm.movq(tasm.asRegister(result), tasm.recordDataReferenceInCode(c, 0));
                 }
                 break;
             default:

@@ -47,8 +47,8 @@ import java.util.*;
  */
 public abstract class Node implements Cloneable {
 
-    static final int DELETED_ID = -1;
-    static final int INITIAL_ID = -2;
+    static final int DELETED_ID_START = -1000000000;
+    static final int INITIAL_ID = -1;
     static final int ALIVE_ID_START = 0;
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -65,13 +65,29 @@ public abstract class Node implements Cloneable {
     @Target(ElementType.FIELD)
     public static @interface Data {}
 
+    /**
+     * Denotes that a parameter of an {@linkplain NodeIntrinsic intrinsic} method
+     * must be a compile time constant at all call sites to the intrinic method.
+     */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public static @interface ConstantNodeParameter {}
 
+    /**
+     * Annotates a method that can be replaced by a compiler intrinsic.
+     * That is, a (resolved) call to the annotated method can be replaced
+     * with an instance of the node class denoted by {@link #value()}.
+     * For this reason, the signature of the annotated method must match
+     * the signature of a constructor in the node class.
+     */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public static @interface NodeIntrinsic {
+        /**
+         * Gets the {@link Node} subclass instantiated when intrinsifyng a call to the annotated method.
+         * If not specified, then the class in which the annotated method is declared is used
+         * (and is assumed to be a {@link Node} subclass).
+         */
         Class value() default NodeIntrinsic.class;
     }
 
@@ -143,7 +159,7 @@ public abstract class Node implements Cloneable {
     }
 
     public boolean isDeleted() {
-        return id == DELETED_ID;
+        return id <= DELETED_ID_START;
     }
 
     public boolean isAlive() {
@@ -202,6 +218,7 @@ public abstract class Node implements Cloneable {
         return nodeClass;
     }
 
+    // TODO(tw): Do not allow to replace with null.
     private boolean checkReplaceWith(Node other) {
         assert assertFalse(other == this, "cannot replace a node with itself");
         assert assertFalse(isDeleted(), "cannot replace deleted node");
@@ -233,9 +250,11 @@ public abstract class Node implements Cloneable {
 
     public void replaceAndDelete(Node other) {
         assert checkReplaceWith(other);
-        clearSuccessors();
-        replaceAtUsages(other);
-        replaceAtPredecessors(other);
+        if (other != null) {
+            clearSuccessors();
+            replaceAtUsages(other);
+            replaceAtPredecessors(other);
+        }
         safeDelete();
     }
 
@@ -296,7 +315,7 @@ public abstract class Node implements Cloneable {
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
-        id = DELETED_ID;
+        id = DELETED_ID_START - id;
         assert isDeleted();
     }
 

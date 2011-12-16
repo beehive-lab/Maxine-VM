@@ -34,22 +34,33 @@ public enum AMD64ArithmeticOpcode implements LIROpcode {
     FADD, FSUB, FMUL, FDIV,
     DADD, DSUB, DMUL, DDIV;
 
-    public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        assert (name().startsWith("I") && leftAndResult.kind == CiKind.Int && right.kind.stackKind() == CiKind.Int)
-            || (name().startsWith("L") && leftAndResult.kind == CiKind.Long && right.kind == CiKind.Long)
-            || (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)
-            || (name().startsWith("D") && leftAndResult.kind == CiKind.Double && right.kind == CiKind.Double);
+    public LIRInstruction create(CiVariable result, CiValue left, CiValue right) {
+        assert (name().startsWith("I") && result.kind == CiKind.Int && left.kind.stackKind() == CiKind.Int && right.kind.stackKind() == CiKind.Int)
+            || (name().startsWith("L") && result.kind == CiKind.Long && left.kind == CiKind.Long && right.kind == CiKind.Long)
+            || (name().startsWith("F") && result.kind == CiKind.Float && left.kind == CiKind.Float && right.kind == CiKind.Float)
+            || (name().startsWith("D") && result.kind == CiKind.Double && left.kind == CiKind.Double && right.kind == CiKind.Double);
 
-        CiValue[] inputs = new CiValue[] {leftAndResult, right};
-        return new AMD64LIRInstruction(this, leftAndResult, null, inputs) {
+        CiValue[] inputs = new CiValue[] {left};
+        CiValue[] alives = new CiValue[] {right};
+
+        return new AMD64LIRInstruction(this, result, null, inputs, alives, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, result(), input(1));
+                CiValue left = input(0);
+                CiValue right = alive(0);
+                assert !(right instanceof CiRegisterValue) || tasm.asRegister(result()) != tasm.asRegister(right) : "result and right must be different registers";
+                AMD64MoveOpcode.move(tasm, masm, result(), left);
+                emit(tasm, masm, result(), right);
             }
 
             @Override
             public boolean inputCanBeMemory(int index) {
-                return index == 1;
+                return true;
+            }
+
+            @Override
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }

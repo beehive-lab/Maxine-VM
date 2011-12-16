@@ -34,7 +34,7 @@ public class LoopUtil {
         // Create node-to-loop relation.
         NodeMap<Loop> nodeToLoop = graph.createNodeMap();
         for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
-            mark(begin, null, nodeToLoop);
+            mark(begin, nodeToLoop);
         }
 
         List<Loop> rootLoops = new ArrayList<Loop>(1);
@@ -67,7 +67,7 @@ public class LoopUtil {
         return info;
     }
 
-    private static void mark(LoopBeginNode begin, Loop outer, NodeMap<Loop> nodeToLoop) {
+    private static void mark(LoopBeginNode begin, NodeMap<Loop> nodeToLoop) {
 
         if (nodeToLoop.get(begin) != null) {
             // Loop already processed.
@@ -83,22 +83,28 @@ public class LoopUtil {
                 // Stop at loop begin.
                 continue;
             }
-            markNode(n, loop, outer, nodeToLoop);
+            markNode(n, loop, nodeToLoop);
 
             for (Node pred : n.cfgPredecessors()) {
                 workCFG.add(pred);
             }
         }
+
+        // We finished marking the loop.
+        loop.setFinished();
     }
 
-    private static void markNode(Node n, Loop loop, Loop outer, NodeMap<Loop> nodeToLoop) {
+    private static void markNode(Node n, Loop loop, NodeMap<Loop> nodeToLoop) {
         Loop oldMark = nodeToLoop.get(n);
-        if (oldMark == null || oldMark == outer) {
+        if (oldMark == null || !oldMark.isFinished()) {
 
             // We have an inner loop, start marking it.
             if (n instanceof LoopBeginNode) {
-                mark((LoopBeginNode) n, loop, nodeToLoop);
+                mark((LoopBeginNode) n, nodeToLoop);
             } else {
+                if (oldMark != null) {
+                    oldMark.directCFGNode().clear(n);
+                }
                 nodeToLoop.set(n, loop);
                 loop.directCFGNode().mark(n);
             }

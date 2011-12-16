@@ -34,7 +34,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
-public class GraalCompiler implements CiCompiler  {
+public class GraalCompiler {
 
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
@@ -72,12 +72,11 @@ public class GraalCompiler implements CiCompiler  {
         init();
     }
 
-    @Override
-    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public CiTargetMethod compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, CiCompiler.DebugInfoLevel debugInfoLevel) {
         return compileMethod(method, osrBCI, stats, debugInfoLevel, PhasePlan.DEFAULT);
     }
 
-    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel, PhasePlan plan) {
+    public CiTargetMethod compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, CiCompiler.DebugInfoLevel debugInfoLevel, PhasePlan plan) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
@@ -92,7 +91,7 @@ public class GraalCompiler implements CiCompiler  {
                 startTime = System.nanoTime();
             }
 
-            CiResult result = null;
+            CiTargetMethod result = null;
             TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             try {
@@ -109,7 +108,7 @@ public class GraalCompiler implements CiCompiler  {
                                     time / 10,
                                     time % 10,
                                     compilation.graph.getNodeCount(),
-                                    (result != null ? result.targetMethod().targetCodeSize() : -1)));
+                                    (result != null ? result.targetCodeSize() : -1)));
                 }
             }
 
@@ -119,9 +118,9 @@ public class GraalCompiler implements CiCompiler  {
         }
     }
 
-    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph, PhasePlan plan) {
+    public CiTargetMethod compileMethod(RiResolvedMethod method, StructuredGraph graph, PhasePlan plan) {
         assert graph.verify();
-        GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
+        GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, CiCompiler.DebugInfoLevel.FULL);
         return compilation.compile(plan);
     }
 

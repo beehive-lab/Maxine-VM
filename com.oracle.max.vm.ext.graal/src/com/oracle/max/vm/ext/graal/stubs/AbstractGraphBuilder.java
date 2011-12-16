@@ -139,7 +139,7 @@ public abstract class AbstractGraphBuilder {
             stackSize = 2;
         }
 
-        List<ValueNode> locks = Collections.emptyList();
+        List<MonitorObject> locks = Collections.emptyList();
         return graph.add(new FrameState(nativeMethod, UNKNOWN_BCI, locals, stack, stackSize, locks, false));
     }
 

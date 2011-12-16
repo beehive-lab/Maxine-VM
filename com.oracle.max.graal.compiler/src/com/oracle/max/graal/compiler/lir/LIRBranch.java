@@ -44,7 +44,7 @@ public abstract class LIRBranch extends LIRInstruction {
 
 
     public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LabelRef destination, LIRDebugInfo info) {
-        super(code, CiValue.IllegalValue, info, LIRInstruction.NO_OPERANDS);
+        super(code, CiValue.IllegalValue, info, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS);
         this.cond = cond;
         this.unorderedIsTrue = unorderedIsTrue;
         this.destination = destination;

@@ -74,6 +74,8 @@ public final class InvokeNode extends AbstractStateSplit implements Node.Iterabl
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Long) {
             return super.toString(Verbosity.Short) + "(bci=" + bci() + ")";
+        } else if (verbosity == Verbosity.Name) {
+            return "Invoke#" + callTarget.targetMethod().name();
         } else {
             return super.toString(verbosity);
         }
