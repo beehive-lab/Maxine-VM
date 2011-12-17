@@ -77,10 +77,15 @@ public class JVMTIVmThreadLocal {
         JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
     }
 
-    static void setEventBits(Pointer tla, long bits) {
+    static void orEventBits(Pointer tla, long bits) {
         long newBits = bits << EVENT_SHIFT;
-        long otherBits = JVMTI_STATE.load(tla).toLong() & ~EVENT_MASK;
+        long otherBits = JVMTI_STATE.load(tla).toLong();
         JVMTI_STATE.store(tla, Address.fromLong(otherBits | newBits));
+    }
+
+    static void clearEventBits(Pointer tla) {
+        long otherBits = JVMTI_STATE.load(tla).toLong() & ~EVENT_MASK;
+        JVMTI_STATE.store(tla, Address.fromLong(otherBits));
     }
 
     static long getEventBits(Pointer tla) {

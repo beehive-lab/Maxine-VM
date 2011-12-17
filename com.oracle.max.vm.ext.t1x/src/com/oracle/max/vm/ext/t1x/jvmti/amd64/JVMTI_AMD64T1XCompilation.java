@@ -65,10 +65,10 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     private T1XTemplate[] templates;
     private long[] breakpoints;
     private int breakpointIndex;
-    private boolean singleStep;
     private MethodID methodID;
     private boolean[] eventBci;
     private boolean anyEventCalls;
+    private long eventSettings;
 
     private final T1X defaultT1X;
 
@@ -80,9 +80,9 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
 
     @Override
     protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
-        // if we compiled any event calls create a JVMTI_T1XTargetMethod, otherwise a vanila one
+        // if we compiled any event calls create a JVMTI_T1XTargetMethod, otherwise a vanilla one
         if (anyEventCalls) {
-            return new JVMTI_T1XTargetMethod(comp, install, eventBci);
+            return new JVMTI_T1XTargetMethod(comp, install, eventBci, eventSettings, breakpoints);
         } else {
             return new T1XTargetMethod(comp, install);
         }
@@ -94,13 +94,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         eventBci = new boolean[bciToPos.length];
         breakpoints = JVMTIBreakpoints.getBreakpoints(method);
         breakpointIndex = 0;
-        singleStep = JVMTIBreakpoints.isSingleStepEnabled();
+        if (JVMTIBreakpoints.isSingleStepEnabled()) {
+            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
+        }
         methodID = MethodID.fromMethodActor(method);
     }
 
     @Override
     protected void do_methodTraceEntry() {
-        if (JVMTI.byteCodeEventNeeded(-1)) {
+        if (JVMTI.byteCodeEventNeeded(-1) != 0) {
             templates = compiler.templates;
             start(TRACE_METHOD_ENTRY);
             assignObject(0, "methodActor", method);
@@ -116,6 +118,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         int currentBCI = stream.currentBCI();
         long id = 0;
         boolean eventCall = false;
+        boolean singleStep = singleStep();
         boolean breakPossible = breakpoints != null && breakpointIndex < breakpoints.length;
         if (singleStep || breakPossible) {
             if (breakPossible && JVMTIBreakpoints.getLocation(breakpoints[breakpointIndex]) == currentBCI) {
@@ -148,10 +151,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.FRETURN:
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
-            case Bytecodes.RETURN:
-                eventCall = JVMTI.byteCodeEventNeeded(opcode);
+            case Bytecodes.RETURN: {
+                int eventId = JVMTI.byteCodeEventNeeded(opcode);
+                eventCall = eventId != 0;
                 setTemplates(eventCall);
+                if (eventId != 0) {
+                    eventSettings |= JVMTIEvent.bitSetting(eventId);
+                }
                 break;
+            }
 
 
             default:
@@ -160,6 +168,10 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         if (eventCall) {
             anyEventCalls = true;
         }
+    }
+
+    private boolean singleStep() {
+        return (eventSettings & JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP)) != 0;
     }
 
     private void setTemplates(boolean jvmti) {
