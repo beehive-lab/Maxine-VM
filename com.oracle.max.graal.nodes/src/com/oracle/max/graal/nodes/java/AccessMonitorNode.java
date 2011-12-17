@@ -31,39 +31,19 @@ import com.oracle.max.graal.nodes.type.*;
  */
 public abstract class AccessMonitorNode extends AbstractStateSplit implements MemoryCheckpoint {
 
-    @Input private ValueNode object;
-    @Data private int monitorIndex;
-    @Data private final boolean monitorStackSlots;
+    @Input private MonitorObject object;
 
-    public ValueNode object() {
+    public MonitorObject object() {
         return object;
-    }
-
-    public int monitorIndex() {
-        return monitorIndex;
-    }
-
-
-    public void setMonitorIndex(int monitorIndex) {
-        this.monitorIndex = monitorIndex;
-    }
-
-    public boolean monitorStackSlots() {
-        return monitorStackSlots;
     }
 
     /**
      * Creates a new AccessMonitor instruction.
      *
      * @param object the instruction producing the object
-     * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
-     * @param lockNumber the number of the lock being acquired
-     * @param monitorStackSlots determines if space on the stack should be reserved for each monitor
      */
-    public AccessMonitorNode(ValueNode object, int monitorIndex, boolean monitorStackSlots) {
+    public AccessMonitorNode(MonitorObject object) {
         super(StampFactory.illegal());
         this.object = object;
-        this.monitorIndex = monitorIndex;
-        this.monitorStackSlots = monitorStackSlots;
     }
 }

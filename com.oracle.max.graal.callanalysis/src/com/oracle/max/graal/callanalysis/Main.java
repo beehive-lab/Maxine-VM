@@ -20,10 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.graphbuilder;
+package com.oracle.max.graal.callanalysis;
 
-import com.oracle.max.graal.graph.*;
+import java.io.*;
+import java.net.*;
 
-public interface GraphBuilderTool {
-    void append(Node node);
+public class Main {
+
+    public static void main(String[] args) {
+        try {
+            OutputStream stream = new BufferedOutputStream(new Socket("localhost", 4444).getOutputStream(), 0x4000);
+
+            String[] prefixes = {"com.oracle.max.graal.callanalysis", "com.sun.max.program"};
+            StaticCallAnalyzer analyzer = new StaticCallAnalyzer(stream, prefixes, Main.class.getClassLoader());
+            analyzer.start("Graal Call Analysis");
+            analyzer.startGraph("Main.main()");
+            analyzer.analyze("com.oracle.max.graal.callanalysis.Main", "main");
+            analyzer.endGraph();
+            analyzer.startGraph("SubtypeDiscovery.visitFile()");
+            analyzer.analyze("com.oracle.max.graal.callanalysis.SubtypeDiscovery", "visitFile");
+            analyzer.endGraph();
+            analyzer.end();
+
+            stream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

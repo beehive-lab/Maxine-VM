@@ -20,27 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.nodes;
+package com.oracle.max.graal.snippets.nodes;
 
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.cri.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.type.*;
+import com.sun.cri.ci.*;
 
-/**
- * Cretes a memory barrier.
- */
-public class MembarNode extends AbstractStateSplit implements LIRLowerable, MemoryCheckpoint {
+public class ArrayHeaderSizeNode extends FloatingNode implements Lowerable {
+    @Data private final CiKind elementKind;
 
-    private final int barriers;
-
-    public MembarNode(int barriers) {
-        super(StampFactory.illegal());
-        this.barriers = barriers;
+    public ArrayHeaderSizeNode(CiKind elementKind) {
+        super(StampFactory.forKind(CiKind.Long));
+        this.elementKind = elementKind;
     }
 
     @Override
-    public void generate(LIRGeneratorTool generator) {
-        generator.emitMembar(barriers);
+    public void lower(CiLoweringTool tool) {
+        tool.getRuntime().lower(this, tool);
+    }
+
+    public CiKind elementKind() {
+        return elementKind;
+    }
+
+    @NodeIntrinsic
+    public static long sizeFor(@ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

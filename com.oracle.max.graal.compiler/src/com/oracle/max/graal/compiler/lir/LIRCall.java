@@ -48,9 +48,6 @@ public abstract class LIRCall extends LIRInstruction {
 
     private final int targetAddressIndex;
 
-    public final List<CiValue> pointerSlots;
-
-
     private static CiValue[] toArray(List<CiValue> arguments, CiValue targetAddress) {
         CiValue[] result = new CiValue[arguments.size() + (targetAddress != null ? 1 : 0)];
         arguments.toArray(result);
@@ -66,11 +63,9 @@ public abstract class LIRCall extends LIRInstruction {
                    List<CiValue> arguments,
                    CiValue targetAddress,
                    LIRDebugInfo info,
-                   Map<XirMark, Mark> marks,
-                   List<CiValue> pointerSlots) {
-        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
+                   Map<XirMark, Mark> marks) {
+        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS);
         this.marks = marks;
-        this.pointerSlots = pointerSlots;
         if (targetAddress == null) {
             this.targetAddressIndex = -1;
         } else {
@@ -105,7 +100,7 @@ public abstract class LIRCall extends LIRInstruction {
         if (targetAddressIndex >= 0) {
             buf.append(operandFmt.format(targetAddress()));
         }
-        if (inputs.length > 1) {
+        if (inputs.length + alives.length > 1) {
             buf.append("(");
         }
         String sep = "";
@@ -115,7 +110,13 @@ public abstract class LIRCall extends LIRInstruction {
                 sep = ", ";
             }
         }
-        if (inputs.length > 1) {
+        for (CiValue input : alives) {
+            if (input != targetAddress()) {
+                buf.append(sep).append(operandFmt.format(input)).append(" ~");
+                sep = ", ";
+            }
+        }
+        if (inputs.length + alives.length > 1) {
             buf.append(")");
         }
         return buf.toString();

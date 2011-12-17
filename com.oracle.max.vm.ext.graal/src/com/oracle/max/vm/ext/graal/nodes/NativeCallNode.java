@@ -64,7 +64,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
     public void generate(LIRGeneratorTool gen) {
         LIRGenerator lir = (LIRGenerator) gen;
         FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
-        LIRDebugInfo info = new LIRDebugInfo(stateDuring);
+        LIRDebugInfo info = lir.stateFor(stateDuring);
         CiValue resultOperand = lir.resultOperandFor(this.kind());
         CiValue callAddress = lir.operand(this.address());
         CiKind[] signature = new CiKind[arguments.size()];
@@ -85,7 +85,7 @@ public final class NativeCallNode extends AbstractCallNode implements LIRLowerab
         argList.add(callAddress);
 
         String target = this.nativeMethod.jniSymbol();
-        lir.append(StandardOpcode.INDIRECT_CALL.create(target, resultOperand, argList, callAddress, info, null, null));
+        lir.append(StandardOpcode.INDIRECT_CALL.create(target, resultOperand, argList, callAddress, info, null));
 
         if (resultOperand.isLegal()) {
             lir.setResult(this, lir.emitMove(resultOperand));

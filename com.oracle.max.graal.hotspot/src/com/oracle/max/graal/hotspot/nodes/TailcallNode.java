@@ -66,12 +66,11 @@ public class TailcallNode extends FixedWithNextNode implements LIRLowerable {
         CiKind[] signature = CiUtil.signatureToKinds(method.signature(), isStatic ? null : method.holder().kind(true));
         CiCallingConvention cc = gen.compilation.registerConfig.getCallingConvention(JavaCall, signature, gen.compilation.compiler.target, false);
         gen.compilation.frameMap().adjustOutgoingStackSize(cc, JavaCall);
-        List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<ValueNode> parameters = new ArrayList<ValueNode>();
         for (int i = 0; i < cc.locations.length; i++) {
             parameters.add(frameState.localAt(i));
         }
-        List<CiValue> argList = gen.visitInvokeArguments(cc, parameters, pointerSlots);
+        List<CiValue> argList = gen.visitInvokeArguments(cc, parameters, null);
 
         CiVariable entry = gen.emitLoad(new CiAddress(CiKind.Long, gen.operand(target), config.nmethodEntryOffset), CiKind.Long, false);
 

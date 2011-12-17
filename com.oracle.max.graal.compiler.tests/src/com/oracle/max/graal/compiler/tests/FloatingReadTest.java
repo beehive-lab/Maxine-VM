@@ -47,7 +47,6 @@ public class FloatingReadTest extends GraphScheduleTest {
 
     @Test
     public void test1() {
-        new Container();
         test("test1Snippet");
     }
 

@@ -147,7 +147,7 @@ public final class GraalCompilation {
         return tasm;
     }
 
-    public CiResult compile(PhasePlan plan) {
+    public CiTargetMethod compile(PhasePlan plan) {
         CiTargetMethod targetMethod;
         try {
             try {
@@ -158,16 +158,12 @@ public final class GraalCompilation {
                 if (GraalOptions.Meter) {
                     context().metrics.BytecodesCompiled += method.codeSize();
                 }
-            } catch (CiBailout b) {
-                return new CiResult(null, b, stats);
+            } catch (CiBailout bailout) {
+                throw bailout;
             } catch (GraalInternalError e) {
                 throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
             } catch (Throwable t) {
-                if (GraalOptions.BailoutOnException) {
-                    return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
-                } else {
-                    throw new RuntimeException("Exception while compiling: " + method, t);
-                }
+                throw new RuntimeException("Exception while compiling: " + method, t);
             }
         } catch (GraalInternalError error) {
             if (context().isObserved()) {
@@ -184,7 +180,7 @@ public final class GraalCompilation {
             }
         }
 
-        return new CiResult(targetMethod, null, stats);
+        return targetMethod;
     }
 
     /**
@@ -357,7 +353,7 @@ public final class GraalCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-        frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
+        frameMap = this.compiler.backend.newFrameMap(this, method);
     }
 
     private void emitLIR(RiXirGenerator xir) {

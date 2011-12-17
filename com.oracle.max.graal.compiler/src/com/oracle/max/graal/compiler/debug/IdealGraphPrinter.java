@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.debug.BasicIdealGraphPrinter.Edge;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
@@ -45,31 +46,15 @@ import com.sun.cri.ri.*;
  */
 public class IdealGraphPrinter {
 
-    private static class Edge {
-        final String from;
-        final int fromIndex;
-        final String to;
-        final int toIndex;
-        final String label;
-
-        Edge(String from, int fromIndex, String to, int toIndex, String label) {
-            this.from = from;
-            this.fromIndex = fromIndex;
-            this.to = to;
-            this.toIndex = toIndex;
-            this.label = label;
-        }
-    }
-
+    private final BasicIdealGraphPrinter printer;
     private final HashSet<Class<?>> omittedClasses = new HashSet<Class<?>>();
-    private final PrintStream stream;
     private final Set<Node> noBlockNodes = new HashSet<Node>();
 
     /**
      * Creates a new {@link IdealGraphPrinter} that writes to the specified output stream.
      */
     public IdealGraphPrinter(OutputStream stream) {
-        this.stream = new PrintStream(stream);
+        this.printer = new BasicIdealGraphPrinter(stream);
     }
 
     /**
@@ -83,55 +68,59 @@ public class IdealGraphPrinter {
      * Flushes any buffered output.
      */
     public void flush() {
-        stream.flush();
+        printer.flush();
     }
 
     /**
      * Starts a new graph document.
      */
     public void begin() {
-        stream.println("<graphDocument>");
+        printer.begin();
     }
 
     /**
      * Starts a new group of graphs with the given name, short name and method byte code index (BCI) as properties.
      */
-    public void beginGroup(String name, String shortName, RiResolvedMethod method, int bci) {
-        stream.println("<group>");
-        stream.printf(" <properties><p name='name'>%s</p><p name='origin'>Graal</p></properties>%n", escape(name));
-        stream.printf(" <method name='%s' shortName='%s' bci='%d'>%n", escape(name), escape(shortName), bci);
+    public void beginGroup(String name, String shortName, RiResolvedMethod method, int bci, String origin) {
+        printer.beginGroup();
+        printer.beginProperties();
+        printer.printProperty("name", name);
+        printer.printProperty("origin", origin);
+        printer.endProperties();
+        printer.beginMethod(name, shortName, bci);
         if (GraalOptions.PrintIdealGraphBytecodes && method != null) {
-            StringBuilder sb = new StringBuilder(40);
-            stream.println("<bytecodes>\n<![CDATA[");
+            printer.beginBytecodes();
             BytecodeStream bytecodes = new BytecodeStream(method.code());
             while (bytecodes.currentBC() != Bytecodes.END) {
-                sb.setLength(0);
-                sb.append(bytecodes.currentBCI()).append(' ');
-                sb.append(Bytecodes.nameOf(bytecodes.currentBC()));
-                for (int i = bytecodes.currentBCI() + 1; i < bytecodes.nextBCI(); ++i) {
-                    sb.append(' ').append(bytecodes.readUByte(i));
+                int startBCI = bytecodes.currentBCI();
+                String mnemonic = Bytecodes.nameOf(bytecodes.currentBC());
+                int[] extra = null;
+                if (bytecodes.nextBCI() > startBCI + 1) {
+                    extra = new int[bytecodes.nextBCI() - (startBCI + 1)];
+                    for (int i = 0; i < extra.length; i++) {
+                        extra[i] = bytecodes.readUByte(startBCI + 1 + i);
+                    }
                 }
-                stream.println(sb.toString());
+                printer.printBytecode(startBCI, mnemonic, extra);
                 bytecodes.next();
             }
-            stream.println("]]></bytecodes>");
+            printer.endBytecodes();
         }
-        stream.println("</method>");
+        printer.endMethod();
     }
 
     /**
      * Ends the current group.
      */
     public void endGroup() {
-        stream.println("</group>");
+        printer.endGroup();
     }
 
     /**
      * Finishes the graph document and flushes the output stream.
      */
     public void end() {
-        stream.println("</graphDocument>");
-        flush();
+        printer.end();
     }
 
     public void print(Graph graph, String title, boolean shortNames) {
@@ -143,7 +132,7 @@ public class IdealGraphPrinter {
      */
     @SuppressWarnings("unchecked")
     public void print(Graph graph, String title, boolean shortNames, IdentifyBlocksPhase schedule) {
-        stream.printf(" <graph name='%s'>%n", escape(title));
+        printer.beginGraph(title);
         noBlockNodes.clear();
         if (schedule == null) {
             try {
@@ -167,26 +156,26 @@ public class IdealGraphPrinter {
             loops = null;
         }
 
-        stream.println("  <nodes>");
+        printer.beginNodes();
         List<Edge> edges = printNodes(graph, shortNames, schedule == null ? null : schedule.getNodeToBlock(), loops);
-        stream.println("  </nodes>");
+        printer.endNodes();
 
-        stream.println("  <edges>");
+        printer.beginEdges();
         for (Edge edge : edges) {
-            printEdge(edge);
+            printer.printEdge(edge);
         }
-        stream.println("  </edges>");
+        printer.endEdges();
 
         if (schedule != null) {
-            stream.println("  <controlFlow>");
+            printer.beginControlFlow();
             for (Block block : schedule.getBlocks()) {
                 printBlock(graph, block, schedule.getNodeToBlock());
             }
             printNoBlock();
-            stream.println("  </controlFlow>");
+            printer.endControlFlow();
         }
 
-        stream.println(" </graph>");
+        printer.endGraph();
         flush();
     }
 
@@ -253,8 +242,9 @@ public class IdealGraphPrinter {
                 continue;
             }
 
-            stream.printf("   <node id='%s'><properties>%n", node.toString(Verbosity.Id));
-            stream.printf("    <p name='idx'>%s</p>%n", node.toString(Verbosity.Id));
+            printer.beginNode(node.toString(Verbosity.Id));
+            printer.beginProperties();
+            printer.printProperty("idx", node.toString(Verbosity.Id));
 
             Map<Object, Object> props = node.getDebugProperties();
             if (!props.containsKey("name") || props.get("name").toString().trim().length() == 0) {
@@ -264,21 +254,21 @@ public class IdealGraphPrinter {
                 } else {
                     name = node.toString();
                 }
-                stream.printf("    <p name='name'>%s</p>%n", escape(name));
+                printer.printProperty("name", name);
             }
-            stream.printf("    <p name='class'>%s</p>%n", escape(node.getClass().getSimpleName()));
+            printer.printProperty("class", node.getClass().getSimpleName());
             Block block = nodeToBlock == null ? null : nodeToBlock.get(node);
             if (block != null) {
-                stream.printf("    <p name='block'>%d</p>%n", block.blockID());
+                printer.printProperty("block", Integer.toString(block.blockID()));
                 if (!(node instanceof PhiNode || node instanceof FrameState || node instanceof LocalNode || node instanceof InductionVariableNode) && !block.getInstructions().contains(node)) {
-                    stream.println("    <p name='notInOwnBlock'>true</p>");
+                    printer.printProperty("notInOwnBlock", "true");
                 }
             } else {
-                stream.println("    <p name='block'>noBlock</p>");
+                printer.printProperty("block", "noBlock");
                 noBlockNodes.add(node);
             }
             if (loopExits.isMarked(node)) {
-                stream.println("    <p name='loopExit'>true</p>");
+                printer.printProperty("loopExit", "true");
             }
             StringBuilder sb = new StringBuilder();
             if (loops != null) {
@@ -292,7 +282,7 @@ public class IdealGraphPrinter {
                 }
             }
             if (sb.length() > 0) {
-                stream.printf("    <p name='loops'>%s</p>%n", sb);
+                printer.printProperty("loops", sb.toString());
             }
 
             Set<Entry<String, Integer>> nodeColors = colors.get(node);
@@ -300,7 +290,7 @@ public class IdealGraphPrinter {
                 for (Entry<String, Integer> color : nodeColors) {
                     String name = color.getKey();
                     Integer value = color.getValue();
-                    stream.printf("    <p name='%s'>%d</p>%n", name, value);
+                    printer.printProperty(name, Integer.toString(value));
                 }
             }
             Set<Entry<String, String>> nodeColorStrings = colorsToString.get(node);
@@ -308,29 +298,24 @@ public class IdealGraphPrinter {
                 for (Entry<String, String> color : nodeColorStrings) {
                     String name = color.getKey();
                     String value = color.getValue();
-                    stream.printf("    <p name='%s'>%s</p>%n", name, value);
+                    printer.printProperty(name, value);
                 }
             }
             Set<String> nodeBits = bits.get(node);
             if (nodeBits != null) {
                 for (String bit : nodeBits) {
-                    stream.print("    <p name='");
-                    stream.print(bit);
-                    stream.println("'>true</p>");
+                    printer.printProperty(bit, "true");
                 }
             }
 
             for (Entry<Object, Object> entry : props.entrySet()) {
                 String key = entry.getKey().toString();
                 String value = entry.getValue() == null ? "null" : entry.getValue().toString();
-                stream.print("    <p name='");
-                stream.print(escape(key));
-                stream.print("'>");
-                stream.print(escape(value));
-                stream.println("</p>");
+                printer.printProperty(key, value);
             }
 
-            stream.println("   </properties></node>");
+            printer.endProperties();
+            printer.endNode();
 
             // successors
             int fromIndex = 0;
@@ -360,20 +345,16 @@ public class IdealGraphPrinter {
         return edges;
     }
 
-    private void printEdge(Edge edge) {
-        stream.printf("   <edge from='%s' fromIndex='%d' to='%s' toIndex='%d' label='%s' />%n", edge.from, edge.fromIndex, edge.to, edge.toIndex, edge.label);
-    }
-
     private void printBlock(Graph graph, Block block, NodeMap<Block> nodeToBlock) {
-        stream.printf("   <block name='%d'>%n", block.blockID());
-        stream.println("    <successors>");
+        printer.beginBlock(Integer.toString(block.blockID()));
+        printer.beginSuccessors();
         for (Block sux : block.getSuccessors()) {
             if (sux != null) {
-                stream.printf("     <successor name='%d'/>%n", sux.blockID());
+                printer.printSuccessor(Integer.toString(sux.blockID()));
             }
         }
-        stream.println("    </successors>");
-        stream.println("    <nodes>");
+        printer.endSuccessors();
+        printer.beginBlockNodes();
 
         Set<Node> nodes = new HashSet<Node>(block.getInstructions());
 
@@ -417,71 +398,24 @@ public class IdealGraphPrinter {
 
             for (Node node : nodes) {
                 if (!omittedClasses.contains(node.getClass())) {
-                    stream.printf("     <node id='%s'/>%n", node.toString(Verbosity.Id));
+                    printer.printBlockNode(node.toString(Verbosity.Id));
                 }
             }
         }
-        stream.println("    </nodes>");
-        stream.printf("   </block>%n", block.blockID());
+        printer.endBlockNodes();
+        printer.endBlock();
     }
 
     private void printNoBlock() {
         if (!noBlockNodes.isEmpty()) {
-            stream.printf("   <block name='noBlock'>%n");
-            stream.printf("    <nodes>%n");
+            printer.beginBlock("noBlock");
+            printer.beginBlockNodes();
             for (Node node : noBlockNodes) {
-                stream.printf("     <node id='%s'/>%n", node.toString(Verbosity.Id));
+                printer.printBlockNode(node.toString(Verbosity.Id));
             }
-            stream.printf("    </nodes>%n");
-            stream.printf("   </block>%n");
+            printer.endBlockNodes();
+            printer.endBlock();
         }
     }
 
-    private String escape(String s) {
-        StringBuilder str = null;
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            switch (c) {
-                case '&':
-                case '<':
-                case '>':
-                case '"':
-                case '\'':
-                    if (str == null) {
-                        str = new StringBuilder();
-                        str.append(s, 0, i);
-                    }
-                    switch(c) {
-                        case '&':
-                            str.append("&amp;");
-                            break;
-                        case '<':
-                            str.append("&lt;");
-                            break;
-                        case '>':
-                            str.append("&gt;");
-                            break;
-                        case '"':
-                            str.append("&quot;");
-                            break;
-                        case '\'':
-                            str.append("&apos;");
-                            break;
-                        default:
-                            assert false;
-                    }
-                    break;
-                default:
-                    if (str != null) {
-                        str.append(c);
-                    }
-                    break;
-            }
-        }
-        if (str == null) {
-            return s;
-        } else {
-            return str.toString();
-        }
-    }
 }

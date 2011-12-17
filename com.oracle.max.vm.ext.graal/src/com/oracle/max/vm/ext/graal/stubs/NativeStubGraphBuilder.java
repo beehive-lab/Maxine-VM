@@ -254,7 +254,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
     protected void applyPhasesBeforeInlining(StructuredGraph graph) {
         apply(new FoldPhase(runtime()), graph);
         apply(new MaxineIntrinsicsPhase(), graph);
-        apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null), graph);
+        apply(new MustInlinePhase(runtime(), new HashMap<RiMethod, StructuredGraph>(), null, GraphBuilderConfiguration.getDefault()), graph);
         apply(new CanonicalizerPhase(null, runtime(), null), graph);
     }
 
@@ -297,10 +297,11 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             observer.compilationStarted(NativeStubGraphBuilder.class.getSimpleName() + ":" + name);
         }
 
-        apply(new GraphBuilderPhase(runtime, method, null, false, true), graph);
+        GraphBuilderConfiguration config = GraphBuilderConfiguration.getDeoptFreeDefault();
+        apply(new GraphBuilderPhase(runtime, method, null, config), graph);
         apply(new FoldPhase(runtime), graph);
         apply(new MaxineIntrinsicsPhase(), graph);
-        apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null), graph);
+        apply(new MustInlinePhase(runtime, new HashMap<RiMethod, StructuredGraph>(), null, config), graph);
         apply(new CanonicalizerPhase(null, runtime, null), graph);
         apply(new DeadCodeEliminationPhase(), graph);
 

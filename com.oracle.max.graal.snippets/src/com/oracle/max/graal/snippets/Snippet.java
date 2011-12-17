@@ -20,35 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.hotspot;
+package com.oracle.max.graal.snippets;
 
-import com.oracle.max.graal.hotspot.nodes.*;
-import com.oracle.max.graal.nodes.*;
+import java.lang.annotation.*;
 
-/**
- * Builder for HotSpot intrinsic method graphs.
- */
-public class HotSpotIntrinsicGraphBuilder {
-
-    private final HotSpotRuntime runtime;
-
-    public HotSpotIntrinsicGraphBuilder(HotSpotRuntime runtime) {
-        this.runtime = runtime;
-    }
-
-    public StructuredGraph buildGraph(HotSpotIntrinsic intrinsic) {
-        switch (intrinsic) {
-            case Thread_currentThread:
-                return buildCurrentThread();
-        }
-        return null;
-    }
-
-    private StructuredGraph buildCurrentThread() {
-        StructuredGraph graph = new StructuredGraph();
-        ReturnNode ret = graph.add(new ReturnNode(graph.unique(new CurrentThread(runtime.config.threadObjectOffset))));
-        graph.start().setNext(ret);
-        return graph;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Snippet {
 
 }
