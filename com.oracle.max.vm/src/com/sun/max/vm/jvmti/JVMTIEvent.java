@@ -256,7 +256,7 @@ public class JVMTIEvent {
             if (eventType == SINGLE_STEP) {
                 JVMTIBreakpoints.setSingleStep(mode == JVMTI_ENABLE);
             }
-            JVMTIThreadFunctions.deOptForEvent(eventType, mode, eventThread);
+            JVMTICode.deOptForEvent(eventType, mode, eventThread);
         }
 
         return JVMTI_ERROR_NONE;

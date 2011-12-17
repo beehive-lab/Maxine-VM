@@ -24,6 +24,7 @@ package com.sun.max.vm.jvmti;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.*;
 
 /**
  * Efficient state storage for thread related JVMTI information.
@@ -35,7 +36,7 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIVmThreadLocal {
     public static final VmThreadLocal JVMTI_STATE = new VmThreadLocal(
-                    "JVMTI", false, "For use by JVMTI");
+                    "JVMTI", false, "For use by JVMTI", Nature.Single);
 
     /**
      * Bit is set when a {@link JVMTIRawMonitor#notify()} has occurred on this thread.

@@ -26,6 +26,7 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
+import com.oracle.max.vm.ext.t1x.jvmti.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -66,6 +67,8 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     private int breakpointIndex;
     private boolean singleStep;
     private MethodID methodID;
+    private boolean[] eventBci;
+    private boolean anyEventCalls;
 
     private final T1X defaultT1X;
 
@@ -76,8 +79,19 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
+    protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
+        // if we compiled any event calls create a JVMTI_T1XTargetMethod, otherwise a vanila one
+        if (anyEventCalls) {
+            return new JVMTI_T1XTargetMethod(comp, install, eventBci);
+        } else {
+            return new T1XTargetMethod(comp, install);
+        }
+    }
+
+    @Override
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         super.initCompile(method, codeAttribute);
+        eventBci = new boolean[bciToPos.length];
         breakpoints = JVMTIBreakpoints.getBreakpoints(method);
         breakpointIndex = 0;
         singleStep = JVMTIBreakpoints.isSingleStepEnabled();
@@ -99,10 +113,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void beginBytecode(int opcode) {
         super.beginBytecode(opcode);
+        int currentBCI = stream.currentBCI();
         long id = 0;
+        boolean eventCall = false;
         boolean breakPossible = breakpoints != null && breakpointIndex < breakpoints.length;
         if (singleStep || breakPossible) {
-            int currentBCI = stream.currentBCI();
             if (breakPossible && JVMTIBreakpoints.getLocation(breakpoints[breakpointIndex]) == currentBCI) {
                 id = breakpoints[breakpointIndex++];
                 if (singleStep) {
@@ -118,6 +133,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
                 start(BREAKPOINT);
                 assignLong(0, "id", id);
                 finish();
+                eventCall = true;
             }
         }
 
@@ -133,11 +149,16 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
             case Bytecodes.RETURN:
-                setTemplates(JVMTI.byteCodeEventNeeded(opcode));
+                eventCall = JVMTI.byteCodeEventNeeded(opcode);
+                setTemplates(eventCall);
                 break;
 
 
             default:
+        }
+        eventBci[currentBCI] = eventCall;
+        if (eventCall) {
+            anyEventCalls = true;
         }
     }
 
