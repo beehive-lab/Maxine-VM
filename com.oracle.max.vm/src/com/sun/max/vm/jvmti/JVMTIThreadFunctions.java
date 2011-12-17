@@ -36,7 +36,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.jni.*;
@@ -199,7 +198,7 @@ public class JVMTIThreadFunctions {
         }
     }
 
-    private static class StackElement {
+    static class StackElement {
         ClassMethodActor classMethodActor;
         int bci;
         FrameAccessWithIP frameAccess;
@@ -234,7 +233,7 @@ public class JVMTIThreadFunctions {
      * In the initial scan downwards all VM frames are dropped until a non-VM frame
      * is seen, then all frames are kept (except reflection stubs).
      */
-    private static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
+    static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
         boolean seenNonVMFrame;
         LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
         @Override
@@ -394,7 +393,7 @@ public class JVMTIThreadFunctions {
         }
     }
 
-    private static class SingleThreadStackTraceVmOperation extends VmOperation {
+    static class SingleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor stackTraceVisitor;
 
         /**
@@ -416,7 +415,7 @@ public class JVMTIThreadFunctions {
     /**
      * Convenience class for commonly used operation.
      */
-    private static class FindAppFramesStackTraceOperation extends SingleThreadStackTraceVmOperation {
+    static class FindAppFramesStackTraceOperation extends SingleThreadStackTraceVmOperation {
         FindAppFramesStackTraceOperation(VmThread vmThread) {
             super(vmThread, new FindAppFramesStackTraceVisitor());
         }
@@ -474,7 +473,7 @@ public class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    private static class MultipleThreadStackTraceVmOperation extends VmOperation {
+    static class MultipleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor[] stackTraceVisitors;
         Thread[] threads;
 
@@ -841,36 +840,6 @@ public class JVMTIThreadFunctions {
 
     static int setLocalObject(Thread thread, int depth, int slot, Object value) {
         return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_OBJECT, value));
-    }
-
-    // deopt support
-
-    /**
-     * Handle any change in compiled code for the methods on the (logical) call stack, using deopt.
-     * N.B. This method may be called multiple times for different events on the same (suspended) thread
-     */
-    static void deOptForEvent(int eventType, int mode, Thread thread) {
-        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(VmThread.fromJava(thread)).submitOp();
-        if (mode == JVMTI_ENABLE) {
-            // its not clear whether we should deopt every frame at this point.
-            // currently there is a bug walking stacks containing a deopt stub so
-            // we only deopt the top frame
-            ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
-            for (int i = 0; i < op.stackTraceVisitor.stackElements.size(); i++) {
-                ClassMethodActor methodActor = op.stackTraceVisitor.getStackElement(i).classMethodActor;
-                TargetMethod targetMethod = methodActor.currentTargetMethod();
-                targetMethod.finalizeReferenceMaps();
-                targetMethods.add(targetMethod);
-                // just top frame for now
-                break;
-            }
-            // Calling this multiple times before the thread resumes is harmless as it takes care to
-            // filter out already invalidated methods. However, it would be better to be able to detect
-            // the multiple calls and just do all this once.
-            new Deoptimization(targetMethods).go();
-        } else {
-            // is it worth re-opting.
-        }
     }
 
     // Thread suspend/resume/stop/interrupt

@@ -536,7 +536,7 @@ public class Deoptimization extends VmOperation {
         // The following are initially the details of the frame being deoptimized.
         // Just before unrolling, they are then modified to reflect the top
         // deoptimized frame.
-        NativeOrVmIP ip = new NativeOrVmIP();
+        public final NativeOrVmIP ip = new NativeOrVmIP();
         Pointer sp;
         Pointer fp;
 
