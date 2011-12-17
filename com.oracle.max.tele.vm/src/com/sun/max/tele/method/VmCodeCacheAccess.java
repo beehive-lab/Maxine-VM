@@ -144,6 +144,11 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
             allocations.add(codeCacheRegion.memoryRegion());
         }
 
+        // The VM's CodePointer class will be used to detect tagged code pointers in VM memory
+        // This initialization assumes that the start of the boot code cache is the lowest address in
+        // VM memory that can hold code, since that is used as the base in the VM for these pointers.
+        CodePointer.initialize(bootCodeCacheRegion.memoryRegion().start());
+
         lastUpdateEpoch = epoch;
         tracer.end(null);
     }

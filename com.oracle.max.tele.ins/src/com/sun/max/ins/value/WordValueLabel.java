@@ -328,6 +328,9 @@ public class WordValueLabel extends ValueLabel {
     /** Non-null if a pointer into a method compilation. */
     private MaxCompilation compilation;
 
+    /** Non-null if a tagged pointer into a method compilation, only meaningful if compilation is non-null. */
+    private RemoteCodePointer taggedCodePointer;
+
     /** Non-null if a pointer into a native function. */
     TeleNativeFunction nativeFunction;
 
@@ -339,6 +342,7 @@ public class WordValueLabel extends ValueLabel {
         teleObject = null;
         teleClassActor = null;
         compilation = null;
+        taggedCodePointer = null;
         thread = null;
 
         if (newValue == VoidValue.VOID) {
@@ -388,6 +392,14 @@ public class WordValueLabel extends ValueLabel {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     } else {
                         compilation = vm().machineCode().findCompilation(address);
+                        if (compilation == null) {
+                            // No compilation at that address; maybe it's really a tagged pointer.
+                            taggedCodePointer = vm().machineCode().makeCodePointerFromTaggedLong(address.toLong());
+                            if (taggedCodePointer != null) {
+                                // Could be a code pointer
+                                compilation = vm().machineCode().findCompilation(taggedCodePointer);
+                            }
+                        }
                         if (compilation != null) {
                             // The word points at a method compilation
                             final Address codeStart = compilation.getCodeStart();
@@ -626,8 +638,9 @@ public class WordValueLabel extends ValueLabel {
                 setFont(wordDataFont);
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(hexString);
+                final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                "<br>" + tagged + "Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
                                 "<br>" + htmlify(nameDisplay.longName(compilation)));
                 break;
             }
@@ -635,8 +648,9 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(nameDisplay.veryShortName(compilation));
+                final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                "<br>" + tagged + "Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
                                 "<br>" + htmlify(nameDisplay.longName(compilation)));
                 break;
             }
@@ -679,8 +693,9 @@ public class WordValueLabel extends ValueLabel {
                 setWrappedText(hexString);
                 if (compilation != null) {
                     final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
+                    final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
                     setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                    "<br>" + tagged + "Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
                                     "<br>" + htmlify(nameDisplay.longName(compilation)) +
                                     "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }
@@ -692,8 +707,9 @@ public class WordValueLabel extends ValueLabel {
                 if (compilation != null) {
                     setWrappedText(htmlify(nameDisplay.veryShortName(compilation, value.toWord().asAddress())));
                     final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
+                    final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
                     setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
+                                    "<br>" + tagged + "Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
                                     "<br>" + htmlify(nameDisplay.longName(compilation)) +
                                     "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }

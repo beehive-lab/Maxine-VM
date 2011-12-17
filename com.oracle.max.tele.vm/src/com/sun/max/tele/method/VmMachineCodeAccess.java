@@ -269,6 +269,27 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         return vm().nativeCode().makeCodePointer(address);
     }
 
+    /**
+     * Treats a long value as if it were a tagged code pointer and creates a legitimate
+     * pointer at what would be the actual location, if that location contains code.
+     * This is a heuristic and may produce false positives.
+     *
+     * @param value contents of a word in VM memory
+     * @return a VM location containing code pointed at by the value, if treated as a code pointer; null if no code at that location.
+     * @see CodePointer
+     */
+    public RemoteCodePointer makeCodePointerFromTaggedLong(long value) {
+        // First check: can only be a legitimate tagged pointer if low order bit is set
+        if ((value & 1L) != 0) {
+            // Create an instance of the (hosted only) VM code pointer object
+            final CodePointer vmCodePointer = CodePointer.fromTaggedLong(value);
+            // Compute the equivalent address for the pointer and see if it points at code.
+            final RemoteCodePointer remoteCodePointer = makeCodePointer(vmCodePointer.toAddress());
+            return remoteCodePointer;
+        }
+        return null;
+    }
+
 
     public TeleCompilation findCompilation(RemoteCodePointer codePointer) {
         return findCompilation(codePointer.getAddress());
