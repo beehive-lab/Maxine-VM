@@ -51,7 +51,7 @@ public class StandardOpcode {
     }
 
     public interface CallOpcode extends LIROpcode {
-        LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots);
+        LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks);
     }
 
     public interface ReturnOpcode extends LIROpcode {
@@ -60,6 +60,6 @@ public class StandardOpcode {
 
     public interface XirOpcode extends LIROpcode {
         LIRInstruction create(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, CiValue[] inputs, CiValue[] temps, int[] inputOperandIndices, int[] tempOperandIndices, int outputOperandIndex,
-                        LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots);
+                        LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method);
     }
 }

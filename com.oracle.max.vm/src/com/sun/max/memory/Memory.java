@@ -43,6 +43,7 @@ public final class Memory {
     }
 
     public static final OutOfMemoryError OUT_OF_MEMORY_ERROR = new OutOfMemoryError();
+    public static final long ZAPPED_MARKER = 0xDEADBEEFCAFEBABEL;
 
     @C_FUNCTION
     private static native Pointer memory_allocate(Size size);
@@ -231,7 +232,11 @@ public final class Memory {
     public static void zapRegion(MemoryRegion region) {
         FatalError.check(region.start().isWordAligned(), "Can only zap word-aligned region");
         FatalError.check(region.size().remainder(Word.size()) == 0, "Can only zap region of words");
-        setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
+        setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), zappedMarker());
     }
 
+    @FOLD
+    public static Address zappedMarker() {
+        return Address.fromLong(ZAPPED_MARKER);
+    }
 }

@@ -124,9 +124,6 @@ public class VMEntriesNative implements VMEntries, Remote {
     public native RiType getType(Class<?> javaClass);
 
     @Override
-    public native void recordBailout(String reason);
-
-    @Override
     public int getArrayLength(CiConstant array) {
         return Array.getLength(array.asObject());
     }

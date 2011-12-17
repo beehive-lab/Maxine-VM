@@ -44,8 +44,6 @@ public interface FrameStateAccess {
 
     ValueNode stackAt(int i);
 
-    void setValueAt(int j, ValueNode v);
-
     void setRethrowException(boolean b);
 
     FrameState outerFrameState();

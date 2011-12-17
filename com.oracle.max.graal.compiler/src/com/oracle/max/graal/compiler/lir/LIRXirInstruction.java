@@ -37,7 +37,6 @@ public abstract class LIRXirInstruction extends LIRInstruction {
     public final int[] tempOperandIndices;
     public final XirSnippet snippet;
     public final RiMethod method;
-    public final List<CiValue> pointerSlots;
     public final LIRDebugInfo infoAfter;
     private LabelRef trueSuccessor;
     private LabelRef falseSuccessor;
@@ -51,12 +50,11 @@ public abstract class LIRXirInstruction extends LIRInstruction {
                              int outputOperandIndex,
                              LIRDebugInfo info,
                              LIRDebugInfo infoAfter,
-                             RiMethod method,
-                             List<CiValue> pointerSlots) {
-        super(opcode, outputOperand, info, inputs, temps);
+                             RiMethod method) {
+        // Note that we register the XIR input operands as Alive, because the XIR specification allows that input operands
+        // are used at any time, even when the temp operands and the actual output operands have already be assigned.
+        super(opcode, outputOperand, info, LIRInstruction.NO_OPERANDS, inputs, temps);
         this.infoAfter = infoAfter;
-        this.pointerSlots = pointerSlots;
-        assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
         this.method = method;
         this.snippet = snippet;
         this.inputOperandIndices = inputOperandIndices;
@@ -85,7 +83,7 @@ public abstract class LIRXirInstruction extends LIRInstruction {
 
     public CiValue[] getOperands() {
         for (int i = 0; i < inputOperandIndices.length; i++) {
-            originalOperands[inputOperandIndices[i]] = input(i);
+            originalOperands[inputOperandIndices[i]] = alive(i);
         }
         for (int i = 0; i < tempOperandIndices.length; i++) {
             originalOperands[tempOperandIndices[i]] = temp(i);

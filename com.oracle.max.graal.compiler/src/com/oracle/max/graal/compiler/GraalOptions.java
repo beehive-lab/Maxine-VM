@@ -69,7 +69,6 @@ public final class GraalOptions {
     public static int     MethodEndBreakpointGuards          = 0;
     public static boolean ZapStackOnMethodEntry              = ____;
     public static boolean StressLinearScan                   = ____;
-    public static boolean BailoutOnException                 = ____;
     public static boolean DeoptALot                          = ____;
     public static boolean VerifyPhases                       = true;
     public static boolean CreateDeoptInfo                    = ____;
@@ -126,7 +125,8 @@ public final class GraalOptions {
     public static boolean TraceReadElimination               = ____;
     public static boolean TraceGVN                           = ____;
     public static int     TraceBytecodeParserLevel           = 0;
-    public static boolean QuietBailout                       = true;
+    public static boolean ExitVMOnBailout                    = ____;
+    public static boolean ExitVMOnException                  = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode             = true;
@@ -174,4 +174,14 @@ public final class GraalOptions {
     public static boolean OptReorderLoops                    = true;
     public static boolean OptEliminateGuards                 = true;
     public static boolean OptImplicitNullChecks              = true;
+
+    /**
+     * Flag to turn on SSA-based register allocation, which is currently under development.
+     */
+    public static boolean AllocSSA                           = false;
+
+    static {
+        // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
+        assert (DetailedAsserts = true) == true;
+    }
 }

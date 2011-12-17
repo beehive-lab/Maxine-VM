@@ -146,7 +146,7 @@ public final class OperandPool {
      * @return a new variable
      */
     public CiVariable newVariable(CiKind kind) {
-        // TODO since CiVariable.get ensures that the variable kind is a stackKind, the checks for Boolean and Byte here are useless!
+        // TODO since we ensure that the variable kind is a stackKind, the checks for Boolean and Byte here are useless!
         return newVariable(kind, kind == CiKind.Boolean || kind == CiKind.Byte ? VariableFlag.MustBeByteRegister : null);
     }
 
@@ -159,6 +159,8 @@ public final class OperandPool {
      */
     public CiVariable newVariable(CiKind kind, VariableFlag flag) {
         assert kind != CiKind.Void;
+        assert kind.stackKind() == kind : "Variables can only be created for stack-kinds";
+
         int varIndex = variables.size();
         CiVariable var = CiVariable.get(kind, varIndex);
         setFlag(var, flag);
@@ -275,5 +277,9 @@ public final class OperandPool {
      */
     public int maxRegisterNumber() {
         return firstVariableNumber - 1;
+    }
+
+    public int numVariables() {
+        return variables.size();
     }
 }

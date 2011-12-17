@@ -50,7 +50,7 @@ public abstract class FixedWithNextNode extends FixedNode {
         setNext(null);
         replaceAtPredecessors(next);
         replaceAtUsages(other);
-        delete();
+        safeDelete();
     }
 
     public void replaceWithFixedWithNext(FixedWithNextNode other) {

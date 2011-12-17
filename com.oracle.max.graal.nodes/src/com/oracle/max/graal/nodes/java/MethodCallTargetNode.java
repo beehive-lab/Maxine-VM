@@ -89,8 +89,7 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
      *         invocation does not take a receiver object
      */
     public ValueNode receiver() {
-        assert !isStatic();
-        return arguments().get(0);
+        return isStatic() ? null : arguments().get(0);
     }
 
     /**
@@ -136,9 +135,15 @@ public class MethodCallTargetNode extends CallTargetNode implements Node.Iterabl
     public Node canonical(CanonicalizerTool tool) {
         if (!isStatic()) {
             ValueNode receiver = receiver();
-            if (receiver != null && receiver.exactType() != null && invokeKind == InvokeKind.Interface) {
-                invokeKind = InvokeKind.Virtual;
-                targetMethod = receiver.exactType().resolveMethodImpl(targetMethod);
+            if (receiver != null && receiver.exactType() != null) {
+                if (invokeKind == InvokeKind.Interface) {
+                    invokeKind = InvokeKind.Virtual;
+                    targetMethod = receiver.exactType().resolveMethodImpl(targetMethod);
+                }
+                if (receiver.isConstant() && invokeKind == InvokeKind.Virtual) {
+                    invokeKind = InvokeKind.Special;
+                    targetMethod = receiver.exactType().resolveMethodImpl(targetMethod);
+                }
             }
         }
         return this;

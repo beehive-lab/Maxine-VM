@@ -23,6 +23,7 @@
 package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.graal.compiler.asm.*;
+import com.oracle.max.graal.compiler.lir.LIRDebugInfo.ValueProcedure;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
@@ -37,24 +38,35 @@ public abstract class LIRInstruction {
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     /**
-     * Constants denoting how a LIR instruction uses an operand. Any combination of these modes
-     * can be applied to an operand as long as every operand has at least one mode applied to it.
+     * Constants denoting how a LIR instruction uses an operand.
      */
     public enum OperandMode {
         /**
-         * An operand that is defined by this LIR instruction and is live after the code emitted for a LIR instruction.
-         */
-        Output,
-
-        /**
-         * An operand that is used by this LIR instruction and is live before the code emitted for this LIR instruction.
+         * The value must have been defined before. It is alive before the instruction until the beginning of the
+         * instruction, but not necessarily throughout the instruction. A register assigned to it can also be assigend
+         * to a Temp or Output operand. The value can be used again after the instruction, so the instruction must not
+         * modify the register.
          */
         Input,
 
         /**
-         * An operand that is used internally by this LIR instruction, i.e., it must get different register than any output operand.
+         * The value must have been defined before. It is alive before the instruction and throughout the instruction. A
+         * register assigned to it cannot be assigned to a Temp or Output operand. The value can be used again after the
+         * instruction, so the instruction must not modify the register.
          */
-        Temp
+        Alive,
+
+        /**
+         * The value must not have been defined before, and must not be used after the instruction. The instruction can
+         * do whatever it wants with the register assigned to it (or not use it at all).
+         */
+        Temp,
+
+        /**
+         * The value must not have been defined beforee. The instruction has to assign a value to the register. The
+         * value can (and most likely will) be used after the instruction.
+         */
+        Output,
     }
 
     /**
@@ -73,6 +85,11 @@ public abstract class LIRInstruction {
     protected final CiValue[] inputs;
 
     /**
+     * The alive operands for this instruction (modified by the register allocator).
+     */
+    protected final CiValue[] alives;
+
+    /**
      * The temp operands for this instruction (modified by the register allocator).
      */
     protected final CiValue[] temps;
@@ -88,13 +105,6 @@ public abstract class LIRInstruction {
     private int id;
 
     /**
-     * Constructs a new LIR instruction that has input operands, but no temp operands.
-     */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs) {
-        this (opcode, result, info, inputs, NO_OPERANDS);
-    }
-
-    /**
      * Constructs a new LIR instruction that has input and temp operands.
      *
      * @param opcode the opcode of the new instruction
@@ -104,10 +114,11 @@ public abstract class LIRInstruction {
      * @param inputs the input operands for the instruction.
      * @param temps the temp operands for the instruction.
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs, CiValue[] temps) {
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs, CiValue[] alives, CiValue[] temps) {
         this.code = opcode;
         this.result = result;
         this.inputs = inputs;
+        this.alives = alives;
         this.temps = temps;
         this.info = info;
         this.id = -1;
@@ -132,6 +143,16 @@ public abstract class LIRInstruction {
      */
     public final CiValue input(int index) {
         return inputs[index];
+    }
+
+    /**
+     * Gets an alive operand of this instruction.
+     *
+     * @param index the index of the operand requested.
+     * @return the {@code index}'th alive operand.
+     */
+    public final CiValue alive(int index) {
+        return alives[index];
     }
 
     /**
@@ -161,13 +182,14 @@ public abstract class LIRInstruction {
     }
 
     public boolean hasOperands() {
-        return inputs.length > 0 || temps.length > 0 || info != null || hasCall();
+        return inputs.length > 0 || alives.length > 0 || temps.length > 0 || info != null || hasCall();
     }
 
     public final int operandCount(OperandMode mode) {
         switch (mode) {
             case Output: return result.isLegal() ? 1 : 0;
             case Input:  return inputs.length;
+            case Alive:  return alives.length;
             case Temp:   return temps.length;
             default:     throw Util.shouldNotReachHere();
         }
@@ -178,6 +200,7 @@ public abstract class LIRInstruction {
         switch (mode) {
             case Output: return result;
             case Input:  return inputs[index];
+            case Alive:  return alives[index];
             case Temp:   return temps[index];
             default:     throw Util.shouldNotReachHere();
         }
@@ -186,12 +209,22 @@ public abstract class LIRInstruction {
     public final void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
-        assert operandAt(mode, index).isVariable();
+        assert operandAt(mode, index).isVariable() && operandAt(mode, index).kind == location.kind;
         switch (mode) {
             case Output: result = location; break;
             case Input:  inputs[index] = location; break;
+            case Alive:  alives[index] = location; break;
             case Temp:   temps[index] = location; break;
             default:     throw Util.shouldNotReachHere();
+        }
+    }
+
+    public final void forEachOperand(OperandMode mode, ValueProcedure proc) {
+        for (int i = 0; i < operandCount(mode); i++) {
+            CiValue newValue = proc.doValue(operandAt(mode, i));
+            if (newValue != null) {
+                setOperandAt(mode, i, newValue);
+            }
         }
     }
 
@@ -204,12 +237,11 @@ public abstract class LIRInstruction {
 
     /**
      * Used by the register allocator.  The result operand of this instruction should get
-     * the same register assigned as the input operand with returned number.
-     * @return The number of the input operand that is used as a register hint for the output operand,
-     *         or -1 if no register hint should be defined.
+     * the same register assigned as the returned operand.
+     * @return The register hint for the output operand, or null if no register hint should be defined.
      */
-    public int registerHint() {
-        return -1;
+    public CiValue registerHint() {
+        return null;
     }
 
     /**
@@ -243,7 +275,7 @@ public abstract class LIRInstruction {
         if (result.isLegal()) {
             buf.append(operandFmt.format(result)).append(" = ");
         }
-        if (inputs.length > 1) {
+        if (inputs.length + alives.length > 1) {
             buf.append("(");
         }
         String sep = "";
@@ -251,20 +283,24 @@ public abstract class LIRInstruction {
             buf.append(sep).append(operandFmt.format(input));
             sep = ", ";
         }
-        if (inputs.length > 1) {
+        for (CiValue input : alives) {
+            buf.append(sep).append(operandFmt.format(input)).append(" ~");
+            sep = ", ";
+        }
+        if (inputs.length + alives.length > 1) {
             buf.append(")");
         }
 
-        if (temps.length > 1) {
-            buf.append("{");
+        if (temps.length > 0) {
+            buf.append(" [");
         }
         sep = "";
         for (CiValue temp : temps) {
             buf.append(sep).append(operandFmt.format(temp));
             sep = ", ";
         }
-        if (temps.length > 1) {
-            buf.append("}");
+        if (temps.length > 0) {
+            buf.append("]");
         }
         return buf.toString();
     }
@@ -294,7 +330,7 @@ public abstract class LIRInstruction {
 
     protected void appendDebugInfo(StringBuilder buf, Formatter operandFmt, LIRDebugInfo info) {
         if (info != null) {
-            buf.append(" [bci:").append(info.state.bci);
+            buf.append(" [bci:").append(info.topFrame.bci);
             if (info.hasDebugInfo()) {
                 CiDebugInfo debugInfo = info.debugInfo();
                 String refmap = refMapToString(debugInfo, operandFmt);

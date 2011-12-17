@@ -214,15 +214,13 @@ public class CFGPrinter extends CompilationPrinter {
         }
 
         for (Node node : block.getInstructions()) {
-            if (node instanceof ValueNode) {
-                printNode((ValueNode) node);
-            }
+            printNode(node);
         }
         out.enableIndentation();
         end("IR");
     }
 
-    private void printNode(ValueNode node) {
+    private void printNode(Node node) {
         if (node instanceof FixedWithNextNode) {
             out.print("f ").print(HOVER_START).print("#").print(HOVER_SEP).print("fixed with next").print(HOVER_END).println(COLUMN_END);
         } else if (node instanceof FixedNode) {
@@ -230,9 +228,11 @@ public class CFGPrinter extends CompilationPrinter {
         } else if (node instanceof FloatingNode) {
             out.print("f ").print(HOVER_START).print("~").print(HOVER_SEP).print("floating").print(HOVER_END).println(COLUMN_END);
         }
-        CiValue operand = compilation.operand(node);
-        if (operand != null) {
-            out.print("result ").print(new OperandFormatter(false).format(operand)).println(COLUMN_END);
+        if (compilation.nodeOperands != null && node instanceof ValueNode) {
+            CiValue operand = compilation.operand((ValueNode) node);
+            if (operand != null) {
+                out.print("result ").print(new OperandFormatter(false).format(operand)).println(COLUMN_END);
+            }
         }
         out.print("tid ").print(nodeToString(node)).println(COLUMN_END);
 
@@ -251,9 +251,9 @@ public class CFGPrinter extends CompilationPrinter {
             out.print(entry.getKey().toString()).print(": ").print(entry.getValue() == null ? "[null]" : entry.getValue().toString()).println();
         }
         out.println("=== Inputs ===");
-        printNamedNodes(node, node.inputs().iterator(), "", "\n");
+        printNamedNodes(node, node.inputs().iterator(), "", "\n", null);
         out.println("=== Succesors ===");
-        printNamedNodes(node, node.successors().iterator(), "", "\n");
+        printNamedNodes(node, node.successors().iterator(), "", "\n", null);
         out.println("=== Usages ===");
         if (!node.usages().isEmpty()) {
             for (Node usage : node.usages()) {
@@ -267,21 +267,25 @@ public class CFGPrinter extends CompilationPrinter {
 
         out.print("instruction ");
         out.print(HOVER_START).print(node.getNodeClass().shortName()).print(HOVER_SEP).print(node.getClass().getName()).print(HOVER_END).print(" ");
-        printNamedNodes(node, node.inputs().iterator(), "", "");
-        printNamedNodes(node, node.successors().iterator(), "#", "");
+        printNamedNodes(node, node.inputs().iterator(), "", "", "#NDF");
+        printNamedNodes(node, node.successors().iterator(), "#", "", "#NDF");
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String key = entry.getKey().toString();
-            if (key.startsWith("data.") && !key.equals("data.kind")) {
+            if (key.startsWith("data.") && !key.equals("data.stamp")) {
                 out.print(key.substring("data.".length())).print(": ").print(entry.getValue() == null ? "[null]" : entry.getValue().toString()).print(" ");
             }
         }
         out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 
-    private void printNamedNodes(Node node, NodeClassIterator iter, String prefix, String suffix) {
+    private void printNamedNodes(Node node, NodeClassIterator iter, String prefix, String suffix, String hideSuffix) {
         int lastIndex = -1;
         while (iter.hasNext()) {
             Position pos = iter.nextPosition();
+            if (hideSuffix != null && node.getNodeClass().getName(pos).endsWith(hideSuffix)) {
+                continue;
+            }
+
             if (pos.index != lastIndex) {
                 if (lastIndex != -1) {
                     out.print(suffix);
@@ -360,11 +364,10 @@ public class CFGPrinter extends CompilationPrinter {
                 int level = out.indentationLevel();
                 out.adjustIndentation(-level);
                 String state;
-                if (inst.info.debugInfo != null) {
-                    // Use register-allocator output if available
-                    state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
+                if (inst.info.hasDebugInfo()) {
+                    state = debugInfoToString(inst.info.debugInfo().codePos, inst.info.debugInfo().registerRefMap, inst.info.debugInfo().frameRefMap, new OperandFormatter(false), target.arch);
                 } else {
-                    state = stateToString(inst.info.state, new OperandFormatter(false));
+                    state = debugInfoToString(inst.info.topFrame, null, null, new OperandFormatter(false), target.arch);
                 }
                 if (state != null) {
                     out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);

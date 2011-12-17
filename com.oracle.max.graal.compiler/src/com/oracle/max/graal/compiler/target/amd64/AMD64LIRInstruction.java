@@ -32,12 +32,8 @@ import com.sun.cri.ci.*;
  */
 public abstract class AMD64LIRInstruction extends LIRInstruction {
 
-    public AMD64LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs) {
-        super(opcode, result, info, inputs);
-    }
-
-    public AMD64LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs, CiValue[] temps) {
-        super(opcode, result, info, inputs, temps);
+    public AMD64LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs, CiValue[] alives, CiValue[] temps) {
+        super(opcode, result, info, inputs, alives, temps);
     }
 
     @Override

@@ -62,12 +62,19 @@ public class InliningPhase extends Phase implements InliningCallback {
 
     private final PhasePlan plan;
 
+    private final GraphBuilderConfiguration config;
+
     public InliningPhase(CiTarget target, GraalRuntime runtime, Collection<Invoke> hints, CiAssumptions assumptions, PhasePlan plan) {
+        this(target, runtime, hints, assumptions, plan, GraphBuilderConfiguration.getDefault(plan));
+    }
+
+    public InliningPhase(CiTarget target, GraalRuntime runtime, Collection<Invoke> hints, CiAssumptions assumptions, PhasePlan plan, GraphBuilderConfiguration config) {
         this.target = target;
         this.runtime = runtime;
         this.hints = hints;
         this.assumptions = assumptions;
         this.plan = plan;
+        this.config = config;
     }
 
     @SuppressWarnings("unchecked")
@@ -109,7 +116,9 @@ public class InliningPhase extends Phase implements InliningCallback {
                     }
                     // get the new nodes here, the canonicalizer phase will reset the mark
                     newNodes = graph.getNewNodes();
-                    new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    if (GraalOptions.OptCanonicalizer) {
+                        new CanonicalizerPhase(target, runtime, true, assumptions).apply(graph);
+                    }
                     if (GraalOptions.Intrinsify) {
                         new IntrinsificationPhase(runtime).apply(graph, context);
                     }
@@ -167,7 +176,7 @@ public class InliningPhase extends Phase implements InliningCallback {
     @Override
     public StructuredGraph buildGraph(RiResolvedMethod method) {
         StructuredGraph graph = new StructuredGraph();
-        new GraphBuilderPhase(runtime, method).apply(graph, context, true, false);
+        new GraphBuilderPhase(runtime, method, null, config).apply(graph, context, true, false);
 
         if (plan != null) {
             plan.runPhases(PhasePosition.AFTER_PARSING, graph, context);

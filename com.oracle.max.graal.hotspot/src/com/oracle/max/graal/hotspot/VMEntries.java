@@ -87,8 +87,6 @@ public interface VMEntries {
 
     RiType getType(Class<?> javaClass);
 
-    void recordBailout(String reason);
-
     RiType RiType_uniqueConcreteSubtype(HotSpotTypeResolved klass);
 
     RiType RiType_superType(HotSpotTypeResolved klass);

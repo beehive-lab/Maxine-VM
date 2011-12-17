@@ -605,6 +605,7 @@ public abstract class TargetMethod extends MemoryRegion {
                         }
                     }
                 } else {
+                    assert site.alignment == 0 : "Alignment for object literals not supported";
                     scalarsMap[dataIndex] = -1;
                 }
                 try {

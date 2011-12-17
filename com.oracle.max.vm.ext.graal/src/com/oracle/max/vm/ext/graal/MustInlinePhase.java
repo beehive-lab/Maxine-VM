@@ -38,11 +38,17 @@ public class MustInlinePhase extends Phase {
     private final MaxRuntime runtime;
     private final RiResolvedType accessor;
     private final Map<RiMethod, StructuredGraph> cache;
+    private final GraphBuilderConfiguration config;
 
     public MustInlinePhase(MaxRuntime runtime, Map<RiMethod, StructuredGraph> cache, RiResolvedType accessor) {
+        this(runtime, cache, accessor, GraphBuilderConfiguration.getDefault());
+    }
+
+    public MustInlinePhase(MaxRuntime runtime, Map<RiMethod, StructuredGraph> cache, RiResolvedType accessor, GraphBuilderConfiguration config) {
         this.runtime = runtime;
         this.cache = cache;
         this.accessor = accessor;
+        this.config = config;
     }
 
     @Override
@@ -54,14 +60,14 @@ public class MustInlinePhase extends Phase {
                 StructuredGraph inlineGraph = cache.get(method);
                 if (inlineGraph == null) {
                     inlineGraph = new StructuredGraph();
-                    new GraphBuilderPhase(runtime, method).apply(inlineGraph);
+                    new GraphBuilderPhase(runtime, method, null, config).apply(inlineGraph);
                     RiResolvedType curAccessor = getAccessor(method, accessor);
                     if (curAccessor != null) {
                         new AccessorPhase(runtime, curAccessor).apply(inlineGraph);
                     }
                     new FoldPhase(runtime).apply(inlineGraph);
                     new MaxineIntrinsicsPhase().apply(inlineGraph);
-                    new MustInlinePhase(runtime, cache, curAccessor).apply(inlineGraph, context);
+                    new MustInlinePhase(runtime, cache, curAccessor, config).apply(inlineGraph, context);
                     cache.put(method, inlineGraph);
                 }
                 InliningUtil.inline(invoke, inlineGraph, false);

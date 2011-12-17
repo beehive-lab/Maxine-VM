@@ -40,10 +40,12 @@ public enum AMD64CompareOpcode implements LIROpcode {
             || (name().startsWith("D") && left.kind == CiKind.Double && right.kind == CiKind.Double) : "left.kind=" + left.kind + ", right.kind=" + right.kind;
         CiValue[] inputs = new CiValue[] {left, right};
 
-        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs) {
+        return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, input(0), input(1));
+                CiValue left = input(0);
+                CiValue right = input(1);
+                emit(tasm, masm, left, right);
             }
 
             @Override
