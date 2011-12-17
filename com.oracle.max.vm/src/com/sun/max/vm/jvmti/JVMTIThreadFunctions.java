@@ -849,6 +849,7 @@ public class JVMTIThreadFunctions {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         new VmOperation.SuspendThreadSet(VmThread.fromJava(thread)).submit();
+        JVMTICode.suspendThreadNotify(VmThread.fromJava(thread));
         return JVMTI_ERROR_NONE;
     }
 
@@ -872,7 +873,9 @@ public class JVMTIThreadFunctions {
         }
         if (isSuspend) {
             new VmOperation.SuspendThreadSet(set).submit();
+            JVMTICode.suspendThreadListNotify(set);
         } else {
+            JVMTICode.resumeThreadListNotify(set);
             new VmOperation.ResumeThreadSet(set).submit();
         }
         return JVMTI_ERROR_NONE;
@@ -887,6 +890,7 @@ public class JVMTIThreadFunctions {
         if (!thread.isAlive()) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
+        JVMTICode.resumeThreadNotify(VmThread.fromJava(thread));
         new VmOperation.ResumeThreadSet(VmThread.fromJava(thread)).submit();
         return JVMTI_ERROR_NONE;
     }

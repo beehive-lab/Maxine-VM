@@ -68,7 +68,11 @@ public class JVMTI {
         /**
          * The global event settings for this agent.
          */
-        long eventSettings;
+        long globalEventSettings;
+        /**
+         * The per-thread event settings for this agent.
+         */
+        JVMTIEvent.PerThreadSettings perThreadEventSettings = new JVMTIEvent.PerThreadSettings();
         /**
          *  JVMTI thread local storage.
          */
@@ -248,9 +252,9 @@ public class JVMTI {
      * Support for determining if we need to compile special code to dispatch
      * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
      * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
-     * @return
+     * @return the eventId corresponding to the bytecode or 0 if not needed
      */
-    public static synchronized boolean byteCodeEventNeeded(int opcode) {
+    public static synchronized int byteCodeEventNeeded(int opcode) {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
@@ -273,11 +277,11 @@ public class JVMTI {
                     eventId = JVMTI_EVENT_FRAME_POP;
                     break;
                 default:
-                    return false;
+                    return 0;
 
             }
         }
-        return JVMTIEvent.isEventSet(eventId);
+        return JVMTIEvent.isEventSet(eventId) ? eventId : 0;
     }
 
     /**
@@ -292,8 +296,7 @@ public class JVMTI {
         if (env.isZero()) {
             return env;
         }
-        // just global for now
-        if (JVMTIEvent.isEventSet(eventId, vmThread)) {
+        if (JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread)) {
             return getCallBack(CALLBACKS.getPtr(env), eventId);
         }
         return Pointer.zero();

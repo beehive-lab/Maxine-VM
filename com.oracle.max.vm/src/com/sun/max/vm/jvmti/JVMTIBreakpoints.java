@@ -67,6 +67,7 @@ public class JVMTIBreakpoints {
     private static long[] table;
     private static EventArgThreadLocal eventArg = new EventArgThreadLocal();
     private static boolean singleStep;
+    private static Map<ClassMethodActor, long[]> methodBreakpointsMap = new HashMap<ClassMethodActor, long[]>();
 
     /**
      * Used in T1X template, so no inlining.
@@ -109,6 +110,7 @@ public class JVMTIBreakpoints {
         if (index < 0) {
             return JVMTI_ERROR_DUPLICATE;
         }
+        methodBreakpointsMap.put(classMethodActor, null);
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         if (targetMethod != null) {
             // compiled already, need to recompile
@@ -140,41 +142,46 @@ public class JVMTIBreakpoints {
     }
 
     /**
-     * Return the list of breakpoints set in the given method, as a sorted array.
-     * Since the low 32 bits are all the same we are effectively sorting by location.
+     * Return the list of breakpoints set in the given method, as a sorted array. Since the low 32 bits are all the same
+     * we are effectively sorting by location.
+     *
      * @param classMethodActor
      * @return
      */
-    public static long[] getBreakpoints(ClassMethodActor classMethodActor)  {
-        int count = 0;
-        long methodID = MethodID.fromMethodActor(classMethodActor).asAddress().toLong();
-        for (int i = 0; i < table().length; i++) {
-            if (getMethodID(table[i]) == methodID) {
-                count++;
-            }
-        }
-        if (count == 0) {
-            return null;
-        }
-        long[] result = new long[count];
-        count = 0;
-        for (int i = 0; i < table.length; i++) {
-            if (getMethodID(table[i]) == methodID) {
-                result[count++] = table[i];
-            }
-        }
-        switch (count) {
-            case 1:
-                break;
-            case 2:
-                if (result[0] > result[1]) {
-                    long temp = result[0];
-                    result[0] = result[1];
-                    result[1] = temp;
+    public static long[] getBreakpoints(ClassMethodActor classMethodActor) {
+        long[] result = methodBreakpointsMap.get(classMethodActor);
+        if (result == null) {
+            int count = 0;
+            long methodID = MethodID.fromMethodActor(classMethodActor).asAddress().toLong();
+            for (int i = 0; i < table().length; i++) {
+                if (getMethodID(table[i]) == methodID) {
+                    count++;
                 }
-                break;
-            default:
-                Arrays.sort(result);
+            }
+            if (count == 0) {
+                return null;
+            }
+            result = new long[count];
+            count = 0;
+            for (int i = 0; i < table.length; i++) {
+                if (getMethodID(table[i]) == methodID) {
+                    result[count++] = table[i];
+                }
+            }
+            switch (count) {
+                case 1:
+                    break;
+                case 2:
+                    if (result[0] > result[1]) {
+                        long temp = result[0];
+                        result[0] = result[1];
+                        result[1] = temp;
+                    }
+                    break;
+                default:
+                    Arrays.sort(result);
+            }
+            methodBreakpointsMap.put(classMethodActor, result);
         }
         return result;
     }

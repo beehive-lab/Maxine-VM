@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 
 import java.util.*;
@@ -34,36 +33,52 @@ import com.sun.max.vm.jvmti.JVMTIThreadFunctions.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Everything concerned with modifications to compiled code.
+ * Everything concerned with modifications to compiled code for JVMTI code events.
  */
 public class JVMTICode {
 
     /**
+     * Called from {@link JVMTIEvent#setEventNotificationMode} to enable/disable events
+     * that require compiled code support. Experimentally, these come in bunches,
+     * one at a time, so we defer handling them until the thread is suspended/resumed.
+     * @param eventType
+     * @param mode
+     * @param thread
+     */
+    static void codeEvent(int eventType, int mode, Thread thread) {
+        if (eventType == JVMTI_EVENT_BREAKPOINT || eventType == JVMTI_EVENT_EXCEPTION) {
+            // no deopt needed for these
+            return;
+        }
+        assert thread != null; // TODO handle global code events
+        // Record the requested event in the {@link JVMTIVmThreadLocal#STATE}
+        JVMTIVmThreadLocal.orEventBits(VmThread.fromJava(thread).tla(), JVMTIEvent.bitSetting(eventType));
+    }
+
+    /**
      * Handle any change in compiled code for the methods on the (logical) call stack
      * necessary for the pervasive events such as SINGLE_STEP, FRAME_POP, for a single thread.
-     * N.B. This method may be called multiple times for different events on the same (suspended) thread.
      */
-    static void deOptForEvent(int eventType, int mode, Thread thread) {
-        SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(VmThread.fromJava(thread)).submitOp();
-        if (mode == JVMTI_ENABLE) {
-            // its not clear whether we should deopt every frame at this point.
-            // currently there is a bug walking stacks containing a deopt stub so
-            // we only deopt the top frame
-            ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
-            for (int i = 0; i < op.stackTraceVisitor.stackElements.size(); i++) {
-                ClassMethodActor methodActor = op.stackTraceVisitor.getStackElement(i).classMethodActor;
-                TargetMethod targetMethod = methodActor.currentTargetMethod();
-                targetMethod.finalizeReferenceMaps();
-                targetMethods.add(targetMethod);
-                // just top frame for now
-                break;
+    private static void deOptForEvent(VmThread vmThread) {
+        long codeEventSettings = JVMTIVmThreadLocal.getEventBits(vmThread.tla()) & JVMTIEvent.CODE_EVENTS_SETTING;
+        if (codeEventSettings != 0) {
+            SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
+            // we only deopt the top frame, which means we need to handle leaving the frame later
+            TargetMethod targetMethod = op.stackTraceVisitor.getStackElement(0).classMethodActor.currentTargetMethod();
+            // we check here if the code is already adequate for the settings we want
+            if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(targetMethod.classMethodActor))) {
+                return;
             }
-            // Calling this multiple times before the thread resumes is harmless as it takes care to
-            // filter out already invalidated methods. However, it would be better to be able to detect
-            // the multiple calls and just do all this once.
+            ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
+            targetMethod.finalizeReferenceMaps();
+            targetMethods.add(targetMethod);
+            // Calling this multiple times for different threads is harmless as it takes care to
+            // filter out already invalidated methods.
             new Deoptimization(targetMethods).go();
         } else {
-            // is it worth re-opting.
+            // is it worth reopting? perhaps if we are resuming without, say, single step set and
+            // the code contains single step event calls. They won't be delivered but they reduce
+            // performance noticeably.
         }
     }
 
@@ -78,5 +93,25 @@ public class JVMTICode {
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
         targetMethods.add(classMethodActor.currentTargetMethod());
         new Deoptimization(targetMethods).go();
+    }
+
+    static void resumeThreadNotify(VmThread vmThread) {
+        deOptForEvent(vmThread);
+    }
+
+    static void suspendThreadNotify(VmThread vmThread) {
+        JVMTIVmThreadLocal.clearEventBits(vmThread.tla());
+    }
+
+    static void resumeThreadListNotify(Set<VmThread> set) {
+        for (VmThread vmThread : set) {
+            resumeThreadNotify(vmThread);
+        }
+    }
+
+    static void suspendThreadListNotify(Set<VmThread> set) {
+        for (VmThread vmThread : set) {
+            suspendThreadNotify(vmThread);
+        }
     }
 }

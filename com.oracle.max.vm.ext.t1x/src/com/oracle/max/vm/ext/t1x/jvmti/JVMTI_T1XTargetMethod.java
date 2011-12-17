@@ -63,10 +63,43 @@ import com.sun.max.vm.runtime.*;
 public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
 
     private final boolean[] eventBci;
+    private final long eventSettings;
+    private final long[] breakpoints;
 
-    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, boolean[] eventBci) {
+    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, boolean[] eventBci, long eventSettings, long[] breakpoints) {
         super(comp, install);
         this.eventBci = eventBci;
+        this.eventSettings = eventSettings;
+        this.breakpoints = breakpoints;
+    }
+
+    @Override
+    /**
+     * Checks if this method supports the event settings and breakpoints passed as arguments.
+     * This does not need to be an exact match since events are not delivered if they are not enabled.
+     * However, this method must support at least the requested settings.
+     * @param eventSettings
+     * @param breakpoints
+     * @return
+     */
+    public boolean jvmtiCheck(long eventSettings, long[] breakpoints) {
+        if ((eventSettings & this.eventSettings) == eventSettings) {
+            for (long rb : breakpoints) {
+                boolean match = false;
+                for (long thisRb : this.breakpoints) {
+                    if (rb == thisRb) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
