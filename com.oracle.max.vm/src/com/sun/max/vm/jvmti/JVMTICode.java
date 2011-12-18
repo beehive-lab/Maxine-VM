@@ -59,27 +59,35 @@ public class JVMTICode {
      * Handle any change in compiled code for the methods on the (logical) call stack
      * necessary for the pervasive events such as SINGLE_STEP, FRAME_POP, for a single thread.
      */
-    private static void deOptForEvent(VmThread vmThread) {
-        long codeEventSettings = JVMTIVmThreadLocal.getEventBits(vmThread.tla()) & JVMTIEvent.CODE_EVENTS_SETTING;
+    private static void checkDeOptForEvent(VmThread vmThread) {
+        long codeEventSettings = codeEventSettings(vmThread);
         if (codeEventSettings != 0) {
             SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
             // we only deopt the top frame, which means we need to handle leaving the frame later
-            TargetMethod targetMethod = op.stackTraceVisitor.getStackElement(0).classMethodActor.currentTargetMethod();
-            // we check here if the code is already adequate for the settings we want
-            if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(targetMethod.classMethodActor))) {
-                return;
-            }
-            ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
-            targetMethod.finalizeReferenceMaps();
-            targetMethods.add(targetMethod);
-            // Calling this multiple times for different threads is harmless as it takes care to
-            // filter out already invalidated methods.
-            new Deoptimization(targetMethods).go();
+            checkDeOptForMethod(op.stackTraceVisitor.getStackElement(0).classMethodActor, codeEventSettings);
         } else {
             // is it worth reopting? perhaps if we are resuming without, say, single step set and
             // the code contains single step event calls. They won't be delivered but they reduce
             // performance noticeably.
         }
+    }
+
+    static long codeEventSettings(VmThread vmThread) {
+        return JVMTIVmThreadLocal.getEventBits(vmThread.tla()) & JVMTIEvent.CODE_EVENTS_SETTING;
+    }
+
+    static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
+        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+        // we check here if the code is already adequate for the settings we want
+        if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(targetMethod.classMethodActor))) {
+            return;
+        }
+        ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
+        targetMethod.finalizeReferenceMaps();
+        targetMethods.add(targetMethod);
+        // Calling this multiple times for different threads is harmless as it takes care to
+        // filter out already invalidated methods.
+        new Deoptimization(targetMethods).go();
     }
 
     /**
@@ -96,7 +104,7 @@ public class JVMTICode {
     }
 
     static void resumeThreadNotify(VmThread vmThread) {
-        deOptForEvent(vmThread);
+        checkDeOptForEvent(vmThread);
     }
 
     static void suspendThreadNotify(VmThread vmThread) {

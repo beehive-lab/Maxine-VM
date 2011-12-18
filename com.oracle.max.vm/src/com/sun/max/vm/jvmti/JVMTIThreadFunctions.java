@@ -594,9 +594,15 @@ public class JVMTIThreadFunctions {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
         if (JVMTIVmThreadLocal.bitIsSet(tla, JVMTI_FRAME_POP)) {
-            // only really need the top frame
             SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread);
             op.submit();
+            // if we are single stepping, we may need to deopt the method we are returning to
+            if (op.stackTraceVisitor.stackElements.size() > 1) {
+                long codeEventSettings = JVMTICode.codeEventSettings(vmThread);
+                if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTI_EVENT_SINGLE_STEP)) != 0) {
+                    JVMTICode.checkDeOptForMethod(op.stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
+                }
+            }
             FramePopEventData framePopEventData = framePopEventDataTL.get();
             framePopEventData.methodID = MethodID.fromMethodActor(op.stackTraceVisitor.getStackElement(0).classMethodActor);
             framePopEventData.wasPoppedByException = wasPoppedByException;
