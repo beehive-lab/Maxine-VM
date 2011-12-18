@@ -638,20 +638,32 @@ public class WordValueLabel extends ValueLabel {
                 setFont(wordDataFont);
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(hexString);
-                final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>" + tagged + "Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
-                                "<br>" + htmlify(nameDisplay.longName(compilation)));
+                if (compilation != null) {
+                    final StringBuilder toolTip = new StringBuilder();
+                    toolTip.append(value.toWord().to0xHexString());
+                    if (taggedCodePointer != null) {
+                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                    }
+                    toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
+                    toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
+                    setWrappedToolTipHtmlText(toolTip.toString());
+                }
                 break;
             }
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallEntryPointColor());
                 setWrappedText(nameDisplay.veryShortName(compilation));
-                final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                "<br>" + tagged + "Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
-                                "<br>" + htmlify(nameDisplay.longName(compilation)));
+                if (compilation != null) {
+                    final StringBuilder toolTip = new StringBuilder();
+                    toolTip.append(value.toWord().to0xHexString());
+                    if (taggedCodePointer != null) {
+                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                    }
+                    toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
+                    toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
+                    setWrappedToolTipHtmlText(toolTip.toString());
+                }
                 break;
             }
             case NATIVE_FUNCTION: {
@@ -692,12 +704,17 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordCallReturnPointColor());
                 setWrappedText(hexString);
                 if (compilation != null) {
-                    final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
-                    final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
-                    setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>" + tagged + "Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
-                                    "<br>" + htmlify(nameDisplay.longName(compilation)) +
-                                    "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
+                    final StringBuilder toolTip = new StringBuilder();
+                    toolTip.append(value.toWord().to0xHexString());
+                    final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
+                    if (taggedCodePointer != null) {
+                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                    }
+                    final long position = address.minus(compilation.getCodeStart()).toLong();
+                    toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
+                    toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
+                    toolTip.append("<br>" + longToDecimalAndHex(position) + "bytes from beginning");
+                    setWrappedToolTipHtmlText(toolTip.toString());
                 }
                 break;
             }
@@ -705,13 +722,18 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordCallReturnPointColor());
                 if (compilation != null) {
-                    setWrappedText(htmlify(nameDisplay.veryShortName(compilation, value.toWord().asAddress())));
-                    final long position = value().asWord().asAddress().minus(compilation.getCodeStart()).toLong();
-                    final String tagged = taggedCodePointer == null ? "" : "(TAGGED)  ";
-                    setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
-                                    "<br>" + tagged + "Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method" +
-                                    "<br>" + htmlify(nameDisplay.longName(compilation)) +
-                                    "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
+                    final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
+                    setWrappedText(nameDisplay.veryShortName(compilation, address));
+                    final StringBuilder toolTip = new StringBuilder();
+                    toolTip.append(value.toWord().to0xHexString());
+                    if (taggedCodePointer != null) {
+                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                    }
+                    final long position = address.minus(compilation.getCodeStart()).toLong();
+                    toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
+                    toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
+                    toolTip.append("<br>" + longToDecimalAndHex(position) + "bytes from beginning");
+                    setWrappedToolTipHtmlText(toolTip.toString());
                 }
                 break;
             }
@@ -927,7 +949,7 @@ public class WordValueLabel extends ValueLabel {
             case NATIVE_FUNCTION:
             case NATIVE_FUNCTION_TEXT:
             case UNCHECKED_CALL_POINT: {
-                final Address address = value.toWord().asAddress();
+                final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
                 action = new InspectorAction(inspection(), "View Code at address") {
                     @Override
                     public void procedure() {
