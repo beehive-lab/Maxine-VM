@@ -84,6 +84,12 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
      */
     public boolean jvmtiCheck(long eventSettings, long[] breakpoints) {
         if ((eventSettings & this.eventSettings) == eventSettings) {
+            if (breakpoints == null) {
+                return true;
+            }
+            if (this.breakpoints == null) {
+                return false;
+            }
             for (long rb : breakpoints) {
                 boolean match = false;
                 for (long thisRb : this.breakpoints) {
