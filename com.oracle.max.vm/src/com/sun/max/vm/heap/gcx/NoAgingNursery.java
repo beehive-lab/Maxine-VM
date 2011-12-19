@@ -96,7 +96,7 @@ public class NoAgingNursery implements HeapSpace {
     }
 
     public Pointer allocate(Size size) {
-        return allocator.allocate(size);
+        return allocator.allocateCleared(size);
     }
 
     @Override
