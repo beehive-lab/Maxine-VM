@@ -31,29 +31,31 @@
 # as well as making it simple to run commands
 # (like hg is the interface to the Mercurial commands).
 #
-# When launched, mx looks for a mx configuration (i.e. a directory named 'mx') 
-# in the current working directory. This is the primary mx configuration. Any
-# other mx configurations are included mx configurations.
+# The organizing principle of mx is a project suite. A suite is a directory
+# containing one or more projects. It's not coincidental that this closely
+# matches the layout of one or more projects in a Mercurial repository.
+# The configuration information for a suite lives in an 'mx' sub-directory
+# at the top level of the suite. 
 #
-# If an mx configuration exists, then the following files in the configuration
-# are processed (if they exist):
+# When launched, mx treats the current working directory as a suite.
+# This is the primary suite. All other suites are called included suites.
 #
-#   projects    - Lists projects, libraries and dependencies between them
-#   commands.py - Extensions to the commands launchable by mx. This is only processed
-#                 for the primary mx configuration.
-#   includes    - Other directories containing mx configurations to be loaded.
-#                 This is a recursive action. 
+# The configuration files (i.e. in the 'mx' sub-directory) of a suite are:
+#
+#   projects    - Defines the projects and libraries in the suite and the dependencies between them
+#   commands.py - Suite specific extensions to the commands available to mx. This is only processed
+#                 for the primary suite.
+#   includes    - Other suites to be loaded. This is a recursive. 
 #   env         - A set of environment variable definitions.
 #
-# The MX_INCLUDES environment variable can also be used to specify
-# other directories containing mx configurations.
+# The MX_INCLUDES environment variable can also be used to specify other suites.
 # This value of this variable has the same format as a Java class path.
 #
 # The includes and env files are typically not put under version control
-# as they usually contain local filesystem paths.
+# as they usually contain local file-system paths.
 #
 # The projects file is like the pom.xml file from Maven except that
-# it is in a properties file format instead of XML. Each non-comment line
+# it is a properties file (not XML). Each non-comment line
 # in the file specifies an attribute of a project or library. The main 
 # difference between a project and a library is that the former contains
 # source code built by the mx tool where as the latter is an external
@@ -105,11 +107,7 @@ DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 _projects = dict()
 _libs = dict()
 _suites = dict()
-
-""" Options parsed from the command line. """
 _opts = None
-
-""" Prefix for a Java command. """
 _java = None
 
 """
@@ -145,6 +143,10 @@ class Project(Dependency):
         self.dir = dir
         
     def all_deps(self, deps, includeLibs):
+        """
+        Add the transitive set of dependencies for this project, including
+        libraries if 'includeLibs' is true, to the 'deps' list.
+        """
         if self in deps:
             return deps
         for name in self.deps:
@@ -191,13 +193,13 @@ class Project(Dependency):
 
     def source_dirs(self):
         """
-        Get the directories in whihc the sources of this project are found.
+        Get the directories in which the sources of this project are found.
         """
         return [join(self.dir, s) for s in self.srcDirs]
         
     def output_dir(self):
         """
-        Get the directory in which the class files of this project are found.
+        Get the directory in which the class files of this project are found/placed.
         """
         if self.native:
             return None
@@ -340,6 +342,9 @@ class Suite:
             self._load_commands(mxDir)
         
 def get_os():
+    """
+    Get a canonical form of sys.platform.
+    """
     if sys.platform.startswith('darwin'):
         return 'darwin'
     elif sys.platform.startswith('linux'):
@@ -498,22 +503,15 @@ def _format_commands():
         msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
     return msg + '\n'
 
-def java_home():
-    return _opts.java_home
+def java():
+    """
+    Get a JavaConfig object containing Java commands launch details.
+    """
+    assert _java is not None
+    return _java
 
-def java_exe():
-    return exe_suffix(_opts.java)
-
-def java_args():
-    init_java()
-    return _opts.java_args
-
-def format_java_cmd(args):
-    init_java()
-    return _java + args
-    
 def run_java(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-    return run(format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+    return run(_java.format_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
 
 def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
     """
@@ -571,46 +569,40 @@ def exe_suffix(name):
         return name + '.exe'
     return name
 
-def init_java():
-    """
-    Lazy initialization and preprocessing of this object's fields before running a Java command.
-    """
-    global _java
-    if _java is not None:
-        return
+"""
+A JavaConfig object encapsulates info on how Java commands are run.
+"""
+class JavaConfig:
+    def __init__(self, opts):
+        self.jdk = opts.java_home
+        self.debug = opts.java_dbg
+        self.java =  exe_suffix(join(self.jdk, 'bin', 'java'))
+        self.javac = exe_suffix(join(self.jdk, 'bin', 'javac'))
+        self.javap = exe_suffix(join(self.jdk, 'bin', 'javap'))
 
-    def delAtAndSplit(s):
-        return shlex.split(s.lstrip('@'))
-
-    _opts.java_args = delAtAndSplit(_opts.java_args)
-    _opts.java_args_pfx = sum(map(delAtAndSplit, _opts.java_args_pfx), [])
-    _opts.java_args_sfx = sum(map(delAtAndSplit, _opts.java_args_sfx), [])
-    
-    # Prepend the -d64 VM option only if the java command supports it
-    output = ''
-    java = _opts.java
-    try:
+        def delAtAndSplit(s):
+            return shlex.split(s.lstrip('@'))
         
-        output = subprocess.check_output([java, '-d64', '-version'], stderr=subprocess.STDOUT)
-        _opts.java_args = ['-d64'] + _opts.java_args
-    except subprocess.CalledProcessError as e:
+        self.java_args = delAtAndSplit(_opts.java_args)
+        self.java_args_pfx = sum(map(delAtAndSplit, _opts.java_args_pfx), [])
+        self.java_args_sfx = sum(map(delAtAndSplit, _opts.java_args_sfx), [])
+        
+        # Prepend the -d64 VM option only if the java command supports it
         try:
-            output = subprocess.check_output([java, '-version'], stderr=subprocess.STDOUT)
+            subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
+            self.java_args = ['-d64'] + self.java_args
         except subprocess.CalledProcessError as e:
-            print e.output
-            abort(e.returncode)
-
-    output = output.split()
-    assert output[0] == 'java' or output[0] == 'openjdk'
-    assert output[1] == 'version'
-    version = output[2]
-    if not version.startswith('"1.6') and not version.startswith('"1.7'):
-        abort('Requires Java version 1.6 or 1.7, got version ' + version)
-
-    if _opts.java_dbg:
-        _opts.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+            try:
+                subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as e:
+                print e.output
+                abort(e.returncode)
         
-    _java = [java] + _opts.java_args_pfx + _opts.java_args + _opts.java_args_sfx 
+        if self.debug:
+            self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+
+    def format_cmd(self, args):
+        return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
     
 def _default_java_home():
     javaHome = os.getenv('JAVA_HOME')
@@ -1135,8 +1127,9 @@ def main():
         _loadSuite(os.getcwd(), True)
             
     opts, commandAndArgs = _argParser._parse_cmd_line()
-    global _opts
+    global _opts, _java
     _opts = opts
+    _java = JavaConfig(opts)
     
     if len(commandAndArgs) == 0:
         _argParser.print_help()
