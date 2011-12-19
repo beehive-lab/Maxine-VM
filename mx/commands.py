@@ -46,7 +46,7 @@ def _configs():
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
     c = Configs()        
-    mx.run([mx.java_exe(), '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath('com.oracle.max.vm', resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath('com.oracle.max.vm', resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
 def configs(arg):
@@ -546,12 +546,13 @@ def makejdk(args):
         mx.log('The destination directory already exists -- it will be deleted')
         shutil.rmtree(maxjdk)
 
-    if not isdir(mx.java_home()):
-        mx.log(mx.java_home() + " does not exist or is not a directory")
+    jdk = mx.java().jdk
+    if not isdir(jdk):
+        mx.log(jdk + " does not exist or is not a directory")
         mx.abort(1)
         
-    mx.log('Replicating ' + mx.java_home() + ' in ' + maxjdk + '...')
-    shutil.copytree(mx.java_home(), maxjdk)
+    mx.log('Replicating ' + jdk + ' in ' + maxjdk + '...')
+    shutil.copytree(jdk, maxjdk)
 
     for f in os.listdir(_vmdir):
         fpath = join(_vmdir, f)
@@ -664,12 +665,12 @@ def test(args):
             mx.log(line.rstrip())
             self.f.write(line)
     
-    mx.init_java()
     console = join(maxineTesterDir, 'console')
     with open(console, 'w', 0) as f:
         tee = Tee(f)
+        java = mx.java()
         mx.run_java(['-cp', mx.classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
-                      '-refvm=' + mx.java_exe(), '-refvm-args=' + ' '.join(mx.java_args())] + args, out=tee.eat, err=tee.eat)
+                      '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=tee.eat)
 
 def verify(args):
     """verifies a set of methods using the Maxine bytecode verifier
