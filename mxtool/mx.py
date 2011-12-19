@@ -102,11 +102,23 @@ import shutil, fnmatch, re, xml.dom.minidom
 
 DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 
+_projects = dict()
+_libs = dict()
+_suites = dict()
+
+""" Options parsed from the command line. """
+_opts = None
+
+""" Prefix for a Java command. """
+_java = None
+
+"""
+A dependency is a library or project specified in a suite.
+"""
 class Dependency:
-    def __init__(self, name, baseDir):
+    def __init__(self, suite, name):
         self.name = name
-        self.baseDir = baseDir
-        self.env = None
+        self.suite = suite
         
     def __str__(self):
         return self.name
@@ -124,45 +136,48 @@ class Dependency:
         return isinstance(self, Library)
     
 class Project(Dependency):
-    def __init__(self, baseDir, name, srcDirs, deps):
-        Dependency.__init__(self, name, baseDir)
+    def __init__(self, suite, name, srcDirs, deps, dir):
+        Dependency.__init__(self, suite, name)
         self.srcDirs = srcDirs
         self.deps = deps
         self.checkstyleProj = name
-        self.dir = join(baseDir, name)
         self.native = False
+        self.dir = dir
         
-    def all_deps(self, deps, pdb, includeLibs):
+    def all_deps(self, deps, includeLibs):
         if self in deps:
             return deps
         for name in self.deps:
             assert name != self.name
-            dep = pdb.libs.get(name, None)
+            dep = _libs.get(name, None)
             if dep is not None:
                 if includeLibs and not dep in deps:
                     deps.append(dep)
             else:
-                dep = pdb.project(name)
+                dep = project(name)
                 if not dep in deps:
-                    dep.all_deps(deps, pdb, includeLibs)
+                    dep.all_deps(deps, includeLibs)
         if not self in deps:
             deps.append(self)
         return deps
     
-    def _compute_max_dep_distances(self, name, distances, dist, pdb):
+    def _compute_max_dep_distances(self, name, distances, dist):
         currentDist = distances.get(name);
         if currentDist is None or currentDist < dist:
             distances[name] = dist
-            if pdb.projects.has_key(name):
-                p = pdb.project(name)
+            p = project(name, False)
+            if p is not None:
                 for dep in p.deps:
-                    self._compute_max_dep_distances(dep, distances, dist + 1, pdb)
+                    self._compute_max_dep_distances(dep, distances, dist + 1)
                 
-
-    def canonical_deps(self, env, pdb):
+    def canonical_deps(self):
+        """
+        Get the dependencies of this project that are not recursive (i.e. cannot be reached
+        via other dependencies).
+        """
         distances = dict()
         result = set()
-        self._compute_max_dep_distances(self.name, distances, 0, pdb)
+        self._compute_max_dep_distances(self.name, distances, 0)
         for n,d in distances.iteritems():
             assert d > 0 or n == self.name
             if d == 1:
@@ -175,50 +190,54 @@ class Project(Dependency):
     
 
     def source_dirs(self):
-        return [join(self.baseDir, self.name, s) for s in self.srcDirs]
+        """
+        Get the directories in whihc the sources of this project are found.
+        """
+        return [join(self.dir, s) for s in self.srcDirs]
         
     def output_dir(self):
-        return join(self.baseDir, self.name, 'bin')
+        """
+        Get the directory in which the class files of this project are found.
+        """
+        if self.native:
+            return None
+        return join(self.dir, 'bin')
 
-    def classpath(self, resolve, env):
-        classesDir = join(self.baseDir, 'classes')
-        if exists(classesDir):
-            return [self.output_dir(), classesDir]
-        return [self.output_dir()]
-    
-
+    def append_to_classpath(self, cp, resolve):
+        if not self.native:
+            cp.append(self.output_dir())
 
 class Library(Dependency):
-    def __init__(self, baseDir, name, path, mustExist, urls):
-        Dependency.__init__(self, name, baseDir)
+    def __init__(self, suite, name, path, mustExist, urls):
+        Dependency.__init__(self, suite, name)
         self.path = path
         self.urls = urls
         self.mustExist = mustExist
     
-    def classpath(self, resolve, env):
+    def get_path(self, resolve):
         path = self.path
         if not isabs(path):
-            path = join(self.baseDir, path)
+            path = join(self.suite.dir, path)
         if resolve and self.mustExist and not exists(path):
             assert not len(self.urls) == 0, 'cannot find required library  ' + self.name + " " + path;
-            env.download(path, self.urls)
-
+            download(path, self.urls)
+        return path
+        
+    def append_to_classpath(self, cp, resolve):
+        path = self.get_path(resolve)
         if exists(path) or not resolve:
-            return [path]
-        return []
+            cp.append(path)
     
-class ProjectsDB():
-    
-    def __init__(self, env):
-        self.env = env
-        self.projects = dict()
-        self.libs = dict()
-        self.commandModules = dict()
-        self.baseDirs = []
-        self.primary = ''
+class Suite:
+    def __init__(self, dir, primary):
+        self.dir = dir
+        self.projects = []
+        self.libs = []
+        self.includes = []
+        self.commands = None
+        self._load(join(dir, 'mx'), primary=primary)
 
-    def _load_projects(self, mxDir, baseDir):
-        env = self.env
+    def _load_projects(self, mxDir):
         libsMap = dict()
         projsMap = dict() 
         projectsFile = join(mxDir, 'projects')
@@ -231,21 +250,24 @@ class ProjectsDB():
                     key, value = line.split('=', 1)
                     
                     parts = key.split('@')
+                    
+                    if len(parts) == 2:
+                        pass
                     if len(parts) != 3:
-                        env.abort('Property name does not have 3 parts separated by "@": ' + key)
+                        abort('Property name does not have 3 parts separated by "@": ' + key)
                     kind, name, attr = parts
                     if kind == 'project':
                         m = projsMap
                     elif kind == 'library':
                         m = libsMap
                     else:
-                        env.abort('Property name does not start with "project@" or "library@": ' + key)
+                        abort('Property name does not start with "project@" or "library@": ' + key)
                         
                     attrs = m.get(name)
                     if attrs is None:
                         attrs = dict()
                         m[name] = attrs
-                    value = env.expandvars_in_property(value)
+                    value = expandvars_in_property(value)
                     attrs[attr] = value
                         
         def pop_list(attrs, name):
@@ -255,30 +277,28 @@ class ProjectsDB():
             return [n.strip() for n in v.split(',')]
         
         for name, attrs in projsMap.iteritems():
-            if self.projects.has_key(name):
-                env.abort('cannot override project  ' + name + ' in ' + self.project(name).baseDir + " with project of the same name in  " + mxDir)
             srcDirs = pop_list(attrs, 'sourceDirs')
             deps = pop_list(attrs, 'dependencies')
-            subDir = attrs.pop('subDir', '');
-            p = Project(join(baseDir, subDir), name, srcDirs, deps)
+            subDir = attrs.pop('subDir', None);
+            if subDir is None:
+                dir = join(self.dir, name)
+            else:
+                dir = join(self.dir, subDir, name)
+            p = Project(self, name, srcDirs, deps, dir)
             p.checkstyleProj = attrs.pop('checkstyle', name)
             p.native = attrs.pop('native', '') == 'true'
             p.__dict__.update(attrs)
-            self.projects[name] = p
+            self.projects.append(p)
 
         for name, attrs in libsMap.iteritems():
-            if self.libs.has_key(name):
-                env.abort('cannot redefine library ' + name)
-            
             path = attrs['path']
             mustExist = attrs.pop('optional', 'false') != 'true'
             urls = pop_list(attrs, 'urls')
-            l = Library(baseDir, name, path, mustExist, urls)
+            l = Library(self, name, path, mustExist, urls)
             l.__dict__.update(attrs)
-            self.libs[name] = l
+            self.libs.append(l)
         
-    def _load_commands(self, mxDir, baseDir):
-        env = self.env
+    def _load_commands(self, mxDir):
         commands = join(mxDir, 'commands.py')
         if exists(commands):
             # temporarily extend the Python path
@@ -290,115 +310,142 @@ class ProjectsDB():
             del sys.path[0]
 
             if not hasattr(mod, 'mx_init'):
-                env.abort(commands + ' must define an mx_init(env) function')
+                abort(commands + ' must define an mx_init(env) function')
                 
-            mod.mx_init(env)
+            mod.mx_init()
+            self.commands = mod
                 
-            name = baseDir + '.commands'
-            sfx = 1
-            while sys.modules.has_key(name):
-                name = baseDir + str(sfx) + '.commands'
-                sfx += 1
-            
-            sys.modules[name] = sys.modules.pop('commands')
-            self.commandModules[name] = mod
-                
-    def _load_includes(self, mxDir, baseDir):
+    def _load_includes(self, mxDir):
         includes = join(mxDir, 'includes')
         if exists(includes):
             with open(includes) as f:
                 for line in f:
-                    includeMxDir = join(self.env.expandvars_in_property(line.strip()), 'mx')
-                    self.load(includeMxDir)
+                    self.includes.append(expandvars_in_property(line.strip()))
         
-    def _load_env(self, mxDir, baseDir):
-        env = join(mxDir, 'env')
-        if exists(env):
-            with open(env) as f:
+    def _load_env(self, mxDir):
+        e = join(mxDir, 'env')
+        if exists(e):
+            with open(e) as f:
                 for line in f:
                     line = line.strip()
                     if len(line) != 0 and line[0] != '#':
                         key, value = line.split('=', 1)
-                        os.environ[key.strip()] = self.env.expandvars_in_property(value.strip())
+                        os.environ[key.strip()] = expandvars_in_property(value.strip())
         
-    def load(self, mxDir, primary=False):
-        """ loads the mx data from a given directory """
-        if not exists(mxDir) or not isdir(mxDir):
-            self.env.abort('Directory does not exist: ' + mxDir)
-        baseDir = dirname(mxDir)
+    def _load(self, mxDir, primary):
+        self._load_includes(mxDir)
+        self._load_projects(mxDir)
+        self._load_env(mxDir)
         if primary:
-            self.primary = baseDir
-        if not baseDir in self.baseDirs:
-            self.baseDirs.append(baseDir)
-            self._load_includes(mxDir, baseDir)
-            self._load_projects(mxDir, baseDir)
-            self._load_env(mxDir, baseDir)
-            if primary:
-                self._load_commands(mxDir, baseDir)
-
-    def project_names(self):
-        return ' '.join(self.projects.keys())
+            self._load_commands(mxDir)
         
-    def project(self, name, fatalIfMissing=True):
-        p = self.projects.get(name)
-        if p is None:
-            self.env.abort('project named ' + name + ' not found')
-        return p
+def get_os():
+    if sys.platform.startswith('darwin'):
+        return 'darwin'
+    elif sys.platform.startswith('linux'):
+        return 'linux'
+    elif sys.platform.startswith('sunos'):
+        return 'solaris'
+    elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+        return 'windows'
+    else:
+        abort('Unknown operating system ' + sys.platform)
+
+def _loadSuite(dir, primary=False):
+    mxDir = join(dir, 'mx')
+    if not exists(mxDir) or not isdir(mxDir):
+        return
+    if not _suites.has_key(dir):
+        suite = Suite(dir, primary)
+        _suites[dir] = suite 
+        for p in suite.projects:
+            existing = _projects.get(p.name)
+            if existing is not None:
+                abort('cannot override project  ' + p.name + ' in ' + p.dir + " with project of the same name in  " + existing.dir)
+            _projects[p.name] = p
+        for l in suite.libs:
+            existing = _libs.get(l.name)
+            if existing is not None:
+                abort('cannot redefine library  ' + l.name)
+            _libs[l.name] = l
+
+def suites():
+    """
+    Get the list of all loaded suites.
+    """
+    return _suites.values()
+
+def projects():
+    """
+    Get the list of all loaded projects.
+    """
+    return _projects.values()
     
-    def library(self, name):
-        l = self.libs.get(name)
-        if l is None:
-            self.env.abort('library named ' + name + ' not found')
-        return l
+def project(name, fatalIfMissing=True):
+    """
+    Get the project for a given name. This will abort if the named project does
+    not exist and 'fatalIfMissing' is true.
+    """
+    p = _projects.get(name)
+    if p is None and fatalIfMissing:
+        abort('project named ' + name + ' not found')
+    return p
 
-    def _as_classpath(self, deps, resolve):
-        cp = []
-        if self.env.cp_prefix is not None:
-            cp = [self.env.cp_prefix]
-        for d in deps:
-            cp += d.classpath(resolve, self.env)
-        if self.env.cp_suffix is not None:
-            cp += [self.env.cp_suffix]
-        return os.pathsep.join(cp)
+def library(name, fatalIfMissing=True):
+    """
+    Gets the library for a given name. This will abort if the named library does
+    not exist and 'fatalIfMissing' is true.
+    """
+    l = _libs.get(name)
+    if l is None and fatalIfMissing:
+        abort('library named ' + name + ' not found')
+    return l
 
-    def classpath(self, names=None, resolve=True):
-        if names is None:
-            return self._as_classpath(self.sorted_deps(True), resolve)
-        deps = []
-        if isinstance(names, types.StringTypes):
-            self.project(names).all_deps(deps, self, True)
-        else:
-            for n in names:
-                self.project(n).all_deps(deps, self, True)
-        return self._as_classpath(deps, resolve)
-        
-    def sorted_deps(self, includeLibs=False):
-        deps = []
-        for p in self.projects.itervalues():
-            p.all_deps(deps, self, includeLibs)
-        return deps
+def _as_classpath(deps, resolve):
+    cp = []
+    if _opts.cp_prefix is not None:
+        cp = [_opts.cp_prefix]
+    for d in deps:
+        d.append_to_classpath(cp, resolve)
+    if _opts.cp_suffix is not None:
+        cp += [_opts.cp_suffix]
+    return os.pathsep.join(cp)
 
-class Env(ArgumentParser):
-
-    def format_commands(self):
-        msg = '\navailable commands:\n\n'
-        for cmd in sorted(self.commands.iterkeys()):
-            c, _ = self.commands[cmd][:2]
-            doc = c.__doc__
-            if doc is None:
-                doc = ''
-            msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
-        return msg + '\n'
+def classpath(names=None, resolve=True):
+    """
+    Get the class path for a list of given projects, resolving each entry in the
+    path (e.g. downloading a missing library) if 'resolve' is true.
+    """
+    if names is None:
+        return _as_classpath(sorted_deps(True), resolve)
+    deps = []
+    if isinstance(names, types.StringTypes):
+        project(names).all_deps(deps, True)
+    else:
+        for n in names:
+            project(n).all_deps(deps, True)
+    return _as_classpath(deps, resolve)
     
+def sorted_deps(includeLibs=False):
+    """
+    Gets the loaded projects and libraries sorted such that dependencies
+    are before the projects that depend on them. Unless 'includeLibs' is
+    true, libraries are omitted from the result.
+    """
+    deps = []
+    for p in _projects.itervalues():
+        p.all_deps(deps, includeLibs)
+    return deps
+
+class ArgParser(ArgumentParser):
+
     # Override parent to append the list of available commands
     def format_help(self):
-        return ArgumentParser.format_help(self) + self.format_commands()
+        return ArgumentParser.format_help(self) + _format_commands()
     
     
     def __init__(self):
         self.java_initialized = False
-        self.pdb = ProjectsDB(self)
-        self.commands = dict()
         ArgumentParser.__init__(self, prog='mx')
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
@@ -409,319 +456,317 @@ class Env(ArgumentParser):
         self.add_argument('--Jp', action='append', dest='java_args_pfx', help='prefix Java VM arguments (e.g. --Jp @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
-        self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=self.default_java_home())
-        self.add_argument('--java', help='Java VM executable (default: bin/java under $JAVA_HOME)', metavar='<path>')
-        self.add_argument('--os', dest='os', help='operating system override')
+        self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=_default_java_home())
         
     def _parse_cmd_line(self, args=None):
         if args is None:
             args = sys.argv[1:]
-        
+
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
         
-        self.parse_args(namespace=self)
+        opts = self.parse_args()
+        
+        if opts.java_home is None or opts.java_home == '':
+            abort('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
 
-        if self.java_home is None or self.java_home == '':
-            self.abort('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
-
-        if self.user_home is None or self.user_home == '':
-            self.abort('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
-
-        if self.os is None:
-            self.remote = False
-            if sys.platform.startswith('darwin'):
-                self.os = 'darwin'
-            elif sys.platform.startswith('linux'):
-                self.os = 'linux'
-            elif sys.platform.startswith('sunos'):
-                self.os = 'solaris'
-            elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
-                self.os = 'windows'
-            else:
-                print 'Supported operating system could not be derived from', sys.platform, '- use --os option explicitly.'
-                sys.exit(1)
-        else:
-            self.java_args += ' -Dmax.os=' + self.os 
-            self.remote = True 
+        if opts.user_home is None or opts.user_home == '':
+            abort('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
     
-        if self.java is None:
-            self.java = join(self.java_home, 'bin', 'java')
-    
-        os.environ['JAVA_HOME'] = self.java_home
-        os.environ['HOME'] = self.user_home
+        os.environ['JAVA_HOME'] = opts.java_home
+        os.environ['HOME'] = opts.user_home
  
-        self.javac = join(self.java_home, 'bin', 'javac')
+        opts.java = join(opts.java_home, 'bin', 'java')
+        opts.javac = join(opts.java_home, 'bin', 'javac')
+        opts.javap = join(opts.java_home, 'bin', 'javap')
         
-        for mod in self.pdb.commandModules.itervalues():
-            if hasattr(mod, 'mx_post_parse_cmd_line'):
-                mod.mx_post_parse_cmd_line(self)
-
-    def expandvars_in_property(self, value):
-        result = expandvars(value)
-        if '$' in result or '%' in result:
-            self.abort('Property contains an undefined environment variable: ' + value)
-        return result
+        commandAndArgs = opts.__dict__.pop('commandAndArgs')
         
-
-    def load_config_file(self, configFile, override=False):
-        """ adds attributes to this object from a file containing key=value lines """
-        if exists(configFile):
-            with open(configFile) as f:
-                for line in f:
-                    k, v = line.split('=', 1)
-                    k = k.strip().lower()
-                    if (override or not hasattr(self, k)):
-                        setattr(self, k, self.expandvars_in_property(v.strip()))
-                        
-    def format_java_cmd(self, args):
-        self.init_java()
-        return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
-        
-    def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-        return self.run(self.format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+        for s in suites():
+            mod = s.commands
+            if hasattr(mod is not None and mod, 'mx_post_parse_cmd_line'):
+                mod.mx_post_parse_cmd_line(opts)
+                
+        return opts, commandAndArgs
     
-    def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-        """
-        Run a command in a subprocess, wait for it to complete and return the exit status of the process.
-        If the exit status is non-zero and `nonZeroIsFatal` is true, then the program is exited with
-        the same exit status.
-        Each line of the standard output and error streams of the subprocess are redirected to the
-        provided out and err functions if they are not None.
-        """
-        
-        assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
-        for arg in args:
-            assert isinstance(arg, types.StringTypes), 'argument is not a string: ' + str(arg)
-        
-        if self.verbose:
-            self.log(' '.join(args))
-            
-        try:
-            if out is None and err is None:
-                retcode = subprocess.call(args, cwd=cwd)
-            else:
-                def redirect(stream, f):
-                    for line in iter(stream.readline, ''):
-                        f(line)
-                    stream.close()
-                p = subprocess.Popen(args, cwd=cwd, stdout=None if out is None else subprocess.PIPE, stderr=None if err is None else subprocess.PIPE)
-                if out is not None:
-                    t = Thread(target=redirect, args=(p.stdout, out))
-                    t.daemon = True # thread dies with the program
-                    t.start()
-                if err is not None:
-                    t = Thread(target=redirect, args=(p.stderr, err))
-                    t.daemon = True # thread dies with the program
-                    t.start()
-                retcode = p.wait()
-        except OSError as e:
-            self.log('Error executing \'' + ' '.join(args) + '\': ' + str(e))
-            if self.verbose:
-                raise e
-            self.abort(e.errno)
-        
+def _format_commands():
+    msg = '\navailable commands:\n\n'
+    for cmd in sorted(commands.iterkeys()):
+        c, _ = commands[cmd][:2]
+        doc = c.__doc__
+        if doc is None:
+            doc = ''
+        msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
+    return msg + '\n'
 
-        if retcode and nonZeroIsFatal:
-            if self.verbose:
-                raise subprocess.CalledProcessError(retcode, ' '.join(args))
-            self.abort(retcode)
-            
-        return retcode
+def java_home():
+    return _opts.java_home
 
-    def check_get_env(self, key):
-        """
-        Gets an environment variable, aborting with a useful message if it is not set.
-        """
-        value = os.environ.get(key)
-        if value is None:
-            self.abort('Required environment variable ' + key + ' must be set (e.g. in ' + join(self.pdb.primary, 'env') + ')')
-        return value
+def java_exe():
+    return exe_suffix(_opts.java)
 
-    def exe_suffix(self, name):
-        """
-        Gets the platform specific suffix for an executable 
-        """
-        if self.os == 'windows':
-            return name + '.exe'
-        return name
+def java_args():
+    init_java()
+    return _opts.java_args
+
+def format_java_cmd(args):
+    init_java()
+    return _java + args
     
-    def log(self, msg=None):
-        """
-        Write a message to the console.
-        All script output goes through this method thus allowing a subclass
-        to redirect it. 
-        """
-        if msg is None:
-            print
+def run_java(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
+    return run(format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+
+def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
+    """
+    Run a command in a subprocess, wait for it to complete and return the exit status of the process.
+    If the exit status is non-zero and `nonZeroIsFatal` is true, then the program is exited with
+    the same exit status.
+    Each line of the standard output and error streams of the subprocess are redirected to the
+    provided out and err functions if they are not None.
+    """
+    
+    assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
+    for arg in args:
+        assert isinstance(arg, types.StringTypes), 'argument is not a string: ' + str(arg)
+    
+    if _opts.verbose:
+        log(' '.join(args))
+        
+    try:
+        if out is None and err is None:
+            retcode = subprocess.call(args, cwd=cwd)
         else:
-            print msg
-
-    def expand_project_in_class_path_arg(self, cpArg):
-        cp = []
-        for part in cpArg.split(os.pathsep):
-            if part.startswith('@'):
-                cp += self.pdb.classpath(part[1:]).split(os.pathsep)
-            else:
-                cp.append(part)
-        return os.pathsep.join(cp)
-        
-    def expand_project_in_args(self, args):
-        for i in range(len(args)):
-            if args[i] == '-cp' or args[i] == '-classpath':
-                if i + 1 < len(args):
-                    args[i + 1] = self.expand_project_in_class_path_arg(args[i + 1])
-                return
+            def redirect(stream, f):
+                for line in iter(stream.readline, ''):
+                    f(line)
+                stream.close()
+            p = subprocess.Popen(args, cwd=cwd, stdout=None if out is None else subprocess.PIPE, stderr=None if err is None else subprocess.PIPE)
+            if out is not None:
+                t = Thread(target=redirect, args=(p.stdout, out))
+                t.daemon = True # thread dies with the program
+                t.start()
+            if err is not None:
+                t = Thread(target=redirect, args=(p.stderr, err))
+                t.daemon = True # thread dies with the program
+                t.start()
+            retcode = p.wait()
+    except OSError as e:
+        log('Error executing \'' + ' '.join(args) + '\': ' + str(e))
+        if _opts.verbose:
+            raise e
+        abort(e.errno)
     
 
-    def init_java(self):
-        """
-        Lazy initialization and preprocessing of this object's fields before running a Java command.
-        """
-        if self.java_initialized:
+    if retcode and nonZeroIsFatal:
+        if _opts.verbose:
+            raise subprocess.CalledProcessError(retcode, ' '.join(args))
+        abort(retcode)
+        
+    return retcode
+
+def exe_suffix(name):
+    """
+    Gets the platform specific suffix for an executable 
+    """
+    if os == 'windows':
+        return name + '.exe'
+    return name
+
+def init_java():
+    """
+    Lazy initialization and preprocessing of this object's fields before running a Java command.
+    """
+    global _java
+    if _java is not None:
+        return
+
+    def delAtAndSplit(s):
+        return shlex.split(s.lstrip('@'))
+
+    _opts.java_args = delAtAndSplit(_opts.java_args)
+    _opts.java_args_pfx = sum(map(delAtAndSplit, _opts.java_args_pfx), [])
+    _opts.java_args_sfx = sum(map(delAtAndSplit, _opts.java_args_sfx), [])
+    
+    # Prepend the -d64 VM option only if the java command supports it
+    output = ''
+    java = _opts.java
+    try:
+        
+        output = subprocess.check_output([java, '-d64', '-version'], stderr=subprocess.STDOUT)
+        _opts.java_args = ['-d64'] + _opts.java_args
+    except subprocess.CalledProcessError as e:
+        try:
+            output = subprocess.check_output([java, '-version'], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print e.output
+            abort(e.returncode)
+
+    output = output.split()
+    assert output[0] == 'java' or output[0] == 'openjdk'
+    assert output[1] == 'version'
+    version = output[2]
+    if not version.startswith('"1.6') and not version.startswith('"1.7'):
+        abort('Requires Java version 1.6 or 1.7, got version ' + version)
+
+    if _opts.java_dbg:
+        _opts.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+        
+    _java = [java] + _opts.java_args_pfx + _opts.java_args + _opts.java_args_sfx 
+    
+def _default_java_home():
+    javaHome = os.getenv('JAVA_HOME')
+    if javaHome is None:
+        if exists('/usr/lib/java/java-6-sun'):
+            javaHome = '/usr/lib/java/java-6-sun'
+        elif exists('/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'):
+            javaHome = '/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'
+        elif exists('/usr/jdk/latest'):
+            javaHome = '/usr/jdk/latest'
+    return javaHome
+
+def check_get_env(key):
+    """
+    Gets an environment variable, aborting with a useful message if it is not set.
+    """
+    value = os.environ.get(key)
+    if value is None:
+        abort('Required environment variable ' + key + ' must be set')
+    return value
+
+def log(msg=None):
+    """
+    Write a message to the console.
+    All script output goes through this method thus allowing a subclass
+    to redirect it. 
+    """
+    if msg is None:
+        print
+    else:
+        print msg
+
+def expand_project_in_class_path_arg(cpArg):
+    cp = []
+    for part in cpArg.split(os.pathsep):
+        if part.startswith('@'):
+            cp += classpath(part[1:]).split(os.pathsep)
+        else:
+            cp.append(part)
+    return os.pathsep.join(cp)
+    
+def expand_project_in_args(args):
+    for i in range(len(args)):
+        if args[i] == '-cp' or args[i] == '-classpath':
+            if i + 1 < len(args):
+                args[i + 1] = expand_project_in_class_path_arg(args[i + 1])
             return
 
-        def delAtAndSplit(s):
-            return shlex.split(s.lstrip('@'))
 
-        self.java_args = delAtAndSplit(self.java_args)
-        self.java_args_pfx = sum(map(delAtAndSplit, self.java_args_pfx), [])
-        self.java_args_sfx = sum(map(delAtAndSplit, self.java_args_sfx), [])
-        
-        # Prepend the -d64 VM option only if the java command supports it
-        output = ''
+def gmake_cmd():
+    for a in ['make', 'gmake', 'gnumake']:
         try:
-            output = subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
-            self.java_args = ['-d64'] + self.java_args
-        except subprocess.CalledProcessError as e:
-            try:
-                output = subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as e:
-                print e.output
-                self.abort(e.returncode)
+            output = subprocess.check_output([a, '--version'])
+            if 'GNU' in output:
+                return a;
+        except:
+            pass
+    abort('Could not find a GNU make executable on the current path.')
 
-        output = output.split()
-        assert output[0] == 'java' or output[0] == 'openjdk'
-        assert output[1] == 'version'
-        version = output[2]
-        if not version.startswith('"1.6') and not version.startswith('"1.7'):
-            self.abort('Requires Java version 1.6 or 1.7, got version ' + version)
-
-        if self.java_dbg:
-            self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
-            
-        self.java_initialized = True
-    
-    def default_java_home(self):
-        javaHome = os.getenv('JAVA_HOME')
-        if javaHome is None:
-            if exists('/usr/lib/java/java-6-sun'):
-                javaHome = '/usr/lib/java/java-6-sun'
-            elif exists('/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'):
-                javaHome = '/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'
-            elif exists('/usr/jdk/latest'):
-                javaHome = '/usr/jdk/latest'
-        return javaHome
-
-    def gmake_cmd(self):
-        for a in ['make', 'gmake', 'gnumake']:
-            try:
-                output = subprocess.check_output([a, '--version'])
-                if 'GNU' in output:
-                    return a;
-            except:
-                pass
-        self.abort('Could not find a GNU make executable on the current path.')
+def expandvars_in_property(value):
+        result = expandvars(value)
+        if '$' in result or '%' in result:
+            abort('Property contains an undefined environment variable: ' + value)
+        return result
 
            
-    def abort(self, codeOrMessage):
-        """
-        Aborts the program with a SystemExit exception.
-        If 'codeOrMessage' is a plain integer, it specifies the system exit status;
-        if it is None, the exit status is zero; if it has another type (such as a string),
-        the object's value is printed and the exit status is one.
-        """
-        raise SystemExit(codeOrMessage)
+def abort(codeOrMessage):
+    """
+    Aborts the program with a SystemExit exception.
+    If 'codeOrMessage' is a plain integer, it specifies the system exit status;
+    if it is None, the exit status is zero; if it has another type (such as a string),
+    the object's value is printed and the exit status is one.
+    """
+    raise SystemExit(codeOrMessage)
 
-    def download(self, path, urls):
-        """
-        Attempts to downloads content for each URL in a list, stopping after the first successful download.
-        If the content cannot be retrieved from any URL, the program is aborted. The downloaded content
-        is written to the file indicated by 'path'.
-        """
-        d = dirname(path)
-        if d != '' and not exists(d):
-            os.makedirs(d)
-            
-        def url_open(url):
-            userAgent = 'Mozilla/5.0 (compatible)'
-            headers = { 'User-Agent' : userAgent }
-            req = urllib2.Request(url, headers=headers)
-            return urllib2.urlopen(req);
-            
-        for url in urls:
-            try:
-                self.log('Downloading ' + url + ' to ' + path)
-                if url.startswith('zip:') or url.startswith('jar:'):
-                    i = url.find('!/')
-                    if i == -1:
-                        self.abort('Zip or jar URL does not contain "!/": ' + url)
-                    url, _, entry = url[len('zip:'):].partition('!/')
-                    with contextlib.closing(url_open(url)) as f:
-                        data = f.read()
-                        zipdata = StringIO.StringIO(f.read())
-                
-                    zf = zipfile.ZipFile(zipdata, 'r')
-                    data = zf.read(entry)
-                    with open(path, 'w') as f:
-                        f.write(data)
-                else:
-                    with contextlib.closing(url_open(url)) as f:
-                        data = f.read()
-                    with open(path, 'w') as f:
-                        f.write(data)
-                return
-            except IOError as e:
-                self.log('Error reading from ' + url + ': ' + str(e))
-            except zipfile.BadZipfile as e:
-                self.log('Error in zip file downloaded from ' + url + ': ' + str(e))
-                
-        # now try it with Java - urllib2 does not handle meta refreshes which are used by Sourceforge
-        myDir = dirname(__file__)
+def download(path, urls, verbose=False):
+    """
+    Attempts to downloads content for each URL in a list, stopping after the first successful download.
+    If the content cannot be retrieved from any URL, the program is aborted. The downloaded content
+    is written to the file indicated by 'path'.
+    """
+    d = dirname(path)
+    if d != '' and not exists(d):
+        os.makedirs(d)
         
-        javaSource = join(myDir, 'URLConnectionDownload.java')
-        javaClass = join(myDir, 'URLConnectionDownload.class')
-        if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
-            subprocess.check_call([self.javac, '-d', myDir, javaSource])
-        if self.run([self.java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
-            self.abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
-                      '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
-
-    def update_file(self, path, content):
-        """
-        Updates a file with some given content if the content differs from what's in
-        the file already. The return value indicates if the file was updated.
-        """
-        existed = exists(path)
+    def url_open(url):
+        userAgent = 'Mozilla/5.0 (compatible)'
+        headers = { 'User-Agent' : userAgent }
+        req = urllib2.Request(url, headers=headers)
+        return urllib2.urlopen(req);
+        
+    for url in urls:
         try:
-            old = None
-            if existed:
-                with open(path, 'rb') as f:
-                    old = f.read()
+            if (verbose):
+                log('Downloading ' + url + ' to ' + path)
+            if url.startswith('zip:') or url.startswith('jar:'):
+                i = url.find('!/')
+                if i == -1:
+                    abort('Zip or jar URL does not contain "!/": ' + url)
+                url, _, entry = url[len('zip:'):].partition('!/')
+                with contextlib.closing(url_open(url)) as f:
+                    data = f.read()
+                    zipdata = StringIO.StringIO(f.read())
             
-            if old == content:
-                return False
-                
-            with open(path, 'wb') as f:
-                f.write(content)
-                
-            self.log(('modified ' if existed else 'created ') + path)
-            return True;
+                zf = zipfile.ZipFile(zipdata, 'r')
+                data = zf.read(entry)
+                with open(path, 'w') as f:
+                    f.write(data)
+            else:
+                with contextlib.closing(url_open(url)) as f:
+                    data = f.read()
+                with open(path, 'w') as f:
+                    f.write(data)
+            return
         except IOError as e:
-            self.abort('Error while writing to ' + path + ': ' + str(e));
+            log('Error reading from ' + url + ': ' + str(e))
+        except zipfile.BadZipfile as e:
+            log('Error in zip file downloaded from ' + url + ': ' + str(e))
+            
+    # now try it with Java - urllib2 does not handle meta refreshes which are used by Sourceforge
+    myDir = dirname(__file__)
+    
+    javaSource = join(myDir, 'URLConnectionDownload.java')
+    javaClass = join(myDir, 'URLConnectionDownload.class')
+    if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
+        subprocess.check_call([_opts.javac, '-d', myDir, javaSource])
+    if run([_opts.java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
+        abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
+                  '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
+
+def update_file(path, content):
+    """
+    Updates a file with some given content if the content differs from what's in
+    the file already. The return value indicates if the file was updated.
+    """
+    existed = exists(path)
+    try:
+        old = None
+        if existed:
+            with open(path, 'rb') as f:
+                old = f.read()
+        
+        if old == content:
+            return False
+            
+        with open(path, 'wb') as f:
+            f.write(content)
+            
+        log(('modified ' if existed else 'created ') + path)
+        return True;
+    except IOError as e:
+        abort('Error while writing to ' + path + ': ' + str(e));
 
 # Builtin commands
             
-def build(env, args):
+def build(args):
     """compile the Java and C sources, linking the latter
 
     Compile all the Java source code using the appropriate compilers
@@ -745,40 +790,33 @@ def build(env, args):
             if len(choices) != 0:
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
-    projects = [p.name for p in env.pdb.sorted_deps()]
     built = set()
-    for project in projects:
-        p = env.pdb.project(project)
-        projectDir = join(p.baseDir, project)
+    for p in sorted_deps():
         
         if p.native:
-            if env.os == 'windows':
-                env.log('Skipping C compilation on Windows until it is supported')
-                pass
-            
-            env.log('Compiling C sources in {0}...'.format(projectDir))
+            log('Compiling C sources in {0}...'.format(p.dir))
 
             if args.clean:
-                env.run([env.gmake_cmd(), 'clean'], cwd=projectDir)
+                run([gmake_cmd(), 'clean'], cwd=p.dir)
                 
-            env.run([env.gmake_cmd()], cwd=projectDir)
-            built.add(project)
+            run([gmake_cmd()], cwd=p.dir)
+            built.add(p.name)
             continue
         
         outputDir = p.output_dir()
         if exists(outputDir):
             if args.clean:
-                env.log('Cleaning {0}...'.format(outputDir))
+                log('Cleaning {0}...'.format(outputDir))
                 shutil.rmtree(outputDir)
                 os.mkdir(outputDir)
         else:
             os.mkdir(outputDir)
 
-        classpath = env.pdb.classpath(project)
-        sourceDirs = env.pdb.project(project).source_dirs()
+        cp = classpath(p.name)
+        sourceDirs = p.source_dirs()
         mustBuild = args.force
         if not mustBuild:
-            for dep in p.all_deps([], env.pdb, False):
+            for dep in p.all_deps([], False):
                 if dep.name in built:
                     mustBuild = True
             
@@ -797,23 +835,23 @@ def build(env, args):
                             break
                 
             if not mustBuild:
-                env.log('[all class files in {0} are up to date - skipping]'.format(sourceDir))
+                log('[all class files in {0} are up to date - skipping]'.format(sourceDir))
                 continue
                 
             if len(javafilelist) == 0:
-                env.log('[no Java sources in {0} - skipping]'.format(sourceDir))
+                log('[no Java sources in {0} - skipping]'.format(sourceDir))
                 continue
 
-            built.add(project)
+            built.add(p.name)
 
-            argfileName = join(projectDir, 'javafilelist.txt')
+            argfileName = join(p.dir, 'javafilelist.txt')
             argfile = open(argfileName, 'w')
             argfile.write('\n'.join(javafilelist))
             argfile.close()
             
             try:
                 if jdtJar is None:
-                    env.log('Compiling Java sources in {0} with javac...'.format(sourceDir))
+                    log('Compiling Java sources in {0} with javac...'.format(sourceDir))
                     
                     class Filter:
                         """
@@ -832,13 +870,13 @@ def build(env, args):
                             else:
                                 print line.rstrip()
                         
-                    env.run([env.javac, '-g', '-J-Xmx1g', '-classpath', classpath, '-d', outputDir, '@' + argfile.name], err=Filter().eat)
+                    run([_opts.javac, '-g', '-J-Xmx1g', '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=Filter().eat)
                 else:
-                    env.log('Compiling Java sources in {0} with JDT...'.format(sourceDir))
-                    jdtProperties = join(projectDir, '.settings', 'org.eclipse.jdt.core.prefs')
+                    log('Compiling Java sources in {0} with JDT...'.format(sourceDir))
+                    jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
                     if not exists(jdtProperties):
                         raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
-                    env.run([env.java, '-Xmx1g', '-jar', jdtJar, '-1.6', '-cp', classpath, '-g',
+                    run([_opts.java, '-Xmx1g', '-jar', jdtJar, '-1.6', '-cp', cp, '-g',
                              '-properties', jdtProperties, 
                              '-warn:-unusedImport,-unchecked',
                              '-d', outputDir, '@' + argfile.name])
@@ -851,15 +889,14 @@ def build(env, args):
                 if exists(dirname(dst)):
                     shutil.copyfile(name, dst)
 
-def canonicalizeprojects(env, args):
+def canonicalizeprojects(args):
     """process all project files to canonicalize the dependencies
 
     The exit code of this command reflects how many files were updated."""
     
     changedFiles = 0
-    pdb = env.pdb
-    for d in pdb.baseDirs:
-        projectsFile = join(d, 'mx', 'projects')
+    for s in suites():
+        projectsFile = join(s.dir, 'mx', 'projects')
         if not exists(projectsFile):
             continue
         with open(projectsFile) as f:
@@ -871,14 +908,14 @@ def canonicalizeprojects(env, args):
                 if m is None:
                     out.write(line + '\n')
                 else:
-                    p = pdb.project(m.group(1))
-                    out.write('project@' + m.group(1) + '@dependencies=' + ','.join(p.canonical_deps(env, pdb)) + '\n')
+                    p = project(m.group(1))
+                    out.write('project@' + m.group(1) + '@dependencies=' + ','.join(p.canonical_deps()) + '\n')
             content = out.getvalue()
-        if env.update_file(projectsFile, content):
+        if update_file(projectsFile, content):
             changedFiles += 1
     return changedFiles;
     
-def checkstyle(env, args):
+def checkstyle(args):
     """run Checkstyle on the Java sources
 
    Run Checkstyle over the Java sources. Any errors or warnings
@@ -886,20 +923,11 @@ def checkstyle(env, args):
 
 If no projects are given, then all Java projects are checked."""
     
-    allProjects = [p.name for p in env.pdb.sorted_deps()]
-    if len(args) == 0:
-        projects = allProjects
-    else:
-        projects = args
-        unknown = set(projects).difference(allProjects)
-        if len(unknown) != 0:
-            env.error('unknown projects: ' + ', '.join(unknown))
-        
-    for project in projects:
-        p = env.pdb.project(project)
-        projectDir = join(p.baseDir, project)
-        sourceDirs = env.pdb.project(project).source_dirs()
-        dotCheckstyle = join(projectDir, '.checkstyle')
+    for p in sorted_deps():
+        if p.native:
+            continue
+        sourceDirs = p.source_dirs()
+        dotCheckstyle = join(p.dir, '.checkstyle')
         
         if not exists(dotCheckstyle):
             continue
@@ -909,10 +937,10 @@ If no projects are given, then all Java projects are checked."""
             for root, _, files in os.walk(sourceDir):
                 javafilelist += [join(root, name) for name in files if name.endswith('.java') and name != 'package-info.java']
             if len(javafilelist) == 0:
-                env.log('[no Java sources in {0} - skipping]'.format(sourceDir))
+                log('[no Java sources in {0} - skipping]'.format(sourceDir))
                 continue
 
-            timestampFile = join(p.baseDir, 'mx', '.checkstyle' + sourceDir[len(p.baseDir):].replace(os.sep, '_') + '.timestamp')
+            timestampFile = join(p.suite.dir, 'mx', '.checkstyle' + sourceDir[len(p.suite.dir):].replace(os.sep, '_') + '.timestamp')
             mustCheck = False
             if exists(timestampFile):
                 timestamp = os.path.getmtime(timestampFile)
@@ -924,7 +952,7 @@ If no projects are given, then all Java projects are checked."""
                 mustCheck = True
             
             if not mustCheck:
-                env.log('[all Java sources in {0} already checked - skipping]'.format(sourceDir))
+                log('[all Java sources in {0} already checked - skipping]'.format(sourceDir))
                 continue
 
             if exists(timestampFile):                
@@ -935,15 +963,22 @@ If no projects are given, then all Java projects are checked."""
             dotCheckstyleXML = xml.dom.minidom.parse(dotCheckstyle)
             localCheckConfig = dotCheckstyleXML.getElementsByTagName('local-check-config')[0]
             configLocation = localCheckConfig.getAttribute('location')
-            if configLocation.startswith('/'):
-                config = join(p.baseDir, configLocation.lstrip('/'))
+            configType = localCheckConfig.getAttribute('type')
+            if configType == 'project':
+                # Eclipse plugin "Project Relative Configuration" format:
+                #
+                #  '/<project_name>/<suffix>'
+                #
+                if configLocation.startswith('/'):
+                    name, _, suffix = configLocation.lstrip('/').partition('/')
+                    config = join(project(name).dir, suffix)
+                else:
+                    config = join(p.dir, configLocation)
             else:
-                config = join(projectDir, configLocation)
+                log('[unknown Checkstyle configuration type "' + configType + '" in {0} - skipping]'.format(sourceDir))
+                continue
                 
-            exclude = join(projectDir, '.checkstyle.exclude')
-                
-                
-            
+            exclude = join(p.dir, '.checkstyle.exclude')
             
             if exists(exclude):
                 with open(exclude) as f:
@@ -952,14 +987,14 @@ If no projects are given, then all Java projects are checked."""
                 def match(name):
                     for p in patterns:
                         if p in name:
-                            env.log('excluding: ' + name)
+                            log('excluding: ' + name)
                             return True
                     return False
                     
                 javafilelist = [name for name in javafilelist if not match(name)]
             
-            auditfileName = join(projectDir, 'checkstyleOutput.txt')
-            env.log('Running Checkstyle on {0} using {1}...'.format(sourceDir, config))
+            auditfileName = join(p.dir, 'checkstyleOutput.txt')
+            log('Running Checkstyle on {0} using {1}...'.format(sourceDir, config))
             
             try:
 
@@ -981,52 +1016,50 @@ If no projects are given, then all Java projects are checked."""
                     batch = javafilelist[:i]
                     javafilelist = javafilelist[i:]
                     try:
-                        env.run_java(['-Xmx1g', '-jar', env.pdb.library('CHECKSTYLE').classpath(True, env)[0], '-c', config, '-o', auditfileName] + batch)
+                        run_java(['-Xmx1g', '-jar', library('CHECKSTYLE').get_path(True), '-c', config, '-o', auditfileName] + batch)
                     finally:
                         if exists(auditfileName):
                             with open(auditfileName) as f:
                                 warnings = [line.strip() for line in f if 'warning:' in line]
                                 if len(warnings) != 0:
-                                    map(env.log, warnings)
+                                    map(log, warnings)
                                     return 1
             finally:
                 if exists(auditfileName):
                     os.unlink(auditfileName)
     return 0
 
-def clean(env, args):
+def clean(args):
     """remove all class files, images, and executables
 
     Removes all files created by a build, including Java class files, executables, and
     generated images.
     """
     
-    projects = env.pdb.projects.keys()
-    for project in projects:
-        p = env.pdb.project(project)
+    for p in projects():
         if p.native:
-            env.run([env.gmake_cmd(), '-C', p.dir, 'clean'])
+            run([gmake_cmd(), '-C', p.dir, 'clean'])
         else:
             outputDir = p.output_dir()
             if outputDir != '' and exists(outputDir):
-                env.log('Removing {0}...'.format(outputDir))
+                log('Removing {0}...'.format(outputDir))
                 shutil.rmtree(outputDir)
     
-def help_(env, args):
+def help_(args):
     """show help for a given command
 
 With no arguments, print a list of commands and short help for each command.
 
 Given a command name, print help for that command."""
     if len(args) == 0:
-        env.print_help()
+        _argParser.print_help()
         return
     
     name = args[0]
-    if not env.commands.has_key(name):
-        env.error('unknown command: ' + name)
+    if not commands.has_key(name):
+        _argParser.error('unknown command: ' + name)
     
-    value = env.commands[name]
+    value = commands[name]
     (func, usage) = value[:2]
     doc = func.__doc__
     if len(value) > 2:
@@ -1034,7 +1067,7 @@ Given a command name, print help for that command."""
         fmtArgs = []
         for d in docArgs:
             if isinstance(d, Callable):
-                fmtArgs += [d(env)]
+                fmtArgs += [d()]
             else:
                 fmtArgs += [str(d)]
         doc = doc.format(*fmtArgs)
@@ -1043,79 +1076,89 @@ Given a command name, print help for that command."""
 
 # Commands are in alphabetical order in this file.
 
-def javap(env, args):
+def javap(args):
     """launch javap with a -classpath option denoting all available classes
 
     Run the JDK javap class file disassembler with the following prepended options:
 
         -private -verbose -classpath <path to project classes>"""
         
-    javap = join(env.java_home, 'bin', 'javap')
+    javap = _opts.javap
     if not exists(javap):
-        env.abort('The javap executable does not exists: ' + javap)
+        abort('The javap executable does not exists: ' + javap)
     else:
-        env.run([javap, '-private', '-verbose', '-classpath', env.pdb.classpath()] + args)
+        run([javap, '-private', '-verbose', '-classpath', classpath()] + args)
 
-def projects(env, args):
+def show_projects(args):
     """show all loaded projects"""
-    pdb = env.pdb
-    for d in pdb.baseDirs:
-        projectsFile = join(d, 'mx', 'projects')
+    for s in suites():
+        projectsFile = join(s.dir, 'mx', 'projects')
         if exists(projectsFile):
-            env.log('# file:  ' + projectsFile)
-            for p in pdb.projects.values():
-                if p.baseDir == d:
-                    env.log(p.name)
+            log(projectsFile)
+            for p in s.projects:
+                log('\t' + p.name)
 
-
-def main(env):    
-
-    # Table of commands in alphabetical order.
-    # Keys are command names, value are lists: [<function>, <usage msg>, <format args to doc string of function>...]
-    # If any of the format args are instances of Callable, then they are called with an 'env' are before being
-    # used in the call to str.format().  
-    # Extensions should update this table directly
-    env.commands = {
-        'build': [build, '[options] projects...'],
-        'checkstyle': [checkstyle, 'projects...'],
-        'canonicalizeprojects': [canonicalizeprojects, ''],
-        'clean': [clean, ''],
-        'help': [help_, '[command]'],
-        'javap': [javap, ''],
-        'projects': [projects, ''],
-    }
+def add_argument(*args, **kwargs):
+    """
+    Define how a single command-line argument.
+    """
+    assert _argParser is not None
+    _argParser.add_argument(*args, **kwargs)
     
+# Table of commands in alphabetical order.
+# Keys are command names, value are lists: [<function>, <usage msg>, <format args to doc string of function>...]
+# If any of the format args are instances of Callable, then they are called with an 'env' are before being
+# used in the call to str.format().  
+# Extensions should update this table directly
+commands = {
+    'build': [build, '[options] projects...'],
+    'checkstyle': [checkstyle, 'projects...'],
+    'canonicalizeprojects': [canonicalizeprojects, ''],
+    'clean': [clean, ''],
+    'help': [help_, '[command]'],
+    'javap': [javap, ''],
+    'projects': [show_projects, ''],
+}
+
+_argParser = ArgParser()
+
+def main():    
     MX_INCLUDES = os.environ.get('MX_INCLUDES', None)
     if MX_INCLUDES is not None:
         for path in MX_INCLUDES.split(os.pathsep):
             d = join(path, 'mx')
             if exists(d) and isdir(d):
-                env.pdb.load(d)
+                _loadSuite(path)
                 
     cwdMxDir = join(os.getcwd(), 'mx')
     if exists(cwdMxDir) and isdir(cwdMxDir):
-        env.pdb.load(cwdMxDir, primary=True)
+        _loadSuite(os.getcwd(), True)
             
-    env._parse_cmd_line()
+    opts, commandAndArgs = _argParser._parse_cmd_line()
+    global _opts
+    _opts = opts
     
-    if len(env.commandAndArgs) == 0:
-        env.print_help()
+    if len(commandAndArgs) == 0:
+        _argParser.print_help()
         return
     
-    env.command = env.commandAndArgs[0]
-    env.command_args = env.commandAndArgs[1:]
+    command = commandAndArgs[0]
+    command_args = commandAndArgs[1:]
     
-    if not env.commands.has_key(env.command):
-        env.abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(env.command, env.format_commands()))
+    if not commands.has_key(command):
+        abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(command, _format_commands()))
         
-    c, _ = env.commands[env.command][:2]
+    c, _ = commands[command][:2]
     try:
-        retcode = c(env, env.command_args)
+        retcode = c(command_args)
         if retcode is not None and retcode != 0:
-            env.abort(retcode)
+            abort(retcode)
     except KeyboardInterrupt:
         # no need to show the stack trace when the user presses CTRL-C
-        env.abort(1)
+        abort(1)
 
 if __name__ == '__main__':
-    main(Env())
+    # rename this module as 'mx' so it is not imported twice by the commands.py modules
+    sys.modules['mx'] = sys.modules.pop('__main__')
+    
+    main()
