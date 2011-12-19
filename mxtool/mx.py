@@ -479,10 +479,6 @@ class ArgParser(ArgumentParser):
     
         os.environ['JAVA_HOME'] = opts.java_home
         os.environ['HOME'] = opts.user_home
- 
-        opts.java = join(opts.java_home, 'bin', 'java')
-        opts.javac = join(opts.java_home, 'bin', 'javac')
-        opts.javap = join(opts.java_home, 'bin', 'javap')
         
         commandAndArgs = opts.__dict__.pop('commandAndArgs')
         
@@ -511,7 +507,7 @@ def java():
     return _java
 
 def run_java(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-    return run(_java.format_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+    return run(java().format_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
 
 def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
     """
@@ -728,8 +724,8 @@ def download(path, urls, verbose=False):
     javaSource = join(myDir, 'URLConnectionDownload.java')
     javaClass = join(myDir, 'URLConnectionDownload.class')
     if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
-        subprocess.check_call([_opts.javac, '-d', myDir, javaSource])
-    if run([_opts.java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
+        subprocess.check_call([java().javac, '-d', myDir, javaSource])
+    if run([java().java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
         abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
                   '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
 
@@ -767,7 +763,9 @@ def build(args):
     parser = ArgumentParser(prog='mx build');
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
-    parser.add_argument('--no-native', action='store_false', dest='native', help='do not build com.oracle.max.vm.native')
+    parser.add_argument('--source', dest='compliance', help='Java compliance level', default='1.6')
+    parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
+    parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
 
     args = parser.parse_args(args)
@@ -786,7 +784,7 @@ def build(args):
     for p in sorted_deps():
         
         if p.native:
-            log('Compiling C sources in {0}...'.format(p.dir))
+            log('Calling GNU make {0}...'.format(p.dir))
 
             if args.clean:
                 run([gmake_cmd(), 'clean'], cwd=p.dir)
@@ -844,32 +842,36 @@ def build(args):
             try:
                 if jdtJar is None:
                     log('Compiling Java sources in {0} with javac...'.format(sourceDir))
-                    
-                    class Filter:
-                        """
-                        Class to filter the 'is Sun proprietary API and may be removed in a future release'
-                        warning when compiling the VM classes.
+                    errFilt = None
+                    if not args.warnAPI:
+                        class Filter:
+                            """
+                            Class to errFilt the 'is Sun proprietary API and may be removed in a future release'
+                            warning when compiling the VM classes.
+                            
+                            """
+                            def __init__(self):
+                                self.c = 0
+                            
+                            def eat(self, line):
+                                if 'proprietary API':
+                                    self.c = 2
+                                elif self.c != 0:
+                                    self.c -= 1
+                                else:
+                                    print line.rstrip()
+                        errFilt=Filter().eat
                         
-                        """
-                        def __init__(self):
-                            self.c = 0
-                        
-                        def eat(self, line):
-                            if 'Sun proprietary API' in line:
-                                self.c = 2
-                            elif self.c != 0:
-                                self.c -= 1
-                            else:
-                                print line.rstrip()
-                        
-                    run([_opts.javac, '-g', '-J-Xmx1g', '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=Filter().eat)
+                    run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
                 else:
                     log('Compiling Java sources in {0} with JDT...'.format(sourceDir))
                     jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
                     if not exists(jdtProperties):
                         raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
-                    run([_opts.java, '-Xmx1g', '-jar', jdtJar, '-1.6', '-cp', cp, '-g',
-                             '-properties', jdtProperties, 
+                    run([java().java, '-Xmx1g', '-jar', jdtJar,
+                             '-properties', jdtProperties,
+                             '-' + args.compliance,
+                             '-cp', cp, '-g',
                              '-warn:-unusedImport,-unchecked',
                              '-d', outputDir, '@' + argfile.name])
             finally:
@@ -1075,7 +1077,7 @@ def javap(args):
 
         -private -verbose -classpath <path to project classes>"""
         
-    javap = _opts.javap
+    javap = java().javap
     if not exists(javap):
         abort('The javap executable does not exists: ' + javap)
     else:
