@@ -481,12 +481,6 @@ class ArgParser(ArgumentParser):
         os.environ['HOME'] = opts.user_home
         
         commandAndArgs = opts.__dict__.pop('commandAndArgs')
-        
-        for s in suites():
-            mod = s.commands
-            if hasattr(mod is not None and mod, 'mx_post_parse_cmd_line'):
-                mod.mx_post_parse_cmd_line(opts)
-                
         return opts, commandAndArgs
     
 def _format_commands():
@@ -585,14 +579,18 @@ class JavaConfig:
         
         # Prepend the -d64 VM option only if the java command supports it
         try:
-            subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
+            output = subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
             self.java_args = ['-d64'] + self.java_args
         except subprocess.CalledProcessError as e:
             try:
-                subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
+                output = subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 print e.output
                 abort(e.returncode)
+        
+        output = output.split()
+        assert output[1] == 'version'
+        self.version = output[2].strip('"')
         
         if self.debug:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
@@ -1129,9 +1127,14 @@ def main():
         _loadSuite(os.getcwd(), True)
             
     opts, commandAndArgs = _argParser._parse_cmd_line()
+    
     global _opts, _java
     _opts = opts
     _java = JavaConfig(opts)
+    
+    for s in suites():
+        if s.commands is not None and hasattr(s.commands, 'mx_post_parse_cmd_line'):
+            s.commands.mx_post_parse_cmd_line(opts)
     
     if len(commandAndArgs) == 0:
         _argParser.print_help()
