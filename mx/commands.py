@@ -490,7 +490,7 @@ def inspect(args):
     
     mx.expand_project_in_args(vmArgs)  
 
-    cmd = mx.format_java_cmd(sysProps + ['-cp', mx.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+    cmd = mx.java().format_cmd(sysProps + ['-cp', mx.classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
     
     
