@@ -27,7 +27,6 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -57,8 +56,14 @@ public class JVMTIEvent {
         }
     }
 
+    /**
+     * Per-agent, per-thread event settings.
+     */
     static class PerThreadSettings {
         private Map<Thread, JVMTIEvent.MutableLong> settings;
+        /**
+         * per-agent setting across all threads.
+         */
         long panThreadSettings;
 
         long get(Thread thread) {
@@ -266,11 +271,10 @@ public class JVMTIEvent {
     /**
      * Implementation of upcall to enable/disable event notification.
      */
-    static int setEventNotificationMode(Pointer env, int mode, int eventType, Thread thread) {
+    static int setEventNotificationMode(JVMTI.Env jvmtiEnv, int mode, int eventType, Thread thread) {
         if (eventType < JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL) {
             return JVMTI_ERROR_INVALID_EVENT_TYPE;
         }
-        JVMTI.Env jvmtiEnv = JVMTI.getEnv(env);
         if (thread == null) {
             // Global
             long newBits = newEventBits(eventType, mode, jvmtiEnv.globalEventSettings);
@@ -303,25 +307,23 @@ public class JVMTIEvent {
             panAgentEventSettingCache |= jvmtiEnv.globalEventSettings | jvmtiEnv.perThreadEventSettings.panThreadSettings;
         }
 
-        // some notification changes require us to do more work
-        if ((bitSetting(eventType) & CODE_EVENTS_SETTING) != 0) {
-            if (eventType == SINGLE_STEP) {
-                JVMTIBreakpoints.setSingleStep(mode == JVMTI_ENABLE);
-            }
-            JVMTICode.codeEvent(eventType, mode, thread);
+        if (eventType == SINGLE_STEP) {
+            JVMTIBreakpoints.setSingleStep(mode == JVMTI_ENABLE);
         }
 
         return JVMTI_ERROR_NONE;
     }
 
-    private static class SetEventSettingProcedure implements Pointer.Procedure {
-
-        public void run(Pointer tla) {
-            JVMTIVmThreadLocal.orEventBits(tla, panAgentThreadEventSettingCache);
+    static long codeEventSettings(JVMTI.Env jvmtiEnv, VmThread vmThread) {
+        long settings;
+        if (jvmtiEnv == null) {
+            // called from compiled code on a frame pop
+            settings = panAgentEventSettingCache;
+        } else {
+            settings = jvmtiEnv.perThreadEventSettings.get(vmThread.javaThread());
         }
+        return settings & JVMTIEvent.CODE_EVENTS_SETTING;
     }
-
-    private static SetEventSettingProcedure setEventSettingProcedure = new SetEventSettingProcedure();
 
     public static long bitSetting(int eventType) {
         return bitSettings[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];

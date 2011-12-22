@@ -31,7 +31,6 @@ import com.sun.max.vm.thread.VmThreadLocal.*;
  *
  * Bits 0-7 are status bits:
  * Bits 8-23 record the depth for frame pop events.
- * Bits 24-63 hold the per-thread event mask
  *
  */
 public class JVMTIVmThreadLocal {
@@ -49,9 +48,6 @@ public class JVMTIVmThreadLocal {
     static final int JVMTI_FRAME_POP = 2;
 
     private static final int STATUS_BIT_MASK = 0xFF;
-
-    private static final int EVENT_SHIFT = 24;
-    private static final long EVENT_MASK = 0xFFFF000000L;
 
     private static final int DEPTH_SHIFT = 8;
 
@@ -77,19 +73,5 @@ public class JVMTIVmThreadLocal {
         JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(depth << DEPTH_SHIFT));
     }
 
-    static void orEventBits(Pointer tla, long bits) {
-        long newBits = bits << EVENT_SHIFT;
-        long otherBits = JVMTI_STATE.load(tla).toLong();
-        JVMTI_STATE.store(tla, Address.fromLong(otherBits | newBits));
-    }
-
-    static void clearEventBits(Pointer tla) {
-        long otherBits = JVMTI_STATE.load(tla).toLong() & ~EVENT_MASK;
-        JVMTI_STATE.store(tla, Address.fromLong(otherBits));
-    }
-
-    static long getEventBits(Pointer tla) {
-        return JVMTI_STATE.load(tla).toLong() >> EVENT_SHIFT;
-    }
 
 }

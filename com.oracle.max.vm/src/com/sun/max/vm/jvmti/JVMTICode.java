@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.jvmti.JVMTIConstants.*;
-
 import java.util.*;
 
 import com.sun.max.vm.actor.member.*;
@@ -38,29 +36,12 @@ import com.sun.max.vm.thread.*;
 public class JVMTICode {
 
     /**
-     * Called from {@link JVMTIEvent#setEventNotificationMode} to enable/disable events
-     * that require compiled code support. Experimentally, these come in bunches,
-     * one at a time, so we defer handling them until the thread is suspended/resumed.
-     * @param eventType
-     * @param mode
-     * @param thread
-     */
-    static void codeEvent(int eventType, int mode, Thread thread) {
-        if (eventType == JVMTI_EVENT_BREAKPOINT || eventType == JVMTI_EVENT_EXCEPTION) {
-            // no deopt needed for these
-            return;
-        }
-        assert thread != null; // TODO handle global code events
-        // Record the requested event in the {@link JVMTIVmThreadLocal#STATE}
-        JVMTIVmThreadLocal.orEventBits(VmThread.fromJava(thread).tla(), JVMTIEvent.bitSetting(eventType));
-    }
-
-    /**
      * Handle any change in compiled code for the methods on the (logical) call stack
      * necessary for the pervasive events such as SINGLE_STEP, FRAME_POP, for a single thread.
+     * This check occurs just before the thread is resumed.
      */
-    private static void checkDeOptForEvent(VmThread vmThread) {
-        long codeEventSettings = codeEventSettings(vmThread);
+    private static void checkDeOptForEvent(JVMTI.Env jvmtiEnv, VmThread vmThread) {
+        long codeEventSettings = JVMTIEvent.codeEventSettings(jvmtiEnv, vmThread);
         if (codeEventSettings != 0) {
             SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
             // we only deopt the top frame, which means we need to handle leaving the frame later
@@ -70,10 +51,6 @@ public class JVMTICode {
             // the code contains single step event calls. They won't be delivered but they reduce
             // performance noticeably.
         }
-    }
-
-    static long codeEventSettings(VmThread vmThread) {
-        return JVMTIVmThreadLocal.getEventBits(vmThread.tla()) & JVMTIEvent.CODE_EVENTS_SETTING;
     }
 
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
@@ -98,28 +75,28 @@ public class JVMTICode {
         // Potentially need to deopt the code in all threads, but note that it
         // may not be active on any thread stack, in which case we just need to recompile
         // and patch call sites. Deopt takes care of it either way.
+        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
-        targetMethods.add(classMethodActor.currentTargetMethod());
+        targetMethods.add(targetMethod);
         new Deoptimization(targetMethods).go();
     }
 
-    static void resumeThreadNotify(VmThread vmThread) {
-        checkDeOptForEvent(vmThread);
+    static void resumeThreadNotify(JVMTI.Env jvmtiEnv, VmThread vmThread) {
+        checkDeOptForEvent(jvmtiEnv, vmThread);
     }
 
-    static void suspendThreadNotify(VmThread vmThread) {
-        JVMTIVmThreadLocal.clearEventBits(vmThread.tla());
+    static void suspendThreadNotify(JVMTI.Env jvmtiEnv, VmThread vmThread) {
     }
 
-    static void resumeThreadListNotify(Set<VmThread> set) {
+    static void resumeThreadListNotify(JVMTI.Env jvmtiEnv, Set<VmThread> set) {
         for (VmThread vmThread : set) {
-            resumeThreadNotify(vmThread);
+            resumeThreadNotify(jvmtiEnv, vmThread);
         }
     }
 
-    static void suspendThreadListNotify(Set<VmThread> set) {
+    static void suspendThreadListNotify(JVMTI.Env jvmtiEnv, Set<VmThread> set) {
         for (VmThread vmThread : set) {
-            suspendThreadNotify(vmThread);
+            suspendThreadNotify(jvmtiEnv, vmThread);
         }
     }
 }

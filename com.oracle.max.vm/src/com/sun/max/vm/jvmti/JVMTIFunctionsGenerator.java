@@ -53,6 +53,7 @@ public class JVMTIFunctionsGenerator {
         static ArrayList<String> methodNames = new ArrayList<String>();
         static String currentMethod;
         static boolean currentMethodLogged;
+        static boolean currentMethodEnvChecked;
 
         @Override
         public String customizeBody(String line) {
@@ -77,13 +78,14 @@ public class JVMTIFunctionsGenerator {
             if (result != null) {
                 return result;
             }
-            result = customizeEnvCheck(line);
-            if (result != null) {
-                return result;
-            }
             // if we get here this a real statement in the body
             // check for logging
             result = checkLogging(line);
+            if (result != null) {
+                return result;
+            }
+            // check environment valid
+            result = envCheck(line);
             if (result != null) {
                 return result;
             }
@@ -258,10 +260,9 @@ public class JVMTIFunctionsGenerator {
             }
         }
 
-        private String customizeEnvCheck(String line) {
-            String[] tagArgs = getTagArgs(line, ENVCHECK);
-            if (tagArgs == null) {
-                return null;
+        private String envCheck(String line) {
+            if (currentMethodEnvChecked) {
+                return line;
             }
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
             sb.append("Env jvmtiEnv = JVMTI.getEnv(env);\n");
@@ -270,7 +271,9 @@ public class JVMTIFunctionsGenerator {
             sb.append(INDENT16);
             sb.append("return JVMTI_ERROR_INVALID_ENVIRONMENT;\n");
             sb.append(INDENT12);
-            sb.append("}\n");
+            sb.append("}\n    ");
+            sb.append(line);
+            currentMethodEnvChecked = true;
             return sb.toString();
         }
 
@@ -285,6 +288,7 @@ public class JVMTIFunctionsGenerator {
             methodNames.add(decl.name);
             currentMethod = decl.name;
             currentMethodLogged = false;
+            currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
         }
 
         @Override
