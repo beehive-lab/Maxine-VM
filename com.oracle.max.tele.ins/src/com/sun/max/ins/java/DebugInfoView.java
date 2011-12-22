@@ -125,11 +125,11 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
             sb.append(teleClassMethodActor.classMethodActor().holder().simpleName()).append(".");
             sb.append(inspection().nameDisplay().veryShortName(teleClassMethodActor));
         } else if (codeLocation.hasAddress()) {
-            MaxNativeFunction externalCode = vm().machineCode().findNativeFunction(codeLocation.address());
-            if (externalCode == null) {
-                sb.append("<native>");
+            MaxNativeFunction nativeFunction = vm().machineCode().findNativeFunction(codeLocation.address());
+            if (nativeFunction == null) {
+                sb.append("<native>@" + codeLocation.address().to0xHexString());
             } else {
-                sb.append(externalCode.entityName());
+                sb.append(nativeFunction.entityName());
             }
         }
         return sb.toString();
@@ -142,7 +142,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         if (codeLocation == null) {
             setContentPane(nullPanel);
         } else if (debugInfo == null) {
-            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
+            simplePanelLabel.setText(inspection().nameDisplay().longName(codeLocation));
             setContentPane(simplePanel);
         } else {
             final JPanel panel = new InspectorPanel(inspection());
@@ -160,7 +160,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
             panel.add(createRefMapsPanel(debugInfo), 0);
 
-            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
+            simplePanelLabel.setText(inspection().nameDisplay().longName(codeLocation));
             panel.add(simplePanel, 0);
             setContentPane(new InspectorScrollPane(inspection(), panel));
         }
