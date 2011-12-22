@@ -30,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -444,7 +445,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * E.g. "MachineCode{0x11111111, int foo(int, int)[0]+0x235 in com.sun.Example, bci=-1}.
+     * E.g. "0x11111111, int foo(int, int)[0]+0x235 in com.sun.Example, bci=-1.
      */
     public String longName(MaxCodeLocation codeLocation) {
         if (codeLocation == null) {
@@ -453,10 +454,10 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder name = new StringBuilder();
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
-            name.append("MachineCode{").append(address.to0xHexString());
-            if (vm().machineCode().findNativeFunction(address) != null) {
-                // a native routine that's already been registered.
-                name.append("}");
+            name.append(address.to0xHexString());
+            TeleNativeFunction nativeFunction = vm().machineCode().findNativeFunction(address);
+            if (nativeFunction != null) {
+                name.append(" in " + longName(nativeFunction));
             } else {
                 final MaxCompilation compilation = vm().machineCode().findCompilation(address);
                 if (compilation != null) {
@@ -467,7 +468,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 } else if (codeLocation.methodKey() != null) {
                     name.append(", MethodKey=").append(longName(codeLocation.methodKey()));
                 }
-                name.append("}");
             }
         } else if (codeLocation.hasTeleClassMethodActor()) {
             name.append(longName(codeLocation.teleClassMethodActor())).append(", bci=").append(codeLocation.bci());
@@ -478,7 +478,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * E.g. "0x11111111 foo()[0] com.sun.Example bci=-1}.
+     * E.g. "0x11111111 foo()[0] com.sun.Example bci=-1.
      */
     public String shortName(MaxCodeLocation codeLocation) {
         if (codeLocation == null) {
@@ -488,14 +488,19 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append(address.to0xHexString()).append(" ");
-            final MaxCompilation compilation = vm().machineCode().findCompilation(address);
-            if (compilation != null) {
-                name.append(extremelyShortName(compilation)).append(" ");
-            }
-            if (codeLocation.hasTeleClassMethodActor()) {
-                name.append(" bci=").append(codeLocation.bci());
-            } else if (codeLocation.methodKey() != null) {
-                name.append(shortName(codeLocation.methodKey()));
+            TeleNativeFunction nativeFunction = vm().machineCode().findNativeFunction(address);
+            if (nativeFunction != null) {
+                name.append(" in " + shortName(nativeFunction));
+            } else {
+                final MaxCompilation compilation = vm().machineCode().findCompilation(address);
+                if (compilation != null) {
+                    name.append(extremelyShortName(compilation)).append(" ");
+                }
+                if (codeLocation.hasTeleClassMethodActor()) {
+                    name.append(" bci=").append(codeLocation.bci());
+                } else if (codeLocation.methodKey() != null) {
+                    name.append(shortName(codeLocation.methodKey()));
+                }
             }
         } else if (codeLocation.hasTeleClassMethodActor()) {
             name.append(veryShortName(codeLocation.teleClassMethodActor())).append(" bci=").append(codeLocation.bci());

@@ -24,11 +24,13 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -104,33 +106,53 @@ public final class StackView extends AbstractView<StackView> {
             if (stackFrame instanceof MaxStackFrame.Compiled) {
                 final MaxCompilation compilation = stackFrame.compilation();
                 methodName += inspection().nameDisplay().veryShortName(compilation);
-                toolTip = htmlify(inspection().nameDisplay().longName(compilation, stackFrame.ip()));
-                if (compilation != null) {
-
-                    try {
-                        vm().acquireLegacyVMAccess();
+                CiDebugInfo debugInfo = stackFrame.codeLocation().debugInfo();
+                if (debugInfo == null || debugInfo.frame().caller() == null) {
+                    toolTip = htmlify(inspection().nameDisplay().longName(compilation, stackFrame.ip()));
+                    if (compilation != null) {
                         try {
-                            final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
-                            if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                                methodName += inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
-                                try {
-                                    toolTip += inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
-                                } catch (Exception e) {
-                                    // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
-                                    //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
-                                    toolTip += inspection().nameDisplay().unavailableDataLongText();
+                            vm().acquireLegacyVMAccess();
+                            try {
+                                final TeleClassMethodActor teleClassMethodActor = compilation.getTeleClassMethodActor();
+                                if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                                    methodName += inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                                    try {
+                                        toolTip += inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                                    } catch (Exception e) {
+                                        // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
+                                        //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
+                                        toolTip += inspection().nameDisplay().unavailableDataLongText();
+                                    }
                                 }
+                            } finally {
+                                vm().releaseLegacyVMAccess();
                             }
-                        } finally {
-                            vm().releaseLegacyVMAccess();
+                        } catch (DataIOError e) {
+                            methodName += inspection().nameDisplay().unavailableDataShortText();
+                            toolTip = inspection().nameDisplay().unavailableDataLongText();
+                        } catch (MaxVMBusyException e) {
+                            methodName += inspection().nameDisplay().unavailableDataShortText();
+                            toolTip = inspection().nameDisplay().unavailableDataLongText();
                         }
-                    } catch (DataIOError e) {
-                        methodName += inspection().nameDisplay().unavailableDataShortText();
-                        toolTip = inspection().nameDisplay().unavailableDataLongText();
-                    } catch (MaxVMBusyException e) {
-                        methodName += inspection().nameDisplay().unavailableDataShortText();
-                        toolTip = inspection().nameDisplay().unavailableDataLongText();
                     }
+                } else {
+                    // There is at least one inlined frame available in debug info
+                    final Stack<CiFrame> frames = new Stack<CiFrame>();
+                    CiFrame frame = debugInfo.frame();
+                    while (frame != null) {
+                        frames.push(frame);
+                        frame = frame.caller();
+                    }
+                    final StringBuilder sb = new StringBuilder();
+                    // Display the immediate frame using the standard format
+                    sb.append(htmlify(inspection().nameDisplay().longName(compilation, stackFrame.ip())));
+                    frame = frames.pop();
+                    while (!frames.isEmpty()) {
+                        frame = frames.pop();
+                        sb.append("<br>    Inlined from: <br>");
+                        CiUtil.appendLocation(sb, frame.method, frame.bci).toString();
+                    }
+                    toolTip = sb.toString();
                 }
             } else if (stackFrame instanceof MaxStackFrame.Truncated) {
                 final MaxStackFrame.Truncated truncated = (MaxStackFrame.Truncated) stackFrame;
