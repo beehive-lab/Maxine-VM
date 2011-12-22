@@ -107,7 +107,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                         if (filterLowerCase.isEmpty() ||
                             (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                              textToMatch.contains(filterLowerCase)) {
-                            final String name = methodActor.format("%h.%n(%p) [" + methodCompilationType + "]");
+                            final String name = methodActor.format("%h.%n(%p)" + inspection().nameDisplay().shortMethodCompilationID(compilation) + "  " + methodCompilationType);
                             namedMethodCompilations.add(new NamedMethodCompilation(name, compilation));
                         }
                     } else {
