@@ -53,7 +53,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
     static boolean UseLOS = true;
-    static boolean VerifyAfterGC = false;
     static {
         VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
