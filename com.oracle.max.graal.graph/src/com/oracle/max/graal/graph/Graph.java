@@ -439,6 +439,7 @@ public class Graph {
     }
 
     void unregister(Node node) {
+        assert !node.isDeleted() : "cannot delete a node twice! node=" + node;
         logNodeDeleted(node);
         nodes.set(node.id(), null);
         deletedNodeCount++;

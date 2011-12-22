@@ -64,11 +64,9 @@ public class HeapFreeChunk {
         SIZE_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
 
-    private static final long HEAP_FREE_CHUNK_MARKER = 0xdadadadadadadadaL;
-
     @INLINE
     public static boolean isInDeadSpace(Address chunkAddress) {
-        return chunkAddress.wordAligned().asPointer().getLong() == HEAP_FREE_CHUNK_MARKER;
+        return chunkAddress.wordAligned().asPointer().getLong() == Memory.ZAPPED_MARKER;
     }
 
     @INLINE
@@ -76,9 +74,9 @@ public class HeapFreeChunk {
         return a.equals(deadSpaceMark());
     }
 
-    @INLINE
+    @FOLD
     public static Address deadSpaceMark() {
-        return Address.fromLong(HEAP_FREE_CHUNK_MARKER);
+        return Memory.zappedMarker();
     }
 
     @INLINE

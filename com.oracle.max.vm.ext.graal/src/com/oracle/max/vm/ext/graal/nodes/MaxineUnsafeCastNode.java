@@ -43,7 +43,7 @@ public final class MaxineUnsafeCastNode extends FloatingNode implements LIRLower
     }
 
     public MaxineUnsafeCastNode(ValueNode x, RiResolvedType toType) {
-        super(toType.kind(false) != CiKind.Object ? StampFactory.forKind(toType.kind(false)) : StampFactory.declared(toType));
+        super(toType.kind(false) == CiKind.Object ? StampFactory.declared(toType) : StampFactory.forKind(toType.kind(false)));
         this.x = x;
         this.toType = toType;
     }

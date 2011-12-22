@@ -29,16 +29,27 @@ import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
 public enum AMD64Op1Opcode implements LIROpcode {
-    INEG, LNEG, FNEG, DNEG,
-    DABS;
+    INEG, LNEG;
 
-    public LIRInstruction create(CiVariable inputAndResult) {
-        CiValue[] inputs = new CiValue[] {inputAndResult};
+    public LIRInstruction create(CiVariable result, CiValue input) {
+        CiValue[] inputs = new CiValue[] {input};
 
-        return new AMD64LIRInstruction(this, inputAndResult, null, inputs) {
+        return new AMD64LIRInstruction(this, result, null, inputs, LIRInstruction.NO_OPERANDS, LIRInstruction.NO_OPERANDS) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                CiValue input = input(0);
+                AMD64MoveOpcode.move(tasm, masm, result(), input);
                 emit(tasm, masm, result());
+            }
+
+            @Override
+            public boolean inputCanBeMemory(int index) {
+                return true;
+            }
+
+            @Override
+            public CiValue registerHint() {
+                return input(0);
             }
         };
     }
@@ -47,9 +58,6 @@ public enum AMD64Op1Opcode implements LIROpcode {
         switch (this) {
             case INEG: masm.negl(tasm.asIntReg(inputAndResult)); break;
             case LNEG: masm.negq(tasm.asLongReg(inputAndResult)); break;
-            case FNEG: masm.xorps(tasm.asFloatReg(inputAndResult),  tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000080000000L), 16)); break;
-            case DNEG: masm.xorpd(tasm.asDoubleReg(inputAndResult), tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000000000000L), 16)); break;
-            case DABS: masm.andpd(tasm.asDoubleReg(inputAndResult), tasm.recordDataReferenceInCode(CiConstant.forLong(0x7FFFFFFFFFFFFFFFL), 16)); break;
             default:   throw Util.shouldNotReachHere();
         }
     }

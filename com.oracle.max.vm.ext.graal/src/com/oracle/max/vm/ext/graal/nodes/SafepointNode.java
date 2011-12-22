@@ -56,13 +56,13 @@ public final class SafepointNode extends AbstractStateSplit implements AMD64LIRL
             case HERE: {
                 gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, AMD64.rip.asValue())));
                 FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
-                LIRDebugInfo info = new LIRDebugInfo(stateDuring);
+                LIRDebugInfo info = gen.stateFor(stateDuring);
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;
             }
             case INFO: {
                 FrameState stateDuring = stateAfter().duplicateModified(stateAfter().bci, false, kind());
-                LIRDebugInfo info = new LIRDebugInfo(stateDuring);
+                LIRDebugInfo info = gen.stateFor(stateDuring);
                 gen.append(AMD64SafepointOpcode.SAFEPOINT.create(info));
                 break;
             }

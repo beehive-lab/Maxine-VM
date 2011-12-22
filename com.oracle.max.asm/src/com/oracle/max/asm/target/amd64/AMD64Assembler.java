@@ -392,15 +392,6 @@ public class AMD64Assembler extends AbstractAssembler {
         emitArith(0x23, 0xC0, dst, src);
     }
 
-    public final void andpd(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
-        emitByte(0x66);
-        prefix(src, dst);
-        emitByte(0x0F);
-        emitByte(0x54);
-        emitOperandHelper(dst, src);
-    }
-
     public final void bsfq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2029,26 +2020,70 @@ public class AMD64Assembler extends AbstractAssembler {
         emitArith(0x33, 0xC0, dst, src);
     }
 
-    public final void xorpd(CiRegister dst, CiRegister src) {
+    public final void andpd(CiRegister dst, CiRegister src) {
+        emitByte(0x66);
+        andps(dst, src);
+    }
+
+    public final void andpd(CiRegister dst, CiAddress src) {
+        emitByte(0x66);
+        andps(dst, src);
+    }
+
+    public final void andps(CiRegister dst, CiRegister src) {
+        assert dst.isFpu() && src.isFpu();
+        int encode = prefixAndEncode(dst.encoding, src.encoding);
+        emitByte(0x0F);
+        emitByte(0x54);
+        emitByte(0xC0 | encode);
+    }
+
+    public final void andps(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
-        assert src.isFpu();
+        prefix(src, dst);
+        emitByte(0x0F);
+        emitByte(0x54);
+        emitOperandHelper(dst, src);
+    }
+
+    public final void orpd(CiRegister dst, CiRegister src) {
+        emitByte(0x66);
+        orps(dst, src);
+    }
+
+    public final void orpd(CiRegister dst, CiAddress src) {
+        emitByte(0x66);
+        orps(dst, src);
+    }
+
+    public final void orps(CiRegister dst, CiRegister src) {
+        assert dst.isFpu() && src.isFpu();
+        int encode = prefixAndEncode(dst.encoding, src.encoding);
+        emitByte(0x0F);
+        emitByte(0x56);
+        emitByte(0xC0 | encode);
+    }
+
+    public final void orps(CiRegister dst, CiAddress src) {
+        assert dst.isFpu();
+        prefix(src, dst);
+        emitByte(0x0F);
+        emitByte(0x56);
+        emitOperandHelper(dst, src);
+    }
+
+    public final void xorpd(CiRegister dst, CiRegister src) {
         emitByte(0x66);
         xorps(dst, src);
     }
 
     public final void xorpd(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
-
         emitByte(0x66);
-        prefix(src, dst);
-        emitByte(0x0F);
-        emitByte(0x57);
-        emitOperandHelper(dst, src);
+        xorps(dst, src);
     }
 
     public final void xorps(CiRegister dst, CiRegister src) {
-
-        assert dst.isFpu();
+        assert dst.isFpu() && src.isFpu();
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0x57);
@@ -2057,7 +2092,6 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void xorps(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
-
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0x57);

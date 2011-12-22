@@ -57,9 +57,9 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        RiResolvedType objectExactType = object().exactType();
-        RiResolvedType classExactType = exactType();
-        if (objectExactType != null && classExactType != null && objectExactType.isSubtypeOf(classExactType)) {
+        RiResolvedType objectDeclaredType = object().declaredType();
+        RiResolvedType targetClass = targetClass();
+        if (objectDeclaredType != null && targetClass != null && objectDeclaredType.isSubtypeOf(targetClass)) {
             freeAnchor();
             return object();
         }

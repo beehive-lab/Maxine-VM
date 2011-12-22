@@ -19,6 +19,9 @@ Maxine.ipr
 Maxine.iws
 maxine-tester
 test-logs.zip
+mx/.checkstyle*.timestamp
+mx/env
+mx/includes
 *~
 *.cfg
 vee2010-results

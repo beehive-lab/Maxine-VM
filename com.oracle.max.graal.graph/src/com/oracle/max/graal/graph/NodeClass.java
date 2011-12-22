@@ -478,7 +478,7 @@ public class NodeClass {
             try {
                 return index < offsets.length;
             } finally {
-                assert modCount == node.modCount();
+                assert modCount == node.modCount() : "must not be modified";
             }
         }
 

@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
-import static com.oracle.max.vm.ext.graal.target.amd64.AMD64StackAllocateOpcode.*;
-
 import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
@@ -50,7 +48,7 @@ public final class AllocaNode extends FixedWithNextNode implements AMD64LIRLower
     public void generateAmd64(AMD64LIRGenerator gen) {
         CiVariable result = gen.newVariable(kind());
         StackBlock stackBlock = gen.compilation.frameMap().reserveStackBlock(size, refs);
-        gen.append(STACK_ALLOCATE.create(result, stackBlock));
+        gen.append(AMD64StandardOpcode.LEA_STACK_BLOCK.create(result, stackBlock));
         gen.setResult(this, result);
     }
 }

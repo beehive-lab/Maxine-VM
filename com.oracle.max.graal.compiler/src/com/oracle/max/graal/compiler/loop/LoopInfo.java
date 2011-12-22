@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.loop;
 
 import java.util.*;
 
+import com.oracle.max.criutils.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.util.*;
 
@@ -56,5 +57,25 @@ public class LoopInfo {
                 };
             }
         };
+    }
+
+    public void print() {
+        for (Loop loop : rootLoops) {
+            print(loop);
+        }
+    }
+
+    private void print(Loop loop) {
+        TTY.println("%s", loop.loopBegin());
+        TTY.println("-- subnodes");
+        for (Node node : loop.fixedNodes()) {
+            TTY.println("  " + node);
+        }
+        TTY.println("-- subloops");
+        for (Loop sub : loop.children()) {
+            print(sub);
+        }
+        TTY.println("-- sub");
+        TTY.println();
     }
 }

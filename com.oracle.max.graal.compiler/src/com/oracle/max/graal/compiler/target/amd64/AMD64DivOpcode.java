@@ -35,13 +35,16 @@ public enum AMD64DivOpcode implements LIROpcode {
     LDIV, LREM, ULDIV, ULREM;
 
     public LIRInstruction create(CiRegisterValue result, LIRDebugInfo info, CiRegisterValue left, CiVariable right) {
-        CiValue[] inputs = new CiValue[] {left, right};
-        CiValue[] temps = new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right};
+        CiValue[] inputs = new CiValue[] {left};
+        CiValue[] alives = new CiValue[] {right};
+        CiValue[] temps = new CiValue[] {AMD64.rdx.asValue()};
 
-        return new AMD64LIRInstruction(this, result, info, inputs, temps) {
+        return new AMD64LIRInstruction(this, result, info, inputs, alives, temps) {
             @Override
             public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                emit(tasm, masm, tasm.asRegister(result()), info, tasm.asRegister(input(0)), tasm.asRegister(input(1)));
+                CiValue left = input(0);
+                CiValue right = alive(0);
+                emit(tasm, masm, tasm.asRegister(result()), info, tasm.asRegister(left), tasm.asRegister(right));
             }
         };
     }

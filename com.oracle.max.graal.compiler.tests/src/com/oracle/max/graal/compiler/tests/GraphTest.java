@@ -101,7 +101,7 @@ public abstract class GraphTest {
     protected StructuredGraph parse(Method m) {
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
         StructuredGraph graph = new StructuredGraph();
-        new GraphBuilderPhase(runtime, riMethod).apply(graph);
+        new GraphBuilderPhase(runtime, riMethod, null, GraphBuilderConfiguration.getDeoptFreeDefault()).apply(graph);
         return graph;
     }
 

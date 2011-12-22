@@ -41,7 +41,7 @@ public class FrameStateBuilder implements FrameStateAccess {
 
     private final ValueNode[] locals;
     private final ValueNode[] stack;
-    private final ArrayList<ValueNode> locks;
+    private final ArrayList<MonitorObject> locks;
 
     private int stackIndex;
     private boolean rethrowException;
@@ -84,7 +84,7 @@ public class FrameStateBuilder implements FrameStateAccess {
             javaIndex += stackSlots(kind);
             index++;
         }
-        this.locks = new ArrayList<ValueNode>();
+        this.locks = new ArrayList<MonitorObject>();
     }
 
     @Override
@@ -375,7 +375,7 @@ public class FrameStateBuilder implements FrameStateAccess {
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
      */
-    public void lock(ValueNode obj) {
+    public void lock(MonitorObject obj) {
         assert obj == null || (obj.kind() != CiKind.Void && obj.kind() != CiKind.Illegal) : "unexpected value: " + obj;
         locks.add(obj);
     }
@@ -383,7 +383,8 @@ public class FrameStateBuilder implements FrameStateAccess {
     /**
      * Unlock the lock on the top of the stack.
      */
-    public void unlock() {
+    public void unlock(MonitorObject obj) {
+        assert locks.get(locks.size() - 1) == obj;
         locks.remove(locks.size() - 1);
     }
 
@@ -412,7 +413,7 @@ public class FrameStateBuilder implements FrameStateAccess {
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
-    public final ValueNode lockAt(int i) {
+    public final MonitorObject lockAt(int i) {
         return locks.get(i);
     }
 
@@ -447,7 +448,7 @@ public class FrameStateBuilder implements FrameStateAccess {
         return new ValueArrayIterator(locals);
     }
 
-    public List<ValueNode> locks() {
+    public List<MonitorObject> locks() {
         return Collections.unmodifiableList(locks);
     }
 
@@ -497,18 +498,6 @@ public class FrameStateBuilder implements FrameStateAccess {
             return stack[i - locals.length];
         } else {
             return locks.get(i - locals.length - stack.length);
-        }
-    }
-
-    @Override
-    public void setValueAt(int i, ValueNode v) {
-        assert v == null || (v.kind() != CiKind.Void && v.kind() != CiKind.Illegal) : "unexpected value: " + v;
-        if (i < locals.length) {
-            locals[i] = v;
-        } else if (i < locals.length + stackIndex) {
-            stack[i - locals.length] = v;
-        } else {
-            locks.set(i - locals.length - stack.length, v);
         }
     }
 
