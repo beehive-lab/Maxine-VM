@@ -364,14 +364,10 @@ public class JVMTI {
                 tfed = new ThreadFieldEventData();
                 break;
 
-            case THREAD_START:
-                // JVMTI_FIELD_EVENT_DATA.store3(Reference.fromJava(new FieldEventData()));
-                break;
-
             default:
         }
 
-        // Check that event is enabled and dispatch it to all registered agents
+        // Check that event is enabled and dispatch it to all interested agents
         for (int i = 0; i < jvmtiEnvs.length; i++) {
             Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current());
             if (callback.isZero()) {

@@ -590,6 +590,10 @@ public class JVMTIThreadFunctions {
 
     private static FramePopEventDataThreadLocal framePopEventDataTL = new FramePopEventDataThreadLocal();
 
+    /**
+     * Invoked from compiled code before a frame is being popped, e.g. a return.
+     * @param wasPoppedByException
+     */
     public static void framePopEvent(boolean wasPoppedByException) {
         VmThread vmThread = VmThread.current();
         Pointer tla = vmThread.tla();
@@ -598,7 +602,7 @@ public class JVMTIThreadFunctions {
             op.submit();
             // if we are single stepping, we may need to deopt the method we are returning to
             if (op.stackTraceVisitor.stackElements.size() > 1) {
-                long codeEventSettings = JVMTICode.codeEventSettings(vmThread);
+                long codeEventSettings = JVMTIEvent.codeEventSettings(null, vmThread);
                 if ((codeEventSettings & JVMTIEvent.bitSetting(JVMTI_EVENT_SINGLE_STEP)) != 0) {
                     JVMTICode.checkDeOptForMethod(op.stackTraceVisitor.getStackElement(1).classMethodActor, codeEventSettings);
                 }
@@ -850,16 +854,16 @@ public class JVMTIThreadFunctions {
 
     // Thread suspend/resume/stop/interrupt
 
-    static int suspendThread(Thread thread) {
+    static int suspendThread(JVMTI.Env jvmtiEnv, Thread thread) {
         if (!thread.isAlive()) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
         new VmOperation.SuspendThreadSet(VmThread.fromJava(thread)).submit();
-        JVMTICode.suspendThreadNotify(VmThread.fromJava(thread));
+        JVMTICode.suspendThreadNotify(jvmtiEnv, VmThread.fromJava(thread));
         return JVMTI_ERROR_NONE;
     }
 
-    private static int suspendOrResumeThreadList(int requestCount, Pointer requestList, Pointer results, boolean isSuspend) {
+    private static int suspendOrResumeThreadList(JVMTI.Env jvmtiEnv, int requestCount, Pointer requestList, Pointer results, boolean isSuspend) {
         if (requestCount < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
@@ -879,30 +883,30 @@ public class JVMTIThreadFunctions {
         }
         if (isSuspend) {
             new VmOperation.SuspendThreadSet(set).submit();
-            JVMTICode.suspendThreadListNotify(set);
+            JVMTICode.suspendThreadListNotify(jvmtiEnv, set);
         } else {
-            JVMTICode.resumeThreadListNotify(set);
+            JVMTICode.resumeThreadListNotify(jvmtiEnv, set);
             new VmOperation.ResumeThreadSet(set).submit();
         }
         return JVMTI_ERROR_NONE;
 
     }
 
-    static int suspendThreadList(int requestCount, Pointer requestList, Pointer results) {
-        return suspendOrResumeThreadList(requestCount, requestList, results, true);
+    static int suspendThreadList(JVMTI.Env jvmtiEnv, int requestCount, Pointer requestList, Pointer results) {
+        return suspendOrResumeThreadList(jvmtiEnv, requestCount, requestList, results, true);
     }
 
-    static int resumeThread(Thread thread) {
+    static int resumeThread(JVMTI.Env jvmtiEnv, Thread thread) {
         if (!thread.isAlive()) {
             return JVMTI_ERROR_THREAD_NOT_ALIVE;
         }
-        JVMTICode.resumeThreadNotify(VmThread.fromJava(thread));
+        JVMTICode.resumeThreadNotify(jvmtiEnv, VmThread.fromJava(thread));
         new VmOperation.ResumeThreadSet(VmThread.fromJava(thread)).submit();
         return JVMTI_ERROR_NONE;
     }
 
-    static int resumeThreadList(int requestCount, Pointer requestList, Pointer results) {
-        return suspendOrResumeThreadList(requestCount, requestList, results, false);
+    static int resumeThreadList(JVMTI.Env jvmtiEnv, int requestCount, Pointer requestList, Pointer results) {
+        return suspendOrResumeThreadList(jvmtiEnv, requestCount, requestList, results, false);
     }
 
     // ThreadGroup functions

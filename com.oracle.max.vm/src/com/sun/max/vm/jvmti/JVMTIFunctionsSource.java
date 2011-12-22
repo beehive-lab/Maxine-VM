@@ -46,14 +46,6 @@ import com.sun.max.vm.thread.*;
  * Essentially the goal is to automate as much error checking as possible
  * so that the real implementations can just focus on the logic.
  *
- * A check on the validity of the environment and conversion from the {@link Pointer}
- * argument to a {@link JVMTI#Env} is indicated by:
- *
- *  // ENVCHECK
- *
- *  Note that the spec arguably requires this to be checked for every method.
- *  Currently the check is only made for methods that actually use the value.
- *
  *  Null {@link Pointer} checks are indicated by:
  *  // NULLCHECK: arg1,arg2,...
  *
@@ -104,7 +96,7 @@ public class JVMTIFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // HANDLECHECK_NULLOK: event_thread=Thread
         // LOG: Address.fromInt(mode),Address.fromInt(event_type),event_thread
-        return JVMTIEvent.setEventNotificationMode(env, mode, event_type, handleAsThread);
+        return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -122,7 +114,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // HANDLECHECK: thread=Thread
-        return JVMTIThreadFunctions.suspendThread(handleAsThread);
+        return JVMTIThreadFunctions.suspendThread(jvmtiEnv, handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -130,7 +122,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // HANDLECHECK: thread=Thread
-        return JVMTIThreadFunctions.resumeThread(handleAsThread);
+        return JVMTIThreadFunctions.resumeThread(jvmtiEnv, handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -795,7 +787,7 @@ public class JVMTIFunctionsSource {
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        return JVMTIThreadFunctions.suspendThreadList(request_count, request_list, results);
+        return JVMTIThreadFunctions.suspendThreadList(jvmtiEnv, request_count, request_list, results);
     }
 
     @VM_ENTRY_POINT
@@ -807,7 +799,7 @@ public class JVMTIFunctionsSource {
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
-        return JVMTIThreadFunctions.resumeThreadList(request_count, request_list, results);
+        return JVMTIThreadFunctions.resumeThreadList(jvmtiEnv, request_count, request_list, results);
     }
 
     @VM_ENTRY_POINT
@@ -881,14 +873,12 @@ public class JVMTIFunctionsSource {
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: tag_ptr
-        // ENVCHECK
         return jvmtiEnv.tags.getTag(object.unhand(), tag_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SetTag(Pointer env, JniHandle object, long tag) {
         // PHASES: START,LIVE
-        // ENVCHECK
         return jvmtiEnv.tags.setTag(object.unhand(), tag);
     }
 
@@ -939,7 +929,6 @@ public class JVMTIFunctionsSource {
         // CAPABILITIES: CAN_TAG_OBJECTS
         // NULLCHECK: callbacks
         // HANDLECHECK_NULLOK: klass=Class
-        // ENVCHECK
         return JVMTIHeapFunctions.iterateThroughHeap(jvmtiEnv, heap_filter, handleAsClass, callbacks, user_data);
     }
 
