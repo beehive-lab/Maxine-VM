@@ -87,6 +87,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      */
     private final CardTableRSet cardTableRSet;
 
+
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
@@ -107,6 +108,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      */
     private final TricolorHeapMarker heapMarker;
 
+    /**
+     * Support for heap verification.
+     */
+    private final NoDirtyCardsVerifier noDirtyCardVerifier;
+    private final FOTVerifier fotVerifier;
+
     @HOSTED_ONLY
     public GenMSEHeapScheme() {
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
@@ -114,6 +121,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         youngSpace = new NoAgingNursery(heapAccount);
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
         cardTableRSet = new CardTableRSet();
+        noDirtyCardVerifier = new NoDirtyCardsVerifier(cardTableRSet);
+        fotVerifier = new FOTVerifier(cardTableRSet);
         minorCollection = new MinorCollection();
         fullCollection = new MajorCollection();
     }
@@ -241,9 +250,19 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // See allocateHeapAndGCStorage
     }
 
+
     final class MinorCollection extends GCOperation {
         MinorCollection() {
             super("MinorCollection");
+        }
+
+        private void verifyAfterGC() {
+            // Verify that:
+            // 1. there are no pointer from old to young.
+            // 2. offset table is correctly setup
+            // 3. cards are all cleaned -- this is only true for as long as we don't have survivor space in young gen.
+            oldSpace.visit(noDirtyCardVerifier);
+            oldSpace.visit(fotVerifier);
         }
 
         @Override
@@ -252,6 +271,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             HeapScheme.Inspect.notifyGCStarted();
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
+            if (VerifyAfterGC) {
+                verifyAfterGC();
+            }
             HeapScheme.Inspect.notifyGCCompleted();
         }
     }

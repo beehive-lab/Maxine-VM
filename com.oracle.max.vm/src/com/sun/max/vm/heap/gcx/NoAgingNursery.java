@@ -125,9 +125,9 @@ public class NoAgingNursery implements HeapSpace {
 
     @Override
     public Pointer allocateTLAB(Size size) {
-        // TODO
-        FatalError.unimplemented();
-        return Pointer.zero();
+        final Pointer tlab = allocator.allocateCleared(size);
+        HeapFreeChunk.format(tlab, size);
+        return tlab;
     }
 
     @Override

@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  * the address of the cell plus its size gives the address of the next cell.
  * @see HeapSpace
  */
-interface HeapSpaceRangeVisitor {
+public interface HeapSpaceRangeVisitor {
     /**
      * Logic to apply to an iterable contiguous range of heap space.
      * @param start Address to the first cell in a  iterable contiguous range of heap space
