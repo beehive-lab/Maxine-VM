@@ -4609,6 +4609,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.THREADS));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
                 menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
+                menu.add(views().activateSingletonViewAction(ViewKind.JVMTILOG));
             }
         };
     }
