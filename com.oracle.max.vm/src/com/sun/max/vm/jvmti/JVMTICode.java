@@ -22,9 +22,12 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.util.*;
 
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.*;
@@ -56,7 +59,7 @@ public class JVMTICode {
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         // we check here if the code is already adequate for the settings we want
-        if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(targetMethod.classMethodActor))) {
+        if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
             return;
         }
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
@@ -71,14 +74,18 @@ public class JVMTICode {
      * A new breakpoint is being set in code that is already compiled.
      * @param classMethodActor
      */
-    static void deOptForBreakpoint(ClassMethodActor classMethodActor) {
+    static void deOptForNewBreakpoint(ClassMethodActor classMethodActor) {
         // Potentially need to deopt the code in all threads, but note that it
         // may not be active on any thread stack, in which case we just need to recompile
-        // and patch call sites. Deopt takes care of it either way.
+        // and patch call sites. If it is not active, Deoptimization.go does
+        // invalidation but does not recompile the method.
+        long codeEventSettings = JVMTIEvent.codeEventSettings(null, null);
+        checkDeOptForMethod(classMethodActor, codeEventSettings);
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
-        targetMethods.add(targetMethod);
-        new Deoptimization(targetMethods).go();
+        if (!targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
+            // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
+            vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
+        }
     }
 
     static void resumeThreadNotify(JVMTI.Env jvmtiEnv, VmThread vmThread) {

@@ -147,7 +147,7 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
         }
 
         // if we get here, then we didn't find the old event call in the new code
-        // i.e., it has been removed, in which case we just dso the default thing.
+        // i.e., it has been removed, in which case we just do the default thing.
         return super.findTemplateCallReturnAddress(info, bci, eventCallee);
     }
 

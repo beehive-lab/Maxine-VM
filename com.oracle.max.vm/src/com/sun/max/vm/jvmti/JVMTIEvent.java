@@ -48,6 +48,19 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIEvent {
 
+    private static class JVMTIEventLogger extends JVMTILog.Logger {
+        private JVMTIEventLogger() {
+            super("JVMTIEvents", EVENT_COUNT);
+        }
+
+        @Override
+        public String operationName(int op) {
+            return name(op + JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
+        }
+    }
+
+    private static JVMTIEventLogger logger = new JVMTIEventLogger();
+
     static class MutableLong {
         long value;
 
@@ -141,6 +154,10 @@ public class JVMTIEvent {
                                    computeEventBitSetting(METHOD_ENTRY) | computeEventBitSetting(METHOD_EXIT) |
                                    computeEventBitSetting(BREAKPOINT) | computeEventBitSetting(SINGLE_STEP) |
                                    computeEventBitSetting(FRAME_POP);
+
+    static void log(int eventId) {
+        logger.log(eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
+    }
 
     /**
      * Returns the bit setting for the given event, or -1 if invalid.
@@ -316,7 +333,7 @@ public class JVMTIEvent {
 
     static long codeEventSettings(JVMTI.Env jvmtiEnv, VmThread vmThread) {
         long settings;
-        if (jvmtiEnv == null) {
+        if (jvmtiEnv == null || vmThread == null) {
             // called from compiled code on a frame pop
             settings = panAgentEventSettingCache;
         } else {

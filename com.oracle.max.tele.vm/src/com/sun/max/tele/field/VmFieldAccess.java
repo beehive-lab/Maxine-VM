@@ -159,6 +159,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootTableMemoryRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootTableMemoryRegion", RootTableMemoryRegion.class);
     public final TeleStaticWordFieldAccess InspectableHeapInfo_rootsPointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "rootsPointer");
     public final TeleInstanceReferenceFieldAccess JVMTILog_buffer = new TeleInstanceReferenceFieldAccess(JVMTILog.class, "buffer", Record[].class);
+    public final TeleStaticReferenceFieldAccess JVMTILog_loggers = new TeleStaticReferenceFieldAccess(JVMTILog.class, "loggers", Map.class);
     public final TeleInstanceIntFieldAccess JVMTILog_nextId = new TeleInstanceIntFieldAccess(JVMTILog.class, "nextId");
     public final TeleStaticReferenceFieldAccess JVMTILog_singleton = new TeleStaticReferenceFieldAccess(JVMTILog.class, "singleton", JVMTILog.class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
@@ -178,6 +179,9 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess JVMTILog$Record_arg1 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg1");
     public final TeleInstanceWordFieldAccess JVMTILog$Record_arg2 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg2");
     public final TeleInstanceWordFieldAccess JVMTILog$Record_arg3 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg3");
+    public final TeleInstanceWordFieldAccess JVMTILog$Record_arg4 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg4");
+    public final TeleInstanceWordFieldAccess JVMTILog$Record_arg5 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg5");
+    public final TeleInstanceWordFieldAccess JVMTILog$Record_arg6 = new TeleInstanceWordFieldAccess(JVMTILog.Record.class, "arg6");
     public final TeleInstanceIntFieldAccess JVMTILog$Record_id = new TeleInstanceIntFieldAccess(JVMTILog.Record.class, "id");
     public final TeleInstanceIntFieldAccess JVMTILog$Record_op = new TeleInstanceIntFieldAccess(JVMTILog.Record.class, "op");
     public final TeleInstanceIntFieldAccess JVMTILog$Record_threadId = new TeleInstanceIntFieldAccess(JVMTILog.Record.class, "threadId");

@@ -41,19 +41,20 @@ public class JVMTIFunctionsGenerator {
     private static final String CAPABILITIES = "// CAPABILITIES: ";
     private static final String MEMBERID = "// MEMBERID: ";
     private static final String ENVCHECK = "// ENVCHECK";
-    private static final String LOG = "// LOG: ";
-    private static final String INDENT8 = "        ";
-    private static final String INDENT12 = INDENT8 + "    ";
-    private static final String INDENT16 = INDENT12 + "    ";
-    private static final String INDENT20 = INDENT16 + "    ";
+    private static final String LOGARGS = "// LOGARGS: ";
+    private static final String INDENT4 = "    ";
+    private static final String INDENT8 = INDENT4 + INDENT4;
+    private static final String INDENT12 = INDENT8 + INDENT4;
+    private static final String INDENT16 = INDENT12 + INDENT4;
+    private static final String INDENT20 = INDENT16 + INDENT4;
     private static final String FIRST_LINE_INDENT = INDENT8;
 
     public static class JVMTICustomizer extends Customizer {
 
         static ArrayList<String> methodNames = new ArrayList<String>();
-        static String currentMethod;
-        static boolean currentMethodLogged;
+        static JniFunctionDeclaration currentMethod;
         static boolean currentMethodEnvChecked;
+        static String[] logArgs;
 
         @Override
         public String customizeBody(String line) {
@@ -78,13 +79,13 @@ public class JVMTIFunctionsGenerator {
             if (result != null) {
                 return result;
             }
-            // if we get here this a real statement in the body
-            // check for logging
-            result = checkLogging(line);
-            if (result != null) {
-                return result;
+            // check for LOGARGS
+            String[] lr = checkLogArgs(line);
+            if (lr != null) {
+                return ""; // drop LOGARGS
             }
-            // check environment valid
+            // if we get here this a real statement in the body
+            // check environment valid, (once)
             result = envCheck(line);
             if (result != null) {
                 return result;
@@ -286,9 +287,19 @@ public class JVMTIFunctionsGenerator {
         @Override
         public void startFunction(JniFunctionDeclaration decl) {
             methodNames.add(decl.name);
-            currentMethod = decl.name;
-            currentMethodLogged = false;
+            currentMethod = decl;
             currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
+            logArgs = null;
+        }
+
+        @Override
+        public String customizeTracePrologue(JniFunctionDeclaration decl) {
+            return logging();
+        }
+
+        @Override
+        public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
+            return INDENT12 + "// currrently no return logging";
         }
 
         @Override
@@ -299,15 +310,9 @@ public class JVMTIFunctionsGenerator {
                 if (i > 0) {
                     out.println(",");
                 }
-                out.printf("        %s(%d, \"%s\")", methodName, i, methodName);
+                out.printf("        /* %d */ %s", i, methodName);
             }
             out.println(";\n");
-            out.println("        public final int index;");
-            out.println("        public final String name;\n");
-            out.println("        Methods(int index, String name) {");
-            out.println("            this.index = index;");
-            out.println("            this.name = name;");
-            out.println("        }");
             out.println("}");
         }
 
@@ -315,29 +320,59 @@ public class JVMTIFunctionsGenerator {
             return s.substring(0, 1).toLowerCase() + s.substring(1);
         }
 
-        private static String checkLogging(String line) {
-            if (!currentMethodLogged) {
-                String[] tagArgs = getTagArgs(line, LOG);
-                if (tagArgs == null) {
-                    return null;
-                }
-                StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
-                sb.append("JVMTILog.add(JVMTIFunctions.Methods.");
-                sb.append(currentMethod);
-                sb.append('.');
-                sb.append("index");
-                for (int i = 0; i < tagArgs.length; i++) {
-                    String tag = tagArgs[i];
-                    sb.append(", ");
-                    sb.append(tag);
-                }
-                sb.append(");");
-                currentMethodLogged = true;
-                return sb.toString();
-            } else {
-                return null;
+        private static String[] checkLogArgs(String line) {
+            String[] s = getTagArgs(line, LOGARGS);
+            if (s != null) {
+                logArgs = s;
+                String[] envLogArgs = new String[logArgs.length + 1];
+                envLogArgs[0] = "env";
+                System.arraycopy(logArgs, 0, envLogArgs, 1, logArgs.length);
+                logArgs = envLogArgs;
             }
+            return s;
         }
+
+        private static String logging() {
+            StringBuilder sb = new StringBuilder();
+            String[] args = logArgs;
+            if (args == null) {
+                // no customization, get defaults
+                args = getDefaultArgs(currentMethod.arguments);
+            }
+            sb.append(INDENT8);
+            sb.append("logger.log(JVMTIFunctions.Methods.");
+            sb.append(currentMethod.name);
+            sb.append('.');
+            sb.append("ordinal()");
+            for (int i = 0; i < args.length; i++) {
+                String tag = args[i];
+                sb.append(", ");
+                sb.append(tag);
+            }
+            sb.append(");");
+            return sb.toString();
+        }
+
+        private static String[] getDefaultArgs(String args) {
+            String[] paramNames = args.split(",\\s");
+            String[] params = currentMethod.parameters.split(",\\s*");
+            for (int i = 0; i < paramNames.length; i++) {
+                String paramType = params[i].split(" ")[0];
+                if (paramType.equals("int")) {
+                    paramNames[i] = "Address.fromInt(" + paramNames[i] + ")";
+                } else if (paramType.equals("long")) {
+                    paramNames[i] = "Address.fromLong(" + paramNames[i] + ")";
+                } else if (paramType.equals("boolean")) {
+                    paramNames[i] = "Address.fromInt(" + paramNames[i] + " ? 1 : 0)";
+                } else if (paramType.equals("float")) {
+                    paramNames[i] = "Address.fromInt(Float.floatToRawIntBits(" + paramNames[i] + "))";
+                } else if (paramType.equals("double")) {
+                    paramNames[i] = "Address.fromLong(Double.doubleToRawLongBits(" + paramNames[i] + "))";
+                }
+            }
+            return paramNames;
+        }
+
     }
 
     private static String[] getTagArgs(String line, String tag) {

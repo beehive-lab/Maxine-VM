@@ -91,8 +91,8 @@ public class JniFunctionsGenerator {
         String returnType;
         boolean isNative;
         public String name;
-        String parameters;
-        String arguments;
+        public String parameters;
+        public String arguments;
         String sourcePos;
 
         static JniFunctionDeclaration parse(String line, String sourcePos) {
@@ -148,6 +148,14 @@ public class JniFunctionsGenerator {
                 result += "\n            " + returnStatement;
             }
             return result;
+        }
+
+        public String customizeTracePrologue(JniFunctionDeclaration decl) {
+            return "        tracePrologue(\"" + decl.name + "\", anchor);";
+        }
+
+        public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
+            return "            traceEpilogue(\"" + decl.name + "\");";
         }
     }
 
@@ -279,7 +287,7 @@ public class JniFunctionsGenerator {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
         out.println("        Pointer anchor = prologue(env);");
-        out.println("        tracePrologue(\"" + decl.name + "\", anchor);");
+        out.println(customizer.customizeTracePrologue(decl));
         if (insertTimers) {
             out.println("        long startTime = System.nanoTime();");
         }
@@ -293,7 +301,7 @@ public class JniFunctionsGenerator {
             out.println("            COUNTER_" + decl.name + "++;");
         }
         out.println("            epilogue(anchor);");
-        out.println("            traceEpilogue(\"" + decl.name + "\");");
+        out.println(customizer.customizeTraceEpilogue(decl));
         out.println("        }");
         out.println("    }");
         if (insertTimers) {
