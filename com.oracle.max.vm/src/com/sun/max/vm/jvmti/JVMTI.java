@@ -82,12 +82,6 @@ public class JVMTI {
     private static final String AGENT_ONLOAD = "Agent_OnLoad";
     private static final String AGENT_ONUNLOAD = "Agent_OnUnLoad";
 
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJVMTIEvents", "Trace JVMTI events.");
-    }
-
-    static boolean TraceJVMTIEvents;
-
     /**
      * Since the agent initialization code happens very early, before we have a functional heap,
      * we static allocate storage for key data structures. The day that someone tries to runs
@@ -344,19 +338,18 @@ public class JVMTI {
      */
     public static void event(int eventId, Object arg1) {
         boolean ignoring = ignoreEvent(eventId);
-        if (TraceJVMTIEvents) {
-            traceEvent(eventId, ignoring);
-        }
 
         if (ignoring) {
             return;
         }
 
+        JVMTIEvent.log(eventId);
+
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
             case VM_START:
                 phase = JVMTI_PHASE_START;
-                JVMTIFunctions.checkTracing();
+                JVMTILog.checkLogging();
                 break;
 
             case VM_INIT:

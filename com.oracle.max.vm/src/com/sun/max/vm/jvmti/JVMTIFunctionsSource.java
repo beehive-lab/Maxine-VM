@@ -69,6 +69,13 @@ import com.sun.max.vm.thread.*;
  *  // MEMBERID: var1=T1,var2=T2,...
  *  where Ti are one of Member,Method,Field and SomeActor is the appropriate {@link Actor} subclass
  *
+ *  By default, all arguments are logged, but this can be customized via:
+ *
+ *  // LOGARGS: arg1,arg2,...
+ *
+ *  N.B. LOGARGS must be the last entry before the method body proper.
+ *  The "env" arg is omitted in a customization but it is always logged.
+ *
  *  Generally, the method implementations are delegated to other classes, unless the
  *  implementation is completely trivial.
  */
@@ -95,7 +102,7 @@ public class JVMTIFunctionsSource {
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
         // PHASES: ONLOAD,LIVE
         // HANDLECHECK_NULLOK: event_thread=Thread
-        // LOG: Address.fromInt(mode),Address.fromInt(event_type),event_thread
+        // LOGARGS: Address.fromInt(mode),Address.fromInt(event_type),event_thread
         return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
     }
 
@@ -223,7 +230,7 @@ public class JVMTIFunctionsSource {
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
         // PHASES: LIVE
         // HANDLECHECK_NULLOK: thread=Thread
-        // LOG: Address.fromInt(depth)
+        // LOGARGS: Address.fromInt(depth)
         return JVMTIThreadFunctions.notifyFramePop(handleAsThread, depth);
     }
 
@@ -328,35 +335,30 @@ public class JVMTIFunctionsSource {
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // @LOG: rawMonitor
         return JVMTIRawMonitor.enter(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // @LOG: rawMonitor
         return JVMTIRawMonitor.exit(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
         // PHASES: ANY
-        // @LOG: rawMonitor
         return JVMTIRawMonitor.wait(rawMonitor, millis);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // @LOG: rawMonitor
         return JVMTIRawMonitor.notify(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
         // PHASES: ANY
-        // @LOG: rawMonitor
         return JVMTIRawMonitor.notifyAll(rawMonitor);
     }
 
@@ -783,7 +785,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // NULLCHECK: request_list,results
-        // LOG: Address.fromInt(request_count)
+        // LOGARGS: Address.fromInt(request_count)
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }
@@ -795,7 +797,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_SUSPEND
         // NULLCHECK: request_list,results
-        // LOG: Address.fromInt(request_count)
+        // LOGARGS: Address.fromInt(request_count)
         if (request_count < 0) {
             return JVMTI_ERROR_ILLEGAL_ARGUMENT;
         }

@@ -114,7 +114,7 @@ public class JVMTIBreakpoints {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         if (targetMethod != null) {
             // compiled already, need to recompile
-            JVMTICode.deOptForBreakpoint(classMethodActor);
+            JVMTICode.deOptForNewBreakpoint(classMethodActor);
         }
         return JVMTI_ERROR_NONE;
     }

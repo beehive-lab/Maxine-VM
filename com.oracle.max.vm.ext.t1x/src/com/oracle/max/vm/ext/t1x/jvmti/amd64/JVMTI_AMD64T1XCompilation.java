@@ -69,6 +69,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     private boolean[] eventBci;
     private boolean anyEventCalls;
     private long eventSettings;
+    private int doMethodEntry;
+    private int doMethodExit;
+    private int doFieldAccess;
+    private int doFieldModification;
+    private int doPopFrame;
 
     private final T1X defaultT1X;
 
@@ -98,11 +103,21 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
+        doMethodEntry = JVMTI.byteCodeEventNeeded(-1);
+        doMethodExit = 0; // TODO
+        doFieldAccess = JVMTI.byteCodeEventNeeded(Bytecodes.GETFIELD);
+        doFieldModification = JVMTI.byteCodeEventNeeded(Bytecodes.PUTFIELD);
+        doPopFrame = JVMTI.byteCodeEventNeeded(Bytecodes.RETURN);
+        // turn off recompiling to optimized code.
+        if (breakpoints != null || singleStep() || doMethodEntry != 0 || doMethodExit != 0 || doFieldAccess != 0 ||
+                        doFieldModification != 0 || doPopFrame  != 0) {
+            methodProfileBuilder = null;
+        }
     }
 
     @Override
     protected void do_methodTraceEntry() {
-        if (JVMTI.byteCodeEventNeeded(-1) != 0) {
+        if (doMethodEntry != 0) {
             templates = compiler.templates;
             start(TRACE_METHOD_ENTRY);
             assignObject(0, "methodActor", method);
@@ -140,29 +155,32 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             }
         }
 
+        int eventId = 0;
         switch (opcode) {
             case Bytecodes.GETFIELD:
             case Bytecodes.GETSTATIC:
+                eventId = doFieldAccess;
+                break;
             case Bytecodes.PUTFIELD:
             case Bytecodes.PUTSTATIC:
-
+                eventId = doFieldModification;
+                break;
             case Bytecodes.IRETURN:
             case Bytecodes.LRETURN:
             case Bytecodes.FRETURN:
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
-            case Bytecodes.RETURN: {
-                int eventId = JVMTI.byteCodeEventNeeded(opcode);
-                eventCall = eventId != 0;
-                setTemplates(eventCall);
-                if (eventId != 0) {
-                    eventSettings |= JVMTIEvent.bitSetting(eventId);
-                }
+            case Bytecodes.RETURN:
+                eventId = doPopFrame;
                 break;
-            }
-
 
             default:
+        }
+
+        if (eventId != 0) {
+            eventCall = true;
+            setTemplates(eventCall);
+            eventSettings |= JVMTIEvent.bitSetting(eventId);
         }
         eventBci[currentBCI] = eventCall;
         if (eventCall) {

@@ -693,7 +693,9 @@ public class JVMTIThreadFunctions {
                 }
                 targetMethod.finalizeReferenceMaps();
                 FrameAccessWithIP frameAccess = stackElement.frameAccess;
-                CiFrame ciFrame = targetMethod.debugInfoAt(targetMethod.findSafepointIndex(frameAccess.ip), isSet ? null : frameAccess).frame();
+                int spi = targetMethod.findSafepointIndex(frameAccess.ip);
+                assert spi >= 0;
+                CiFrame ciFrame = targetMethod.debugInfoAt(spi, isSet ? null : frameAccess).frame();
                 if (slot >= ciFrame.numLocals) {
                     returnCode = JVMTI_ERROR_INVALID_SLOT;
                     return;
@@ -788,7 +790,11 @@ public class JVMTIThreadFunctions {
             if (typedData.tag == 'L') {
                 return type == 'L' || type == '[';
             } else {
-                return type == typedData.tag;
+                if (typedData.tag == 'I') {
+                    return type == 'Z' || type == 'B' || type == 'C' || type == 'S' || type == 'I';
+                } else {
+                    return type == typedData.tag;
+                }
             }
         }
     }
