@@ -1827,4 +1827,5 @@ public final class JniFunctionsSource {
         }
         assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
     }
+
 }

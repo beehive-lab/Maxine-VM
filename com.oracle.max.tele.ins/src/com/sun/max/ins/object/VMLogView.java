@@ -40,39 +40,39 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * A custom singleton viewer for JVMTI log records.
+ * A custom singleton viewer for VM log records.
  * Essentially a hybrid array/object viewer.
  */
 @SuppressWarnings("unused")
-public class JVMTILogView extends AbstractView<JVMTILogView> {
-    private static final ViewKind VIEW_KIND = ViewKind.JVMTILOG;
-    private static final String SHORT_NAME = "JVMTI Log";
-    private static final String LONG_NAME = " JVMTI Log View";
-    private static final String GEOMETRY_SETTINGS_KEY = "jvmtiLogViewGeometry";
+public class VMLogView extends AbstractView<VMLogView> {
+    private static final ViewKind VIEW_KIND = ViewKind.VMLOG;
+    private static final String SHORT_NAME = "VM Log";
+    private static final String LONG_NAME = "VM Log View";
+    private static final String GEOMETRY_SETTINGS_KEY = "vmLogViewGeometry";
 
-    public static final class JVMTILogViewManager extends AbstractSingletonViewManager<JVMTILogView> {
+    public static final class VMLogViewManager extends AbstractSingletonViewManager<VMLogView> {
 
-        protected JVMTILogViewManager(Inspection inspection) {
+        protected VMLogViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
         @Override
-        protected JVMTILogView createView(Inspection inspection) {
-            return new JVMTILogView(inspection);
+        protected VMLogView createView(Inspection inspection) {
+            return new VMLogView(inspection);
         }
 
     }
 
     // Will be non-null before any instances created.
-    private static JVMTILogViewManager viewManager = null;
+    private static VMLogViewManager viewManager = null;
 
-    public static JVMTILogViewManager makeViewManager(Inspection inspection) {
+    public static VMLogViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new JVMTILogViewManager(inspection);
+            viewManager = new VMLogViewManager(inspection);
         }
         return viewManager;
     }
@@ -84,20 +84,20 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
     private TeleObject log;
     private TeleArrayObject logBuffer;
     private TeleInstanceIntFieldAccess nextIdFieldAccess;
-    private Map<Integer, JVMTILog.Logger> loggers;
+    private Map<Integer, VMLog.Logger> loggers;
 
     @SuppressWarnings("unchecked")
-    JVMTILogView(Inspection inspection) {
+    VMLogView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         TeleVM vm = (TeleVM) vm();
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
-        logRef = vm.fields().JVMTILog_singleton.readReference(vm);
+        logRef = vm.fields().VMLog_vmLog.readReference(vm);
         log = VmObjectAccess.make(vm).makeTeleObject(logRef);
-        Reference logBufferRef = vm.fields().JVMTILog_buffer.readReference(logRef);
+        Reference logBufferRef = vm.fields().VMLog_buffer.readReference(logRef);
         logBuffer = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(logBufferRef);
-        nextIdFieldAccess = vm.fields().JVMTILog_nextId;
-        Reference loggersRef = vm.fields().JVMTILog_loggers.readReference(vm);
-        loggers = (Map<Integer, JVMTILog.Logger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
+        nextIdFieldAccess = vm.fields().VMLog_nextId;
+        Reference loggersRef = vm.fields().VMLog_loggers.readReference(logRef);
+        loggers = (Map<Integer, VMLog.Logger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
         /*final InspectorFrame frame = */ createFrame(true);
 //        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
@@ -109,7 +109,7 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
 
     @Override
     protected void createViewContent() {
-        elementsPane = createJVMTILogElementsPane(inspection());
+        elementsPane = createVMLogElementsPane(inspection());
         getContentPane().add(elementsPane);
     }
 
@@ -118,7 +118,7 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
         elementsPane.refresh(force);
     }
 
-    private ObjectScrollPane createJVMTILogElementsPane(Inspection inspection) {
+    private ObjectScrollPane createVMLogElementsPane(Inspection inspection) {
         final LogElementsTable elementsTable = new LogElementsTable(inspection);
         return new ObjectScrollPane(inspection, elementsTable);
     }
@@ -135,9 +135,9 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
 
     private class LogElementsTableModel extends InspectorTableModel {
 
-        private JVMTILog logCache = new JVMTILog();
+        private VMLog logCache = new VMLog();
         /**
-         * After {@link #refresh}, this holds a copy of the {@link JVMTILog#nextId} field,
+         * After {@link #refresh}, this holds a copy of the {@link VMLog#nextId} field,
          * which is the id of the next record that will be written. The actual slot in the
          * log buffer that will be written is {@code nextId % buffer size}.
          */
@@ -194,7 +194,7 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
                     result = logCache.buffer[row].threadId;
                     break;
                 case OPERATION:
-                    result = logCache.buffer[row].op;
+                    result = logCache.buffer[row].oplc;
                     break;
                 case ARG1:
                     result = logCache.buffer[row].arg1;
@@ -256,19 +256,20 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
             super.refresh();
         }
 
-        private JVMTILog.Record getRecordFromVM(int i) {
+        private VMLog.Record getRecordFromVM(int i) {
             TeleVM vm = (TeleVM) vm();
             Reference recordRef = logBuffer.readElementValue(i).asReference();
-            return new JVMTILog.Record(
-                            vm.fields().JVMTILog$Record_op.readInt(recordRef),
-                            vm.fields().JVMTILog$Record_threadId.readInt(recordRef),
-                            vm.fields().JVMTILog$Record_id.readInt(recordRef),
-                            vm.fields().JVMTILog$Record_arg1.readWord(recordRef),
-                            vm.fields().JVMTILog$Record_arg2.readWord(recordRef),
-                            vm.fields().JVMTILog$Record_arg3.readWord(recordRef),
-                            vm.fields().JVMTILog$Record_arg4.readWord(recordRef),
-                            vm.fields().JVMTILog$Record_arg5.readWord(recordRef),
-                            vm.fields().JVMTILog$Record_arg6.readWord(recordRef));
+            return new VMLog.Record(
+                            vm.fields().VMLog$Record_oplc.readInt(recordRef),
+                            vm.fields().VMLog$Record_threadId.readInt(recordRef),
+                            vm.fields().VMLog$Record_id.readInt(recordRef),
+                            vm.fields().VMLog$Record_arg1.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg2.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg3.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg4.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg5.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg6.readWord(recordRef),
+                            vm.fields().VMLog$Record_arg7.readWord(recordRef));
         }
 
     }
@@ -279,12 +280,13 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
             addColumn(LogColumnKind.INDEX, new IndexCellRenderer(inspection()), null);
             addColumn(LogColumnKind.THREAD, new ThreadCellRenderer(inspection()), null);
             addColumn(LogColumnKind.OPERATION, new OperationCellRenderer(inspection()), null);
-            addColumn(LogColumnKind.ARG1, new ArgCellRenderer(inspection(), 0), null);
-            addColumn(LogColumnKind.ARG2, new ArgCellRenderer(inspection(), 1), null);
-            addColumn(LogColumnKind.ARG3, new ArgCellRenderer(inspection(), 2), null);
-            addColumn(LogColumnKind.ARG4, new ArgCellRenderer(inspection(), 3), null);
-            addColumn(LogColumnKind.ARG5, new ArgCellRenderer(inspection(), 4), null);
-            addColumn(LogColumnKind.ARG6, new ArgCellRenderer(inspection(), 5), null);
+            addColumn(LogColumnKind.ARG1, new ArgCellRenderer(inspection(), 1), null);
+            addColumn(LogColumnKind.ARG2, new ArgCellRenderer(inspection(), 2), null);
+            addColumn(LogColumnKind.ARG3, new ArgCellRenderer(inspection(), 3), null);
+            addColumn(LogColumnKind.ARG4, new ArgCellRenderer(inspection(), 4), null);
+            addColumn(LogColumnKind.ARG5, new ArgCellRenderer(inspection(), 5), null);
+            addColumn(LogColumnKind.ARG6, new ArgCellRenderer(inspection(), 6), null);
+            addColumn(LogColumnKind.ARG6, new ArgCellRenderer(inspection(), 7), null);
         }
     }
 
@@ -423,8 +425,8 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
                 // but before the data has been filled in.
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            JVMTILog.Logger logger = loggers.get(JVMTILog.Record.getLoggerId(op));
-            setText(logger.name + "." + logger.operationName(JVMTILog.Record.getOperation(op)));
+            VMLog.Logger logger = loggers.get(VMLog.Record.getLoggerId(op));
+            setText(logger.name + "." + logger.operationName(VMLog.Record.getOperation(op)));
             return this;
         }
     }
@@ -441,85 +443,19 @@ public class JVMTILogView extends AbstractView<JVMTILogView> {
             if (value == null) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            int op = tableModel.logCache.buffer[tableModel.getBufferRow(row)].op;
+            int op = tableModel.logCache.buffer[tableModel.getBufferRow(row)].oplc;
             if (op == 0) {
                 // we have stopped in the Inspector after the log buffer id has been bumped
                 // but before the data has been filled in.
                 return gui().getUnavailableDataTableCellRenderer();
             }
 
-            long longValue = ((Boxed) value).value();
-            String text = "";
-
-            JVMTILog.Logger logger = loggers.get(JVMTILog.Record.getLoggerId(op));
-            if (logger.name.equals("JVMTICalls")) {
-                switch (JVMTIFunctions.Methods.values()[JVMTILog.Record.getOperation(op)]) {
-                    // arg0 is always the env value
-                    case SetEventNotificationMode:
-                        if (argNum == 1) {
-                            text = longValue == 1 ? "ENABLE" : "DISABLE";
-                        } else if (argNum == 1) {
-                            text = JVMTIEvent.name((int) longValue);
-                        }
-                        break;
-
-                    case CreateRawMonitor:
-                        if (argNum == 1) {
-                            text = stringFromCString((TeleVM) vm(), Address.fromLong(longValue).asPointer());
-                        }
-                        break;
-
-                    case RawMonitorEnter:
-                    case RawMonitorExit:
-                    case RawMonitorWait:
-                    case RawMonitorNotify:
-                    case RawMonitorNotifyAll:
-                        // arg1 value is the address (origin) of the JVMTIRawMonitor.Monitor object
-                        // from which we can get the name
-                        if (argNum == 1) {
-                            Reference rawMonitor = Reference.fromOrigin(Address.fromLong(longValue).asPointer());
-                            Pointer nameCString = ((TeleVM) vm()).fields().JVMTIRawMonitor$Monitor_name.readWord(rawMonitor).asPointer();
-                            text = stringFromCString((TeleVM) vm(), nameCString);
-                        }
-                        break;
-
-                    case GetSystemProperty:
-                        if (argNum == 1) {
-                            text = stringFromCString((TeleVM) vm(), Address.fromLong(longValue).asPointer());
-                        }
-                        break;
-
-                    case SetBreakpoint:
-                        if (argNum == 1) {
-                        }
-                        break;
-
-                    default:
-                        text = Long.toHexString(longValue);
-                }
-            } else if (logger.name.equals("JVMTIEvents")) {
-                // no decode yet
-                switch (JVMTILog.Record.getOperation(op)) {
-
-                }
-            }
-            setText(text);
+            long argValue = ((Boxed) value).value();
+            VMLogArgRenderer vmLogArgRenderer = VmLogArgRendererFactory.getArgRenderer(loggers.get(VMLog.Record.getLoggerId(op)));
+            setText(vmLogArgRenderer.getText((TeleVM) vm(), op, argNum, argValue));
             return this;
         }
 
-        private String stringFromCString(TeleVM vm, Pointer cString) {
-            byte[] bytes = new byte[1024];
-            int index = 0;
-            while (true) {
-                byte b = vm.memory().readByte(cString, index);
-                if (b == 0) {
-                    break;
-                }
-                bytes[index++] = b;
-            }
-            return new String(bytes, 0, index);
-
-        }
     }
 
 }

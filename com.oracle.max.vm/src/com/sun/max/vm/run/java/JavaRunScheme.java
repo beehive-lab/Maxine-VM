@@ -227,6 +227,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
+
+            VMLog.checkLogOptions();
+
             vmConfig().initializeSchemes(MaxineVM.Phase.STARTING);
 
             if (Heap.ExcessiveGCFrequency != 0) {
