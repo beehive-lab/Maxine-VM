@@ -25,7 +25,6 @@ package com.sun.max.vm.jvmti;
 import static com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
@@ -51,8 +50,6 @@ public class JVMTIFunctionsGenerator {
 
     public static class JVMTICustomizer extends Customizer {
 
-        static ArrayList<String> methodNames = new ArrayList<String>();
-        static JniFunctionDeclaration currentMethod;
         static boolean currentMethodEnvChecked;
         static String[] logArgs;
 
@@ -286,8 +283,7 @@ public class JVMTIFunctionsGenerator {
 
         @Override
         public void startFunction(JniFunctionDeclaration decl) {
-            methodNames.add(decl.name);
-            currentMethod = decl;
+            super.startFunction(decl);
             currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
             logArgs = null;
         }
@@ -303,17 +299,8 @@ public class JVMTIFunctionsGenerator {
         }
 
         @Override
-        public void close(PrintWriter out) {
-            out.println("    public static enum Methods {");
-            for (int i = 0; i < methodNames.size(); i++) {
-                String methodName = methodNames.get(i);
-                if (i > 0) {
-                    out.println(",");
-                }
-                out.printf("        /* %d */ %s", i, methodName);
-            }
-            out.println(";\n");
-            out.println("}");
+        public void close(PrintWriter writer) {
+            super.close(writer);
         }
 
         private static String toFirstLower(String s) {
@@ -337,11 +324,11 @@ public class JVMTIFunctionsGenerator {
             String[] args = logArgs;
             if (args == null) {
                 // no customization, get defaults
-                args = getDefaultArgs(currentMethod.arguments);
+                args = JniFunctionsGenerator.getDefaultArgs();
             }
             sb.append(INDENT8);
-            sb.append("logger.log(JVMTIFunctions.Methods.");
-            sb.append(currentMethod.name);
+            sb.append("logger.log(EntryPoints.");
+            sb.append(JniFunctionsGenerator.currentMethod.name);
             sb.append('.');
             sb.append("ordinal()");
             for (int i = 0; i < args.length; i++) {
@@ -353,25 +340,6 @@ public class JVMTIFunctionsGenerator {
             return sb.toString();
         }
 
-        private static String[] getDefaultArgs(String args) {
-            String[] paramNames = args.split(",\\s");
-            String[] params = currentMethod.parameters.split(",\\s*");
-            for (int i = 0; i < paramNames.length; i++) {
-                String paramType = params[i].split(" ")[0];
-                if (paramType.equals("int")) {
-                    paramNames[i] = "Address.fromInt(" + paramNames[i] + ")";
-                } else if (paramType.equals("long")) {
-                    paramNames[i] = "Address.fromLong(" + paramNames[i] + ")";
-                } else if (paramType.equals("boolean")) {
-                    paramNames[i] = "Address.fromInt(" + paramNames[i] + " ? 1 : 0)";
-                } else if (paramType.equals("float")) {
-                    paramNames[i] = "Address.fromInt(Float.floatToRawIntBits(" + paramNames[i] + "))";
-                } else if (paramType.equals("double")) {
-                    paramNames[i] = "Address.fromLong(Double.doubleToRawLongBits(" + paramNames[i] + "))";
-                }
-            }
-            return paramNames;
-        }
 
     }
 

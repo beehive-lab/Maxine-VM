@@ -23,6 +23,7 @@
 package com.sun.max.vm.jni;
 
 import java.io.*;
+import java.util.*;
 import java.util.regex.*;
 
 import com.sun.max.annotate.*;
@@ -53,6 +54,8 @@ public class JniFunctionsGenerator {
     static final int BEFORE_FIRST_JNI_FUNCTION = -1;
     static final int BEFORE_JNI_FUNCTION = 0;
     static final int BEFORE_PROLOGUE = 1;
+    static ArrayList<String> entryPointNames;
+    public static JniFunctionDeclaration currentMethod;
 
     /**
      * An extension of {@link BufferedReader} that tracks the line number.
@@ -137,9 +140,21 @@ public class JniFunctionsGenerator {
         }
 
         public void startFunction(JniFunctionDeclaration decl) {
+            currentMethod = decl;
+            entryPointNames.add(decl.name);
         }
 
         public void close(PrintWriter writer) {
+            writer.println("    public static enum EntryPoints {");
+            for (int i = 0; i < entryPointNames.size(); i++) {
+                String methodName = entryPointNames.get(i);
+                if (i > 0) {
+                    writer.println(",");
+                }
+                writer.printf("        /* %d */ %s", i, methodName);
+            }
+            writer.println(";\n");
+            writer.println("    }");
         }
 
         public String customizeHandler(String returnStatement) {
@@ -151,12 +166,58 @@ public class JniFunctionsGenerator {
         }
 
         public String customizeTracePrologue(JniFunctionDeclaration decl) {
-            return "        tracePrologue(\"" + decl.name + "\", anchor);";
+            return entryLogging();
         }
 
         public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
-            return "            traceEpilogue(\"" + decl.name + "\");";
+            return exitLogging();
         }
+
+        private static String entryLogging() {
+            StringBuilder sb = new StringBuilder();
+            String[] args = getDefaultArgs();
+            sb.append("        logger.log(EntryPoints.");
+            sb.append(currentMethod.name);
+            sb.append('.');
+            sb.append("ordinal(), Word.allOnes(), anchor");
+            for (int i = 0; i < args.length; i++) {
+                String tag = args[i];
+                sb.append(", ");
+                sb.append(tag);
+            }
+            sb.append(");\n");
+            return sb.toString();
+        }
+
+        private static String exitLogging() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("            logger.log(EntryPoints.");
+            sb.append(currentMethod.name);
+            sb.append('.');
+            sb.append("ordinal(), Word.zero());\n");
+            return sb.toString();
+        }
+    }
+
+    public static String[] getDefaultArgs() {
+        String[] paramNames = currentMethod.arguments.split(",\\s");
+        String[] params = currentMethod.parameters.split(",\\s*");
+        for (int i = 0; i < paramNames.length; i++) {
+            String paramType = params[i].split(" ")[0];
+            if (paramType.equals("int") || paramType.equals("short") || paramType.equals("char") ||
+                            paramType.equals("byte")) {
+                paramNames[i] = "Address.fromInt(" + paramNames[i] + ")";
+            } else if (paramType.equals("long")) {
+                paramNames[i] = "Address.fromLong(" + paramNames[i] + ")";
+            } else if (paramType.equals("boolean")) {
+                paramNames[i] = "Address.fromInt(" + paramNames[i] + " ? 1 : 0)";
+            } else if (paramType.equals("float")) {
+                paramNames[i] = "Address.fromInt(Float.floatToRawIntBits(" + paramNames[i] + "))";
+            } else if (paramType.equals("double")) {
+                paramNames[i] = "Address.fromLong(Double.doubleToRawLongBits(" + paramNames[i] + "))";
+            }
+        }
+        return paramNames;
     }
 
     public static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
@@ -190,6 +251,7 @@ public class JniFunctionsGenerator {
         int state = BEFORE_FIRST_JNI_FUNCTION;
         Writer writer = new StringWriter();
         PrintWriter out = new PrintWriter(writer);
+        entryPointNames = new ArrayList<String>();
 
         while ((line = lr.readLine()) != null) {
 

@@ -27,6 +27,7 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -48,7 +49,7 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIEvent {
 
-    private static class JVMTIEventLogger extends JVMTILog.Logger {
+    private static class JVMTIEventLogger extends VMLog.Logger {
         private JVMTIEventLogger() {
             super("JVMTIEvents", EVENT_COUNT);
         }

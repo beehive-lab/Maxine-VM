@@ -347,11 +347,6 @@ public class JVMTI {
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
-            case VM_START:
-                phase = JVMTI_PHASE_START;
-                JVMTILog.checkLogging();
-                break;
-
             case VM_INIT:
                 phase = JVMTI_PHASE_LIVE;
                 tfed = new ThreadFieldEventData();
