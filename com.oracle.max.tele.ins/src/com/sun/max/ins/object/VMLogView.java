@@ -80,9 +80,10 @@ public class VMLogView extends AbstractView<VMLogView> {
     private final LogViewPreferences viewPreferences;
     private ObjectScrollPane elementsPane;
     private LogElementsTableModel tableModel;
-    private Reference logRef;
-    private TeleObject log;
-    private TeleArrayObject logBuffer;
+    private Reference vmLogRef;
+    private TeleObject vmLog;
+    private TeleArrayObject teleLogBuffer;
+    private int logBufferSize;
     private TeleInstanceIntFieldAccess nextIdFieldAccess;
     private Map<Integer, VMLog.Logger> loggers;
 
@@ -91,12 +92,13 @@ public class VMLogView extends AbstractView<VMLogView> {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         TeleVM vm = (TeleVM) vm();
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
-        logRef = vm.fields().VMLog_vmLog.readReference(vm);
-        log = VmObjectAccess.make(vm).makeTeleObject(logRef);
-        Reference logBufferRef = vm.fields().VMLog_buffer.readReference(logRef);
-        logBuffer = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(logBufferRef);
+        vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
+        vmLog = VmObjectAccess.make(vm).makeTeleObject(vmLogRef);
+        Reference logBufferRef = vm.fields().VMLog_buffer.readReference(vmLogRef);
+        teleLogBuffer = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(logBufferRef);
+        logBufferSize = vm.fields().VMLog_logSize.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
-        Reference loggersRef = vm.fields().VMLog_loggers.readReference(logRef);
+        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vmLogRef);
         loggers = (Map<Integer, VMLog.Logger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
         /*final InspectorFrame frame = */ createFrame(true);
 //        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
@@ -135,7 +137,7 @@ public class VMLogView extends AbstractView<VMLogView> {
 
     private class LogElementsTableModel extends InspectorTableModel {
 
-        private VMLog logCache = new VMLog();
+        private VMLog.HostedRecord[] logRecordCache = new VMLog.HostedRecord[logBufferSize];
         /**
          * After {@link #refresh}, this holds a copy of the {@link VMLog#nextId} field,
          * which is the id of the next record that will be written. The actual slot in the
@@ -152,117 +154,102 @@ public class VMLogView extends AbstractView<VMLogView> {
         }
 
         public int getRowCount() {
-            int nextId = nextIdFieldAccess.readInt(logRef);
-            if (nextId >= logCache.buffer.length) {
+            int nextId = nextIdFieldAccess.readInt(vmLogRef);
+            if (nextId >= logRecordCache.length) {
                 // we have wrapped the circular buffer
-                return logCache.buffer.length;
+                return logRecordCache.length;
             } else {
                 return nextId;
             }
         }
 
         /**
-         * Get the index of the slot in the log buffer at the given logical row and column.
-         * N.B. Row 0 is interpreted as the start of the circular buffer, not the start of the array
-         * holding the buffer, so we have to translate if we have wrapped.
-         */
-        private int getBufferRow(int xrow) {
-            int row = xrow;
-            if (lastNextId >= logCache.buffer.length) {
-                int row0Index = lastNextId  % logCache.buffer.length;
-                row = (row0Index + xrow)  % logCache.buffer.length;
-            }
-            return row;
-        }
-
-        /**
          * Get the value of the slot in the log buffer at the given logical row and column.
-         * N.B. Row 0 is interpreted as the start of the circular buffer, not the start of the array
-         * holding the buffer, so we have to translate if we have wrapped.
          */
-        public Object getValueAt(int xrow, int col) {
-            int row = getBufferRow(xrow);
-            if (logCache.buffer[row] == null) {
+        public Object getValueAt(int row, int col) {
+            VMLog.HostedRecord record = logRecordCache[row];
+            if (record == null) {
                 TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
             }
-            Object result;
+            Object result = null;
+            int argCount = VMLog.Record.getArgCount(record.oplc);
+
             switch (LogColumnKind.values()[col]) {
-                case INDEX:
-                    result = logCache.buffer[row].id;
+                case ID:
+                    result = record.id;
                     break;
                 case THREAD:
-                    result = logCache.buffer[row].threadId;
+                    result = record.threadId;
                     break;
                 case OPERATION:
-                    result = logCache.buffer[row].oplc;
+                    result = record.oplc;
                     break;
                 case ARG1:
-                    result = logCache.buffer[row].arg1;
+                    if (argCount > 0) {
+                        result = record.arg1;
+                    }
                     break;
                 case ARG2:
-                    result = logCache.buffer[row].arg2;
+                    if (argCount > 1) {
+                        result = record.arg2;
+                    }
                     break;
                 case ARG3:
-                    result = logCache.buffer[row].arg3;
+                    if (argCount > 2) {
+                        result = record.arg3;
+                    }
                     break;
                 case ARG4:
-                    result = logCache.buffer[row].arg4;
+                    if (argCount > 3) {
+                        result = record.arg4;
+                    }
                     break;
                 case ARG5:
-                    result = logCache.buffer[row].arg5;
+                    if (argCount > 4) {
+                        result = record.arg5;
+                    }
                     break;
                 case ARG6:
-                    result = logCache.buffer[row].arg6;
+                    if (argCount > 5) {
+                        result = record.arg6;
+                    }
                     break;
                 default:
                     TeleError.unexpected("illegal column value kind");
                     result = null;
-            }
-            if (result == null) {
-                result = new BoxedWord(0);
             }
             return result;
         }
 
         @Override
         public void refresh() {
-            int nextId = nextIdFieldAccess.readInt(logRef);
+            int nextId = nextIdFieldAccess.readInt(vmLogRef);
             if (nextId != lastNextId) {
-                // get actual array slots
-                if (nextId >= lastNextId + logCache.buffer.length) {
-                    // every slot changed
-                    for (int i = 0; i < logCache.buffer.length; i++) {
-                        logCache.buffer[i] = getRecordFromVM(i);
-                    }
-                } else {
-                    // subset changed
-                    int nextIdIndex = nextId % logCache.buffer.length;
-                    int lastNextIdIndex = lastNextId % logCache.buffer.length;
-                    if (nextIdIndex < lastNextIdIndex) {
-                        // wrapped
-                        for (int i = 0; i < logCache.buffer.length; i++) {
-                            if (i < nextIdIndex || i >= lastNextIdIndex) {
-                                logCache.buffer[i] = getRecordFromVM(i);
-                            }
-                        }
-                    } else {
-                        for (int i = lastNextIdIndex; i < nextIdIndex; i++) {
-                            logCache.buffer[i] = getRecordFromVM(i);
-                        }
-                    }
+                // Some new records; we could try to be clever and just figure out what changed
+                // but for now we just read everything into the record cache (underlying page caching helps).
+                // This also makes it easy to keep the record cache logical in the sense that index 0 is the first
+                // slot in the circular buffer and not index 0 in the VM log array.
+                final long firstId = nextId >= logRecordCache.length ? nextId - logRecordCache.length : 0;
+                long id = firstId;
+                int cacheIndex = 0;
+
+                while (id < nextId) {
+                    int idIndex = (int) (id % logRecordCache.length); // actual slot in target buffer array
+                    logRecordCache[cacheIndex++] = getRecordFromVM(idIndex, id);
+                    id++;
                 }
                 lastNextId = nextId;
             }
             super.refresh();
         }
 
-        private VMLog.Record getRecordFromVM(int i) {
+        private VMLog.HostedRecord getRecordFromVM(int index, long id) {
             TeleVM vm = (TeleVM) vm();
-            Reference recordRef = logBuffer.readElementValue(i).asReference();
-            return new VMLog.Record(
+            Reference recordRef = teleLogBuffer.readElementValue(index).asReference();
+            return new VMLog.HostedRecord(
+                            id,
                             vm.fields().VMLog$Record_oplc.readInt(recordRef),
                             vm.fields().VMLog$Record_threadId.readInt(recordRef),
-                            vm.fields().VMLog$Record_id.readInt(recordRef),
                             vm.fields().VMLog$Record_arg1.readWord(recordRef),
                             vm.fields().VMLog$Record_arg2.readWord(recordRef),
                             vm.fields().VMLog$Record_arg3.readWord(recordRef),
@@ -277,7 +264,7 @@ public class VMLogView extends AbstractView<VMLogView> {
     private class LogColumnModel extends InspectorTableColumnModel<LogColumnKind>  {
         private LogColumnModel() {
             super(LogColumnKind.values().length, viewPreferences);
-            addColumn(LogColumnKind.INDEX, new IndexCellRenderer(inspection()), null);
+            addColumn(LogColumnKind.ID, new IdCellRenderer(inspection()), null);
             addColumn(LogColumnKind.THREAD, new ThreadCellRenderer(inspection()), null);
             addColumn(LogColumnKind.OPERATION, new OperationCellRenderer(inspection()), null);
             addColumn(LogColumnKind.ARG1, new ArgCellRenderer(inspection(), 1), null);
@@ -291,7 +278,7 @@ public class VMLogView extends AbstractView<VMLogView> {
     }
 
     private enum LogColumnKind implements ColumnKind {
-        INDEX("Index", "index in circular buffer", true, 5),
+        ID("Id", "unique id", true, 5),
         THREAD("Thread", "thread that created the entry", true, -1),
         OPERATION("Operation", "operation name", true, -1),
         ARG1("Arg1", "argument 1", true, -1),
@@ -376,8 +363,8 @@ public class VMLogView extends AbstractView<VMLogView> {
         }
     }
 
-    private class IndexCellRenderer extends WordValueLabel implements TableCellRenderer {
-        private IndexCellRenderer(Inspection inspection) {
+    private class IdCellRenderer extends WordValueLabel implements TableCellRenderer {
+        private IdCellRenderer(Inspection inspection) {
             super(inspection, WordValueLabel.ValueMode.WORD, null);
         }
 
@@ -385,8 +372,8 @@ public class VMLogView extends AbstractView<VMLogView> {
             if (value == null) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            int index = (Integer) value;
-            setText(Integer.toString(index));
+            long index = (Long) value;
+            setText(Long.toString(index));
             return this;
         }
     }
@@ -441,9 +428,11 @@ public class VMLogView extends AbstractView<VMLogView> {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (value == null) {
-                return gui().getUnavailableDataTableCellRenderer();
+                // non-existent argument
+                setText("");
+                return this;
             }
-            int op = tableModel.logCache.buffer[tableModel.getBufferRow(row)].oplc;
+            int op = tableModel.logRecordCache[row].oplc;
             if (op == 0) {
                 // we have stopped in the Inspector after the log buffer id has been bumped
                 // but before the data has been filled in.
@@ -451,7 +440,7 @@ public class VMLogView extends AbstractView<VMLogView> {
             }
 
             long argValue = ((Boxed) value).value();
-            VMLogArgRenderer vmLogArgRenderer = VmLogArgRendererFactory.getArgRenderer(loggers.get(VMLog.Record.getLoggerId(op)));
+            VMLogArgRenderer vmLogArgRenderer = VmLogArgRendererFactory.getArgRenderer(loggers.get(VMLog.Record.getLoggerId(op)).name);
             setText(vmLogArgRenderer.getText((TeleVM) vm(), op, argNum, argValue));
             return this;
         }

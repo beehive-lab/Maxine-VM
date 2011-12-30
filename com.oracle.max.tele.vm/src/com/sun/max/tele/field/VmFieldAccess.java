@@ -180,7 +180,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess VMLog$Record_arg5 = new TeleInstanceWordFieldAccess(VMLog.Record.class, "arg5");
     public final TeleInstanceWordFieldAccess VMLog$Record_arg6 = new TeleInstanceWordFieldAccess(VMLog.Record.class, "arg6");
     public final TeleInstanceWordFieldAccess VMLog$Record_arg7 = new TeleInstanceWordFieldAccess(VMLog.Record.class, "arg7");
-    public final TeleInstanceIntFieldAccess VMLog$Record_id = new TeleInstanceIntFieldAccess(VMLog.Record.class, "id");
     public final TeleInstanceIntFieldAccess VMLog$Record_oplc = new TeleInstanceIntFieldAccess(VMLog.Record.class, "oplc");
     public final TeleInstanceIntFieldAccess VMLog$Record_threadId = new TeleInstanceIntFieldAccess(VMLog.Record.class, "threadId");
     public final TeleStaticIntFieldAccess RegionTable_TableOffset = new TeleStaticIntFieldAccess(RegionTable.class, "TableOffset");
@@ -216,6 +215,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
     public final TeleInstanceReferenceFieldAccess VMLog_buffer = new TeleInstanceReferenceFieldAccess(VMLog.class, "buffer", Record[].class);
+    public final TeleInstanceIntFieldAccess VMLog_logSize = new TeleInstanceIntFieldAccess(VMLog.class, "logSize");
     public final TeleInstanceReferenceFieldAccess VMLog_loggers = new TeleInstanceReferenceFieldAccess(VMLog.class, "loggers", Map.class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
