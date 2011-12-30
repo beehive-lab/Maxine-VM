@@ -72,8 +72,6 @@ public class VMLog {
         @INSPECTED
         public int threadId;
         @INSPECTED
-        public int id;
-        @INSPECTED
         public Word arg1;
         @INSPECTED
         public Word arg2;
@@ -87,20 +85,6 @@ public class VMLog {
         public Word arg6;
         @INSPECTED
         public Word arg7;
-
-        @HOSTED_ONLY
-        public Record(int oplc, int threadId, int startIndex, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
-            this.oplc = oplc;
-            this.threadId = threadId;
-            this.id = startIndex;
-            this.arg1 = arg1;
-            this.arg2 = arg2;
-            this.arg3 = arg3;
-            this.arg4 = arg4;
-            this.arg5 = arg5;
-            this.arg6 = arg6;
-            this.arg7 = arg7;
-        }
 
         private Record() {
 
@@ -117,7 +101,26 @@ public class VMLog {
         public static int getArgCount(int oplc) {
             return oplc & Record.ARGCOUNT_MASK;
         }
+    }
 
+    /**
+     * Inspector use only.
+     */
+    @HOSTED_ONLY
+    public static class HostedRecord extends Record {
+        public final long id;
+        public HostedRecord(long id, int oplc, int threadId, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
+            this.id = id;
+            this.oplc = oplc;
+            this.threadId = threadId;
+            this.arg1 = arg1;
+            this.arg2 = arg2;
+            this.arg3 = arg3;
+            this.arg4 = arg4;
+            this.arg5 = arg5;
+            this.arg6 = arg6;
+            this.arg7 = arg7;
+        }
     }
 
     public static class Logger {
@@ -146,6 +149,8 @@ public class VMLog {
         private final VMStringOption logExcludeOption;
         private boolean log;
         private boolean trace;
+
+        private int[] argCounts = new int[8];
 
         @HOSTED_ONLY
         protected Logger(String name, int numOps) {
@@ -224,6 +229,7 @@ public class VMLog {
                     case 3: arg = r.arg4; break;
                     case 4: arg = r.arg5; break;
                     case 5: arg = r.arg6; break;
+                    case 6: arg = r.arg7; break;
                 }
                 // Checkstyle: resume
                 Log.print(argString(op, i, arg));
@@ -267,6 +273,7 @@ public class VMLog {
                 r = getRecord(argCount);
                 r.oplc = (op << Record.OPERATION_SHIFT) | loggerId | argCount;
                 r.threadId = VmThread.current().id();
+                argCounts[argCount]++;
             }
             return r;
         }
@@ -373,18 +380,15 @@ public class VMLog {
             boolean lockDisabledSafepoints = Log.lock();
             trace(r);
             Log.unlock(lockDisabledSafepoints);
-
         }
 
     }
 
     private static final String LOG_SIZE_PROPERTY = "max.vmlog.size";
     private final static int DEFAULT_LOG_SIZE = 8192;
-    private final int logSize;
 
     @INSPECTED
-    private static VMLog vmLog = new VMLog();
-
+    private final int logSize;
     @INSPECTED
     private Map<Integer, Logger> loggers;
     @INSPECTED
@@ -392,9 +396,16 @@ public class VMLog {
     @INSPECTED
     private volatile int nextId;
 
+    @INSPECTED
+    private static VMLog vmLog = new VMLog();
+
     private static final int nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
 
-    public VMLog() {
+    public static void initialize() {
+
+    }
+
+    private VMLog() {
         String logSizeProperty = System.getProperty(LOG_SIZE_PROPERTY);
         if (logSizeProperty != null) {
             logSize = Integer.parseInt(logSizeProperty);
@@ -414,16 +425,7 @@ public class VMLog {
             myId = vmLog.nextId;
         }
         Record r = vmLog.buffer[myId % vmLog.logSize];
-        r.id = myId;
         r.oplc = 0; // mark not in use
-        // clear out old values
-        r.threadId = 0;
-        r.arg1 = Word.zero();
-        r.arg2 = Word.zero();
-        r.arg3 = Word.zero();
-        r.arg4 = Word.zero();
-        r.arg5 = Word.zero();
-        r.arg6 = Word.zero();
         return r;
     }
 

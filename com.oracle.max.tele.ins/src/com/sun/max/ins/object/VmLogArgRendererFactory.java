@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.jvmti.*;
 
 /**
  * Factory for custom renderers for {@link VMLog.Logger} arguments.
@@ -40,23 +39,25 @@ public abstract class VmLogArgRendererFactory {
 
     private static Map<String, VMLogArgRenderer> renderers = new HashMap<String, VMLogArgRenderer>();
 
-    private static class DefaultVMLogArgRenderer extends VMLogArgRenderer {
+    static DefaultVMLogArgRenderer defaultVMLogArgRenderer = new DefaultVMLogArgRenderer();
+
+    static class DefaultVMLogArgRenderer extends VMLogArgRenderer {
         @Override
         String getText(TeleVM vm, int op, int argNum, long argValue) {
             return Long.toHexString(argValue);
         }
     }
 
-    static VMLogArgRenderer getArgRenderer(VMLog.Logger logger) {
-        VMLogArgRenderer result = renderers.get(logger.name);
+    static VMLogArgRenderer getArgRenderer(String loggerName) {
+        VMLogArgRenderer result = renderers.get(loggerName);
         if (result == null) {
             try {
-                result = (VMLogArgRenderer) Class.forName(VmLogArgRendererFactory.class.getPackage().getName() + logger.name + "VMLogArgRenderer").newInstance();
+                result = (VMLogArgRenderer) Class.forName(VmLogArgRendererFactory.class.getPackage().getName() + "." + loggerName + "VMLogArgRenderer").newInstance();
             } catch (Exception ex) {
-                Trace.line(1, "no custom VMLog argument renderer found for " + logger.name);
-                result = new DefaultVMLogArgRenderer();
+                Trace.line(1, "no custom VMLog argument renderer found for " + loggerName);
+                result =  defaultVMLogArgRenderer;
             }
-            renderers.put(logger.name, result);
+            renderers.put(loggerName, result);
         }
         return result;
     }
