@@ -40,7 +40,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.VMLog.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -48,8 +47,9 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -185,23 +185,24 @@ public final class JniFunctions {
     /**
      * Logging/Tracing of JNI/JMM entry/exit.
      */
-    static abstract class XXXFunctionsLogger extends VMLog.Logger {
+    static abstract class XXXFunctionsLogger extends VMLogger {
         XXXFunctionsLogger(String name, int entryPointsLength) {
             super(name, entryPointsLength);
         }
 
         @Override
         protected void trace(Record r) {
-            int op = Record.getOperation(r.oplc);
-            boolean entry = r.arg1.isAllOnes();
+            Record1 r1 = VMLog.asRecord1(r);
+            boolean entry = r1.arg1.isAllOnes();
             Log.print("[Thread \"");
-            Log.print(threadName(r.threadId));
+            Log.print(threadName(r.getThreadId()));
             Log.print("\" ");
             Log.print(entry ? "-->" : "<--");
             Log.print(" JNI upcall: ");
-            Log.print(operationName(op));
+            Log.print(operationName(r.getOperation()));
             if (entry) {
-                Pointer anchor = r.arg2.asPointer();
+                Record2 r2 = VMLog.asRecord2(r);
+                Pointer anchor = r2.arg2.asPointer();
                 Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
                 final Address jniStubPC = jniStubAnchor.isZero() ? Address.zero() : JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
                 if (!jniStubPC.isZero()) {
