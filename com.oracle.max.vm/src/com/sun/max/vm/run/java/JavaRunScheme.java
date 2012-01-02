@@ -49,6 +49,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;

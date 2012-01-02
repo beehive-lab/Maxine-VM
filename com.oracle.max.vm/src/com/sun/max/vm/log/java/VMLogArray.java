@@ -20,42 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.object;
+package com.sun.max.vm.log.java;
 
-import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.*;
 
 /**
- * Base class for custom {@link VMlog.Logger} argument renderers.
+ * Common superclass for implementations using an indexed array of {@link Record} instances.
  */
-public abstract class VMLogArgRenderer {
-    /**
-     *
-     * @param header value from log buffer
-     * @param argNum argument index {@code [1 .. N-1]}
-     * @param argValue argument value (can't be a reference)
-     * @return
-     */
-    abstract String getText(TeleVM vm, int header, int argNum, long argValue);
-
-    /**
-     * Convenience method for converting a C string to a {@link String}.
-     * Perhaps should be elsewhere.
-     * @param vm
-     * @param cString
-     * @return
-     */
-    static String stringFromCString(TeleVM vm, Pointer cString) {
-        byte[] bytes = new byte[1024];
-        int index = 0;
-        while (true) {
-            byte b = vm.memory().readByte(cString, index);
-            if (b == 0) {
-                break;
-            }
-            bytes[index++] = b;
-        }
-        return new String(bytes, 0, index);
-
+public abstract class VMLogArray extends VMLog {
+    @INSPECTED
+    public final Record[] buffer;
+    protected VMLogArray() {
+        buffer = new Record[logSize];
     }
+
 }

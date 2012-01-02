@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -80,7 +81,7 @@ public class JVMTIFunctions  {
         return JniFunctions.prologue(currentJniEnv());
     }
 
-    private static class JVMTIFunctionsLogger extends VMLog.Logger {
+    private static class JVMTIFunctionsLogger extends VMLogger {
         private static EntryPoints[] methods = EntryPoints.values();
 
         private JVMTIFunctionsLogger() {

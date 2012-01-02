@@ -26,18 +26,19 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 
 
 public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
     @Override
-    public String getText(TeleVM vm, int op, int argNum, long argValue) {
+    public String getText(TeleVM vm, int header, int argNum, long argValue) {
         String text = "";
         if (argNum == 1) {
             // Env
             text = Long.toHexString(argValue);
         } else {
-            switch (JVMTIFunctions.EntryPoints.values()[VMLog.Record.getOperation(op)]) {
+            switch (JVMTIFunctions.EntryPoints.values()[VMLog.Record.getOperation(header)]) {
                 // arg0 is always the env value
                 case SetEventNotificationMode:
                     if (argNum == 2) {

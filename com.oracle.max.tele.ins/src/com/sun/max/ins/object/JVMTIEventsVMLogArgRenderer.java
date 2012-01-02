@@ -28,7 +28,7 @@ import com.sun.max.tele.*;
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
     @Override
-    String getText(TeleVM vm, int op, int argNum, long argValue) {
+    String getText(TeleVM vm, int header, int argNum, long argValue) {
         // no decode yet
         return "";
     }

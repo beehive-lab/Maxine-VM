@@ -41,6 +41,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -85,7 +86,7 @@ public class VMLogView extends AbstractView<VMLogView> {
     private TeleArrayObject teleLogBuffer;
     private int logBufferSize;
     private TeleInstanceIntFieldAccess nextIdFieldAccess;
-    private Map<Integer, VMLog.Logger> loggers;
+    private Map<Integer, VMLogger> loggers;
 
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
@@ -94,12 +95,12 @@ public class VMLogView extends AbstractView<VMLogView> {
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
         vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
         vmLog = VmObjectAccess.make(vm).makeTeleObject(vmLogRef);
-        Reference logBufferRef = vm.fields().VMLog_buffer.readReference(vmLogRef);
+        Reference logBufferRef = vm.fields().VMLogArray_buffer.readReference(vmLogRef);
         teleLogBuffer = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(logBufferRef);
         logBufferSize = vm.fields().VMLog_logSize.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
         Reference loggersRef = vm.fields().VMLog_loggers.readReference(vmLogRef);
-        loggers = (Map<Integer, VMLog.Logger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
+        loggers = (Map<Integer, VMLogger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
         /*final InspectorFrame frame = */ createFrame(true);
 //        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
@@ -154,12 +155,11 @@ public class VMLogView extends AbstractView<VMLogView> {
         }
 
         public int getRowCount() {
-            int nextId = nextIdFieldAccess.readInt(vmLogRef);
-            if (nextId >= logRecordCache.length) {
+            if (lastNextId >= logRecordCache.length) {
                 // we have wrapped the circular buffer
                 return logRecordCache.length;
             } else {
-                return nextId;
+                return lastNextId;
             }
         }
 
@@ -172,46 +172,51 @@ public class VMLogView extends AbstractView<VMLogView> {
                 TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
             }
             Object result = null;
-            int argCount = VMLog.Record.getArgCount(record.oplc);
+            int argCount = VMLog.Record.getArgCount(record.header);
 
             switch (LogColumnKind.values()[col]) {
                 case ID:
                     result = record.id;
                     break;
                 case THREAD:
-                    result = record.threadId;
+                    result = record.getThreadId();
                     break;
                 case OPERATION:
-                    result = record.oplc;
+                    result = record.getOperation();
                     break;
                 case ARG1:
                     if (argCount > 0) {
-                        result = record.arg1;
+                        result = record.args[0];
                     }
                     break;
                 case ARG2:
                     if (argCount > 1) {
-                        result = record.arg2;
+                        result = record.args[1];
                     }
                     break;
                 case ARG3:
                     if (argCount > 2) {
-                        result = record.arg3;
+                        result = record.args[2];
                     }
                     break;
                 case ARG4:
                     if (argCount > 3) {
-                        result = record.arg4;
+                        result = record.args[3];
                     }
                     break;
                 case ARG5:
                     if (argCount > 4) {
-                        result = record.arg5;
+                        result = record.args[4];
                     }
                     break;
                 case ARG6:
                     if (argCount > 5) {
-                        result = record.arg6;
+                        result = record.args[5];
+                    }
+                    break;
+                case ARG7:
+                    if (argCount > 6) {
+                        result = record.args[6];
                     }
                     break;
                 default:
@@ -229,7 +234,7 @@ public class VMLogView extends AbstractView<VMLogView> {
                 // but for now we just read everything into the record cache (underlying page caching helps).
                 // This also makes it easy to keep the record cache logical in the sense that index 0 is the first
                 // slot in the circular buffer and not index 0 in the VM log array.
-                final long firstId = nextId >= logRecordCache.length ? nextId - logRecordCache.length : 0;
+                final long firstId = firstId(nextId);
                 long id = firstId;
                 int cacheIndex = 0;
 
@@ -239,8 +244,22 @@ public class VMLogView extends AbstractView<VMLogView> {
                     id++;
                 }
                 lastNextId = nextId;
+            } else {
+                // one very special case - the last refresh was after nextId was bumped
+                // but before the record was filled in.
+                if (lastNextId != 0) {
+                    int id = lastNextId - 1;
+                    // re-read the record
+                    int idIndex = id % logRecordCache.length; // actual slot in target buffer array
+                    VMLog.HostedRecord record = getRecordFromVM(idIndex, id);
+                    logRecordCache[id - firstId(id)] = record;
+                }
             }
             super.refresh();
+        }
+
+        private int firstId(int id) {
+            return id >= logRecordCache.length ? id - logRecordCache.length : 0;
         }
 
         private VMLog.HostedRecord getRecordFromVM(int index, long id) {
@@ -248,15 +267,34 @@ public class VMLogView extends AbstractView<VMLogView> {
             Reference recordRef = teleLogBuffer.readElementValue(index).asReference();
             return new VMLog.HostedRecord(
                             id,
-                            vm.fields().VMLog$Record_oplc.readInt(recordRef),
-                            vm.fields().VMLog$Record_threadId.readInt(recordRef),
-                            vm.fields().VMLog$Record_arg1.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg2.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg3.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg4.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg5.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg6.readWord(recordRef),
-                            vm.fields().VMLog$Record_arg7.readWord(recordRef));
+                            vm.fields().VMLog$Record_header.readInt(recordRef),
+                            vm.fields().VMLog$Record1_arg1.readWord(recordRef),
+                            vm.fields().VMLog$Record2_arg2.readWord(recordRef),
+                            vm.fields().VMLog$Record3_arg3.readWord(recordRef),
+                            vm.fields().VMLog$Record4_arg4.readWord(recordRef),
+                            vm.fields().VMLog$Record5_arg5.readWord(recordRef),
+                            vm.fields().VMLog$Record6_arg6.readWord(recordRef),
+                            vm.fields().VMLog$Record7_arg7.readWord(recordRef));
+        }
+
+        /**
+         * Is this header value well-formed?
+         * @param header
+         * @return
+         */
+        private boolean wellFormedHeader(int header) {
+            // there are brief periods when a record may not be well formed,
+            // e.g., we have stopped in the Inspector after the log buffer id has been bumped
+            // but before the data has been filled in.
+            // specifically, the logger id may be bogus, which will cause a crash.
+            if (VMLog.Record.isFree(header)) {
+                return false;
+            }
+            int loggerId = VMLog.Record.getLoggerId(header);
+            if (loggers.get(loggerId) == null) {
+                return false;
+            }
+            return true;
         }
 
     }
@@ -273,7 +311,7 @@ public class VMLogView extends AbstractView<VMLogView> {
             addColumn(LogColumnKind.ARG4, new ArgCellRenderer(inspection(), 4), null);
             addColumn(LogColumnKind.ARG5, new ArgCellRenderer(inspection(), 5), null);
             addColumn(LogColumnKind.ARG6, new ArgCellRenderer(inspection(), 6), null);
-            addColumn(LogColumnKind.ARG6, new ArgCellRenderer(inspection(), 7), null);
+            addColumn(LogColumnKind.ARG7, new ArgCellRenderer(inspection(), 7), null);
         }
     }
 
@@ -286,7 +324,8 @@ public class VMLogView extends AbstractView<VMLogView> {
         ARG3("Arg3", "argument 3", true, -1),
         ARG4("Arg4", "argument 4", true, -1),
         ARG5("Arg5", "argument 5", true, -1),
-        ARG6("Arg6", "argument 6", true, -1);
+        ARG6("Arg6", "argument 6", true, -1),
+        ARG7("Arg7", "argument 7", true, -1);
 
         private final String label;
         private final String toolTipText;
@@ -407,13 +446,12 @@ public class VMLogView extends AbstractView<VMLogView> {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             int op = (Integer) value;
-            if (op == 0) {
-                // we have stopped in the Inspector after the log buffer id has been bumped
-                // but before the data has been filled in.
+            int header = tableModel.logRecordCache[row].header;
+            if (!tableModel.wellFormedHeader(header)) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            VMLog.Logger logger = loggers.get(VMLog.Record.getLoggerId(op));
-            setText(logger.name + "." + logger.operationName(VMLog.Record.getOperation(op)));
+            VMLogger logger = loggers.get(VMLog.Record.getLoggerId(header));
+            setText(logger.name + "." + logger.operationName(op));
             return this;
         }
     }
@@ -432,16 +470,14 @@ public class VMLogView extends AbstractView<VMLogView> {
                 setText("");
                 return this;
             }
-            int op = tableModel.logRecordCache[row].oplc;
-            if (op == 0) {
-                // we have stopped in the Inspector after the log buffer id has been bumped
-                // but before the data has been filled in.
+            int header = tableModel.logRecordCache[row].header;
+            if (!tableModel.wellFormedHeader(header)) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
 
             long argValue = ((Boxed) value).value();
-            VMLogArgRenderer vmLogArgRenderer = VmLogArgRendererFactory.getArgRenderer(loggers.get(VMLog.Record.getLoggerId(op)).name);
-            setText(vmLogArgRenderer.getText((TeleVM) vm(), op, argNum, argValue));
+            VMLogArgRenderer vmLogArgRenderer = VmLogArgRendererFactory.getArgRenderer(loggers.get(VMLog.Record.getLoggerId(header)).name);
+            setText(vmLogArgRenderer.getText((TeleVM) vm(), header, argNum, argValue));
             return this;
         }
 
