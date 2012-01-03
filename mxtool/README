@@ -1,0 +1,6 @@
+This is as a read-only copy of the mxtool (https://hg.kenai.com/hg/maxine~mxtool).
+Having a copy makes the Maxine repo more self-contained so that every revision
+will always be built with a specific version of this tool, ensuring repeatability.
+
+Changes to the tool should be made in a clone of the Kenai repo, pushed back
+to Kenai and copied here.
