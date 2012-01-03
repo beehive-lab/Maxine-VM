@@ -47,21 +47,24 @@ public interface RemoteCodePointerManager {
      * at the specified location.  Does <em>not</em> check whether an
      * instructions starts at the location.
      *
-     * @throws TeleError if the location is not in the memory region being managed.
+     * @throws TeleError if the location is not in the memory region
+     * being managed.
      */
     boolean isValidCodePointer(Address address) throws TeleError;
 
     /**
-     * Creates a canonical pointer to a location in VM memory containing machine code,
-     * null if there is no machine code at that location.
+     * Creates a canonical pointer to a location in VM memory containing
+     * machine code, null if there is no machine code at that location.
      * <p>
-     * The absolute address of the code pointer may change over time, for example
-     * if the code is a managed code cache region.
+     * The absolute address of the code pointer may change over time, for
+     * example if the code is a managed code cache region.
      * <p>
-     * Remote  code pointers are collected when no longer used, or when the code
-     * to which they point ceases to be live in the VM (as well as can be determined).
+     * Remote  code pointers are collected when no longer used, or when
+     * the code to which they point ceases to be live in the VM (as well
+     * as can be determined).
      *
-     * @throws TeleError if the location is not in the memory region being managed.
+     * @throws TeleError if the location is not in the memory region
+     * being managed.
      */
     RemoteCodePointer makeCodePointer(Address address) throws TeleError;
 

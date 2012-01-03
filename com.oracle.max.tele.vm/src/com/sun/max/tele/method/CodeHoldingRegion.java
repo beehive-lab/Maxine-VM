@@ -32,12 +32,14 @@ import com.sun.max.tele.*;
 public interface CodeHoldingRegion {
 
     /**
-     * @return description of the VM memory allocated for this region, null if the region is external to the VM.
+     * Gets a description of the VM memory allocated for this region,
+     * null if the region is external to the VM.
      */
     MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
 
     /**
-     * Returns the manager for dealing with pointers to machine code in this memory region.
+     * Returns the manager for dealing with pointers to machine code
+     * in this memory region.
      */
     RemoteCodePointerManager codePointerManager();
 

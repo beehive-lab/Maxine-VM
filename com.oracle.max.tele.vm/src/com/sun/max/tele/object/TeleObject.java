@@ -323,10 +323,12 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     public static class InvalidObjectClass {}
 
     /**
-     * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type of this object in the
-     *         VM. Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type
-     *         of the object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this
-     *         case the type of the class that the tuple helps implement.
+     * Gets a local {@link ClassActor}, equivalent to the one in the
+     * VM that describes the type of this object in the VM. Note that
+     * in the singular instance of {@link StaticTuple} this does not
+     * correspond to the actual type of the object, which is an
+     * exceptional Maxine object that has no ordinary Java type; it
+     * returns in this case the type of the class the tuple helps implement.
      */
     public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
         try {
@@ -368,14 +370,16 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * @return the size of the memory occupied by this object in the VM, including header.
+     * Gets the size of the memory occupied by this object in the VM,
+     * including header.
      */
     protected abstract int objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
      *
-     * @return current memory region occupied by this object in the VM, subject to relocation by GC.
+     * @return current memory region occupied by this object in the VM,
+     * subject to relocation by GC.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
         if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
@@ -536,9 +540,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
-     *            describes a field in this object in the VM
-     * @return contents of the designated field in this object in the VM
+     * @param fieldActor local {@link FieldActor}, part of the
+     * {@link ClassActor} for the type of this object, that
+     * describes a field in this object in the VM
+     *
+     * @return contents of the designated field in this VM object
      */
     public abstract Value readFieldValue(FieldActor fieldActor);
 
