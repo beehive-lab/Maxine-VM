@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
@@ -32,6 +33,10 @@ import com.sun.max.vm.runtime.*;
  * Adaptor for factoring a number of common boiler plate for HeapScheme implemented with components of the gcx package.
  */
 public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
+    protected static boolean VerifyAfterGC = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "VerifyAfterGC", HeapSchemeWithTLABAdaptor.class, "Verify heap after GC", Phase.PRISTINE);
+    }
 
     /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be

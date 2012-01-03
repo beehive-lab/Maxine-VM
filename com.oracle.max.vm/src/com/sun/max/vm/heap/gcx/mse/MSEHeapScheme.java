@@ -51,11 +51,9 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-    static boolean VerifyAfterGC = false;
     static boolean DumpFragStatsAfterGC = false;
     static boolean DumpFragStatsAtGCFailure = false;
     static {
-        VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSEHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAfterGC", MSEHeapScheme.class, "Dump region fragmentation stats after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAtGCFailure", MSEHeapScheme.class, "Dump region fragmentation when GC failed to reclaim enough space", Phase.PRISTINE);
     }
