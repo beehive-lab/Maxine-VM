@@ -103,7 +103,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
                         @Override
                         public void entered(Address address) {
-                            final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().nBytesInWord() * 10);
+                            final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(inspection.vm(), null, address, inspection.vm().platform().nBytesInWord() * 10);
                             makeView(newRegion, null).highlight();
                         }
                     };
@@ -647,7 +647,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 titleBuilder.append(regionDescription);
                 break;
             case WORD:
-                if (regionName == null) {
+                if (regionName == null || regionName.equals("")) {
                     titleBuilder.append("Memory: ").append(memoryWordRegion.start().toHexString()).append("--").append(memoryWordRegion.end().toHexString());
                     titleBuilder.append(regionDescription);
                 } else {
@@ -664,6 +664,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     @Override
     protected void refreshState(boolean force) {
         table.refresh(force);
+        setTitle();
     }
 
     /**
