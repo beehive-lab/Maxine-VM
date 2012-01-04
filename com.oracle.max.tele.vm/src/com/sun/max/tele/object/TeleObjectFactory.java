@@ -248,6 +248,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(Method.class, getConstructor(TeleMethod.class));
         classToTeleTupleObjectConstructor.put(TypeDescriptor.class, getConstructor(TeleTypeDescriptor.class));
         classToTeleTupleObjectConstructor.put(SignatureDescriptor.class, getConstructor(TeleSignatureDescriptor.class));
+        classToTeleTupleObjectConstructor.put(StackTraceElement.class, getConstructor(TeleStackTraceElement.class));
 
         tracer.end(statsPrinter);
     }

@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
@@ -707,6 +708,13 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     protected abstract Object createDeepCopy(DeepCopier context);
 
     /**
+     * @return a warning message about deep copying that is potentially problematic, null otherwise.
+     */
+    protected String deepCopyWarning() {
+        return null;
+    }
+
+    /**
      * Hook for subclasses to refine the extent of {@linkplain #deepCopy() deep copying}.
      */
     protected DeepCopier newDeepCopier() {
@@ -724,6 +732,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         Object objectCopy = null;
         Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
         long start = System.currentTimeMillis();
+        final String warningMessage = deepCopyWarning();
+        if (warningMessage != null) {
+            TeleWarning.message(warningMessage);
+        }
         if (vm().tryLock()) {
             try {
                 DeepCopier copier = newDeepCopier();
