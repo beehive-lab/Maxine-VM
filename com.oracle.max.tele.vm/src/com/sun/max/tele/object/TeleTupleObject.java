@@ -143,6 +143,15 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
+    protected String deepCopyWarning() {
+        final Class<?> javaClass = classActorForObjectType().toJava();
+        if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
+            return "Deep copying instance of " + javaClass.getName();
+        }
+        return null;
+    }
+
+    @Override
     protected Object createDeepCopy(DeepCopier context) {
         final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
