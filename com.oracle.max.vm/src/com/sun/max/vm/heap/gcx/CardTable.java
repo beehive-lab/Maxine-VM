@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ class CardTable extends  Log2RegionToByteMapTable {
      * @param start index of the first card in the range (inclusive)
      * @param end index of the last card of the range (exclusive)
      * @param cardState a card state
-    * @return {@link #NO_CARD_INDEX} if none of the cards in the range are set to the card state specified, the index to the first card in that state otherwise.
+    * @return the index to the first card in the specified state, or the end index if none of the cards in the range are set to that state.
     */
     final int first(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
@@ -135,10 +135,10 @@ class CardTable extends  Log2RegionToByteMapTable {
         while (cursor.getByte() != cardValue) {
             cursor = cursor.plus(1);
             if (cursor.greaterEqual(limit)) {
-                return -1;
+                return end;
             }
         }
-        return cursor.minus(first).toInt();
+        return cursor.minus(tableAddress).toInt();
     }
 
 
@@ -147,7 +147,7 @@ class CardTable extends  Log2RegionToByteMapTable {
      * @param start index of the first card in the range (inclusive)
      * @param end index of the last card of the range (exclusive)
      * @param cardState a card state
-    * @return {@link #NO_CARD_INDEX} if all the cards in the range have the same card state as the one specified, the index to the first card set to a different state otherwise.
+    * @return the index to the first card in a state different than the specified state, or the end index if  all the cards in the range have that state.
     */
     final int firstNot(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
@@ -160,9 +160,9 @@ class CardTable extends  Log2RegionToByteMapTable {
         while (cursor.getByte() == cardValue) {
             cursor = cursor.plus(1);
             if (cursor.greaterEqual(limit)) {
-                return -1;
+                return end;
             }
         }
-        return cursor.minus(first).toInt();
+        return cursor.minus(tableAddress).toInt();
     }
 }
