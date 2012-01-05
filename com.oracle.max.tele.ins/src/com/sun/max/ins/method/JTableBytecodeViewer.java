@@ -633,6 +633,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final CiCodePos codePos = (CiCodePos) value;
+            if (codePos == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             ClassMethodActor method = (ClassMethodActor) codePos.method;
             final String sourceFileName = method.holder().sourceFileName;
