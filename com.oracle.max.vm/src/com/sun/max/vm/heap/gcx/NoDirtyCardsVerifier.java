@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,31 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import java.util.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.CardTable.*;
 
-public final class HeapRegionInfoIterable extends HeapRegionListIterable  implements Iterable<HeapRegionInfo>, Iterator<HeapRegionInfo> {
-    HeapRegionInfoIterable() {
-    }
+public final class NoDirtyCardsVerifier implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
+    final CardTableRSet cardTableRSet;
 
-    public Iterator<HeapRegionInfo> iterator() {
-        return this;
+    public NoDirtyCardsVerifier(CardTableRSet cardTableRSet) {
+        this.cardTableRSet = cardTableRSet;
     }
 
     @Override
-    public HeapRegionInfo next() {
-        final HeapRegionInfo rinfo =  RegionTable.theRegionTable().regionInfo(cursor);
-        last = cursor;
-        cursor = regionList.next(cursor);
-        return rinfo;
+    public void visitCells(Address start, Address end) {
+        cardTableRSet.visitCards(start, end, CardState.DIRTY_CARD, this);
     }
 
-    public void remove() {
-        if (last == INVALID_REGION_ID) {
-            throw new IllegalStateException();
-        }
-        regionList.remove(last);
+    @Override
+    public Pointer visitCell(Pointer cell, Address start, Address end) {
+        // Must never be called if there aren't any dirty card.
+        Log.print("Card is Dirty for range [");
+        Log.print(start);
+        Log.print(", ]; ");
+        Log.print(end);
+        Log.println(", ]; ");
+        return end.asPointer();
     }
-
 }

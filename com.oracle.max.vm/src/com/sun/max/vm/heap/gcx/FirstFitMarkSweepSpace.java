@@ -76,7 +76,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      */
     private HeapRegionList unavailableRegions;
 
-    // private HeapRegionList sweepList;
+    /**
+     * Temporary list used during GC-ing of this space. Before GC, all regions of the space are moved to this list, which then hold all the regions
+     * allocated to this space. During sweeping, the GC redistribute the regions from this to the above three list depending on their available free space.
+     */
+    private HeapRegionList sweepList;
 
     /**
      * Region currently used for tlab allocation.
@@ -192,7 +196,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     final int numBytesNeeded = size.toInt();
                    // Actually, any region with a chunk large enough can do in that case.
                     while (regionInfoIterable.hasNext()) {
-                        HeapRegionInfo rinfo = regionInfoIterable.next();
+                        final HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
                             allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(regionSizeInBytes);
                             return allocateSingleRegionLargeObject(rinfo, rinfo.regionStart().asPointer(), size, Size.fromInt(regionSizeInBytes));
@@ -211,7 +215,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     debug_lastRegion = lastRegion;
 
                     while (regionInfoIterable.hasNext()) {
-                        HeapRegionInfo rinfo = regionInfoIterable.next();
+                        final HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
                             int rid = rinfo.toRegionID();
                             if (n == 0) {
@@ -708,6 +712,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         unavailableRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        sweepList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+
         int initialNumberOfRegions = numberOfRegions(minSize);
         int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false, true);
         if (result != initialNumberOfRegions) {
@@ -793,6 +799,19 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     public void doBeforeGC() {
         overflowAllocator.doBeforeGC();
         tlabAllocator.doBeforeGC();
+        // Move all regions to the sweep list. This tracks all the regions used by the space.
+        sweepList.appendAndClear(unavailableRegions);
+        sweepList.appendAndClear(allocationRegions);
+        sweepList.appendAndClear(tlabAllocationRegions);
+        if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
+            sweepList.append(currentTLABAllocatingRegion);
+            currentTLABAllocatingRegion = INVALID_REGION_ID;
+        }
+        if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
+            sweepList.append(currentOverflowAllocatingRegion);
+            currentOverflowAllocatingRegion = INVALID_REGION_ID;
+        }
+        sweepList.sort();
     }
 
     public void doAfterGC() {
@@ -803,40 +822,46 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         heapMarker.markAll(regionsRangeIterable);
     }
 
-    @Override
-    public void verify(AfterMarkSweepVerifier verifier) {
-        tlabAllocationRegions.checkIsAddressOrdered();
-        allocationRegions.checkIsAddressOrdered();
+    private void verify(HeapRegionList regionList, AfterMarkSweepVerifier verifier) {
+        regionList.checkIsAddressOrdered();
+        regionsRangeIterable.initialize(regionList);
         regionsRangeIterable.resetToFirstIterable();
         while (regionsRangeIterable.hasNext()) {
             HeapRegionInfo.walk(regionsRangeIterable.nextIterableRange(), verifier);
         }
     }
 
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        verify(tlabAllocationRegions, verifier);
+        verify(allocationRegions, verifier);
+        verify(unavailableRegions, verifier);
+    }
+
     public void sweep(TricolorHeapMarker heapMarker) {
-        HeapRegionList allRegions = heapAccount.committedRegions();
         if (MaxineVM.isDebug()) {
-            allRegions.checkIsAddressOrdered();
+            sweepList.checkIsAddressOrdered();
         }
-        currentOverflowAllocatingRegion = INVALID_REGION_ID;
-        currentTLABAllocatingRegion = INVALID_REGION_ID;
-        tlabAllocationRegions.clear();
-        allocationRegions.clear();
         allocationRegionsFreeSpace = Size.zero();
-        regionInfoIterable.initialize(allRegions);
-        regionInfoIterable.reset();
         csrIsLiveMultiRegionObjectTail = false;
         heapMarker.sweep(this);
+        if (MaxineVM.isDebug()) {
+            sweepList.isEmpty();
+        }
+    }
+
+    private HeapRegionInfo nextRegionToSweep() {
+        return RegionTable.theRegionTable().regionInfo(sweepList.removeHead());
     }
 
     @Override
     public boolean hasNextSweepingRegion() {
-        return regionInfoIterable.hasNext();
+        return !sweepList.isEmpty();
     }
 
     @Override
     public void beginSweep() {
-        resetSweepingRegion(regionInfoIterable.next());
+        resetSweepingRegion(nextRegionToSweep());
     }
 
     private void traceSweptRegion() {
@@ -888,8 +913,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     traceSweptRegion();
                 }
                 while (!csrInfo.next().isTailOfLargeObject()) {
+                    csrInfo =  nextRegionToSweep();
                     unavailableRegions.append(csrInfo.toRegionID());
-                    csrInfo = regionInfoIterable.next();
                     if (TraceSweep) {
                         traceSweptRegion();
                     }
@@ -911,7 +936,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     if (csrInfo.next().isTailOfLargeObject()) {
                         break;
                     }
-                    csrInfo = regionInfoIterable.next();
+                    csrInfo = nextRegionToSweep();
                 } while (true);
                 csrLastLiveAddress = csrInfo.regionStart().plus(regionSizeInBytes);
                 // If the large object is dead and its tail isn't large enough to be reclaimable, we must fill it with a dead object to maintain heap parsability.
@@ -967,7 +992,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     @Override
     public void reachedRightmostLiveRegion() {
         while (hasNextSweepingRegion()) {
-            HeapRegionInfo rinfo = regionInfoIterable.next();
+            final HeapRegionInfo rinfo = nextRegionToSweep();
             EMPTY_REGION.setState(rinfo);
             HeapFreeChunk.format(rinfo.regionStart(), regionSizeInBytes);
             rinfo.resetOccupancy();

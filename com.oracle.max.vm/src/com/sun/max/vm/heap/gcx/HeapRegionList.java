@@ -35,8 +35,8 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A doubly linked list of regions implemented as an array of int region identifiers.
- * Used for region ownership list, wherein a region can only belong to one list at a time.
+ * A doubly linked list of regions implemented on top of a shared array of region identifiers.
+ * Used for region ownership lists, wherein a region can only belong to one list at a time.
  * This allows to share the backing storage for all the list, i.e., all lists of regions for a particular use are threaded over the same array.
  */
 public class HeapRegionList {
@@ -62,12 +62,43 @@ public class HeapRegionList {
     }
 
     private static final int [][] listsStorage = new int[RegionListUse.values().length][];
+    private static int [] sortingArea;
 
-    static void initializeListStorage(RegionListUse use, int [] storage) {
-        Arrays.fill(storage, INVALID_REGION_ID);
-        listsStorage[use.ordinal()] = storage;
+    static void initializeListStorage(int numRegions) {
+        final int regionListSize = numRegions << 1; // 2 entries per regions, one for each link (prev and next).
+        for (RegionListUse use : RegionListUse.values()) {
+            int [] storage = new int[regionListSize];
+            Arrays.fill(storage, INVALID_REGION_ID);
+            listsStorage[use.ordinal()] = storage;
+        }
+        sortingArea = new int[numRegions];
     }
 
+    // Sort using the shared, pre-allocated, sorting area.
+    private static synchronized void sort(HeapRegionList list) {
+        int index = 0;
+        int current = list.head;
+        if (current != INVALID_REGION_ID) {
+            do {
+                sortingArea[index++] = current;
+                current = list.next(current);
+            } while(current != INVALID_REGION_ID);
+            Arrays.sort(sortingArea, 0, index);
+            // Rebuild link list from sorted array.
+            list.clear();
+            list.append(sortingArea[0]);
+            int i = 1;
+            while (i < index) {
+                list.appendNonEmpty(sortingArea[i++]);
+            }
+        }
+    }
+
+    public  void sort() {
+        if (size > 1) {
+            sort(this);
+        }
+    }
 
     /**
      * The value denoting the null element. Used as a list terminator.
@@ -190,6 +221,13 @@ public class HeapRegionList {
         head = nullElement;
     }
 
+    private void appendNonEmpty(int elem) {
+        setNext(tail, elem);
+        init(elem, nullElement, tail);
+        tail = elem;
+        size++;
+    }
+
     /**
      * Append element at the end of the list.
      * @param elem element to append
@@ -203,10 +241,7 @@ public class HeapRegionList {
             size = 1;
         } else {
             // Add to tail
-            setNext(tail, elem);
-            init(elem, nullElement, tail);
-            tail = elem;
-            size++;
+            appendNonEmpty(elem);
         }
     }
 
@@ -283,20 +318,21 @@ public class HeapRegionList {
         }
         int nextElem = next(elem);
         int prevElem = prev(elem);
-        if (nextElem == nullElement) {
-            FatalError.check(elem == tail, "Only the tail can have null next element");
-            if (prevElem == nullElement) {
+
+        // favor head removal (most frequent occurrence)
+        if (prevElem == nullElement) {
+            FatalError.check(elem == head, "Only the head can have null prev element");
+            if (nextElem == nullElement) {
                 FatalError.check(head == tail, "Only singleton list can have both prev and next null element");
                 head = nullElement;
                 tail = nullElement;
             } else {
-                tail = prevElem;
-                setNext(tail, nullElement);
+                head = nextElem;
+                setPrev(head, nullElement);
             }
-        } else if (prevElem == nullElement) {
-            FatalError.check(elem == head, "Only the head can have null prev element");
-            head = nextElem;
-            setPrev(head, nullElement);
+        } else if (nextElem == nullElement) {
+            tail = prevElem;
+            setNext(tail, nullElement);
         } else {
             setNext(prevElem, nextElem);
             setPrev(nextElem, prevElem);
@@ -305,14 +341,55 @@ public class HeapRegionList {
         size--;
     }
 
+    void appendAndClear(HeapRegionList list) {
+        if (list.isEmpty()) {
+            return;
+        }
+        append(list);
+        list.clear();
+    }
+
+    private void append(int head, int tail) {
+        if (isEmpty()) {
+            this.head = head;
+        } else {
+            setNext(this.tail, head);
+            setPrev(head, this.tail);
+        }
+        this.tail = tail;
+    }
+
+    private void prepend(int head, int tail) {
+        if (isEmpty()) {
+            this.tail = tail;
+        } else {
+            setPrev(this.head, tail);
+            setNext(tail, this.head);
+        }
+        this.head = head;
+    }
+
+
     void append(HeapRegionList list) {
         FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
-        appendRange(list.head, list.tail);
+        append(list.head, list.tail);
+        size += list.size;
     }
 
     void prepend(HeapRegionList list) {
         FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
-        prependRange(list.head, list.tail);
+        prepend(list.head, list.tail);
+        size += list.size;
+    }
+
+    void prependRange(int rangeHead, int rangeTail) {
+        prepend(rangeHead, rangeTail);
+        size += rangeTail - rangeHead + 1;
+    }
+
+    void appendRange(int rangeHead, int rangeTail) {
+        append(rangeHead, rangeTail);
+        size += rangeTail - rangeHead + 1;
     }
 
     void linkRange(int rangeHead, int rangeTail) {
@@ -325,28 +402,6 @@ public class HeapRegionList {
             r = n;
         }
         setNext(rangeTail, nullElement);
-    }
-
-    void prependRange(int rangeHead, int rangeTail) {
-        if (isEmpty()) {
-            tail = rangeTail;
-        } else {
-            setPrev(head, rangeTail);
-            setNext(rangeTail, head);
-        }
-        head = rangeHead;
-        size += rangeTail - rangeHead + 1;
-    }
-
-    void appendRange(int rangeHead, int rangeTail) {
-        if (isEmpty()) {
-            head = rangeHead;
-        } else {
-            setNext(tail, rangeHead);
-            setPrev(rangeHead, tail);
-        }
-        tail = rangeTail;
-        size += rangeTail - rangeHead + 1;
     }
 
     void insertRangeAfter(int elem, int rangeHead, int rangeTail) {
