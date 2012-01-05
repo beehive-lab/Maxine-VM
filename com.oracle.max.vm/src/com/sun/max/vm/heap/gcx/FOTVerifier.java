@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,18 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import java.util.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+import com.sun.max.unsafe.*;
 
-public final class HeapRegionInfoIterable extends HeapRegionListIterable  implements Iterable<HeapRegionInfo>, Iterator<HeapRegionInfo> {
-    HeapRegionInfoIterable() {
+
+public class FOTVerifier implements HeapSpaceRangeVisitor {
+    CardFirstObjectTable cfoTable;
+
+    public FOTVerifier(CardTableRSet cardTableRSet) {
+        cfoTable = cardTableRSet.cfoTable;
     }
-
-    public Iterator<HeapRegionInfo> iterator() {
-        return this;
-    }
-
     @Override
-    public HeapRegionInfo next() {
-        final HeapRegionInfo rinfo =  RegionTable.theRegionTable().regionInfo(cursor);
-        last = cursor;
-        cursor = regionList.next(cursor);
-        return rinfo;
-    }
-
-    public void remove() {
-        if (last == INVALID_REGION_ID) {
-            throw new IllegalStateException();
-        }
-        regionList.remove(last);
+    public void visitCells(Address start, Address end) {
+        cfoTable.verify(start, end);
     }
 
 }

@@ -27,6 +27,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -37,6 +38,8 @@ import com.sun.max.vm.reference.*;
 class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
     private final Object accountOwner;
     private final RegionTable regionTable;
+    private final int hubIndex;
+    private final int refArrayFirstIndex;
     private long outgoingReferenceCount = 0L;
 
     /**
@@ -45,6 +48,8 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
     OutgoingReferenceChecker(HeapAccount<?> heapAccount) {
         accountOwner = heapAccount.owner();
         regionTable = RegionTable.theRegionTable();
+        hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
+        refArrayFirstIndex = Layout.referenceArrayLayout().getElementOffsetFromOrigin(0).toInt() >> Word.widthValue().log2numberOfBytes;
     }
 
     void reset() {
@@ -61,6 +66,22 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
             }
         }
     }
+    private void checkReference(Pointer refHolder, int wordIndex) {
+        Pointer cell = refHolder.getReference(wordIndex).toOrigin();
+        if (!cell.isZero()) {
+            final HeapRegionInfo rinfo = regionTable.regionInfo(cell);
+            if (rinfo.owner() != accountOwner && !Heap.bootHeapRegion.contains(cell)) {
+                Log.print("outgoing ref: ");
+                Log.print(refHolder);
+                Log.print(" [ ");
+                Log.print(wordIndex);
+                Log.print(" ] = ");
+                Log.println(cell);
+                outgoingReferenceCount++;
+            }
+        }
+    }
+
 
     @Override
     public Pointer visitCell(Pointer cell) {
@@ -71,7 +92,7 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
             Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
             return cell.plus(chunkSize);
         }
-        checkReference(hubRef.toOrigin());
+        checkReference(origin, hubIndex);
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
@@ -79,9 +100,9 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
         } else if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = Layout.readArrayLength(origin);
-            for (int index = 0; index < length; index++) {
-                checkReference(Layout.getReference(origin, index).toOrigin());
+            final int length = refArrayFirstIndex + Layout.readArrayLength(origin);
+            for (int index = refArrayFirstIndex; index < length; index++) {
+                checkReference(origin, index);
             }
         }
         Size size = Layout.size(origin);
@@ -90,7 +111,7 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
 
     @Override
     public void visit(Pointer pointer, int wordIndex) {
-        checkReference(pointer.getReference(wordIndex).toOrigin());
+        checkReference(pointer, wordIndex);
     }
 
     public long outgoingReferenceCount() {
