@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -436,14 +436,14 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         }
 
         /**
-         * Gets a target code breakpoint set at a specified address in the VM.
+         * Gets a target code breakpoint set at a specified location in the VM.
          * <br>
-         * If multiple breakpoints are set at {@code address}, then one is selected
+         * If multiple breakpoints are set at the location, then one is selected
          * according to the following preference:  a client breakpoint, if one exists,
          * otherwise a system breakpoint, if one exists, otherwise a transient breakpoint,
          * if one exists.
          *
-         * @return the target code breakpoint a the specified address, if it exists, null otherwise.
+         * @return the target code breakpoint a the specified location, if it exists, null otherwise.
          */
         synchronized VmTargetBreakpoint find(RemoteCodePointer codePointer) {
             final ClientTargetBreakpoint clientBreakpoint = clientBreakpoints.get(codePointer);
@@ -462,7 +462,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
                 byte[] c = new byte[code.length];
                 memory().readBytes(codePointer.getAddress(), c);
                 if (Arrays.equals(c, code)) {
-                    final MachineCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(codePointer.getAddress(), "discovered breakpoint");
+                    final MachineCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "discovered breakpoint");
                     return new TransientTargetBreakpoint(vm(), this, codeLocation, null);
                 }
             } catch (DataIOError e) {

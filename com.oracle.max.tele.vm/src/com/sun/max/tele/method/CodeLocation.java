@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,14 +298,12 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
     }
 
     /**
-     * A code location in the VM specified only as an address in compiled code.
+     * A code location in the VM specified only as an location in compiled code.
      * <p>
      * Additional information about the compilation, the method, and an equivalent
      * bytecode location will be discovered when possible.
-     *
-     * @see MaxCodeLocationFactory#createMachineCodeLocation(Address, String)
      */
-    private static final class AddressCodeLocation extends MachineCodeLocation {
+    private static final class PointerCodeLocation extends MachineCodeLocation {
 
         // TODO (mlvdv) distinguish between cases where we are able to locate
         // a method compilation and those where we are not.  The latter would
@@ -316,7 +314,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
         private final RemoteCodePointer codePointer;
         private volatile TeleClassMethodActor teleClassMethodActor = null;
 
-        private AddressCodeLocation(TeleVM vm, RemoteCodePointer codePointer, String description) {
+        private PointerCodeLocation(TeleVM vm, RemoteCodePointer codePointer, String description) {
             super(vm, description);
             TeleError.check(codePointer != null);
             this.codePointer = codePointer;
@@ -430,11 +428,9 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
                     try {
                         final TeleTargetMethod javaTargetMethod = teleClassMethodActor().getCurrentCompilation();
                         if (javaTargetMethod != null) {
-                            final Address callEntryPoint = javaTargetMethod.callEntryPoint();
-                            if (callEntryPoint != null && callEntryPoint.isNotZero()) {
-                                codePointer = vm().machineCode().makeCodePointer(callEntryPoint);
-                            }
+                            codePointer = vm().machineCode().makeCodePointer(javaTargetMethod.callEntryPoint());
                         }
+                    } catch (InvalidCodeAddressException e) {
                     } finally {
                         vm().unlock();
                     }
@@ -467,7 +463,6 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             return codeLocationFactory;
         }
 
-
         private CodeLocationFactory(TeleVM vm) {
             super(vm);
         }
@@ -480,18 +475,16 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
             return new ClassMethodActorLocation(vm(), teleClassMethodActor, bci, description);
         }
 
-        public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError {
-            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
-            return new AddressCodeLocation(vm(), codePointer, description);
+        public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws InvalidCodeAddressException {
+            return new PointerCodeLocation(vm(), vm().machineCode().makeCodePointer(address), description);
         }
 
-        public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
-            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
-            return new ClassMethodActorAddressLocation(vm(), codePointer, teleClassMethodActor, bci, description);
+        public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError, InvalidCodeAddressException {
+            return new ClassMethodActorAddressLocation(vm(), vm().machineCode().makeCodePointer(address), teleClassMethodActor, bci, description);
         }
 
         public MachineCodeLocation createMachineCodeLocation(RemoteCodePointer codePointer, String description) throws TeleError {
-            return new AddressCodeLocation(vm(), codePointer, description);
+            return new PointerCodeLocation(vm(), codePointer, description);
         }
 
         /**

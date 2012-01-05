@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.text.*;
 import java.util.*;
 
@@ -35,7 +36,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.value.*;
 
 /**
@@ -71,6 +72,12 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
      */
     private final Set<TeleTargetMethod> unallocatedTeleTargetMethods = new HashSet<TeleTargetMethod>();
 
+
+    /**
+     * A manager for code pointers that appear not to refer to any known loaded libraries.
+     */
+    private final DisconnectedRemoteCodePointerManager disconnectedCodePointerManager;
+
     private final Object statsPrinter = new Object() {
         @Override
         public String toString() {
@@ -85,6 +92,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.entityDescription = "Remote code pointer creation and management for the " + vm.entityName();
+        this.disconnectedCodePointerManager = new DisconnectedRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(statsPrinter);
     }
@@ -259,14 +267,37 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
     }
 
     /**
-     * @see RemoteCodePointerManager#makeCodePointer(Address)
+     * Creates a canonical pointer to a location in VM memory containing
+     * machine code, null if there is no machine code at that location.
+     * <p>
+     * The absolute address of the code pointer may change over time, for
+     * example if the code is a managed code cache region.
+     *
+     * @throws InvalidCodeAddressException if the location is known to be
+     * illegal:  null, zero, or in a non-code holding region
      */
-    public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
+    public RemoteCodePointer makeCodePointer(Address address) throws InvalidCodeAddressException {
+        if (address == null) {
+            throw new InvalidCodeAddressException(null, "Null address");
+        }
         final VmCodeCacheRegion codeCacheRegion = codeCache().findCodeCacheRegion(address);
         if (codeCacheRegion != null) {
             return codeCacheRegion.codePointerManager().makeCodePointer(address);
         }
-        return vm().nativeCode().makeCodePointer(address);
+        final TeleNativeLibrary nativeLibrary = vm().nativeCode().findNativeLibrary(address);
+        if (nativeLibrary != null) {
+            return nativeLibrary.codePointerManager().makeCodePointer(address);
+        }
+        // Not in any known code holding region, does it point somewhere it shouldn't?
+        if (address.isZero()) {
+            throw new InvalidCodeAddressException(address, "Zero address");
+        }
+        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
+        if (memoryRegion != null) {
+            throw new InvalidCodeAddressException(address, "points into non-code region=\"" + memoryRegion.regionName() + "\"");
+        }
+        // Completely unknown location, just make a code pointer and carry on
+        return disconnectedCodePointerManager.makeCodePointer(address);
     }
 
     /**
@@ -284,8 +315,11 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             // Create an instance of the (hosted only) VM code pointer object
             final CodePointer vmCodePointer = CodePointer.fromTaggedLong(value);
             // Compute the equivalent address for the pointer and see if it points at code.
-            final RemoteCodePointer remoteCodePointer = makeCodePointer(vmCodePointer.toAddress());
-            return remoteCodePointer;
+            try {
+                return makeCodePointer(vmCodePointer.toAddress());
+            } catch (InvalidCodeAddressException e) {
+                return null;
+            }
         }
         return null;
     }
@@ -348,6 +382,69 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
             codeCacheRegion.writeSummary(printStream);
         }
         vm().nativeCode().writeSummary(printStream);
+    }
+
+
+    /**
+     * A manager for pointers to disconnected machine code not in any known region, presumed to be constant.
+     */
+    private class DisconnectedRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
+
+        /**
+         * Map:  address in VM --> a {@link RemoteCodePointer} that refers to the machine code at that location.
+         */
+        private Map<Long, WeakReference<RemoteCodePointer>> addressToCodePointer = new HashMap<Long, WeakReference<RemoteCodePointer>>();
+
+        public DisconnectedRemoteCodePointerManager(TeleVM vm) {
+            super(vm);
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * This manager is designed for disconnected code, i.e. code that is not in any
+         * region known.
+         */
+        public CodeHoldingRegion codeRegion() {
+            return null;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Since we don't know anything about this code, all we can ensure is that it is really
+         * external to anything else we know about.
+         */
+        public boolean isValidCodePointer(Address address) {
+            return vm().findMemoryRegion(address) == null;
+        }
+
+        public RemoteCodePointer makeCodePointer(Address address) {
+            RemoteCodePointer codePointer = null;
+            final WeakReference<RemoteCodePointer> existingRef = addressToCodePointer.get(address.toLong());
+            if (existingRef != null) {
+                codePointer = existingRef.get();
+            }
+            if (codePointer == null) {
+                codePointer = new ConstantRemoteCodePointer(address);
+                addressToCodePointer.put(address.toLong(), new WeakReference<RemoteCodePointer>(codePointer));
+            }
+            return codePointer;
+        }
+
+        public int activePointerCount() {
+            int count = 0;
+            for (WeakReference<RemoteCodePointer> weakRef : addressToCodePointer.values()) {
+                if (weakRef.get() != null) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public int totalPointerCount() {
+            return addressToCodePointer.size();
+        }
     }
 
 }

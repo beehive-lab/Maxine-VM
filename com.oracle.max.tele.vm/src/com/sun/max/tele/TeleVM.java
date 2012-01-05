@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1410,10 +1410,11 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
-        final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
-
         try {
+            final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
             runToInstruction(entryLocation, true, false);
+        } catch (InvalidCodeAddressException exception) {
+            TeleError.unexpected("Unable to set breakpoint at Java entry point " + exception.getAddressString() + ": " + exception.getMessage());
         } catch (Exception exception) {
             throw new IOException(exception);
         }
@@ -1941,14 +1942,17 @@ public abstract class TeleVM implements MaxVM {
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             if (codeLocation.isMachineCode()) {
-                final MachineCodeLocation location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
-                final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
-                if (breakpoint != null) {
-                    try {
+                MachineCodeLocation location = null;
+                try {
+                    location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                    final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
+                    if (breakpoint != null) {
                         breakpoint.remove();
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        TeleError.unexpected("breakpoint removal failed");
                     }
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    TeleError.unexpected("breakpoint removal failed");
+                } catch (InvalidCodeAddressException e) {
+                    TeleError.unexpected("bad breakpoint address");
                 }
             }
             assert breakpointLocations.contains(codeLocation);
