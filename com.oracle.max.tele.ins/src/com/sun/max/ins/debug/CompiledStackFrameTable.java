@@ -291,7 +291,10 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Slot slot = (Slot) value;
-            setText(slot.name);            //
+            if (slot == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
+            setText(slot.name);
 
             String otherInfo = "";
             if (viewPreferences.biasSlotOffsets()) {
