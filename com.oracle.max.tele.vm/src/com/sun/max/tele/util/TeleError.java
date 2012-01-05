@@ -33,7 +33,7 @@ public final class TeleError extends Error {
     }
 
     private static TeleError error(String message, Throwable cause) {
-        throw new TeleError((message == null) ? "Internal Error:" : "Internal Error: " + message, cause);
+        throw new TeleError((message == null) ? "Tele Internal Error:" : "Tele Internal Error: " + message, cause);
     }
 
     /**
