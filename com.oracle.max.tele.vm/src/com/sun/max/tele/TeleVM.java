@@ -1391,7 +1391,8 @@ public abstract class TeleVM implements MaxVM {
         final TeleClassActor teleClassActor = classAccess.findTeleClassActor(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                if (teleMethodActor.methodActor().equals(methodActor)) {
+                final MethodActor actor = teleMethodActor.methodActor();
+                if (actor != null && actor.equals(methodActor)) {
                     return teleMethodActorType.cast(teleMethodActor);
                 }
             }
