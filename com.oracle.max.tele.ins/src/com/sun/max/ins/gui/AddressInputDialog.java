@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,7 +154,7 @@ public abstract class AddressInputDialog extends InspectorDialog {
      * Subclasses override to validate an entered address, above and beyond being a valid hex number.
      *
      * @param address an address to validate
-     * @return {@code null} is {@code address} is valid, an error message if not
+     * @return {@code null} if {@code address} is valid, an error message if not
      */
     protected String validateInput(Address address) {
         return null;
