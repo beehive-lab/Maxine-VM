@@ -78,7 +78,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
     /**
      * Temporary list used during GC-ing of this space. Before GC, all regions of the space are moved to this list, which then hold all the regions
-     * allocated to this space. During sweeping, the GC redistribute the regions from this to the above three list depending on their available free space.
+     * allocated to this space. During sweeping, the GC redistribute the regions from this to the above three lists depending on their available free space.
      */
     private HeapRegionList sweepList;
 
@@ -1033,9 +1033,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return Size.zero();
     }
 
-    @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
-        regionsRangeIterable.initialize(heapAccount.committedRegions());
+    private void visit(HeapSpaceRangeVisitor visitor, HeapRegionList regionList) {
+        if (regionList.isEmpty()) {
+            return;
+        }
+        regionsRangeIterable.initialize(regionList);
         regionsRangeIterable.resetToFirstIterable();
         while (regionsRangeIterable.hasNext()) {
             final RegionRange r = regionsRangeIterable.nextIterableRange();
@@ -1043,6 +1045,27 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             final Address end = start.plus(Size.fromInt(r.numRegions()).shiftedLeft(log2RegionSizeInBytes));
             visitor.visitCells(start, end);
         }
+    }
+
+    private void visit(HeapSpaceRangeVisitor visitor, BaseAtomicBumpPointerAllocator<?> allocator, int allocatingRegion) {
+        if (allocatingRegion == INVALID_REGION_ID) {
+            return;
+        }
+        final HeapRegionInfo rinfo = HeapRegionInfo.fromRegionID(allocatingRegion);
+        allocator.unsafeMakeParsable();
+        final Address start = rinfo.regionStart();
+        final Address end = start.plus(regionSizeInBytes);
+        visitor.visitCells(start, end);
+    }
+
+    @Override
+    public void visit(HeapSpaceRangeVisitor visitor) {
+        visit(visitor, unavailableRegions);
+        visit(visitor, allocationRegions);
+        visit(visitor, tlabAllocationRegions);
+        // Visit allocating regions. Must be made parsable first.
+        visit(visitor, tlabAllocator, currentTLABAllocatingRegion);
+        visit(visitor, overflowAllocator, currentOverflowAllocatingRegion);
     }
 
 }
