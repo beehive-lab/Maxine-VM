@@ -75,9 +75,6 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        if (reference().readWord(0).asAddress().equals(Memory.zappedMarker())) {
-            return false;
-        }
         statsPrinter.addStat(localStatsPrinter);
         if (!isRelocatable() && isAllocated() && regionNameCache != null) {
             statsPrinter.addStat("allocated & not relocatable, no location refresh needed");
