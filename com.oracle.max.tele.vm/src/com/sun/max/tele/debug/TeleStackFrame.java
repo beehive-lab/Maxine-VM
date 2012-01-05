@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,26 +121,34 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         this.position = position;
 
         CodeLocation location = null;
-        Pointer instructionPointer = stackFrame.ip;
-        if (instructionPointer.isNotZero()) {
+        if (stackFrame.ip.isNotZero()) {
             final StackFrame callee = stackFrame.calleeFrame();
             if (callee == null) {
-                // Top frame, not a call return so no adjustment.
-                location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer, "top stack frame IP");
+                // Top frame
+                try {
+                    location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip, "top stack frame IP");
+                } catch (InvalidCodeAddressException e) {
+                    TeleWarning.message("Bad IP address " + e.getAddressString() + " for top frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
+                }
             } else {
-                // A call frame; record the return location, the next to be executed upon return.
+                // Call frame: records the return location, the next to be executed upon return.
                 // Add a platform-specific offset from the stored code address to the actual call return site.
                 final TargetMethod calleeTargetMethod = callee.targetMethod();
-                if (calleeTargetMethod != null) {
-                    if (calleeTargetMethod.is(TrapStub)) {
-                        // Special case, where the IP caused a trap; no adjustment.
-                        location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer, "stack frame return");
+                if (calleeTargetMethod != null && calleeTargetMethod.is(TrapStub)) {
+                    // Special case, where the IP caused a trap; no adjustment.
+                    try {
+                        location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip, "stack frame return");
+                    } catch (InvalidCodeAddressException e) {
+                        TeleWarning.message("Bad IP address " + e.getAddressString() + " for trap stub frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
                     }
-                }
-                if (location == null) {
-                    // An ordinary call; apply a platform-specific adjustment to get the real return address.
+                } else {
+                    // Ordinary call: apply a platform-specific adjustment to get the real return address.
                     final int offsetToReturnPC = platform().isa.offsetToReturnPC;
-                    location = vm.codeLocationFactory().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
+                    try {
+                        location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip.plus(offsetToReturnPC), "stack frame return");
+                    } catch (InvalidCodeAddressException e) {
+                        TeleWarning.message("Bad IP address " + e.getAddressString() + " for call frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
+                    }
                 }
             }
         }

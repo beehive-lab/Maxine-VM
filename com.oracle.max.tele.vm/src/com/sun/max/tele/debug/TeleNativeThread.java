@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -259,12 +259,16 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     }
 
     public final MachineCodeLocation ipLocation() {
-        if (!isLive()) {
-            return null;
-        }
         // No need to refresh registers: the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
-        return codeLocationFactory().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
+        if (isLive()) {
+            try {
+                return codeLocationFactory().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
+            } catch (InvalidCodeAddressException e) {
+                TeleWarning.message("Bad IP address " + e.getAddressString() + " in thread " + entityName() + ": " + e.getMessage());
+            }
+        }
+        return null;
     }
 
     public final TeleVmThread teleVmThread() {
@@ -419,7 +423,12 @@ public abstract class TeleNativeThread extends AbstractVmHolder
 
         try {
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(breakpointAddress);
+            RemoteCodePointer codePointer = null;
+            try {
+                codePointer = vm().machineCode().makeCodePointer(breakpointAddress);
+            } catch (InvalidCodeAddressException e) {
+                TeleWarning.message("Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
+            }
             if (codePointer != null) {
                 breakpoint = breakpointManager().targetBreakpoints().find(codePointer);
             }

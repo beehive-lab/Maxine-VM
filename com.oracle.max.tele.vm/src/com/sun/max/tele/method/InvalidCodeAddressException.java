@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,29 +24,32 @@ package com.sun.max.tele.method;
 
 import com.sun.max.unsafe.*;
 
+
 /**
- * Represents a machine code location in the VM.
- * <p>
- * The absolute location may change, or may become dead if evicted
- * from a managed code region.
+ * Exception thrown when an memory address is known to be an
+ * illegal location for machine code, e.g. in a heap.
  */
-public interface RemoteCodePointer {
+public class InvalidCodeAddressException extends Exception {
+
+    private final Address address;
+
+    public InvalidCodeAddressException(Address address, String message) {
+        super(message);
+        this.address = address;
+    }
 
     /**
-     * Gets the current absolute location in VM memory of a byte in an
-     * area of machine code.
-     *
-     * @return non-null: the current memory location of the code if live,
-     * {@link Address#zero()} if not live.
+     * @return the offending address, possibly null or 0
      */
-    Address getAddress();
+    public Address getAddress() {
+        return address;
+    }
 
     /**
-     * Gets the status of the machine code with respect to possible code
-     * eviction.
-     *
-     * @return non-null:  {@code true} if the machine code is still used by
-     * the VM, {@code false} if it has been evicted and is no longer used.
+     * @return text describing the offending address, possibly "null".
      */
-    boolean isCodeLive();
+    public String getAddressString() {
+        return address == null ? "null" : address.to0xHexString();
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -949,13 +949,17 @@ public class WordValueLabel extends ValueLabel {
             case NATIVE_FUNCTION:
             case NATIVE_FUNCTION_TEXT:
             case UNCHECKED_CALL_POINT: {
-                final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
-                action = new InspectorAction(inspection(), "View Code at address") {
-                    @Override
-                    public void procedure() {
-                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "code address from WordValueLabel"), true);
-                    }
-                };
+                try {
+                    final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
+                    final MaxCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(address, "code address from WordValueLabel");
+                    action = new InspectorAction(inspection(), "View Code at address") {
+                        @Override
+                        public void procedure() {
+                            focus().setCodeLocation(codeLocation, true);
+                        }
+                    };
+                } catch (InvalidCodeAddressException e) {
+                }
                 break;
             }
             case CLASS_ACTOR_ID:

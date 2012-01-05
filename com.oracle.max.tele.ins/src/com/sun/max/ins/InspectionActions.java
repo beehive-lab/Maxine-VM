@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -1511,12 +1512,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     if (vm().machineCode().findMachineCode(address) != null) {
                         return null;
                     }
-                    return "There is no method containing the address " + address.toHexString();
+                    return "No known machine code contains the address " + address.toHexString();
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
+                    try {
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to view c, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                    }
                 }
             };
         }
@@ -1779,7 +1784,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (nativeLibrary != null) {
                 final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), nativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
+                    try {
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to view code, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                    }
                 }
             }
         }
@@ -1899,7 +1908,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+            try {
+                focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+            } catch (InvalidCodeAddressException e) {
+                gui().errorMessage("Unable to view, no machine code @ " + e.getAddressString() + ":  " + e.getMessage());
+            }
         }
     }
 
@@ -1947,7 +1960,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             new AddressInputDialog(inspection(), initialAddress, "View native function containing code address...", "View Code") {
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "native code address specified by user"), true);
+                    try {
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "native code address specified by user"), true);
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("No code found @ " + e.getAddressString() + ":  " + e.getMessage());
+                    }
                 }
             };
         }
@@ -2487,20 +2504,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             new NativeLocationInputDialog(inspection(), "Break at machine code address...", vm().bootImageStart(), "") {
+
                 @Override
                 public void entered(Address address, String description) {
-                    if (address.isNotZero()) {
-                        try {
-                            final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
-                            if (breakpoint == null) {
-                                gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
-                            } else {
-                                breakpoint.setDescription(description);
-                            }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection().announceVMBusyFailure(name());
-                        }
+                    MaxBreakpoint breakpoint = null;
+                    try {
+                        breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                        return;
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to create breakpoint, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                        return;
                     }
+                    if (breakpoint == null) {
+                        gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
+                        return;
+                    }
+                    breakpoint.setDescription(description);
                 }
             };
         }
@@ -2514,7 +2535,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction setMachineCodeBreakpointAtAddressAction = new SetMachineCodeBreakpointAtAddressAction(null);
 
     /**
-     * @return an Action that will toggle on/off a breakpoint at the machinee code location of the current focus.
+     * @return an Action that will toggle on/off a breakpoint at the machine code location of the current focus.
      */
     public final InspectorAction setMachineCodeBreakpointAtAddress() {
         return setMachineCodeBreakpointAtAddressAction;
@@ -2707,8 +2728,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     try {
                         MaxBreakpoint machineCodeBreakpoint = null;
                         for (MaxNativeFunction nativeFunction : functions) {
-                            machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
+                            try {
+                                machineCodeBreakpoint =
+                                    vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
+                            } catch (InvalidCodeAddressException e) {
+                                gui().errorMessage("Unable to set breakpoint, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                            }
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
