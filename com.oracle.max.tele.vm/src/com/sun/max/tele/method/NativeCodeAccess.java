@@ -71,7 +71,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
      * <li>The number of registered regions is small, so linear lookup suffices</li>
      * <ul>
      */
-    private final List<MaxMemoryRegion> nativeFunctionMemoryRegions = new ArrayList<MaxMemoryRegion>();
+    private final List<MaxEntityMemoryRegion<? extends MaxEntity> > nativeFunctionMemoryRegions = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     private final List<MaxNativeLibrary> libraries = new ArrayList<MaxNativeLibrary>();
 
@@ -160,7 +160,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
         return null;
     }
 
-    public List<MaxMemoryRegion> memoryAllocations() {
+    public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
         return nativeFunctionMemoryRegions;
     }
 
