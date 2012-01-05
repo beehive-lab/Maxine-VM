@@ -274,7 +274,8 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
      * example if the code is a managed code cache region.
      *
      * @throws InvalidCodeAddressException if the location is known to be
-     * illegal:  null, zero, or in a non-code holding region
+     * illegal:  null, zero, in a non-code holding region, or a
+     * non-code area of a code region.
      */
     public RemoteCodePointer makeCodePointer(Address address) throws InvalidCodeAddressException {
         if (address == null) {
@@ -282,7 +283,12 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         }
         final VmCodeCacheRegion codeCacheRegion = codeCache().findCodeCacheRegion(address);
         if (codeCacheRegion != null) {
-            return codeCacheRegion.codePointerManager().makeCodePointer(address);
+            final RemoteCodePointer codePointer = codeCacheRegion.codePointerManager().makeCodePointer(address);
+            if (codePointer == null) {
+                final String message = "Points into non-code memory in \"" + codeCacheRegion.entityName() + "\"";
+                throw new InvalidCodeAddressException(address, message);
+            }
+            return codePointer;
         }
         final TeleNativeLibrary nativeLibrary = vm().nativeCode().findNativeLibrary(address);
         if (nativeLibrary != null) {
