@@ -185,8 +185,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         return null;
     }
 
-    public final List<MaxMemoryRegion> memoryAllocations() {
-        final List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>(2);
+    public final List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
+        final List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(2);
         if (teleStack.memoryRegion() != null) {
             allocations.add(teleStack.memoryRegion());
         }

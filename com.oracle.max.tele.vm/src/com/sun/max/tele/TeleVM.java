@@ -121,7 +121,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public static final String TELE_LIBRARY_NAME = "tele";
 
-    private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
+    private static final List<MaxEntityMemoryRegion<? extends MaxEntity> > EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
     /**
      * Defines whether the target VM running locally or on a remote machine, or is core-dump.
@@ -621,7 +621,7 @@ public abstract class TeleVM implements MaxVM {
      * <p>
      * Should never contain {@code null}
      */
-    private final Set<MaxMemoryRegion> memoryAllocations = new HashSet<MaxMemoryRegion>();
+    private final Set<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations = new HashSet<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -1193,7 +1193,7 @@ public abstract class TeleVM implements MaxVM {
      *
      * @return a list of platform-specific memory regions, empty if none.
      */
-    protected List<MaxMemoryRegion> platformMemoryRegions() {
+    protected List<MaxEntityMemoryRegion<? extends MaxEntity> > platformMemoryRegions() {
         return EMPTY_MAXMEMORYREGION_LIST;
     }
 
@@ -1267,7 +1267,7 @@ public abstract class TeleVM implements MaxVM {
             mode,
             processState,
             epoch,
-            Collections.unmodifiableList(new ArrayList<MaxMemoryRegion>(memoryAllocations)),
+            Collections.unmodifiableList(new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(memoryAllocations)),
             threads,
             singleStepThread,
             threadsStarted,

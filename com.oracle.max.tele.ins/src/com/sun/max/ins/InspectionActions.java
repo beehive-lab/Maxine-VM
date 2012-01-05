@@ -1516,18 +1516,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             new AddressInputDialog(inspection(), defaultAddress, "View machine code containing address...", "View Code") {
 
-                @SuppressWarnings("unchecked")
                 @Override
                 protected String validateInput(Address address) {
                     if (address.isZero()) {
                         return "Zero is not a valid code address";
                     }
-                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(address);
-                    if (memoryRegion instanceof MaxEntityMemoryRegion<?>) {
-                        final MaxEntityMemoryRegion<? extends MaxEntity> maxEntityMemoryRegion = (MaxEntityMemoryRegion<? extends MaxEntity>) memoryRegion;
-                        if (!(maxEntityMemoryRegion.owner() instanceof CodeHoldingRegion)) {
-                            return address.to0xHexString() + " points into region \"" + memoryRegion.regionName() + "\"";
-                        }
+                    final MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion = vm().state().findMemoryRegion(address);
+                    if (!(memoryRegion.owner() instanceof CodeHoldingRegion)) {
+                        return address.to0xHexString() + " points into region \"" + memoryRegion.regionName() + "\"";
                     }
                     return null;
                 }

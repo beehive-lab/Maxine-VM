@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.memory;
-
-import java.util.*;
-
-import com.sun.max.tele.*;
+package com.sun.max.tele;
 
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
-
+// TODO (mlvdv)  This will go away with the new memory management framework.
 /**
- * A VM entity that can <em>own</em> regions of memory allocated from the OS.
+ * Access to the special root table allocated in the VM for tracking references
+ * using the legacy semi-space collector support.
  */
-public interface AllocationHolder {
+public interface MaxRootsTable extends MaxEntity<MaxRootsTable> {
 
-    /**
-     * Gets the regions of memory allocated from the OS that this entity
-     * <em>owns</em>, in the sense that this entity tracks its allocation
-     * and possible deallocation.
-     * <p>
-     * This includes both regions that are allocated directly by the VM,
-     * as well as those allocated implicitly, for example by the creation
-     * of threads and the loading of shared libraries.
-     */
-    List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations();
 }
