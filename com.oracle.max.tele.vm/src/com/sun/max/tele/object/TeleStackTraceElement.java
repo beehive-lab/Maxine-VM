@@ -35,7 +35,7 @@ public class TeleStackTraceElement extends TeleTupleObject {
     /**
      * {@inheritDoc}
      * <p>
-     * Suppress this warning for instances of {@link StackTraceElement}, for which deep copying is safe.
+     * Suppress the default tuple warning for instances of {@link StackTraceElement}, for which deep copying is safe.
      */
     @Override
     protected String deepCopyWarning() {
