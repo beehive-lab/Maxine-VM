@@ -734,8 +734,8 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
     public final int read(Address address, ByteBuffer buffer, int offset, int length) throws DataIOError, TerminatedProcessIOException {
         if (processState == TERMINATED) {
             final StringBuilder msg = new StringBuilder();
-            msg.append("Attempt to read the memory @").append(address.to0xHexString());
-            msg.append("memory when the process is in state " + TERMINATED);
+            msg.append("Memory read @ ").append(address.to0xHexString());
+            msg.append(" (process TERMINATED)");
             throw new TerminatedProcessIOException(msg.toString());
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
