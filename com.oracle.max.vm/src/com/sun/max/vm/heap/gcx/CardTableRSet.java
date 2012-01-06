@@ -191,7 +191,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
             cardTable.clean(startCardIndex, endCardIndex);
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {
-                break;
+                return;
             }
             startCardIndex = cardTable.first(endCardIndex, endOfRange, CardState.DIRTY_CARD);
         }
@@ -204,7 +204,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
             int endCardIndex = cardTable.firstNot(++startCardIndex, endOfRange, cardState);
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {
-                break;
+                return;
             }
             startCardIndex = cardTable.first(endCardIndex, endOfRange, cardState);
         }

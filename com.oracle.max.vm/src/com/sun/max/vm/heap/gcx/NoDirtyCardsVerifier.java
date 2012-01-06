@@ -41,10 +41,12 @@ public final class NoDirtyCardsVerifier implements HeapSpaceRangeVisitor, Overla
 
     @Override
     public Pointer visitCell(Pointer cell, Address start, Address end) {
-        // Must never be called if there aren't any dirty card.
+        // We may be called because of implicit barrier run by the GC.
+        // The SpecialReferenceManager is running such barrier while discovering reference.
+
         Log.print("Card is Dirty for range [");
         Log.print(start);
-        Log.print(", ]; ");
+        Log.print(", ");
         Log.print(end);
         Log.println(", ]; ");
         return end.asPointer();

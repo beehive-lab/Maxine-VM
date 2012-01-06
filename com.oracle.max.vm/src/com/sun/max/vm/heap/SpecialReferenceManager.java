@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,6 +229,8 @@ public class SpecialReferenceManager {
                 FatalError.unexpected("Duplicate on discovered list");
             }
             final Reference referent = Reference.fromJava(refAlias.referent);
+            // WATCH OUT: the following two lines will cause a write barrier to be executed. Depending on its implementation, this may
+            // resulting in implicit modification to a remember set during GC.
             refAlias.discovered = discoveredList;
             discoveredList = ref;
             if (TraceReferenceGC || Heap.traceGC()) {
