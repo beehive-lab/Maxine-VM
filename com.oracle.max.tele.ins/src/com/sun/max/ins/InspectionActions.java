@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -1491,54 +1492,68 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the method whose machine code contains
+     * Action:  displays in the {@MethodInspector} the method or native function whose machine code contains
      * an interactively specified address.
      */
-    final class ViewMethodCodeByAddressAction extends InspectorAction {
+    final class ViewMachineCodeByAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Method compilation...";
+        private static final String DEFAULT_TITLE = "View code by address...";
 
-        public ViewMethodCodeByAddressAction(String actionTitle) {
+        public ViewMachineCodeByAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().bootImageStart(), "View machine code containing address...", "View Code") {
+            // Most likely situation is that we are just about to call a function method in which case RAX is the address
+            Address defaultAddress = Address.zero();
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                final Address registerValue = thread.registers().getCallRegisterValue();
+                if (vm().machineCode().findMachineCode(registerValue) != null) {
+                    defaultAddress = registerValue;
+                }
+            }
+            new AddressInputDialog(inspection(), defaultAddress, "View machine code containing address...", "View Code") {
 
                 @Override
-                public String validateInput(Address address) {
-                    if (vm().machineCode().findMachineCode(address) != null) {
-                        return null;
+                protected String validateInput(Address address) {
+                    if (address.isZero()) {
+                        return "Zero is not a valid code address";
                     }
-                    return "There is no method containing the address " + address.toHexString();
+                    final MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion = vm().state().findMemoryRegion(address);
+                    if (!(memoryRegion.owner() instanceof CodeHoldingRegion)) {
+                        return address.to0xHexString() + " points into region \"" + memoryRegion.regionName() + "\"";
+                    }
+                    return null;
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
+                    if (vm().machineCode().findMachineCode(address) == null) {
+                        final String message = "Address " + address.to0xHexString() + " not in any known compilation or native function, try anyway?";
+                        if (!gui().yesNoDialog(message)) {
+                            return;
+                        }
+                    }
+                    try {
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to view, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                    }
                 }
             };
         }
     }
 
-    private final InspectorAction viewMethodCodeByAddressAction = new ViewMethodCodeByAddressAction(null);
+    private final InspectorAction viewMachineCodeByAddressAction = new ViewMachineCodeByAddressAction(null);
 
     /**
      * @return Singleton interactive action that displays in the {@link MethodView} the method whose
      * machine code contains the specified address in the VM.
      */
-    public final InspectorAction viewMethodCodeByAddress() {
-        return viewMethodCodeByAddressAction;
-    }
-
-    /**
-     * @param actionTitle name of the action to appear in menu or button, uses default if null
-     * @return an interactive action that displays in the {@link MethodView} the method whose
-     * machine code contains the specified address in the VM.
-     */
-    public final InspectorAction viewMethodCodeByAddress(String actionTitle) {
-        return new ViewMethodCodeByAddressAction(actionTitle);
+    public final InspectorAction viewMachineCodeByAddress() {
+        return viewMachineCodeByAddressAction;
     }
 
     /**
@@ -1779,7 +1794,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (nativeLibrary != null) {
                 final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), nativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
+                    try {
+                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to view code, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                    }
                 }
             }
         }
@@ -1899,7 +1918,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+            try {
+                focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+            } catch (InvalidCodeAddressException e) {
+                gui().errorMessage("Unable to view, no machine code @ " + e.getAddressString() + ":  " + e.getMessage());
+            }
         }
     }
 
@@ -1925,52 +1948,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewThreadRunMethodCodeInBootImageAction;
     }
 
-    /**
-     * Action:  displays a body of native code whose location contains
-     * an interactively specified address.
-     */
-    final class ViewNativeFunctionByAddressAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Native function...";
-
-        public ViewNativeFunctionByAddressAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            // Most likely situation is that we are just about to call a function method in which case RAX is the address
-            final MaxThread thread = focus().thread();
-            assert thread != null;
-            final Address indirectCallAddress = thread.registers().getCallRegisterValue();
-            final Address initialAddress = indirectCallAddress == null ? vm().bootImageStart() : indirectCallAddress;
-            new AddressInputDialog(inspection(), initialAddress, "View native function containing code address...", "View Code") {
-                @Override
-                public void entered(Address address) {
-                    focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "native code address specified by user"), true);
-                }
-            };
-        }
-    }
-
-    private final InspectorAction viewNativeFunctinByAddressAction = new ViewNativeFunctionByAddressAction(null);
-
-    /**
-      * @return Singleton interactive action that displays in the {@link MethodView} a body of native code whose
-     * location contains the specified address in the VM.
-     */
-    public final InspectorAction viewNativeFunctionByAddress() {
-        return viewNativeFunctinByAddressAction;
-    }
-
-    /**
-     * @param actionTitle name of the action, as it will appear on a menu or button, default name if null
-     * @return an interactive action that displays in the {@link MethodView} a body of native code whose
-     * location contains the specified address in the VM.
-     */
-    public final InspectorAction viewNativeFunctionByAddress(String actionTitle) {
-        return new ViewNativeFunctionByAddressAction(actionTitle);
-    }
 
     /**
      * Action:  copies to the system clipboard a textual representation of the
@@ -2487,20 +2464,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             new NativeLocationInputDialog(inspection(), "Break at machine code address...", vm().bootImageStart(), "") {
+
                 @Override
                 public void entered(Address address, String description) {
-                    if (address.isNotZero()) {
-                        try {
-                            final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
-                            if (breakpoint == null) {
-                                gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
-                            } else {
-                                breakpoint.setDescription(description);
-                            }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection().announceVMBusyFailure(name());
-                        }
+                    MaxBreakpoint breakpoint = null;
+                    try {
+                        breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                        return;
+                    } catch (InvalidCodeAddressException e) {
+                        gui().errorMessage("Unable to create breakpoint, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                        return;
                     }
+                    if (breakpoint == null) {
+                        gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
+                        return;
+                    }
+                    breakpoint.setDescription(description);
                 }
             };
         }
@@ -2514,7 +2495,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction setMachineCodeBreakpointAtAddressAction = new SetMachineCodeBreakpointAtAddressAction(null);
 
     /**
-     * @return an Action that will toggle on/off a breakpoint at the machinee code location of the current focus.
+     * @return an Action that will toggle on/off a breakpoint at the machine code location of the current focus.
      */
     public final InspectorAction setMachineCodeBreakpointAtAddress() {
         return setMachineCodeBreakpointAtAddressAction;
@@ -2707,8 +2688,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     try {
                         MaxBreakpoint machineCodeBreakpoint = null;
                         for (MaxNativeFunction nativeFunction : functions) {
-                            machineCodeBreakpoint =
-                                vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
+                            try {
+                                machineCodeBreakpoint =
+                                    vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
+                            } catch (InvalidCodeAddressException e) {
+                                gui().errorMessage("Unable to set breakpoint, no code @ " + e.getAddressString() + ":  " + e.getMessage());
+                            }
                         }
                         focus().setBreakpoint(machineCodeBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -4501,10 +4486,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 byNameSub.add(actions().viewMethodCompilationByName());
                 byNameSub.add(actions().viewNativeFunctionByName());
                 menu.add(byNameSub);
-                final JMenu byAddressSub = new JMenu("View code by address");
-                byAddressSub.add(actions().viewMethodCodeByAddress());
-                byAddressSub.add(actions().viewNativeFunctionByAddress());
-                menu.add(byAddressSub);
+                menu.add(actions().viewMachineCodeByAddress());
                 final JMenu bootMethodSub = new JMenu("View boot image method code");
                 bootMethodSub.add(actions().viewRunMethodCodeInBootImage());
                 bootMethodSub.add(actions().viewThreadRunMethodCodeInBootImage());

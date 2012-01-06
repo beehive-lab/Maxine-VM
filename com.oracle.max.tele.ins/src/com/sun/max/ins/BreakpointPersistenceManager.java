@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
@@ -152,6 +153,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 } catch (MaxVMBusyException maxVMBusyException) {
                     InspectorWarning.message(inspection, "Unable to recreate machine code breakpoint from saved settings at: " + address, maxVMBusyException);
+                } catch (InvalidCodeAddressException e) {
+                    InspectorWarning.message(inspection, "Bad code breakpoint location from saved settings @ " + e.getAddressString() + ": " + e.getMessage());
                 }
             } else {
                 InspectorWarning.message(inspection, "dropped former breakpoint in runtime-generated code at address: " + address);

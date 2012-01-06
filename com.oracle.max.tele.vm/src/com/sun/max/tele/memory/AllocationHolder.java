@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,5 +43,5 @@ public interface AllocationHolder {
      * as well as those allocated implicitly, for example by the creation
      * of threads and the loading of shared libraries.
      */
-    List<MaxMemoryRegion> memoryAllocations();
+    List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations();
 }

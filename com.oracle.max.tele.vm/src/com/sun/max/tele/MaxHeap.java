@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * @return description for the special memory region allocated for holding
      * remote copies of addresses being held by references.
      */
-    MaxMemoryRegion rootsMemoryRegion();
+    MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion();
 
     /**
      * Indicates whether heap management provides detailed heap region information.

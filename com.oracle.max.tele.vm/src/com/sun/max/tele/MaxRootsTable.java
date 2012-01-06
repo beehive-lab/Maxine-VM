@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
-
+// TODO (mlvdv)  This will go away with the new memory management framework.
 /**
- * A allocatable area in the VM that can contain machine code.
+ * Access to the special root table allocated in the VM for tracking references
+ * using the legacy semi-space collector support.
  */
-public interface CodeHoldingRegion {
-
-    /**
-     * Gets a description of the VM memory allocated for this region,
-     * null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with pointers to machine code
-     * in this memory region.
-     */
-    RemoteCodePointerManager codePointerManager();
+public interface MaxRootsTable extends MaxEntity<MaxRootsTable> {
 
 }

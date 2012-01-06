@@ -142,6 +142,21 @@ public class TeleTupleObject extends TeleObject {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The default for tuples is to generate a warning message about deep copying instances of
+     * most {@code java.lang} classes.
+     */
+    @Override
+    protected String deepCopyWarning() {
+        final Class<?> javaClass = classActorForObjectType().toJava();
+        if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
+            return "Deep copying instance of " + javaClass.getName();
+        }
+        return null;
+    }
+
     @Override
     protected Object createDeepCopy(DeepCopier context) {
         final ClassActor classActor = classActorForObjectType();
@@ -150,11 +165,6 @@ public class TeleTupleObject extends TeleObject {
         Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
             final Object newTuple = ObjectUtils.allocateInstance(javaClass);
-
-            if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
-                TeleWarning.message("Deep copying instance of " + javaClass.getName());
-            }
-
             context.register(this, newTuple, true);
             ClassActor holderClassActor = classActor;
             do {

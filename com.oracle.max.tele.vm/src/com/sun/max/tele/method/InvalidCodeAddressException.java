@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,34 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
 /**
- * A allocatable area in the VM that can contain machine code.
+ * Exception thrown when an memory address is known to be an
+ * illegal location for machine code, e.g. in a heap.
  */
-public interface CodeHoldingRegion {
+public class InvalidCodeAddressException extends Exception {
+
+    private final Address address;
+
+    public InvalidCodeAddressException(Address address, String message) {
+        super(message);
+        this.address = address;
+    }
 
     /**
-     * Gets a description of the VM memory allocated for this region,
-     * null if the region is external to the VM.
+     * @return the offending address, possibly null or 0
      */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
+    public Address getAddress() {
+        return address;
+    }
 
     /**
-     * Returns the manager for dealing with pointers to machine code
-     * in this memory region.
+     * @return text describing the offending address, possibly "null".
      */
-    RemoteCodePointerManager codePointerManager();
+    public String getAddressString() {
+        return address == null ? "null" : address.to0xHexString();
+    }
 
 }

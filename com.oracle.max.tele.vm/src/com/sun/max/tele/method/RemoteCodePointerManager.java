@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,23 +47,24 @@ public interface RemoteCodePointerManager {
      * at the specified location.  Does <em>not</em> check whether an
      * instructions starts at the location.
      *
-     * @throws TeleError if the location is not in the memory region being managed.
+     * @throws TeleError if the location is not in the memory region
+     * being managed.
      */
     boolean isValidCodePointer(Address address) throws TeleError;
 
     /**
-     * Creates a canonical pointer to a location in VM memory containing machine code,
-     * null if there is no machine code at that location.
+     * Creates a canonical pointer to a location in VM memory containing
+     * machine code, null if there is no machine code at that location.
      * <p>
-     * The absolute address of the code pointer may change over time, for example
-     * if the code is a managed code cache region.
-     * <p>
-     * Remote  code pointers are collected when no longer used, or when the code
-     * to which they point ceases to be live in the VM (as well as can be determined).
+     * The absolute address of the code pointer may change over time, for
+     * example if the code is a managed code cache region.
      *
-     * @throws TeleError if the location is not in the memory region being managed.
+     * @throws TeleError if the location is not in the memory region
+     * being managed.
+     * @throws InvalidCodeAddressException if the location is known to be
+     * illegal:  null, zero, or in a non-code holding region
      */
-    RemoteCodePointer makeCodePointer(Address address) throws TeleError;
+    RemoteCodePointer makeCodePointer(Address address) throws TeleError, InvalidCodeAddressException;
 
     /**
      * Returns the total number of remote code pointers being held by the manager.

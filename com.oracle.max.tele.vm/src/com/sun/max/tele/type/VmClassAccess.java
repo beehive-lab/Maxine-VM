@@ -440,10 +440,20 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         idToClassActorReference.put(id, classActorReference);
         final Reference typeDescriptorReference = fields().ClassActor_typeDescriptor.readReference(classActorReference);
         final Reference stringReference = fields().Descriptor_string.readReference(typeDescriptorReference);
-        final String typeDescriptorString = vm().getString(stringReference);
-        final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
-        typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
-        Trace.line(TRACE_VALUE + 2, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+        String typeDescriptorString = null;
+        try {
+            typeDescriptorString = vm().getString(stringReference);
+        } catch (InvalidReferenceException invalidReferenceException) {
+            final StringBuilder msg = new StringBuilder();
+            msg.append("Failed to register newly loaded ClassActor @" + classActorReference.toOrigin().to0xHexString());
+            msg.append(":  invalid reference to type descriptor string @" + stringReference.toOrigin().to0xHexString());
+            TeleWarning.message(msg.toString());
+        }
+        if (typeDescriptorString != null) {
+            final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
+            typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
+            Trace.line(TRACE_VALUE + 2, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+        }
     }
 
     /**

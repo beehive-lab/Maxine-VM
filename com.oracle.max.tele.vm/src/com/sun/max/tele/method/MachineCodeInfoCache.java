@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.type.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -375,61 +376,65 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
                 final List<Integer> labels = new ArrayList<Integer>();
 
                 int bci = 0; // position cursor in the original bytecode stream, used if we have a bytecode -> target code map
-                for (int instructionIndex = 0; instructionIndex < instructionCount; instructionIndex++) {
-                    final TargetCodeInstruction instruction = instructions.get(instructionIndex);
-                    indexToLocation[instructionIndex] = codeLocationFactory().createMachineCodeLocation(instruction.address, "native target code instruction");
-                    if (instruction.label != null) {
-                        labels.add(instructionIndex);
-                    }
-
-                    // offset in bytes of this machine code instruction from beginning
-                    final int pos = instruction.position;
-
-                    // Ensure that the reported instruction position is legitimate.
-                    // The disassembler sometimes seems to report wild positions
-                    // when disassembling random binary; this can happen when
-                    // viewing some unknown native code whose length we must guess.
-                    if (pos < 0 || pos >= targetCodeLength) {
-                        continue;
-                    }
-
-                    indexToDebugInfoMap[instructionIndex] = posToDebugInfoMap[pos];
-
-                    if (posToSafepointMap != null) {
-                        final int safepoint = posToSafepointMap[pos];
-                        if (safepoint != 0) {
-                            // We're at a safepoint
-                            indexToSafepoint[instructionIndex] = safepoint;
-                            CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
-                            final CiCodePos codePos = info == null ? null : info.codePos;
-                            if (codePos != null && codePos.bci >= 0) {
-                                ClassMethodActor method = (ClassMethodActor) codePos.method;
-                                RiMethod callee = method.codeAttribute().calleeAt(codePos.bci);
-                                indexToCallee[instructionIndex - 1] = callee;
-                            }
+                try {
+                    for (int instructionIndex = 0; instructionIndex < instructionCount; instructionIndex++) {
+                        final TargetCodeInstruction instruction = instructions.get(instructionIndex);
+                        indexToLocation[instructionIndex] = codeLocationFactory().createMachineCodeLocation(instruction.address, "native target code instruction");
+                        if (instruction.label != null) {
+                            labels.add(instructionIndex);
                         }
-                    }
-                    if (bciToPosMap != null) {
-                        // Add more information if we have a precise map from bytecode to machine code instructions
-                        // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
-                        // for the start of bytecode template.
-                        if (bci < bciToPosMap.length && pos == bciToPosMap[bci]) {
-                            if (bci == bytecodes.length) {
-                                indexToOpcode[instructionIndex] = Integer.MAX_VALUE;
-                            } else {
-                                // This is the start of the machine code block implementing the next bytecode
-                                int opcode = Bytes.beU1(bytecodes, bci);
-                                if (opcode == Bytecodes.WIDE) {
-                                    opcode = Bytes.beU1(bytecodes, bci + 1);
+
+                        // offset in bytes of this machine code instruction from beginning
+                        final int pos = instruction.position;
+
+                        // Ensure that the reported instruction position is legitimate.
+                        // The disassembler sometimes seems to report wild positions
+                        // when disassembling random binary; this can happen when
+                        // viewing some unknown native code whose length we must guess.
+                        if (pos < 0 || pos >= targetCodeLength) {
+                            continue;
+                        }
+
+                        indexToDebugInfoMap[instructionIndex] = posToDebugInfoMap[pos];
+
+                        if (posToSafepointMap != null) {
+                            final int safepoint = posToSafepointMap[pos];
+                            if (safepoint != 0) {
+                                // We're at a safepoint
+                                indexToSafepoint[instructionIndex] = safepoint;
+                                CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
+                                final CiCodePos codePos = info == null ? null : info.codePos;
+                                if (codePos != null && codePos.bci >= 0) {
+                                    ClassMethodActor method = (ClassMethodActor) codePos.method;
+                                    RiMethod callee = method.codeAttribute().calleeAt(codePos.bci);
+                                    indexToCallee[instructionIndex - 1] = callee;
                                 }
-                                indexToOpcode[instructionIndex] = opcode;
-                                // Move bytecode position cursor to start of next instruction
-                                do {
-                                    ++bci;
-                                } while (bci < bciToPosMap.length && (bciToPosMap[bci] == 0 || bciToPosMap[bci] == pos));
+                            }
+                        }
+                        if (bciToPosMap != null) {
+                            // Add more information if we have a precise map from bytecode to machine code instructions
+                            // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
+                            // for the start of bytecode template.
+                            if (bci < bciToPosMap.length && pos == bciToPosMap[bci]) {
+                                if (bci == bytecodes.length) {
+                                    indexToOpcode[instructionIndex] = Integer.MAX_VALUE;
+                                } else {
+                                    // This is the start of the machine code block implementing the next bytecode
+                                    int opcode = Bytes.beU1(bytecodes, bci);
+                                    if (opcode == Bytecodes.WIDE) {
+                                        opcode = Bytes.beU1(bytecodes, bci + 1);
+                                    }
+                                    indexToOpcode[instructionIndex] = opcode;
+                                    // Move bytecode position cursor to start of next instruction
+                                    do {
+                                        ++bci;
+                                    } while (bci < bciToPosMap.length && (bciToPosMap[bci] == 0 || bciToPosMap[bci] == pos));
+                                }
                             }
                         }
                     }
+                } catch (InvalidCodeAddressException e) {
+                    TeleError.unexpected("TargetMethod cache loading failed @" + e.getAddressString() + ":  " + e.getMessage());
                 }
                 labelIndexes = Collections.unmodifiableList(labels);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,9 +144,11 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
     }
 
     public CodeLocation getCodeStartLocation() {
-        final Address codeStart = getCodeStart();
-        if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeLocationFactory().createMachineCodeLocation(codeStart, "start location in code");
+        if (codeStartLocation == null) {
+            try {
+                codeStartLocation = codeLocationFactory().createMachineCodeLocation(getCodeStart(), "start location in code");
+            } catch (InvalidCodeAddressException e) {
+            }
         }
         return codeStartLocation;
     }
@@ -156,11 +158,11 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
     }
 
     public CodeLocation getCallEntryLocation() {
-        final Address callEntryPoint = getCallEntryPoint();
-        if (callEntryPoint.isZero()) {
-            return null;
+        try {
+            return codeLocationFactory().createMachineCodeLocation(getCallEntryPoint(), "Code entry");
+        } catch (InvalidCodeAddressException e) {
         }
-        return codeLocationFactory().createMachineCodeLocation(callEntryPoint, "Code entry");
+        return null;
     }
 
     public boolean isCodeLive() {

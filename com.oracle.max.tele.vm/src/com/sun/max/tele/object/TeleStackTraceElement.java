@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.vm.reference.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
-/**
- * A allocatable area in the VM that can contain machine code.
- */
-public interface CodeHoldingRegion {
+public class TeleStackTraceElement extends TeleTupleObject {
 
-    /**
-     * Gets a description of the VM memory allocated for this region,
-     * null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
+    public TeleStackTraceElement(TeleVM vm, Reference stackTraceElementReference) {
+        super(vm, stackTraceElementReference);
+    }
 
     /**
-     * Returns the manager for dealing with pointers to machine code
-     * in this memory region.
+     * {@inheritDoc}
+     * <p>
+     * Suppress the default tuple warning for instances of {@link StackTraceElement}, for which deep copying is safe.
      */
-    RemoteCodePointerManager codePointerManager();
-
+    @Override
+    protected String deepCopyWarning() {
+        return null;
+    }
 }

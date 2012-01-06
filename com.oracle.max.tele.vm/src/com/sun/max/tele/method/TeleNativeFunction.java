@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,6 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     /**
      * Summary information about a sequence of native disassembled machine code instructions about
      * which little is known.
-     *
      */
     private final class NativeFunctionMachineCodeInfo implements MaxMachineCodeInfo {
 
@@ -98,12 +97,16 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             final int length = instructions.size();
             final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
             final List<Integer> labels = new ArrayList<Integer>();
-            for (int index = 0; index < length; index++) {
-                final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "native function code instruction"));
-                if (targetCodeInstruction.label != null) {
-                    labels.add(index);
+            try {
+                for (int index = 0; index < length; index++) {
+                    final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
+                    locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "native function code instruction"));
+                    if (targetCodeInstruction.label != null) {
+                        labels.add(index);
+                    }
                 }
+            } catch (InvalidCodeAddressException e) {
+                TeleError.unexpected("Getting native function code info failed @ " + e.getAddressString() + ": " + e.getMessage());
             }
             machineCodeLocations = locations;
             labelIndexes = Collections.unmodifiableList(labels);
@@ -340,9 +343,11 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     }
 
     public CodeLocation getCodeStartLocation() {
-        final Address codeStart = getCodeStart();
-        if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeLocationFactory().createMachineCodeLocation(codeStart, "code start location in external native code");
+        if (codeStartLocation == null) {
+            try {
+                codeStartLocation = codeLocationFactory().createMachineCodeLocation(getCodeStart(), "code start location in external native code");
+            } catch (InvalidCodeAddressException e) {
+            }
         }
         return codeStartLocation;
     }

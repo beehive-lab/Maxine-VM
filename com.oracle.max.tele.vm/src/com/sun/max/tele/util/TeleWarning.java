@@ -33,7 +33,7 @@ public final class TeleWarning {
 
     private static void warn(String message, Throwable cause) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("Warning: ");
+        sb.append("TeleWarning: ");
         if (message != null) {
             sb.append(message + "  ");
         }

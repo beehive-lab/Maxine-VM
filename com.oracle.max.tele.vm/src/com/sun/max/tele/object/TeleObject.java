@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
@@ -173,6 +174,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     private Pointer lastValidPointer;
 
     /**
+     * Becomes permanently {@code false} when GC has determined that the object is no longer reachable.
+     */
+    private boolean isLive = true;
+
+    /**
      * Creates a "surrogate" object that encapsulates information about an object in the VM.
      * <p>
      * This is not the same thing as a Proxy, although it can be used that way. Specific subclasses encapsulate design
@@ -250,6 +256,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     /**
      * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
      * update statistics reporting and to handle a uniform method for avoiding redundant updates.
+     * <p>
+     * If the object is known to be dead then the update fails immediately.
+     * <p>
+     * All subclasses should call this as super immediately and halt any update is fails.
      *
      * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
@@ -257,11 +267,20 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @returns whether the object's cache was successfully updated.
      */
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        return true;
+        if (isLive()) {
+            return true;
+        }
+        return false;
     }
 
+    /**
+     * @return {@code true} if assumed by the memory manager to be reachable, {@code false} if the object has been collected...
+     */
     public final boolean isLive() {
-        return reference.isLive();
+        if (isLive) {
+            isLive = !reference().readWord(0).asAddress().equals(Memory.zappedMarker()) && reference.isLive();
+        }
+        return isLive;
     }
 
     public final ObjectMemoryStatus memoryStatus() {
@@ -323,10 +342,12 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     public static class InvalidObjectClass {}
 
     /**
-     * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type of this object in the
-     *         VM. Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type
-     *         of the object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this
-     *         case the type of the class that the tuple helps implement.
+     * Gets a local {@link ClassActor}, equivalent to the one in the
+     * VM that describes the type of this object in the VM. Note that
+     * in the singular instance of {@link StaticTuple} this does not
+     * correspond to the actual type of the object, which is an
+     * exceptional Maxine object that has no ordinary Java type; it
+     * returns in this case the type of the class the tuple helps implement.
      */
     public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
         try {
@@ -368,14 +389,16 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * @return the size of the memory occupied by this object in the VM, including header.
+     * Gets the size of the memory occupied by this object in the VM,
+     * including header.
      */
     protected abstract int objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
      *
-     * @return current memory region occupied by this object in the VM, subject to relocation by GC.
+     * @return current memory region occupied by this object in the VM,
+     * subject to relocation by GC.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
         if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
@@ -536,9 +559,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
-     *            describes a field in this object in the VM
-     * @return contents of the designated field in this object in the VM
+     * @param fieldActor local {@link FieldActor}, part of the
+     * {@link ClassActor} for the type of this object, that
+     * describes a field in this object in the VM
+     *
+     * @return contents of the designated field in this VM object
      */
     public abstract Value readFieldValue(FieldActor fieldActor);
 
@@ -701,6 +726,15 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     protected abstract Object createDeepCopy(DeepCopier context);
 
     /**
+     * Checks to see if a deep copy of this object would be potentially problematic, and if so generates a warning message.
+     *
+     * @return a warning message about deep copying, null otherwise; default is no-warning.
+     */
+    protected String deepCopyWarning() {
+        return null;
+    }
+
+    /**
      * Hook for subclasses to refine the extent of {@linkplain #deepCopy() deep copying}.
      */
     protected DeepCopier newDeepCopier() {
@@ -718,6 +752,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         Object objectCopy = null;
         Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
         long start = System.currentTimeMillis();
+        final String warningMessage = deepCopyWarning();
+        if (warningMessage != null) {
+            TeleWarning.message(warningMessage);
+        }
         if (vm().tryLock()) {
             try {
                 DeepCopier copier = newDeepCopier();

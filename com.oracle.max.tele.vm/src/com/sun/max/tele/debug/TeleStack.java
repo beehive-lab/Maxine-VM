@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -230,30 +231,37 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
     }
 
     public CodeLocation returnLocation() {
-        final StackFrame topFrame = teleNativeThread.top();
-        final StackFrame topFrameCaller = topFrame.callerFrame();
-        if (topFrameCaller == null) {
-            return null;
-        }
-        Pointer instructionPointer = topFrameCaller.ip;
-        if (instructionPointer.isZero()) {
-            return null;
-        }
-        final StackFrame callee = topFrameCaller.calleeFrame();
-        if (callee == null) {
-            // Top frame, not a call return so no adjustment.
-            return codeLocationFactory().createMachineCodeLocation(instructionPointer, "top teleStack frame IP");
-        }
-        // Add a platform-specific offset from the stored code address to the actual call return site.
-        final TargetMethod calleeTargetMethod = callee.targetMethod();
-        if (calleeTargetMethod != null) {
-            if (calleeTargetMethod.is(TrapStub)) {
-                // Special case, where the IP caused a trap; no adjustment.
-                return codeLocationFactory().createMachineCodeLocation(instructionPointer, "teleStack frame return");
+        final StackFrame topFrameCaller = teleNativeThread.top().callerFrame();
+        if (topFrameCaller != null && topFrameCaller.ip.isNotZero()) {
+            final StackFrame callee = topFrameCaller.calleeFrame();
+            if (callee == null) {
+                // Top frame
+                try {
+                    return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip, "top teleStack frame IP");
+                } catch (InvalidCodeAddressException e) {
+                    TeleWarning.message("Bad IP address " + e.getAddressString() + " for top frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
+                }
+            } else {
+                // A call return: add a platform-specific offset from the stored code address to the actual call return site.
+                final TargetMethod calleeTargetMethod = callee.targetMethod();
+                if (calleeTargetMethod != null && calleeTargetMethod.is(TrapStub)) {
+                    // Special case, where the IP caused a trap; no adjustment.
+                    try {
+                        return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip, "teleStack frame return");
+                    } catch (InvalidCodeAddressException e) {
+                        TeleWarning.message("Bad IP address " + e.getAddressString() + " for trap stub frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
+                    }
+                } else {
+                    // An ordinary call; apply a platform-specific adjustment to get the real return address.
+                    try {
+                        return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip.plus(offsetToReturnPC), "teleStack frame return");
+                    } catch (InvalidCodeAddressException e) {
+                        TeleWarning.message("Bad IP address " + e.getAddressString() + " for frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
+                    }
+                }
             }
         }
-        // An ordinary call; apply a platform-specific adjustment to get the real return address.
-        return codeLocationFactory().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "teleStack frame return");
+        return null;
     }
 
 }

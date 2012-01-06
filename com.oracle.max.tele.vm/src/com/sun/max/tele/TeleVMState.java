@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,13 +37,13 @@ public final class TeleVMState implements MaxVMState {
     private static final List<MaxThread> EMPTY_MAXTHREAD_LIST  = Collections.emptyList();
     private static final List<TeleBreakpointEvent> EMPTY_BREAKPOINTEVENT_LIST = Collections.emptyList();
     private static final List<MaxBreakpointEvent> EMPTY_MAXBREAKPOINTEVENT_LIST = Collections.emptyList();
-    private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
+    private static final List<MaxEntityMemoryRegion<? extends MaxEntity> > EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
     private final MaxInspectionMode inspectionMode;
     private final MaxProcessState processState;
     private final long serialID;
     private final long epoch;
-    private final List<MaxMemoryRegion> memoryAllocations;
+    private final List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations;
     private final List<MaxThread> threads;
     private final MaxThread singleStepThread;
     private final List<MaxThread> threadsStarted;
@@ -73,7 +73,7 @@ public final class TeleVMState implements MaxVMState {
                     MaxInspectionMode inspectionMode,
                     ProcessState processState,
                     long epoch,
-                    List<MaxMemoryRegion> memoryAllocations,
+                    List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations,
                     Collection<TeleNativeThread> threads,
                     TeleNativeThread singleStepThread,
                     List<TeleNativeThread> threadsStarted,
@@ -157,12 +157,12 @@ public final class TeleVMState implements MaxVMState {
         return epoch;
     }
 
-    public List<MaxMemoryRegion> memoryAllocations() {
+    public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
         return memoryAllocations;
     }
 
-    public MaxMemoryRegion findMemoryRegion(Address address) {
-        for (MaxMemoryRegion memoryRegion : memoryAllocations) {
+    public MaxEntityMemoryRegion<? extends MaxEntity> findMemoryRegion(Address address) {
+        for (MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion : memoryAllocations) {
             if (memoryRegion != null && memoryRegion.contains(address)) {
                 return memoryRegion;
             }

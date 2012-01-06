@@ -41,33 +41,38 @@ public interface RemoteObjectReferenceManager {
     ObjectHoldingRegion objectRegion();
 
     /**
-     * Determines whether there is an object in the VM memory region with specified origin.
+     * Determines whether there is an object in the VM memory region
+     * with specified origin.
      *
      * @throws TeleError if the origin is not in the memory region being managed.
      */
     boolean isObjectOrigin(Address origin) throws TeleError;
 
     /**
-     * Creates a canonical remote reference to an object whose origin in VM memory is
-     * at a specified address, null if there is no object with that origin.
+     * Creates a canonical remote reference to an object whose origin
+     * in VM memory is at a specified address, null if there is no
+     * object with that origin.
      * <p>
-     * The origin of the object may change over time, for example if a relocating collector
-     * is being used for the region by the VM.
+     * The origin of the object may change over time, for example if
+     * a relocating collector is being used for the region by the VM.
      * <p>
-     * Remote references are collected when no longer used, or when the objects to which
-     * they point cease to be live in the VM (as well as can be determined).
+     * Remote references are collected when no longer used, or when the
+     * objects to which they point cease to be live in the VM (as well
+     * as can be determined).
      *
      * @throws TeleError if the origin is not in the memory region being managed.
      */
     TeleReference makeReference(Address origin) throws TeleError;
 
     /**
-     * Returns the total number of remote object references being held by the manager.
+     * Returns the total number of remote object references being held by
+     * the manager.
      */
     int activeReferenceCount();
 
     /**
-     * Returns the number of remote object references being held that are no longer inactive use.
+     * Returns the number of remote object references being held that are no
+     * longer inactive use.
      */
     int totalReferenceCount();
 
