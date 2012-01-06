@@ -460,7 +460,7 @@ public class WordValueLabel extends ValueLabel {
             setFont(style.wordAlternateTextFont());
             setForeground(style.wordInvalidDataColor());
             setWrappedText("void");
-            setWrappedToolTipHtmlText("<unable to read value>");
+            setWrappedToolTipHtmlText(htmlify("<memory unreadable>"));
             if (parent != null) {
                 parent.repaint();
             }
@@ -1035,7 +1035,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().state().findMemoryRegion(address) != null) {
+                    if (address.isNotZero()) {
                         action = views().memory().makeViewAction(address, null);
                     }
                     break;
