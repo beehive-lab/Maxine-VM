@@ -170,6 +170,12 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
                 @Override
                 protected void procedure() {
+                    if (vm().state().findMemoryRegion(address) == null) {
+                        final String message = "Address " + address.to0xHexString() + " not in any known memory allocation, try anyway?";
+                        if (!gui().yesNoDialog(message)) {
+                            return;
+                        }
+                    }
                     makeView(address);
                 }
             };
