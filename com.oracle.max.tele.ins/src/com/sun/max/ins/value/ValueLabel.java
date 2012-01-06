@@ -25,6 +25,7 @@ package com.sun.max.ins.value;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.value.*;
 
@@ -77,6 +78,8 @@ public abstract class ValueLabel extends InspectorLabel {
         try {
             value = fetchValue();
         } catch (TerminatedProcessIOException terminatedProcessIOException) {
+            value = VoidValue.VOID;
+        } catch (DataIOError error) {
             value = VoidValue.VOID;
         }
         lastRefreshedState = vm().state();
