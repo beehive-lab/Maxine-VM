@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import java.util.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 public final class HeapRegionInfoIterable extends HeapRegionListIterable  implements Iterable<HeapRegionInfo>, Iterator<HeapRegionInfo> {
     HeapRegionInfoIterable() {
@@ -34,13 +35,17 @@ public final class HeapRegionInfoIterable extends HeapRegionListIterable  implem
 
     @Override
     public HeapRegionInfo next() {
-        HeapRegionInfo rinfo =  RegionTable.theRegionTable().regionInfo(cursor);
+        final HeapRegionInfo rinfo =  RegionTable.theRegionTable().regionInfo(cursor);
+        last = cursor;
         cursor = regionList.next(cursor);
         return rinfo;
     }
 
     public void remove() {
-        throw new UnsupportedOperationException();
+        if (last == INVALID_REGION_ID) {
+            throw new IllegalStateException();
+        }
+        regionList.remove(last);
     }
 
 }

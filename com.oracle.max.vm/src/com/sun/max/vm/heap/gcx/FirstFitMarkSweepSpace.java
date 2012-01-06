@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,9 +72,15 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     private HeapRegionList tlabAllocationRegions;
 
     /**
-     * Sorted list used to keep track of regions with live objects that are unavailable for allocation.
+     * List used to keep track of regions with live objects that are unavailable for allocation.
      */
     private HeapRegionList unavailableRegions;
+
+    /**
+     * Temporary list used during GC-ing of this space. Before GC, all regions of the space are moved to this list, which then hold all the regions
+     * allocated to this space. During sweeping, the GC redistribute the regions from this to the above three lists depending on their available free space.
+     */
+    private HeapRegionList sweepList;
 
     /**
      * Region currently used for tlab allocation.
@@ -147,6 +153,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
             }
             FULL_REGION.setState(rinfo);
+            unavailableRegions.append(regionID);
         } else {
             if (traceAllocateLarge) {
                 Log.print("allocateLarge putback region #");
@@ -189,7 +196,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     final int numBytesNeeded = size.toInt();
                    // Actually, any region with a chunk large enough can do in that case.
                     while (regionInfoIterable.hasNext()) {
-                        HeapRegionInfo rinfo = regionInfoIterable.next();
+                        final HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
                             allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(regionSizeInBytes);
                             return allocateSingleRegionLargeObject(rinfo, rinfo.regionStart().asPointer(), size, Size.fromInt(regionSizeInBytes));
@@ -208,7 +215,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     debug_lastRegion = lastRegion;
 
                     while (regionInfoIterable.hasNext()) {
-                        HeapRegionInfo rinfo = regionInfoIterable.next();
+                        final HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
                             int rid = rinfo.toRegionID();
                             if (n == 0) {
@@ -233,10 +240,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     allocationRegions.remove(firstRegion);
                                     HeapRegionInfo firstRegionInfo = HeapRegionInfo.fromRegionID(firstRegion);
                                     LARGE_HEAD.setState(firstRegionInfo);
+                                    unavailableRegions.append(firstRegion);
                                     if (n > 2) {
                                         for (int i = firstRegion + 1; i < lastRegion; i++) {
                                             allocationRegions.remove(i);
                                             LARGE_BODY.setState(HeapRegionInfo.fromRegionID(i));
+                                            unavailableRegions.append(i);
                                         }
                                     }
                                     HeapRegionInfo lastRegionInfo =  HeapRegionInfo.fromRegionID(lastRegion);
@@ -248,6 +257,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                         }
                                         allocationRegions.remove(lastRegion);
                                         LARGE_FULL_TAIL.setState(lastRegionInfo);
+                                        unavailableRegions.append(lastRegion);
                                         allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(Size.fromInt(numContiguousRegionNeeded).shiftedLeft(log2RegionSizeInBytes));
                                     } else {
                                         // Format the tail as a free chunk.
@@ -491,6 +501,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         protected void doBeforeGC() {
             if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
                 toFullState(theRegionTable().regionInfo(currentTLABAllocatingRegion));
+                unavailableRegions.append(currentTLABAllocatingRegion);
                 currentTLABAllocatingRegion = INVALID_REGION_ID;
             }
             nextFreeChunkInRegion = Address.zero();
@@ -520,6 +531,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 }
                // We don't know what specific allocating states we're in, so use this method to move to the corresponding a full state.
                 toFullState(regionInfo);
+                unavailableRegions.append(currentTLABAllocatingRegion);
             }
             do {
                 currentTLABAllocatingRegion = tlabAllocationRegionList().removeHead();
@@ -608,6 +620,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                         HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
                     }
                     toFullState(regionInfo);
+                    unavailableRegions.append(currentOverflowAllocatingRegion);
                 }
                 currentOverflowAllocatingRegion = INVALID_REGION_ID;
             }
@@ -668,6 +681,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 // the bump allocator must have filled the allocated with a dead object. So mark it full.
                 toFullState(theRegionTable().regionInfo(currentOverflowAllocatingRegion));
+                unavailableRegions.append(currentOverflowAllocatingRegion);
                 currentOverflowAllocatingRegion = INVALID_REGION_ID;
             }
         }
@@ -698,6 +712,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         unavailableRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        sweepList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+
         int initialNumberOfRegions = numberOfRegions(minSize);
         int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false, true);
         if (result != initialNumberOfRegions) {
@@ -783,6 +799,19 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     public void doBeforeGC() {
         overflowAllocator.doBeforeGC();
         tlabAllocator.doBeforeGC();
+        // Move all regions to the sweep list. This tracks all the regions used by the space.
+        sweepList.appendAndClear(unavailableRegions);
+        sweepList.appendAndClear(allocationRegions);
+        sweepList.appendAndClear(tlabAllocationRegions);
+        if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
+            sweepList.append(currentTLABAllocatingRegion);
+            currentTLABAllocatingRegion = INVALID_REGION_ID;
+        }
+        if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
+            sweepList.append(currentOverflowAllocatingRegion);
+            currentOverflowAllocatingRegion = INVALID_REGION_ID;
+        }
+        sweepList.sort();
     }
 
     public void doAfterGC() {
@@ -793,40 +822,46 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         heapMarker.markAll(regionsRangeIterable);
     }
 
-    @Override
-    public void verify(AfterMarkSweepVerifier verifier) {
-        tlabAllocationRegions.checkIsAddressOrdered();
-        allocationRegions.checkIsAddressOrdered();
+    private void verify(HeapRegionList regionList, AfterMarkSweepVerifier verifier) {
+        regionList.checkIsAddressOrdered();
+        regionsRangeIterable.initialize(regionList);
         regionsRangeIterable.resetToFirstIterable();
         while (regionsRangeIterable.hasNext()) {
             HeapRegionInfo.walk(regionsRangeIterable.nextIterableRange(), verifier);
         }
     }
 
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        verify(tlabAllocationRegions, verifier);
+        verify(allocationRegions, verifier);
+        verify(unavailableRegions, verifier);
+    }
+
     public void sweep(TricolorHeapMarker heapMarker) {
-        HeapRegionList allRegions = heapAccount.committedRegions();
         if (MaxineVM.isDebug()) {
-            allRegions.checkIsAddressOrdered();
+            sweepList.checkIsAddressOrdered();
         }
-        currentOverflowAllocatingRegion = INVALID_REGION_ID;
-        currentTLABAllocatingRegion = INVALID_REGION_ID;
-        tlabAllocationRegions.clear();
-        allocationRegions.clear();
         allocationRegionsFreeSpace = Size.zero();
-        regionInfoIterable.initialize(allRegions);
-        regionInfoIterable.reset();
         csrIsLiveMultiRegionObjectTail = false;
         heapMarker.sweep(this);
+        if (MaxineVM.isDebug()) {
+            sweepList.isEmpty();
+        }
+    }
+
+    private HeapRegionInfo nextRegionToSweep() {
+        return RegionTable.theRegionTable().regionInfo(sweepList.removeHead());
     }
 
     @Override
     public boolean hasNextSweepingRegion() {
-        return regionInfoIterable.hasNext();
+        return !sweepList.isEmpty();
     }
 
     @Override
     public void beginSweep() {
-        resetSweepingRegion(regionInfoIterable.next());
+        resetSweepingRegion(nextRegionToSweep());
     }
 
     private void traceSweptRegion() {
@@ -872,12 +907,14 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 csrIsLiveMultiRegionObjectTail = true;
                 // Reset the flag
                 LARGE_HEAD.setState(csrInfo);
-                // Skip all intermediate regions. They are full.
+                unavailableRegions.append(csrInfo.toRegionID());
+               // Skip all intermediate regions. They are full.
                 if (TraceSweep) {
                     traceSweptRegion();
                 }
                 while (!csrInfo.next().isTailOfLargeObject()) {
-                    csrInfo = regionInfoIterable.next();
+                    csrInfo =  nextRegionToSweep();
+                    unavailableRegions.append(csrInfo.toRegionID());
                     if (TraceSweep) {
                         traceSweptRegion();
                     }
@@ -899,7 +936,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                     if (csrInfo.next().isTailOfLargeObject()) {
                         break;
                     }
-                    csrInfo = regionInfoIterable.next();
+                    csrInfo = nextRegionToSweep();
                 } while (true);
                 csrLastLiveAddress = csrInfo.regionStart().plus(regionSizeInBytes);
                 // If the large object is dead and its tail isn't large enough to be reclaimable, we must fill it with a dead object to maintain heap parsability.
@@ -921,6 +958,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 }  else {
                     FULL_REGION.setState(csrInfo);
                 }
+                unavailableRegions.append(csrInfo.toRegionID());
             } else {
                 if (csrFreeBytes == regionSizeInBytes) {
                     EMPTY_REGION.setState(csrInfo);
@@ -954,7 +992,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     @Override
     public void reachedRightmostLiveRegion() {
         while (hasNextSweepingRegion()) {
-            HeapRegionInfo rinfo = regionInfoIterable.next();
+            final HeapRegionInfo rinfo = nextRegionToSweep();
             EMPTY_REGION.setState(rinfo);
             HeapFreeChunk.format(rinfo.regionStart(), regionSizeInBytes);
             rinfo.resetOccupancy();
@@ -995,9 +1033,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return Size.zero();
     }
 
-    @Override
-    public void visit(HeapSpaceRangeVisitor visitor) {
-        regionsRangeIterable.initialize(heapAccount.committedRegions());
+    private void visit(HeapSpaceRangeVisitor visitor, HeapRegionList regionList) {
+        if (regionList.isEmpty()) {
+            return;
+        }
+        regionsRangeIterable.initialize(regionList);
         regionsRangeIterable.resetToFirstIterable();
         while (regionsRangeIterable.hasNext()) {
             final RegionRange r = regionsRangeIterable.nextIterableRange();
@@ -1005,6 +1045,27 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             final Address end = start.plus(Size.fromInt(r.numRegions()).shiftedLeft(log2RegionSizeInBytes));
             visitor.visitCells(start, end);
         }
+    }
+
+    private void visit(HeapSpaceRangeVisitor visitor, BaseAtomicBumpPointerAllocator<?> allocator, int allocatingRegion) {
+        if (allocatingRegion == INVALID_REGION_ID) {
+            return;
+        }
+        final HeapRegionInfo rinfo = HeapRegionInfo.fromRegionID(allocatingRegion);
+        allocator.unsafeMakeParsable();
+        final Address start = rinfo.regionStart();
+        final Address end = start.plus(regionSizeInBytes);
+        visitor.visitCells(start, end);
+    }
+
+    @Override
+    public void visit(HeapSpaceRangeVisitor visitor) {
+        visit(visitor, unavailableRegions);
+        visit(visitor, allocationRegions);
+        visit(visitor, tlabAllocationRegions);
+        // Visit allocating regions. Must be made parsable first.
+        visit(visitor, tlabAllocator, currentTLABAllocatingRegion);
+        visit(visitor, overflowAllocator, currentOverflowAllocatingRegion);
     }
 
 }

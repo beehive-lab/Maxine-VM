@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,11 +118,11 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Find the first card set to the specified value in the specified range of entries in the table .
+     * Find the first card set to the specified card state in the specified range of entries in the table .
      * @param start index of the first card in the range (inclusive)
      * @param end index of the last card of the range (exclusive)
      * @param cardState a card state
-    * @return {@link #NO_CARD_INDEX} if all the cards in the range are clean, the index to the first dirty card otherwise.
+    * @return the index to the first card in the specified state, or the end index if none of the cards in the range are set to that state.
     */
     final int first(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
@@ -135,9 +135,34 @@ class CardTable extends  Log2RegionToByteMapTable {
         while (cursor.getByte() != cardValue) {
             cursor = cursor.plus(1);
             if (cursor.greaterEqual(limit)) {
-                return -1;
+                return end;
             }
         }
-        return cursor.minus(first).toInt();
+        return cursor.minus(tableAddress).toInt();
+    }
+
+
+    /**
+     * Find the first card not set to the specified card state in the specified range of entries in the table .
+     * @param start index of the first card in the range (inclusive)
+     * @param end index of the last card of the range (exclusive)
+     * @param cardState a card state
+    * @return the index to the first card in a state different than the specified state, or the end index if  all the cards in the range have that state.
+    */
+    final int firstNot(int start, int end, CardState cardState) {
+        // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
+        // We may also get rid of the limit test by making the end of the range looking like a marked card.
+        // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
+        final Pointer first = tableAddress.plus(start);
+        final Pointer limit = tableAddress.plus(end);
+        final byte cardValue = cardState.value;
+        Pointer cursor = first;
+        while (cursor.getByte() == cardValue) {
+            cursor = cursor.plus(1);
+            if (cursor.greaterEqual(limit)) {
+                return end;
+            }
+        }
+        return cursor.minus(tableAddress).toInt();
     }
 }

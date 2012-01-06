@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,30 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.CardTable.*;
 
-/**
- * Interface to visit iterable ranges of contiguous heap space.
- * An iterable range is formatted as a sequence of cells whose size can be queried by visitors and such that
- * the address of the cell plus its size gives the address of the next cell.
- * @see HeapSpace
- */
-public interface HeapSpaceRangeVisitor {
-    /**
-     * Logic to apply to an iterable contiguous range of heap space.
-     * @param start Address to the first cell in a  iterable contiguous range of heap space
-     * @param end Address after the end of the last cell of an iterable contiguous range of heap space
-     */
-    void visitCells(Address start, Address end);
+public final class NoDirtyCardsVerifier implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
+    final CardTableRSet cardTableRSet;
+
+    public NoDirtyCardsVerifier(CardTableRSet cardTableRSet) {
+        this.cardTableRSet = cardTableRSet;
+    }
+
+    @Override
+    public void visitCells(Address start, Address end) {
+        cardTableRSet.visitCards(start, end, CardState.DIRTY_CARD, this);
+    }
+
+    @Override
+    public Pointer visitCell(Pointer cell, Address start, Address end) {
+        // Must never be called if there aren't any dirty card.
+        Log.print("Card is Dirty for range [");
+        Log.print(start);
+        Log.print(", ]; ");
+        Log.print(end);
+        Log.println(", ]; ");
+        return end.asPointer();
+    }
 }
