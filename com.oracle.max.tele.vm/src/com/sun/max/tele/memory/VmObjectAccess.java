@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
@@ -190,7 +189,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             }
             // Now check using heuristic to see if there's actually an object stored at the location.
             return isObjectOriginHeuristic(address);
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
         } catch (DataIOError dataAccessError) {
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
         }
@@ -244,8 +242,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 }
                 hubWord = nextHubWord;
             }
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
-            return false;
+//        } catch (TerminatedProcessIOException terminatedProcessIOException) {
+//            return false;
         } catch (DataIOError dataAccessError) {
             return false;
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {

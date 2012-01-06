@@ -187,6 +187,12 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         }
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        codeLocation = null;
+        reconstructView();
+    }
+
     private String shortString(CiCodePos codePos) {
         return codePos.method.name() + "() bci=" + codePos.bci;
     }

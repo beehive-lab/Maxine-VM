@@ -1374,8 +1374,6 @@ public abstract class TeleVM implements MaxVM {
                 offset++;
             }
             return new String(chars);
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
-            return null;
         } catch (DataIOError dataIOError) {
             return null;
         }
