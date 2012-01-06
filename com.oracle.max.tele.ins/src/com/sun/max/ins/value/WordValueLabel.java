@@ -642,7 +642,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + taggedCodePointer.getAddress().to0xHexString());
                     }
                     toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
                     toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
@@ -658,7 +659,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + taggedCodePointer.getAddress().to0xHexString());
                     }
                     toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
                     toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
@@ -708,7 +710,8 @@ public class WordValueLabel extends ValueLabel {
                     toolTip.append(value.toWord().to0xHexString());
                     final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + address.to0xHexString());
                     }
                     final long position = address.minus(compilation.getCodeStart()).toLong();
                     toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
@@ -727,7 +730,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + address.to0xHexString());
                     }
                     final long position = address.minus(compilation.getCodeStart()).toLong();
                     toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
