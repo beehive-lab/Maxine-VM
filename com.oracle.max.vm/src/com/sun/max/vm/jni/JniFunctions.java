@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -73,9 +75,6 @@ public final class JniFunctions {
 
     @RESET
     public static boolean TraceJNI;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
-    }
 
     public static boolean CheckJNI;
     static {
@@ -88,7 +87,6 @@ public final class JniFunctions {
         }, Phase.STARTING);
     }
 
-    private static final String JNI = "JNI";
     public static final int JNI_OK = 0;
     public static final int JNI_ERR = -1; /* unknown error */
     public static final int JNI_EDETACHED = -2; /* thread detached from the VM */
@@ -122,13 +120,6 @@ public final class JniFunctions {
     }
 
     @INLINE
-    public static void tracePrologue(String name, Pointer anchor) {
-        if (TraceJNI) {
-            traceEntry(name, JNI, anchor);
-        }
-    }
-
-    @INLINE
     public static Pointer prologue(Pointer env) {
         SafepointPoll.setLatchRegister(env.minus(JNI_ENV.offset));
         Pointer etla = ETLA.load(currentTLA());
@@ -146,72 +137,6 @@ public final class JniFunctions {
         Pointer etla = ETLA.load(currentTLA());
         Snippets.nativeCallPrologue0(etla, JavaFrameAnchor.PREVIOUS.get(anchor));
     }
-
-    @INLINE
-    public static void traceEpilogue(String name) {
-        if (TraceJNI) {
-            traceExit(name, JNI);
-        }
-    }
-
-    /**
-     * Traces the entry to an upcall.
-     *
-     * @param name the name of the JNI/JVMTI function being entered
-     * @param anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub frame
-     *            that called out to native code or the native anchor of a thread that attached to the VM.
-     */
-
-    public static void traceEntry(String name, String callType, Pointer anchor) {
-        if (name != null) {
-            boolean lockDisabledSafepoints = Log.lock();
-            Log.print("[Thread \"");
-            Log.print(VmThread.current().getName());
-            Log.print("\" --> "); Log.print(callType); Log.print(" upcall: ");
-            Log.print(name);
-            Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
-            final Address jniStubPC = jniStubAnchor.isZero() ? Address.zero() : JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
-            if (!jniStubPC.isZero()) {
-                final TargetMethod nativeMethod = CodePointer.from(jniStubPC).toTargetMethod();
-                Log.print(", last down call: ");
-                FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
-                Log.print(nativeMethod.classMethodActor().name.string);
-            } else {
-                Log.print(", called from attached native thread");
-            }
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    /**
-     * Traces the exit from an upcall.
-     *
-     * @param name the name of the JNI/JVMTI function being exited
-     */
-    public static void traceExit(String name, String callType) {
-        if (name != null) {
-            boolean lockDisabledSafepoints = Log.lock();
-            traceExitNoLock(name, callType);
-            Log.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    /**
-     * Traces the exit from an upcall. Assert: Lock.lock has been invoked by caller.
-     *
-     * @param name the name of the JNI/JVMTI function being exited
-     */
-    public static void traceExitNoLock(String name, String callType) {
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
-        Log.print("\" <-- ");
-        Log.print(callType);
-        Log.print(" upcall: ");
-        Log.print(name);
-        Log.println("]");
-    }
-
 
     private static class Triple implements Comparable<Triple> {
         public long counter;
@@ -256,6 +181,65 @@ public final class JniFunctions {
             }
         }
     }
+
+    /**
+     * Logging/Tracing of JNI/JMM entry/exit.
+     */
+    static abstract class XXXFunctionsLogger extends VMLogger {
+        XXXFunctionsLogger(String name, int entryPointsLength) {
+            super(name, entryPointsLength);
+        }
+
+        @Override
+        protected void trace(Record r) {
+            boolean entry = r.getArg(1).isAllOnes();
+            Log.print("[Thread \"");
+            Log.print(threadName(r.getThreadId()));
+            Log.print("\" ");
+            Log.print(entry ? "-->" : "<--");
+            Log.print(" JNI upcall: ");
+            Log.print(operationName(r.getOperation()));
+            if (entry) {
+                Pointer anchor = r.getArg(2).asPointer();
+                Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
+                final Address jniStubPC = jniStubAnchor.isZero() ? Address.zero() : JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
+                if (!jniStubPC.isZero()) {
+                    final TargetMethod nativeMethod = CodePointer.from(jniStubPC).toTargetMethod();
+                    Log.print(", last down call: ");
+                    FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
+                    Log.print(nativeMethod.classMethodActor().name.string);
+                } else {
+                    Log.print(", called from attached native thread");
+                }
+            }
+            Log.println("]");
+        }
+
+    }
+
+    /**
+     * Logging/Tracing of JNI entry/exit.
+     */
+    private static class JniFunctionsLogger extends XXXFunctionsLogger {
+        private static EntryPoints[] entryPoints = EntryPoints.values();
+
+        private JniFunctionsLogger() {
+            super("JNI", entryPoints.length);
+        }
+
+        @Override
+        public String operationName(int op) {
+            return entryPoints[op].name();
+        }
+
+        @Override
+        protected void checkLogOptions() {
+            super.checkLogOptions();
+            TraceJNI = logger.traceEnabled();
+        }
+    }
+
+    static JniFunctionsLogger logger = new JniFunctionsLogger();
 
     /*
      * DO NOT EDIT CODE BETWEEN "START GENERATED CODE" AND "END GENERATED CODE" IN THIS FILE.
@@ -309,7 +293,8 @@ public final class JniFunctions {
     private static JniHandle DefineClass(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
         // Source: JniFunctionsSource.java:103
         Pointer anchor = prologue(env);
-        tracePrologue("DefineClass", anchor);
+        logger.log(EntryPoints.DefineClass.ordinal(), Word.allOnes(), anchor, env, slashifiedName, classLoader, buffer, Address.fromInt(length));
+
         try {
             final byte[] bytes = new byte[length];
             Memory.readBytes(buffer, length, bytes);
@@ -330,7 +315,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("DefineClass");
+            logger.log(EntryPoints.DefineClass.ordinal(), Word.zero());
+
         }
     }
 
@@ -346,7 +332,8 @@ public final class JniFunctions {
     private static JniHandle FindClass(Pointer env, Pointer name) throws ClassNotFoundException {
         // Source: JniFunctionsSource.java:129
         Pointer anchor = prologue(env);
-        tracePrologue("FindClass", anchor);
+        logger.log(EntryPoints.FindClass.ordinal(), Word.allOnes(), anchor, env, name);
+
         try {
             String className;
             try {
@@ -365,7 +352,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("FindClass");
+            logger.log(EntryPoints.FindClass.ordinal(), Word.zero());
+
         }
     }
 
@@ -373,7 +361,8 @@ public final class JniFunctions {
     private static MethodID FromReflectedMethod(Pointer env, JniHandle reflectedMethod) {
         // Source: JniFunctionsSource.java:145
         Pointer anchor = prologue(env);
-        tracePrologue("FromReflectedMethod", anchor);
+        logger.log(EntryPoints.FromReflectedMethod.ordinal(), Word.allOnes(), anchor, env, reflectedMethod);
+
         try {
             final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
             return MethodID.fromMethodActor(methodActor);
@@ -382,7 +371,8 @@ public final class JniFunctions {
             return asMethodID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("FromReflectedMethod");
+            logger.log(EntryPoints.FromReflectedMethod.ordinal(), Word.zero());
+
         }
     }
 
@@ -390,7 +380,8 @@ public final class JniFunctions {
     private static FieldID FromReflectedField(Pointer env, JniHandle field) {
         // Source: JniFunctionsSource.java:151
         Pointer anchor = prologue(env);
-        tracePrologue("FromReflectedField", anchor);
+        logger.log(EntryPoints.FromReflectedField.ordinal(), Word.allOnes(), anchor, env, field);
+
         try {
             final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
             return FieldID.fromFieldActor(fieldActor);
@@ -399,7 +390,8 @@ public final class JniFunctions {
             return asFieldID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("FromReflectedField");
+            logger.log(EntryPoints.FromReflectedField.ordinal(), Word.zero());
+
         }
     }
 
@@ -415,7 +407,8 @@ public final class JniFunctions {
     private static JniHandle ToReflectedMethod(Pointer env, JniHandle javaClass, MethodID methodID, boolean isStatic) throws NoSuchMethodException {
         // Source: JniFunctionsSource.java:165
         Pointer anchor = prologue(env);
-        tracePrologue("ToReflectedMethod", anchor);
+        logger.log(EntryPoints.ToReflectedMethod.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, Address.fromInt(isStatic ? 1 : 0));
+
         try {
             return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
         } catch (Throwable t) {
@@ -423,7 +416,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ToReflectedMethod");
+            logger.log(EntryPoints.ToReflectedMethod.ordinal(), Word.zero());
+
         }
     }
 
@@ -431,7 +425,8 @@ public final class JniFunctions {
     private static JniHandle GetSuperclass(Pointer env, JniHandle subType) {
         // Source: JniFunctionsSource.java:170
         Pointer anchor = prologue(env);
-        tracePrologue("GetSuperclass", anchor);
+        logger.log(EntryPoints.GetSuperclass.ordinal(), Word.allOnes(), anchor, env, subType);
+
         try {
             return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
         } catch (Throwable t) {
@@ -439,7 +434,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetSuperclass");
+            logger.log(EntryPoints.GetSuperclass.ordinal(), Word.zero());
+
         }
     }
 
@@ -447,7 +443,8 @@ public final class JniFunctions {
     private static boolean IsAssignableFrom(Pointer env, JniHandle subType, JniHandle superType) {
         // Source: JniFunctionsSource.java:175
         Pointer anchor = prologue(env);
-        tracePrologue("IsAssignableFrom", anchor);
+        logger.log(EntryPoints.IsAssignableFrom.ordinal(), Word.allOnes(), anchor, env, subType, superType);
+
         try {
             return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
         } catch (Throwable t) {
@@ -455,7 +452,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsAssignableFrom");
+            logger.log(EntryPoints.IsAssignableFrom.ordinal(), Word.zero());
+
         }
     }
 
@@ -463,7 +461,8 @@ public final class JniFunctions {
     private static JniHandle ToReflectedField(Pointer env, JniHandle javaClass, FieldID fieldID, boolean isStatic) {
         // Source: JniFunctionsSource.java:180
         Pointer anchor = prologue(env);
-        tracePrologue("ToReflectedField", anchor);
+        logger.log(EntryPoints.ToReflectedField.ordinal(), Word.allOnes(), anchor, env, javaClass, fieldID, Address.fromInt(isStatic ? 1 : 0));
+
         try {
             final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
             if (fieldActor == null || fieldActor.isStatic() != isStatic) {
@@ -475,7 +474,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ToReflectedField");
+            logger.log(EntryPoints.ToReflectedField.ordinal(), Word.zero());
+
         }
     }
 
@@ -483,7 +483,8 @@ public final class JniFunctions {
     private static int Throw(Pointer env, JniHandle throwable) {
         // Source: JniFunctionsSource.java:189
         Pointer anchor = prologue(env);
-        tracePrologue("Throw", anchor);
+        logger.log(EntryPoints.Throw.ordinal(), Word.allOnes(), anchor, env, throwable);
+
         try {
             VmThread.fromJniEnv(env).setJniException((Throwable) throwable.unhand());
             return JNI_OK;
@@ -492,7 +493,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("Throw");
+            logger.log(EntryPoints.Throw.ordinal(), Word.zero());
+
         }
     }
 
@@ -500,7 +502,8 @@ public final class JniFunctions {
     private static int ThrowNew(Pointer env, JniHandle throwableClass, Pointer message) throws Throwable {
         // Source: JniFunctionsSource.java:195
         Pointer anchor = prologue(env);
-        tracePrologue("ThrowNew", anchor);
+        logger.log(EntryPoints.ThrowNew.ordinal(), Word.allOnes(), anchor, env, throwableClass, message);
+
         try {
             final Class<Class<? extends Throwable>> type = null;
             Constructor<? extends Throwable> constructor = null;
@@ -520,7 +523,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ThrowNew");
+            logger.log(EntryPoints.ThrowNew.ordinal(), Word.zero());
+
         }
     }
 
@@ -528,7 +532,8 @@ public final class JniFunctions {
     private static JniHandle ExceptionOccurred(Pointer env) {
         // Source: JniFunctionsSource.java:212
         Pointer anchor = prologue(env);
-        tracePrologue("ExceptionOccurred", anchor);
+        logger.log(EntryPoints.ExceptionOccurred.ordinal(), Word.allOnes(), anchor, env);
+
         try {
             return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).jniException());
         } catch (Throwable t) {
@@ -536,7 +541,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ExceptionOccurred");
+            logger.log(EntryPoints.ExceptionOccurred.ordinal(), Word.zero());
+
         }
     }
 
@@ -544,7 +550,8 @@ public final class JniFunctions {
     private static void ExceptionDescribe(Pointer env) {
         // Source: JniFunctionsSource.java:217
         Pointer anchor = prologue(env);
-        tracePrologue("ExceptionDescribe", anchor);
+        logger.log(EntryPoints.ExceptionDescribe.ordinal(), Word.allOnes(), anchor, env);
+
         try {
             final Throwable exception = VmThread.fromJniEnv(env).jniException();
             if (exception != null) {
@@ -554,7 +561,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ExceptionDescribe");
+            logger.log(EntryPoints.ExceptionDescribe.ordinal(), Word.zero());
+
         }
     }
 
@@ -562,14 +570,16 @@ public final class JniFunctions {
     private static void ExceptionClear(Pointer env) {
         // Source: JniFunctionsSource.java:225
         Pointer anchor = prologue(env);
-        tracePrologue("ExceptionClear", anchor);
+        logger.log(EntryPoints.ExceptionClear.ordinal(), Word.allOnes(), anchor, env);
+
         try {
             VmThread.fromJniEnv(env).setJniException(null);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ExceptionClear");
+            logger.log(EntryPoints.ExceptionClear.ordinal(), Word.zero());
+
         }
     }
 
@@ -577,7 +587,8 @@ public final class JniFunctions {
     private static void FatalError(Pointer env, Pointer message) {
         // Source: JniFunctionsSource.java:230
         Pointer anchor = prologue(env);
-        tracePrologue("FatalError", anchor);
+        logger.log(EntryPoints.FatalError.ordinal(), Word.allOnes(), anchor, env, message);
+
         try {
             try {
                 FatalError.unexpected(CString.utf8ToJava(message));
@@ -588,7 +599,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("FatalError");
+            logger.log(EntryPoints.FatalError.ordinal(), Word.zero());
+
         }
     }
 
@@ -601,7 +613,8 @@ public final class JniFunctions {
     private static int PushLocalFrame(Pointer env, int capacity) {
         // Source: JniFunctionsSource.java:244
         Pointer anchor = prologue(env);
-        tracePrologue("PushLocalFrame", anchor);
+        logger.log(EntryPoints.PushLocalFrame.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(capacity));
+
         try {
             JniHandles.pushLocalFrame(capacity);
             return JNI_OK;
@@ -610,7 +623,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("PushLocalFrame");
+            logger.log(EntryPoints.PushLocalFrame.ordinal(), Word.zero());
+
         }
     }
 
@@ -618,7 +632,8 @@ public final class JniFunctions {
     private static JniHandle PopLocalFrame(Pointer env, JniHandle res) {
         // Source: JniFunctionsSource.java:250
         Pointer anchor = prologue(env);
-        tracePrologue("PopLocalFrame", anchor);
+        logger.log(EntryPoints.PopLocalFrame.ordinal(), Word.allOnes(), anchor, env, res);
+
         try {
             return JniHandles.popLocalFrame(res);
         } catch (Throwable t) {
@@ -626,7 +641,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("PopLocalFrame");
+            logger.log(EntryPoints.PopLocalFrame.ordinal(), Word.zero());
+
         }
     }
 
@@ -634,7 +650,8 @@ public final class JniFunctions {
     private static JniHandle NewGlobalRef(Pointer env, JniHandle handle) {
         // Source: JniFunctionsSource.java:255
         Pointer anchor = prologue(env);
-        tracePrologue("NewGlobalRef", anchor);
+        logger.log(EntryPoints.NewGlobalRef.ordinal(), Word.allOnes(), anchor, env, handle);
+
         try {
             return JniHandles.createGlobalHandle(handle.unhand());
         } catch (Throwable t) {
@@ -642,7 +659,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewGlobalRef");
+            logger.log(EntryPoints.NewGlobalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -650,14 +668,16 @@ public final class JniFunctions {
     private static void DeleteGlobalRef(Pointer env, JniHandle handle) {
         // Source: JniFunctionsSource.java:260
         Pointer anchor = prologue(env);
-        tracePrologue("DeleteGlobalRef", anchor);
+        logger.log(EntryPoints.DeleteGlobalRef.ordinal(), Word.allOnes(), anchor, env, handle);
+
         try {
             JniHandles.destroyGlobalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("DeleteGlobalRef");
+            logger.log(EntryPoints.DeleteGlobalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -665,14 +685,16 @@ public final class JniFunctions {
     private static void DeleteLocalRef(Pointer env, JniHandle handle) {
         // Source: JniFunctionsSource.java:265
         Pointer anchor = prologue(env);
-        tracePrologue("DeleteLocalRef", anchor);
+        logger.log(EntryPoints.DeleteLocalRef.ordinal(), Word.allOnes(), anchor, env, handle);
+
         try {
             JniHandles.destroyLocalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("DeleteLocalRef");
+            logger.log(EntryPoints.DeleteLocalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -680,7 +702,8 @@ public final class JniFunctions {
     private static boolean IsSameObject(Pointer env, JniHandle object1, JniHandle object2) {
         // Source: JniFunctionsSource.java:270
         Pointer anchor = prologue(env);
-        tracePrologue("IsSameObject", anchor);
+        logger.log(EntryPoints.IsSameObject.ordinal(), Word.allOnes(), anchor, env, object1, object2);
+
         try {
             return object1.unhand() == object2.unhand();
         } catch (Throwable t) {
@@ -688,7 +711,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsSameObject");
+            logger.log(EntryPoints.IsSameObject.ordinal(), Word.zero());
+
         }
     }
 
@@ -696,7 +720,8 @@ public final class JniFunctions {
     private static JniHandle NewLocalRef(Pointer env, JniHandle object) {
         // Source: JniFunctionsSource.java:275
         Pointer anchor = prologue(env);
-        tracePrologue("NewLocalRef", anchor);
+        logger.log(EntryPoints.NewLocalRef.ordinal(), Word.allOnes(), anchor, env, object);
+
         try {
             return JniHandles.createLocalHandle(object.unhand());
         } catch (Throwable t) {
@@ -704,7 +729,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewLocalRef");
+            logger.log(EntryPoints.NewLocalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -712,7 +738,8 @@ public final class JniFunctions {
     private static int EnsureLocalCapacity(Pointer env, int capacity) {
         // Source: JniFunctionsSource.java:280
         Pointer anchor = prologue(env);
-        tracePrologue("EnsureLocalCapacity", anchor);
+        logger.log(EntryPoints.EnsureLocalCapacity.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(capacity));
+
         try {
             // If this call fails, it will be with an OutOfMemoryError which will be
             // set as the pending exception for the current thread
@@ -723,7 +750,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("EnsureLocalCapacity");
+            logger.log(EntryPoints.EnsureLocalCapacity.ordinal(), Word.zero());
+
         }
     }
 
@@ -739,7 +767,8 @@ public final class JniFunctions {
     private static JniHandle AllocObject(Pointer env, JniHandle javaClass) throws InstantiationException {
         // Source: JniFunctionsSource.java:296
         Pointer anchor = prologue(env);
-        tracePrologue("AllocObject", anchor);
+        logger.log(EntryPoints.AllocObject.ordinal(), Word.allOnes(), anchor, env, javaClass);
+
         try {
             return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
         } catch (Throwable t) {
@@ -747,7 +776,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("AllocObject");
+            logger.log(EntryPoints.AllocObject.ordinal(), Word.zero());
+
         }
     }
 
@@ -763,7 +793,8 @@ public final class JniFunctions {
     private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:307
         Pointer anchor = prologue(env);
-        tracePrologue("NewObjectA", anchor);
+        logger.log(EntryPoints.NewObjectA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
 
             final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
@@ -791,7 +822,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewObjectA");
+            logger.log(EntryPoints.NewObjectA.ordinal(), Word.zero());
+
         }
     }
 
@@ -799,7 +831,8 @@ public final class JniFunctions {
     private static JniHandle GetObjectClass(Pointer env, JniHandle object) {
         // Source: JniFunctionsSource.java:332
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectClass", anchor);
+        logger.log(EntryPoints.GetObjectClass.ordinal(), Word.allOnes(), anchor, env, object);
+
         try {
             final Class javaClass = object.unhand().getClass();
             return JniHandles.createLocalHandle(javaClass);
@@ -808,7 +841,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectClass");
+            logger.log(EntryPoints.GetObjectClass.ordinal(), Word.zero());
+
         }
     }
 
@@ -816,7 +850,8 @@ public final class JniFunctions {
     private static boolean IsInstanceOf(Pointer env, JniHandle object, JniHandle javaType) {
         // Source: JniFunctionsSource.java:338
         Pointer anchor = prologue(env);
-        tracePrologue("IsInstanceOf", anchor);
+        logger.log(EntryPoints.IsInstanceOf.ordinal(), Word.allOnes(), anchor, env, object, javaType);
+
         try {
             return ((Class) javaType.unhand()).isInstance(object.unhand());
         } catch (Throwable t) {
@@ -824,7 +859,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsInstanceOf");
+            logger.log(EntryPoints.IsInstanceOf.ordinal(), Word.zero());
+
         }
     }
 
@@ -832,7 +868,8 @@ public final class JniFunctions {
     private static MethodID GetMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         // Source: JniFunctionsSource.java:343
         Pointer anchor = prologue(env);
-        tracePrologue("GetMethodID", anchor);
+        logger.log(EntryPoints.GetMethodID.ordinal(), Word.allOnes(), anchor, env, javaType, nameCString, descriptorCString);
+
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             Snippets.makeClassInitialized(classActor);
@@ -858,7 +895,8 @@ public final class JniFunctions {
             return asMethodID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMethodID");
+            logger.log(EntryPoints.GetMethodID.ordinal(), Word.zero());
+
         }
     }
 
@@ -979,7 +1017,8 @@ public final class JniFunctions {
     private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:477
         Pointer anchor = prologue(env);
-        tracePrologue("CallObjectMethodA", anchor);
+        logger.log(EntryPoints.CallObjectMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments, Kind.REFERENCE).asObject());
         } catch (Throwable t) {
@@ -987,7 +1026,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallObjectMethodA");
+            logger.log(EntryPoints.CallObjectMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1003,7 +1043,8 @@ public final class JniFunctions {
     private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:488
         Pointer anchor = prologue(env);
-        tracePrologue("CallBooleanMethodA", anchor);
+        logger.log(EntryPoints.CallBooleanMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.BOOLEAN).asBoolean();
         } catch (Throwable t) {
@@ -1011,7 +1052,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallBooleanMethodA");
+            logger.log(EntryPoints.CallBooleanMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1027,7 +1069,8 @@ public final class JniFunctions {
     private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:499
         Pointer anchor = prologue(env);
-        tracePrologue("CallByteMethodA", anchor);
+        logger.log(EntryPoints.CallByteMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.BYTE).asByte();
         } catch (Throwable t) {
@@ -1035,7 +1078,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallByteMethodA");
+            logger.log(EntryPoints.CallByteMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1051,7 +1095,8 @@ public final class JniFunctions {
     private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:510
         Pointer anchor = prologue(env);
-        tracePrologue("CallCharMethodA", anchor);
+        logger.log(EntryPoints.CallCharMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.CHAR).asChar();
         } catch (Throwable t) {
@@ -1059,7 +1104,8 @@ public final class JniFunctions {
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallCharMethodA");
+            logger.log(EntryPoints.CallCharMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1075,7 +1121,8 @@ public final class JniFunctions {
     private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:521
         Pointer anchor = prologue(env);
-        tracePrologue("CallShortMethodA", anchor);
+        logger.log(EntryPoints.CallShortMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.SHORT).asShort();
         } catch (Throwable t) {
@@ -1083,7 +1130,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallShortMethodA");
+            logger.log(EntryPoints.CallShortMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1099,7 +1147,8 @@ public final class JniFunctions {
     private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:532
         Pointer anchor = prologue(env);
-        tracePrologue("CallIntMethodA", anchor);
+        logger.log(EntryPoints.CallIntMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.INT).asInt();
         } catch (Throwable t) {
@@ -1107,7 +1156,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallIntMethodA");
+            logger.log(EntryPoints.CallIntMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1123,7 +1173,8 @@ public final class JniFunctions {
     private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:543
         Pointer anchor = prologue(env);
-        tracePrologue("CallLongMethodA", anchor);
+        logger.log(EntryPoints.CallLongMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.LONG).asLong();
         } catch (Throwable t) {
@@ -1131,7 +1182,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallLongMethodA");
+            logger.log(EntryPoints.CallLongMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1147,7 +1199,8 @@ public final class JniFunctions {
     private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:554
         Pointer anchor = prologue(env);
-        tracePrologue("CallFloatMethodA", anchor);
+        logger.log(EntryPoints.CallFloatMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.FLOAT).asFloat();
         } catch (Throwable t) {
@@ -1155,7 +1208,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallFloatMethodA");
+            logger.log(EntryPoints.CallFloatMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1171,7 +1225,8 @@ public final class JniFunctions {
     private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:565
         Pointer anchor = prologue(env);
-        tracePrologue("CallDoubleMethodA", anchor);
+        logger.log(EntryPoints.CallDoubleMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.DOUBLE).asDouble();
         } catch (Throwable t) {
@@ -1179,7 +1234,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallDoubleMethodA");
+            logger.log(EntryPoints.CallDoubleMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1215,14 +1271,16 @@ public final class JniFunctions {
     private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:596
         Pointer anchor = prologue(env);
-        tracePrologue("CallVoidMethodA", anchor);
+        logger.log(EntryPoints.CallVoidMethodA.ordinal(), Word.allOnes(), anchor, env, object, methodID, arguments);
+
         try {
             CallValueMethodA(env, object, methodID, arguments, Kind.VOID);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallVoidMethodA");
+            logger.log(EntryPoints.CallVoidMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1238,7 +1296,8 @@ public final class JniFunctions {
     private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:607
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualObjectMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualObjectMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
         } catch (Throwable t) {
@@ -1246,7 +1305,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualObjectMethodA");
+            logger.log(EntryPoints.CallNonvirtualObjectMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1262,7 +1322,8 @@ public final class JniFunctions {
     private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:618
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualBooleanMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualBooleanMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
         } catch (Throwable t) {
@@ -1270,7 +1331,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualBooleanMethodA");
+            logger.log(EntryPoints.CallNonvirtualBooleanMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1286,7 +1348,8 @@ public final class JniFunctions {
     private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:629
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualByteMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualByteMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BYTE).asByte();
         } catch (Throwable t) {
@@ -1294,7 +1357,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualByteMethodA");
+            logger.log(EntryPoints.CallNonvirtualByteMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1310,7 +1374,8 @@ public final class JniFunctions {
     private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:640
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualCharMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualCharMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.CHAR).asChar();
         } catch (Throwable t) {
@@ -1318,7 +1383,8 @@ public final class JniFunctions {
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualCharMethodA");
+            logger.log(EntryPoints.CallNonvirtualCharMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1334,7 +1400,8 @@ public final class JniFunctions {
     private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:651
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualShortMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualShortMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.SHORT).asShort();
         } catch (Throwable t) {
@@ -1342,7 +1409,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualShortMethodA");
+            logger.log(EntryPoints.CallNonvirtualShortMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1358,7 +1426,8 @@ public final class JniFunctions {
     private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:662
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualIntMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualIntMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.INT).asInt();
         } catch (Throwable t) {
@@ -1366,7 +1435,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualIntMethodA");
+            logger.log(EntryPoints.CallNonvirtualIntMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1382,7 +1452,8 @@ public final class JniFunctions {
     private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:673
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualLongMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualLongMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.LONG).asLong();
         } catch (Throwable t) {
@@ -1390,7 +1461,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualLongMethodA");
+            logger.log(EntryPoints.CallNonvirtualLongMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1406,7 +1478,8 @@ public final class JniFunctions {
     private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:684
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualFloatMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualFloatMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
         } catch (Throwable t) {
@@ -1414,7 +1487,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualFloatMethodA");
+            logger.log(EntryPoints.CallNonvirtualFloatMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1430,7 +1504,8 @@ public final class JniFunctions {
     private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:695
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualDoubleMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualDoubleMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
         } catch (Throwable t) {
@@ -1438,7 +1513,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualDoubleMethodA");
+            logger.log(EntryPoints.CallNonvirtualDoubleMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1454,14 +1530,16 @@ public final class JniFunctions {
     private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:706
         Pointer anchor = prologue(env);
-        tracePrologue("CallNonvirtualVoidMethodA", anchor);
+        logger.log(EntryPoints.CallNonvirtualVoidMethodA.ordinal(), Word.allOnes(), anchor, env, object, javaClass, methodID, arguments);
+
         try {
             CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.VOID);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallNonvirtualVoidMethodA");
+            logger.log(EntryPoints.CallNonvirtualVoidMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1469,7 +1547,8 @@ public final class JniFunctions {
     private static FieldID GetFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         // Source: JniFunctionsSource.java:711
         Pointer anchor = prologue(env);
-        tracePrologue("GetFieldID", anchor);
+        logger.log(EntryPoints.GetFieldID.ordinal(), Word.allOnes(), anchor, env, javaType, nameCString, descriptorCString);
+
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             Snippets.makeClassInitialized(classActor);
@@ -1496,7 +1575,8 @@ public final class JniFunctions {
             return asFieldID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFieldID");
+            logger.log(EntryPoints.GetFieldID.ordinal(), Word.zero());
+
         }
     }
 
@@ -1504,7 +1584,8 @@ public final class JniFunctions {
     private static JniHandle GetObjectField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:735
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectField", anchor);
+        logger.log(EntryPoints.GetObjectField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(object.unhand()));
         } catch (Throwable t) {
@@ -1512,7 +1593,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectField");
+            logger.log(EntryPoints.GetObjectField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1520,7 +1602,8 @@ public final class JniFunctions {
     private static boolean GetBooleanField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:740
         Pointer anchor = prologue(env);
-        tracePrologue("GetBooleanField", anchor);
+        logger.log(EntryPoints.GetBooleanField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(object.unhand());
         } catch (Throwable t) {
@@ -1528,7 +1611,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetBooleanField");
+            logger.log(EntryPoints.GetBooleanField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1536,7 +1620,8 @@ public final class JniFunctions {
     private static byte GetByteField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:745
         Pointer anchor = prologue(env);
-        tracePrologue("GetByteField", anchor);
+        logger.log(EntryPoints.GetByteField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getByte(object.unhand());
         } catch (Throwable t) {
@@ -1544,7 +1629,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetByteField");
+            logger.log(EntryPoints.GetByteField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1552,7 +1638,8 @@ public final class JniFunctions {
     private static char GetCharField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:750
         Pointer anchor = prologue(env);
-        tracePrologue("GetCharField", anchor);
+        logger.log(EntryPoints.GetCharField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getChar(object.unhand());
         } catch (Throwable t) {
@@ -1560,7 +1647,8 @@ public final class JniFunctions {
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCharField");
+            logger.log(EntryPoints.GetCharField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1568,7 +1656,8 @@ public final class JniFunctions {
     private static short GetShortField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:755
         Pointer anchor = prologue(env);
-        tracePrologue("GetShortField", anchor);
+        logger.log(EntryPoints.GetShortField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getShort(object.unhand());
         } catch (Throwable t) {
@@ -1576,7 +1665,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetShortField");
+            logger.log(EntryPoints.GetShortField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1584,7 +1674,8 @@ public final class JniFunctions {
     private static int GetIntField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:760
         Pointer anchor = prologue(env);
-        tracePrologue("GetIntField", anchor);
+        logger.log(EntryPoints.GetIntField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getInt(object.unhand());
         } catch (Throwable t) {
@@ -1592,7 +1683,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetIntField");
+            logger.log(EntryPoints.GetIntField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1600,7 +1692,8 @@ public final class JniFunctions {
     private static long GetLongField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:765
         Pointer anchor = prologue(env);
-        tracePrologue("GetLongField", anchor);
+        logger.log(EntryPoints.GetLongField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getLong(object.unhand());
         } catch (Throwable t) {
@@ -1608,7 +1701,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLongField");
+            logger.log(EntryPoints.GetLongField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1616,7 +1710,8 @@ public final class JniFunctions {
     private static float GetFloatField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:770
         Pointer anchor = prologue(env);
-        tracePrologue("GetFloatField", anchor);
+        logger.log(EntryPoints.GetFloatField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getFloat(object.unhand());
         } catch (Throwable t) {
@@ -1624,7 +1719,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFloatField");
+            logger.log(EntryPoints.GetFloatField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1632,7 +1728,8 @@ public final class JniFunctions {
     private static double GetDoubleField(Pointer env, JniHandle object, FieldID fieldID) {
         // Source: JniFunctionsSource.java:775
         Pointer anchor = prologue(env);
-        tracePrologue("GetDoubleField", anchor);
+        logger.log(EntryPoints.GetDoubleField.ordinal(), Word.allOnes(), anchor, env, object, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getDouble(object.unhand());
         } catch (Throwable t) {
@@ -1640,7 +1737,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetDoubleField");
+            logger.log(EntryPoints.GetDoubleField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1648,14 +1746,16 @@ public final class JniFunctions {
     private static void SetObjectField(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
         // Source: JniFunctionsSource.java:780
         Pointer anchor = prologue(env);
-        tracePrologue("SetObjectField", anchor);
+        logger.log(EntryPoints.SetObjectField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, value);
+
         try {
             FieldID.toFieldActor(fieldID).setObject(object.unhand(), value.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetObjectField");
+            logger.log(EntryPoints.SetObjectField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1663,14 +1763,16 @@ public final class JniFunctions {
     private static void SetBooleanField(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
         // Source: JniFunctionsSource.java:785
         Pointer anchor = prologue(env);
-        tracePrologue("SetBooleanField", anchor);
+        logger.log(EntryPoints.SetBooleanField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(value ? 1 : 0));
+
         try {
             FieldID.toFieldActor(fieldID).setBoolean(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetBooleanField");
+            logger.log(EntryPoints.SetBooleanField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1678,14 +1780,16 @@ public final class JniFunctions {
     private static void SetByteField(Pointer env, JniHandle object, FieldID fieldID, byte value) {
         // Source: JniFunctionsSource.java:790
         Pointer anchor = prologue(env);
-        tracePrologue("SetByteField", anchor);
+        logger.log(EntryPoints.SetByteField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setByte(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetByteField");
+            logger.log(EntryPoints.SetByteField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1693,14 +1797,16 @@ public final class JniFunctions {
     private static void SetCharField(Pointer env, JniHandle object, FieldID fieldID, char value) {
         // Source: JniFunctionsSource.java:795
         Pointer anchor = prologue(env);
-        tracePrologue("SetCharField", anchor);
+        logger.log(EntryPoints.SetCharField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setChar(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetCharField");
+            logger.log(EntryPoints.SetCharField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1708,14 +1814,16 @@ public final class JniFunctions {
     private static void SetShortField(Pointer env, JniHandle object, FieldID fieldID, short value) {
         // Source: JniFunctionsSource.java:800
         Pointer anchor = prologue(env);
-        tracePrologue("SetShortField", anchor);
+        logger.log(EntryPoints.SetShortField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setShort(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetShortField");
+            logger.log(EntryPoints.SetShortField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1723,14 +1831,16 @@ public final class JniFunctions {
     private static void SetIntField(Pointer env, JniHandle object, FieldID fieldID, int value) {
         // Source: JniFunctionsSource.java:805
         Pointer anchor = prologue(env);
-        tracePrologue("SetIntField", anchor);
+        logger.log(EntryPoints.SetIntField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setInt(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetIntField");
+            logger.log(EntryPoints.SetIntField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1738,14 +1848,16 @@ public final class JniFunctions {
     private static void SetLongField(Pointer env, JniHandle object, FieldID fieldID, long value) {
         // Source: JniFunctionsSource.java:810
         Pointer anchor = prologue(env);
-        tracePrologue("SetLongField", anchor);
+        logger.log(EntryPoints.SetLongField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromLong(value));
+
         try {
             FieldID.toFieldActor(fieldID).setLong(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLongField");
+            logger.log(EntryPoints.SetLongField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1753,14 +1865,16 @@ public final class JniFunctions {
     private static void SetFloatField(Pointer env, JniHandle object, FieldID fieldID, float value) {
         // Source: JniFunctionsSource.java:815
         Pointer anchor = prologue(env);
-        tracePrologue("SetFloatField", anchor);
+        logger.log(EntryPoints.SetFloatField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromInt(Float.floatToRawIntBits(value)));
+
         try {
             FieldID.toFieldActor(fieldID).setFloat(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetFloatField");
+            logger.log(EntryPoints.SetFloatField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1768,14 +1882,16 @@ public final class JniFunctions {
     private static void SetDoubleField(Pointer env, JniHandle object, FieldID fieldID, double value) {
         // Source: JniFunctionsSource.java:820
         Pointer anchor = prologue(env);
-        tracePrologue("SetDoubleField", anchor);
+        logger.log(EntryPoints.SetDoubleField.ordinal(), Word.allOnes(), anchor, env, object, fieldID, Address.fromLong(Double.doubleToRawLongBits(value)));
+
         try {
             FieldID.toFieldActor(fieldID).setDouble(object.unhand(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetDoubleField");
+            logger.log(EntryPoints.SetDoubleField.ordinal(), Word.zero());
+
         }
     }
 
@@ -1783,7 +1899,8 @@ public final class JniFunctions {
     private static MethodID GetStaticMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         // Source: JniFunctionsSource.java:825
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticMethodID", anchor);
+        logger.log(EntryPoints.GetStaticMethodID.ordinal(), Word.allOnes(), anchor, env, javaType, nameCString, descriptorCString);
+
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             Snippets.makeClassInitialized(classActor);
@@ -1809,7 +1926,8 @@ public final class JniFunctions {
             return asMethodID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticMethodID");
+            logger.log(EntryPoints.GetStaticMethodID.ordinal(), Word.zero());
+
         }
     }
 
@@ -1849,7 +1967,8 @@ public final class JniFunctions {
     private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:878
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticObjectMethodA", anchor);
+        logger.log(EntryPoints.CallStaticObjectMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
         } catch (Throwable t) {
@@ -1857,7 +1976,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticObjectMethodA");
+            logger.log(EntryPoints.CallStaticObjectMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1873,7 +1993,8 @@ public final class JniFunctions {
     private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:889
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticBooleanMethodA", anchor);
+        logger.log(EntryPoints.CallStaticBooleanMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
         } catch (Throwable t) {
@@ -1881,7 +2002,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticBooleanMethodA");
+            logger.log(EntryPoints.CallStaticBooleanMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1897,7 +2019,8 @@ public final class JniFunctions {
     private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:900
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticByteMethodA", anchor);
+        logger.log(EntryPoints.CallStaticByteMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BYTE).asByte();
         } catch (Throwable t) {
@@ -1905,7 +2028,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticByteMethodA");
+            logger.log(EntryPoints.CallStaticByteMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1921,7 +2045,8 @@ public final class JniFunctions {
     private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:911
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticCharMethodA", anchor);
+        logger.log(EntryPoints.CallStaticCharMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.CHAR).asChar();
         } catch (Throwable t) {
@@ -1929,7 +2054,8 @@ public final class JniFunctions {
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticCharMethodA");
+            logger.log(EntryPoints.CallStaticCharMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1945,7 +2071,8 @@ public final class JniFunctions {
     private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:922
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticShortMethodA", anchor);
+        logger.log(EntryPoints.CallStaticShortMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.SHORT).asShort();
         } catch (Throwable t) {
@@ -1953,7 +2080,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticShortMethodA");
+            logger.log(EntryPoints.CallStaticShortMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1969,7 +2097,8 @@ public final class JniFunctions {
     private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:933
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticIntMethodA", anchor);
+        logger.log(EntryPoints.CallStaticIntMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.INT).asInt();
         } catch (Throwable t) {
@@ -1977,7 +2106,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticIntMethodA");
+            logger.log(EntryPoints.CallStaticIntMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -1993,7 +2123,8 @@ public final class JniFunctions {
     private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:944
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticLongMethodA", anchor);
+        logger.log(EntryPoints.CallStaticLongMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.LONG).asLong();
         } catch (Throwable t) {
@@ -2001,7 +2132,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticLongMethodA");
+            logger.log(EntryPoints.CallStaticLongMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -2017,7 +2149,8 @@ public final class JniFunctions {
     private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:955
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticFloatMethodA", anchor);
+        logger.log(EntryPoints.CallStaticFloatMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
         } catch (Throwable t) {
@@ -2025,7 +2158,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticFloatMethodA");
+            logger.log(EntryPoints.CallStaticFloatMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -2041,7 +2175,8 @@ public final class JniFunctions {
     private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:966
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticDoubleMethodA", anchor);
+        logger.log(EntryPoints.CallStaticDoubleMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
         } catch (Throwable t) {
@@ -2049,7 +2184,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticDoubleMethodA");
+            logger.log(EntryPoints.CallStaticDoubleMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -2065,14 +2201,16 @@ public final class JniFunctions {
     private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         // Source: JniFunctionsSource.java:977
         Pointer anchor = prologue(env);
-        tracePrologue("CallStaticVoidMethodA", anchor);
+        logger.log(EntryPoints.CallStaticVoidMethodA.ordinal(), Word.allOnes(), anchor, env, javaClass, methodID, arguments);
+
         try {
             CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.VOID);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("CallStaticVoidMethodA");
+            logger.log(EntryPoints.CallStaticVoidMethodA.ordinal(), Word.zero());
+
         }
     }
 
@@ -2080,7 +2218,8 @@ public final class JniFunctions {
     private static FieldID GetStaticFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         // Source: JniFunctionsSource.java:982
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticFieldID", anchor);
+        logger.log(EntryPoints.GetStaticFieldID.ordinal(), Word.allOnes(), anchor, env, javaType, nameCString, descriptorCString);
+
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             Snippets.makeClassInitialized(classActor);
@@ -2106,7 +2245,8 @@ public final class JniFunctions {
             return asFieldID(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticFieldID");
+            logger.log(EntryPoints.GetStaticFieldID.ordinal(), Word.zero());
+
         }
     }
 
@@ -2114,7 +2254,8 @@ public final class JniFunctions {
     private static JniHandle GetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1005
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticObjectField", anchor);
+        logger.log(EntryPoints.GetStaticObjectField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(null));
         } catch (Throwable t) {
@@ -2122,7 +2263,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticObjectField");
+            logger.log(EntryPoints.GetStaticObjectField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2130,7 +2272,8 @@ public final class JniFunctions {
     private static boolean GetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1010
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticBooleanField", anchor);
+        logger.log(EntryPoints.GetStaticBooleanField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(null);
         } catch (Throwable t) {
@@ -2138,7 +2281,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticBooleanField");
+            logger.log(EntryPoints.GetStaticBooleanField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2146,7 +2290,8 @@ public final class JniFunctions {
     private static byte GetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1015
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticByteField", anchor);
+        logger.log(EntryPoints.GetStaticByteField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getByte(null);
         } catch (Throwable t) {
@@ -2154,7 +2299,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticByteField");
+            logger.log(EntryPoints.GetStaticByteField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2162,7 +2308,8 @@ public final class JniFunctions {
     private static char GetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1020
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticCharField", anchor);
+        logger.log(EntryPoints.GetStaticCharField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getChar(null);
         } catch (Throwable t) {
@@ -2170,7 +2317,8 @@ public final class JniFunctions {
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticCharField");
+            logger.log(EntryPoints.GetStaticCharField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2178,7 +2326,8 @@ public final class JniFunctions {
     private static short GetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1025
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticShortField", anchor);
+        logger.log(EntryPoints.GetStaticShortField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getShort(null);
         } catch (Throwable t) {
@@ -2186,7 +2335,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticShortField");
+            logger.log(EntryPoints.GetStaticShortField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2194,7 +2344,8 @@ public final class JniFunctions {
     private static int GetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1030
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticIntField", anchor);
+        logger.log(EntryPoints.GetStaticIntField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getInt(null);
         } catch (Throwable t) {
@@ -2202,7 +2353,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticIntField");
+            logger.log(EntryPoints.GetStaticIntField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2210,7 +2362,8 @@ public final class JniFunctions {
     private static long GetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1035
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticLongField", anchor);
+        logger.log(EntryPoints.GetStaticLongField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getLong(null);
         } catch (Throwable t) {
@@ -2218,7 +2371,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticLongField");
+            logger.log(EntryPoints.GetStaticLongField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2226,7 +2380,8 @@ public final class JniFunctions {
     private static float GetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1040
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticFloatField", anchor);
+        logger.log(EntryPoints.GetStaticFloatField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getFloat(null);
         } catch (Throwable t) {
@@ -2234,7 +2389,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticFloatField");
+            logger.log(EntryPoints.GetStaticFloatField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2242,7 +2398,8 @@ public final class JniFunctions {
     private static double GetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID) {
         // Source: JniFunctionsSource.java:1045
         Pointer anchor = prologue(env);
-        tracePrologue("GetStaticDoubleField", anchor);
+        logger.log(EntryPoints.GetStaticDoubleField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID);
+
         try {
             return FieldID.toFieldActor(fieldID).getDouble(null);
         } catch (Throwable t) {
@@ -2250,7 +2407,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStaticDoubleField");
+            logger.log(EntryPoints.GetStaticDoubleField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2258,14 +2416,16 @@ public final class JniFunctions {
     private static void SetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
         // Source: JniFunctionsSource.java:1050
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticObjectField", anchor);
+        logger.log(EntryPoints.SetStaticObjectField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, value);
+
         try {
             FieldID.toFieldActor(fieldID).setObject(null, value.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticObjectField");
+            logger.log(EntryPoints.SetStaticObjectField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2273,14 +2433,16 @@ public final class JniFunctions {
     private static void SetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
         // Source: JniFunctionsSource.java:1055
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticBooleanField", anchor);
+        logger.log(EntryPoints.SetStaticBooleanField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(value ? 1 : 0));
+
         try {
             FieldID.toFieldActor(fieldID).setBoolean(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticBooleanField");
+            logger.log(EntryPoints.SetStaticBooleanField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2288,14 +2450,16 @@ public final class JniFunctions {
     private static void SetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
         // Source: JniFunctionsSource.java:1060
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticByteField", anchor);
+        logger.log(EntryPoints.SetStaticByteField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setByte(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticByteField");
+            logger.log(EntryPoints.SetStaticByteField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2303,14 +2467,16 @@ public final class JniFunctions {
     private static void SetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
         // Source: JniFunctionsSource.java:1065
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticCharField", anchor);
+        logger.log(EntryPoints.SetStaticCharField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setChar(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticCharField");
+            logger.log(EntryPoints.SetStaticCharField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2318,14 +2484,16 @@ public final class JniFunctions {
     private static void SetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
         // Source: JniFunctionsSource.java:1070
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticShortField", anchor);
+        logger.log(EntryPoints.SetStaticShortField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setShort(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticShortField");
+            logger.log(EntryPoints.SetStaticShortField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2333,14 +2501,16 @@ public final class JniFunctions {
     private static void SetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
         // Source: JniFunctionsSource.java:1075
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticIntField", anchor);
+        logger.log(EntryPoints.SetStaticIntField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(value));
+
         try {
             FieldID.toFieldActor(fieldID).setInt(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticIntField");
+            logger.log(EntryPoints.SetStaticIntField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2348,14 +2518,16 @@ public final class JniFunctions {
     private static void SetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
         // Source: JniFunctionsSource.java:1080
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticLongField", anchor);
+        logger.log(EntryPoints.SetStaticLongField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromLong(value));
+
         try {
             FieldID.toFieldActor(fieldID).setLong(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticLongField");
+            logger.log(EntryPoints.SetStaticLongField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2363,14 +2535,16 @@ public final class JniFunctions {
     private static void SetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
         // Source: JniFunctionsSource.java:1085
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticFloatField", anchor);
+        logger.log(EntryPoints.SetStaticFloatField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromInt(Float.floatToRawIntBits(value)));
+
         try {
             FieldID.toFieldActor(fieldID).setFloat(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticFloatField");
+            logger.log(EntryPoints.SetStaticFloatField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2378,14 +2552,16 @@ public final class JniFunctions {
     private static void SetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
         // Source: JniFunctionsSource.java:1090
         Pointer anchor = prologue(env);
-        tracePrologue("SetStaticDoubleField", anchor);
+        logger.log(EntryPoints.SetStaticDoubleField.ordinal(), Word.allOnes(), anchor, env, javaType, fieldID, Address.fromLong(Double.doubleToRawLongBits(value)));
+
         try {
             FieldID.toFieldActor(fieldID).setDouble(null, value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetStaticDoubleField");
+            logger.log(EntryPoints.SetStaticDoubleField.ordinal(), Word.zero());
+
         }
     }
 
@@ -2393,7 +2569,8 @@ public final class JniFunctions {
     private static JniHandle NewString(Pointer env, Pointer chars, int length) {
         // Source: JniFunctionsSource.java:1095
         Pointer anchor = prologue(env);
-        tracePrologue("NewString", anchor);
+        logger.log(EntryPoints.NewString.ordinal(), Word.allOnes(), anchor, env, chars, Address.fromInt(length));
+
         try {
             final char[] charArray = new char[length];
             for (int i = 0; i < length; i++) {
@@ -2405,7 +2582,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewString");
+            logger.log(EntryPoints.NewString.ordinal(), Word.zero());
+
         }
     }
 
@@ -2413,7 +2591,8 @@ public final class JniFunctions {
     private static int GetStringLength(Pointer env, JniHandle string) {
         // Source: JniFunctionsSource.java:1104
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringLength", anchor);
+        logger.log(EntryPoints.GetStringLength.ordinal(), Word.allOnes(), anchor, env, string);
+
         try {
             return ((String) string.unhand()).length();
         } catch (Throwable t) {
@@ -2421,7 +2600,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringLength");
+            logger.log(EntryPoints.GetStringLength.ordinal(), Word.zero());
+
         }
     }
 
@@ -2429,7 +2609,8 @@ public final class JniFunctions {
     private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1109
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringChars", anchor);
+        logger.log(EntryPoints.GetStringChars.ordinal(), Word.allOnes(), anchor, env, string, isCopy);
+
         try {
             setCopyPointer(isCopy, true);
             return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
@@ -2438,7 +2619,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringChars");
+            logger.log(EntryPoints.GetStringChars.ordinal(), Word.zero());
+
         }
     }
 
@@ -2446,14 +2628,16 @@ public final class JniFunctions {
     private static void ReleaseStringChars(Pointer env, JniHandle string, Pointer chars) {
         // Source: JniFunctionsSource.java:1115
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseStringChars", anchor);
+        logger.log(EntryPoints.ReleaseStringChars.ordinal(), Word.allOnes(), anchor, env, string, chars);
+
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseStringChars");
+            logger.log(EntryPoints.ReleaseStringChars.ordinal(), Word.zero());
+
         }
     }
 
@@ -2461,7 +2645,8 @@ public final class JniFunctions {
     private static JniHandle NewStringUTF(Pointer env, Pointer utf) {
         // Source: JniFunctionsSource.java:1120
         Pointer anchor = prologue(env);
-        tracePrologue("NewStringUTF", anchor);
+        logger.log(EntryPoints.NewStringUTF.ordinal(), Word.allOnes(), anchor, env, utf);
+
         try {
             try {
                 return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
@@ -2473,7 +2658,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewStringUTF");
+            logger.log(EntryPoints.NewStringUTF.ordinal(), Word.zero());
+
         }
     }
 
@@ -2481,7 +2667,8 @@ public final class JniFunctions {
     private static int GetStringUTFLength(Pointer env, JniHandle string) {
         // Source: JniFunctionsSource.java:1129
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringUTFLength", anchor);
+        logger.log(EntryPoints.GetStringUTFLength.ordinal(), Word.allOnes(), anchor, env, string);
+
         try {
             return Utf8.utf8Length((String) string.unhand());
         } catch (Throwable t) {
@@ -2489,7 +2676,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringUTFLength");
+            logger.log(EntryPoints.GetStringUTFLength.ordinal(), Word.zero());
+
         }
     }
 
@@ -2497,7 +2685,8 @@ public final class JniFunctions {
     private static Pointer GetStringUTFChars(Pointer env, JniHandle string, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1134
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringUTFChars", anchor);
+        logger.log(EntryPoints.GetStringUTFChars.ordinal(), Word.allOnes(), anchor, env, string, isCopy);
+
         try {
             setCopyPointer(isCopy, true);
             return CString.utf8FromJava((String) string.unhand());
@@ -2506,7 +2695,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringUTFChars");
+            logger.log(EntryPoints.GetStringUTFChars.ordinal(), Word.zero());
+
         }
     }
 
@@ -2514,14 +2704,16 @@ public final class JniFunctions {
     private static void ReleaseStringUTFChars(Pointer env, JniHandle string, Pointer chars) {
         // Source: JniFunctionsSource.java:1140
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseStringUTFChars", anchor);
+        logger.log(EntryPoints.ReleaseStringUTFChars.ordinal(), Word.allOnes(), anchor, env, string, chars);
+
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseStringUTFChars");
+            logger.log(EntryPoints.ReleaseStringUTFChars.ordinal(), Word.zero());
+
         }
     }
 
@@ -2529,7 +2721,8 @@ public final class JniFunctions {
     private static int GetArrayLength(Pointer env, JniHandle array) {
         // Source: JniFunctionsSource.java:1145
         Pointer anchor = prologue(env);
-        tracePrologue("GetArrayLength", anchor);
+        logger.log(EntryPoints.GetArrayLength.ordinal(), Word.allOnes(), anchor, env, array);
+
         try {
             return Array.getLength(array.unhand());
         } catch (Throwable t) {
@@ -2537,7 +2730,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetArrayLength");
+            logger.log(EntryPoints.GetArrayLength.ordinal(), Word.zero());
+
         }
     }
 
@@ -2545,7 +2739,8 @@ public final class JniFunctions {
     private static JniHandle NewObjectArray(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
         // Source: JniFunctionsSource.java:1150
         Pointer anchor = prologue(env);
-        tracePrologue("NewObjectArray", anchor);
+        logger.log(EntryPoints.NewObjectArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length), elementType, initialElementValue);
+
         try {
             final Object array = Array.newInstance((Class) elementType.unhand(), length);
             final Object initialValue = initialElementValue.unhand();
@@ -2558,7 +2753,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewObjectArray");
+            logger.log(EntryPoints.NewObjectArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2566,7 +2762,8 @@ public final class JniFunctions {
     private static JniHandle GetObjectArrayElement(Pointer env, JniHandle array, int index) {
         // Source: JniFunctionsSource.java:1160
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectArrayElement", anchor);
+        logger.log(EntryPoints.GetObjectArrayElement.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(index));
+
         try {
             return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
         } catch (Throwable t) {
@@ -2574,7 +2771,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectArrayElement");
+            logger.log(EntryPoints.GetObjectArrayElement.ordinal(), Word.zero());
+
         }
     }
 
@@ -2582,14 +2780,16 @@ public final class JniFunctions {
     private static void SetObjectArrayElement(Pointer env, JniHandle array, int index, JniHandle value) {
         // Source: JniFunctionsSource.java:1165
         Pointer anchor = prologue(env);
-        tracePrologue("SetObjectArrayElement", anchor);
+        logger.log(EntryPoints.SetObjectArrayElement.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(index), value);
+
         try {
             ((Object[]) array.unhand())[index] = value.unhand();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetObjectArrayElement");
+            logger.log(EntryPoints.SetObjectArrayElement.ordinal(), Word.zero());
+
         }
     }
 
@@ -2597,7 +2797,8 @@ public final class JniFunctions {
     private static JniHandle NewBooleanArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1170
         Pointer anchor = prologue(env);
-        tracePrologue("NewBooleanArray", anchor);
+        logger.log(EntryPoints.NewBooleanArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new boolean[length]);
         } catch (Throwable t) {
@@ -2605,7 +2806,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewBooleanArray");
+            logger.log(EntryPoints.NewBooleanArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2613,7 +2815,8 @@ public final class JniFunctions {
     private static JniHandle NewByteArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1175
         Pointer anchor = prologue(env);
-        tracePrologue("NewByteArray", anchor);
+        logger.log(EntryPoints.NewByteArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new byte[length]);
         } catch (Throwable t) {
@@ -2621,7 +2824,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewByteArray");
+            logger.log(EntryPoints.NewByteArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2629,7 +2833,8 @@ public final class JniFunctions {
     private static JniHandle NewCharArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1180
         Pointer anchor = prologue(env);
-        tracePrologue("NewCharArray", anchor);
+        logger.log(EntryPoints.NewCharArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new char[length]);
         } catch (Throwable t) {
@@ -2637,7 +2842,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewCharArray");
+            logger.log(EntryPoints.NewCharArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2645,7 +2851,8 @@ public final class JniFunctions {
     private static JniHandle NewShortArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1185
         Pointer anchor = prologue(env);
-        tracePrologue("NewShortArray", anchor);
+        logger.log(EntryPoints.NewShortArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new short[length]);
         } catch (Throwable t) {
@@ -2653,7 +2860,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewShortArray");
+            logger.log(EntryPoints.NewShortArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2661,7 +2869,8 @@ public final class JniFunctions {
     private static JniHandle NewIntArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1190
         Pointer anchor = prologue(env);
-        tracePrologue("NewIntArray", anchor);
+        logger.log(EntryPoints.NewIntArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new int[length]);
         } catch (Throwable t) {
@@ -2669,7 +2878,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewIntArray");
+            logger.log(EntryPoints.NewIntArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2677,7 +2887,8 @@ public final class JniFunctions {
     private static JniHandle NewLongArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1195
         Pointer anchor = prologue(env);
-        tracePrologue("NewLongArray", anchor);
+        logger.log(EntryPoints.NewLongArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new long[length]);
         } catch (Throwable t) {
@@ -2685,7 +2896,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewLongArray");
+            logger.log(EntryPoints.NewLongArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2693,7 +2905,8 @@ public final class JniFunctions {
     private static JniHandle NewFloatArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1200
         Pointer anchor = prologue(env);
-        tracePrologue("NewFloatArray", anchor);
+        logger.log(EntryPoints.NewFloatArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new float[length]);
         } catch (Throwable t) {
@@ -2701,7 +2914,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewFloatArray");
+            logger.log(EntryPoints.NewFloatArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2709,7 +2923,8 @@ public final class JniFunctions {
     private static JniHandle NewDoubleArray(Pointer env, int length) {
         // Source: JniFunctionsSource.java:1205
         Pointer anchor = prologue(env);
-        tracePrologue("NewDoubleArray", anchor);
+        logger.log(EntryPoints.NewDoubleArray.ordinal(), Word.allOnes(), anchor, env, Address.fromInt(length));
+
         try {
             return JniHandles.createLocalHandle(new double[length]);
         } catch (Throwable t) {
@@ -2717,7 +2932,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewDoubleArray");
+            logger.log(EntryPoints.NewDoubleArray.ordinal(), Word.zero());
+
         }
     }
 
@@ -2725,7 +2941,8 @@ public final class JniFunctions {
     private static Pointer GetBooleanArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1210
         Pointer anchor = prologue(env);
-        tracePrologue("GetBooleanArrayElements", anchor);
+        logger.log(EntryPoints.GetBooleanArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getBooleanArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2733,7 +2950,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetBooleanArrayElements");
+            logger.log(EntryPoints.GetBooleanArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2751,7 +2969,8 @@ public final class JniFunctions {
     private static Pointer GetByteArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1225
         Pointer anchor = prologue(env);
-        tracePrologue("GetByteArrayElements", anchor);
+        logger.log(EntryPoints.GetByteArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getByteArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2759,7 +2978,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetByteArrayElements");
+            logger.log(EntryPoints.GetByteArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2777,7 +2997,8 @@ public final class JniFunctions {
     private static Pointer GetCharArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1240
         Pointer anchor = prologue(env);
-        tracePrologue("GetCharArrayElements", anchor);
+        logger.log(EntryPoints.GetCharArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getCharArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2785,7 +3006,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCharArrayElements");
+            logger.log(EntryPoints.GetCharArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2803,7 +3025,8 @@ public final class JniFunctions {
     private static Pointer GetShortArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1255
         Pointer anchor = prologue(env);
-        tracePrologue("GetShortArrayElements", anchor);
+        logger.log(EntryPoints.GetShortArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getShortArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2811,7 +3034,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetShortArrayElements");
+            logger.log(EntryPoints.GetShortArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2829,7 +3053,8 @@ public final class JniFunctions {
     private static Pointer GetIntArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1270
         Pointer anchor = prologue(env);
-        tracePrologue("GetIntArrayElements", anchor);
+        logger.log(EntryPoints.GetIntArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getIntArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2837,7 +3062,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetIntArrayElements");
+            logger.log(EntryPoints.GetIntArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2855,7 +3081,8 @@ public final class JniFunctions {
     private static Pointer GetLongArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1285
         Pointer anchor = prologue(env);
-        tracePrologue("GetLongArrayElements", anchor);
+        logger.log(EntryPoints.GetLongArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getLongArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2863,7 +3090,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLongArrayElements");
+            logger.log(EntryPoints.GetLongArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2881,7 +3109,8 @@ public final class JniFunctions {
     private static Pointer GetFloatArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1300
         Pointer anchor = prologue(env);
-        tracePrologue("GetFloatArrayElements", anchor);
+        logger.log(EntryPoints.GetFloatArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getFloatArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2889,7 +3118,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFloatArrayElements");
+            logger.log(EntryPoints.GetFloatArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2907,7 +3137,8 @@ public final class JniFunctions {
     private static Pointer GetDoubleArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1315
         Pointer anchor = prologue(env);
-        tracePrologue("GetDoubleArrayElements", anchor);
+        logger.log(EntryPoints.GetDoubleArrayElements.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             return getDoubleArrayElements(array, isCopy);
         } catch (Throwable t) {
@@ -2915,7 +3146,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetDoubleArrayElements");
+            logger.log(EntryPoints.GetDoubleArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2933,14 +3165,16 @@ public final class JniFunctions {
     private static void ReleaseBooleanArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1330
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseBooleanArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseBooleanArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseBooleanArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseBooleanArrayElements");
+            logger.log(EntryPoints.ReleaseBooleanArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2958,14 +3192,16 @@ public final class JniFunctions {
     private static void ReleaseByteArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1345
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseByteArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseByteArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseByteArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseByteArrayElements");
+            logger.log(EntryPoints.ReleaseByteArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -2983,14 +3219,16 @@ public final class JniFunctions {
     private static void ReleaseCharArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1360
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseCharArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseCharArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseCharArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseCharArrayElements");
+            logger.log(EntryPoints.ReleaseCharArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3008,14 +3246,16 @@ public final class JniFunctions {
     private static void ReleaseShortArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1375
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseShortArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseShortArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseShortArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseShortArrayElements");
+            logger.log(EntryPoints.ReleaseShortArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3033,14 +3273,16 @@ public final class JniFunctions {
     private static void ReleaseIntArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1390
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseIntArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseIntArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseIntArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseIntArrayElements");
+            logger.log(EntryPoints.ReleaseIntArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3058,14 +3300,16 @@ public final class JniFunctions {
     private static void ReleaseLongArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1405
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseLongArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseLongArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseLongArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseLongArrayElements");
+            logger.log(EntryPoints.ReleaseLongArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3083,14 +3327,16 @@ public final class JniFunctions {
     private static void ReleaseFloatArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1420
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseFloatArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseFloatArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseFloatArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseFloatArrayElements");
+            logger.log(EntryPoints.ReleaseFloatArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3108,14 +3354,16 @@ public final class JniFunctions {
     private static void ReleaseDoubleArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1435
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseDoubleArrayElements", anchor);
+        logger.log(EntryPoints.ReleaseDoubleArrayElements.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             releaseDoubleArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseDoubleArrayElements");
+            logger.log(EntryPoints.ReleaseDoubleArrayElements.ordinal(), Word.zero());
+
         }
     }
 
@@ -3133,7 +3381,8 @@ public final class JniFunctions {
     private static void GetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1450
         Pointer anchor = prologue(env);
-        tracePrologue("GetBooleanArrayRegion", anchor);
+        logger.log(EntryPoints.GetBooleanArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final boolean[] a = (boolean[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3143,7 +3392,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetBooleanArrayRegion");
+            logger.log(EntryPoints.GetBooleanArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3151,7 +3401,8 @@ public final class JniFunctions {
     private static void GetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1458
         Pointer anchor = prologue(env);
-        tracePrologue("GetByteArrayRegion", anchor);
+        logger.log(EntryPoints.GetByteArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final byte[] a = (byte[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3161,7 +3412,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetByteArrayRegion");
+            logger.log(EntryPoints.GetByteArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3169,7 +3421,8 @@ public final class JniFunctions {
     private static void GetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1466
         Pointer anchor = prologue(env);
-        tracePrologue("GetCharArrayRegion", anchor);
+        logger.log(EntryPoints.GetCharArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final char[] a = (char[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3179,7 +3432,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCharArrayRegion");
+            logger.log(EntryPoints.GetCharArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3187,7 +3441,8 @@ public final class JniFunctions {
     private static void GetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1474
         Pointer anchor = prologue(env);
-        tracePrologue("GetShortArrayRegion", anchor);
+        logger.log(EntryPoints.GetShortArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final short[] a = (short[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3197,7 +3452,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetShortArrayRegion");
+            logger.log(EntryPoints.GetShortArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3205,7 +3461,8 @@ public final class JniFunctions {
     private static void GetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1482
         Pointer anchor = prologue(env);
-        tracePrologue("GetIntArrayRegion", anchor);
+        logger.log(EntryPoints.GetIntArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final int[] a = (int[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3215,7 +3472,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetIntArrayRegion");
+            logger.log(EntryPoints.GetIntArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3223,7 +3481,8 @@ public final class JniFunctions {
     private static void GetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1490
         Pointer anchor = prologue(env);
-        tracePrologue("GetLongArrayRegion", anchor);
+        logger.log(EntryPoints.GetLongArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final long[] a = (long[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3233,7 +3492,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLongArrayRegion");
+            logger.log(EntryPoints.GetLongArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3241,7 +3501,8 @@ public final class JniFunctions {
     private static void GetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1498
         Pointer anchor = prologue(env);
-        tracePrologue("GetFloatArrayRegion", anchor);
+        logger.log(EntryPoints.GetFloatArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final float[] a = (float[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3251,7 +3512,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFloatArrayRegion");
+            logger.log(EntryPoints.GetFloatArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3259,7 +3521,8 @@ public final class JniFunctions {
     private static void GetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1506
         Pointer anchor = prologue(env);
-        tracePrologue("GetDoubleArrayRegion", anchor);
+        logger.log(EntryPoints.GetDoubleArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final double[] a = (double[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3269,7 +3532,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetDoubleArrayRegion");
+            logger.log(EntryPoints.GetDoubleArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3277,7 +3541,8 @@ public final class JniFunctions {
     private static void SetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1514
         Pointer anchor = prologue(env);
-        tracePrologue("SetBooleanArrayRegion", anchor);
+        logger.log(EntryPoints.SetBooleanArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final boolean[] a = (boolean[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3287,7 +3552,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetBooleanArrayRegion");
+            logger.log(EntryPoints.SetBooleanArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3295,7 +3561,8 @@ public final class JniFunctions {
     private static void SetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1522
         Pointer anchor = prologue(env);
-        tracePrologue("SetByteArrayRegion", anchor);
+        logger.log(EntryPoints.SetByteArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final byte[] a = (byte[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3305,7 +3572,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetByteArrayRegion");
+            logger.log(EntryPoints.SetByteArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3313,7 +3581,8 @@ public final class JniFunctions {
     private static void SetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1530
         Pointer anchor = prologue(env);
-        tracePrologue("SetCharArrayRegion", anchor);
+        logger.log(EntryPoints.SetCharArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final char[] a = (char[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3323,7 +3592,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetCharArrayRegion");
+            logger.log(EntryPoints.SetCharArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3331,7 +3601,8 @@ public final class JniFunctions {
     private static void SetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1538
         Pointer anchor = prologue(env);
-        tracePrologue("SetShortArrayRegion", anchor);
+        logger.log(EntryPoints.SetShortArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final short[] a = (short[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3341,7 +3612,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetShortArrayRegion");
+            logger.log(EntryPoints.SetShortArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3349,7 +3621,8 @@ public final class JniFunctions {
     private static void SetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1546
         Pointer anchor = prologue(env);
-        tracePrologue("SetIntArrayRegion", anchor);
+        logger.log(EntryPoints.SetIntArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final int[] a = (int[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3359,7 +3632,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetIntArrayRegion");
+            logger.log(EntryPoints.SetIntArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3367,7 +3641,8 @@ public final class JniFunctions {
     private static void SetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1554
         Pointer anchor = prologue(env);
-        tracePrologue("SetLongArrayRegion", anchor);
+        logger.log(EntryPoints.SetLongArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final long[] a = (long[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3377,7 +3652,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLongArrayRegion");
+            logger.log(EntryPoints.SetLongArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3385,7 +3661,8 @@ public final class JniFunctions {
     private static void SetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1562
         Pointer anchor = prologue(env);
-        tracePrologue("SetFloatArrayRegion", anchor);
+        logger.log(EntryPoints.SetFloatArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final float[] a = (float[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3395,7 +3672,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetFloatArrayRegion");
+            logger.log(EntryPoints.SetFloatArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3403,7 +3681,8 @@ public final class JniFunctions {
     private static void SetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1570
         Pointer anchor = prologue(env);
-        tracePrologue("SetDoubleArrayRegion", anchor);
+        logger.log(EntryPoints.SetDoubleArrayRegion.ordinal(), Word.allOnes(), anchor, env, array, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final double[] a = (double[]) array.unhand();
             for (int i = 0; i < length; i++) {
@@ -3413,7 +3692,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetDoubleArrayRegion");
+            logger.log(EntryPoints.SetDoubleArrayRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3429,7 +3709,8 @@ public final class JniFunctions {
     private static int RegisterNatives(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
         // Source: JniFunctionsSource.java:1586
         Pointer anchor = prologue(env);
-        tracePrologue("RegisterNatives", anchor);
+        logger.log(EntryPoints.RegisterNatives.ordinal(), Word.allOnes(), anchor, env, javaType, methods, Address.fromInt(numberOfMethods));
+
         try {
             Pointer a = methods;
 
@@ -3470,7 +3751,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RegisterNatives");
+            logger.log(EntryPoints.RegisterNatives.ordinal(), Word.zero());
+
         }
     }
 
@@ -3478,7 +3760,8 @@ public final class JniFunctions {
     private static int UnregisterNatives(Pointer env, JniHandle javaType) {
         // Source: JniFunctionsSource.java:1624
         Pointer anchor = prologue(env);
-        tracePrologue("UnregisterNatives", anchor);
+        logger.log(EntryPoints.UnregisterNatives.ordinal(), Word.allOnes(), anchor, env, javaType);
+
         try {
             ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             for (VirtualMethodActor method : classActor.allVirtualMethodActors()) {
@@ -3496,7 +3779,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("UnregisterNatives");
+            logger.log(EntryPoints.UnregisterNatives.ordinal(), Word.zero());
+
         }
     }
 
@@ -3504,7 +3788,8 @@ public final class JniFunctions {
     private static int MonitorEnter(Pointer env, JniHandle object) {
         // Source: JniFunctionsSource.java:1639
         Pointer anchor = prologue(env);
-        tracePrologue("MonitorEnter", anchor);
+        logger.log(EntryPoints.MonitorEnter.ordinal(), Word.allOnes(), anchor, env, object);
+
         try {
             Monitor.enter(object.unhand());
             return 0;
@@ -3513,7 +3798,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("MonitorEnter");
+            logger.log(EntryPoints.MonitorEnter.ordinal(), Word.zero());
+
         }
     }
 
@@ -3521,7 +3807,8 @@ public final class JniFunctions {
     private static int MonitorExit(Pointer env, JniHandle object) {
         // Source: JniFunctionsSource.java:1645
         Pointer anchor = prologue(env);
-        tracePrologue("MonitorExit", anchor);
+        logger.log(EntryPoints.MonitorExit.ordinal(), Word.allOnes(), anchor, env, object);
+
         try {
             Monitor.exit(object.unhand());
             return 0;
@@ -3530,7 +3817,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("MonitorExit");
+            logger.log(EntryPoints.MonitorExit.ordinal(), Word.zero());
+
         }
     }
 
@@ -3542,7 +3830,8 @@ public final class JniFunctions {
     private static void GetStringRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1654
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringRegion", anchor);
+        logger.log(EntryPoints.GetStringRegion.ordinal(), Word.allOnes(), anchor, env, string, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final String s = (String) string.unhand();
             for (int i = 0; i < length; i++) {
@@ -3552,7 +3841,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringRegion");
+            logger.log(EntryPoints.GetStringRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3560,7 +3850,8 @@ public final class JniFunctions {
     private static void GetStringUTFRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
         // Source: JniFunctionsSource.java:1662
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringUTFRegion", anchor);
+        logger.log(EntryPoints.GetStringUTFRegion.ordinal(), Word.allOnes(), anchor, env, string, Address.fromInt(start), Address.fromInt(length), buffer);
+
         try {
             final String s = ((String) string.unhand()).substring(start, start + length);
             final byte[] utf = Utf8.stringToUtf8(s);
@@ -3570,7 +3861,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringUTFRegion");
+            logger.log(EntryPoints.GetStringUTFRegion.ordinal(), Word.zero());
+
         }
     }
 
@@ -3578,7 +3870,8 @@ public final class JniFunctions {
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1670
         Pointer anchor = prologue(env);
-        tracePrologue("GetPrimitiveArrayCritical", anchor);
+        logger.log(EntryPoints.GetPrimitiveArrayCritical.ordinal(), Word.allOnes(), anchor, env, array, isCopy);
+
         try {
             final Object arrayObject = array.unhand();
             if (Heap.useDirectPointer(arrayObject)) {
@@ -3609,7 +3902,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetPrimitiveArrayCritical");
+            logger.log(EntryPoints.GetPrimitiveArrayCritical.ordinal(), Word.zero());
+
         }
     }
 
@@ -3617,7 +3911,8 @@ public final class JniFunctions {
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
         // Source: JniFunctionsSource.java:1698
         Pointer anchor = prologue(env);
-        tracePrologue("ReleasePrimitiveArrayCritical", anchor);
+        logger.log(EntryPoints.ReleasePrimitiveArrayCritical.ordinal(), Word.allOnes(), anchor, env, array, elements, Address.fromInt(mode));
+
         try {
             final Object arrayObject = array.unhand();
             if (Heap.releasedDirectPointer(arrayObject)) {
@@ -3644,7 +3939,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleasePrimitiveArrayCritical");
+            logger.log(EntryPoints.ReleasePrimitiveArrayCritical.ordinal(), Word.zero());
+
         }
     }
 
@@ -3652,7 +3948,8 @@ public final class JniFunctions {
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1723
         Pointer anchor = prologue(env);
-        tracePrologue("GetStringCritical", anchor);
+        logger.log(EntryPoints.GetStringCritical.ordinal(), Word.allOnes(), anchor, env, string, isCopy);
+
         try {
             // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
             setCopyPointer(isCopy, true);
@@ -3667,7 +3964,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStringCritical");
+            logger.log(EntryPoints.GetStringCritical.ordinal(), Word.zero());
+
         }
     }
 
@@ -3675,14 +3973,16 @@ public final class JniFunctions {
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
         // Source: JniFunctionsSource.java:1735
         Pointer anchor = prologue(env);
-        tracePrologue("ReleaseStringCritical", anchor);
+        logger.log(EntryPoints.ReleaseStringCritical.ordinal(), Word.allOnes(), anchor, env, string, chars);
+
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("ReleaseStringCritical");
+            logger.log(EntryPoints.ReleaseStringCritical.ordinal(), Word.zero());
+
         }
     }
 
@@ -3690,7 +3990,8 @@ public final class JniFunctions {
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
         // Source: JniFunctionsSource.java:1740
         Pointer anchor = prologue(env);
-        tracePrologue("NewWeakGlobalRef", anchor);
+        logger.log(EntryPoints.NewWeakGlobalRef.ordinal(), Word.allOnes(), anchor, env, handle);
+
         try {
             return JniHandles.createWeakGlobalHandle(handle.unhand());
         } catch (Throwable t) {
@@ -3698,7 +3999,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewWeakGlobalRef");
+            logger.log(EntryPoints.NewWeakGlobalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -3706,14 +4008,16 @@ public final class JniFunctions {
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
         // Source: JniFunctionsSource.java:1745
         Pointer anchor = prologue(env);
-        tracePrologue("DeleteWeakGlobalRef", anchor);
+        logger.log(EntryPoints.DeleteWeakGlobalRef.ordinal(), Word.allOnes(), anchor, env, handle);
+
         try {
             JniHandles.destroyWeakGlobalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("DeleteWeakGlobalRef");
+            logger.log(EntryPoints.DeleteWeakGlobalRef.ordinal(), Word.zero());
+
         }
     }
 
@@ -3721,7 +4025,8 @@ public final class JniFunctions {
     private static boolean ExceptionCheck(Pointer env) {
         // Source: JniFunctionsSource.java:1750
         Pointer anchor = prologue(env);
-        tracePrologue("ExceptionCheck", anchor);
+        logger.log(EntryPoints.ExceptionCheck.ordinal(), Word.allOnes(), anchor, env);
+
         try {
             return VmThread.fromJniEnv(env).jniException() != null;
         } catch (Throwable t) {
@@ -3729,7 +4034,8 @@ public final class JniFunctions {
             return false;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ExceptionCheck");
+            logger.log(EntryPoints.ExceptionCheck.ordinal(), Word.zero());
+
         }
     }
 
@@ -3739,7 +4045,8 @@ public final class JniFunctions {
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
         // Source: JniFunctionsSource.java:1757
         Pointer anchor = prologue(env);
-        tracePrologue("NewDirectByteBuffer", anchor);
+        logger.log(EntryPoints.NewDirectByteBuffer.ordinal(), Word.allOnes(), anchor, env, address, Address.fromLong(capacity));
+
         try {
             ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
             return JniHandles.createLocalHandle(buffer);
@@ -3748,7 +4055,8 @@ public final class JniFunctions {
             return asJniHandle(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("NewDirectByteBuffer");
+            logger.log(EntryPoints.NewDirectByteBuffer.ordinal(), Word.zero());
+
         }
     }
 
@@ -3756,7 +4064,8 @@ public final class JniFunctions {
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
         // Source: JniFunctionsSource.java:1763
         Pointer anchor = prologue(env);
-        tracePrologue("GetDirectBufferAddress", anchor);
+        logger.log(EntryPoints.GetDirectBufferAddress.ordinal(), Word.allOnes(), anchor, env, buffer);
+
         try {
             Object buf = buffer.unhand();
             if (DirectByteBuffer.isInstance(buf)) {
@@ -3769,7 +4078,8 @@ public final class JniFunctions {
             return asPointer(0);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetDirectBufferAddress");
+            logger.log(EntryPoints.GetDirectBufferAddress.ordinal(), Word.zero());
+
         }
     }
 
@@ -3777,7 +4087,8 @@ public final class JniFunctions {
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
         // Source: JniFunctionsSource.java:1773
         Pointer anchor = prologue(env);
-        tracePrologue("GetDirectBufferCapacity", anchor);
+        logger.log(EntryPoints.GetDirectBufferCapacity.ordinal(), Word.allOnes(), anchor, env, buffer);
+
         try {
             Object buf = buffer.unhand();
             if (DirectByteBuffer.isInstance(buf)) {
@@ -3789,7 +4100,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetDirectBufferCapacity");
+            logger.log(EntryPoints.GetDirectBufferCapacity.ordinal(), Word.zero());
+
         }
     }
 
@@ -3797,7 +4109,8 @@ public final class JniFunctions {
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
         // Source: JniFunctionsSource.java:1782
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectRefType", anchor);
+        logger.log(EntryPoints.GetObjectRefType.ordinal(), Word.allOnes(), anchor, env, obj);
+
         try {
             final int tag = JniHandles.tag(obj);
             if (tag == JniHandles.Tag.STACK) {
@@ -3809,7 +4122,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectRefType");
+            logger.log(EntryPoints.GetObjectRefType.ordinal(), Word.zero());
+
         }
     }
 
@@ -3821,7 +4135,8 @@ public final class JniFunctions {
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
         // Source: JniFunctionsSource.java:1795
         Pointer anchor = prologue(env);
-        tracePrologue("GetNumberOfArguments", anchor);
+        logger.log(EntryPoints.GetNumberOfArguments.ordinal(), Word.allOnes(), anchor, env, methodID);
+
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
             if (methodActor == null) {
@@ -3833,7 +4148,8 @@ public final class JniFunctions {
             return JNI_ERR;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetNumberOfArguments");
+            logger.log(EntryPoints.GetNumberOfArguments.ordinal(), Word.zero());
+
         }
     }
 
@@ -3841,7 +4157,8 @@ public final class JniFunctions {
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
         // Source: JniFunctionsSource.java:1804
         Pointer anchor = prologue(env);
-        tracePrologue("GetKindsOfArguments", anchor);
+        logger.log(EntryPoints.GetKindsOfArguments.ordinal(), Word.allOnes(), anchor, env, methodID, kinds);
+
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
             if (methodActor == null) {
@@ -3856,7 +4173,8 @@ public final class JniFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetKindsOfArguments");
+            logger.log(EntryPoints.GetKindsOfArguments.ordinal(), Word.zero());
+
         }
     }
 
@@ -3873,6 +4191,177 @@ public final class JniFunctions {
             Memory.deallocate(elements);
         }
         assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+    }
+
+    public static enum EntryPoints {
+        /* 0 */ DefineClass,
+        /* 1 */ FindClass,
+        /* 2 */ FromReflectedMethod,
+        /* 3 */ FromReflectedField,
+        /* 4 */ ToReflectedMethod,
+        /* 5 */ GetSuperclass,
+        /* 6 */ IsAssignableFrom,
+        /* 7 */ ToReflectedField,
+        /* 8 */ Throw,
+        /* 9 */ ThrowNew,
+        /* 10 */ ExceptionOccurred,
+        /* 11 */ ExceptionDescribe,
+        /* 12 */ ExceptionClear,
+        /* 13 */ FatalError,
+        /* 14 */ PushLocalFrame,
+        /* 15 */ PopLocalFrame,
+        /* 16 */ NewGlobalRef,
+        /* 17 */ DeleteGlobalRef,
+        /* 18 */ DeleteLocalRef,
+        /* 19 */ IsSameObject,
+        /* 20 */ NewLocalRef,
+        /* 21 */ EnsureLocalCapacity,
+        /* 22 */ AllocObject,
+        /* 23 */ NewObjectA,
+        /* 24 */ GetObjectClass,
+        /* 25 */ IsInstanceOf,
+        /* 26 */ GetMethodID,
+        /* 27 */ CallObjectMethodA,
+        /* 28 */ CallBooleanMethodA,
+        /* 29 */ CallByteMethodA,
+        /* 30 */ CallCharMethodA,
+        /* 31 */ CallShortMethodA,
+        /* 32 */ CallIntMethodA,
+        /* 33 */ CallLongMethodA,
+        /* 34 */ CallFloatMethodA,
+        /* 35 */ CallDoubleMethodA,
+        /* 36 */ CallVoidMethodA,
+        /* 37 */ CallNonvirtualObjectMethodA,
+        /* 38 */ CallNonvirtualBooleanMethodA,
+        /* 39 */ CallNonvirtualByteMethodA,
+        /* 40 */ CallNonvirtualCharMethodA,
+        /* 41 */ CallNonvirtualShortMethodA,
+        /* 42 */ CallNonvirtualIntMethodA,
+        /* 43 */ CallNonvirtualLongMethodA,
+        /* 44 */ CallNonvirtualFloatMethodA,
+        /* 45 */ CallNonvirtualDoubleMethodA,
+        /* 46 */ CallNonvirtualVoidMethodA,
+        /* 47 */ GetFieldID,
+        /* 48 */ GetObjectField,
+        /* 49 */ GetBooleanField,
+        /* 50 */ GetByteField,
+        /* 51 */ GetCharField,
+        /* 52 */ GetShortField,
+        /* 53 */ GetIntField,
+        /* 54 */ GetLongField,
+        /* 55 */ GetFloatField,
+        /* 56 */ GetDoubleField,
+        /* 57 */ SetObjectField,
+        /* 58 */ SetBooleanField,
+        /* 59 */ SetByteField,
+        /* 60 */ SetCharField,
+        /* 61 */ SetShortField,
+        /* 62 */ SetIntField,
+        /* 63 */ SetLongField,
+        /* 64 */ SetFloatField,
+        /* 65 */ SetDoubleField,
+        /* 66 */ GetStaticMethodID,
+        /* 67 */ CallStaticObjectMethodA,
+        /* 68 */ CallStaticBooleanMethodA,
+        /* 69 */ CallStaticByteMethodA,
+        /* 70 */ CallStaticCharMethodA,
+        /* 71 */ CallStaticShortMethodA,
+        /* 72 */ CallStaticIntMethodA,
+        /* 73 */ CallStaticLongMethodA,
+        /* 74 */ CallStaticFloatMethodA,
+        /* 75 */ CallStaticDoubleMethodA,
+        /* 76 */ CallStaticVoidMethodA,
+        /* 77 */ GetStaticFieldID,
+        /* 78 */ GetStaticObjectField,
+        /* 79 */ GetStaticBooleanField,
+        /* 80 */ GetStaticByteField,
+        /* 81 */ GetStaticCharField,
+        /* 82 */ GetStaticShortField,
+        /* 83 */ GetStaticIntField,
+        /* 84 */ GetStaticLongField,
+        /* 85 */ GetStaticFloatField,
+        /* 86 */ GetStaticDoubleField,
+        /* 87 */ SetStaticObjectField,
+        /* 88 */ SetStaticBooleanField,
+        /* 89 */ SetStaticByteField,
+        /* 90 */ SetStaticCharField,
+        /* 91 */ SetStaticShortField,
+        /* 92 */ SetStaticIntField,
+        /* 93 */ SetStaticLongField,
+        /* 94 */ SetStaticFloatField,
+        /* 95 */ SetStaticDoubleField,
+        /* 96 */ NewString,
+        /* 97 */ GetStringLength,
+        /* 98 */ GetStringChars,
+        /* 99 */ ReleaseStringChars,
+        /* 100 */ NewStringUTF,
+        /* 101 */ GetStringUTFLength,
+        /* 102 */ GetStringUTFChars,
+        /* 103 */ ReleaseStringUTFChars,
+        /* 104 */ GetArrayLength,
+        /* 105 */ NewObjectArray,
+        /* 106 */ GetObjectArrayElement,
+        /* 107 */ SetObjectArrayElement,
+        /* 108 */ NewBooleanArray,
+        /* 109 */ NewByteArray,
+        /* 110 */ NewCharArray,
+        /* 111 */ NewShortArray,
+        /* 112 */ NewIntArray,
+        /* 113 */ NewLongArray,
+        /* 114 */ NewFloatArray,
+        /* 115 */ NewDoubleArray,
+        /* 116 */ GetBooleanArrayElements,
+        /* 117 */ GetByteArrayElements,
+        /* 118 */ GetCharArrayElements,
+        /* 119 */ GetShortArrayElements,
+        /* 120 */ GetIntArrayElements,
+        /* 121 */ GetLongArrayElements,
+        /* 122 */ GetFloatArrayElements,
+        /* 123 */ GetDoubleArrayElements,
+        /* 124 */ ReleaseBooleanArrayElements,
+        /* 125 */ ReleaseByteArrayElements,
+        /* 126 */ ReleaseCharArrayElements,
+        /* 127 */ ReleaseShortArrayElements,
+        /* 128 */ ReleaseIntArrayElements,
+        /* 129 */ ReleaseLongArrayElements,
+        /* 130 */ ReleaseFloatArrayElements,
+        /* 131 */ ReleaseDoubleArrayElements,
+        /* 132 */ GetBooleanArrayRegion,
+        /* 133 */ GetByteArrayRegion,
+        /* 134 */ GetCharArrayRegion,
+        /* 135 */ GetShortArrayRegion,
+        /* 136 */ GetIntArrayRegion,
+        /* 137 */ GetLongArrayRegion,
+        /* 138 */ GetFloatArrayRegion,
+        /* 139 */ GetDoubleArrayRegion,
+        /* 140 */ SetBooleanArrayRegion,
+        /* 141 */ SetByteArrayRegion,
+        /* 142 */ SetCharArrayRegion,
+        /* 143 */ SetShortArrayRegion,
+        /* 144 */ SetIntArrayRegion,
+        /* 145 */ SetLongArrayRegion,
+        /* 146 */ SetFloatArrayRegion,
+        /* 147 */ SetDoubleArrayRegion,
+        /* 148 */ RegisterNatives,
+        /* 149 */ UnregisterNatives,
+        /* 150 */ MonitorEnter,
+        /* 151 */ MonitorExit,
+        /* 152 */ GetStringRegion,
+        /* 153 */ GetStringUTFRegion,
+        /* 154 */ GetPrimitiveArrayCritical,
+        /* 155 */ ReleasePrimitiveArrayCritical,
+        /* 156 */ GetStringCritical,
+        /* 157 */ ReleaseStringCritical,
+        /* 158 */ NewWeakGlobalRef,
+        /* 159 */ DeleteWeakGlobalRef,
+        /* 160 */ ExceptionCheck,
+        /* 161 */ NewDirectByteBuffer,
+        /* 162 */ GetDirectBufferAddress,
+        /* 163 */ GetDirectBufferCapacity,
+        /* 164 */ GetObjectRefType,
+        /* 165 */ GetNumberOfArguments,
+        /* 166 */ GetKindsOfArguments;
+
     }
 // END GENERATED CODE
 }
