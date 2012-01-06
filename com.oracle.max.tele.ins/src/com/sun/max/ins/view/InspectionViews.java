@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,8 @@ import com.sun.max.ins.debug.StackView.StackViewManager;
 import com.sun.max.ins.debug.ThreadLocalsView.ThreadLocalsViewManager;
 import com.sun.max.ins.debug.ThreadsView.ThreadsViewManager;
 import com.sun.max.ins.debug.WatchpointsView.WatchpointsViewManager;
+import com.sun.max.ins.debug.vmlog.*;
+import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.ins.file.*;
 import com.sun.max.ins.file.JavaSourceView.JavaSourceViewManager;
 import com.sun.max.ins.gui.*;
@@ -52,7 +54,6 @@ import com.sun.max.ins.memory.MemoryView.MemoryViewManager;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.method.MethodViewContainer.MethodViewManager;
 import com.sun.max.ins.object.HeapRegionInfoView.HeapRegionInfoViewManager;
-import com.sun.max.ins.object.VMLogView.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 

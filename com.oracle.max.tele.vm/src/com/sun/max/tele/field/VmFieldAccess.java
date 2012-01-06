@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,8 @@ import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.java.*;
+import com.sun.max.vm.log.nat.*;
+import com.sun.max.vm.log.nat.thread.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -174,14 +176,14 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess JVMTIRawMonitor$Monitor_name = new TeleInstanceWordFieldAccess(JVMTIRawMonitor.Monitor.class, "name");
     public final TeleInstanceReferenceFieldAccess JVMTIRawMonitor$Monitor_owner = new TeleInstanceReferenceFieldAccess(JVMTIRawMonitor.Monitor.class, "owner", VmThread.class);
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
-    public final TeleInstanceIntFieldAccess VMLog$Record_header = new TeleInstanceIntFieldAccess(VMLog.Record.class, "header");
-    public final TeleInstanceWordFieldAccess VMLog$Record1_arg1 = new TeleInstanceWordFieldAccess(VMLog.Record1.class, "arg1");
-    public final TeleInstanceWordFieldAccess VMLog$Record2_arg2 = new TeleInstanceWordFieldAccess(VMLog.Record2.class, "arg2");
-    public final TeleInstanceWordFieldAccess VMLog$Record3_arg3 = new TeleInstanceWordFieldAccess(VMLog.Record3.class, "arg3");
-    public final TeleInstanceWordFieldAccess VMLog$Record4_arg4 = new TeleInstanceWordFieldAccess(VMLog.Record4.class, "arg4");
-    public final TeleInstanceWordFieldAccess VMLog$Record5_arg5 = new TeleInstanceWordFieldAccess(VMLog.Record5.class, "arg5");
-    public final TeleInstanceWordFieldAccess VMLog$Record6_arg6 = new TeleInstanceWordFieldAccess(VMLog.Record6.class, "arg6");
-    public final TeleInstanceWordFieldAccess VMLog$Record7_arg7 = new TeleInstanceWordFieldAccess(VMLog.Record7.class, "arg7");
+    public final TeleInstanceIntFieldAccess VMLogArray$Record0_header = new TeleInstanceIntFieldAccess(VMLogArray.Record0.class, "header");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record1_arg1 = new TeleInstanceWordFieldAccess(VMLogArray.Record1.class, "arg1");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record2_arg2 = new TeleInstanceWordFieldAccess(VMLogArray.Record2.class, "arg2");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record3_arg3 = new TeleInstanceWordFieldAccess(VMLogArray.Record3.class, "arg3");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record4_arg4 = new TeleInstanceWordFieldAccess(VMLogArray.Record4.class, "arg4");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record5_arg5 = new TeleInstanceWordFieldAccess(VMLogArray.Record5.class, "arg5");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record6_arg6 = new TeleInstanceWordFieldAccess(VMLogArray.Record6.class, "arg6");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record7_arg7 = new TeleInstanceWordFieldAccess(VMLogArray.Record7.class, "arg7");
     public final TeleStaticIntFieldAccess RegionTable_TableOffset = new TeleStaticIntFieldAccess(RegionTable.class, "TableOffset");
     public final TeleInstanceIntFieldAccess RegionTable_length = new TeleInstanceIntFieldAccess(RegionTable.class, "length");
     public final TeleInstanceIntFieldAccess RegionTable_regionInfoSize = new TeleInstanceIntFieldAccess(RegionTable.class, "regionInfoSize");
@@ -214,12 +216,16 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaStart = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaStart");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
-    public final TeleInstanceIntFieldAccess VMLog_logSize = new TeleInstanceIntFieldAccess(VMLog.class, "logSize");
+    public final TeleInstanceIntFieldAccess VMLog_logEntries = new TeleInstanceIntFieldAccess(VMLog.class, "logEntries");
     public final TeleInstanceReferenceFieldAccess VMLog_loggers = new TeleInstanceReferenceFieldAccess(VMLog.class, "loggers", Map.class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
     public final TeleInstanceReferenceFieldAccess VMLogArray_buffer = new TeleInstanceReferenceFieldAccess(VMLogArray.class, "buffer", Record[].class);
+    public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordArgsOffset = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordArgsOffset");
+    public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordSize");
+    public final TeleInstanceIntFieldAccess VMLogNativeThread_threadLogSize = new TeleInstanceIntFieldAccess(VMLogNativeThread.class, "threadLogSize");
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "name", String.class);
+    public final TeleStaticReferenceFieldAccess VmThreadLocal_VALUES = new TeleStaticReferenceFieldAccess(VmThreadLocal.class, "VALUES", List.class);
     // END GENERATED CONTENT
 
     // Injected JDK fields:

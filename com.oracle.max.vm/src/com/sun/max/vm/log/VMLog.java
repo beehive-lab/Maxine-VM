@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,13 @@
  */
 package com.sun.max.vm.log;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -54,7 +53,7 @@ public abstract class VMLog {
      */
     public static class Factory {
         private static final String VMLOG_FACTORY_CLASS = "max.vmlog.class";
-        public static final String DEFAULT_VMLOG_CLASS = "java.def.VMLogDefault";
+        public static final String DEFAULT_VMLOG_CLASS = "java.fix.VMLogArrayFixed";
 
         private static VMLog create() {
             String prop = System.getProperty(VMLOG_FACTORY_CLASS);
@@ -78,46 +77,34 @@ public abstract class VMLog {
     }
 
     /**
-     * The bare essentials of a log record.
+     * The bare essentials of a log record. A log record contains:
+     * <ul>
+     * <li>The {@link VMlogger} id that created the record.
+     * <li>The operation code.
+     * <li>The thread that created the record.
+     * <li>Up to {@value MAX_ARGS} {@link Word} valued arguments.
+     * </ul>
+     * Everything except the arguments is stored in a {@code header} word,
+     * the format of which is specified here as a set of bit fields.
+     * The actual representation of the record is left to concrete subclasses.
+     * <p>
+     * Note that, although, the {@link VMLog} maintains a monotonically increasing
+     * {@link VMLog#nextId globally unique id}, that is incremented each time a record
+     * is allocated, this value is not stored by default in the log record.
+     * The log is typically viewed in the Maxine Inspector, which is capable of
+     * reproducing the id in the log view.
+     *
      */
-    public static class Record {
-        static final int ARGCOUNT_MASK = 0x7;
-        static final int LOGGER_ID_SHIFT = 3;
-        static final int LOGGER_ID_MASK = 0xF;
-        static final int OPERATION_SHIFT = 7;
-        static final int OPERATION_MASK = 0x1FF;
-        static final int THREAD_SHIFT = 16;
-        static final int THREAD_MASK = 0x7FFF;
+    public abstract static class Record {
+        public static final int ARGCOUNT_MASK = 0x7;
+        public static final int LOGGER_ID_SHIFT = 3;
+        public static final int LOGGER_ID_MASK = 0xF;
+        public static final int OPERATION_SHIFT = 7;
+        public static final int OPERATION_MASK = 0x1FF;
+        public static final int THREAD_SHIFT = 16;
+        public static final int THREAD_MASK = 0x7FFF;
         public static final int FREE = 0x80000000;
         public static final int MAX_ARGS = 7;
-
-        /**
-         * Encodes the loggerId, the operation and the argument count.
-         * Bits 0-2: argument count (max 7)
-         * Bits 3-6: logger id (max 16)
-         * Bits 7-15: operation id (max 512)
-         * Bits 16-30: threadId (max 32768)
-         * Bit 31: FREE (1) for implementations that have free lists
-         */
-        @INSPECTED
-        public volatile int header;
-
-        final void setHeader(int op, int argCount, int loggerId) {
-            header = (VmThread.current().id() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
-                      (loggerId << Record.LOGGER_ID_SHIFT) | argCount;
-        }
-
-        public int getArgCount() {
-            return getArgCount(header);
-        }
-
-        public static int getArgCount(int header) {
-            return header & Record.ARGCOUNT_MASK;
-        }
-
-        public int getOperation() {
-            return getOperation(header);
-        }
 
         public static int getOperation(int header) {
             return (header >> Record.OPERATION_SHIFT) & OPERATION_MASK;
@@ -125,10 +112,6 @@ public abstract class VMLog {
 
         public static int getLoggerId(int header) {
             return (header >> LOGGER_ID_SHIFT) & Record.LOGGER_ID_MASK;
-        }
-
-        public int getThreadId() {
-            return getThreadId(header);
         }
 
         public static int getThreadId(int header) {
@@ -139,86 +122,116 @@ public abstract class VMLog {
             return (header & FREE) != 0;
         }
 
-    }
+        public static int getArgCount(int header) {
+            return header & Record.ARGCOUNT_MASK;
+        }
 
-    public static class Record1 extends Record {
-        @INSPECTED
-        public Word arg1;
-    }
+        /**
+         * Encodes the loggerId, the operation and the argument count.
+         * Bits 0-2: argument count (max 7)
+         * Bits 3-6: logger id (max 16)
+         * Bits 7-15: operation id (max 512)
+         * Bits 16-30: threadId (max 32768)
+         * Bit 31: FREE (1) for implementations that have free lists
+         */
+        public abstract void setHeader(int header);
+        public abstract int getHeader();
 
-    public static class Record2 extends Record1 {
-        @INSPECTED
-        public Word arg2;
-    }
+        public void setHeader(int op, int argCount, int loggerId) {
+            setHeader((VmThread.current().id() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
+                      (loggerId << Record.LOGGER_ID_SHIFT) | argCount);
+        }
 
-    public static class Record3 extends Record2 {
-        @INSPECTED
-        public Word arg3;
-    }
+        public void setFree() {
+            setHeader(FREE);
+        }
 
-    public static class Record4 extends Record3 {
-        @INSPECTED
-        public Word arg4;
-    }
+        public int getThreadId() {
+            return getThreadId(getHeader());
+        }
+        public int getOperation() {
+            return getOperation(getHeader());
+        }
+        public int getLoggerId() {
+            return getLoggerId(getHeader());
+        }
+        public int getArgCount() {
+            return getArgCount(getHeader());
+        }
 
-    public static class Record5 extends Record4 {
-        @INSPECTED
-        public Word arg5;
-    }
+        /**
+         * Return value of argument {@code n: 1 <= N}.
+         * @param n
+         * @return
+         */
+        public Word getArg(int n) {
+            return argError();
+        }
 
-    public static class Record6 extends Record5 {
-        @INSPECTED
-        public Word arg6;
-    }
-
-    public static class Record7 extends Record6 {
-        @INSPECTED
-        public Word arg7;
-    }
-
-    @INTRINSIC(UNSAFE_CAST) public static native Record1 asRecord1(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record2 asRecord2(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record3 asRecord3(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record4 asRecord4(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record5 asRecord5(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record6 asRecord6(Record r);
-    @INTRINSIC(UNSAFE_CAST) public static native Record7 asRecord7(Record r);
-
-    /**
-     * Inspector use only. Includes the record id, and args as an array.
-     */
-    @HOSTED_ONLY
-    public static class HostedRecord extends Record {
-        public final long id;
-        public final Word[] args;
-        public HostedRecord(long id, int header, Word... args) {
-            this.id = id;
-            this.header = header;
-            this.args = args;
+        public void setArgs(Word arg1) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
+            argError();
         }
     }
 
-    private static final String LOG_SIZE_PROPERTY = "max.vmlog.size";
-    private final static int DEFAULT_LOG_SIZE = 8192;
+    public static Word argError() {
+        assert false;
+        return Word.zero();
+    }
 
+    private static final String LOG_ENTRIES_PROPERTY = "max.vmlog.entries";
+    private final static int DEFAULT_LOG_ENTRIES = 8192;
+
+    /**
+     * Number of log records maintained in the circular buffer.
+     */
     @INSPECTED
-    protected int logSize;
+    protected int logEntries;
+
+    /**
+     * Map of registered {@link VMLogger} instances.
+     */
     @INSPECTED
     protected Map<Integer, VMLogger> loggers;
 
+    /**
+     * The actual {@link VMLog} instance in this VM image.
+     */
     @INSPECTED
     private static VMLog vmLog = Factory.create();
 
+    /**
+     * Monotonically increasing global unique id for a log record.
+     * Incremented every time {@link #getRecord(int)} is invoked.
+     */
     @INSPECTED
     protected volatile int nextId;
 
-    protected static final int nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
+    @CONSTANT_WHEN_NOT_ZERO
+    protected int nextIdOffset;
 
     /**
      * Invoked on early VM startup.
      */
     public void initialize() {
-
+        nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
     }
 
     public static VMLog vmLog() {
@@ -229,17 +242,17 @@ public abstract class VMLog {
         vmLog.loggers.put(logger.loggerId, logger);
     }
 
-    private void checkLogSize() {
-        String logSizeProperty = System.getProperty(LOG_SIZE_PROPERTY);
+    private void checkLogEntriesProperty() {
+        String logSizeProperty = System.getProperty(LOG_ENTRIES_PROPERTY);
         if (logSizeProperty != null) {
-            logSize = Integer.parseInt(logSizeProperty);
+            logEntries = Integer.parseInt(logSizeProperty);
         } else {
-            logSize = DEFAULT_LOG_SIZE;
+            logEntries = DEFAULT_LOG_ENTRIES;
         }
     }
 
     protected VMLog() {
-        checkLogSize();
+        checkLogEntriesProperty();
         loggers = new HashMap<Integer, VMLogger>();
     }
 
@@ -254,6 +267,25 @@ public abstract class VMLog {
         }
     }
 
+    /**
+     * Allocate a monotonically increasing unique id for a log record.
+     * @return
+     */
+    @INLINE
+    protected final int getUniqueId() {
+        int myId = nextId;
+        while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
+            myId = nextId;
+        }
+        return myId;
+    }
+
+    /**
+     * Acquire a record that is capable of storing at least {@code argCount} arguments.
+     * N.B. This value should be considered single use and not cached.
+     * @param argCount
+     * @return
+     */
     protected abstract Record getRecord(int argCount);
 
 }

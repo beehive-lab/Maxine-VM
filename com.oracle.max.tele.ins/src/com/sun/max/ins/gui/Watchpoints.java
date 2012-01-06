@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
+import com.sun.max.tele.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -331,8 +332,13 @@ public final class Watchpoints {
         final String description;
 
         boolean watched;
+        // TODO clean this up. inspection == null when watchedVariableName is called from buildThreadLocalWatchpointMenu
         private String watchedVariableName() {
-            return VmThreadLocal.values().get(threadLocalIndex).name;
+            assert inspection != null;
+            return watchedVariableName(inspection);
+        }
+        private String watchedVariableName(Inspection inspection) {
+            return TeleThreadLocalsArea.Static.values(inspection.vm()).get(threadLocalIndex).name;
         }
         private MaxThreadLocalVariable threadLocalVariable(MaxThread thread) {
             return  thread.localsBlock().tlaFor(SafepointPoll.State.ENABLED).getThreadLocalVariable(threadLocalIndex);
@@ -340,7 +346,7 @@ public final class Watchpoints {
 
         ThreadLocalWatchpointItemListener(Inspection inspection, VmThreadLocal threadLocal) {
             threadLocalIndex = threadLocal.index;
-            description = "Write access to " + watchedVariableName();
+            description = "Write access to " + watchedVariableName(inspection);
             this.inspection = inspection;
             watched = false;
         }
@@ -397,7 +403,7 @@ public final class Watchpoints {
      *
      */
     public static void buildThreadLocalWatchpointMenu(final Inspection inspection, JMenu menu) {
-        for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
+        for (VmThreadLocal threadLocal : TeleThreadLocalsArea.Static.values(inspection.vm())) {
             JCheckBoxMenuItem cbox = new JCheckBoxMenuItem(threadLocal.name, false);
             cbox.addItemListener(new ThreadLocalWatchpointItemListener(inspection, threadLocal));
             menu.add(cbox);

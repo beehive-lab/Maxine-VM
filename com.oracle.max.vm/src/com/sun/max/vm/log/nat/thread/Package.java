@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.java.def;
+package com.sun.max.vm.log.nat.thread;
 
-import com.sun.max.vm.log.java.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.log.*;
 
-/**
- * Simple space inefficient implementation.
- * Allocates {@link Record records} large enough to hold the maximum number of arguments.
- * All records are considered in use, i.e., not FREE, even if they are not currently filled in (early startup).
- */
-public class VMLogDefault extends VMLogArray {
 
-    public VMLogDefault() {
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = new Record7();
-        }
+public class Package extends BootImagePackage {
+    public Package() {
+        registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
+        registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
     }
 
     @Override
-    protected Record getRecord(int argCount) {
-        int myId = nextId;
-        while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
-            myId = nextId;
-        }
-        Record r = buffer[myId % logSize];
-        return r;
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
+               VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
     }
 
 }
