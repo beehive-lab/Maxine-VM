@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -460,7 +460,7 @@ public class WordValueLabel extends ValueLabel {
             setFont(style.wordAlternateTextFont());
             setForeground(style.wordInvalidDataColor());
             setWrappedText("void");
-            setWrappedToolTipHtmlText("<unable to read value>");
+            setWrappedToolTipHtmlText(htmlify("<memory unreadable>"));
             if (parent != null) {
                 parent.repaint();
             }
@@ -642,7 +642,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + taggedCodePointer.getAddress().to0xHexString());
                     }
                     toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
                     toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
@@ -658,7 +659,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + taggedCodePointer.getAddress().to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + taggedCodePointer.getAddress().to0xHexString());
                     }
                     toolTip.append("<br>Points to entry in compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
                     toolTip.append("<br>" + htmlify(nameDisplay.longName(compilation)));
@@ -708,7 +710,8 @@ public class WordValueLabel extends ValueLabel {
                     toolTip.append(value.toWord().to0xHexString());
                     final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + address.to0xHexString());
                     }
                     final long position = address.minus(compilation.getCodeStart()).toLong();
                     toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
@@ -727,7 +730,8 @@ public class WordValueLabel extends ValueLabel {
                     final StringBuilder toolTip = new StringBuilder();
                     toolTip.append(value.toWord().to0xHexString());
                     if (taggedCodePointer != null) {
-                        toolTip.append("<br>TAGGED:  actual address=" + address.to0xHexString());
+                        toolTip.append("<br>Decimal= " + Long.toString(value.toLong()));
+                        toolTip.append("<br>POSSIBLY TAGGED encoding of " + address.to0xHexString());
                     }
                     final long position = address.minus(compilation.getCodeStart()).toLong();
                     toolTip.append("<br>Points into compilation " + nameDisplay.longMethodCompilationID(compilation) + " for method");
@@ -949,13 +953,17 @@ public class WordValueLabel extends ValueLabel {
             case NATIVE_FUNCTION:
             case NATIVE_FUNCTION_TEXT:
             case UNCHECKED_CALL_POINT: {
-                final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
-                action = new InspectorAction(inspection(), "View Code at address") {
-                    @Override
-                    public void procedure() {
-                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "code address from WordValueLabel"), true);
-                    }
-                };
+                try {
+                    final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
+                    final MaxCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(address, "code address from WordValueLabel");
+                    action = new InspectorAction(inspection(), "View Code at address") {
+                        @Override
+                        public void procedure() {
+                            focus().setCodeLocation(codeLocation, true);
+                        }
+                    };
+                } catch (InvalidCodeAddressException e) {
+                }
                 break;
             }
             case CLASS_ACTOR_ID:
@@ -1027,7 +1035,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().state().findMemoryRegion(address) != null) {
+                    if (address.isNotZero()) {
                         action = views().memory().makeViewAction(address, null);
                     }
                     break;

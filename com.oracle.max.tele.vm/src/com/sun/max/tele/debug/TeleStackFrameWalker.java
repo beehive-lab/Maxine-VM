@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -168,7 +169,11 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
             }
 
         } catch (Throwable e) {
-            e.printStackTrace();
+            final StringBuilder msg = new StringBuilder();
+            msg.append("Stack walk failed for thread " + teleNativeThread.entityName());
+            msg.append(", frame count=" + frames.size());
+            msg.append(", msg=" + e.getMessage());
+            TeleWarning.message(msg.toString());
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.get(frames.size() - 1);
             frames.add(new TruncatedStackFrame(parentFrame, e));
         }

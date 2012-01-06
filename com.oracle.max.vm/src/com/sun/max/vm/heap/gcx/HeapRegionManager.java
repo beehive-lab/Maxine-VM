@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -258,8 +258,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
         // Estimate conservatively how much space the heap manager needs initially. This is to commit
         // enough memory to get started.
-        final int regionListSize = numTotalRegions << 1; // 2 entries per regions, one for each link (prev and next).
-
         final int initialNumRegions = bootHeapSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
         if (MaxineVM.isDebug()) {
             Log.print("Initialize heap region manager's boot allocator with ");
@@ -285,8 +283,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             regionAllocator.initialize(startOfManagedSpace, numTotalRegions, initialNumRegions);
             RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numTotalRegions);
             // Allocate the backing storage for the region lists.
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[regionListSize]);
+            HeapRegionList.initializeListStorage(numTotalRegions);
 
             FatalError.check(managerAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(bootHeapSize)), "");
 

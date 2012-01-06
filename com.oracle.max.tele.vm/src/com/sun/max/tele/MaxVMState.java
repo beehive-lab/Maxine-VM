@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,15 +84,15 @@ public interface MaxVMState  {
      *
      * @return the regions of memory that the VM has allocated from the OS.
      */
-    List<MaxMemoryRegion> memoryAllocations();
+    List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations();
 
     /**
      * Finds the allocated region of memory in the VM, if any, that includes an address.
      *
      * @param address a memory location in the VM
-     * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
+     * @return the allocated {@link MaxEntityMemoryRegion} containing the address, null if not in any known region.
      */
-    MaxMemoryRegion findMemoryRegion(Address address);
+    MaxEntityMemoryRegion<? extends MaxEntity> findMemoryRegion(Address address);
 
     /**
      * Enumerates all threads live in the VM at this state transition.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ public final class TeleWarning {
 
     private static void warn(String message, Throwable cause) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("Warning: ");
+        sb.append("TeleWarning: ");
         if (message != null) {
             sb.append(message + "  ");
         }

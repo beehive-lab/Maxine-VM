@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ public final class TeleRegisterSet extends AbstractVmHolder implements TeleVMCac
                             teleIntegerRegisters.registerData(),
                             teleFloatingPointRegisters.registerData(),
                             teleStateRegisters.registerData())) {
-                TeleWarning.message("Error while updating register set " + this + " for thread: " + teleNativeThread);
+                TeleWarning.message("Error while updating register set " + this + " for thread: " + teleNativeThread.entityName());
             }
             teleIntegerRegisters.updateCache(epoch);
             teleFloatingPointRegisters.updateCache(epoch);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ public final class TeleError extends Error {
     }
 
     private static TeleError error(String message, Throwable cause) {
-        throw new TeleError((message == null) ? "Internal Error:" : "Internal Error: " + message, cause);
+        throw new TeleError((message == null) ? "Tele Internal Error:" : "Tele Internal Error: " + message, cause);
     }
 
     /**

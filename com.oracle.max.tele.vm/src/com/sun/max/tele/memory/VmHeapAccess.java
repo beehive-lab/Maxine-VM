@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,7 +190,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
-    private TeleFixedMemoryRegion rootsRegion = null;
+    private TeleRootsTable teleRootsTable = null;
 
     private final TeleHeapScheme teleHeapScheme;
 
@@ -199,7 +199,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     /**
      * Keep track of memory regions allocated from the OS that are <em>owned</em> by the heap.
      */
-    private List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>();
+    private List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     private long gcStartedCount = -1;
     private long gcCompletedCount = -1;
@@ -447,7 +447,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         maybeAllocatedRegion.updateCache(epoch);
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleRootsRegion = maybeAllocatedRegion;
-                            rootsRegion = new TeleFixedMemoryRegion(vm(), maybeAllocatedRegion.getRegionName(), maybeAllocatedRegion.getRegionStart(), maybeAllocatedRegion.getRegionNBytes());
+                            teleRootsTable = new TeleRootsTable(vm(), teleRootsRegion);
                         }
                     }
                 }
@@ -461,7 +461,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                 allocations.add(heapRegion.memoryRegion());
             }
             if (teleRootsRegion != null) {
-                allocations.add(rootsRegion);
+                allocations.add(teleRootsTable.memoryRegion());
             }
 
             lastUpdateEpoch = epoch;
@@ -529,8 +529,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         return heapRegion != null && !heapRegion.isBootRegion() && !heapRegion.equals(immortalHeapRegion);
     }
 
-    public MaxMemoryRegion rootsMemoryRegion() {
-        return rootsRegion;
+    public MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion() {
+        return teleRootsTable != null ? teleRootsTable.memoryRegion() : null;
     }
 
     public boolean providesHeapRegionInfo() {
@@ -550,7 +550,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         return teleHeapScheme.markBitInfo();
     }
 
-    public List<MaxMemoryRegion> memoryAllocations() {
+    public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
         return allocations;
     }
 

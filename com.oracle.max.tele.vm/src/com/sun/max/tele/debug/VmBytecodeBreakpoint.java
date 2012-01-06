@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -656,8 +656,13 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                     TeleError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
                 }
             }
-            final RemoteCodePointer codePointer = vm().machineCode().makeCodePointer(address);
-            if (breakpointManager().targetBreakpoints().find(codePointer) == null) {
+            RemoteCodePointer codePointer = null;
+            try {
+                codePointer = vm().machineCode().makeCodePointer(address);
+            } catch (InvalidCodeAddressException e) {
+                TeleWarning.message("Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
+            }
+            if (codePointer != null && breakpointManager().targetBreakpoints().find(codePointer) == null) {
                 final CodeLocation location = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
                 if (bci == -1) {
                     breakpointManager().targetBreakpoints().makeTransientBreakpoint(location);

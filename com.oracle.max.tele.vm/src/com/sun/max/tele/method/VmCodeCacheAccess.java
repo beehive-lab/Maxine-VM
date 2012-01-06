@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
     /**
      * Keep track of memory regions allocated from the OS that are <em>owned</em> by the code cache.
      */
-    private List<MaxMemoryRegion> allocations = new ArrayList<MaxMemoryRegion>();
+    private List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     /**
      * Creates the object that models the cache of machine code in the VM.
@@ -211,7 +211,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
         return null;
     }
 
-    public List<MaxMemoryRegion> memoryAllocations() {
+    public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
         return allocations;
     }
 

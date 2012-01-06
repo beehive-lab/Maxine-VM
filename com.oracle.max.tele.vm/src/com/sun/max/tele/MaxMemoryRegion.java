@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,14 +38,14 @@ public interface MaxMemoryRegion {
     MaxVM vm();
 
     /**
-     * @return a short human-readable name for this memory region that helps explain
-     * the role it plays; suitable for appearance in a table
-     * cell or menu item.
+     * @return a short human-readable name for this memory region
+     * that helps explain the role it plays; suitable for appearance
+     * in a table cell or as the name of a menu item.
      */
     String regionName();
 
     /**
-     * @return address of the first location in the region.
+     * @return memory address of the first location in the region.
      */
     Address start();
 
@@ -60,7 +60,8 @@ public interface MaxMemoryRegion {
     Address end();
 
     /**
-     * @return a description of the memory usage for this region, NULL_USAGE if not allocated or no information available.
+     * @return a description of the memory usage for this region,
+     * NULL_USAGE if not allocated or no information available.
      */
     MemoryUsage getUsage();
 

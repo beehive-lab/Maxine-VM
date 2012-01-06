@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public static final String TELE_LIBRARY_NAME = "tele";
 
-    private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
+    private static final List<MaxEntityMemoryRegion<? extends MaxEntity> > EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
     /**
      * Defines whether the target VM running locally or on a remote machine, or is core-dump.
@@ -621,7 +621,7 @@ public abstract class TeleVM implements MaxVM {
      * <p>
      * Should never contain {@code null}
      */
-    private final Set<MaxMemoryRegion> memoryAllocations = new HashSet<MaxMemoryRegion>();
+    private final Set<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations = new HashSet<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -1193,7 +1193,7 @@ public abstract class TeleVM implements MaxVM {
      *
      * @return a list of platform-specific memory regions, empty if none.
      */
-    protected List<MaxMemoryRegion> platformMemoryRegions() {
+    protected List<MaxEntityMemoryRegion<? extends MaxEntity> > platformMemoryRegions() {
         return EMPTY_MAXMEMORYREGION_LIST;
     }
 
@@ -1267,7 +1267,7 @@ public abstract class TeleVM implements MaxVM {
             mode,
             processState,
             epoch,
-            Collections.unmodifiableList(new ArrayList<MaxMemoryRegion>(memoryAllocations)),
+            Collections.unmodifiableList(new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(memoryAllocations)),
             threads,
             singleStepThread,
             threadsStarted,
@@ -1391,7 +1391,8 @@ public abstract class TeleVM implements MaxVM {
         final TeleClassActor teleClassActor = classAccess.findTeleClassActor(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                if (teleMethodActor.methodActor().equals(methodActor)) {
+                final MethodActor actor = teleMethodActor.methodActor();
+                if (actor != null && actor.equals(methodActor)) {
                     return teleMethodActorType.cast(teleMethodActor);
                 }
             }
@@ -1409,10 +1410,11 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
-        final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
-
         try {
+            final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
             runToInstruction(entryLocation, true, false);
+        } catch (InvalidCodeAddressException exception) {
+            TeleError.unexpected("Unable to set breakpoint at Java entry point " + exception.getAddressString() + ": " + exception.getMessage());
         } catch (Exception exception) {
             throw new IOException(exception);
         }
@@ -1940,14 +1942,17 @@ public abstract class TeleVM implements MaxVM {
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             if (codeLocation.isMachineCode()) {
-                final MachineCodeLocation location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
-                final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
-                if (breakpoint != null) {
-                    try {
+                MachineCodeLocation location = null;
+                try {
+                    location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                    final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
+                    if (breakpoint != null) {
                         breakpoint.remove();
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        TeleError.unexpected("breakpoint removal failed");
                     }
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    TeleError.unexpected("breakpoint removal failed");
+                } catch (InvalidCodeAddressException e) {
+                    TeleError.unexpected("bad breakpoint address");
                 }
             }
             assert breakpointLocations.contains(codeLocation);

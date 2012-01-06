@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,15 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
  */
 public abstract class HeapRegionListIterable {
     protected HeapRegionList regionList;
+    /**
+     * Cursor to the next iterable element to return.
+     */
     protected int cursor = INVALID_REGION_ID;
+
+    /**
+     * last element returned.
+     */
+    protected int last = INVALID_REGION_ID;
 
     HeapRegionListIterable() {
     }
@@ -41,12 +49,9 @@ public abstract class HeapRegionListIterable {
         this.regionList = regionList;
     }
 
-    int cursor() {
-        return cursor;
-    }
-
     void reset(int cursor) {
         this.cursor = cursor;
+        last = INVALID_REGION_ID;
     }
 
     /**
@@ -54,6 +59,7 @@ public abstract class HeapRegionListIterable {
      */
     void reset() {
         cursor = regionList.head();
+        last = INVALID_REGION_ID;
     }
 
     /**

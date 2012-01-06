@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -30,7 +31,6 @@ import com.sun.max.vm.actor.member.*;
 /**
  * Client access to code locations in the VM.
  */
-
 public interface MaxCodeLocationFactory {
 
     /**
@@ -77,9 +77,9 @@ public interface MaxCodeLocationFactory {
      * @param address a non-zero address in VM memory that represents the beginning of a compiled machine code instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a newly created location
-     * @throws TeleError if the address is null or zero
+     * @throws InvalidCodeAddressException if the address is null, zero, or points somewhere known not to contain code
      */
-    MaxCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError;
+    MaxCodeLocation createMachineCodeLocation(Address address, String description) throws InvalidCodeAddressException;
 
     /**
      * Creates a code location in the VM based on both a bytecode and compiled machine code description:
@@ -94,8 +94,9 @@ public interface MaxCodeLocationFactory {
      * @param bci index into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bci &lt; -1
+     * @throws TeleError if the address is null or zero or if teleClassMethodActor is null or bci &lt; -1
+     * @throws InvalidCodeAddressException if the address points into a region that should not have code in it.
      */
-    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError;
+    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError, InvalidCodeAddressException;
 
 }

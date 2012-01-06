@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.tele.method;
 
 import com.sun.max.unsafe.*;
 
+
 /**
- * Interface to visit iterable ranges of contiguous heap space.
- * An iterable range is formatted as a sequence of cells whose size can be queried by visitors and such that
- * the address of the cell plus its size gives the address of the next cell.
- * @see HeapSpace
+ * Exception thrown when an memory address is known to be an
+ * illegal location for machine code, e.g. in a heap.
  */
-public interface HeapSpaceRangeVisitor {
+public class InvalidCodeAddressException extends Exception {
+
+    private final Address address;
+
+    public InvalidCodeAddressException(Address address, String message) {
+        super(message);
+        this.address = address;
+    }
+
     /**
-     * Logic to apply to an iterable contiguous range of heap space.
-     * @param start Address to the first cell in a  iterable contiguous range of heap space
-     * @param end Address after the end of the last cell of an iterable contiguous range of heap space
+     * @return the offending address, possibly null or 0
      */
-    void visitCells(Address start, Address end);
+    public Address getAddress() {
+        return address;
+    }
+
+    /**
+     * @return text describing the offending address, possibly "null".
+     */
+    public String getAddressString() {
+        return address == null ? "null" : address.to0xHexString();
+    }
+
 }

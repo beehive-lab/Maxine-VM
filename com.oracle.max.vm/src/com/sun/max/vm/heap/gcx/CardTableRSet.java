@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,7 +187,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         final int endOfRange = cardTable.tableEntryIndex(end);
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, CardState.DIRTY_CARD);
         while (startCardIndex < endOfRange) {
-            int endCardIndex = cardTable.first(++startCardIndex, endOfRange, CardState.CLEAN_CARD);
+            int endCardIndex = cardTable.firstNot(++startCardIndex, endOfRange, CardState.DIRTY_CARD);
             cardTable.clean(startCardIndex, endCardIndex);
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {
@@ -197,6 +197,18 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         }
     }
 
+    public void visitCards(Address start, Address end, CardState cardState, OverlappingCellVisitor cellVisitor) {
+        final int endOfRange = cardTable.tableEntryIndex(end);
+        int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
+        while (startCardIndex < endOfRange) {
+            int endCardIndex = cardTable.firstNot(++startCardIndex, endOfRange, cardState);
+            visitCards(startCardIndex, endCardIndex, cellVisitor);
+            if (++endCardIndex >= endOfRange) {
+                break;
+            }
+            startCardIndex = cardTable.first(endCardIndex, endOfRange, cardState);
+        }
+    }
 
     @Override
     public Size memoryRequirement(Size maxCoveredAreaSize) {

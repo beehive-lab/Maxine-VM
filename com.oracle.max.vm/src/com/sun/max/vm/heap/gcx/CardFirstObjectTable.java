@@ -27,6 +27,7 @@ import static com.sun.max.vm.heap.gcx.CardTable.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Table providing support for  linear scanning of arbitrary cards of a contiguous range of virtual addresses associated with a card table.
@@ -195,4 +196,16 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         assert offset <= 0 : "offset encoded in FOT entries must be negative";
         return rangeStart(cardIndex).plus(offset);
     }
+
+    void verify(Address start, Address end) {
+        // iterate over all entry and verify the invariant on the first object.
+        int firstCard = tableEntryIndex(start);
+        int lastCard = tableEntryIndex(end);
+        for (int card = firstCard; card < lastCard; card++) {
+            Address cardStart = rangeStart(firstCard);
+            Address firstObjectStart = cellStart(card);
+            FatalError.check(firstObjectStart.lessEqual(cardStart), "First object must be before or at the card start");
+        }
+    }
+
 }

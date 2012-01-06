@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.tele;
 
-import com.sun.max.unsafe.*;
 
+// TODO (mlvdv)  This will go away with the new memory management framework.
 /**
- * Interface to visit iterable ranges of contiguous heap space.
- * An iterable range is formatted as a sequence of cells whose size can be queried by visitors and such that
- * the address of the cell plus its size gives the address of the next cell.
- * @see HeapSpace
+ * Access to the special root table allocated in the VM for tracking references
+ * using the legacy semi-space collector support.
  */
-public interface HeapSpaceRangeVisitor {
-    /**
-     * Logic to apply to an iterable contiguous range of heap space.
-     * @param start Address to the first cell in a  iterable contiguous range of heap space
-     * @param end Address after the end of the last cell of an iterable contiguous range of heap space
-     */
-    void visitCells(Address start, Address end);
+public interface MaxRootsTable extends MaxEntity<MaxRootsTable> {
+
 }

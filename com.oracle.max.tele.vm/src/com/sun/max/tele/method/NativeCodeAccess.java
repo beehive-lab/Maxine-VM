@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
-import java.lang.ref.*;
 import java.text.*;
 import java.util.*;
 
@@ -72,14 +71,9 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
      * <li>The number of registered regions is small, so linear lookup suffices</li>
      * <ul>
      */
-    private final List<MaxMemoryRegion> nativeFunctionMemoryRegions = new ArrayList<MaxMemoryRegion>();
+    private final List<MaxEntityMemoryRegion<? extends MaxEntity> > nativeFunctionMemoryRegions = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     private final List<MaxNativeLibrary> libraries = new ArrayList<MaxNativeLibrary>();
-
-    /**
-     * A manager for code pointers that appear not to refer to any known loaded libraries.
-     */
-    private final DisconnectedRemoteCodePointerManager codePointerManager;
 
     private final Object statsPrinter = new Object() {
 
@@ -100,7 +94,6 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.entityDescription = "Native functions in dynamically loaded libraries";
-        this.codePointerManager = new DisconnectedRemoteCodePointerManager(vm);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         tracer.end(null);
     }
@@ -167,19 +160,9 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
         return null;
     }
 
-    public List<MaxMemoryRegion> memoryAllocations() {
+    public List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
         return nativeFunctionMemoryRegions;
     }
-
-    public RemoteCodePointer makeCodePointer(Address address) {
-        final TeleNativeLibrary teleNativeLibrary = findNativeLibrary(address);
-        if (teleNativeLibrary != null) {
-            return teleNativeLibrary.codePointerManager().makeCodePointer(address);
-        }
-        // Code location is not in any known library; create a special disconnected pointer.
-        return codePointerManager.makeCodePointer(address);
-    }
-
 
     TeleNativeFunction registerNativeFunction(Address codeStart, long nBytes, String name) throws MaxVMBusyException, IllegalArgumentException, MaxInvalidAddressException {
         if (codeStart == null || codeStart.isZero()) {
@@ -231,74 +214,5 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
         }
     }
 
-    /**
-     * A manager for pointers to disconnected machine code not in any known region, presumed to be constant.
-     */
-    private class DisconnectedRemoteCodePointerManager extends AbstractRemoteCodePointerManager {
-
-        /**
-         * Map:  address in VM --> a {@link RemoteCodePointer} that refers to the machine code at that location.
-         */
-        private Map<Long, WeakReference<RemoteCodePointer>> addressToCodePointer = new HashMap<Long, WeakReference<RemoteCodePointer>>();
-
-        public DisconnectedRemoteCodePointerManager(TeleVM vm) {
-            super(vm);
-        }
-
-        /**
-         * {@inheritDoc}
-         * <p>
-         * This manager is designed for disconnected code, i.e. code that is not in any
-         * region known.
-         */
-        public CodeHoldingRegion codeRegion() {
-            return null;
-        }
-
-        /**
-         * {@inheritDoc}
-         * <p>
-         * Since we don't know anything about this code, all we can ensure is that it is really
-         * external to anything else we know about.
-         */
-        public boolean isValidCodePointer(Address address) throws TeleError {
-            return vm().findMemoryRegion(address) == null;
-        }
-
-        public RemoteCodePointer makeCodePointer(Address address) throws TeleError {
-            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
-            if (memoryRegion != null) {
-                final StringBuffer sb = new StringBuffer();
-                sb.append(" Creating native function code pointer=" + address.to0xHexString());
-                sb.append(", points into region=\"" + memoryRegion.regionName() + "\"");
-                TeleWarning.message(sb.toString());
-            }
-            //TeleError.check(isValidCodePointer(address), "Location is in a VM allocation");
-            RemoteCodePointer codePointer = null;
-            final WeakReference<RemoteCodePointer> existingRef = addressToCodePointer.get(address.toLong());
-            if (existingRef != null) {
-                codePointer = existingRef.get();
-            }
-            if (codePointer == null) {
-                codePointer = new ConstantRemoteCodePointer(address);
-                addressToCodePointer.put(address.toLong(), new WeakReference<RemoteCodePointer>(codePointer));
-            }
-            return codePointer;
-        }
-
-        public int activePointerCount() {
-            int count = 0;
-            for (WeakReference<RemoteCodePointer> weakRef : addressToCodePointer.values()) {
-                if (weakRef.get() != null) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
-        public int totalPointerCount() {
-            return addressToCodePointer.size();
-        }
-    }
 
 }
