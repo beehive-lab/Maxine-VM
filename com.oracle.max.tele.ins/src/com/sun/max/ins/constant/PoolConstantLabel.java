@@ -30,6 +30,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -154,13 +155,12 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             lastRefreshedState = vm().state();
             if (teleConstantPool != null) {
                 try {
+                    telePoolConstant = null;
                     telePoolConstant = teleConstantPool.readTelePoolConstant(index);
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    telePoolConstant = null;
                 } catch (DataIOError dataIOError) {
-                    telePoolConstant = null;
                 } catch (InvalidReferenceException invalidReferenceException) {
-                    telePoolConstant = null;
+                } catch (TerminatedProcessIOException erminatedProcessIOException) {
                 }
                 updateText();
             }

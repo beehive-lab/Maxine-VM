@@ -244,6 +244,11 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     }
 
     @Override
+    public void vmProcessTerminated() {
+        dispose();
+    }
+
+    @Override
     protected void refreshState(boolean force) {
         final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
         if (memoryStatus.isObsolete() && followingTeleObject) {

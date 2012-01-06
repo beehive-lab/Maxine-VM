@@ -432,7 +432,6 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (codePointer != null) {
                 breakpoint = breakpointManager().targetBreakpoints().find(codePointer);
             }
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
