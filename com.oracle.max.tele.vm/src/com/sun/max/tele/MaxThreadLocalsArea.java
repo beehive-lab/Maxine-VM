@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.sun.max.tele;
+
+import java.util.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -55,7 +57,15 @@ public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
     SafepointPoll.State safepointState();
 
     /**
+     * Gets the list of {@linkplain VmThreadLocal thread local variables} from the target VM.
+     * This should always be used in preference to {@link VmThreadLocal#values()}.
+     * @return
+     */
+    List<VmThreadLocal> values();
+
+    /**
      * Gets the number of thread local variables in this thread locals area in the VM.
+     * Equivalent to {@code values.size()}.
      * <br>
      * Thread-safe
      *

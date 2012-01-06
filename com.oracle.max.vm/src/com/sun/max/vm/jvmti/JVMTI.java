@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -315,21 +315,6 @@ public class JVMTI {
         event(eventId, null);
     }
 
-    private static void traceEvent(int eventId, boolean ignoring) {
-        boolean lockDisabledSafepoints = Log.lock();
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
-        Log.print("\" --> ");
-        Log.print("JVMTI");
-        Log.print(" event: ");
-        Log.print(JVMTIEvent.name(eventId));
-        if (ignoring) {
-            Log.print(" ignoring");
-        }
-        Log.println("]");
-        Log.unlock(lockDisabledSafepoints);
-    }
-
     /**
      * Dispatches the event denoted by {@code eventId} to all environments that have registered and enabled a call back
      * for it.
@@ -347,6 +332,10 @@ public class JVMTI {
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
+            case VM_START:
+                phase = JVMTI_PHASE_START;
+                break;
+
             case VM_INIT:
                 phase = JVMTI_PHASE_LIVE;
                 tfed = new ThreadFieldEventData();

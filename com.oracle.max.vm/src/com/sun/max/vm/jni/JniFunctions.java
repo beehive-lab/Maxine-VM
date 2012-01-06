@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,8 +192,7 @@ public final class JniFunctions {
 
         @Override
         protected void trace(Record r) {
-            Record1 r1 = VMLog.asRecord1(r);
-            boolean entry = r1.arg1.isAllOnes();
+            boolean entry = r.getArg(1).isAllOnes();
             Log.print("[Thread \"");
             Log.print(threadName(r.getThreadId()));
             Log.print("\" ");
@@ -201,8 +200,7 @@ public final class JniFunctions {
             Log.print(" JNI upcall: ");
             Log.print(operationName(r.getOperation()));
             if (entry) {
-                Record2 r2 = VMLog.asRecord2(r);
-                Pointer anchor = r2.arg2.asPointer();
+                Pointer anchor = r.getArg(2).asPointer();
                 Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
                 final Address jniStubPC = jniStubAnchor.isZero() ? Address.zero() : JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
                 if (!jniStubPC.isZero()) {

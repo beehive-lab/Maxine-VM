@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import com.sun.max.vm.thread.*;
  * a standard {@code -XX:+LogXXX} option derived from the logger name.
  * Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX},
  * and a default implementation is provided, although this can be overridden.
- *
+ *<p>
  * Fine control over which operations are logged (and therefore traced) is provided
  * by the {@code -XX:LogXXXInclude=pattern} and {@code -XX:LogXXXExclude=pattern} options.
  * The {@code pattern} is a regular expression in the syntax expected by {@link java.util.regex.Pattern}
@@ -57,6 +57,11 @@ import com.sun.max.vm.thread.*;
  * By default all operations are logged. However, if the include option is set only
  * those operations that match the pattern are logged. In either case, if the exclude
  * option is provided, the set is reduced by those operations that match the exclude pattern.
+ * <p>
+ * The management of log records is handled in a separate class; a subclass of {@log VMLog}.
+ *  {@link VMLogger instance} requests a {@link VMLog.Record record} that can store a given
+ *  number of arguments from the singleton {@link #vmLog} instance and then records the values.
+ *  The format of the log record is opaque to allow a variety of implementations.
  *
  */
 public class VMLogger {
@@ -75,7 +80,7 @@ public class VMLogger {
      */
     private final int numOps;
     /**
-     * Bit n is set of operation n is to be logged.
+     * Bit n is set iff operation n is to be logged.
      */
     private final BitSet logOp;
 
@@ -87,8 +92,6 @@ public class VMLogger {
     private boolean trace;
 
     private final VMLog vmLog;
-
-    private int[] argCounts = new int[8];
 
     @HOSTED_ONLY
     protected VMLogger(String name, int numOps) {
@@ -122,6 +125,7 @@ public class VMLogger {
 
     /**
      * Provides a mnemonic name for the given operation.
+     * Default is {@code OpN}.
      */
     public String operationName(int op) {
         return "Op " + Integer.toString(op);
@@ -145,7 +149,7 @@ public class VMLogger {
     /**
      * Implements the default trace option {@code -XX:+TraceXXX}.
      * {@link Log#lock()} and {@link Log#unlock(boolean)} are
-     * handled by the caller.
+     * already handled by the caller.
      * @param r
      */
     protected void trace(Record r) {
@@ -158,19 +162,7 @@ public class VMLogger {
         int argCount = r.getArgCount();
         for (int i = 1; i <= argCount; i++) {
             Log.print(' ');
-            Word arg = Word.zero();
-            // Checkstyle: stop
-            switch (i) {
-                case 1: arg = asRecord1(r).arg1; break;
-                case 2: arg = asRecord2(r).arg2; break;
-                case 3: arg = asRecord3(r).arg3; break;
-                case 4: arg = asRecord4(r).arg4; break;
-                case 5: arg = asRecord5(r).arg5; break;
-                case 6: arg = asRecord6(r).arg6; break;
-                case 7: arg = asRecord7(r).arg7; break;
-            }
-            // Checkstyle: resume
-            Log.print(argString(i, arg));
+            Log.print(argString(i, r.getArg(i)));
         }
         Log.println();
     }
@@ -210,7 +202,6 @@ public class VMLogger {
         if (log && logOp.get(op)) {
             r = vmLog.getRecord(argCount);
             r.setHeader(op, argCount, loggerId);
-            argCounts[argCount]++;
         }
         return r;
     }
@@ -223,9 +214,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1) {
-        Record1 r = asRecord1(log(op, 1));
+        Record r = log(op, 1);
         if (r != null) {
-            r.arg1 = arg1;
+            r.setArgs(arg1);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -233,10 +224,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2) {
-        Record2 r = asRecord2(log(op, 2));
+        Record r = log(op, 2);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
+            r.setArgs(arg1, arg2);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -244,11 +234,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3) {
-        Record3 r = asRecord3(log(op, 3));
+        Record r = log(op, 3);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
-            r.arg3 = arg3;
+            r.setArgs(arg1, arg2, arg3);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -256,12 +244,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4) {
-        Record4 r = asRecord4(log(op, 4));
+        Record r = log(op, 4);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
-            r.arg3 = arg3;
-            r.arg4 = arg4;
+            r.setArgs(arg1, arg2, arg3, arg4);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -269,13 +254,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5) {
-        Record5 r = asRecord5(log(op, 5));
+        Record r = log(op, 5);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
-            r.arg3 = arg3;
-            r.arg4 = arg4;
-            r.arg5 = arg5;
+            r.setArgs(arg1, arg2, arg3, arg4, arg5);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -283,14 +264,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6) {
-        Record6 r = asRecord6(log(op, 6));
+        Record r = log(op, 6);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
-            r.arg3 = arg3;
-            r.arg4 = arg4;
-            r.arg5 = arg5;
-            r.arg6 = arg6;
+            r.setArgs(arg1, arg2, arg3, arg4, arg5, arg6);
         }
         if (r != null && trace) {
             doTrace(r);
@@ -298,15 +274,9 @@ public class VMLogger {
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
-        Record7 r = asRecord7(log(op, 7));
+        Record r = log(op, 7);
         if (r != null) {
-            r.arg1 = arg1;
-            r.arg2 = arg2;
-            r.arg3 = arg3;
-            r.arg4 = arg4;
-            r.arg5 = arg5;
-            r.arg6 = arg6;
-            r.arg7 = arg7;
+            r.setArgs(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
         if (r != null && trace) {
             doTrace(r);

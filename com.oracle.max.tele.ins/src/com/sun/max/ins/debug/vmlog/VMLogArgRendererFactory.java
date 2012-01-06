@@ -20,14 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.debug.vmlog;
 
 import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
 
 /**
  * Factory for custom renderers for {@link VMLog.Logger} arguments.
@@ -36,7 +34,7 @@ import com.sun.max.vm.log.*;
  * have name of the form {@code XXXVMLogArgRenderer}, where {@code XXX}
  * is the name of the logger.
  */
-public abstract class VmLogArgRendererFactory {
+public abstract class VMLogArgRendererFactory {
 
     private static Map<String, VMLogArgRenderer> renderers = new HashMap<String, VMLogArgRenderer>();
 
@@ -53,7 +51,7 @@ public abstract class VmLogArgRendererFactory {
         VMLogArgRenderer result = renderers.get(loggerName);
         if (result == null) {
             try {
-                result = (VMLogArgRenderer) Class.forName(VmLogArgRendererFactory.class.getPackage().getName() + "." + loggerName + "VMLogArgRenderer").newInstance();
+                result = (VMLogArgRenderer) Class.forName(VMLogArgRendererFactory.class.getPackage().getName() + "." + loggerName + "VMLogArgRenderer").newInstance();
             } catch (Exception ex) {
                 Trace.line(1, "no custom VMLog argument renderer found for " + loggerName);
                 result =  defaultVMLogArgRenderer;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.object;
+package com.sun.max.vm.log.nat.thread.var;
 
-import com.sun.max.tele.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.log.*;
 
 
-public class JNIVMLogArgRenderer extends VMLogArgRenderer {
-
+public class Package extends BootImagePackage {
     @Override
-    String getText(TeleVM vm, int header, int argNum, long argValue) {
-        if (argNum == 1) {
-            return argValue == 0 ? "EXIT" : "ENTRY";
-        } else {
-            return VmLogArgRendererFactory.defaultVMLogArgRenderer.getText(vm, header, argNum, argValue);
-        }
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadVariable");
     }
 
 }
