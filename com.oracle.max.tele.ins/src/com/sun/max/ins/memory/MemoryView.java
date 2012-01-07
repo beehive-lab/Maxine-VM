@@ -151,7 +151,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                     makeView(memoryRegion, regionName);
                 }
             };
-            inspectorAction.setEnabled(memoryRegion.start().isNotZero() && memoryRegion.nBytes() > 0);
+            inspectorAction.setEnabled(memoryRegion.isAllocated());
             return inspectorAction;
         }
 
