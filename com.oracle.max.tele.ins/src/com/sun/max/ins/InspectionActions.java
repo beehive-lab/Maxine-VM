@@ -1522,7 +1522,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         return "Zero is not a valid code address";
                     }
                     final MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion = vm().state().findMemoryRegion(address);
-                    if (!(memoryRegion.owner() instanceof CodeHoldingRegion)) {
+                    if (!(memoryRegion.owner() instanceof MaxCodeHoldingRegion<?>)) {
                         return address.to0xHexString() + " points into region \"" + memoryRegion.regionName() + "\"";
                     }
                     return null;

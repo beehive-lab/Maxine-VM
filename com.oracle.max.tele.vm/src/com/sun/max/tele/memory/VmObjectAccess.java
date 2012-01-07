@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
  * <p>
  * Objects in the VM can appear in memory regions other than the heap proper.
  *
- * @see ObjectHoldingRegion
+ * @see MaxObjectHoldingRegion
  * @see VmHeapRegion
  * @see VmCodeCacheRegion
  */

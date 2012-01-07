@@ -40,7 +40,7 @@ public interface RemoteCodePointerManager {
     /**
      * Gets the region contain the machine code locations to be managed.
      */
-    CodeHoldingRegion codeRegion();
+    MaxCodeHoldingRegion codeRegion();
 
     /**
      * Determines whether there is machine code in the VM memory region

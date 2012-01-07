@@ -24,18 +24,11 @@ package com.sun.max.tele.method;
 
 import com.sun.max.tele.*;
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
 
 /**
  * A allocatable area in the VM that can contain machine code.
  */
-public interface CodeHoldingRegion {
-
-    /**
-     * Gets a description of the VM memory allocated for this region,
-     * null if the region is external to the VM.
-     */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
+public interface MaxCodeHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type> {
 
     /**
      * Returns the manager for dealing with pointers to machine code
