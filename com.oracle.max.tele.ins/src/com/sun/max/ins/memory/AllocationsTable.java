@@ -265,7 +265,7 @@ public final class AllocationsTable extends InspectorTable {
                 regionToLabel.put(memoryRegion, label);
             }
             label.setForeground(cellForegroundColor(row, column));
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -306,7 +306,7 @@ public final class AllocationsTable extends InspectorTable {
                 label.setOpaque(true);
                 regionToLabel.put(memoryRegion, label);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -347,7 +347,7 @@ public final class AllocationsTable extends InspectorTable {
                 regionToLabel.put(memoryRegion, label);
             }
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Ends @");
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -382,7 +382,7 @@ public final class AllocationsTable extends InspectorTable {
             // are cached by location and may not always be displayed on the same row.
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Size = ");
             label.setForeground(cellForegroundColor(row, column));
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -415,7 +415,7 @@ public final class AllocationsTable extends InspectorTable {
             }
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Alloc = ");
             label.setForeground(cellForegroundColor(row, column));
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 

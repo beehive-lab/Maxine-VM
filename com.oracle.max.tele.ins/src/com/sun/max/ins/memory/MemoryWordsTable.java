@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -324,7 +324,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 label.setOpaque(true);
                 addressToLabelMap.put(address.toLong(), label);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
                 label.setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -395,7 +395,7 @@ public final class MemoryWordsTable extends InspectorTable {
             } else {
                 label.setBorder(null);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             label.setForeground(cellForegroundColor(row, column));
             label.setFont(preference().style().defaultFont());
             return label;
@@ -418,7 +418,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -454,7 +454,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value=");
                 addressToLabelMap.put(address.toLong(), label);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             if (isBoundaryRow(row)) {
                 label.setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -497,7 +497,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 setBorder(null);
             }
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             setValue(bytes);
             return this;
         }
@@ -520,7 +520,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 setBorder(null);
             }
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             setValue(bytes);
             return this;
         }
@@ -544,7 +544,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 setBorder(null);
             }
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -567,7 +567,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 setBorder(null);
             }
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }

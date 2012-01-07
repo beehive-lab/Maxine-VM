@@ -282,7 +282,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         setTitle();
         switch(memoryStatus) {
             case DEAD:
-                setStateColor(preference().style().vmTerminatedBackgroundColor());
+                setStateColor(preference().style().deadObjectBackgroundColor());
                 break;
             case OBSOLETE:
                 setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));

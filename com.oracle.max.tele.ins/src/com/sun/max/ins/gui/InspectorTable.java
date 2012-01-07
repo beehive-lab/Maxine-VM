@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,15 +38,19 @@ import com.sun.max.tele.*;
 
 /**
  * A table specialized for use in the VM Inspector.
- * <br>
+ * <p>
  * This table dispatches mouse events to table cell renderers, after first giving
  * implementations an opportunity to respond in the case of left
  * or middle-clicks.  A right click pops up a menu, if provided by
  * an implementation, over the cell where the click took place.
- * <br>
+ * <p>
  * After all special handling has completed, the event is passed
  * along to the renderer for the cell where the click took place.
- * <br>
+ * <p>
+ * This table overrides the Swing display of row selection, which is
+ * normally shown with an alternate background shading, using
+ * instead a box drawn around the row.
+ * <p>
  * Table cells can act as sources for drag and drop operations, but
  * only for <code>Copy</code> (not <code>Move</code>).  The request for something that can
  * be dragged is by default delegated to the specific table renderer,
@@ -148,12 +152,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     private final Inspection inspection;
     private final String tracePrefix;
 
-    /**
-     * Should selection be highlighted by a box around the selected row(s)?
-     * If not, use default background shading.
-     */
-    private boolean showSelectionWithBox = false;
-
     private Set<ColumnChangeListener> columnChangeListeners = CiUtil.newIdentityHashSet();
 
     private MaxVMState lastRefreshedState;
@@ -169,7 +167,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection, InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
         super(inspectorTableModel, inspectorTableColumnModel);
-        this.showSelectionWithBox = true;
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(inspection.preference().style().defaultFont());
@@ -221,7 +218,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     @Override
     public final void paintChildren(Graphics g) {
         super.paintChildren(g);
-        if (showSelectionWithBox && getRowSelectionAllowed()) {
+        if (getRowSelectionAllowed()) {
             // Draw a box around the selected row in the table
             final int row = getSelectedRow();
             if (row >= 0) {
@@ -354,7 +351,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Sets up standard view configuration for tables used to show memory in one way or another.
      */
     protected final void configureMemoryTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        showSelectionWithBox = true;
         setModel(inspectorTableModel);
         setColumnModel(inspectorTableColumnModel);
         setFillsViewportHeight(true);
@@ -390,16 +386,20 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     public void updateFocusSelection() {
     }
 
+
     /**
-     * Gets the appropriate background color for rendering a table cell, depending on the selection.
-     * If the alternate selection highlighting choice is enabled (painting a box around the row(s)),
-     * then only return the default background shading.
-     *
-     * @param isSelected whether the cell being rendered is part of the current selection
-     * @return the appropriate, default background color for the cell.
+     * Gets an alternate background color for rendering a table cell, null for the default.
+     * <p>
+     * Note that this can get called very early in table initialization by superclasses.
      */
-    public Color cellBackgroundColor(boolean isSelected) {
-        return (isSelected && getRowSelectionAllowed() && !showSelectionWithBox) ? getSelectionBackground() : getBackground();
+    public Color cellBackgroundColor() {
+        return null;
+    }
+
+    @Override
+    public Color getBackground() {
+        final Color alternateBackgroundColor = cellBackgroundColor();
+        return alternateBackgroundColor == null ? super.getBackground() : alternateBackgroundColor;
     }
 
     /**
