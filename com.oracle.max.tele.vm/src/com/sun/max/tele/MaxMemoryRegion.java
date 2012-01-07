@@ -28,7 +28,14 @@ import java.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Description of a region of memory in the VM.
+ * Description of an extent of memory in the VM.
+ * <p>
+ * A described region may not yet be <em>allocated</em>, in which
+ * case it starts at {@linkplain Address#zero() address zero} and
+ * has zero length.
+ * <p>
+ * An <em>allocated</em> region has non-zero length and <em>may not</em>
+ * start at {@linkplain Address#zero() address zero}.
  */
 public interface MaxMemoryRegion {
 
@@ -58,6 +65,12 @@ public interface MaxMemoryRegion {
      * @return address just past the last location in the region.
      */
     Address end();
+
+    /**
+     * @return whether this region describes a legitimately allocated
+     * span of memory: positive length and not starting at zero.
+     */
+    boolean isAllocated();
 
     /**
      * @return a description of the memory usage for this region,
@@ -125,6 +138,12 @@ public interface MaxMemoryRegion {
             return NAME_COMPARATOR;
         }
 
+        /**
+         * @return whether the VM memory region describes a legitimate allocation
+         */
+        public static boolean isAllocated(MaxMemoryRegion memoryRegion) {
+            return memoryRegion.start().isNotZero() && memoryRegion.nBytes() > 0;
+        }
         /**
          * @return whether the VM memory region contains a specific address
          */
