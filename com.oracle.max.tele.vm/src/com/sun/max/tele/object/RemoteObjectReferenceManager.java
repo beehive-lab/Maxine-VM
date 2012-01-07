@@ -38,7 +38,7 @@ public interface RemoteObjectReferenceManager {
     /**
      * Gets the region whose remote object references are being managed.
      */
-    ObjectHoldingRegion objectRegion();
+    MaxObjectHoldingRegion objectRegion();
 
     /**
      * Determines whether there is an object in the VM memory region

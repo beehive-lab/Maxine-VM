@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
-public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxNativeLibrary, CodeHoldingRegion {
+public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxNativeLibrary, MaxCodeHoldingRegion<MaxNativeLibrary> {
 
     private static final class NativeLibraryMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxNativeLibrary> {
         private final List<MaxEntityMemoryRegion< ? extends MaxEntity>> children = new ArrayList<MaxEntityMemoryRegion< ? extends MaxEntity>>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,11 @@ package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
 
+
 /**
  * A allocatable area in the VM that can contain objects.
  */
-public interface ObjectHoldingRegion {
-
-    /**
-     * @return description of the VM memory allocated for this object region.
-     */
-    MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion();
+public interface MaxObjectHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type>  {
 
     /**
      * Returns the manager for dealing with remote references to objects allocated in this VM region.
