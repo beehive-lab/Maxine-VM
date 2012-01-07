@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -193,7 +193,7 @@ public final class ThreadsTable extends InspectorTable {
                 setToolTipText("VM thread ID:  " + threadIdText);
             }
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -214,7 +214,7 @@ public final class ThreadsTable extends InspectorTable {
             setText(handleString);
             setToolTipText("Thread handle:  " + handleString);
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -235,7 +235,7 @@ public final class ThreadsTable extends InspectorTable {
             setText(handleString);
             setToolTipText("Local thread handle:  " + handleString);
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -265,7 +265,7 @@ public final class ThreadsTable extends InspectorTable {
             setText(kind);
             setToolTipText("Thread kind:  " + kind);
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -284,7 +284,7 @@ public final class ThreadsTable extends InspectorTable {
             }
             setValue(inspection().nameDisplay().shortName(thread), "Thread name:  " + inspection().nameDisplay().longName(thread));
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -309,7 +309,7 @@ public final class ThreadsTable extends InspectorTable {
             }
             setToolTipText(toolTipText);
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }

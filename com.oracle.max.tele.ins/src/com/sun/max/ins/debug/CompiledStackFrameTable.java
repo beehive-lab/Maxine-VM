@@ -306,7 +306,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             final String toolTipText = String.format("SP %+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]");
             setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
 
             return this;
         }
@@ -325,7 +325,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             setValue(tableModel.getSPOffset(row, viewPreferences.biasSlotOffsets()), tableModel.getOrigin());
             setToolTipPrefix("Stack frame slot \"" + tableModel.getSlotName(row) + "\" SP-relative location<br>Address= ");
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -342,7 +342,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             setValue(tableModel.getFPOffset(row, viewPreferences.biasSlotOffsets()), tableModel.getAddress(0));
             setToolTipPrefix("Stack frame slot \"" + tableModel.getSlotName(row) + "\" FP-relative location<br>Address= ");
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -373,7 +373,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                 label.setToolTipPrefix(tableModel.getRowDescription(row) + " value = ");
                 addressToLabelMap.put(address.toLong(), label);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 

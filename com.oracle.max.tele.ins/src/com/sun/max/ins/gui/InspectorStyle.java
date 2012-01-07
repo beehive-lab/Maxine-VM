@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -211,6 +211,9 @@ public interface InspectorStyle {
     /** Color for text displaying memory contents at a location where the process has hit a watchpoint. */
     Color memoryWatchpointTextColor();
 
+    /** Color for the background of any display of memory belonging to an object that has died. */
+    Color deadObjectBackgroundColor();
+
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();
@@ -285,6 +288,7 @@ public interface InspectorStyle {
     Color CoolGray2 = new Color(189, 190, 192);
 
     // X11 Colors:
+    Color LightPink = new Color(255, 182, 193);
     Color LightCoral = new Color(240, 128, 128);
     Color Red = new Color(255, 0, 0);
     Color Pink = new Color(255, 192, 203);

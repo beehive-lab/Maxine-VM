@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ public final class MemoryContentsTypeTableCellRenderer extends InspectorTableCel
         } else {
             label.setBorder(null);
         }
-        label.setBackground(inspectorTable.cellBackgroundColor(isSelected));
+        label.setBackground(inspectorTable.cellBackgroundColor());
         label.setForeground(inspectorTable.cellForegroundColor(row, column));
         return label;
     }
