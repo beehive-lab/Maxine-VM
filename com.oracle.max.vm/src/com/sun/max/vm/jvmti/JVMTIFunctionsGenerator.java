@@ -327,6 +327,8 @@ public class JVMTIFunctionsGenerator {
                 args = JniFunctionsGenerator.getDefaultArgs();
             }
             sb.append(INDENT8);
+            sb.append("if (logger.enabled()) {\n");
+            sb.append(INDENT12);
             sb.append("logger.log(EntryPoints.");
             sb.append(JniFunctionsGenerator.currentMethod.name);
             sb.append('.');
@@ -337,6 +339,8 @@ public class JVMTIFunctionsGenerator {
                 sb.append(tag);
             }
             sb.append(");");
+            sb.append(INDENT8);
+            sb.append("}\n");
             return sb.toString();
         }
 
