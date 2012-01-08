@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.tele.object.ObjectManagerStatus.*;
+
 import java.lang.ref.*;
 import java.util.*;
 
@@ -60,6 +62,16 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
 
     public MaxObjectHoldingRegion objectRegion() {
         return objectRegion;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There is no GC cycle for an unmanaged code cache; object
+     * are neither relocated nor collected.
+     */
+    public  ObjectManagerStatus objectManagerStatus() {
+        return ALLOCATING;
     }
 
     public boolean isObjectOrigin(Address origin) throws TeleError {

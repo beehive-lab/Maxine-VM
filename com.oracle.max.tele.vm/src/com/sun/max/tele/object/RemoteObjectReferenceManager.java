@@ -41,6 +41,11 @@ public interface RemoteObjectReferenceManager {
     MaxObjectHoldingRegion objectRegion();
 
     /**
+     * Describes the phase of the manager with respect to GC.
+     */
+    ObjectManagerStatus objectManagerStatus();
+
+    /**
      * Determines whether there is an object in the VM memory region
      * with specified origin.
      *
