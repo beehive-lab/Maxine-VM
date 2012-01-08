@@ -24,6 +24,7 @@ package com.sun.max.tele.reference;
 
 import java.util.*;
 
+//TODO (mlvdv) articulate behavior with respect to relocated/forwarded objects.
 /**
  * The status of an object in the VM, or more precisely the status of the region of memory
  * in which an object's state is or was represented.
@@ -79,6 +80,10 @@ public enum ObjectMemoryStatus {
 
     public String label() {
         return label;
+    }
+
+    public String description() {
+        return description;
     }
 
     /**
