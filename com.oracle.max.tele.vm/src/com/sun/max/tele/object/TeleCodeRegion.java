@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      * @return whether the {@link CodeRegion} object describes the "boot code" region,
      * which is contained in the boot image of the VM.
      */
-    public final boolean isBootCodeRegion() {
+    public boolean isBootCodeRegion() {
         initialize();
         return isBootCodeRegion;
     }
@@ -75,7 +75,6 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     private void initialize() {
         if (!initialized) {
             isBootCodeRegion = getRegionName().equals(vm().codeCache().bootCodeRegionName());
-            targetMethodsReference = fields().CodeRegion_targetMethods.readReference(reference());
             initialized = true;
         }
     }
@@ -85,6 +84,9 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
+        // We may get updated before initialization; if we don't force it now, we may step
+        // into a very nasty infinite regress.
+        initialize();
         // The target methods array might change if the array is grown, or via eviction.
         targetMethodsReference = fields().CodeRegion_targetMethods.readReference(reference());
         additionStartedCount = fields().CodeRegion_additionStartedCount.readInt(reference());
