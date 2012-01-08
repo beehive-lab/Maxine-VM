@@ -272,7 +272,9 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     public TeleObject findObjectAt(Address origin) {
         if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
-                return makeTeleObject(vm().referenceManager().makeReference(origin.asPointer()));
+                if (isValidOrigin(origin)) {
+                    return makeTeleObject(vm().referenceManager().makeReference(origin.asPointer()));
+                }
             } catch (Throwable throwable) {
                 // Can't resolve the address somehow
             } finally {
