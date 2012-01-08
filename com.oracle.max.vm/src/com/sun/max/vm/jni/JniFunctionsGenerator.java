@@ -176,25 +176,29 @@ public class JniFunctionsGenerator {
         private static String entryLogging() {
             StringBuilder sb = new StringBuilder();
             String[] args = getDefaultArgs();
-            sb.append("        logger.log(EntryPoints.");
+            sb.append("        if (logger.enabled()) {\n");
+            sb.append("            logger.log(EntryPoints.");
             sb.append(currentMethod.name);
             sb.append('.');
-            sb.append("ordinal(), Word.allOnes(), anchor");
+            sb.append("ordinal(), ENTRY, anchor");
             for (int i = 0; i < args.length; i++) {
                 String tag = args[i];
                 sb.append(", ");
                 sb.append(tag);
             }
             sb.append(");\n");
+            sb.append("        }\n");
             return sb.toString();
         }
 
         private static String exitLogging() {
             StringBuilder sb = new StringBuilder();
-            sb.append("            logger.log(EntryPoints.");
+            sb.append("            if (logger.enabled()) {\n");
+            sb.append("                logger.log(EntryPoints.");
             sb.append(currentMethod.name);
             sb.append('.');
-            sb.append("ordinal(), Word.zero());\n");
+            sb.append("ordinal(), EXIT);\n");
+            sb.append("            }\n");
             return sb.toString();
         }
     }

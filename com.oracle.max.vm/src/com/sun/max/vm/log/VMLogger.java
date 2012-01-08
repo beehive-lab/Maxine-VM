@@ -49,6 +49,10 @@ import com.sun.max.vm.thread.*;
  * a standard {@code -XX:+LogXXX} option derived from the logger name.
  * Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX},
  * and a default implementation is provided, although this can be overridden.
+ * Enabling tracing also enables logging, as the trace is driven from the log.
+ * <b>N.B.</b>It is not possible to check the options until the VM startup has reached
+ * a certain point. In order not to lose logging in the early phases, logging, but not
+ * tracing, is always enabled initially.
  *<p>
  * Fine control over which operations are logged (and therefore traced) is provided
  * by the {@code -XX:LogXXXInclude=pattern} and {@code -XX:LogXXXExclude=pattern} options.
@@ -59,9 +63,21 @@ import com.sun.max.vm.thread.*;
  * option is provided, the set is reduced by those operations that match the exclude pattern.
  * <p>
  * The management of log records is handled in a separate class; a subclass of {@log VMLog}.
- *  {@link VMLogger instance} requests a {@link VMLog.Record record} that can store a given
- *  number of arguments from the singleton {@link #vmLog} instance and then records the values.
- *  The format of the log record is opaque to allow a variety of implementations.
+ * {@link VMLogger instance} requests a {@link VMLog.Record record} that can store a given
+ * number of arguments from the singleton {@link #vmLog} instance and then records the values.
+ * The format of the log record is opaque to allow a variety of implementations.
+ * <p>
+ * Performance: Logging affects performance even when disabled because the disabled
+ * check happens inside the {@link VMLogger} log methods, so the cost of the argument marshalling
+ * and method call is always paid when used in the straightforward manner, e.g.:
+ *
+ * {@code  logger.log("Operation", arg1, arg2);}
+ *
+ * If performance is an issue, replace the above with a guarded call, vis:
+ *
+ * {@code if (logger.enabled()) { logger.log("Operation", arg1, arg2);}
+ *
+ * The {@code enabled} method is always inlined.
  *
  */
 public class VMLogger {
@@ -142,7 +158,13 @@ public class VMLogger {
         return Long.toHexString(arg.asAddress().toLong());
     }
 
-    protected boolean traceEnabled() {
+    @INLINE
+    public final boolean enabled() {
+        return log;
+    }
+
+    @INLINE
+    public final boolean traceEnabled() {
         return trace;
     }
 
