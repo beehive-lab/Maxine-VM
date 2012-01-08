@@ -2,7 +2,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@
 #
 # Values can use environment variables with Bash syntax (e.g. ${HOME}).
 
-import sys, os, errno, time, subprocess, shlex, types, urllib2, contextlib, StringIO, zipfile 
+import sys, os, errno, time, subprocess, shlex, types, urllib2, contextlib, StringIO, zipfile, signal
 import shutil, fnmatch, re, xml.dom.minidom
 from collections import Callable
 from threading import Thread
@@ -134,7 +134,7 @@ class Project(Dependency):
         self.native = False
         self.dir = dir
         
-    def all_deps(self, deps, includeLibs):
+    def all_deps(self, deps, includeLibs, includeSelf=True):
         """
         Add the transitive set of dependencies for this project, including
         libraries if 'includeLibs' is true, to the 'deps' list.
@@ -151,7 +151,7 @@ class Project(Dependency):
                 dep = project(name)
                 if not dep in deps:
                     dep.all_deps(deps, includeLibs)
-        if not self in deps:
+        if not self in deps and includeSelf:
             deps.append(self)
         return deps
     
@@ -214,6 +214,7 @@ class Library(Dependency):
             path = join(self.suite.dir, path)
         if resolve and self.mustExist and not exists(path):
             assert not len(self.urls) == 0, 'cannot find required library  ' + self.name + " " + path;
+            print('Downloading ' + self.name + ' from ' + str(self.urls))
             download(path, self.urls)
         return path
         
@@ -229,7 +230,11 @@ class Suite:
         self.libs = []
         self.includes = []
         self.commands = None
-        self._load(join(dir, 'mx'), primary=primary)
+        self.primary = primary
+        mxDir = join(dir, 'mx')
+        self._load_env(mxDir)
+        if primary:
+            self._load_commands(mxDir)
 
     def _load_projects(self, mxDir):
         libsMap = dict()
@@ -305,6 +310,8 @@ class Suite:
 
             if not hasattr(mod, 'mx_init'):
                 abort(commands + ' must define an mx_init(env) function')
+            if hasattr(mod, 'mx_post_parse_cmd_line'):
+                self.mx_post_parse_cmd_line = mod.mx_post_parse_cmd_line
                 
             mod.mx_init()
             self.commands = mod
@@ -325,13 +332,23 @@ class Suite:
                     if len(line) != 0 and line[0] != '#':
                         key, value = line.split('=', 1)
                         os.environ[key.strip()] = expandvars_in_property(value.strip())
-        
-    def _load(self, mxDir, primary):
-        self._load_env(mxDir)
+    
+    def _post_init(self, opts):
+        mxDir = join(self.dir, 'mx')
         self._load_includes(mxDir)
         self._load_projects(mxDir)
-        if primary:
-            self._load_commands(mxDir)
+        if self.mx_post_parse_cmd_line is not None:
+            self.mx_post_parse_cmd_line(opts)
+        for p in self.projects:
+            existing = _projects.get(p.name)
+            if existing is not None:
+                abort('cannot override project  ' + p.name + ' in ' + p.dir + " with project of the same name in  " + existing.dir)
+            _projects[p.name] = p
+        for l in self.libs:
+            existing = _libs.get(l.name)
+            if existing is not None:
+                abort('cannot redefine library  ' + l.name)
+            _libs[l.name] = l
         
 def get_os():
     """
@@ -355,16 +372,6 @@ def _loadSuite(dir, primary=False):
     if not _suites.has_key(dir):
         suite = Suite(dir, primary)
         _suites[dir] = suite 
-        for p in suite.projects:
-            existing = _projects.get(p.name)
-            if existing is not None:
-                abort('cannot override project  ' + p.name + ' in ' + p.dir + " with project of the same name in  " + existing.dir)
-            _projects[p.name] = p
-        for l in suite.libs:
-            existing = _libs.get(l.name)
-            if existing is not None:
-                abort('cannot redefine library  ' + l.name)
-            _libs[l.name] = l
 
 def suites():
     """
@@ -408,7 +415,7 @@ def _as_classpath(deps, resolve):
         cp += [_opts.cp_suffix]
     return os.pathsep.join(cp)
 
-def classpath(names=None, resolve=True):
+def classpath(names=None, resolve=True, includeSelf=True):
     """
     Get the class path for a list of given projects, resolving each entry in the
     path (e.g. downloading a missing library) if 'resolve' is true.
@@ -417,10 +424,10 @@ def classpath(names=None, resolve=True):
         return _as_classpath(sorted_deps(True), resolve)
     deps = []
     if isinstance(names, types.StringTypes):
-        project(names).all_deps(deps, True)
+        project(names).all_deps(deps, True, includeSelf)
     else:
         for n in names:
-            project(n).all_deps(deps, True)
+            project(n).all_deps(deps, True, includeSelf)
     return _as_classpath(deps, resolve)
     
 def sorted_deps(includeLibs=False):
@@ -454,7 +461,11 @@ class ArgParser(ArgumentParser):
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
         self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>')
-        self.add_argument('--timeout', help='Timeout (in seconds) for subprocesses', type=int, default=0, metavar='<secs>')
+        if get_os() != 'windows':
+            # Time outs are (currently) implemented with Unix specific functionality
+            self.add_argument('--timeout', help='Timeout (in seconds) for command', type=int, default=0, metavar='<secs>')
+            self.add_argument('--ptimeout', help='Timeout (in seconds) for subprocesses', type=int, default=0, metavar='<secs>')
+        
         
     def _parse_cmd_line(self, args=None):
         if args is None:
@@ -499,6 +510,15 @@ def java():
 def run_java(args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
     return run(java().format_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
 
+def _kill_process_group(pid):
+    pgid = os.getpgid(pid)
+    try:
+        os.killpg(pgid, signal.SIGKILL)
+        return True
+    except:
+        log('Error killing subprocess ' + str(pgid) + ': ' + str(sys.exc_info()[1]))
+        return False
+
 def _waitWithTimeout(process, args, timeout):
     def _waitpid(pid):
         while True:
@@ -509,26 +529,39 @@ def _waitWithTimeout(process, args, timeout):
                     continue
                 raise
     
+    def _returncode(status):
+        if os.WIFSIGNALED(status):
+            return -os.WTERMSIG(status)
+        elif os.WIFEXITED(status):
+            return os.WEXITSTATUS(status)
+        else:
+            # Should never happen
+            raise RuntimeError("Unknown child exit status!")
+        
     end = time.time() + timeout
     delay = 0.0005
     while True:
-        (pid, _) = _waitpid(process.pid)
+        (pid, status) = _waitpid(process.pid)
         if pid == process.pid:
-            return process.wait()
+            return _returncode(status)
         remaining = end - time.time()
         if remaining <= 0:
-            process.kill()
             abort('Process timed out after {0} seconds: {1}'.format(timeout, ' '.join(args)))
+            _kill_process_group(process.pid)
         delay = min(delay * 2, remaining, .05)
         time.sleep(delay)
+
+# Makes the current subprocess accessible to the abort() function
+# This is a tuple of the Popen object and args.
+_currentSubprocess = None
 
 def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
     """
     Run a command in a subprocess, wait for it to complete and return the exit status of the process.
     If the exit status is non-zero and `nonZeroIsFatal` is true, then mx is exited with
     the same exit status.
-    Each line of the standard output and error streams of the subprocess are redirected to the
-    provided out and err functions if they are not None.
+    Each line of the standard output and error streams of the subprocess are redirected to
+    out and err if they are callable objects.
     """
     
     assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
@@ -538,27 +571,39 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
     if _opts.verbose:
         log(' '.join(args))
         
-    if timeout is None and _opts.timeout != 0:
-        timeout = _opts.timeout
-    
+    if timeout is None and _opts.ptimeout != 0:
+        timeout = _opts.ptimeout
+
+    global _currentSubprocess    
+        
     try:
-        if out is None and err is None and timeout is None:
-            retcode = subprocess.call(args, cwd=cwd)
+        # On Unix, the new subprocess should be in a separate group so that a timeout alarm
+        # can use os.killpg() to kill the whole subprocess group
+        preexec_fn = os.setsid if get_os() != 'windows' else None
+        
+        if not callable(out) and not callable(err) and timeout is None:
+            # The preexec_fn=os.setsid
+            p = subprocess.Popen(args, cwd=cwd, preexec_fn=preexec_fn)
+            _currentSubprocess = (p, args)
+            retcode = p.wait()
         else:
             def redirect(stream, f):
                 for line in iter(stream.readline, ''):
                     f(line)
                 stream.close()
-            p = subprocess.Popen(args, cwd=cwd, stdout=None if out is None else subprocess.PIPE, stderr=None if err is None else subprocess.PIPE)
-            if out is not None:
+            stdout=out if not callable(out) else subprocess.PIPE
+            stderr=err if not callable(err) else subprocess.PIPE
+            p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn)
+            _currentSubprocess = (p, args)
+            if callable(out):
                 t = Thread(target=redirect, args=(p.stdout, out))
                 t.daemon = True # thread dies with the program
                 t.start()
-            if err is not None:
+            if callable(err):
                 t = Thread(target=redirect, args=(p.stderr, err))
                 t.daemon = True # thread dies with the program
                 t.start()
-            if timeout is None:
+            if timeout is None or timeout == 0:
                 retcode = p.wait()
             else:
                 if get_os() == 'windows':
@@ -569,7 +614,10 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
         if _opts.verbose:
             raise e
         abort(e.errno)
-    
+    except KeyboardInterrupt:
+        abort(1)
+    finally:
+        _currentSubprocess = None
 
     if retcode and nonZeroIsFatal:
         if _opts.verbose:
@@ -629,9 +677,16 @@ def check_get_env(key):
     """
     Gets an environment variable, aborting with a useful message if it is not set.
     """
-    value = os.environ.get(key)
+    value = get_env(key)
     if value is None:
         abort('Required environment variable ' + key + ' must be set')
+    return value
+
+def get_env(key, default=None):
+    """
+    Gets an environment variable.
+    """
+    value = os.environ.get(key, default)
     return value
 
 def log(msg=None):
@@ -686,6 +741,14 @@ def abort(codeOrMessage):
     if it is None, the exit status is zero; if it has another type (such as a string),
     the object's value is printed and the exit status is one.
     """
+    
+    #import traceback
+    #traceback.print_stack()
+    currentSubprocess = _currentSubprocess
+    if currentSubprocess is not None:
+        p, _ = currentSubprocess
+        _kill_process_group(p.pid)
+    
     raise SystemExit(codeOrMessage)
 
 def download(path, urls, verbose=False):
@@ -697,6 +760,16 @@ def download(path, urls, verbose=False):
     d = dirname(path)
     if d != '' and not exists(d):
         os.makedirs(d)
+        
+    # Try it with the Java tool first since it can show a progress counter
+    myDir = dirname(__file__)
+    
+    javaSource = join(myDir, 'URLConnectionDownload.java')
+    javaClass = join(myDir, 'URLConnectionDownload.class')
+    if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
+        subprocess.check_call([java().javac, '-d', myDir, javaSource])
+    if run([java().java, '-cp', myDir, 'URLConnectionDownload', path] + urls) == 0:
+        return
         
     def url_open(url):
         userAgent = 'Mozilla/5.0 (compatible)'
@@ -719,12 +792,12 @@ def download(path, urls, verbose=False):
             
                 zf = zipfile.ZipFile(zipdata, 'r')
                 data = zf.read(entry)
-                with open(path, 'w') as f:
+                with open(path, 'wb') as f:
                     f.write(data)
             else:
                 with contextlib.closing(url_open(url)) as f:
                     data = f.read()
-                with open(path, 'w') as f:
+                with open(path, 'wb') as f:
                     f.write(data)
             return
         except IOError as e:
@@ -732,17 +805,9 @@ def download(path, urls, verbose=False):
         except zipfile.BadZipfile as e:
             log('Error in zip file downloaded from ' + url + ': ' + str(e))
             
-    # now try it with Java - urllib2 does not handle meta refreshes which are used by Sourceforge
-    myDir = dirname(__file__)
-    
-    javaSource = join(myDir, 'URLConnectionDownload.java')
-    javaClass = join(myDir, 'URLConnectionDownload.class')
-    if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
-        subprocess.check_call([java().javac, '-d', myDir, javaSource])
-    if run([java().java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
-        abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
-                  '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
-
+    abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
+              '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
+            
 def update_file(path, content):
     """
     Updates a file with some given content if the content differs from what's in
@@ -768,19 +833,27 @@ def update_file(path, content):
 
 # Builtin commands
             
-def build(args):
+def build(args, parser=None):
     """compile the Java and C sources, linking the latter
 
     Compile all the Java source code using the appropriate compilers
     and linkers for the various source code types."""
     
-    parser = ArgumentParser(prog='mx build');
+    suppliedParser = parser is not None
+    if not suppliedParser:
+        parser = ArgumentParser(prog='mx build')
+    
+    parser = parser if parser is not None else ArgumentParser(prog='mx build')
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
     parser.add_argument('--source', dest='compliance', help='Java compliance level', default='1.6')
     parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
+    parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
+    
+    if suppliedParser:
+        parser.add_argument('remainder', nargs=REMAINDER, metavar='...')
 
     args = parser.parse_args(args)
     
@@ -798,14 +871,19 @@ def build(args):
     for p in sorted_deps():
         
         if p.native:
-            log('Calling GNU make {0}...'.format(p.dir))
-
-            if args.clean:
-                run([gmake_cmd(), 'clean'], cwd=p.dir)
-                
-            run([gmake_cmd()], cwd=p.dir)
-            built.add(p.name)
+            if args.native:
+                log('Calling GNU make {0}...'.format(p.dir))
+    
+                if args.clean:
+                    run([gmake_cmd(), 'clean'], cwd=p.dir)
+                    
+                run([gmake_cmd()], cwd=p.dir)
+                built.add(p.name)
             continue
+        else:
+            if not args.java:
+                continue
+
         
         outputDir = p.output_dir()
         if exists(outputDir):
@@ -816,7 +894,7 @@ def build(args):
         else:
             os.mkdir(outputDir)
 
-        cp = classpath(p.name)
+        cp = classpath(p.name, includeSelf=True)
         sourceDirs = p.source_dirs()
         mustBuild = args.force
         if not mustBuild:
@@ -849,7 +927,7 @@ def build(args):
             built.add(p.name)
 
             argfileName = join(p.dir, 'javafilelist.txt')
-            argfile = open(argfileName, 'w')
+            argfile = open(argfileName, 'wb')
             argfile.write('\n'.join(javafilelist))
             argfile.close()
             
@@ -868,12 +946,12 @@ def build(args):
                                 self.c = 0
                             
                             def eat(self, line):
-                                if 'proprietary API':
+                                if 'proprietary API' in line:
                                     self.c = 2
                                 elif self.c != 0:
                                     self.c -= 1
                                 else:
-                                    print line.rstrip()
+                                    log(line.rstrip())
                         errFilt=Filter().eat
                         
                     run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
@@ -896,6 +974,9 @@ def build(args):
                 dst = join(outputDir, name[len(sourceDir) + 1:])
                 if exists(dirname(dst)):
                     shutil.copyfile(name, dst)
+    if suppliedParser:
+        return args
+    return None
 
 def canonicalizeprojects(args):
     """process all project files to canonicalize the dependencies
@@ -1037,21 +1118,30 @@ If no projects are given, then all Java projects are checked."""
                     os.unlink(auditfileName)
     return 0
 
-def clean(args):
+def clean(args, parser=None):
     """remove all class files, images, and executables
 
     Removes all files created by a build, including Java class files, executables, and
     generated images.
     """
     
+    parser = parser if parser is not None else ArgumentParser(prog='mx build');
+    parser.add_argument('--no-native', action='store_false', dest='native', help='do not clean native projects')
+    parser.add_argument('--no-java', action='store_false', dest='java', help='do not clean Java projects')
+
+    args = parser.parse_args(args)
+    
     for p in projects():
         if p.native:
-            run([gmake_cmd(), '-C', p.dir, 'clean'])
+            if args.native:
+                run([gmake_cmd(), '-C', p.dir, 'clean'])
         else:
-            outputDir = p.output_dir()
-            if outputDir != '' and exists(outputDir):
-                log('Removing {0}...'.format(outputDir))
-                shutil.rmtree(outputDir)
+            if args.java:
+                outputDir = p.output_dir()
+                if outputDir != '' and exists(outputDir):
+                    log('Removing {0}...'.format(outputDir))
+                    shutil.rmtree(outputDir)
+    return args
     
 def help_(args):
     """show help for a given command
@@ -1119,8 +1209,8 @@ def add_argument(*args, **kwargs):
 # used in the call to str.format().  
 # Extensions should update this table directly
 commands = {
-    'build': [build, '[options] projects...'],
-    'checkstyle': [checkstyle, 'projects...'],
+    'build': [build, '[options]'],
+    'checkstyle': [checkstyle, ''],
     'canonicalizeprojects': [canonicalizeprojects, ''],
     'clean': [clean, ''],
     'help': [help_, '[command]'],
@@ -1130,7 +1220,7 @@ commands = {
 
 _argParser = ArgParser()
 
-def main():    
+def main():
     MX_INCLUDES = os.environ.get('MX_INCLUDES', None)
     if MX_INCLUDES is not None:
         for path in MX_INCLUDES.split(os.pathsep):
@@ -1149,8 +1239,7 @@ def main():
     _java = JavaConfig(opts)
     
     for s in suites():
-        if s.commands is not None and hasattr(s.commands, 'mx_post_parse_cmd_line'):
-            s.commands.mx_post_parse_cmd_line(opts)
+        s._post_init(opts)
     
     if len(commandAndArgs) == 0:
         _argParser.print_help()
@@ -1164,6 +1253,11 @@ def main():
         
     c, _ = commands[command][:2]
     try:
+        if opts.timeout != 0:
+            def alarm_handler(signum, frame):
+                abort('Command timed out after ' + str(opts.timeout) + ' seconds: ' + ' '.join(commandAndArgs))
+            signal.signal(signal.SIGALRM, alarm_handler)
+            signal.alarm(opts.timeout)
         retcode = c(command_args)
         if retcode is not None and retcode != 0:
             abort(retcode)
@@ -1174,5 +1268,5 @@ def main():
 if __name__ == '__main__':
     # rename this module as 'mx' so it is not imported twice by the commands.py modules
     sys.modules['mx'] = sys.modules.pop('__main__')
-    
+
     main()
