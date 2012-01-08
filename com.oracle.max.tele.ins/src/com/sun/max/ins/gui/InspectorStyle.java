@@ -266,6 +266,10 @@ public interface InspectorStyle {
      * Darken a color, more than {@link #darken1(Color)}, less than {@link Color#darker()}.
      */
     Color darken2(Color color);
+    /**
+     *  Very slightly brighten a color, much less than {@link Color#brighter()}.
+     */
+    Color brighten1(Color color);
 
     // Standard Color Palates.  Please don't change; create new colors if needed.
     // Palate 1:  Primary colors, designed to work well together

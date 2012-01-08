@@ -271,7 +271,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     public Color deadObjectBackgroundColor() {
-        return InspectorStyle.LightPink;
+        return brighten1(InspectorStyle.Pink);
     }
 
     private static final Color debugSelectionBorderColor = InspectorStyle.Blue;

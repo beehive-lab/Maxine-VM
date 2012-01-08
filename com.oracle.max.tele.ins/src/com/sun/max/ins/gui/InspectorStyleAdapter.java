@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -462,6 +462,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return new Color(Math.max((int) (color.getRed()  * DARKEN2_FACTOR), 0),
             Math.max((int) (color.getGreen() * DARKEN2_FACTOR), 0),
             Math.max((int) (color.getBlue() * DARKEN2_FACTOR), 0));
+    }
+
+    private static final double BRIGHTEN1_FACTOR = 1.05;
+    public Color brighten1(Color color) {
+        return new Color(Math.min((int) (color.getRed()  * BRIGHTEN1_FACTOR), 255),
+            Math.min((int) (color.getGreen() * BRIGHTEN1_FACTOR), 255),
+            Math.min((int) (color.getBlue() * BRIGHTEN1_FACTOR), 255));
     }
 
     /** Returns an ImageIcon, or null if the path was invalid. */
