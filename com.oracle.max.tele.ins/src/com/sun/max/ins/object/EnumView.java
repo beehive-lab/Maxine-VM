@@ -69,7 +69,7 @@ public class EnumView extends ObjectView<EnumView> {
                 return teleEnum.toJava().name();
             }
             public boolean isLive() {
-                return teleObject().isLive();
+                return teleObject().memoryStatus().isNotDeadYet();
             }
         });
         tabbedPane.add("string value", stringPane);

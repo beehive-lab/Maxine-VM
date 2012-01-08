@@ -71,7 +71,7 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 return new String(chars, 0, length);
             }
             public boolean isLive() {
-                return teleArrayObject.isLive();
+                return teleArrayObject.memoryStatus().isNotDeadYet();
             }
         });
         tabbedPane.add("string value", stringPane);

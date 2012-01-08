@@ -70,7 +70,7 @@ public class StringConstantView extends ObjectView<StringConstantView> {
                 return teleStringConstant.getString();
             }
             public boolean isLive() {
-                return teleObject().isLive();
+                return teleObject().memoryStatus().isNotDeadYet();
             }
         });
         tabbedPane.add("string value", stringPane);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,40 +24,50 @@ package com.sun.max.tele.reference;
 
 import java.util.*;
 
-import com.sun.max.tele.object.*;
-
 /**
  * The status of an object in the VM, or more precisely the status of the region of memory
- * in which this object's state is or was stored.  A new object is by definition {@linkplain #LIVE "LIVE"}.
+ * in which an object's state is or was represented.
+ * <ul>
+ * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection</li>
+ * <li> {@link #UNKNOWN}: During liveness analysis:  formerly live, not yet determined reachable</li>
+ * <li> {@link #DEAD}: Determined unreachable; no further assumptions about memory may be made</li>
+ * <li> {@link #FORWARDED}: a possibly obsolete status, may be removed</li>
+ * </ul>
  * <p>
- * If the object has been collected by the VM, it is no longer a legitimate object, the
- * state of this instance becomes {@linkplain #DEAD "DEAD"}, and it does not change again.
- * <p>
- * If the object has been relocated by the VM, the memory referred to by this instance
- * is no longer a legitimate object, the state of this instance becomes {@linkplain #OBSOLETE "OBSOLETE"},
- * and it does not change again.
- * <p>
- * Once an object is no longer live, the  memory most recently allocated to it might be
- * reused by the VM.  For debugging purposes, however, a {@link TeleObject}
- * continues to refer to the abandoned memory as if it were an object.
+ * Possible transitions:
+ * <ul>
+ * <li> {@link #LIVE} --> {@link #UNKNOWN}: at the beginning of liveness analysis,
+ * when the status of all objects becomes uncertain until further notice;</li>
+ * <li> {@link #UNKNOWN} --> {@link #LIVE}: during liveness analysis, when an object
+ * is determined to be reachable;</li>
+ * <li> {@link #UNKNOWN} --> {@link #DEAD}: at the conclusion of liveness analysis, when
+ * it becomes certain that an object is unreachable;</li>
+ * </ul>
  */
 public enum ObjectMemoryStatus {
 
     /**
      * The region of memory is in a live allocation area and represents an object
-     * that is reachable as of the most recent collection.
+     * that was determined to be reachable as of the most recent collection.
      */
-    LIVE("Live", "The region of memory is in a live allocation area and represents an object that is reachable as of the most recent collection"),
+    LIVE("Live", "Determined to be reachable as of the most recent collection"),
 
     /**
-     * The region of memory formerly represented an object that has been moved to another location.
+     * Only during liveness analysis: the region of memory was live as of the previous collection
+     * and has not yet been determined live during the current analysis.
      */
-    OBSOLETE("Obsolete", "The region of memory formerly represented an object that has been moved to another location"),
+    UNKNOWN("Unknown", "During liveness analysis:  formerly live, not yet determined reachable"),
 
     /**
      * The region of memory formerly represented an object that has been collected.
      */
-    DEAD("Dead", "The region of memory formerly represented an object that has been collected");
+    DEAD("Dead", "The region of memory formerly represented an object that has been collected"),
+
+    /**
+     * The region of memory formerly represented an object that has been moved to another location.
+     * This status is possibly obsolete and may be removed.
+     */
+    FORWARDED("Forwarded", "An object that has been moved to another location");
 
     private final String label;
     private final String description;
@@ -72,29 +82,41 @@ public enum ObjectMemoryStatus {
     }
 
     /**
-     * Does the memory represent a live object in the VM?
-     *
-     * @return whether the object's memory in the VM is still live
+     * Does the memory represent an object that is currently assumed
+     * to be reachable?
      */
     public boolean isLive() {
         return this == LIVE;
     }
 
     /**
-     * Does the memory contain a copy of an object in the VM
-     * that has been abandoned after relocation by GC.
-     *
-     * @return whether the object's memory in the VM has been relocated elsewhere.
+     * (During liveness analysis only) Has the formerly live object
+     * not yet been determined to be reachable?
      */
-    public boolean isObsolete() {
-        return this == OBSOLETE;
+    public boolean isUnknown() {
+        return this == UNKNOWN;
     }
 
     /**
-     * Does the memory represent the state of
-     * an object in the VM that has been collected.
-     *
-     * @return whether the object in the VM has been collected.
+     * Should he object be presumed live until further notice (either
+     * live or (during liveness analysis only) not yet determined to
+     * be dead?
+     */
+    public boolean isNotDeadYet() {
+        return this == LIVE || this == UNKNOWN;
+    }
+
+    /**
+     * Does the memory contain a copy of an object in the VM
+     * that has been abandoned after relocation by GC.
+     */
+    public boolean isForwarded() {
+        return this == FORWARDED;
+    }
+
+    /**
+     * Has the object represented by the memory been determined
+     * to be unreachable?
      */
     public boolean isDead() {
         return this == DEAD;

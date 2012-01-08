@@ -122,7 +122,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         }
 
         public MemoryView makeView(TeleObject teleObject) {
-            final MemoryView memoryView = new MemoryView(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.memoryStatus().isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
+            final MemoryView memoryView = new MemoryView(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.memoryStatus().isNotDeadYet() ? ViewMode.OBJECT : ViewMode.WORD, null);
             notifyAddingView(memoryView);
             return memoryView;
         }
