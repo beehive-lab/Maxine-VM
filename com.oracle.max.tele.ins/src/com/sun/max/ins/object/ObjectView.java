@@ -82,9 +82,10 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     /**
      * Cache of the most recent update to the frame title; needed
      * in situations where the frame becomes unavailable.
-     * This cache does not include the object state modifier.
+     * This cache does not include the object state modifier or
+     * region information.
      */
-    private String title = null;
+    private String title = "";
 
     private InspectorTable objectHeaderTable;
 
@@ -96,7 +97,6 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         super(inspection, VIEW_KIND, null);
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();
-        this.title = "";
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
             protected void setShowHeader(boolean showHeader) {
@@ -177,16 +177,21 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     public final String getTextForTitle() {
-        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
-        final String regionSuffix = " in "
-            + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
-        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
-        if (memoryStatus.isLive()) {
+        final StringBuilder titleText = new StringBuilder();
+        final ObjectMemoryStatus status = teleObject.memoryStatus();
+        if (!status.isLive()) {
+            // Omit the prefix for live objects: the usual case.
+            titleText.append("(").append(status.label()).append(") ");
+        }
+        if (status.isNotDeadYet()) {
+            // Revise the title of the object if we still can
             Pointer pointer = teleObject.origin();
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
-            return title + regionSuffix;
         }
-        return memoryStatus.label() + " " + title + regionSuffix;
+        titleText.append(title);
+        final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
+        titleText.append(" in ").append(memoryRegion == null ? "unknown region" : memoryRegion.regionName());
+        return titleText.toString();
     }
 
     @Override
@@ -251,7 +256,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     protected void refreshState(boolean force) {
         final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
-        if (memoryStatus.isObsolete() && followingTeleObject) {
+        if (memoryStatus.isForwarded() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
@@ -284,7 +289,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             case DEAD:
                 setStateColor(preference().style().deadObjectBackgroundColor());
                 break;
-            case OBSOLETE:
+            case FORWARDED:
                 setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
                 break;
             default:

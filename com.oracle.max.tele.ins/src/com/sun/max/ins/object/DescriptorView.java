@@ -70,7 +70,7 @@ public class DescriptorView extends ObjectView<DescriptorView> {
                 return teleDescriptor.descriptor().string;
             }
             public boolean isLive() {
-                return teleObject().isLive();
+                return teleObject().memoryStatus().isNotDeadYet();
             }
         });
         tabbedPane.add("string value", stringPane);

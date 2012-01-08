@@ -69,7 +69,7 @@ class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
                 return teleUtf8Constant.utf8Constant().string;
             }
             public boolean isLive() {
-                return teleObject().isLive();
+                return teleObject().memoryStatus().isNotDeadYet();
             }
         });
         tabbedPane.add("string value", stringPane);
