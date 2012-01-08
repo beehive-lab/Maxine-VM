@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ public final class StringPane extends InspectorScrollPane {
 
     public interface StringSource {
         String fetchString();
+        boolean isLive();
     }
 
     private final StringSource stringSource;
@@ -66,11 +67,17 @@ public final class StringPane extends InspectorScrollPane {
     public void refresh(boolean force) {
         if (vm().state().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = vm().state();
-            final String newString = stringSource.fetchString();
-            if (newString != stringValue) {
-                stringValue = newString;
+            if (stringSource.isLive()) {
+                final String newString = stringSource.fetchString();
+                if (newString != stringValue) {
+                    stringValue = newString;
+                    textArea.selectAll();
+                    textArea.replaceSelection(stringValue);
+                }
+            } else {
                 textArea.selectAll();
-                textArea.replaceSelection(stringValue);
+                textArea.replaceSelection("");
+                textArea.setBackground(preference().style().deadObjectBackgroundColor());
             }
         }
     }

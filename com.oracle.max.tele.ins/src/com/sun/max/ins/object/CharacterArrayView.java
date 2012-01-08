@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,6 +69,9 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
                 final char[] chars = (char[]) teleArrayObject.shallowCopy();
                 final int length = Math.min(chars.length, preference().style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
+            }
+            public boolean isLive() {
+                return teleArrayObject.isLive();
             }
         });
         tabbedPane.add("string value", stringPane);
