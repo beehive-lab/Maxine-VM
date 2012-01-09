@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -41,23 +40,12 @@ import com.sun.max.vm.type.*;
  * the remembered set holdings references to the evacuated area.
  *
  */
-public abstract class Evacuator extends PointerIndexVisitor implements CellVisitor, OverlappingCellVisitor, SpecialReferenceManager.GC  {
+public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements CellVisitor, OverlappingCellVisitor, SpecialReferenceManager.GC  {
     protected static boolean TraceEvacVisitedCell = false;
     static {
         VMOptions.addFieldOption("-XX:", "TraceEvacVisitedCell", Evacuator.class, "Trace cells visited by the evacuator (Debug mode only)", Phase.PRISTINE);
     }
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
-    private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
-    /**
-     * Word index to the first element of a reference array from its origin.
-     */
-    private final int FIRST_ELEMENT_INDEX = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
-
-    protected Hub getHub(Pointer origin) {
-        return UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
-    }
-
-
     private void updateReferenceArray(Pointer refArrayOrigin, final int firstIndex, final int length) {
         for (int index = firstIndex; index < length; index++) {
             updateEvacuatedRef(refArrayOrigin, index);
@@ -226,7 +214,7 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         // Update the hub first so that is can be dereferenced to obtain
         // the reference map needed to find the other references in the object
         updateEvacuatedRef(origin,  HUB_WORD_INDEX);
-        final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        final Hub hub = getHub(origin);
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {

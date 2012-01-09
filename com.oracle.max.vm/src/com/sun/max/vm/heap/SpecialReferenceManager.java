@@ -102,6 +102,8 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
+    public static final int REFERENT_WORD_INDEX =  JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
+
     /**
      * The head of the list of discovered references.
      * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
@@ -143,7 +145,7 @@ public class SpecialReferenceManager {
      *     null.
      * <p>
      *     Pending: queue = ReferenceQueue with which instance is registered;
-     *     next = Following instance in queue, or this if at end of list.
+     *     next = Following instance in queue, or this if at end of list.Reference
      * <p>
      *     Enqueued: queue = ReferenceQueue.ENQUEUED; next = Following instance
      *     in queue, or this if at end of list.
