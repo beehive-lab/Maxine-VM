@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ public class TeleNativeLibraries {
             byte[] bytes = new byte[1024];
             int index = 0;
             while (true) {
-                byte b = vm.memory().readByte(cString, index);
+                byte b = vm.memoryIO().readByte(cString, index);
                 if (b == 0) {
                     break;
                 }
@@ -102,7 +102,7 @@ public class TeleNativeLibraries {
         for (int index = 0; index < length; index++) {
             boolean newLib = index >= libs.size();
             if (newLib || libs.get(index).base().isZero()) {
-                Reference libInfoReference = vm.memory().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
+                Reference libInfoReference = vm.memoryIO().readArrayElementValue(Kind.REFERENCE, libInfoArrayReference, index).asReference();
                 TargetVMLibInfo targetVMLibInfo = new TargetVMLibInfo(vm, libInfoReference);
                 TeleNativeLibrary teleNativeLibrary = processLibrary(targetVMLibInfo, newLib ? null : libs.get(index));
                 if (index >= libs.size()) {

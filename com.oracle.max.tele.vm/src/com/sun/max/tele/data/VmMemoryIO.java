@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,22 +34,22 @@ import com.sun.max.vm.value.*;
  * methods wrapped around the low level data reading interface, but access to the low level
  * interface is possible for other cases.
  */
-public final class VmMemoryAccess extends AbstractVmHolder implements MaxMemory {
+public final class VmMemoryIO extends AbstractVmHolder implements MaxMemoryIO {
 
     private static final int TRACE_VALUE = 1;
 
-    private static VmMemoryAccess vmMemory;
+    private static VmMemoryIO vmMemoryIO;
 
-    public static VmMemoryAccess make(TeleVM vm, TeleProcess teleProcess) {
-        if (vmMemory == null) {
-            vmMemory = new VmMemoryAccess(vm, teleProcess);
+    public static VmMemoryIO make(TeleVM vm, TeleProcess teleProcess) {
+        if (vmMemoryIO == null) {
+            vmMemoryIO = new VmMemoryIO(vm, teleProcess);
         }
-        return vmMemory;
+        return vmMemoryIO;
     }
 
     private final DataAccess access;
 
-    private VmMemoryAccess(TeleVM vm, TeleProcess teleProcess) {
+    private VmMemoryIO(TeleVM vm, TeleProcess teleProcess) {
         super(vm);
         this.access = teleProcess.dataAccess();
     }

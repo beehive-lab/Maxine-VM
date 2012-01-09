@@ -60,8 +60,8 @@ public abstract class AbstractVmHolder implements TeleVMAccess {
         return vm.classes();
     }
 
-    public final VmMemoryAccess memory() {
-        return vm.memory();
+    public final VmMemoryIO memory() {
+        return vm.memoryIO();
     }
 
     public final VmReferenceManager referenceManager() {

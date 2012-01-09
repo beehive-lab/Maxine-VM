@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -660,7 +660,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return vm().memory().readWordValue(literalAddress);
+                    return vm().memoryIO().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")).trim());
@@ -676,7 +676,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return vm().memory().readWordValue(literalAddress);
+                    return vm().memoryIO().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));

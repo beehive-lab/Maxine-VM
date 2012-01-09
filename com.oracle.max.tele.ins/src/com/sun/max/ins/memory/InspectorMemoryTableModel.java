@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,7 +144,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
         assert nBytes < Integer.MAX_VALUE;
         final byte[] bytes = new byte[(int) nBytes];
         try {
-            vm().memory().readBytes(getMemoryRegion(row).start(), bytes);
+            vm().memoryIO().readBytes(getMemoryRegion(row).start(), bytes);
         } catch (DataIOError dataIOError) {
             return null;
         }
