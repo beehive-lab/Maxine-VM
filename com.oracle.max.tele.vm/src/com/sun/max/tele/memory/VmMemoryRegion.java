@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,8 +47,12 @@ public abstract class VmMemoryRegion implements MaxMemoryRegion {
         return start().plus(nBytes());
     }
 
+    public boolean isAllocated() {
+        return MaxMemoryRegion.Util.isAllocated(this);
+    }
+
     public final boolean contains(Address address) {
-        return MaxMemoryRegion.Util.contains(this, address);
+        return isAllocated() && MaxMemoryRegion.Util.contains(this, address);
     }
 
     public boolean containsInAllocated(Address address) {

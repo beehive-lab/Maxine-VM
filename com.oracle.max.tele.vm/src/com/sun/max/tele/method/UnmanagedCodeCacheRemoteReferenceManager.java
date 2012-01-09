@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.sun.max.tele.method;
+
+import static com.sun.max.tele.object.ObjectManagerStatus.*;
 
 import java.lang.ref.*;
 import java.util.*;
@@ -69,7 +71,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     /**
      * Create a manager for objects allocated in an <em>unmanaged</em> {@linkplain VmCodeCacheRegion code cache region}.
      *
-     * @param vm the TM
      * @param codeCacheRegion the code cache region whose objects are to be managed.
      */
     public UnmanagedCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
@@ -81,8 +82,18 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
     }
 
-    public ObjectHoldingRegion objectRegion() {
+    public MaxObjectHoldingRegion objectRegion() {
         return codeCacheRegion;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There is no GC cycle for an unmanaged code cache; object
+     * are neither relocated nor collected.
+     */
+    public ObjectManagerStatus objectManagerStatus() {
+        return ALLOCATING;
     }
 
     /**

@@ -550,6 +550,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final BytecodeTable bytecodeTable = (BytecodeTable) table;
             final Integer bci = (Integer) value;
+            if (bci == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             if (this.bci != bci) {
                 this.bci = bci;
                 setValue(bci);

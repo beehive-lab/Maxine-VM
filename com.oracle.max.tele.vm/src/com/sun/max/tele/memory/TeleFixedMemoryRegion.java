@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.tele.memory;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -36,6 +37,7 @@ public class TeleFixedMemoryRegion extends VmMemoryRegion {
 
     public TeleFixedMemoryRegion(MaxVM vm, String regionName, Address start, long nBytes) {
         super(vm);
+        TeleError.check(start.isNotZero() || nBytes == 0, "Non-empty memory regions may not start at address 0");
         this.start = start;
         this.nBytes = nBytes;
         this.regionName = regionName;
@@ -51,6 +53,12 @@ public class TeleFixedMemoryRegion extends VmMemoryRegion {
 
     public final long nBytes() {
         return nBytes;
+    }
+
+    @Override
+    public boolean isAllocated() {
+        // Don't need to check for 0 start, per checked invariant
+        return nBytes > 0;
     }
 
 }

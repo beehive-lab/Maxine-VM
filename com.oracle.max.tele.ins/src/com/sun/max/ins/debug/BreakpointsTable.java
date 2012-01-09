@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -379,7 +379,7 @@ public final class BreakpointsTable extends InspectorTable {
             setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             setWrappedToolTipHtmlText("<br>" + "Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -397,7 +397,7 @@ public final class BreakpointsTable extends InspectorTable {
             setValue(breakpointData.shortName(), "<br>" + htmlify(breakpointData.longName()));
             setToolTipSuffix("<br>" + htmlify(breakpointData.locationDescription()));
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -415,7 +415,7 @@ public final class BreakpointsTable extends InspectorTable {
             setText(Integer.toString(breakpointData.location()));
             setWrappedToolTipHtmlText("<br>" + htmlify(breakpointData.locationDescription()));
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -436,7 +436,7 @@ public final class BreakpointsTable extends InspectorTable {
                 component.setToolTipText("<html>" + InspectorLabel.htmlify(tableModel.getRowDescription(row)) + "<br>Breakpoint conditions not supported");
             }
             component.setForeground(cellForegroundColor(row, column));
-            component.setBackground(cellBackgroundColor(isSelected));
+            component.setBackground(cellBackgroundColor());
             return component;
         }
 
@@ -466,7 +466,7 @@ public final class BreakpointsTable extends InspectorTable {
                 setWrappedToolTipHtmlText("<br>No Thread stopped at this breakpoint");
             }
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }

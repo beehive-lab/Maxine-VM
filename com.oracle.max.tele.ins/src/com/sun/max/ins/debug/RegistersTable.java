@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -184,7 +184,7 @@ public final class RegistersTable extends InspectorTable {
             } else {
                 setForeground(ageColors[age]);
             }
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -213,7 +213,7 @@ public final class RegistersTable extends InspectorTable {
             final RegisterHistory registerHistory = (RegisterHistory) tableModel.getValueAt(row, 0);
             final WordValueLabel label = labels[row];
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>age=" + registerHistory.age() + " value = ");
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -275,7 +275,7 @@ public final class RegistersTable extends InspectorTable {
             }
             labels[row].setValue(registerHistory.value());
             labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + " value = " + registerHistory.value().asWord().toHexString() + "<br>");
-            labels[row].setBackground(cellBackgroundColor(isSelected));
+            labels[row].setBackground(cellBackgroundColor());
             return labels[row];
         }
     }

@@ -24,8 +24,6 @@ package com.sun.max.tele.data;
 
 import java.nio.*;
 
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -83,17 +81,13 @@ public interface DataIO {
             final int length = dst.limit();
             int n = 0;
             assert dst.position() == 0;
-            try {
-                while (n < length) {
-                    final int count = dataIO.read(src.plus(n), dst, n, length - n);
-                    if (count <= 0) {
-                        throw new DataIOError(src, (length - n) + " of " + length + " bytes unread");
-                    }
-                    n += count;
-                    dst.position(0);
+            while (n < length) {
+                final int count = dataIO.read(src.plus(n), dst, n, length - n);
+                if (count <= 0) {
+                    throw new DataIOError(src, (length - n) + " of " + length + " bytes unread");
                 }
-            } catch (TerminatedProcessIOException e) {
-                TeleWarning.message(e.getMessage());
+                n += count;
+                dst.position(0);
             }
         }
 

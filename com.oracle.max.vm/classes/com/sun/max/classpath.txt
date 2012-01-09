@@ -1,1 +1,0 @@
-This file is only here so the stupid JavaProject can find this directory and add it to the classpath.

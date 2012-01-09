@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.nio.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.TargetLocation.Kind;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -147,6 +148,7 @@ public class Page {
                     TeleWarning.message(e);
                 }
                 throw e;
+            } catch (TerminatedProcessIOException e) {
             }
         }
     }

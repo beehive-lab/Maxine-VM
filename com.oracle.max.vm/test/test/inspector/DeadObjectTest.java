@@ -20,40 +20,46 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package test.inspector;
 
-import com.sun.max.unsafe.*;
 
 /**
- * Denotes a native (dynamically loaded) library in the target VM.
- * See {@link System#loadLibrary(String).
+ * Simple Inspector demonstration class, with focus on interaction of watchpoints and GC.
  */
-public interface MaxNativeLibrary extends MaxEntity<MaxNativeLibrary> {
-    /**
-     * The file system path to the native library.
-     * @return
-     */
-    String path();
+public class DeadObjectTest {
 
     /**
-     * The functions in the library, or {@code null} if this information is not known (yet).
-     * There is a window between opening the library and resolving the first symbol where
-     * {@code null} can be returned.
-     * @return
+     * @param args
      */
-    MaxNativeFunction[] functions();
+    @SuppressWarnings("unused")
+    public static void main(String[] args) {
+        SimpleObject aSimpleObject;
 
-    /**
-     * Get the native function in the library, if any, whose code includes
-     * a given address in the VM; null if none.
-     *
-     * @param address memory location in the VM
-     * @return a native function whose code includes the address, null if none
-     */
-    MaxNativeFunction findNativeFunction(Address address);
+        aSimpleObject = makeObject1();
+        aSimpleObject = makeObject2();
 
-    Address base();
+        char[] charArrayToDie = {'a', 'b', 'c'};
+        charArrayToDie = null;
 
-    int length();
+        System.gc();
+        System.out.println("Object=" + aSimpleObject);
 
+        System.out.println("Demo1 end");
+    }
+
+    private static SimpleObject makeObject1() {
+        return new SimpleObject("this object will be collected");
+    }
+
+    private static SimpleObject makeObject2() {
+        return new SimpleObject("this object will not be collected");
+    }
+    private static class SimpleObject {
+
+        public SimpleObject(String text) {
+            this.string = text;
+        }
+
+        public String string;
+    }
 }

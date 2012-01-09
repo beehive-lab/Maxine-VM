@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.sun.max.ins.memory;
 import java.lang.management.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -48,6 +49,7 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
     private MemoryUsage memoryUsage = null;
 
     public InspectorMemoryRegion(MaxVM maxVM, String regionName, Address start, long nBytes) {
+        TeleError.check(nBytes == 0 || start.isNotZero(), "Non-empty memory regions may not start address 0");
         this.vm = maxVM;
         this.start = start;
         this.nBytes = nBytes;
@@ -74,6 +76,10 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
         return start().plus(nBytes);
     }
 
+    public final boolean isAllocated() {
+        return MaxMemoryRegion.Util.isAllocated(this);
+    }
+
     public final void setDescription(String regionName) {
         this.regionName = regionName;
     }
@@ -94,7 +100,7 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
     }
 
     public final boolean sameAs(MaxMemoryRegion otherMemoryRegion) {
-        return Util.equal(this, otherMemoryRegion);
+        return MaxMemoryRegion.Util.equal(this, otherMemoryRegion);
     }
 
     public final MemoryUsage getUsage() {

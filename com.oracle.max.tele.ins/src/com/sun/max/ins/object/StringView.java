@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,9 @@ public final class StringView extends ObjectView<StringView> {
             public String fetchString() {
                 return teleString.getString();
             }
+            public boolean isLive() {
+                return teleObject().isLive();
+            }
         });
         tabbedPane.add("string value", stringPane);
 
@@ -86,7 +89,7 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().memoryStatus().isLive()) {
+        if (teleObject().memoryStatus().isNotDeadYet()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

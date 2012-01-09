@@ -44,6 +44,7 @@ if major != 2 or minor != 7:
     raise SystemExit('The mx.py script requires Python 2.7, not {0}.{1}.{2}'.format(major, minor, micro))
 END
 if [ $? -eq 0 ]; then
-    exec python "$dir/mx.py" "$@"
+    exec python -u "$dir/mx.py" "$@"
 fi
 
+#end of file

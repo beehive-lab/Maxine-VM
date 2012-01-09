@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.MemoryTagTableCellRenderer;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
@@ -181,6 +180,16 @@ public final class ArrayElementsTable extends InspectorTable {
         return null;
     }
 
+
+    @Override
+    public Color cellBackgroundColor() {
+        // Gets called during superclass initialization
+        if (teleObject != null && teleObject.memoryStatus().isDead()) {
+            return preference().style().deadObjectBackgroundColor();
+        }
+        return null;
+    }
+
     /**
      * A column model for array elements, to be used in an {@link ObjectView}.
      * Column selection is driven by choices in the parent {@link ObjectView}.
@@ -301,7 +310,7 @@ public final class ArrayElementsTable extends InspectorTable {
         public void refresh() {
             setOrigin(teleObject.origin());
             // Update the mapping between array elements and displayed rows.
-            if (teleObject.memoryStatus().isLive()) {
+            if (teleObject.memoryStatus().isNotDeadYet()) {
                 if (instanceViewPreferences.hideNullArrayElements()) {
                     visibleElementCount = 0;
                     for (int index = 0; index < arrayLength; index++) {
@@ -334,7 +343,7 @@ public final class ArrayElementsTable extends InspectorTable {
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>address = ");
             setValue(row, tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(cellForegroundColor(row, col));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -408,7 +417,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 labels[elementIndex].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
                 labels[elementIndex].setOpaque(true);
             }
-            labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
+            labels[elementIndex].setBackground(cellBackgroundColor());
             return labels[elementIndex];
         }
     }

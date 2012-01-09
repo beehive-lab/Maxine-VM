@@ -411,7 +411,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
          * This manager is designed for disconnected code, i.e. code that is not in any
          * region known.
          */
-        public CodeHoldingRegion codeRegion() {
+        public MaxCodeHoldingRegion codeRegion() {
             return null;
         }
 
