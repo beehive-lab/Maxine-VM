@@ -899,13 +899,20 @@ def build(args, parser=None):
                 if dep.name in built:
                     mustBuild = True
             
+        javafilelist = []
+        nonjavafilelistdst = []
         for sourceDir in sourceDirs:
-            javafilelist = []
-            nonjavafilelist = []
             for root, _, files in os.walk(sourceDir):
                 javafiles = [join(root, name) for name in files if name.endswith('.java') and name != 'package-info.java']
                 javafilelist += javafiles
-                nonjavafilelist += [join(root, name) for name in files if not name.endswith('.java')]
+                
+                # Copy all non Java resources
+                nonjavafilelist = [join(root, name) for name in files if not name.endswith('.java')]
+                for src in nonjavafilelist:
+                    dst = join(outputDir, src[len(sourceDir) + 1:])
+                    if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
+                        shutil.copyfile(src, dst)
+                
                 if not mustBuild:
                     for javafile in javafiles:
                         classfile = outputDir + javafile[len(sourceDir):-len('java')] + 'class'
@@ -913,64 +920,59 @@ def build(args, parser=None):
                             mustBuild = True
                             break
                 
-            if not mustBuild:
-                log('[all class files in {0} are up to date - skipping]'.format(sourceDir))
-                continue
-                
-            if len(javafilelist) == 0:
-                log('[no Java sources in {0} - skipping]'.format(sourceDir))
-                continue
-
-            built.add(p.name)
-
-            argfileName = join(p.dir, 'javafilelist.txt')
-            argfile = open(argfileName, 'wb')
-            argfile.write('\n'.join(javafilelist))
-            argfile.close()
+        if not mustBuild:
+            log('[all class files for {0} are up to date - skipping]'.format(p.name))
+            continue
             
-            try:
-                if jdtJar is None:
-                    log('Compiling Java sources in {0} with javac...'.format(sourceDir))
-                    errFilt = None
-                    if not args.warnAPI:
-                        class Filter:
-                            """
-                            Class to errFilt the 'is Sun proprietary API and may be removed in a future release'
-                            warning when compiling the VM classes.
-                            
-                            """
-                            def __init__(self):
-                                self.c = 0
-                            
-                            def eat(self, line):
-                                if 'proprietary API' in line:
-                                    self.c = 2
-                                elif self.c != 0:
-                                    self.c -= 1
-                                else:
-                                    log(line.rstrip())
-                        errFilt=Filter().eat
+        if len(javafilelist) == 0:
+            log('[no Java sources for {0} - skipping]'.format(p.name))
+            continue
+
+        built.add(p.name)
+
+        argfileName = join(p.dir, 'javafilelist.txt')
+        argfile = open(argfileName, 'wb')
+        argfile.write('\n'.join(javafilelist))
+        argfile.close()
+        
+        try:
+            if jdtJar is None:
+                log('Compiling Java sources for {0} with javac...'.format(p.name))
+                errFilt = None
+                if not args.warnAPI:
+                    class Filter:
+                        """
+                        Class to errFilt the 'is Sun proprietary API and may be removed in a future release'
+                        warning when compiling the VM classes.
                         
-                    run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
-                else:
-                    log('Compiling Java sources in {0} with JDT...'.format(sourceDir))
-                    jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
-                    if not exists(jdtProperties):
-                        raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
-                    run([java().java, '-Xmx1g', '-jar', jdtJar,
-                             '-properties', jdtProperties,
-                             '-' + args.compliance,
-                             '-cp', cp, '-g',
-                             '-warn:-unusedImport,-unchecked',
-                             '-d', outputDir, '@' + argfile.name])
-            finally:
-                os.remove(argfileName)
+                        """
+                        def __init__(self):
+                            self.c = 0
                         
-                
-            for name in nonjavafilelist:
-                dst = join(outputDir, name[len(sourceDir) + 1:])
-                if exists(dirname(dst)):
-                    shutil.copyfile(name, dst)
+                        def eat(self, line):
+                            if 'proprietary API' in line:
+                                self.c = 2
+                            elif self.c != 0:
+                                self.c -= 1
+                            else:
+                                log(line.rstrip())
+                    errFilt=Filter().eat
+                    
+                run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
+            else:
+                log('Compiling Java sources for {0} with JDT...'.format(p.name))
+                jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
+                if not exists(jdtProperties):
+                    raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
+                run([java().java, '-Xmx1g', '-jar', jdtJar,
+                         '-properties', jdtProperties,
+                         '-' + args.compliance,
+                         '-cp', cp, '-g',
+                         '-warn:-unusedImport,-unchecked',
+                         '-d', outputDir, '@' + argfile.name])
+        finally:
+            os.remove(argfileName)
+                    
     if suppliedParser:
         return args
     return None
@@ -1121,8 +1123,10 @@ def clean(args, parser=None):
     Removes all files created by a build, including Java class files, executables, and
     generated images.
     """
+
+    suppliedParser = parser is not None
     
-    parser = parser if parser is not None else ArgumentParser(prog='mx build');
+    parser = parser if suppliedParser else ArgumentParser(prog='mx build');
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not clean native projects')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not clean Java projects')
 
@@ -1138,7 +1142,9 @@ def clean(args, parser=None):
                 if outputDir != '' and exists(outputDir):
                     log('Removing {0}...'.format(outputDir))
                     shutil.rmtree(outputDir)
-    return args
+                    
+    if suppliedParser:
+        return args
     
 def help_(args):
     """show help for a given command
