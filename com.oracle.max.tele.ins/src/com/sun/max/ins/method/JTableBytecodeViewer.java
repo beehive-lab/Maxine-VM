@@ -285,29 +285,31 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
             final int oldSelectedRow = getSelectedRow();
-            final BytecodeTableModel model = (BytecodeTableModel) getModel();
-            int focusRow = -1;
-            if (codeLocation.hasTeleClassMethodActor()) {
-                if (codeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    focusRow = model.findRowAtBCI(codeLocation.bci());
+            if (codeLocation != null) {
+                final BytecodeTableModel model = (BytecodeTableModel) getModel();
+                int focusRow = -1;
+                if (codeLocation.hasTeleClassMethodActor()) {
+                    if (codeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
+                        focusRow = model.findRowAtBCI(codeLocation.bci());
+                    }
+                } else if (codeLocation.hasMethodKey()) {
+                    // Shouldn't happen, but...
+                    if (codeLocation.methodKey().equals(methodKey())) {
+                        focusRow = model.findRowAtBCI(0);
+                    }
+                } else if (codeLocation.hasAddress()) {
+                    if (compilation() != null && compilation().contains(codeLocation.address())) {
+                        focusRow = model.findRow(codeLocation.address());
+                    }
                 }
-            } else if (codeLocation.hasMethodKey()) {
-                // Shouldn't happen, but...
-                if (codeLocation.methodKey().equals(methodKey())) {
-                    focusRow = model.findRowAtBCI(0);
+                if (focusRow >= 0) {
+                    // View contains the focus; ensure it is selected and visible
+                    if (focusRow != oldSelectedRow) {
+                        updateSelection(focusRow);
+                    }
+                    scrollToRows(focusRow, focusRow);
+                    return true;
                 }
-            } else if (codeLocation.hasAddress()) {
-                if (compilation() != null && compilation().contains(codeLocation.address())) {
-                    focusRow = model.findRow(codeLocation.address());
-                }
-            }
-            if (focusRow >= 0) {
-                // View contains the focus; ensure it is selected and visible
-                if (focusRow != oldSelectedRow) {
-                    updateSelection(focusRow);
-                }
-                scrollToRows(focusRow, focusRow);
-                return true;
             }
             // View doesn't contain the focus; clear any old selection
             if (oldSelectedRow >= 0) {
