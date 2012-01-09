@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,7 +228,7 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
-            vm().memory().readBytes(address, bytes);
+            vm().memoryIO().readBytes(address, bytes);
             memoryLabels[i].setText(byteGroupToString(bytes));
             memoryLabels[i].setToolTipText(address.toHexString());
             switch (numberOfBytesPerGroup) {

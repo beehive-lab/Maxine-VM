@@ -56,7 +56,7 @@ public interface TeleVMAccess {
      * Gets access to low level reading & writing methods
      * for VM memory.
      */
-    VmMemoryAccess memory();
+    VmMemoryIO memory();
 
     /**
      * Gets access to information and services for managing

@@ -191,17 +191,17 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public byte readByte(Address address, int offset) {
-        return vm.memory().readByte(address, offset);
+        return vm.memoryIO().readByte(address, offset);
     }
 
     @Override
     public Word readWord(Address address, int offset) {
-        return vm.memory().readWord(address, offset);
+        return vm.memoryIO().readWord(address, offset);
     }
 
     @Override
     public int readInt(Address address, int offset) {
-        return vm.memory().readInt(address, offset);
+        return vm.memoryIO().readInt(address, offset);
     }
 
     @Override

@@ -90,7 +90,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return access to low level memory reading from the VM.
      */
-    MaxMemory memory();
+    MaxMemoryIO memoryIO();
 
     /**
      * @return access to objects in the VM

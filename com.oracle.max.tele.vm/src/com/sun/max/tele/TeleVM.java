@@ -582,7 +582,7 @@ public abstract class TeleVM implements MaxVM {
 
     final File programFile;
 
-    private final VmMemoryAccess memoryAccess;
+    private final VmMemoryIO memoryIO;
 
     private final VmObjectAccess objectAccess;
 
@@ -748,7 +748,7 @@ public abstract class TeleVM implements MaxVM {
         }
         this.bootImageStart = loadBootImage();
         this.vmConfiguration = VMConfiguration.vmConfig();
-        this.memoryAccess = VmMemoryAccess.make(this, this.teleProcess);
+        this.memoryIO = VmMemoryIO.make(this, this.teleProcess);
         this.referenceManager = VmReferenceManager.make(this, (RemoteReferenceScheme) this.vmConfiguration.referenceScheme());
 
         this.threadAccess = VmThreadAccess.make(this);
@@ -961,8 +961,8 @@ public abstract class TeleVM implements MaxVM {
         return classAccess;
     }
 
-    public final VmMemoryAccess memory() {
-        return memoryAccess;
+    public final VmMemoryIO memoryIO() {
+        return memoryIO;
     }
 
     public final VmObjectAccess objects() {
@@ -1959,7 +1959,7 @@ public abstract class TeleVM implements MaxVM {
 
         public byte[] accessMemory(long start, int length) {
             final byte[] bytes = new byte[length];
-            TeleVM.this.memory().readBytes(Address.fromLong(start), bytes);
+            TeleVM.this.memoryIO().readBytes(Address.fromLong(start), bytes);
             return bytes;
         }
 

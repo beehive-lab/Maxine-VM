@@ -101,7 +101,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
         final VmCodeCacheRegion codeCacheRegion = vm.codeCache().findCodeCacheRegion(codeLocation.address());
         this.owner = owner;
         this.codeLocationIsManaged = codeCacheRegion != null && codeCacheRegion.isManaged();
-        this.originalCodeAtBreakpoint = originalCode == null ? vm.memory().readBytes(codeLocation.address(), manager.codeSize()) : originalCode;
+        this.originalCodeAtBreakpoint = originalCode == null ? vm.memoryIO().readBytes(codeLocation.address(), manager.codeSize()) : originalCode;
     }
 
     public boolean isBytecodeBreakpoint() {
