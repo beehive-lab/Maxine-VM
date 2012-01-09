@@ -84,6 +84,7 @@ public final class ThreadsView extends AbstractView<ThreadsView> implements Tabl
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().viewSelectedThreadLocalsBlockMemory(null));
         memoryMenu.add(actions().viewSelectedThreadStackMemory(null));
+        memoryMenu.add(actions().viewSelectedThreadVMLogMemory(null));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 

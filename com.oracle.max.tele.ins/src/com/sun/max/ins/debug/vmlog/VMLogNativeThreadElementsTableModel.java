@@ -30,17 +30,17 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.nat.thread.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 
 class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel {
 
     private static class NativeThreadRecordAccess implements Comparable<NativeThreadRecordAccess> {
+        MaxThreadVMLog vmLog;
         Pointer recordAddress = Pointer.zero();
         int id;
 
-        NativeThreadRecordAccess(Pointer recordAddress, int id) {
+        NativeThreadRecordAccess(MaxThreadVMLog vmLog, Pointer recordAddress, int id) {
+            this.vmLog = vmLog;
             this.recordAddress = recordAddress;
             this.id = id;
         }
@@ -57,30 +57,16 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
 
         @Override
         public String toString() {
-            return id + ":" + Long.toHexString(recordAddress.toLong());
+            return vmLog.thread().entityName() + ":" + id + ":" + Long.toHexString(recordAddress.toLong());
         }
     }
 
 
     protected NativeThreadRecordAccess[] sharedModel;
-    protected int threadLogSize;
-    protected int vmLogBufferIndex;
     protected int vmLogBufferNextIdIndex;
 
     protected VMLogNativeThreadElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection, vmLogView);
-    }
-
-    private void setThreadLocalIndices(MaxThreadLocalsArea tla) {
-        if (vmLogBufferIndex == 0) {
-            for (VmThreadLocal vmtl : tla.values()) {
-                if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_NAME)) {
-                    vmLogBufferIndex = vmtl.index;
-                } else if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME)) {
-                    vmLogBufferNextIdIndex = vmtl.index;
-                }
-            }
-        }
     }
 
     @Override
@@ -91,38 +77,31 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
         // N.B. At the end there is no guarantee that the gathered ids are contiguous.
         // TODO reimplement to avoid such prodigious storage allocation by sharing between refreshes
         ArrayList<NativeThreadRecordAccess> sharedModelList = new ArrayList<NativeThreadRecordAccess>();
-        threadLogSize = vm.fields().VMLogNativeThread_threadLogSize.readInt(vmLogView.vmLogRef);
 
         // look at every thread's buffer
         for (MaxThread thread : vm.state().threads()) {
-            MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
-            if (tla == null) {
+            MaxThreadVMLog vmLog = thread.vmLog();
+            if (vmLog.memoryRegion() == null) {
                 continue;
             }
-            setThreadLocalIndices(tla);
-            MaxThreadLocalVariable tlaBuf = tla.getThreadLocalVariable(vmLogBufferIndex);
-            MaxThreadLocalVariable tlaBufOffsets = tla.getThreadLocalVariable(vmLogBufferNextIdIndex);
-            Pointer logBuffer = tlaBuf.value().toWord().asPointer();
-            if (logBuffer.isZero()) {
-                // no log buffer (yet)
-                continue;
-            }
-            int bufferNextOffset = (int) (tlaBufOffsets.value().toLong() & VMLogNativeThread.NEXT_OFFSET_MASK);
+            Pointer logBuffer = vmLog.start().asPointer();
+            int size = vmLog.size();
+            Pointer logBufferEnd = logBuffer.plus(size);
 
-            int bufferFirstOffset = (int) ((tlaBufOffsets.value().toLong() >> VMLogNativeThread.FIRST_OFFSET_SHIFT) & VMLogNativeThread.SHIFTED_FIRST_OFFSET_MASK);
-
-            int offset = bufferFirstOffset;
+            int offset = vmLog.firstOffset();
+            int nextOffset = vmLog.nextOffset();
             do {
                 Pointer recordAddress = logBuffer.plus(offset);
+                assert recordAddress.lessThan(logBufferEnd);
                 int header = vma.readInt(recordAddress);
                 // variable length records can cause holes
                 if (!Record.isFree(header)) {
                     int sharedId = vma.readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
-                    NativeThreadRecordAccess nativeThreadRecordAccess = new NativeThreadRecordAccess(recordAddress, sharedId);
+                    NativeThreadRecordAccess nativeThreadRecordAccess = new NativeThreadRecordAccess(vmLog, recordAddress, sharedId);
                     sharedModelList.add(nativeThreadRecordAccess);
                 }
-                offset = (offset + nativeRecordSize(recordAddress)) % threadLogSize;
-            } while (offset != bufferNextOffset);
+                offset = (offset + nativeRecordSize(recordAddress)) % size;
+            } while (offset != nextOffset);
         }
 
         sharedModel = new NativeThreadRecordAccess[sharedModelList.size()];

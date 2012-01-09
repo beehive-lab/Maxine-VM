@@ -1259,7 +1259,7 @@ public abstract class TeleVM implements MaxVM {
         for (TeleNativeThread thread : threadsDied) {
             memoryAllocations.remove(thread.memoryAllocations());
         }
-        for (TeleNativeThread thread : threadsStarted) {
+        for (TeleNativeThread thread : threads) {
             memoryAllocations.addAll(thread.memoryAllocations());
         }
 
