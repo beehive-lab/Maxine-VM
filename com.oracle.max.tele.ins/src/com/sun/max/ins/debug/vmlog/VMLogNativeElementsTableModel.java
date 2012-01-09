@@ -26,6 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.VMLog.Record;
 
 
 abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
@@ -68,16 +69,13 @@ abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
         if (recordAddress.isZero()) {
             return new HostedLogRecord();
         } else {
-            return new HostedLogRecord(
-                            id,
-                            vma.readInt(recordAddress),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 0),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 1),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 2),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 3),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 4),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 5),
-                            vma.getWord(recordAddress, nativeRecordArgsOffset(), 6));
+            int header = vma.readInt(recordAddress);
+            int argCount = Record.getArgCount(header);
+            Word[] args = new Word[argCount];
+            for (int i = 0; i < argCount; i++) {
+                args[i] = vma.getWord(recordAddress, nativeRecordArgsOffset(), i);
+            }
+            return new HostedLogRecord(id, header, args);
         }
     }
 
