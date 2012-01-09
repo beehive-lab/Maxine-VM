@@ -45,11 +45,8 @@
 #   projects    - Defines the projects and libraries in the suite and the dependencies between them
 #   commands.py - Suite specific extensions to the commands available to mx. This is only processed
 #                 for the primary suite.
-#   includes    - Other suites to be loaded. This is a recursive. 
+#   includes    - Other suites to be loaded. This is recursive. 
 #   env         - A set of environment variable definitions.
-#
-# The MX_INCLUDES environment variable can also be used to specify other suites.
-# This value of this variable has the same format as a Java class path.
 #
 # The includes and env files are typically not put under version control
 # as they usually contain local file-system paths.
@@ -1221,13 +1218,6 @@ commands = {
 _argParser = ArgParser()
 
 def main():
-    MX_INCLUDES = os.environ.get('MX_INCLUDES', None)
-    if MX_INCLUDES is not None:
-        for path in MX_INCLUDES.split(os.pathsep):
-            d = join(path, 'mx')
-            if exists(d) and isdir(d):
-                _loadSuite(path)
-                
     cwdMxDir = join(os.getcwd(), 'mx')
     if exists(cwdMxDir) and isdir(cwdMxDir):
         _loadSuite(os.getcwd(), True)
