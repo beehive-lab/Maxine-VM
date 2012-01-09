@@ -201,8 +201,15 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         // iterate over all entry and verify the invariant on the first object.
         int firstCard = tableEntryIndex(start);
         int lastCard = tableEntryIndex(end);
+        if (MaxineVM.isDebug()) {
+            Log.println("Verify FOT for cards [");
+            Log.print(firstCard);
+            Log.print(", ");
+            Log.print(lastCard);
+            Log.println("]");
+        }
         for (int card = firstCard; card < lastCard; card++) {
-            Address cardStart = rangeStart(firstCard);
+            Address cardStart = rangeStart(card);
             Address firstObjectStart = cellStart(card);
             FatalError.check(firstObjectStart.lessEqual(cardStart), "First object must be before or at the card start");
         }
