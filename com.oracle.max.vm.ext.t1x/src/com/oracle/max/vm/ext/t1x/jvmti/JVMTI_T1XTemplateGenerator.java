@@ -164,6 +164,22 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
                 case BREAKPOINT:
                     generateBreakpoint();
                     break;
+
+                case IRETURN:
+                case LRETURN:
+                case FRETURN:
+                case DRETURN:
+                case ARETURN:
+                case RETURN:
+
+                case IRETURN$unlock:
+                case LRETURN$unlock:
+                case FRETURN$unlock:
+                case DRETURN$unlock:
+                case ARETURN$unlock:
+                case RETURN$unlock:
+                    generateReturn(k);
+
             }
         }
 
@@ -173,29 +189,33 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
     }
 
     private static final String INDENT8_PREFIX = "        ";
-    private static final String ACCESS_PREFIX = "JVMTI.fieldAccessEvent";
-    private static final String MODIFICATION_PREFIX = "JVMTI.fieldModificationEvent";
-    private static final String INDENT8_ACCESS_PREFIX = INDENT8_PREFIX + ACCESS_PREFIX;
-    private static final String INDENT8_MODIFICATION_PREFIX = INDENT8_PREFIX + MODIFICATION_PREFIX;
+    private static final String FIELD_ACCESS_PREFIX = "JVMTI.fieldAccessEvent";
+    private static final String FIELD_MODIFICATION_PREFIX = "JVMTI.fieldModificationEvent";
+    private static final String INDENT8_FIELD_ACCESS_PREFIX = INDENT8_PREFIX + FIELD_ACCESS_PREFIX;
+    private static final String INDENT8_FIELD_MODIFICATION_PREFIX = INDENT8_PREFIX + FIELD_MODIFICATION_PREFIX;
 
     private void generatePutField(String k, boolean resolved) {
         String offset = resolved ? "offset" : "f.offset()";
-        out.printf(INDENT8_MODIFICATION_PREFIX + "(object, %s, false, %s);%n", offset, putValue(k));
+        out.printf(INDENT8_FIELD_MODIFICATION_PREFIX + "(object, %s, false, %s);%n", offset, putValue(k));
     }
 
     private void generateGetField(String k, boolean resolved) {
         String offset = resolved ? "offset" : "f.offset()";
-        out.printf(INDENT8_ACCESS_PREFIX + "(object, %s, false);%n", offset);
+        out.printf(INDENT8_FIELD_ACCESS_PREFIX + "(object, %s, false);%n", offset);
     }
 
     private void generatePutStatic(String k, boolean init) {
         String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
-        out.printf(INDENT8_MODIFICATION_PREFIX + "(%s, true, %s);%n", args, putValue(k));
+        out.printf(INDENT8_FIELD_MODIFICATION_PREFIX + "(%s, true, %s);%n", args, putValue(k));
     }
 
     private void generateGetStatic(String k, boolean init) {
         String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
-        out.printf(INDENT8_ACCESS_PREFIX + "(%s, true);%n", args);
+        out.printf(INDENT8_FIELD_ACCESS_PREFIX + "(%s, true);%n", args);
+    }
+
+    private void generateReturn(String k) {
+        out.printf("        JVMTIThreadFunctions.framePopEvent(false);%n");
     }
 
     private void generateTraceMethodEntry() {
@@ -247,6 +267,7 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         generatePutStaticTemplates();
         generateTraceMethodEntryTemplate();
         generateBreakpointTemplate();
+        generateReturnTemplates();
     }
 
     static boolean generate(boolean checkOnly, Class target) throws Exception {

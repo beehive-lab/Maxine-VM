@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.sun.max.vm.jvmti;
 import static com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
@@ -41,15 +40,18 @@ public class JVMTIFunctionsGenerator {
     private static final String CAPABILITIES = "// CAPABILITIES: ";
     private static final String MEMBERID = "// MEMBERID: ";
     private static final String ENVCHECK = "// ENVCHECK";
-    private static final String INDENT8 = "        ";
-    private static final String INDENT12 = INDENT8 + "    ";
-    private static final String INDENT16 = INDENT12 + "    ";
-    private static final String INDENT20 = INDENT16 + "    ";
+    private static final String LOGARGS = "// LOGARGS: ";
+    private static final String INDENT4 = "    ";
+    private static final String INDENT8 = INDENT4 + INDENT4;
+    private static final String INDENT12 = INDENT8 + INDENT4;
+    private static final String INDENT16 = INDENT12 + INDENT4;
+    private static final String INDENT20 = INDENT16 + INDENT4;
     private static final String FIRST_LINE_INDENT = INDENT8;
 
     public static class JVMTICustomizer extends Customizer {
 
-        static ArrayList<String> methodNames = new ArrayList<String>();
+        static boolean currentMethodEnvChecked;
+        static String[] logArgs;
 
         @Override
         public String customizeBody(String line) {
@@ -74,7 +76,14 @@ public class JVMTIFunctionsGenerator {
             if (result != null) {
                 return result;
             }
-            result = customizeEnvCheck(line);
+            // check for LOGARGS
+            String[] lr = checkLogArgs(line);
+            if (lr != null) {
+                return ""; // drop LOGARGS
+            }
+            // if we get here this a real statement in the body
+            // check environment valid, (once)
+            result = envCheck(line);
             if (result != null) {
                 return result;
             }
@@ -92,7 +101,7 @@ public class JVMTIFunctionsGenerator {
                 return null;
             }
             if (tagArgs[0].equals("ANY")) {
-                return null;
+                return "";
             }
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
             sb.append("if (!(");
@@ -249,10 +258,9 @@ public class JVMTIFunctionsGenerator {
             }
         }
 
-        private String customizeEnvCheck(String line) {
-            String[] tagArgs = getTagArgs(line, ENVCHECK);
-            if (tagArgs == null) {
-                return null;
+        private String envCheck(String line) {
+            if (currentMethodEnvChecked) {
+                return line;
             }
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
             sb.append("Env jvmtiEnv = JVMTI.getEnv(env);\n");
@@ -261,7 +269,9 @@ public class JVMTIFunctionsGenerator {
             sb.append(INDENT16);
             sb.append("return JVMTI_ERROR_INVALID_ENVIRONMENT;\n");
             sb.append(INDENT12);
-            sb.append("}\n");
+            sb.append("}\n    ");
+            sb.append(line);
+            currentMethodEnvChecked = true;
             return sb.toString();
         }
 
@@ -273,25 +283,68 @@ public class JVMTIFunctionsGenerator {
 
         @Override
         public void startFunction(JniFunctionDeclaration decl) {
-            methodNames.add(decl.name);
+            super.startFunction(decl);
+            currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
+            logArgs = null;
         }
 
         @Override
-        public void close(PrintWriter out) {
-            out.println("    private static final String[] methodNames = new String[] {");
-            for (int i = 0; i < methodNames.size(); i++) {
-                String methodName = methodNames.get(i);
-                if (i > 0) {
-                    out.println(",");
-                }
-                out.printf("        \"%s\"", methodName);
-            }
-            out.println("};");
+        public String customizeTracePrologue(JniFunctionDeclaration decl) {
+            return logging();
+        }
+
+        @Override
+        public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
+            return INDENT12 + "// currrently no return logging";
+        }
+
+        @Override
+        public void close(PrintWriter writer) {
+            super.close(writer);
         }
 
         private static String toFirstLower(String s) {
             return s.substring(0, 1).toLowerCase() + s.substring(1);
         }
+
+        private static String[] checkLogArgs(String line) {
+            String[] s = getTagArgs(line, LOGARGS);
+            if (s != null) {
+                logArgs = s;
+                String[] envLogArgs = new String[logArgs.length + 1];
+                envLogArgs[0] = "env";
+                System.arraycopy(logArgs, 0, envLogArgs, 1, logArgs.length);
+                logArgs = envLogArgs;
+            }
+            return s;
+        }
+
+        private static String logging() {
+            StringBuilder sb = new StringBuilder();
+            String[] args = logArgs;
+            if (args == null) {
+                // no customization, get defaults
+                args = JniFunctionsGenerator.getDefaultArgs();
+            }
+            sb.append(INDENT8);
+            sb.append("if (logger.enabled()) {\n");
+            sb.append(INDENT12);
+            sb.append("logger.log(EntryPoints.");
+            sb.append(JniFunctionsGenerator.currentMethod.name);
+            sb.append('.');
+            sb.append("ordinal()");
+            for (int i = 0; i < args.length; i++) {
+                String tag = args[i];
+                sb.append(", ");
+                sb.append(tag);
+            }
+            sb.append(");");
+            sb.append(INDENT8);
+            sb.append("}\n");
+            return sb.toString();
+        }
+
+
     }
 
     private static String[] getTagArgs(String line, String tag) {
@@ -311,7 +364,6 @@ public class JVMTIFunctionsGenerator {
         sb.append(";\n" + INDENT12 + "}");
         return sb.toString();
     }
-
 
     public static void main(String[] args) throws Exception {
         boolean updated = false;

@@ -1327,6 +1327,15 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
+    public void generateReturnTemplates() {
+        for (Kind k : kinds) {
+            if (hasReturnTemplates(k)) {
+                generateReturnTemplate(k, "");
+                generateReturnTemplate(k, "unlock");
+            }
+        }
+    }
+
     /**
      * Generate a specific {@code RETURN} template.
      * @param k type

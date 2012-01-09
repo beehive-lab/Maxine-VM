@@ -1267,4 +1267,14 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public abstract VMFrameLayout frameLayout();
+
+    /**
+     * JMVTI support. Check if this method supports the the event settings and breakpoints passed as arguments.
+     * @param eventSettings
+     * @param breakpoints
+     * @return
+     */
+    public boolean jvmtiCheck(long eventSettings, long[] breakpoints) {
+        return false;
+    }
 }
