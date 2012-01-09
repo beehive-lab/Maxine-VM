@@ -263,7 +263,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         // ensures that it is always in sync.
         if (isLive()) {
             try {
-                return codeLocationFactory().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
+                return codeLocations().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
             } catch (InvalidCodeAddressException e) {
                 TeleWarning.message("Bad IP address " + e.getAddressString() + " in thread " + entityName() + ": " + e.getMessage());
             }

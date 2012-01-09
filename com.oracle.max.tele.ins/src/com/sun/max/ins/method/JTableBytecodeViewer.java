@@ -183,7 +183,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int bci = tableModel.rowToInstruction(row).bci;
-        focus().setCodeLocation(vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view set focus"), false);
+        focus().setCodeLocation(vm().codeLocations().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view set focus"), false);
     }
 
     @Override
@@ -245,10 +245,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final Address machineCodeFirstAddress = bytecodeInstruction.machineCodeFirstAddress;
                     final int bci = bytecodeInstruction.bci;
                     if (machineCodeFirstAddress.isZero()) {
-                        focus().setCodeLocation(vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view"));
+                        focus().setCodeLocation(vm().codeLocations().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view"));
                     } else {
                         try {
-                            focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), bci, "bytecode view"), true);
+                            focus().setCodeLocation(vm().codeLocations().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), bci, "bytecode view"), true);
                         } catch (InvalidCodeAddressException e1) {
                         }
                     }

@@ -379,7 +379,7 @@ public final class MachineCodeInfoCache extends AbstractVmHolder {
                 try {
                     for (int instructionIndex = 0; instructionIndex < instructionCount; instructionIndex++) {
                         final TargetCodeInstruction instruction = instructions.get(instructionIndex);
-                        indexToLocation[instructionIndex] = codeLocationFactory().createMachineCodeLocation(instruction.address, "native target code instruction");
+                        indexToLocation[instructionIndex] = codeLocations().createMachineCodeLocation(instruction.address, "native target code instruction");
                         if (instruction.label != null) {
                             labels.add(instructionIndex);
                         }

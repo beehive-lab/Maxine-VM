@@ -146,7 +146,7 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
     public CodeLocation getCodeStartLocation() {
         if (codeStartLocation == null) {
             try {
-                codeStartLocation = codeLocationFactory().createMachineCodeLocation(getCodeStart(), "start location in code");
+                codeStartLocation = codeLocations().createMachineCodeLocation(getCodeStart(), "start location in code");
             } catch (InvalidCodeAddressException e) {
             }
         }
@@ -159,7 +159,7 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
 
     public CodeLocation getCallEntryLocation() {
         try {
-            return codeLocationFactory().createMachineCodeLocation(getCallEntryPoint(), "Code entry");
+            return codeLocations().createMachineCodeLocation(getCallEntryPoint(), "Code entry");
         } catch (InvalidCodeAddressException e) {
         }
         return null;

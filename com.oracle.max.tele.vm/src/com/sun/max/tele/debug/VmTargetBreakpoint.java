@@ -462,7 +462,7 @@ public abstract class VmTargetBreakpoint extends VmBreakpoint {
                 byte[] c = new byte[code.length];
                 memory().readBytes(codePointer.getAddress(), c);
                 if (Arrays.equals(c, code)) {
-                    final MachineCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "discovered breakpoint");
+                    final MachineCodeLocation codeLocation = vm().codeLocations().createMachineCodeLocation(codePointer, "discovered breakpoint");
                     return new TransientTargetBreakpoint(vm(), this, codeLocation, null);
                 }
             } catch (DataIOError e) {

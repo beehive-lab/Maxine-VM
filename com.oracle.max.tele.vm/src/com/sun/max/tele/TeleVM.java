@@ -55,7 +55,7 @@ import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -594,8 +594,7 @@ public abstract class TeleVM implements MaxVM {
 
     private NativeCodeAccess nativeCodeAccess = null;
 
-    // TODO (mlvdv) to be replaced
-    private final CodeLocationFactory codeLocationFactory;
+    private final VmCodeLocationManager codeLocationManager;
 
     private final VmMachineCodeAccess machineCodeAccess;
 
@@ -753,14 +752,14 @@ public abstract class TeleVM implements MaxVM {
         this.referenceManager = VmReferenceManager.make(this, (RemoteReferenceScheme) this.vmConfiguration.referenceScheme());
 
         this.threadAccess = VmThreadAccess.make(this);
-        this.codeLocationFactory = CodeLocationFactory.make(this);
+        this.codeLocationManager = VmCodeLocationManager.make(this);
         this.machineCodeAccess = VmMachineCodeAccess.make(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");
         }
         this.fieldAccess = VmFieldAccess.make(this);
-        this.methodAccess = VmMethodAccess.make(this, codeLocationFactory);
+        this.methodAccess = VmMethodAccess.make(this, codeLocationManager);
         this.objectAccess = VmObjectAccess.make(this);
         this.heapAccess = VmHeapAccess.make(this);
         unlock();
@@ -986,8 +985,8 @@ public abstract class TeleVM implements MaxVM {
         return nativeCodeAccess;
     }
 
-    public final CodeLocationFactory codeLocationFactory() {
-        return codeLocationFactory;
+    public final VmCodeLocationManager codeLocations() {
+        return codeLocationManager;
     }
 
     public final VmMachineCodeAccess machineCode() {
@@ -1409,7 +1408,7 @@ public abstract class TeleVM implements MaxVM {
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
-            final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
+            final MachineCodeLocation entryLocation = codeLocations().createMachineCodeLocation(startEntryAddress, "vm start address");
             runToInstruction(entryLocation, true, false);
         } catch (InvalidCodeAddressException exception) {
             TeleError.unexpected("Unable to set breakpoint at Java entry point " + exception.getAddressString() + ": " + exception.getMessage());
@@ -1929,7 +1928,7 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final BytecodeLocation methodCodeLocation = codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "");
+            final BytecodeLocation methodCodeLocation = codeLocations().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
                 TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -1942,7 +1941,7 @@ public abstract class TeleVM implements MaxVM {
             if (codeLocation.isMachineCode()) {
                 MachineCodeLocation location = null;
                 try {
-                    location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                    location = codeLocations().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
                     final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
                     if (breakpoint != null) {
                         breakpoint.remove();

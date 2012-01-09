@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
@@ -88,8 +88,8 @@ public abstract class AbstractVmHolder implements TeleVMAccess {
         return vm.codeCache();
     }
 
-    public final CodeLocationFactory codeLocationFactory() {
-        return vm.codeLocationFactory();
+    public final VmCodeLocationManager codeLocations() {
+        return vm.codeLocations();
     }
 
     public final VmBreakpointManager breakpointManager() {
