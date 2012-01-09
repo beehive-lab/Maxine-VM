@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.VmFieldAccess.InspectedMemberReifier;
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,7 +56,7 @@ public final class VmMethodAccess extends AbstractVmHolder {
 
     private static VmMethodAccess vmMethodsAccess;
 
-    public static VmMethodAccess make(TeleVM vm, CodeLocationFactory codeManager) {
+    public static VmMethodAccess make(TeleVM vm, VmCodeLocationManager codeManager) {
         if (vmMethodsAccess == null) {
             vmMethodsAccess = new VmMethodAccess(vm, codeManager);
         }
@@ -99,7 +99,7 @@ public final class VmMethodAccess extends AbstractVmHolder {
 
     private final List<CodeLocation> clientInspectableMethods;
 
-    private VmMethodAccess(TeleVM vm, CodeLocationFactory codeManager) {
+    private VmMethodAccess(TeleVM vm, VmCodeLocationManager codeManager) {
         super(vm);
         // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
         // updateSource(true);

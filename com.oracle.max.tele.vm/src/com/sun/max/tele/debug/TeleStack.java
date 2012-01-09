@@ -237,7 +237,7 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
             if (callee == null) {
                 // Top frame
                 try {
-                    return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip, "top teleStack frame IP");
+                    return codeLocations().createMachineCodeLocation(topFrameCaller.ip, "top teleStack frame IP");
                 } catch (InvalidCodeAddressException e) {
                     TeleWarning.message("Bad IP address " + e.getAddressString() + " for top frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
                 }
@@ -247,14 +247,14 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
                 if (calleeTargetMethod != null && calleeTargetMethod.is(TrapStub)) {
                     // Special case, where the IP caused a trap; no adjustment.
                     try {
-                        return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip, "teleStack frame return");
+                        return codeLocations().createMachineCodeLocation(topFrameCaller.ip, "teleStack frame return");
                     } catch (InvalidCodeAddressException e) {
                         TeleWarning.message("Bad IP address " + e.getAddressString() + " for trap stub frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
                     }
                 } else {
                     // An ordinary call; apply a platform-specific adjustment to get the real return address.
                     try {
-                        return codeLocationFactory().createMachineCodeLocation(topFrameCaller.ip.plus(offsetToReturnPC), "teleStack frame return");
+                        return codeLocations().createMachineCodeLocation(topFrameCaller.ip.plus(offsetToReturnPC), "teleStack frame return");
                     } catch (InvalidCodeAddressException e) {
                         TeleWarning.message("Bad IP address " + e.getAddressString() + " for frame in thread " + teleNativeThread.entityName() + ": " + e.getMessage());
                     }

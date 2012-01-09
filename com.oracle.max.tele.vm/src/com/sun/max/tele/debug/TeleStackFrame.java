@@ -126,7 +126,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             if (callee == null) {
                 // Top frame
                 try {
-                    location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip, "top stack frame IP");
+                    location = vm.codeLocations().createMachineCodeLocation(stackFrame.ip, "top stack frame IP");
                 } catch (InvalidCodeAddressException e) {
                     TeleWarning.message("Bad IP address " + e.getAddressString() + " for top frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
                 }
@@ -137,7 +137,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
                 if (calleeTargetMethod != null && calleeTargetMethod.is(TrapStub)) {
                     // Special case, where the IP caused a trap; no adjustment.
                     try {
-                        location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip, "stack frame return");
+                        location = vm.codeLocations().createMachineCodeLocation(stackFrame.ip, "stack frame return");
                     } catch (InvalidCodeAddressException e) {
                         TeleWarning.message("Bad IP address " + e.getAddressString() + " for trap stub frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
                     }
@@ -145,7 +145,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
                     // Ordinary call: apply a platform-specific adjustment to get the real return address.
                     final int offsetToReturnPC = platform().isa.offsetToReturnPC;
                     try {
-                        location = vm.codeLocationFactory().createMachineCodeLocation(stackFrame.ip.plus(offsetToReturnPC), "stack frame return");
+                        location = vm.codeLocations().createMachineCodeLocation(stackFrame.ip.plus(offsetToReturnPC), "stack frame return");
                     } catch (InvalidCodeAddressException e) {
                         TeleWarning.message("Bad IP address " + e.getAddressString() + " for call frame in thread " + teleStack.thread().entityName() + ": " + e.getMessage());
                     }

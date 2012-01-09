@@ -31,7 +31,7 @@ import com.sun.max.vm.actor.member.*;
 /**
  * Client access to code locations in the VM.
  */
-public interface MaxCodeLocationFactory {
+public interface MaxCodeLocationManager {
 
     /**
      * Creates a code location in the VM specified only by an abstract description a method, which may not
