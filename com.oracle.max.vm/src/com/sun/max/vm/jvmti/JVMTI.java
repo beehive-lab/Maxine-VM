@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
+import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FramePopEventData;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -65,9 +66,13 @@ public class JVMTI {
          */
         long[] bootClassPathAdd = new long[4];
         /**
-         * A cache of the code event settings by this agent.
+         * The global event settings for this agent.
          */
-        long codeEventMask;
+        long globalEventSettings;
+        /**
+         * The per-thread event settings for this agent.
+         */
+        JVMTIEvent.PerThreadSettings perThreadEventSettings = new JVMTIEvent.PerThreadSettings();
         /**
          *  JVMTI thread local storage.
          */
@@ -76,12 +81,6 @@ public class JVMTI {
 
     private static final String AGENT_ONLOAD = "Agent_OnLoad";
     private static final String AGENT_ONUNLOAD = "Agent_OnUnLoad";
-
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJVMTIEvents", "Trace JVMTI events.");
-    }
-
-    static boolean TraceJVMTIEvents;
 
     /**
      * Since the agent initialization code happens very early, before we have a functional heap,
@@ -227,7 +226,7 @@ public class JVMTI {
             return false;
         }
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId);
+            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current());
             if (!callback.isZero()) {
                 return true;
             }
@@ -240,44 +239,58 @@ public class JVMTI {
      * @return
      */
     public static synchronized boolean compiledCodeEventsNeeded() {
-        return JVMTIEvent.anyCodeEventsSetGlobally();
+        return JVMTIEvent.anyCodeEventsSet();
     }
 
     /**
      * Support for determining if we need to compile special code to dispatch
      * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
      * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
-     * @return
+     * @return the eventId corresponding to the bytecode or 0 if not needed
      */
-    public static synchronized boolean byteCodeEventNeeded(int opcode) {
+    public static synchronized int byteCodeEventNeeded(int opcode) {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
         } else {
-            if (opcode == Bytecodes.GETFIELD || opcode == Bytecodes.GETSTATIC) {
-                eventId = JVMTI_EVENT_FIELD_ACCESS;
-            } else if (opcode == Bytecodes.PUTFIELD || opcode == Bytecodes.PUTSTATIC) {
-                eventId = JVMTI_EVENT_FIELD_MODIFICATION;
-            } else {
-                return false;
+            switch (opcode) {
+                case Bytecodes.GETFIELD:
+                case Bytecodes.GETSTATIC:
+                    eventId = JVMTI_EVENT_FIELD_ACCESS;
+                    break;
+                case Bytecodes.PUTFIELD:
+                case Bytecodes.PUTSTATIC:
+                    eventId = JVMTI_EVENT_FIELD_MODIFICATION;
+                    break;
+                case Bytecodes.IRETURN:
+                case Bytecodes.LRETURN:
+                case Bytecodes.FRETURN:
+                case Bytecodes.DRETURN:
+                case Bytecodes.ARETURN:
+                case Bytecodes.RETURN:
+                    eventId = JVMTI_EVENT_FRAME_POP;
+                    break;
+                default:
+                    return 0;
+
             }
         }
-        return JVMTIEvent.isEventSetGlobally(eventId);
+        return JVMTIEvent.isEventSet(eventId) ? eventId : 0;
     }
 
     /**
      * Gets the (enabled) callback for given event in given environment.
      * @param jvmtiEnv
      * @param eventId
+     * @param vmThread thread generating the event
      * @return the callback address or zero if none or not enabled
      */
-    static Pointer getCallbackForEvent(Env jvmtiEnv, int eventId) {
+    static Pointer getCallbackForEvent(Env jvmtiEnv, int eventId, VmThread vmThread) {
         Pointer env = jvmtiEnv.env;
         if (env.isZero()) {
             return env;
         }
-        // just global for now
-        if (JVMTIEvent.isEventSetGlobally(eventId)) {
+        if (JVMTIEvent.isEventSet(jvmtiEnv, eventId, vmThread)) {
             return getCallBack(CALLBACKS.getPtr(env), eventId);
         }
         return Pointer.zero();
@@ -302,21 +315,6 @@ public class JVMTI {
         event(eventId, null);
     }
 
-    private static void traceEvent(int eventId, boolean ignoring) {
-        boolean lockDisabledSafepoints = Log.lock();
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
-        Log.print("\" --> ");
-        Log.print("JVMTI");
-        Log.print(" event: ");
-        Log.print(JVMTIEvent.name(eventId));
-        if (ignoring) {
-            Log.print(" ignoring");
-        }
-        Log.println("]");
-        Log.unlock(lockDisabledSafepoints);
-    }
-
     /**
      * Dispatches the event denoted by {@code eventId} to all environments that have registered and enabled a call back
      * for it.
@@ -325,19 +323,17 @@ public class JVMTI {
      */
     public static void event(int eventId, Object arg1) {
         boolean ignoring = ignoreEvent(eventId);
-        if (TraceJVMTIEvents) {
-            traceEvent(eventId, ignoring);
-        }
 
         if (ignoring) {
             return;
         }
 
+        JVMTIEvent.log(eventId);
+
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
             case VM_START:
                 phase = JVMTI_PHASE_START;
-                JVMTIFunctions.checkTracing();
                 break;
 
             case VM_INIT:
@@ -345,16 +341,12 @@ public class JVMTI {
                 tfed = new ThreadFieldEventData();
                 break;
 
-            case THREAD_START:
-                // JVMTI_FIELD_EVENT_DATA.store3(Reference.fromJava(new FieldEventData()));
-                break;
-
             default:
         }
 
-        // Check that event is enabled and dispatch it to all registered agents
+        // Check that event is enabled and dispatch it to all interested agents
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId);
+            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], eventId, VmThread.current());
             if (callback.isZero()) {
                 continue;
             }
@@ -391,9 +383,17 @@ public class JVMTI {
                     break;
 
                 case BREAKPOINT:
+                case SINGLE_STEP:
                     EventBreakpointID id = asEventBreakpointID(arg1);
                     invokeBreakpointCallback(callback, env, currentThreadHandle(), id.methodID, id.location);
                     break;
+
+                case FRAME_POP:
+                    FramePopEventData framePopEventData = asFramePopEventData(arg1);
+                    invokeFramePopCallback(callback, env, currentThreadHandle(), framePopEventData.methodID,
+                                           framePopEventData.wasPoppedByException);
+                    break;
+
             }
         }
         if (eventId == VM_DEATH) {
@@ -411,6 +411,7 @@ public class JVMTI {
     private static ThreadFieldEventData tfed;
 
     @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
+    @INTRINSIC(UNSAFE_CAST) public static FramePopEventData  asFramePopEventData(Object object) { return (FramePopEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
 
     private static FieldEventData checkGetFieldModificationEvent(int eventType, Object object, int offset, boolean isStatic) {

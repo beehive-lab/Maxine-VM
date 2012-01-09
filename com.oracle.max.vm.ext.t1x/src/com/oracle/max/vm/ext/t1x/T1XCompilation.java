@@ -443,7 +443,7 @@ public abstract class T1XCompilation {
 
         startTimer(T1XTimer.INSTALL);
         try {
-            return new T1XTargetMethod(this, install);
+            return newT1XTargetMethod(this, install);
         } finally {
             stopTimer(T1XTimer.INSTALL);
         }
@@ -476,6 +476,16 @@ public abstract class T1XCompilation {
         if (epiloguePos != buf.position()) {
             bciToPos[endBCI] = epiloguePos;
         }
+    }
+
+    /**
+     * Create a new (subclass) of {@link T1XTargetMethod}.
+     * @param comp
+     * @param install
+     * @return
+     */
+    protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
+        return new T1XTargetMethod(this, install);
     }
 
     protected abstract void emitUnprotectMethod();

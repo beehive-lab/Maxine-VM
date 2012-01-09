@@ -31,8 +31,7 @@ import com.sun.max.unsafe.*;
 enum JVMTIEnvNativeStruct {
     FUNCTIONS(0),
     CALLBACKS(8),
-    CAPABILITIES(16), // the capabilities that are active for this environment
-    EVENTMASK(24); // global event enabled mask
+    CAPABILITIES(16); // the capabilities that are active for this environment
 
     int offset;
 
