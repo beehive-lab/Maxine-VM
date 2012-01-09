@@ -540,7 +540,7 @@ def makejdk(args):
     else:
         maxjdk = args[0]
         if maxjdk[0] != '/':
-            maxjdk = join(os.getcwd, args[0])
+            maxjdk = join(os.getcwd(), maxjdk)
 
     if exists(maxjdk):
         mx.log('The destination directory already exists -- it will be deleted')
@@ -670,7 +670,7 @@ def test(args):
         tee = Tee(f)
         java = mx.java()
         mx.run_java(['-cp', mx.classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
-                      '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=tee.eat)
+                      '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):
     """verifies a set of methods using the Maxine bytecode verifier
