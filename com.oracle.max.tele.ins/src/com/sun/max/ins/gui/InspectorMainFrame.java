@@ -327,6 +327,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.THREADS));
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.THREAD_LOCALS));
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.WATCHPOINTS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.VMLOG));
 
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override

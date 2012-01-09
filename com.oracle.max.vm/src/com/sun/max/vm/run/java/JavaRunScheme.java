@@ -49,6 +49,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
@@ -227,6 +228,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
+
+            VMLog.checkLogOptions();
+
             vmConfig().initializeSchemes(MaxineVM.Phase.STARTING);
 
             if (Heap.ExcessiveGCFrequency != 0) {

@@ -834,6 +834,40 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     *Action:  view the memory allocated to the currently selected thread's stack.
+     */
+    final class ViewSelectedThreadVMLogMemoryAction extends InspectorAction {
+
+        public ViewSelectedThreadVMLogMemoryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for selected thread's VM log" : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                views().memory().makeView(thread.vmLog().memoryRegion(), "Thread " + thread.toShortString()).highlight();
+            } else {
+                gui().errorMessage("no thread selected");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasThread());
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory view
+     * for memory allocated by the currently selected stack frame
+     */
+    public final InspectorAction viewSelectedThreadVMLogMemory(String actionTitle) {
+        return new ViewSelectedThreadVMLogMemoryAction(actionTitle);
+    }
+
+    /**
      *Action:  view the memory allocated to the currently selected thread's locals block.
      */
     final class ViewSelectedThreadLocalsBlockMemoryAction extends InspectorAction {
@@ -4591,6 +4625,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.THREADS));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
                 menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
+                menu.add(views().activateSingletonViewAction(ViewKind.VMLOG));
             }
         };
     }

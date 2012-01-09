@@ -46,6 +46,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -454,6 +455,8 @@ public final class MaxineVM {
         ImmortalHeap.initialize();
 
         NativeInterfaces.initialize(jniEnv, jmmInterface, jvmtiInterface);
+
+        VMLog.vmLog().initialize();
 
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();

@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -1085,6 +1086,94 @@ public class JVMTI_T1XTemplateSource {
     @T1X_TEMPLATE(BREAKPOINT)
     public static void breakpoint(long id) {
         JVMTIBreakpoints.event(id);
+    }
+
+    @T1X_TEMPLATE(IRETURN)
+    @Slot(-1)
+    public static int ireturn(@Slot(0) int value) {
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(IRETURN$unlock)
+    @Slot(-1)
+    public static int ireturnUnlock(Reference object, @Slot(0) int value) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(FRETURN)
+    @Slot(-1)
+    public static float freturn(@Slot(0) float value) {
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(FRETURN$unlock)
+    @Slot(-1)
+    public static float freturnUnlock(Reference object, @Slot(0) float value) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(LRETURN)
+    @Slot(-1)
+    public static long lreturn(@Slot(0) long value) {
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(LRETURN$unlock)
+    @Slot(-1)
+    public static long lreturnUnlock(Reference object, @Slot(0) long value) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(DRETURN)
+    @Slot(-1)
+    public static double dreturn(@Slot(0) double value) {
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(DRETURN$unlock)
+    @Slot(-1)
+    public static double dreturnUnlock(Reference object, @Slot(0) double value) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(ARETURN)
+    @Slot(-1)
+    public static Reference areturn(@Slot(0) Reference value) {
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(ARETURN$unlock)
+    @Slot(-1)
+    public static Reference areturnUnlock(Reference object, @Slot(0) Reference value) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
+        return value;
+    }
+
+    @T1X_TEMPLATE(RETURN)
+    @Slot(-1)
+    public static void vreturn() {
+        JVMTIThreadFunctions.framePopEvent(false);
+    }
+
+    @T1X_TEMPLATE(RETURN$unlock)
+    @Slot(-1)
+    public static void vreturnUnlock(Reference object) {
+        Monitor.noninlineExit(object);
+        JVMTIThreadFunctions.framePopEvent(false);
     }
 
 // END GENERATED CODE

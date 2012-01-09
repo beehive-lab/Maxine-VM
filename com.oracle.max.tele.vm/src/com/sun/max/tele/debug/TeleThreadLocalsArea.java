@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,11 @@ import com.sun.max.vm.value.*;
  * <br>
  * This class maintains a <strong>cache</strong> of the values of the variables, which it rereads from
  * VM memory every time {@link #refresh(DataAccess)} is called.
+ * <p>
+ * N.B. Owing to the fact that the exact set and order (index value) of the target VM {@linkplain VmThreadLocal thread local variables}
+ * is dependent on the VM configuration, it is <b>not</b> ok to assume that the value of {@link VmThreadLocal#values()}
+ * executed in the Inspector accurately reflects the target VM. The actual list of values must be read from the
+ * target VM.
  *
  * @see VmThreadLocal
  */
@@ -103,6 +108,7 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
     private final int threadLocalAreaVariableCount;
     private final TeleThreadLocalVariable[] threadLocalVariables;
     private final Map<String, TeleThreadLocalVariable> nameToThreadLocalVariable = new HashMap<String, TeleThreadLocalVariable>();
+    private static List<VmThreadLocal> targetValues;
 
     /**
      * Creates an object that models and provides access to an area of thread local storage, containing an instance of each
@@ -121,10 +127,10 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
         this.tlaMemoryRegion =
             new ThreadLocalsAreaMemoryRegion(vm, this, entityName, start.asAddress(), VmThreadLocal.tlaSize().toInt());
-        this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
+        this.threadLocalAreaVariableCount = targetValues.size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
         final int wordSize = teleNativeThread.vm().platform().nBytesInWord();
-        for (VmThreadLocal vmThreadLocal : VmThreadLocal.values()) {
+        for (VmThreadLocal vmThreadLocal : targetValues) {
             final TeleThreadLocalVariable teleThreadLocalVariable =
                 new TeleThreadLocalVariable(vmThreadLocal, teleNativeThread, safepointState, start.plus(vmThreadLocal.offset), wordSize);
             threadLocalVariables[vmThreadLocal.index] = teleThreadLocalVariable;
@@ -137,7 +143,7 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
         if (epoch > lastUpdateEpoch) {
             int offset = 0;
             final DataAccess dataAccess = vm().teleProcess().dataAccess();
-            for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
+            for (VmThreadLocal vmThreadLocalVariable : targetValues) {
                 final int index = vmThreadLocalVariable.index;
                 if (offset == 0 && safepointState == State.TRIGGERED) {
                     threadLocalVariables[index].setValue(VoidValue.VOID);
@@ -188,6 +194,21 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
 
     public SafepointPoll.State safepointState() {
         return safepointState;
+    }
+
+    public List<VmThreadLocal> values() {
+        return Static.values(vm());
+    }
+
+    public static class Static {
+        @SuppressWarnings("unchecked")
+        public static List<VmThreadLocal> values(MaxVM vm) {
+            if (targetValues == null) {
+                TeleVM teleVM = (TeleVM) vm;
+                targetValues = (List<VmThreadLocal>) VmObjectAccess.make(teleVM).makeTeleObject(teleVM.fields().VmThreadLocal_VALUES.readReference(vm)).deepCopy();
+            }
+            return targetValues;
+        }
     }
 
     public int variableCount() {

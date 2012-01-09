@@ -122,6 +122,11 @@ public interface MaxThread extends MaxEntity<MaxThread> {
     MaxCodeLocation ipLocation();
 
     /**
+     * Gets the per-thread {@link VMLog} for this thread, or null if none.
+     */
+    MaxThreadVMLog vmLog();
+
+    /**
      * Gets the surrogate for the heap object in the VM that implements this thread.
      * This method returns {@code null} for any of the following reasons:
      * <ol>

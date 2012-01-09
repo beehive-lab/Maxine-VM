@@ -28,9 +28,6 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
 import static com.sun.max.vm.jni.JniFunctions.epilogue;
 
-import java.util.*;
-import java.util.regex.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -39,6 +36,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -48,16 +46,6 @@ import com.sun.max.vm.thread.*;
  * Do not add code here, add it to the appropriate implementation class.
  */
 public class JVMTIFunctions  {
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJVMTI", "Trace JVMTI calls.");
-        VMOptions.addFieldOption("-XX:", "TraceJVMTIInclude", "list of methods to include");
-        VMOptions.addFieldOption("-XX:", "TraceJVMTIExclude", "list of methods to exclude");
-    }
-
-    static boolean TraceJVMTI;
-    static String TraceJVMTIInclude;
-    static String TraceJVMTIExclude;
-
     /* The standard JNI entry prologue uses the fact that the jni env value is a slot in the
      * thread local storage area in order to reset the safepoint latch register
      * on an upcall, by indexing back to the base of the storage area.
@@ -93,56 +81,20 @@ public class JVMTIFunctions  {
         return JniFunctions.prologue(currentJniEnv());
     }
 
-    @INLINE
-    static void tracePrologue(String name, Pointer anchor) {
-        if (TraceJVMTI) {
-            if (methodTraceStates == null || methodTraceStates.get(name)) {
-                JniFunctions.traceEntry(name, "JVMTI", anchor);
-            }
+    private static class JVMTIFunctionsLogger extends VMLogger {
+        private static EntryPoints[] methods = EntryPoints.values();
+
+        private JVMTIFunctionsLogger() {
+            super("JVMTICalls", methods.length);
+        }
+
+        @Override
+        public String operationName(int op) {
+            return methods[op].name();
         }
     }
 
-    @INLINE
-    static void traceEpilogue(String name) {
-        if (TraceJVMTI) {
-            boolean lockDisabledSafepoints = Log.lock();
-            if (methodTraceStates == null || methodTraceStates.get(name)) {
-                JniFunctions.traceExitNoLock(name, "JVMTI");
-            }
-            Log.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    static Map<String, Boolean> methodTraceStates;
-
-    /**
-     * Called once the VM is up to check for limitations on JVMTI tracing.
-     *
-     */
-    static void checkTracing() {
-        if (TraceJVMTIInclude != null || TraceJVMTIExclude != null) {
-            methodTraceStates = new HashMap<String, Boolean>();
-            for (String methodName : methodNames) {
-                methodTraceStates.put(methodName, TraceJVMTIInclude == null ? true : false);
-            }
-            if (TraceJVMTIInclude != null) {
-                Pattern inclusionPattern = Pattern.compile(TraceJVMTIInclude);
-                for (String methodName : methodNames) {
-                    if (inclusionPattern.matcher(methodName).matches()) {
-                        methodTraceStates.put(methodName, true);
-                    }
-                }
-            }
-            if (TraceJVMTIExclude != null) {
-                Pattern exclusionPattern = Pattern.compile(TraceJVMTIExclude);
-                for (String methodName : methodNames) {
-                    if (exclusionPattern.matcher(methodName).matches()) {
-                        methodTraceStates.put(methodName, false);
-                    }
-                }
-            }
-        }
-    }
+    private static JVMTIFunctionsLogger logger = new JVMTIFunctionsLogger();
 
  // Checkstyle: stop method name check
 
@@ -152,35 +104,50 @@ public class JVMTIFunctions  {
 
     @VM_ENTRY_POINT
     private static native void reserved1();
-        // Source: JVMTIFunctionsSource.java:100
+        // Source: JVMTIFunctionsSource.java:99
 
     @VM_ENTRY_POINT
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
-        // Source: JVMTIFunctionsSource.java:103
+        // Source: JVMTIFunctionsSource.java:102
         Pointer anchor = prologue(env);
-        tracePrologue("SetEventNotificationMode", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetEventNotificationMode.ordinal(), env, Address.fromInt(mode), Address.fromInt(event_type), event_thread);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
-            return JVMTIEvent.setEventNotificationMode(env, mode, event_type, event_thread);
+            Thread handleAsThread;
+            try {
+                handleAsThread = (Thread) event_thread.unhand();
+            } catch (ClassCastException ex) {
+                return JVMTI_ERROR_INVALID_THREAD;
+            }
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
+            return JVMTIEvent.setEventNotificationMode(jvmtiEnv, mode, event_type, handleAsThread);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetEventNotificationMode");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved3();
-        // Source: JVMTIFunctionsSource.java:109
+        // Source: JVMTIFunctionsSource.java:110
 
     @VM_ENTRY_POINT
     private static int GetAllThreads(Pointer env, Pointer threads_count_ptr, Pointer threads_ptr) {
-        // Source: JVMTIFunctionsSource.java:112
+        // Source: JVMTIFunctionsSource.java:113
         Pointer anchor = prologue(env);
-        tracePrologue("GetAllThreads", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetAllThreads.ordinal(), env, threads_count_ptr, threads_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -188,20 +155,26 @@ public class JVMTIFunctions  {
             if (threads_count_ptr.isZero() || threads_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getAllThreads(threads_count_ptr, threads_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetAllThreads");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SuspendThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:119
+        // Source: JVMTIFunctionsSource.java:120
         Pointer anchor = prologue(env);
-        tracePrologue("SuspendThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SuspendThread.ordinal(), env, thread);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -218,20 +191,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
-            return JVMTIThreadFunctions.suspendThread(handleAsThread);
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
+            return JVMTIThreadFunctions.suspendThread(jvmtiEnv, handleAsThread);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SuspendThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ResumeThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:127
+        // Source: JVMTIFunctionsSource.java:128
         Pointer anchor = prologue(env);
-        tracePrologue("ResumeThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ResumeThread.ordinal(), env, thread);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -248,35 +227,47 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
-            return JVMTIThreadFunctions.resumeThread(handleAsThread);
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
+            return JVMTIThreadFunctions.resumeThread(jvmtiEnv, handleAsThread);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ResumeThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int StopThread(Pointer env, JniHandle thread, JniHandle exception) {
-        // Source: JVMTIFunctionsSource.java:135
+        // Source: JVMTIFunctionsSource.java:136
         Pointer anchor = prologue(env);
-        tracePrologue("StopThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.StopThread.ordinal(), env, thread, exception);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("StopThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int InterruptThread(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:140
+        // Source: JVMTIFunctionsSource.java:141
         Pointer anchor = prologue(env);
-        tracePrologue("InterruptThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.InterruptThread.ordinal(), env, thread);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -293,20 +284,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.interruptThread(handleAsThread);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("InterruptThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle thread, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:148
+        // Source: JVMTIFunctionsSource.java:149
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadInfo.ordinal(), env, thread, info_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -323,50 +320,68 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getThreadInfo(handleAsThread, info_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorInfo(Pointer env, JniHandle thread, Pointer owned_monitor_count_ptr, Pointer owned_monitors_ptr) {
-        // Source: JVMTIFunctionsSource.java:156
+        // Source: JVMTIFunctionsSource.java:157
         Pointer anchor = prologue(env);
-        tracePrologue("GetOwnedMonitorInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetOwnedMonitorInfo.ordinal(), env, thread, owned_monitor_count_ptr, owned_monitors_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetOwnedMonitorInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentContendedMonitor(Pointer env, JniHandle thread, Pointer monitor_ptr) {
-        // Source: JVMTIFunctionsSource.java:161
+        // Source: JVMTIFunctionsSource.java:162
         Pointer anchor = prologue(env);
-        tracePrologue("GetCurrentContendedMonitor", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetCurrentContendedMonitor.ordinal(), env, thread, monitor_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCurrentContendedMonitor");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RunAgentThread(Pointer env, JniHandle jthread, Address proc, Pointer arg, int priority) {
-        // Source: JVMTIFunctionsSource.java:166
+        // Source: JVMTIFunctionsSource.java:167
         Pointer anchor = prologue(env);
-        tracePrologue("RunAgentThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RunAgentThread.ordinal(), env, jthread, proc, arg, Address.fromInt(priority));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -374,20 +389,26 @@ public class JVMTIFunctions  {
             if (proc.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI.runAgentThread(env, jthread, proc, arg, priority);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RunAgentThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetTopThreadGroups(Pointer env, Pointer group_count_ptr, Pointer groups_ptr) {
-        // Source: JVMTIFunctionsSource.java:173
+        // Source: JVMTIFunctionsSource.java:174
         Pointer anchor = prologue(env);
-        tracePrologue("GetTopThreadGroups", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetTopThreadGroups.ordinal(), env, group_count_ptr, groups_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -395,20 +416,26 @@ public class JVMTIFunctions  {
             if (group_count_ptr.isZero() || groups_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getTopThreadGroups(group_count_ptr, groups_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetTopThreadGroups");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadGroupInfo(Pointer env, JniHandle group, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:180
+        // Source: JVMTIFunctionsSource.java:181
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadGroupInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadGroupInfo.ordinal(), env, group, info_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -425,20 +452,26 @@ public class JVMTIFunctions  {
             if (info_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getThreadGroupInfo(handleAsThreadGroup, info_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadGroupInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadGroupChildren(Pointer env, JniHandle group, Pointer thread_count_ptr, Pointer threads_ptr, Pointer group_count_ptr, Pointer groups_ptr) {
-        // Source: JVMTIFunctionsSource.java:188
+        // Source: JVMTIFunctionsSource.java:189
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadGroupChildren", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadGroupChildren.ordinal(), env, group, thread_count_ptr, threads_ptr, group_count_ptr, groups_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -455,21 +488,27 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD_GROUP;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getThreadGroupChildren(handleAsThreadGroup, thread_count_ptr,
                             threads_ptr, group_count_ptr,  groups_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadGroupChildren");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetFrameCount(Pointer env, JniHandle thread, Pointer count_ptr) {
-        // Source: JVMTIFunctionsSource.java:197
+        // Source: JVMTIFunctionsSource.java:198
         Pointer anchor = prologue(env);
-        tracePrologue("GetFrameCount", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetFrameCount.ordinal(), env, thread, count_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -486,20 +525,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getFrameCount(handleAsThread, count_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFrameCount");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadState(Pointer env, JniHandle thread, Pointer thread_state_ptr) {
-        // Source: JVMTIFunctionsSource.java:205
+        // Source: JVMTIFunctionsSource.java:206
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadState", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadState.ordinal(), env, thread, thread_state_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -516,20 +561,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getThreadState(handleAsThread, thread_state_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadState");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentThread(Pointer env, Pointer thread_ptr) {
-        // Source: JVMTIFunctionsSource.java:213
+        // Source: JVMTIFunctionsSource.java:214
         Pointer anchor = prologue(env);
-        tracePrologue("GetCurrentThread", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetCurrentThread.ordinal(), env, thread_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -537,21 +588,27 @@ public class JVMTIFunctions  {
             if (thread_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             thread_ptr.setWord(JniHandles.createLocalHandle(VmThread.current().javaThread()));
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCurrentThread");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetFrameLocation(Pointer env, JniHandle thread, int depth, Pointer method_ptr, Pointer location_ptr) {
-        // Source: JVMTIFunctionsSource.java:221
+        // Source: JVMTIFunctionsSource.java:222
         Pointer anchor = prologue(env);
-        tracePrologue("GetFrameLocation", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetFrameLocation.ordinal(), env, thread, Address.fromInt(depth), method_ptr, location_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -568,35 +625,57 @@ public class JVMTIFunctions  {
             if (method_ptr.isZero() ||  location_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getFrameLocation(handleAsThread, depth, method_ptr, location_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFrameLocation");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
-        // Source: JVMTIFunctionsSource.java:229
+        // Source: JVMTIFunctionsSource.java:230
         Pointer anchor = prologue(env);
-        tracePrologue("NotifyFramePop", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.NotifyFramePop.ordinal(), env, Address.fromInt(depth));        }
+
         try {
-            return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+            if (!(phase == JVMTI_PHASE_LIVE)) {
+                return JVMTI_ERROR_WRONG_PHASE;
+            }
+            Thread handleAsThread;
+            try {
+                handleAsThread = (Thread) thread.unhand();
+            } catch (ClassCastException ex) {
+                return JVMTI_ERROR_INVALID_THREAD;
+            }
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
+            return JVMTIThreadFunctions.notifyFramePop(handleAsThread, depth);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("NotifyFramePop");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalObject(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:234
+        // Source: JVMTIFunctionsSource.java:238
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalObject", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -615,21 +694,27 @@ public class JVMTIFunctions  {
             }
             if (value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'L');
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalObject");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalInt(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:243
+        // Source: JVMTIFunctionsSource.java:247
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalInt", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -648,21 +733,27 @@ public class JVMTIFunctions  {
             }
             if (value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'I');
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalInt");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalLong(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:252
+        // Source: JVMTIFunctionsSource.java:256
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalLong", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -681,21 +772,27 @@ public class JVMTIFunctions  {
             }
             if (value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'J');
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalLong");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:261
+        // Source: JVMTIFunctionsSource.java:265
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalFloat", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -714,21 +811,27 @@ public class JVMTIFunctions  {
             }
             if (value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'F');
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalFloat");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:270
+        // Source: JVMTIFunctionsSource.java:274
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalDouble", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -748,20 +851,26 @@ public class JVMTIFunctions  {
             if (value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.getLocalValue(handleAsThread, depth, slot, value_ptr, 'D');
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalDouble");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalObject(Pointer env, JniHandle thread, int depth, int slot, JniHandle value) {
-        // Source: JVMTIFunctionsSource.java:279
+        // Source: JVMTIFunctionsSource.java:283
         Pointer anchor = prologue(env);
-        tracePrologue("SetLocalObject", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -777,21 +886,27 @@ public class JVMTIFunctions  {
                 }
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value.unhand());
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLocalObject");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalInt(Pointer env, JniHandle thread, int depth, int slot, int value) {
-        // Source: JVMTIFunctionsSource.java:287
+        // Source: JVMTIFunctionsSource.java:291
         Pointer anchor = prologue(env);
-        tracePrologue("SetLocalInt", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(value));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -807,21 +922,27 @@ public class JVMTIFunctions  {
                 }
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.setLocalInt(handleAsThread, depth, slot, value);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLocalInt");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalLong(Pointer env, JniHandle thread, int depth, int slot, long value) {
-        // Source: JVMTIFunctionsSource.java:295
+        // Source: JVMTIFunctionsSource.java:299
         Pointer anchor = prologue(env);
-        tracePrologue("SetLocalLong", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(value));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -837,21 +958,27 @@ public class JVMTIFunctions  {
                 }
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.setLocalLong(handleAsThread, depth, slot, value);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLocalLong");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, float value) {
-        // Source: JVMTIFunctionsSource.java:303
+        // Source: JVMTIFunctionsSource.java:307
         Pointer anchor = prologue(env);
-        tracePrologue("SetLocalFloat", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(Float.floatToRawIntBits(value)));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -867,21 +994,27 @@ public class JVMTIFunctions  {
                 }
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIThreadFunctions.setLocalFloat(handleAsThread, depth, slot, value);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLocalFloat");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, double value) {
-        // Source: JVMTIFunctionsSource.java:311
+        // Source: JVMTIFunctionsSource.java:315
         Pointer anchor = prologue(env);
-        tracePrologue("SetLocalDouble", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(Double.doubleToRawLongBits(value)));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -898,20 +1031,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadFunctions.setLocalDouble(handleAsThread, depth, slot, value);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetLocalDouble");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int CreateRawMonitor(Pointer env, Pointer name, Pointer monitor_ptr) {
-        // Source: JVMTIFunctionsSource.java:319
+        // Source: JVMTIFunctionsSource.java:323
         Pointer anchor = prologue(env);
-        tracePrologue("CreateRawMonitor", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.CreateRawMonitor.ordinal(), env, name, monitor_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -919,118 +1058,160 @@ public class JVMTIFunctions  {
             if (name.isZero() || monitor_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.create(name, monitor_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("CreateRawMonitor");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int DestroyRawMonitor(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:326
+        // Source: JVMTIFunctionsSource.java:330
         Pointer anchor = prologue(env);
-        tracePrologue("DestroyRawMonitor", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.DestroyRawMonitor.ordinal(), env, rawMonitor);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIRawMonitor.destroy(rawMonitor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("DestroyRawMonitor");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:332
+        // Source: JVMTIFunctionsSource.java:336
         Pointer anchor = prologue(env);
-        tracePrologue("RawMonitorEnter", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RawMonitorEnter.ordinal(), env, rawMonitor);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.enter(rawMonitor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RawMonitorEnter");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:338
+        // Source: JVMTIFunctionsSource.java:342
         Pointer anchor = prologue(env);
-        tracePrologue("RawMonitorExit", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RawMonitorExit.ordinal(), env, rawMonitor);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.exit(rawMonitor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RawMonitorExit");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
-        // Source: JVMTIFunctionsSource.java:344
+        // Source: JVMTIFunctionsSource.java:348
         Pointer anchor = prologue(env);
-        tracePrologue("RawMonitorWait", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RawMonitorWait.ordinal(), env, rawMonitor, Address.fromLong(millis));        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.wait(rawMonitor, millis);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RawMonitorWait");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:350
+        // Source: JVMTIFunctionsSource.java:354
         Pointer anchor = prologue(env);
-        tracePrologue("RawMonitorNotify", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RawMonitorNotify.ordinal(), env, rawMonitor);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.notify(rawMonitor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RawMonitorNotify");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
-        // Source: JVMTIFunctionsSource.java:356
+        // Source: JVMTIFunctionsSource.java:360
         Pointer anchor = prologue(env);
-        tracePrologue("RawMonitorNotifyAll", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RawMonitorNotifyAll.ordinal(), env, rawMonitor);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIRawMonitor.notifyAll(rawMonitor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RawMonitorNotifyAll");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetBreakpoint(Pointer env, MethodID method, long location) {
-        // Source: JVMTIFunctionsSource.java:362
+        // Source: JVMTIFunctionsSource.java:366
         Pointer anchor = prologue(env);
-        tracePrologue("SetBreakpoint", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1038,21 +1219,27 @@ public class JVMTIFunctions  {
             ClassMethodActor classMethodActor = JVMTIUtil.toClassMethodActor(method);
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIBreakpoints.setBreakpoint(classMethodActor, method, location);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetBreakpoint");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ClearBreakpoint(Pointer env, MethodID method, long location) {
-        // Source: JVMTIFunctionsSource.java:369
+        // Source: JVMTIFunctionsSource.java:373
         Pointer anchor = prologue(env);
-        tracePrologue("ClearBreakpoint", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ClearBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1061,24 +1248,30 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIBreakpoints.clearBreakpoint(classMethodActor, method, location);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ClearBreakpoint");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved40();
-        // Source: JVMTIFunctionsSource.java:376
+        // Source: JVMTIFunctionsSource.java:380
 
     @VM_ENTRY_POINT
     private static int SetFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:379
+        // Source: JVMTIFunctionsSource.java:383
         Pointer anchor = prologue(env);
-        tracePrologue("SetFieldAccessWatch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetFieldAccessWatch.ordinal(), env, klass, field);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1098,21 +1291,27 @@ public class JVMTIFunctions  {
             }
             if (!(CAN_GENERATE_FIELD_ACCESS_EVENTS.get(CAPABILITIES.getPtr(env)))) {
                 return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIFieldWatch.setAccessWatch(handleAsClass, fieldActor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetFieldAccessWatch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ClearFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:388
+        // Source: JVMTIFunctionsSource.java:392
         Pointer anchor = prologue(env);
-        tracePrologue("ClearFieldAccessWatch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ClearFieldAccessWatch.ordinal(), env, klass, field);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1133,20 +1332,26 @@ public class JVMTIFunctions  {
             if (!(CAN_GENERATE_FIELD_ACCESS_EVENTS.get(CAPABILITIES.getPtr(env)))) {
                 return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIFieldWatch.clearAccessWatch(handleAsClass, fieldActor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ClearFieldAccessWatch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:397
+        // Source: JVMTIFunctionsSource.java:401
         Pointer anchor = prologue(env);
-        tracePrologue("SetFieldModificationWatch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetFieldModificationWatch.ordinal(), env, klass, field);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1166,21 +1371,27 @@ public class JVMTIFunctions  {
             }
             if (!(CAN_GENERATE_FIELD_MODIFICATION_EVENTS.get(CAPABILITIES.getPtr(env)))) {
                 return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTIFieldWatch.setModificationWatch(handleAsClass, fieldActor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetFieldModificationWatch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ClearFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
-        // Source: JVMTIFunctionsSource.java:406
+        // Source: JVMTIFunctionsSource.java:410
         Pointer anchor = prologue(env);
-        tracePrologue("ClearFieldModificationWatch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ClearFieldModificationWatch.ordinal(), env, klass, field);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1201,39 +1412,55 @@ public class JVMTIFunctions  {
             if (!(CAN_GENERATE_FIELD_MODIFICATION_EVENTS.get(CAPABILITIES.getPtr(env)))) {
                 return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIFieldWatch.clearModificationWatch(handleAsClass, fieldActor);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ClearFieldModificationWatch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsModifiableClass(Pointer env, JniHandle klass, Pointer is_modifiable_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:415
+        // Source: JVMTIFunctionsSource.java:419
         Pointer anchor = prologue(env);
-        tracePrologue("IsModifiableClass", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsModifiableClass.ordinal(), env, klass, is_modifiable_class_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsModifiableClass");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int Allocate(Pointer env, long size, Pointer mem_ptr) {
-        // Source: JVMTIFunctionsSource.java:420
+        // Source: JVMTIFunctionsSource.java:424
         Pointer anchor = prologue(env);
-        tracePrologue("Allocate", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.Allocate.ordinal(), env, Address.fromLong(size), mem_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (mem_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             if (size < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
@@ -1252,32 +1479,40 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("Allocate");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int Deallocate(Pointer env, Pointer mem) {
-        // Source: JVMTIFunctionsSource.java:439
+        // Source: JVMTIFunctionsSource.java:443
         Pointer anchor = prologue(env);
-        tracePrologue("Deallocate", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.Deallocate.ordinal(), env, mem);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             Memory.deallocate(mem);
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("Deallocate");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassSignature(Pointer env, JniHandle klass, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:446
+        // Source: JVMTIFunctionsSource.java:450
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassSignature", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassSignature.ordinal(), env, klass, signature_ptr, generic_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1291,20 +1526,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getClassSignature(handleAsClass, signature_ptr, generic_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassSignature");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassStatus(Pointer env, JniHandle klass, Pointer status_ptr) {
-        // Source: JVMTIFunctionsSource.java:453
+        // Source: JVMTIFunctionsSource.java:457
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassStatus", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassStatus.ordinal(), env, klass, status_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1321,20 +1562,26 @@ public class JVMTIFunctions  {
             if (status_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getClassStatus(handleAsClass, status_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassStatus");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetSourceFileName(Pointer env, JniHandle klass, Pointer source_name_ptr) {
-        // Source: JVMTIFunctionsSource.java:461
+        // Source: JVMTIFunctionsSource.java:465
         Pointer anchor = prologue(env);
-        tracePrologue("GetSourceFileName", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetSourceFileName.ordinal(), env, klass, source_name_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1354,20 +1601,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getSourceFileName(handleAsClass, source_name_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetSourceFileName");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassModifiers(Pointer env, JniHandle klass, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:470
+        // Source: JVMTIFunctionsSource.java:474
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassModifiers", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassModifiers.ordinal(), env, klass, modifiers_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1384,21 +1637,27 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             modifiers_ptr.setInt(ClassActor.fromJava(handleAsClass).accessFlags());
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassModifiers");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassMethods(Pointer env, JniHandle klass, Pointer method_count_ptr, Pointer methods_ptr) {
-        // Source: JVMTIFunctionsSource.java:479
+        // Source: JVMTIFunctionsSource.java:483
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassMethods", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassMethods.ordinal(), env, klass, method_count_ptr, methods_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1415,20 +1674,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getClassMethods(handleAsClass, method_count_ptr, methods_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassMethods");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassFields(Pointer env, JniHandle klass, Pointer field_count_ptr, Pointer fields_ptr) {
-        // Source: JVMTIFunctionsSource.java:487
+        // Source: JVMTIFunctionsSource.java:491
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassFields", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassFields.ordinal(), env, klass, field_count_ptr, fields_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1445,20 +1710,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getClassFields(handleAsClass, field_count_ptr, fields_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassFields");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetImplementedInterfaces(Pointer env, JniHandle klass, Pointer interface_count_ptr, Pointer interfaces_ptr) {
-        // Source: JVMTIFunctionsSource.java:495
+        // Source: JVMTIFunctionsSource.java:499
         Pointer anchor = prologue(env);
-        tracePrologue("GetImplementedInterfaces", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetImplementedInterfaces.ordinal(), env, klass, interface_count_ptr, interfaces_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1475,21 +1746,31 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getImplementedInterfaces(handleAsClass, interface_count_ptr, interfaces_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetImplementedInterfaces");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsInterface(Pointer env, JniHandle klass, Pointer is_interface_ptr) {
-        // Source: JVMTIFunctionsSource.java:503
+        // Source: JVMTIFunctionsSource.java:507
         Pointer anchor = prologue(env);
-        tracePrologue("IsInterface", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsInterface.ordinal(), env, klass, is_interface_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             // PHASES LIVE
             if (is_interface_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
@@ -1510,16 +1791,22 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsInterface");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsArrayClass(Pointer env, JniHandle klass, Pointer is_array_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:513
+        // Source: JVMTIFunctionsSource.java:517
         Pointer anchor = prologue(env);
-        tracePrologue("IsArrayClass", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsArrayClass.ordinal(), env, klass, is_array_class_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             // PHASES LIVE
             if (is_array_class_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
@@ -1540,16 +1827,22 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsArrayClass");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassLoader(Pointer env, JniHandle klass, Pointer classloader_ptr) {
-        // Source: JVMTIFunctionsSource.java:523
+        // Source: JVMTIFunctionsSource.java:527
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassLoader", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassLoader.ordinal(), env, klass, classloader_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             // PHASES START,LIVE
             if (classloader_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
@@ -1569,21 +1862,27 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassLoader");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetObjectHashCode(Pointer env, JniHandle handle, Pointer hash_code_ptr) {
-        // Source: JVMTIFunctionsSource.java:532
+        // Source: JVMTIFunctionsSource.java:536
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectHashCode", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetObjectHashCode.ordinal(), env, handle, hash_code_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (hash_code_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             Object object = handle.unhand();
             if (object == null) {
@@ -1595,30 +1894,38 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectHashCode");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetObjectMonitorUsage(Pointer env, JniHandle object, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:544
+        // Source: JVMTIFunctionsSource.java:548
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectMonitorUsage", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetObjectMonitorUsage.ordinal(), env, object, info_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectMonitorUsage");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetFieldName(Pointer env, JniHandle klass, FieldID field, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:549
+        // Source: JVMTIFunctionsSource.java:553
         Pointer anchor = prologue(env);
-        tracePrologue("GetFieldName", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetFieldName.ordinal(), env, klass, field, name_ptr, signature_ptr, generic_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1636,20 +1943,26 @@ public class JVMTIFunctions  {
             if (fieldActor == null) {
                 return JVMTI_ERROR_INVALID_FIELDID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getFieldName(fieldActor, name_ptr, signature_ptr, generic_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFieldName");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetFieldDeclaringClass(Pointer env, JniHandle klass, FieldID field, Pointer declaring_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:557
+        // Source: JVMTIFunctionsSource.java:561
         Pointer anchor = prologue(env);
-        tracePrologue("GetFieldDeclaringClass", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetFieldDeclaringClass.ordinal(), env, klass, field, declaring_class_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1661,20 +1974,26 @@ public class JVMTIFunctions  {
             if (fieldActor == null) {
                 return JVMTI_ERROR_INVALID_FIELDID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getFieldDeclaringClass(fieldActor, declaring_class_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFieldDeclaringClass");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetFieldModifiers(Pointer env, JniHandle klass, FieldID field, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:565
+        // Source: JVMTIFunctionsSource.java:569
         Pointer anchor = prologue(env);
-        tracePrologue("GetFieldModifiers", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetFieldModifiers.ordinal(), env, klass, field, modifiers_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1686,21 +2005,27 @@ public class JVMTIFunctions  {
             if (fieldActor == null) {
                 return JVMTI_ERROR_INVALID_FIELDID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             modifiers_ptr.setInt(fieldActor.flags());
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetFieldModifiers");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsFieldSynthetic(Pointer env, JniHandle klass, FieldID field, Pointer is_synthetic_ptr) {
-        // Source: JVMTIFunctionsSource.java:574
+        // Source: JVMTIFunctionsSource.java:578
         Pointer anchor = prologue(env);
-        tracePrologue("IsFieldSynthetic", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsFieldSynthetic.ordinal(), env, klass, field, is_synthetic_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1715,6 +2040,10 @@ public class JVMTIFunctions  {
             if (fieldActor == null) {
                 return JVMTI_ERROR_INVALID_FIELDID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             boolean result = (fieldActor.flags() & Actor.ACC_SYNTHETIC) != 0;
             is_synthetic_ptr.setBoolean(result);
             return JVMTI_ERROR_NONE;
@@ -1722,15 +2051,17 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsFieldSynthetic");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetMethodName(Pointer env, MethodID method, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
-        // Source: JVMTIFunctionsSource.java:585
+        // Source: JVMTIFunctionsSource.java:589
         Pointer anchor = prologue(env);
-        tracePrologue("GetMethodName", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetMethodName.ordinal(), env, method, name_ptr, signature_ptr, generic_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1739,20 +2070,26 @@ public class JVMTIFunctions  {
             if (methodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getMethodName(methodActor, name_ptr, signature_ptr, generic_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMethodName");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetMethodDeclaringClass(Pointer env, MethodID method, Pointer declaring_class_ptr) {
-        // Source: JVMTIFunctionsSource.java:592
+        // Source: JVMTIFunctionsSource.java:596
         Pointer anchor = prologue(env);
-        tracePrologue("GetMethodDeclaringClass", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetMethodDeclaringClass.ordinal(), env, method, declaring_class_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1764,20 +2101,26 @@ public class JVMTIFunctions  {
             if (methodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getMethodDeclaringClass(methodActor, declaring_class_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMethodDeclaringClass");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetMethodModifiers(Pointer env, MethodID method, Pointer modifiers_ptr) {
-        // Source: JVMTIFunctionsSource.java:600
+        // Source: JVMTIFunctionsSource.java:604
         Pointer anchor = prologue(env);
-        tracePrologue("GetMethodModifiers", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetMethodModifiers.ordinal(), env, method, modifiers_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1789,25 +2132,31 @@ public class JVMTIFunctions  {
             if (methodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             modifiers_ptr.setInt(methodActor.flags());
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMethodModifiers");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved67();
-        // Source: JVMTIFunctionsSource.java:609
+        // Source: JVMTIFunctionsSource.java:613
 
     @VM_ENTRY_POINT
     private static int GetMaxLocals(Pointer env, MethodID method, Pointer max_ptr) {
-        // Source: JVMTIFunctionsSource.java:612
+        // Source: JVMTIFunctionsSource.java:616
         Pointer anchor = prologue(env);
-        tracePrologue("GetMaxLocals", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetMaxLocals.ordinal(), env, method, max_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1819,20 +2168,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getMaxLocals(classMethodActor, max_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMaxLocals");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetArgumentsSize(Pointer env, MethodID method, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:620
+        // Source: JVMTIFunctionsSource.java:624
         Pointer anchor = prologue(env);
-        tracePrologue("GetArgumentsSize", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetArgumentsSize.ordinal(), env, method, size_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1844,20 +2199,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getArgumentsSize(classMethodActor, size_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetArgumentsSize");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLineNumberTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
-        // Source: JVMTIFunctionsSource.java:628
+        // Source: JVMTIFunctionsSource.java:632
         Pointer anchor = prologue(env);
-        tracePrologue("GetLineNumberTable", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLineNumberTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1872,20 +2233,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getLineNumberTable(classMethodActor, entry_count_ptr, table_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLineNumberTable");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetMethodLocation(Pointer env, MethodID method, Pointer start_location_ptr, Pointer end_location_ptr) {
-        // Source: JVMTIFunctionsSource.java:637
+        // Source: JVMTIFunctionsSource.java:641
         Pointer anchor = prologue(env);
-        tracePrologue("GetMethodLocation", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetMethodLocation.ordinal(), env, method, start_location_ptr, end_location_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1897,20 +2264,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getMethodLocation(classMethodActor, start_location_ptr, end_location_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetMethodLocation");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalVariableTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
-        // Source: JVMTIFunctionsSource.java:645
+        // Source: JVMTIFunctionsSource.java:649
         Pointer anchor = prologue(env);
-        tracePrologue("GetLocalVariableTable", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLocalVariableTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1922,50 +2295,68 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getLocalVariableTable(classMethodActor, entry_count_ptr, table_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLocalVariableTable");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefix(Pointer env, Pointer prefix) {
-        // Source: JVMTIFunctionsSource.java:653
+        // Source: JVMTIFunctionsSource.java:657
         Pointer anchor = prologue(env);
-        tracePrologue("SetNativeMethodPrefix", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetNativeMethodPrefix.ordinal(), env, prefix);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetNativeMethodPrefix");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefixes(Pointer env, int prefix_count, Pointer prefixes) {
-        // Source: JVMTIFunctionsSource.java:658
+        // Source: JVMTIFunctionsSource.java:662
         Pointer anchor = prologue(env);
-        tracePrologue("SetNativeMethodPrefixes", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetNativeMethodPrefixes.ordinal(), env, Address.fromInt(prefix_count), prefixes);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetNativeMethodPrefixes");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetBytecodes(Pointer env, MethodID method, Pointer bytecode_count_ptr, Pointer bytecodes_ptr) {
-        // Source: JVMTIFunctionsSource.java:663
+        // Source: JVMTIFunctionsSource.java:667
         Pointer anchor = prologue(env);
-        tracePrologue("GetBytecodes", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetBytecodes.ordinal(), env, method, bytecode_count_ptr, bytecodes_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -1980,20 +2371,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getByteCodes(classMethodActor, bytecode_count_ptr, bytecodes_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetBytecodes");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsMethodNative(Pointer env, MethodID method, Pointer is_native_ptr) {
-        // Source: JVMTIFunctionsSource.java:672
+        // Source: JVMTIFunctionsSource.java:676
         Pointer anchor = prologue(env);
-        tracePrologue("IsMethodNative", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsMethodNative.ordinal(), env, method, is_native_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2005,21 +2402,27 @@ public class JVMTIFunctions  {
             if (methodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             is_native_ptr.setBoolean(methodActor.isNative());
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsMethodNative");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsMethodSynthetic(Pointer env, MethodID method, Pointer is_synthetic_ptr) {
-        // Source: JVMTIFunctionsSource.java:681
+        // Source: JVMTIFunctionsSource.java:685
         Pointer anchor = prologue(env);
-        tracePrologue("IsMethodSynthetic", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsMethodSynthetic.ordinal(), env, method, is_synthetic_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2034,6 +2437,10 @@ public class JVMTIFunctions  {
             if (methodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             boolean result = (methodActor.flags() & Actor.ACC_SYNTHETIC) != 0;
             is_synthetic_ptr.setBoolean(result);
             return JVMTI_ERROR_NONE;
@@ -2041,15 +2448,17 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsMethodSynthetic");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLoadedClasses(Pointer env, Pointer class_count_ptr, Pointer classes_ptr) {
-        // Source: JVMTIFunctionsSource.java:692
+        // Source: JVMTIFunctionsSource.java:696
         Pointer anchor = prologue(env);
-        tracePrologue("GetLoadedClasses", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetLoadedClasses.ordinal(), env, class_count_ptr, classes_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2057,20 +2466,26 @@ public class JVMTIFunctions  {
             if (class_count_ptr.isZero() || classes_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getLoadedClasses(class_count_ptr, classes_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetLoadedClasses");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassLoaderClasses(Pointer env, JniHandle initiatingLoader, Pointer class_count_ptr, Pointer classes_ptr) {
-        // Source: JVMTIFunctionsSource.java:699
+        // Source: JVMTIFunctionsSource.java:703
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassLoaderClasses", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassLoaderClasses.ordinal(), env, initiatingLoader, class_count_ptr, classes_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2087,144 +2502,202 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_OBJECT;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getClassLoaderClasses(handleAsClassLoader, class_count_ptr, classes_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassLoaderClasses");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int PopFrame(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:707
+        // Source: JVMTIFunctionsSource.java:711
         Pointer anchor = prologue(env);
-        tracePrologue("PopFrame", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.PopFrame.ordinal(), env, thread);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("PopFrame");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnObject(Pointer env, JniHandle thread, JniHandle value) {
-        // Source: JVMTIFunctionsSource.java:712
+        // Source: JVMTIFunctionsSource.java:716
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnObject", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnObject.ordinal(), env, thread, value);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnObject");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnInt(Pointer env, JniHandle thread, int value) {
-        // Source: JVMTIFunctionsSource.java:717
+        // Source: JVMTIFunctionsSource.java:721
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnInt", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnInt.ordinal(), env, thread, Address.fromInt(value));        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnInt");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnLong(Pointer env, JniHandle thread, long value) {
-        // Source: JVMTIFunctionsSource.java:722
+        // Source: JVMTIFunctionsSource.java:726
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnLong", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnLong.ordinal(), env, thread, Address.fromLong(value));        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnLong");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnFloat(Pointer env, JniHandle thread, float value) {
-        // Source: JVMTIFunctionsSource.java:727
+        // Source: JVMTIFunctionsSource.java:731
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnFloat", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnFloat.ordinal(), env, thread, Address.fromInt(Float.floatToRawIntBits(value)));        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnFloat");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnDouble(Pointer env, JniHandle thread, double value) {
-        // Source: JVMTIFunctionsSource.java:732
+        // Source: JVMTIFunctionsSource.java:736
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnDouble", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnDouble.ordinal(), env, thread, Address.fromLong(Double.doubleToRawLongBits(value)));        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnDouble");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnVoid(Pointer env, JniHandle thread) {
-        // Source: JVMTIFunctionsSource.java:737
+        // Source: JVMTIFunctionsSource.java:741
         Pointer anchor = prologue(env);
-        tracePrologue("ForceEarlyReturnVoid", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceEarlyReturnVoid.ordinal(), env, thread);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceEarlyReturnVoid");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RedefineClasses(Pointer env, int class_count, Pointer class_definitions) {
-        // Source: JVMTIFunctionsSource.java:742
+        // Source: JVMTIFunctionsSource.java:746
         Pointer anchor = prologue(env);
-        tracePrologue("RedefineClasses", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RedefineClasses.ordinal(), env, Address.fromInt(class_count), class_definitions);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RedefineClasses");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetVersionNumber(Pointer env, Pointer version_ptr) {
-        // Source: JVMTIFunctionsSource.java:747
+        // Source: JVMTIFunctionsSource.java:751
         Pointer anchor = prologue(env);
-        tracePrologue("GetVersionNumber", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetVersionNumber.ordinal(), env, version_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (version_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             version_ptr.setInt(JVMTI_VERSION);
             return JVMTI_ERROR_NONE;
@@ -2232,19 +2705,25 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetVersionNumber");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:755
+        // Source: JVMTIFunctionsSource.java:759
         Pointer anchor = prologue(env);
-        tracePrologue("GetCapabilities", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetCapabilities.ordinal(), env, capabilities_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (capabilities_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             capabilities_ptr.setLong(0, CAPABILITIES.getPtr(env).readLong(0));
             return JVMTI_ERROR_NONE;
@@ -2252,15 +2731,17 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCapabilities");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetSourceDebugExtension(Pointer env, JniHandle klass, Pointer source_debug_extension_ptr) {
-        // Source: JVMTIFunctionsSource.java:763
+        // Source: JVMTIFunctionsSource.java:767
         Pointer anchor = prologue(env);
-        tracePrologue("GetSourceDebugExtension", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetSourceDebugExtension.ordinal(), env, klass, source_debug_extension_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2280,20 +2761,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_CLASS;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getSourceDebugExtension(handleAsClass, source_debug_extension_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetSourceDebugExtension");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IsMethodObsolete(Pointer env, MethodID method, Pointer is_obsolete_ptr) {
-        // Source: JVMTIFunctionsSource.java:772
+        // Source: JVMTIFunctionsSource.java:776
         Pointer anchor = prologue(env);
-        tracePrologue("IsMethodObsolete", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IsMethodObsolete.ordinal(), env, method, is_obsolete_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2305,20 +2792,26 @@ public class JVMTIFunctions  {
             if (classMethodActor == null) {
                 return JVMTI_ERROR_INVALID_METHODID;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.isMethodObsolete(classMethodActor, is_obsolete_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IsMethodObsolete");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SuspendThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:780
+        // Source: JVMTIFunctionsSource.java:784
         Pointer anchor = prologue(env);
-        tracePrologue("SuspendThreadList", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SuspendThreadList.ordinal(), env, Address.fromInt(request_count));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2329,23 +2822,30 @@ public class JVMTIFunctions  {
             if (request_list.isZero() || results.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             if (request_count < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
             }
-            return JVMTIThreadFunctions.suspendThreadList(request_count, request_list, results);
+            return JVMTIThreadFunctions.suspendThreadList(jvmtiEnv, request_count, request_list, results);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SuspendThreadList");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ResumeThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        // Source: JVMTIFunctionsSource.java:791
+        // Source: JVMTIFunctionsSource.java:796
         Pointer anchor = prologue(env);
-        tracePrologue("ResumeThreadList", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ResumeThreadList.ordinal(), env, Address.fromInt(request_count));        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2356,53 +2856,64 @@ public class JVMTIFunctions  {
             if (request_list.isZero() || results.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             if (request_count < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
             }
-            return JVMTIThreadFunctions.resumeThreadList(request_count, request_list, results);
+            return JVMTIThreadFunctions.resumeThreadList(jvmtiEnv, request_count, request_list, results);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ResumeThreadList");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved94();
-        // Source: JVMTIFunctionsSource.java:802
-
-    @VM_ENTRY_POINT
-    private static native void reserved95();
-        // Source: JVMTIFunctionsSource.java:805
-
-    @VM_ENTRY_POINT
-    private static native void reserved96();
         // Source: JVMTIFunctionsSource.java:808
 
     @VM_ENTRY_POINT
-    private static native void reserved97();
+    private static native void reserved95();
         // Source: JVMTIFunctionsSource.java:811
 
     @VM_ENTRY_POINT
-    private static native void reserved98();
+    private static native void reserved96();
         // Source: JVMTIFunctionsSource.java:814
 
     @VM_ENTRY_POINT
-    private static native void reserved99();
+    private static native void reserved97();
         // Source: JVMTIFunctionsSource.java:817
 
     @VM_ENTRY_POINT
-    private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
+    private static native void reserved98();
         // Source: JVMTIFunctionsSource.java:820
+
+    @VM_ENTRY_POINT
+    private static native void reserved99();
+        // Source: JVMTIFunctionsSource.java:823
+
+    @VM_ENTRY_POINT
+    private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
+        // Source: JVMTIFunctionsSource.java:826
         Pointer anchor = prologue(env);
-        tracePrologue("GetAllStackTraces", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetAllStackTraces.ordinal(), env, Address.fromInt(max_frame_count), stack_info_ptr, thread_count_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (stack_info_ptr.isZero() || thread_count_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             if (max_frame_count < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
@@ -2412,21 +2923,27 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetAllStackTraces");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadListStackTraces(Pointer env, int thread_count, Pointer thread_list, int max_frame_count, Pointer stack_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:830
+        // Source: JVMTIFunctionsSource.java:836
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadListStackTraces", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadListStackTraces.ordinal(), env, Address.fromInt(thread_count), thread_list, Address.fromInt(max_frame_count), stack_info_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (thread_list.isZero() || stack_info_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             if (thread_count < 0 || max_frame_count < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
@@ -2436,15 +2953,17 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadListStackTraces");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:840
+        // Source: JVMTIFunctionsSource.java:846
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadLocalStorage", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadLocalStorage.ordinal(), env, thread, data_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2461,20 +2980,26 @@ public class JVMTIFunctions  {
             if (data_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadLocalStorage.getThreadLocalStorage(handleAsThread, data_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadLocalStorage");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:848
+        // Source: JVMTIFunctionsSource.java:854
         Pointer anchor = prologue(env);
-        tracePrologue("SetThreadLocalStorage", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetThreadLocalStorage.ordinal(), env, thread, data);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2488,20 +3013,26 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIThreadLocalStorage.setThreadLocalStorage(handleAsThread, data);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetThreadLocalStorage");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
-        // Source: JVMTIFunctionsSource.java:855
+        // Source: JVMTIFunctionsSource.java:861
         Pointer anchor = prologue(env);
-        tracePrologue("GetStackTrace", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetStackTrace.ordinal(), env, thread, Address.fromInt(start_depth), Address.fromInt(max_frame_count), frame_buffer, count_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2518,6 +3049,10 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             if (max_frame_count < 0) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
             }
@@ -2526,19 +3061,21 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetStackTrace");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved105();
-        // Source: JVMTIFunctionsSource.java:866
+        // Source: JVMTIFunctionsSource.java:872
 
     @VM_ENTRY_POINT
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
-        // Source: JVMTIFunctionsSource.java:869
+        // Source: JVMTIFunctionsSource.java:875
         Pointer anchor = prologue(env);
-        tracePrologue("GetTag", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetTag.ordinal(), env, object, tag_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2550,21 +3087,22 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-
             return jvmtiEnv.tags.getTag(object.unhand(), tag_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetTag");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetTag(Pointer env, JniHandle object, long tag) {
-        // Source: JVMTIFunctionsSource.java:877
+        // Source: JVMTIFunctionsSource.java:882
         Pointer anchor = prologue(env);
-        tracePrologue("SetTag", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetTag.ordinal(), env, object, Address.fromLong(tag));        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2573,101 +3111,132 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-
             return jvmtiEnv.tags.setTag(object.unhand(), tag);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetTag");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int ForceGarbageCollection(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:884
+        // Source: JVMTIFunctionsSource.java:888
         Pointer anchor = prologue(env);
-        tracePrologue("ForceGarbageCollection", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.ForceGarbageCollection.ordinal(), env);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             System.gc();
             return JVMTI_ERROR_NONE;
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("ForceGarbageCollection");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverObjectsReachableFromObject(Pointer env, JniHandle object, Address object_reference_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:890
+        // Source: JVMTIFunctionsSource.java:894
         Pointer anchor = prologue(env);
-        tracePrologue("IterateOverObjectsReachableFromObject", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IterateOverObjectsReachableFromObject.ordinal(), env, object, object_reference_callback, user_data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IterateOverObjectsReachableFromObject");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverReachableObjects(Pointer env, Address heap_root_callback, Address stack_ref_callback, Address object_ref_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:895
+        // Source: JVMTIFunctionsSource.java:899
         Pointer anchor = prologue(env);
-        tracePrologue("IterateOverReachableObjects", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IterateOverReachableObjects.ordinal(), env, heap_root_callback, stack_ref_callback, object_ref_callback, user_data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IterateOverReachableObjects");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverHeap(Pointer env, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:900
+        // Source: JVMTIFunctionsSource.java:904
         Pointer anchor = prologue(env);
-        tracePrologue("IterateOverHeap", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IterateOverHeap.ordinal(), env, Address.fromInt(object_filter), heap_object_callback, user_data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IterateOverHeap");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverInstancesOfClass(Pointer env, JniHandle klass, int object_filter, Address heap_object_callback, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:905
+        // Source: JVMTIFunctionsSource.java:909
         Pointer anchor = prologue(env);
-        tracePrologue("IterateOverInstancesOfClass", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IterateOverInstancesOfClass.ordinal(), env, klass, Address.fromInt(object_filter), heap_object_callback, user_data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IterateOverInstancesOfClass");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved113();
-        // Source: JVMTIFunctionsSource.java:910
+        // Source: JVMTIFunctionsSource.java:914
 
     @VM_ENTRY_POINT
     private static int GetObjectsWithTags(Pointer env, int tag_count, Pointer tags, Pointer count_ptr, Pointer object_result_ptr, Pointer tag_result_ptr) {
-        // Source: JVMTIFunctionsSource.java:913
+        // Source: JVMTIFunctionsSource.java:917
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectsWithTags", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetObjectsWithTags.ordinal(), env, Address.fromInt(tag_count), tags, count_ptr, object_result_ptr, tag_result_ptr);        }
+
         try {
             if (!(CAN_TAG_OBJECTS.get(CAPABILITIES.getPtr(env)))) {
                 return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
@@ -2675,35 +3244,47 @@ public class JVMTIFunctions  {
             if (tags.isZero() || count_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI.getEnv(env).tags.getObjectsWithTags(tag_count, tags, count_ptr, object_result_ptr, tag_result_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectsWithTags");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int FollowReferences(Pointer env, int heap_filter, JniHandle klass, JniHandle initial_object, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:920
+        // Source: JVMTIFunctionsSource.java:924
         Pointer anchor = prologue(env);
-        tracePrologue("FollowReferences", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.FollowReferences.ordinal(), env, Address.fromInt(heap_filter), klass, initial_object, callbacks, user_data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("FollowReferences");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int IterateThroughHeap(Pointer env, int heap_filter, JniHandle klass, Pointer callbacks, Pointer user_data) {
-        // Source: JVMTIFunctionsSource.java:925
+        // Source: JVMTIFunctionsSource.java:929
         Pointer anchor = prologue(env);
-        tracePrologue("IterateThroughHeap", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.IterateThroughHeap.ordinal(), env, Address.fromInt(heap_filter), klass, callbacks, user_data);        }
+
         try {
             if (!(phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2724,66 +3305,83 @@ public class JVMTIFunctions  {
             if (jvmtiEnv == null) {
                 return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
-
             return JVMTIHeapFunctions.iterateThroughHeap(jvmtiEnv, heap_filter, handleAsClass, callbacks, user_data);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("IterateThroughHeap");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved117();
-        // Source: JVMTIFunctionsSource.java:935
-
-    @VM_ENTRY_POINT
-    private static native void reserved118();
         // Source: JVMTIFunctionsSource.java:938
 
     @VM_ENTRY_POINT
-    private static native void reserved119();
+    private static native void reserved118();
         // Source: JVMTIFunctionsSource.java:941
 
     @VM_ENTRY_POINT
-    private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
+    private static native void reserved119();
         // Source: JVMTIFunctionsSource.java:944
+
+    @VM_ENTRY_POINT
+    private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
+        // Source: JVMTIFunctionsSource.java:947
         Pointer anchor = prologue(env);
-        tracePrologue("SetJNIFunctionTable", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetJNIFunctionTable.ordinal(), env, function_table);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetJNIFunctionTable");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetJNIFunctionTable(Pointer env, Pointer function_table) {
-        // Source: JVMTIFunctionsSource.java:949
+        // Source: JVMTIFunctionsSource.java:952
         Pointer anchor = prologue(env);
-        tracePrologue("GetJNIFunctionTable", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetJNIFunctionTable.ordinal(), env, function_table);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetJNIFunctionTable");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetEventCallbacks(Pointer env, Pointer callbacks, int size_of_callbacks) {
-        // Source: JVMTIFunctionsSource.java:954
+        // Source: JVMTIFunctionsSource.java:957
         Pointer anchor = prologue(env);
-        tracePrologue("SetEventCallbacks", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetEventCallbacks.ordinal(), env, callbacks, Address.fromInt(size_of_callbacks));        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             Pointer envCallbacks = CALLBACKS.get(env).asPointer();
             Memory.copyBytes(callbacks, envCallbacks, Size.fromInt(size_of_callbacks));
@@ -2792,95 +3390,131 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetEventCallbacks");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GenerateEvents(Pointer env, int event_type) {
-        // Source: JVMTIFunctionsSource.java:962
+        // Source: JVMTIFunctionsSource.java:965
         Pointer anchor = prologue(env);
-        tracePrologue("GenerateEvents", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GenerateEvents.ordinal(), env, Address.fromInt(event_type));        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GenerateEvents");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetExtensionFunctions(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:967
+        // Source: JVMTIFunctionsSource.java:970
         Pointer anchor = prologue(env);
-        tracePrologue("GetExtensionFunctions", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetExtensionFunctions.ordinal(), env, extension_count_ptr, extensions);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetExtensionFunctions");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetExtensionEvents(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        // Source: JVMTIFunctionsSource.java:972
+        // Source: JVMTIFunctionsSource.java:975
         Pointer anchor = prologue(env);
-        tracePrologue("GetExtensionEvents", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetExtensionEvents.ordinal(), env, extension_count_ptr, extensions);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetExtensionEvents");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetExtensionEventCallback(Pointer env, int extension_event_index, Address callback) {
-        // Source: JVMTIFunctionsSource.java:977
+        // Source: JVMTIFunctionsSource.java:980
         Pointer anchor = prologue(env);
-        tracePrologue("SetExtensionEventCallback", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetExtensionEventCallback.ordinal(), env, Address.fromInt(extension_event_index), callback);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetExtensionEventCallback");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int DisposeEnvironment(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:982
+        // Source: JVMTIFunctionsSource.java:985
         Pointer anchor = prologue(env);
-        tracePrologue("DisposeEnvironment", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.DisposeEnvironment.ordinal(), env);        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI.disposeEnv(env);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("DisposeEnvironment");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetErrorName(Pointer env, int error, Pointer name_ptr) {
-        // Source: JVMTIFunctionsSource.java:988
+        // Source: JVMTIFunctionsSource.java:991
         Pointer anchor = prologue(env);
-        tracePrologue("GetErrorName", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetErrorName.ordinal(), env, Address.fromInt(error), name_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (name_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             if (error < 0 || error > JVMTI_ERROR_MAX) {
                 return JVMTI_ERROR_ILLEGAL_ARGUMENT;
@@ -2894,45 +3528,59 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetErrorName");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetlongFormat(Pointer env, Pointer format_ptr) {
-        // Source: JVMTIFunctionsSource.java:1002
+        // Source: JVMTIFunctionsSource.java:1005
         Pointer anchor = prologue(env);
-        tracePrologue("GetlongFormat", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetlongFormat.ordinal(), env, format_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetlongFormat");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
-        // Source: JVMTIFunctionsSource.java:1007
+        // Source: JVMTIFunctionsSource.java:1010
         Pointer anchor = prologue(env);
-        tracePrologue("GetSystemProperties", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetSystemProperties.ordinal(), env, count_ptr, property_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetSystemProperties");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
-        // Source: JVMTIFunctionsSource.java:1012
+        // Source: JVMTIFunctionsSource.java:1015
         Pointer anchor = prologue(env);
-        tracePrologue("GetSystemProperty", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetSystemProperty.ordinal(), env, property, value_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -2940,133 +3588,185 @@ public class JVMTIFunctions  {
             if (property.isZero() || value_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI.getSystemProperty(env, property, value_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetSystemProperty");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
-        // Source: JVMTIFunctionsSource.java:1019
+        // Source: JVMTIFunctionsSource.java:1022
         Pointer anchor = prologue(env);
-        tracePrologue("SetSystemProperty", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetSystemProperty.ordinal(), env, property, value);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetSystemProperty");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetPhase(Pointer env, Pointer phase_ptr) {
-        // Source: JVMTIFunctionsSource.java:1024
+        // Source: JVMTIFunctionsSource.java:1027
         Pointer anchor = prologue(env);
-        tracePrologue("GetPhase", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetPhase.ordinal(), env, phase_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (phase_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTI.getPhase(phase_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetPhase");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1031
+        // Source: JVMTIFunctionsSource.java:1034
         Pointer anchor = prologue(env);
-        tracePrologue("GetCurrentThreadCpuTimerInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetCurrentThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCurrentThreadCpuTimerInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1036
+        // Source: JVMTIFunctionsSource.java:1039
         Pointer anchor = prologue(env);
-        tracePrologue("GetCurrentThreadCpuTime", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetCurrentThreadCpuTime.ordinal(), env, nanos_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetCurrentThreadCpuTime");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1041
+        // Source: JVMTIFunctionsSource.java:1044
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadCpuTimerInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadCpuTimerInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTime(Pointer env, JniHandle thread, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1046
+        // Source: JVMTIFunctionsSource.java:1049
         Pointer anchor = prologue(env);
-        tracePrologue("GetThreadCpuTime", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetThreadCpuTime.ordinal(), env, thread, nanos_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetThreadCpuTime");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetTimerInfo(Pointer env, Pointer info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1051
+        // Source: JVMTIFunctionsSource.java:1054
         Pointer anchor = prologue(env);
-        tracePrologue("GetTimerInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetTimerInfo.ordinal(), env, info_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetTimerInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetTime(Pointer env, Pointer nanos_ptr) {
-        // Source: JVMTIFunctionsSource.java:1056
+        // Source: JVMTIFunctionsSource.java:1059
         Pointer anchor = prologue(env);
-        tracePrologue("GetTime", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetTime.ordinal(), env, nanos_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (nanos_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             nanos_ptr.setLong(System.nanoTime());
             return JVMTI_ERROR_NONE;
@@ -3074,21 +3774,27 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetTime");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetPotentialCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1064
+        // Source: JVMTIFunctionsSource.java:1067
         Pointer anchor = prologue(env);
-        tracePrologue("GetPotentialCapabilities", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetPotentialCapabilities.ordinal(), env, capabilities_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (capabilities_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             // Currently we don't have any phase-limited or ownership limitations
             JVMTICapabilities.setAll(capabilities_ptr);
@@ -3097,46 +3803,58 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetPotentialCapabilities");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static native void reserved141();
-        // Source: JVMTIFunctionsSource.java:1073
+        // Source: JVMTIFunctionsSource.java:1076
 
     @VM_ENTRY_POINT
     private static int AddCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1076
+        // Source: JVMTIFunctionsSource.java:1079
         Pointer anchor = prologue(env);
-        tracePrologue("AddCapabilities", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.AddCapabilities.ordinal(), env, capabilities_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (capabilities_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             return JVMTICapabilities.addCapabilities(env, capabilities_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("AddCapabilities");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
-        // Source: JVMTIFunctionsSource.java:1083
+        // Source: JVMTIFunctionsSource.java:1086
         Pointer anchor = prologue(env);
-        tracePrologue("RelinquishCapabilities", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RelinquishCapabilities.ordinal(), env, capabilities_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_ONLOAD || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
             }
             if (capabilities_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             Pointer envCaps = CAPABILITIES.getPtr(env);
             for (int i = 0; i < JVMTICapabilities.values.length; i++) {
@@ -3150,19 +3868,25 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RelinquishCapabilities");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
-        // Source: JVMTIFunctionsSource.java:1097
+        // Source: JVMTIFunctionsSource.java:1100
         Pointer anchor = prologue(env);
-        tracePrologue("GetAvailableProcessors", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetAvailableProcessors.ordinal(), env, processor_count_ptr);        }
+
         try {
-            // PHASES: ANY
+    
             if (processor_count_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
             }
             processor_count_ptr.setInt(Runtime.getRuntime().availableProcessors());
             return JVMTI_ERROR_NONE;
@@ -3170,15 +3894,17 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetAvailableProcessors");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
-        // Source: JVMTIFunctionsSource.java:1105
+        // Source: JVMTIFunctionsSource.java:1108
         Pointer anchor = prologue(env);
-        tracePrologue("GetClassVersionNumbers", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetClassVersionNumbers.ordinal(), env, klass, minor_version_ptr, major_version_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -3186,66 +3912,94 @@ public class JVMTIFunctions  {
             if (minor_version_ptr.isZero() ||  minor_version_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetClassVersionNumbers");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
-        // Source: JVMTIFunctionsSource.java:1112
+        // Source: JVMTIFunctionsSource.java:1115
         Pointer anchor = prologue(env);
-        tracePrologue("GetConstantPool", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetConstantPool.ordinal(), env, klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetConstantPool");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        // Source: JVMTIFunctionsSource.java:1117
+        // Source: JVMTIFunctionsSource.java:1120
         Pointer anchor = prologue(env);
-        tracePrologue("GetEnvironmentLocalStorage", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetEnvironmentLocalStorage.ordinal(), env, data_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetEnvironmentLocalStorage");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        // Source: JVMTIFunctionsSource.java:1122
+        // Source: JVMTIFunctionsSource.java:1125
         Pointer anchor = prologue(env);
-        tracePrologue("SetEnvironmentLocalStorage", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetEnvironmentLocalStorage.ordinal(), env, data);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetEnvironmentLocalStorage");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1127
+        // Source: JVMTIFunctionsSource.java:1130
         Pointer anchor = prologue(env);
-        tracePrologue("AddToBootstrapClassLoaderSearch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.AddToBootstrapClassLoaderSearch.ordinal(), env, segment);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             // PHASES ONLOAD,LIVE
             if (segment.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
@@ -3255,17 +4009,23 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("AddToBootstrapClassLoaderSearch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
-        // Source: JVMTIFunctionsSource.java:1134
+        // Source: JVMTIFunctionsSource.java:1137
         Pointer anchor = prologue(env);
-        tracePrologue("SetVerboseFlag", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetVerboseFlag.ordinal(), env, Address.fromInt(flag), Address.fromInt(value ? 1 : 0));        }
+
         try {
-            // PHASES: ANY
+    
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             switch (flag) {
                 case JVMTI_VERBOSE_GC:
                     VMOptions.verboseOption.verboseGC = value;
@@ -3287,60 +4047,80 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetVerboseFlag");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
-        // Source: JVMTIFunctionsSource.java:1156
+        // Source: JVMTIFunctionsSource.java:1159
         Pointer anchor = prologue(env);
-        tracePrologue("AddToSystemClassLoaderSearch", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.AddToSystemClassLoaderSearch.ordinal(), env, segment);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("AddToSystemClassLoaderSearch");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
-        // Source: JVMTIFunctionsSource.java:1161
+        // Source: JVMTIFunctionsSource.java:1164
         Pointer anchor = prologue(env);
-        tracePrologue("RetransformClasses", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.RetransformClasses.ordinal(), env, Address.fromInt(class_count), classes);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("RetransformClasses");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
-        // Source: JVMTIFunctionsSource.java:1166
+        // Source: JVMTIFunctionsSource.java:1169
         Pointer anchor = prologue(env);
-        tracePrologue("GetOwnedMonitorStackDepthInfo", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetOwnedMonitorStackDepthInfo.ordinal(), env, thread, monitor_info_count_ptr, monitor_info_ptr);        }
+
         try {
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetOwnedMonitorStackDepthInfo");
+            // currrently no return logging
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
-        // Source: JVMTIFunctionsSource.java:1171
+        // Source: JVMTIFunctionsSource.java:1174
         Pointer anchor = prologue(env);
-        tracePrologue("GetObjectSize", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.GetObjectSize.ordinal(), env, object, size_ptr);        }
+
         try {
             if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
                 return JVMTI_ERROR_WRONG_PHASE;
@@ -3348,12 +4128,16 @@ public class JVMTIFunctions  {
             if (size_ptr.isZero()) {
                 return JVMTI_ERROR_NULL_POINTER;
             }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
             return JVMTIClassFunctions.getObjectSize(object.unhand(), size_ptr);
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("GetObjectSize");
+            // currrently no return logging
         }
     }
 
@@ -3364,9 +4148,11 @@ public class JVMTIFunctions  {
      */
     @VM_ENTRY_POINT
     private static int SetJVMTIEnv(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:1183
+        // Source: JVMTIFunctionsSource.java:1186
         Pointer anchor = prologue(env);
-        tracePrologue("SetJVMTIEnv", anchor);
+        if (logger.enabled()) {
+            logger.log(EntryPoints.SetJVMTIEnv.ordinal(), env);        }
+
         try {
             JVMTI.setJVMTIEnv(env);
             return 0;
@@ -3374,149 +4160,151 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            traceEpilogue("SetJVMTIEnv");
+            // currrently no return logging
         }
     }
 
-    private static final String[] methodNames = new String[] {
-        "SetEventNotificationMode",
-        "GetAllThreads",
-        "SuspendThread",
-        "ResumeThread",
-        "StopThread",
-        "InterruptThread",
-        "GetThreadInfo",
-        "GetOwnedMonitorInfo",
-        "GetCurrentContendedMonitor",
-        "RunAgentThread",
-        "GetTopThreadGroups",
-        "GetThreadGroupInfo",
-        "GetThreadGroupChildren",
-        "GetFrameCount",
-        "GetThreadState",
-        "GetCurrentThread",
-        "GetFrameLocation",
-        "NotifyFramePop",
-        "GetLocalObject",
-        "GetLocalInt",
-        "GetLocalLong",
-        "GetLocalFloat",
-        "GetLocalDouble",
-        "SetLocalObject",
-        "SetLocalInt",
-        "SetLocalLong",
-        "SetLocalFloat",
-        "SetLocalDouble",
-        "CreateRawMonitor",
-        "DestroyRawMonitor",
-        "RawMonitorEnter",
-        "RawMonitorExit",
-        "RawMonitorWait",
-        "RawMonitorNotify",
-        "RawMonitorNotifyAll",
-        "SetBreakpoint",
-        "ClearBreakpoint",
-        "SetFieldAccessWatch",
-        "ClearFieldAccessWatch",
-        "SetFieldModificationWatch",
-        "ClearFieldModificationWatch",
-        "IsModifiableClass",
-        "Allocate",
-        "Deallocate",
-        "GetClassSignature",
-        "GetClassStatus",
-        "GetSourceFileName",
-        "GetClassModifiers",
-        "GetClassMethods",
-        "GetClassFields",
-        "GetImplementedInterfaces",
-        "IsInterface",
-        "IsArrayClass",
-        "GetClassLoader",
-        "GetObjectHashCode",
-        "GetObjectMonitorUsage",
-        "GetFieldName",
-        "GetFieldDeclaringClass",
-        "GetFieldModifiers",
-        "IsFieldSynthetic",
-        "GetMethodName",
-        "GetMethodDeclaringClass",
-        "GetMethodModifiers",
-        "GetMaxLocals",
-        "GetArgumentsSize",
-        "GetLineNumberTable",
-        "GetMethodLocation",
-        "GetLocalVariableTable",
-        "SetNativeMethodPrefix",
-        "SetNativeMethodPrefixes",
-        "GetBytecodes",
-        "IsMethodNative",
-        "IsMethodSynthetic",
-        "GetLoadedClasses",
-        "GetClassLoaderClasses",
-        "PopFrame",
-        "ForceEarlyReturnObject",
-        "ForceEarlyReturnInt",
-        "ForceEarlyReturnLong",
-        "ForceEarlyReturnFloat",
-        "ForceEarlyReturnDouble",
-        "ForceEarlyReturnVoid",
-        "RedefineClasses",
-        "GetVersionNumber",
-        "GetCapabilities",
-        "GetSourceDebugExtension",
-        "IsMethodObsolete",
-        "SuspendThreadList",
-        "ResumeThreadList",
-        "GetAllStackTraces",
-        "GetThreadListStackTraces",
-        "GetThreadLocalStorage",
-        "SetThreadLocalStorage",
-        "GetStackTrace",
-        "GetTag",
-        "SetTag",
-        "ForceGarbageCollection",
-        "IterateOverObjectsReachableFromObject",
-        "IterateOverReachableObjects",
-        "IterateOverHeap",
-        "IterateOverInstancesOfClass",
-        "GetObjectsWithTags",
-        "FollowReferences",
-        "IterateThroughHeap",
-        "SetJNIFunctionTable",
-        "GetJNIFunctionTable",
-        "SetEventCallbacks",
-        "GenerateEvents",
-        "GetExtensionFunctions",
-        "GetExtensionEvents",
-        "SetExtensionEventCallback",
-        "DisposeEnvironment",
-        "GetErrorName",
-        "GetlongFormat",
-        "GetSystemProperties",
-        "GetSystemProperty",
-        "SetSystemProperty",
-        "GetPhase",
-        "GetCurrentThreadCpuTimerInfo",
-        "GetCurrentThreadCpuTime",
-        "GetThreadCpuTimerInfo",
-        "GetThreadCpuTime",
-        "GetTimerInfo",
-        "GetTime",
-        "GetPotentialCapabilities",
-        "AddCapabilities",
-        "RelinquishCapabilities",
-        "GetAvailableProcessors",
-        "GetClassVersionNumbers",
-        "GetConstantPool",
-        "GetEnvironmentLocalStorage",
-        "SetEnvironmentLocalStorage",
-        "AddToBootstrapClassLoaderSearch",
-        "SetVerboseFlag",
-        "AddToSystemClassLoaderSearch",
-        "RetransformClasses",
-        "GetOwnedMonitorStackDepthInfo",
-        "GetObjectSize",
-        "SetJVMTIEnv"};
+    public static enum EntryPoints {
+        /* 0 */ SetEventNotificationMode,
+        /* 1 */ GetAllThreads,
+        /* 2 */ SuspendThread,
+        /* 3 */ ResumeThread,
+        /* 4 */ StopThread,
+        /* 5 */ InterruptThread,
+        /* 6 */ GetThreadInfo,
+        /* 7 */ GetOwnedMonitorInfo,
+        /* 8 */ GetCurrentContendedMonitor,
+        /* 9 */ RunAgentThread,
+        /* 10 */ GetTopThreadGroups,
+        /* 11 */ GetThreadGroupInfo,
+        /* 12 */ GetThreadGroupChildren,
+        /* 13 */ GetFrameCount,
+        /* 14 */ GetThreadState,
+        /* 15 */ GetCurrentThread,
+        /* 16 */ GetFrameLocation,
+        /* 17 */ NotifyFramePop,
+        /* 18 */ GetLocalObject,
+        /* 19 */ GetLocalInt,
+        /* 20 */ GetLocalLong,
+        /* 21 */ GetLocalFloat,
+        /* 22 */ GetLocalDouble,
+        /* 23 */ SetLocalObject,
+        /* 24 */ SetLocalInt,
+        /* 25 */ SetLocalLong,
+        /* 26 */ SetLocalFloat,
+        /* 27 */ SetLocalDouble,
+        /* 28 */ CreateRawMonitor,
+        /* 29 */ DestroyRawMonitor,
+        /* 30 */ RawMonitorEnter,
+        /* 31 */ RawMonitorExit,
+        /* 32 */ RawMonitorWait,
+        /* 33 */ RawMonitorNotify,
+        /* 34 */ RawMonitorNotifyAll,
+        /* 35 */ SetBreakpoint,
+        /* 36 */ ClearBreakpoint,
+        /* 37 */ SetFieldAccessWatch,
+        /* 38 */ ClearFieldAccessWatch,
+        /* 39 */ SetFieldModificationWatch,
+        /* 40 */ ClearFieldModificationWatch,
+        /* 41 */ IsModifiableClass,
+        /* 42 */ Allocate,
+        /* 43 */ Deallocate,
+        /* 44 */ GetClassSignature,
+        /* 45 */ GetClassStatus,
+        /* 46 */ GetSourceFileName,
+        /* 47 */ GetClassModifiers,
+        /* 48 */ GetClassMethods,
+        /* 49 */ GetClassFields,
+        /* 50 */ GetImplementedInterfaces,
+        /* 51 */ IsInterface,
+        /* 52 */ IsArrayClass,
+        /* 53 */ GetClassLoader,
+        /* 54 */ GetObjectHashCode,
+        /* 55 */ GetObjectMonitorUsage,
+        /* 56 */ GetFieldName,
+        /* 57 */ GetFieldDeclaringClass,
+        /* 58 */ GetFieldModifiers,
+        /* 59 */ IsFieldSynthetic,
+        /* 60 */ GetMethodName,
+        /* 61 */ GetMethodDeclaringClass,
+        /* 62 */ GetMethodModifiers,
+        /* 63 */ GetMaxLocals,
+        /* 64 */ GetArgumentsSize,
+        /* 65 */ GetLineNumberTable,
+        /* 66 */ GetMethodLocation,
+        /* 67 */ GetLocalVariableTable,
+        /* 68 */ SetNativeMethodPrefix,
+        /* 69 */ SetNativeMethodPrefixes,
+        /* 70 */ GetBytecodes,
+        /* 71 */ IsMethodNative,
+        /* 72 */ IsMethodSynthetic,
+        /* 73 */ GetLoadedClasses,
+        /* 74 */ GetClassLoaderClasses,
+        /* 75 */ PopFrame,
+        /* 76 */ ForceEarlyReturnObject,
+        /* 77 */ ForceEarlyReturnInt,
+        /* 78 */ ForceEarlyReturnLong,
+        /* 79 */ ForceEarlyReturnFloat,
+        /* 80 */ ForceEarlyReturnDouble,
+        /* 81 */ ForceEarlyReturnVoid,
+        /* 82 */ RedefineClasses,
+        /* 83 */ GetVersionNumber,
+        /* 84 */ GetCapabilities,
+        /* 85 */ GetSourceDebugExtension,
+        /* 86 */ IsMethodObsolete,
+        /* 87 */ SuspendThreadList,
+        /* 88 */ ResumeThreadList,
+        /* 89 */ GetAllStackTraces,
+        /* 90 */ GetThreadListStackTraces,
+        /* 91 */ GetThreadLocalStorage,
+        /* 92 */ SetThreadLocalStorage,
+        /* 93 */ GetStackTrace,
+        /* 94 */ GetTag,
+        /* 95 */ SetTag,
+        /* 96 */ ForceGarbageCollection,
+        /* 97 */ IterateOverObjectsReachableFromObject,
+        /* 98 */ IterateOverReachableObjects,
+        /* 99 */ IterateOverHeap,
+        /* 100 */ IterateOverInstancesOfClass,
+        /* 101 */ GetObjectsWithTags,
+        /* 102 */ FollowReferences,
+        /* 103 */ IterateThroughHeap,
+        /* 104 */ SetJNIFunctionTable,
+        /* 105 */ GetJNIFunctionTable,
+        /* 106 */ SetEventCallbacks,
+        /* 107 */ GenerateEvents,
+        /* 108 */ GetExtensionFunctions,
+        /* 109 */ GetExtensionEvents,
+        /* 110 */ SetExtensionEventCallback,
+        /* 111 */ DisposeEnvironment,
+        /* 112 */ GetErrorName,
+        /* 113 */ GetlongFormat,
+        /* 114 */ GetSystemProperties,
+        /* 115 */ GetSystemProperty,
+        /* 116 */ SetSystemProperty,
+        /* 117 */ GetPhase,
+        /* 118 */ GetCurrentThreadCpuTimerInfo,
+        /* 119 */ GetCurrentThreadCpuTime,
+        /* 120 */ GetThreadCpuTimerInfo,
+        /* 121 */ GetThreadCpuTime,
+        /* 122 */ GetTimerInfo,
+        /* 123 */ GetTime,
+        /* 124 */ GetPotentialCapabilities,
+        /* 125 */ AddCapabilities,
+        /* 126 */ RelinquishCapabilities,
+        /* 127 */ GetAvailableProcessors,
+        /* 128 */ GetClassVersionNumbers,
+        /* 129 */ GetConstantPool,
+        /* 130 */ GetEnvironmentLocalStorage,
+        /* 131 */ SetEnvironmentLocalStorage,
+        /* 132 */ AddToBootstrapClassLoaderSearch,
+        /* 133 */ SetVerboseFlag,
+        /* 134 */ AddToSystemClassLoaderSearch,
+        /* 135 */ RetransformClasses,
+        /* 136 */ GetOwnedMonitorStackDepthInfo,
+        /* 137 */ GetObjectSize,
+        /* 138 */ SetJVMTIEnv;
+
+    }
 // END GENERATED CODE
 }

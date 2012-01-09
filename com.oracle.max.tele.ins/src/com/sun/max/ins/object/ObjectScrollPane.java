@@ -151,7 +151,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
      * of the table up to a specified limit.
      */
-    private ObjectScrollPane(Inspection inspection, InspectorTable inspectorTable) {
+    public ObjectScrollPane(Inspection inspection, InspectorTable inspectorTable) {
         super(inspection, inspectorTable);
         this.inspectorTable = inspectorTable;
         // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
