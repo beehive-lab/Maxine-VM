@@ -160,7 +160,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
                     }
                 }
             };
-            sizeInputField.setRange(1, 999);
+            sizeInputField.setRange(1, Integer.MAX_VALUE);
             sizeFieldLabel.setLabelFor(sizeInputField);
             fieldsPanel.add(sizeInputField);
         }
