@@ -846,7 +846,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                views().memory().makeView(thread.vmLog().memoryRegion(), "Thread " + thread.toShortString()).highlight();
+                MaxEntityMemoryRegion<MaxThreadVMLog> memoryRegion = thread.vmLog().memoryRegion();
+                if (memoryRegion != null) {
+                    views().memory().makeView(thread.vmLog().memoryRegion(), "Thread " + thread.toShortString()).highlight();
+                } else {
+                    gui().errorMessage("thread has no VM log buffer");
+                }
             } else {
                 gui().errorMessage("no thread selected");
             }
