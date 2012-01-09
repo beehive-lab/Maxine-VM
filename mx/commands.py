@@ -552,22 +552,27 @@ def makejdk(args):
         mx.abort(1)
         
     mx.log('Replicating ' + jdk + ' in ' + maxjdk + '...')
-    shutil.copytree(jdk, maxjdk)
+    shutil.copytree(jdk, maxjdk, symlinks=True)
+    
+    jreExists = exists(join(maxjdk, 'jre'))
 
     for f in os.listdir(_vmdir):
         fpath = join(_vmdir, f)
         if isfile(fpath):
             shutil.copy(fpath, join(maxjdk, 'bin'))
-            shutil.copy(fpath, join(maxjdk, 'jre', 'bin'))
+            if jreExists:
+                shutil.copy(fpath, join(maxjdk, 'jre', 'bin'))
                 
     os.unlink(join(maxjdk, 'bin', 'java'))
-    os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
+    if jreExists:
+        os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
     if (mx.os == 'windows'):
         shutil.copy(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
         shutil.copy(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
     else:
         os.symlink(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
-        os.symlink(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
+        if jreExists:
+            os.symlink(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
 
     mx.log('Created Maxine based JDK in ' + maxjdk)
 
