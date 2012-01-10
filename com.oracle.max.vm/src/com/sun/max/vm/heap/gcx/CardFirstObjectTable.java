@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ import com.sun.max.vm.runtime.*;
  * address and size of an object crossing a card boundary.
  *
  */
-public class CardFirstObjectTable extends Log2RegionToByteMapTable {
+public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
     static final int LOG2_NUM_WORD_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
     static final int NUM_WORD_PER_CARD = 1 << LOG2_NUM_WORD_PER_CARD;
     static final byte ZERO = 0;
@@ -156,11 +156,10 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         }
         // Subsequent LOG2_ENCODING_THRESHOLD entries encode a distance (in number of cards) to the cards holding the offset information.
         int numNonLogEncodedCards = remainingCards >= LOG2_ENCODING_THRESHOLD ? LOG2_ENCODING_THRESHOLD : remainingCards;
-        int nextCard = offsetCard + 1;
-        for (byte i = 0; i < numNonLogEncodedCards; i++) {
-            set(nextCard + i, i);
+        for (byte i = 1; i <= numNonLogEncodedCards; i++) {
+            set(offsetCard + i, i);
         }
-        nextCard += numNonLogEncodedCards;
+        int nextCard = offsetCard + numNonLogEncodedCards + 1;
 
         if (MaxineVM.isDebug() && TraceFOT) {
             Log.print("setting FOT for range [");  Log.print(cell);
@@ -200,8 +199,8 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
                 startInfo = get(nextCardIndex);
             }
             if (startInfo > ZERO) {
-                nextCardIndex = startInfo;
-                startInfo = get(startInfo);
+                nextCardIndex -= startInfo;
+                startInfo = get(nextCardIndex);
             }
         }
         if (MaxineVM.isDebug() && startInfo > 0) {
