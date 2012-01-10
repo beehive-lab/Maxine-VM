@@ -176,7 +176,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
         } else {
             // one very special case - the last refresh was after nextId was bumped
             // but before the record was filled in.
-            if (lastNextId != 0) {
+            if (lastNextId != 0 && logRecordCache[actualLogBufferEntries - 1].header == 0) {
                 int id = lastNextId - 1;
                 // re-read the record
                 HostedLogRecord record = getRecordFromVM(id);
