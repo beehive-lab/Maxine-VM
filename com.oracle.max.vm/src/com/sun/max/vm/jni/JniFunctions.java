@@ -49,7 +49,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
+//import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
@@ -185,8 +185,9 @@ public final class JniFunctions {
 
     /**
      * Logging/Tracing of JNI/JMM entry/exit.
+     * TODO javac cannot resolve VMLogger if the symbol is unqualified (why?)
      */
-    static abstract class JxxFunctionsLogger extends VMLogger {
+    static abstract class JxxFunctionsLogger extends com.sun.max.vm.log.VMLogger {
         static final Word ENTRY = Word.allOnes();
         static final Word EXIT = Word.zero();
 
