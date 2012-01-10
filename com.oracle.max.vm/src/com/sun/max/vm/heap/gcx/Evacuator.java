@@ -309,6 +309,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         evacuateReachables();
         // TraceVisitedCell = false;
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
+        evacuateReachables();
         doAfterEvacuation();
     }
 }
