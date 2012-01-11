@@ -115,6 +115,14 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeBreakpointCallback(JNIEnv *env, j
                 jmethodID method, jint location) {
     (*callback)(jvmti_env, env, thread, method, location);
 }
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFramePopCallback(JNIEnv *env, jclass c, jvmtiEventFramePop callback,
+                jvmtiEnv *jvmti_env, jthread thread,
+                jmethodID method, jboolean wasPoppedByException) {
+    (*callback)(jvmti_env, env, thread, method, wasPoppedByException);
+}
+
 void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, jboolean is_daemon,
                 jobject thread_group, jobject context_class_loader) {
     threadInfo->name = name;
@@ -350,7 +358,6 @@ typedef struct {
     const struct /*jvmtiInterface_1_*/ExtendedJVMTINativeInterface_ *functions;
     jvmtiEventCallbacks *callbacks;
     jvmtiCapabilities *capabilities;
-    long eventMask;
 } JVMTIEnvImplStruct, *JVMTIEnvImpl;
 
 void *getJVMTIInterface(int version) {
@@ -362,13 +369,12 @@ void *getJVMTIInterface(int version) {
 
 void *getJVMTIImpl(JNIEnv *env, int version) {
     JVMTIEnvImplStruct *jvmtienv_impl = malloc(sizeof(JVMTIEnvImplStruct));
-    if (jvmtienv_impl == NULL) return NULL;    
+    if (jvmtienv_impl == NULL) return NULL;
     jvmtienv_impl->functions = &jvmti_extended_interface;
     jvmtienv_impl->callbacks = malloc(sizeof(jvmtiEventCallbacks));
     if (jvmtienv_impl->callbacks == NULL) return NULL;
     jvmtienv_impl->capabilities = malloc(sizeof(jvmtiCapabilities));
     if (jvmtienv_impl->capabilities == NULL) return NULL;
-    jvmtienv_impl->eventMask = 0;
     ExtendedJvmtiEnv *jvmti = (ExtendedJvmtiEnv*) jvmtienv_impl;
     (*jvmti)->SetJVMTIEnv((jvmtiEnv*) jvmti);
     return (void *)jvmti;

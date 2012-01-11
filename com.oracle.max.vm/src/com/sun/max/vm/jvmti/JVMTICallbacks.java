@@ -53,6 +53,8 @@ public class JVMTICallbacks {
     static native void invokeFieldWatchCallback(Pointer callback, Pointer jvmtiEnv,
                     Word thread, Word methodID, long location, Word klass, Word object,
                     Word fieldID, byte sigType, Word value);
+    static native void invokeFramePopCallback(Pointer callback, Pointer jvmtiEnv,
+                    Word thread, Word methodID, boolean wasPoppedByException);
 
     static native int invokeHeapIterationCallback(Pointer callback, long classTag, long size, Pointer tagPtr, int length, Word userData);
 

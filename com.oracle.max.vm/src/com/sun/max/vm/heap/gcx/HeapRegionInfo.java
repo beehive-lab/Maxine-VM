@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,8 @@ public class HeapRegionInfo {
         /**
          * Indicates that the region is part of an iterable range.
          * GCs and other operations walking over the heap must never come
-         * across a non-iterable region. Empty and allocating regions may not be iterable.
+         * across a non-iterable region. Empty regions are not iterable (they could be made iterable but
+         * it is pointless to iterate over them). Allocating regions are considered non-iterable.
          */
         IS_ITERABLE,
         /**

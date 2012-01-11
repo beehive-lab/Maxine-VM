@@ -58,9 +58,18 @@ public class NativeOrVmIP {
      * Fails if the IP points into native code somewhere and not at a VM method compilation.
      */
     public final CodePointer vmIP() {
+        return tm.codeAt(pos());
+    }
+
+    /**
+     * Returns the offset in the target method.
+     * Fails if the IP points into native code somewhere and not at a VM method compilation.
+     * @return
+     */
+    public final int pos() {
         assert tm != null : "target method must not be null";
         assert nativeIP.isZero() : "raw IP must be zero";
-        return tm.codeAt(pos);
+        return pos;
     }
 
     /**

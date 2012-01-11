@@ -66,7 +66,7 @@ public class Compilations {
      */
     public TargetMethod currentTargetMethod(RuntimeCompiler.Nature nature) {
         if (nature == Nature.BASELINE) {
-            return baseline;
+            return baseline.invalidated() != null ? null : baseline;
         } else if (nature == Nature.OPT) {
             if (optimized != null && optimized.invalidated() == null) {
                 return optimized;

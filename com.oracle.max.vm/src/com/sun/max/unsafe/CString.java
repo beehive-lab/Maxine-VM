@@ -388,7 +388,7 @@ public final class CString {
      * Append a (UTF8) {@link String} to a C string.
      * @param cstring
      * @param string
-     * @return new C string
+     * @return new C string or {@link Pointer#isZero()} if can't allocate.
      */
     public static Pointer append(Pointer cstring, String string) {
         Size csl = CString.length(cstring);
@@ -407,9 +407,9 @@ public final class CString {
 
     /**
      * Append two C strings.
-     * @param cstring
-     * @param string
-     * @return new C string
+     * @param cstring1
+     * @param cstring2
+     * @return new C string or {@link Pointer#isZero()} if can't allocate.
      */
     public static Pointer appendCString(Pointer cstring1, Pointer cstring2) {
         Size csl1 = CString.length(cstring1);
@@ -422,6 +422,23 @@ public final class CString {
         Memory.copyBytes(cstring1, result, csl1);
         Memory.copyBytes(cstring2, result.plus(csl1), csl2);
         result.setByte(nl.toInt(), (byte) 0);
+        return result;
+    }
+
+    /**
+     * Copy a C string.
+     * @param cstring
+     * @param string
+     * @return new C string or {@link Pointer#isZero()} if can't allocate.
+     */
+    public static Pointer copy(Pointer cstring1) {
+        Size csl1 = CString.length(cstring1);
+        Pointer result = Memory.allocate(csl1.plus(1));
+        if (result.isZero()) {
+            return result;
+        }
+        Memory.copyBytes(cstring1, result, csl1);
+        result.setByte(csl1.toInt(), (byte) 0);
         return result;
     }
 
