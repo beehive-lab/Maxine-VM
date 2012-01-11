@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,10 +56,10 @@ import com.sun.max.vm.thread.*;
  */
 public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
-    public static final String FROM_REGION_NAME = "Heap-From";
-    public static final String TO_REGION_NAME = "Heap-To";
-    public static final String FROM_GROW_REGION_NAME = "Heap-From-Grow";
-    public static final String TO_GROW_REGION_NAME = "Heap-To-Grow";
+    public static final String FROM_REGION_NAME = "Heap-SemiSpace-From";
+    public static final String TO_REGION_NAME = "Heap-SemiSpace-To";
+    public static final String FROM_GROW_REGION_NAME = "Heap-SemiSpace-From-Grow";
+    public static final String TO_GROW_REGION_NAME = "Heap-SemiSpace-To-Grow";
     public static final String LINEAR_GROW_POLICY_NAME = "Linear";
     public static final String DOUBLE_GROW_POLICY_NAME = "Double";
     public static final String NO_GROW_POLICY_NAME = "None";
