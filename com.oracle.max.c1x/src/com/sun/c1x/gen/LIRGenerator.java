@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1010,7 +1010,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         for (XirConstant c : snippet.template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = c.value;
+            operands[c.index] = c.value();
         }
 
         XirOperand[] inputOperands = snippet.template.inputOperands;

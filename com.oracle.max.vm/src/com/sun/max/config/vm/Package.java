@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,7 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.jni.*",
             "com.sun.max.vm.jvmti.*",
             "com.sun.max.vm.layout.**",
+            "com.sun.max.vm.log.**",
             "com.sun.max.vm.management.*",
             "com.sun.max.vm.monitor.**",
             "com.sun.max.vm.object.*",

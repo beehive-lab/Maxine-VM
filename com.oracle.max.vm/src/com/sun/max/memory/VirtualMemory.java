@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@ import java.io.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
+import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 
@@ -149,6 +151,15 @@ public final class VirtualMemory {
     @C_FUNCTION
     private static native Pointer virtualMemory_deallocate(Address start, Size size, int type);
 
+    private static final TimerMetric reserveMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+    private static final TimerMetric commitMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+    private static final TimerMetric uncommitMemoryTime = new TimerMetric(new SingleUseTimer(Clock.SYSTEM_MILLISECONDS));
+
+    public static void reportMetrics() {
+        reserveMemoryTime.report("VirtualMemory.reserveMemory", Log.out);
+        commitMemoryTime.report("VirtualMemory.commitMemory", Log.out);
+        uncommitMemoryTime.report("VirtualMemory.uncommitMemory", Log.out);
+    }
 
     /**
      * Allocates virtual memory that is not backed by swap space.
@@ -165,7 +176,10 @@ public final class VirtualMemory {
         if (TraceAnonOperations) {
             traceRange("reserveMemory", address, size);
         }
-        return virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+        reserveMemoryTime.start();
+        final Pointer result = virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+        reserveMemoryTime.stop();
+        return result;
     }
 
     public static boolean commitMemory(Address address, Size size, Type type) {
@@ -175,7 +189,9 @@ public final class VirtualMemory {
         if (TraceAnonOperations) {
             traceRange("commitMemory", address, size);
         }
-        Pointer committed = virtualMemory_allocatePrivateAnon(address, size, true, false, type.ordinal());
+        commitMemoryTime.start();
+        final Pointer committed = virtualMemory_allocatePrivateAnon(address, size, true, false, type.ordinal());
+        commitMemoryTime.stop();
         return committed.equals(address);
     }
 
@@ -186,8 +202,10 @@ public final class VirtualMemory {
         if (TraceAnonOperations) {
             traceRange("uncommitMemory", address, size);
         }
+        uncommitMemoryTime.start();
        // Remap previously mapped space so the new space isn't backed with swap space and all access are prevented (protNone = true).
-        Pointer uncommitted = virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+        final Pointer uncommitted = virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+        uncommitMemoryTime.stop();
         return !uncommitted.isZero();
     }
 

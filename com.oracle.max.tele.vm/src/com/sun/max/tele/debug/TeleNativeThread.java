@@ -102,6 +102,11 @@ public abstract class TeleNativeThread extends AbstractVmHolder
      */
     private final TeleThreadLocalsBlock threadLocalsBlock;
 
+    /**
+     * Access to associated {@link TeleThreadVMLog}, if assigned.
+     */
+    private final TeleThreadVMLog vmLog;
+
     private MaxThreadState state = SUSPENDED;
     private VmTargetBreakpoint breakpoint;
     private FrameProvider[] frameCache;
@@ -151,6 +156,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.nBytes());
         }
+        this.vmLog = new TeleThreadVMLog(teleProcess.vm(), this);
         this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.nBytes());
@@ -166,6 +172,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (state.allowsDataAccess()) {
                 refreshBreakpoint();
                 threadLocalsBlock.updateCache(epoch);
+                vmLog.updateCache(epoch);
             }
             lastUpdateEpoch = epoch;
         } else {
@@ -187,12 +194,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     }
 
     public final List<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations() {
-        final List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(2);
+        final List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations = new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(3);
         if (teleStack.memoryRegion() != null) {
             allocations.add(teleStack.memoryRegion());
         }
         if (threadLocalsBlock.memoryRegion() != null) {
             allocations.add(threadLocalsBlock.memoryRegion());
+        }
+        if (vmLog.memoryRegion() != null) {
+            allocations.add(vmLog.memoryRegion());
         }
         return allocations;
     }
@@ -203,6 +213,10 @@ public abstract class TeleNativeThread extends AbstractVmHolder
 
     public final TeleObject representation() {
         return teleVmThread();
+    }
+
+    public final MaxThreadVMLog vmLog() {
+        return vmLog;
     }
 
     public final int id() {
@@ -539,6 +553,10 @@ public abstract class TeleNativeThread extends AbstractVmHolder
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
                 sb.append(",stack_size=").append(stack().memoryRegion().nBytes());
+                if (vmLog.memoryRegion() != null) {
+                    sb.append(",vmlog_start=0x").append(vmLog.memoryRegion().start().toHexString());
+                    sb.append(",vmlog_size=").append(vmLog.memoryRegion().nBytes());
+                }
             }
         }
         sb.append("]");

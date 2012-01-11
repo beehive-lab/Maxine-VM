@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,7 +161,7 @@ public class Log2RegionToByteMapTable {
      * @return address to the first byte of the region
      */
     Address rangeStart(int index) {
-        return coveredAreaStart.plus(Address.fromLong(1L).shiftedLeft(log2RangeSize));
+        return coveredAreaStart.plus(Address.fromInt(index).shiftedLeft(log2RangeSize));
     }
 
     /**

@@ -868,12 +868,18 @@ public class VmOperation {
 
     /**
      * Bit set in {@link VmThreadLocal#SUSPEND} when a thread is requesting to suspend.
+     * The bit is on up until it the thread is resumed. It does not indicate
+     * whether the thread has actually suspended yet.
      */
     public static final int SUSPEND_REQUEST = 1;
 
     /**
      * Bit set in {@link VmThreadLocal#SUSPEND} when a {@link #THREAD_IN_JAVA} is suspended.
-     * I.e. if {@link #doSafepoint} is called.
+     * I.e. if {@link #doSafepoint} is called. This allows threads that are suspended when
+     * returning from native code to be distinguished from those suspended explicitly by a safepoint.
+     * The issue being that the final act of the safepoint mechanism is to block by calling
+     * native code and we do not want to suspend such a thread at that point, as that will prevent
+     * the {@link VmOperation} from completing.
      */
     public static final int SUSPEND_JAVA = 2;
 

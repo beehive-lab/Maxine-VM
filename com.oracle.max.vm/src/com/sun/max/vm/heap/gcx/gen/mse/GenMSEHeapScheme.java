@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
  * Generational Heap Scheme. WORK IN PROGRESS.
  */
 final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
-     /**
+    /**
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
@@ -111,7 +111,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Support for heap verification.
      */
-    private final NoDirtyCardsVerifier noDirtyCardVerifier;
+    private final NoYoungReferenceVerifier noYoungReferencesVerifier;
     private final FOTVerifier fotVerifier;
 
     @HOSTED_ONLY
@@ -121,7 +121,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         youngSpace = new NoAgingNursery(heapAccount);
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
         cardTableRSet = new CardTableRSet();
-        noDirtyCardVerifier = new NoDirtyCardsVerifier(cardTableRSet);
+        noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         minorCollection = new MinorCollection();
         fullCollection = new MajorCollection();
@@ -151,13 +151,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // for boundaries in the write barrier. Note that covering these with the card table doesn't mean we will iterate over these
         // cards to find references to young objects (i.e., it may be cheaper to use the reference maps for the boot image).
         final Size cardTableDataSize = cardTableRSet.memoryRequirement(cardTableCoveredAreaSize);
-
-        if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
-            MaxineVM.reportPristineMemoryFailure("card table space", "commit", cardTableDataSize);
+        if (!Heap.AvoidsAnonOperations) {
+            if (!VirtualMemory.commitMemory(cardTableDataStart, cardTableDataSize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("card table space", "commit", cardTableDataSize);
+            }
         }
         cardTableRSet.initialize(Heap.bootHeapRegion.start(), cardTableCoveredAreaSize, cardTableDataStart, cardTableDataSize);
-
     }
+
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, card & offset tables, etc.).
      */
@@ -177,8 +178,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
-
         theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
@@ -197,39 +198,40 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             if (unusedReservedSpaceStart.greaterThan(endOfReservedSpace)) {
                 MaxineVM.reportPristineMemoryFailure("Can't allocate heap marker", "reserve", heapMarkerDatasize);
             }
-
-            if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("heap marker space", "commit", heapMarkerDatasize);
+            if (!Heap.AvoidsAnonOperations) {
+                if (!VirtualMemory.commitMemory(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("heap marker space", "commit", heapMarkerDatasize);
+                }
             }
             heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
+
             // Free reserved space we will not be using.
             Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
 
             // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
-            if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+            if (!Heap.AvoidsAnonOperations) {
+                if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+                }
             }
-
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
 
             heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2RegionSizeInBytes);
-
             if (!heapAccount().open(numberOfRegions(applicationHeapMaxSize))) {
                 FatalError.unexpected("Failed to create application heap");
             }
-
             youngSpace.initialize(heapResizingPolicy);
             oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
 
             // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
             // worst case evacuation and the number of fragments of old space available for allocation.
             // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-
             youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
                             new SurvivorRangesQueue(1000), ELABSize);
-            // Make the heap inspectable
+            cardTableRSet.initializeXirStartupConstants();
+             // Make the heap inspectable
             InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());
         } finally {
             disableCustomAllocation();
@@ -258,11 +260,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         private void verifyAfterGC() {
             // Verify that:
-            // 1. there are no pointer from old to young.
-            // 2. offset table is correctly setup
-            // 3. cards are all cleaned -- this is only true for as long as we don't have survivor space in young gen.
-            oldSpace.visit(noDirtyCardVerifier);
+            // 1. offset table is correctly setup
+            // 2. there are no pointer from old to young.
+            // 3. cards are all cleaned (except for those holding special references, which may have been dirtied during reference discovery)
             oldSpace.visit(fotVerifier);
+            oldSpace.visit(noYoungReferencesVerifier);
         }
 
         @Override

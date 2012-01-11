@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.log.nat.thread.var;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.CardTable.*;
+import com.sun.max.vm.log.*;
 
-public final class NoDirtyCardsVerifier implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
-    final CardTableRSet cardTableRSet;
 
-    public NoDirtyCardsVerifier(CardTableRSet cardTableRSet) {
-        this.cardTableRSet = cardTableRSet;
-    }
-
+public class Package extends BootImagePackage {
     @Override
-    public void visitCells(Address start, Address end) {
-        cardTableRSet.visitCards(start, end, CardState.DIRTY_CARD, this);
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadVariable");
     }
 
-    @Override
-    public Pointer visitCell(Pointer cell, Address start, Address end) {
-        // Must never be called if there aren't any dirty card.
-        Log.print("Card is Dirty for range [");
-        Log.print(start);
-        Log.print(", ]; ");
-        Log.print(end);
-        Log.println(", ]; ");
-        return end.asPointer();
-    }
 }

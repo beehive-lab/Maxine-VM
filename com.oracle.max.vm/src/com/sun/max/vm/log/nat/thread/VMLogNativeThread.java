@@ -1,0 +1,105 @@
+/*
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.sun.max.vm.log.nat.thread;
+
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.nat.*;
+import com.sun.max.vm.thread.*;
+
+/**
+ * Common superclass for per-thread log buffers.
+ *
+ * Information on the state of the buffer is stored in a {@link VmThreadLocal},
+ * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises the offset (in bytes)
+ * of the first valid record, the offset where the next record should be written
+ * and a sticky bit to indicate that the buffer has wrapped.
+ *
+ * Note that in order for the Inspector to be able to recreate a globally ordered
+ * set of records (by id), we must store the id in the record itself.
+ *
+ */
+public abstract class VMLogNativeThread extends VMLogNative {
+
+    public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
+    public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
+    public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
+    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsetsd");
+
+    public static final int ID_OFFSET = Ints.SIZE;
+    public static final int ARGS_OFFSET = 2 * Ints.SIZE;
+    public static final int NEXT_OFFSET_MASK = 0x7FFFFFFF;
+    public static final int FIRST_OFFSET_SHIFT = 32;
+    public static final int SHIFTED_FIRST_OFFSET_MASK = 0x7FFFFFE;
+    public static final long WRAPPED = 0x100000000L; // set in FIRST_OFFSET to indicate buffer has wrapped (sticky)
+    public static final long FIRST_OFFSET_WRAP_MASK = 0x7FFFFFF00000000L;
+
+    /**
+     * Size in bytes of the per-thread log buffer.
+     */
+    @INSPECTED
+    protected int threadLogSize;
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        // Perhaps we should reduce the log size per thread.
+        // Problem is we don't know how many threads there will be.
+        // In case of a single threaded application we want
+        // similar behavior to the shared buffer, which means
+        // it has to be the same size.
+        // N.B. The total number of records is inherently variable
+        // but the Inspector view currently only shows the number
+        // defined by VMLog.logEntries.
+        threadLogSize = logEntries * nativeRecordSize;
+    }
+
+    @Override
+    protected int getArgsOffset() {
+        return ARGS_OFFSET;
+    }
+
+    @NEVER_INLINE
+    private Pointer allocateBuffer() {
+        Pointer buffer = Memory.allocate(Size.fromInt(threadLogSize));
+        VMLOG_BUFFER.store3(buffer);
+        return buffer;
+    }
+
+    @INLINE
+    protected final Pointer getBuffer(Pointer tla) {
+        Pointer buffer = VMLOG_BUFFER.load(tla);
+        if (buffer.isZero()) {
+            buffer = allocateBuffer();
+        }
+        return buffer;
+    }
+
+    @INLINE
+    protected final int modLogSize(int offset) {
+        // offset is either < threadLogSize or < 2 * threadLogSize
+        return offset < threadLogSize ? offset : offset - threadLogSize;
+    }
+}

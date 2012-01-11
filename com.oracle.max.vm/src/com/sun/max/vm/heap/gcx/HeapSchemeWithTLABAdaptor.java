@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
@@ -112,6 +113,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
             if (Heap.traceGCTime()) {
                 reportTotalGCTimes();
             }
+            VirtualMemory.reportMetrics();
         }
     }
 
