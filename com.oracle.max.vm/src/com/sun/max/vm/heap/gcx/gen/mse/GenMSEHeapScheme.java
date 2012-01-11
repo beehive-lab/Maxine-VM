@@ -229,6 +229,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
             youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
                             new SurvivorRangesQueue(1000), ELABSize);
+
+            cardTableRSet.initializeXirStartupConstants();
             // Make the heap inspectable
             InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());
         } finally {
