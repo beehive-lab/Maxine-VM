@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.method;
+package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.tele.*;
-
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
+import com.sun.max.unsafe.*;
 
 /**
- * A allocatable area in the VM that can contain machine code.
+ * Base class for custom {@link VMlog.Logger} argument renderers.
  */
-public interface CodeHoldingRegion {
+public abstract class VMLogArgRenderer {
+    /**
+     *
+     * @param header value from log buffer
+     * @param argNum argument index {@code [1 .. N-1]}
+     * @param argValue argument value (can't be a reference)
+     * @return
+     */
+    abstract String getText(TeleVM vm, int header, int argNum, long argValue);
 
     /**
-     * Gets a description of the VM memory allocated for this region,
-     * null if the region is external to the VM.
+     * Convenience method for converting a C string to a {@link String}.
+     * Perhaps should be elsewhere.
+     * @param vm
+     * @param cString
+     * @return
      */
-    MaxEntityMemoryRegion< ? extends MaxEntity> memoryRegion();
+    static String stringFromCString(TeleVM vm, Pointer cString) {
+        byte[] bytes = new byte[1024];
+        int index = 0;
+        while (true) {
+            byte b = vm.memory().readByte(cString, index);
+            if (b == 0) {
+                break;
+            }
+            bytes[index++] = b;
+        }
+        return new String(bytes, 0, index);
 
-    /**
-     * Returns the manager for dealing with pointers to machine code
-     * in this memory region.
-     */
-    RemoteCodePointerManager codePointerManager();
-
+    }
 }

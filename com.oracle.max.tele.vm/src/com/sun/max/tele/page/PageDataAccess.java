@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -148,32 +149,49 @@ public class PageDataAccess extends DataAccessAdapter {
     }
 
     public synchronized int write(ByteBuffer buffer, int offset, int length, Address address) {
-        invalidateForWrite(address, buffer.limit());
-        DataIO.Static.checkRead(buffer, offset, length);
-        return teleIO.write(buffer, offset, buffer.limit(), address);
+        try {
+            invalidateForWrite(address, buffer.limit());
+            DataIO.Static.checkRead(buffer, offset, length);
+            return teleIO.write(buffer, offset, buffer.limit(), address);
+        } catch (TerminatedProcessIOException e) {
+            return length;
+        }
     }
 
     public synchronized void writeByte(Address address, byte value) {
-        invalidateForWrite(address, Bytes.SIZE);
-        writeBuffer.put(0, value);
-        teleIO.write(writeBuffer, 0, Bytes.SIZE, address);
+        try {
+            invalidateForWrite(address, Bytes.SIZE);
+            writeBuffer.put(0, value);
+            teleIO.write(writeBuffer, 0, Bytes.SIZE, address);
+        } catch (TerminatedProcessIOException e) {
+        }
     }
 
     public synchronized void writeShort(Address address, short value) {
-        invalidateForWrite(address, Shorts.SIZE);
-        writeBuffer.putShort(0, value);
-        teleIO.write(writeBuffer, 0, Shorts.SIZE, address);
+        try {
+            invalidateForWrite(address, Shorts.SIZE);
+            writeBuffer.putShort(0, value);
+            teleIO.write(writeBuffer, 0, Shorts.SIZE, address);
+        } catch (TerminatedProcessIOException e) {
+        }
     }
 
     public synchronized void writeInt(Address address, int value) {
-        invalidateForWrite(address, Ints.SIZE);
-        writeBuffer.putInt(0, value);
-        teleIO.write(writeBuffer, 0, Ints.SIZE, address);
+        try {
+            invalidateForWrite(address, Ints.SIZE);
+            writeBuffer.putInt(0, value);
+            teleIO.write(writeBuffer, 0, Ints.SIZE, address);
+        } catch (TerminatedProcessIOException e) {
+        }
     }
 
     public synchronized void writeLong(Address address, long value) {
-        invalidateForWrite(address, Longs.SIZE);
-        writeBuffer.putLong(0, value);
-        teleIO.write(writeBuffer, 0, Longs.SIZE, address);
+        try {
+            invalidateForWrite(address, Longs.SIZE);
+            writeBuffer.putLong(0, value);
+            teleIO.write(writeBuffer, 0, Longs.SIZE, address);
+        } catch (TerminatedProcessIOException e) {
+        }
     }
+
 }

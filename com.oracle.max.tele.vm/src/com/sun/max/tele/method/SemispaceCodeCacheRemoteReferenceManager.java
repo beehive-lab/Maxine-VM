@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.sun.max.tele.method;
+
+import static com.sun.max.tele.object.ObjectManagerStatus.*;
 
 import java.lang.ref.*;
 import java.util.*;
@@ -58,6 +60,11 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     private final VmCodeCacheRegion codeCacheRegion;
 
     /**
+     * The status of the manager with respect to object status and memory management.
+     */
+    private ObjectManagerStatus objectManagerStatus;
+
+    /**
      * A two level map.  For each of the possible kinds of references that can be created,
      * record the ones we've created, indexed by TeleTargetMethod
      * <pre>
@@ -73,14 +80,20 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
         super(vm);
         this.codeCacheRegion = codeCacheRegion;
+        this.objectManagerStatus = ALLOCATING;
         // Create a separate map for references of each kind
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
             refMaps.put(kind, new HashMap<TeleTargetMethod, WeakReference<SemispaceCodeCacheRemoteReference> >());
         }
     }
 
-    public ObjectHoldingRegion objectRegion() {
+    public MaxObjectHoldingRegion objectRegion() {
         return codeCacheRegion;
+    }
+
+    // TODO (mlvdv) Interpret this status for the special case of objects in the code cache.
+    public ObjectManagerStatus objectManagerStatus() {
+        return objectManagerStatus;
     }
 
     /**

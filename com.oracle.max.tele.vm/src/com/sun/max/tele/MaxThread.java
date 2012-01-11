@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,6 +120,11 @@ public interface MaxThread extends MaxEntity<MaxThread> {
      * @return location of the instruction pointer for the thread; null if thread has died
      */
     MaxCodeLocation ipLocation();
+
+    /**
+     * Gets the per-thread {@link VMLog} for this thread, or null if none.
+     */
+    MaxThreadVMLog vmLog();
 
     /**
      * Gets the surrogate for the heap object in the VM that implements this thread.

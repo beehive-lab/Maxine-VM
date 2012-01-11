@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ public class URLConnectionDownload {
 
         for (String s : urls) {
             try {
-                System.err.println("Downloading  " + s + " to  " + path + proxyMsg);
+                System.err.println("Downloading " + s + " to  " + path + proxyMsg);
                 URL url = new URL(s);
                 URLConnection conn = url.openConnection();
                 // 10 second timeout to establish connection
@@ -88,7 +88,8 @@ public class URLConnectionDownload {
                 int n = 0;
                 while ((read = in.read(buf)) != -1) {
                     n += read;
-                    System.err.print("\r " + n + " bytes " + (size == -1 ? "" : " ( " + (n * 100 / size) + "%)"));
+                    long percent = ((long) n * 100 / size);
+                    System.err.print("\r " + n + " bytes " + (size == -1 ? "" : " (" + percent + "%)"));
                     out.write(buf, 0, read);
                 }
                 System.err.println();

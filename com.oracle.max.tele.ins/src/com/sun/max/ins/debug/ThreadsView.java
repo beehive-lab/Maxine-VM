@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,7 @@ public final class ThreadsView extends AbstractView<ThreadsView> implements Tabl
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().viewSelectedThreadLocalsBlockMemory(null));
         memoryMenu.add(actions().viewSelectedThreadStackMemory(null));
+        memoryMenu.add(actions().viewSelectedThreadVMLogMemory(null));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 

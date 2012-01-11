@@ -1257,9 +1257,9 @@ public abstract class TeleVM implements MaxVM {
         // We've already updated the allocation information for the VM-allocated regions
         // Now update it for the thread-allocated regions we've discovered.
         for (TeleNativeThread thread : threadsDied) {
-            memoryAllocations.remove(thread.memoryAllocations());
+            memoryAllocations.removeAll(thread.memoryAllocations());
         }
-        for (TeleNativeThread thread : threadsStarted) {
+        for (TeleNativeThread thread : threads) {
             memoryAllocations.addAll(thread.memoryAllocations());
         }
 
@@ -1374,8 +1374,6 @@ public abstract class TeleVM implements MaxVM {
                 offset++;
             }
             return new String(chars);
-        } catch (TerminatedProcessIOException terminatedProcessIOException) {
-            return null;
         } catch (DataIOError dataIOError) {
             return null;
         }

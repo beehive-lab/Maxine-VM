@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,11 +217,14 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected void updateStackCache() {
         if (haveMachineCodeAddresses()) {
             Arrays.fill(rowToStackFrame, null);
-            for (int row = 0; row < bytecodeInstructions.size(); row++) {
-                for (MaxStackFrame frame : focus().thread().stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
-                    if (frame.codeLocation() != null && rowContainsAddress(row, frame.codeLocation().address())) {
-                        rowToStackFrame[row] = frame;
-                        break;
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                for (int row = 0; row < bytecodeInstructions.size(); row++) {
+                    for (MaxStackFrame frame : thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                        if (frame.codeLocation() != null && rowContainsAddress(row, frame.codeLocation().address())) {
+                            rowToStackFrame[row] = frame;
+                            break;
+                        }
                     }
                 }
             }

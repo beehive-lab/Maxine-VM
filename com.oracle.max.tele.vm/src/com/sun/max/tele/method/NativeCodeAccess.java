@@ -189,7 +189,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
     TeleNativeFunction findNativeFunction(Address address) {
         //look in registered native libraries
         for (TeleNativeLibrary teleNativeLibrary : TeleNativeLibraries.libs()) {
-            if (teleNativeLibrary.contains(address)) {
+            if (teleNativeLibrary.functions() != null && teleNativeLibrary.contains(address)) {
                 return teleNativeLibrary.findNativeFunction(address);
             }
         }

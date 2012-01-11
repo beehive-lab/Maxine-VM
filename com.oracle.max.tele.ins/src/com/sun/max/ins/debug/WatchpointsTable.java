@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -335,7 +335,7 @@ public final class WatchpointsTable extends InspectorTable {
             }
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
     }
@@ -365,7 +365,7 @@ public final class WatchpointsTable extends InspectorTable {
                 watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
-            label.setBackground(cellBackgroundColor(isSelected));
+            label.setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -415,7 +415,7 @@ public final class WatchpointsTable extends InspectorTable {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(watchpoint.memoryRegion().nBytes());
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -446,7 +446,7 @@ public final class WatchpointsTable extends InspectorTable {
                 watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return label;
         }
 
@@ -508,7 +508,7 @@ public final class WatchpointsTable extends InspectorTable {
             } else {
                 setForeground(cellForegroundColor(row, column));
             }
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -522,7 +522,7 @@ public final class WatchpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(new WordValue(watchpoint.memoryRegion().start()));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -546,7 +546,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -570,7 +570,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }
@@ -609,7 +609,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(cellForegroundColor(row, column));
-            setBackground(cellBackgroundColor(isSelected));
+            setBackground(cellBackgroundColor());
             return this;
         }
     }

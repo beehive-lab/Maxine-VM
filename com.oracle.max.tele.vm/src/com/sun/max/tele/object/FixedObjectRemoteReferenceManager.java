@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.tele.object.ObjectManagerStatus.*;
+
 import java.lang.ref.*;
 import java.util.*;
 
@@ -41,7 +43,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
 
     private static final int TRACE_VALUE = 1;
 
-    private final ObjectHoldingRegion objectRegion;
+    private final MaxObjectHoldingRegion objectRegion;
 
     /**
      * Map:  address in VM --> a {@link TeleReference} that refers to the object whose origin is at that location.
@@ -53,13 +55,23 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
      * of memory in the VM, presumed to be an unmanaged region in which object
      * never move and are never collected.
      */
-    public FixedObjectRemoteReferenceManager(TeleVM vm, ObjectHoldingRegion objectRegion) {
+    public FixedObjectRemoteReferenceManager(TeleVM vm, MaxObjectHoldingRegion objectRegion) {
         super(vm);
         this.objectRegion = objectRegion;
     }
 
-    public ObjectHoldingRegion objectRegion() {
+    public MaxObjectHoldingRegion objectRegion() {
         return objectRegion;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * There is no GC cycle for an unmanaged code cache; object
+     * are neither relocated nor collected.
+     */
+    public  ObjectManagerStatus objectManagerStatus() {
+        return ALLOCATING;
     }
 
     public boolean isObjectOrigin(Address origin) throws TeleError {

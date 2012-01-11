@@ -43,6 +43,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -90,7 +91,7 @@ class JVMTIClassFunctions {
         int classfileBytesLength = classfileBytes.length;
         boolean changed = false;
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], JVMTIEvent.CLASS_FILE_LOAD_HOOK);
+            Pointer callback = getCallbackForEvent(jvmtiEnvs[i], JVMTIEvent.CLASS_FILE_LOAD_HOOK, VmThread.current());
             if (callback.isZero()) {
                 continue;
             }

@@ -288,7 +288,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     public final TeleObject getForwardedTeleObject() {
-        if (memoryStatus().isObsolete()) {
+        if (memoryStatus().isForwarded()) {
             TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
             TeleObject teleObject = objects().findObjectByOID(forwardedTeleRef.makeOID());
             if (teleObject == null) {
@@ -380,7 +380,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      *
      */
     public Pointer origin() {
-        if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
+        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
             return lastValidPointer;
         }
         Pointer pointer = reference.toOrigin();
@@ -401,7 +401,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * subject to relocation by GC.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (memoryStatus().isObsolete() || memoryStatus().isDead()) {
+        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
             // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
         }
@@ -409,7 +409,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     public final MaxMemoryRegion getForwardedMemoryRegion() {
-        if (memoryStatus().isObsolete()) {
+        if (memoryStatus().isForwarded()) {
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardedTeleRef().toOrigin()), objectSize());
         }
         return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.vm.log.nat.thread.var;
 
-import com.sun.max.tele.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.log.*;
 
-/**
- * A allocatable area in the VM that can contain objects.
- */
-public interface ObjectHoldingRegion {
 
-    /**
-     * @return description of the VM memory allocated for this object region.
-     */
-    MaxEntityMemoryRegion<? extends MaxEntity> memoryRegion();
-
-    /**
-     * Returns the manager for dealing with remote references to objects allocated in this VM region.
-     */
-    RemoteObjectReferenceManager objectReferenceManager();
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadVariable");
+    }
 
 }
-
