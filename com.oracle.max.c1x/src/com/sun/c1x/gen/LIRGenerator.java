@@ -1010,7 +1010,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         for (XirConstant c : snippet.template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = c.value;
+            operands[c.index] = c.value();
         }
 
         XirOperand[] inputOperands = snippet.template.inputOperands;

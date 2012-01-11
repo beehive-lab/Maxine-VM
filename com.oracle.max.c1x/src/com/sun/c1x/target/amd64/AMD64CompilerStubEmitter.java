@@ -209,7 +209,7 @@ public class AMD64CompilerStubEmitter {
 
         for (XirConstant c : template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = c.value;
+            operands[c.index] = c.value();
         }
 
         for (XirTemp t : template.temps) {

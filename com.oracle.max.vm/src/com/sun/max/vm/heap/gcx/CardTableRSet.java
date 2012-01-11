@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import java.util.*;
+
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
@@ -54,15 +56,25 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     final CardFirstObjectTable cfoTable;
 
     /**
-     * Dummy object used to find card table literal constants in boot code region.
-     * The biased card table address is initialize with the origin of this object, so that
-     * during the serializing phase of boot image generation we can identify easily the location
-     * in the boot code region holding it.
+     * CiConstant holding the card table's biased address in boot code region and used for all XirSnippets implementing the write barrier.
+     * Biased card table address XirConstant are initialized with this CiConstant which holds a  WrappedWord object with a dummy address.
+     * The WrappedWord object can be used during the serializing phase of boot image generation  to identify easily the literal locations
+     * in the boot code region that hold the biased card table address. A table of these location is added in the boot image and used at
+     * VM startup to patch them with the actual biased card table address once this one is known.
      * See {@link #recordLiteralsLocations()}
      * See {@link #patchBootCodeLiterals()}
      */
     @HOSTED_ONLY
-    byte [] dummyCardTable = new byte[0];
+    private CiConstant biasedCardTableAddressCiConstant;
+
+    @HOSTED_ONLY
+    private List<XirConstant> xirConstants = new ArrayList<XirConstant>(16);
+
+    /**
+     * List of XIR constants representing the biased card table address.
+     * The list is used at startup to initialize the "startup-time" constant value.
+     */
+    private XirBiasedCardTableConstant [] biasedCardTableAddressXirConstants = new XirBiasedCardTableConstant[0];
 
     @HOSTED_ONLY
     ReferenceLiteralLocationRecorder literalRecorder;
@@ -95,8 +107,10 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
                 Log2RegionToByteMapTable.hostInitialize();
             } else if (phase == Phase.SERIALIZING_IMAGE) {
                 // Build a table of indexes to reference literals that point to the card table.
-                literalRecorder = new ReferenceLiteralLocationRecorder(Code.bootCodeRegion(), dummyCardTable);
+                assert biasedCardTableAddressCiConstant != null;
+                literalRecorder = new ReferenceLiteralLocationRecorder(Code.bootCodeRegion(), biasedCardTableAddressCiConstant.asObject());
                 bootCardTableLiterals = literalRecorder.getLiteralLocations();
+                biasedCardTableAddressXirConstants = xirConstants.toArray(biasedCardTableAddressXirConstants);
             } else if (phase == MaxineVM.Phase.WRITING_IMAGE) {
                 literalRecorder.fillLiteralLocations();
             }
@@ -119,14 +133,45 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         }
     }
 
+    static class XirBiasedCardTableConstant extends CiXirAssembler.XirConstant {
+        XirBiasedCardTableConstant(CiXirAssembler asm, CiConstant value) {
+            super(asm, "Card Table biased-address", value);
+            asm.recordConstant(this);
+        }
+
+        void setStartupValue(CiConstant startupValue) {
+            value = startupValue;
+        }
+    }
+
+    public void initializeXirStartupConstants() {
+        final CiConstant biasedCardTableCiConstant = CiConstant.forLong(cardTable.biasedTableAddress.toLong());
+        for (XirBiasedCardTableConstant c : biasedCardTableAddressXirConstants) {
+            c.setStartupValue(biasedCardTableCiConstant);
+        }
+    }
+
+    @HOSTED_ONLY
+    private XirConstant biasedCardTableAddressXirConstant(CiXirAssembler asm) {
+        if (biasedCardTableAddressCiConstant == null) {
+            biasedCardTableAddressCiConstant = WordUtil.wrappedConstant(Address.fromLong(123456789L));
+        }
+        XirConstant constant = new XirBiasedCardTableConstant(asm, biasedCardTableAddressCiConstant);
+        xirConstants.add(constant);
+        return constant;
+    }
+
     @HOSTED_ONLY
     public void genTuplePostWriteBarrier(CiXirAssembler asm, XirOperand tupleCell) {
         final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
         asm.shr(temp, tupleCell, asm.i(CardTable.LOG2_CARD_SIZE));
         // Watch out: this create a reference literal that will not point to an object!
         // The GC will need to carefully skip reference table entries holding the biased base of the card table.
-        final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        // final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        final XirConstant biasedCardTableAddress = biasedCardTableAddressXirConstant(asm);
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
+
+        // FIXME: remove this temp debug code
         if (MaxineVM.isDebug()) {
             // Just so that we get the address of the card entry in a register when inspecting...
             asm.lea(temp, biasedCardTableAddress, temp, 0, Scale.Times1);
@@ -140,7 +185,8 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         final int disp = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
         asm.lea(temp, arrayCell, elemIndex, disp, scale);
         asm.shr(temp, temp, asm.i(CardTable.LOG2_CARD_SIZE));
-        final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        // final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
+        final XirConstant biasedCardTableAddress = biasedCardTableAddressXirConstant(asm);
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
     }
 
@@ -202,6 +248,19 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, cardState);
+            if (MaxineVM.isDebug() && true) {
+                Log.print("Visiting ");
+                Log.print(cardState.name());
+                Log.print(" cards [");
+                Log.print(startCardIndex);
+                Log.print(", ");
+                Log.print(endCardIndex);
+                Log.print("]  (");
+                Log.print(cardTable.rangeStart(startCardIndex));
+                Log.print(", ");
+                Log.print(cardTable.rangeStart(endCardIndex));
+                Log.println(")");
+            }
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {
                 return;
