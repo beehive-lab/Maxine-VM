@@ -88,6 +88,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxClasses classes();
 
     /**
+     * @return access to a map of top level allocations in the VM address space.
+     */
+    MaxAddressSpace addressSpace();
+
+    /**
      * @return access to low level memory reading from the VM.
      */
     MaxMemoryIO memoryIO();

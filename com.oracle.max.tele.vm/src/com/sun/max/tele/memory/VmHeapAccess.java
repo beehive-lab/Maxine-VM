@@ -116,7 +116,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
      * after the {@link VmClassAccess} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
-    public static VmHeapAccess make(TeleVM vm) {
+    public static VmHeapAccess make(TeleVM vm, VmAddressSpace addressSpace) {
         if (vmHeap ==  null) {
             final String heapSchemeName = vm.heapScheme().name();
             TeleHeapScheme teleHeapScheme = null;
@@ -134,7 +134,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                 TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
                 e.printStackTrace();
             }
-            vmHeap = new VmHeapAccess(vm, teleHeapScheme);
+            vmHeap = new VmHeapAccess(vm, addressSpace, teleHeapScheme);
             Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
         }
         return vmHeap;
@@ -225,7 +225,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         }
     };
 
-    private VmHeapAccess(TeleVM vm, TeleHeapScheme teleHeapScheme) {
+    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace, TeleHeapScheme teleHeapScheme) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
@@ -245,6 +245,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         final int bootHeapSize = vm().bootImage().header.heapSize;
         bootHeapRegion =
             new VmHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
+        addressSpace.add(bootHeapRegion.memoryRegion());
         heapRegions.add(bootHeapRegion);
 
         // There might already be dynamically allocated regions in a dumped image or when attaching to a running VM
@@ -252,6 +253,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
             final VmHeapRegion fakeDynamicHeapRegion =
                 new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes(), false);
             heapRegions.add(fakeDynamicHeapRegion);
+            addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
         }
         this.allHeapRegions = Collections.unmodifiableList(heapRegions);
 
@@ -326,8 +328,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         this.teleBootHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
+        vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
         this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion, true);
         allocations.add(this.bootHeapRegion.memoryRegion());
+        vm().addressSpace().add(this.bootHeapRegion.memoryRegion());
         isInitialized = true;
 
         updateCache(epoch);
@@ -400,6 +404,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleImmortalHeapRegion = maybeAllocatedRegion;
                             immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion, false);
+                            vm().addressSpace().add(immortalHeapRegion.memoryRegion());
                         }
                     }
                 }
@@ -426,6 +431,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                             final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion, false);
                             discoveredHeapRegions.add(newVmHeapRegion);
                             addressToVmHeapRegion.put(dynamicHeapRegion.getRegionStart().toLong(), newVmHeapRegion);
+                            vm().addressSpace().add(newVmHeapRegion.memoryRegion());
                         }
                     } else {
                         // This can happen when inspecting VM startup
@@ -448,6 +454,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleRootsRegion = maybeAllocatedRegion;
                             teleRootsTable = new TeleRootsTable(vm(), teleRootsRegion);
+                            vm().addressSpace().add(teleRootsTable.memoryRegion());
                         }
                     }
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,6 +122,11 @@ public final class AboutSessionDialog extends InspectorDialog {
             stream.print(INDENT + vm().bootImageFile().getAbsolutePath().toString() + "\n");
             stream.print(INDENT + "built: " + bootImageDate.toString() + "\n");
         }
+
+        stream.println();
+        final MaxAddressSpace addressSpace = vm().addressSpace();
+        stream.print(addressSpace.entityName().toUpperCase() + ":\n");
+        addressSpace.printSessionStats(stream, indent, verbose);
 
         stream.println();
         final MaxClasses classRegistry = vm().classes();

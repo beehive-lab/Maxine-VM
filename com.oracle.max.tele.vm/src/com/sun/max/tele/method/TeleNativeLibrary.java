@@ -78,6 +78,7 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
     protected Address base;
     protected long length;
     protected String sentinel;
+    private String entityName;
     private Address sentinelAddress;
     private TeleNativeFunction[] functions;
     private NativeLibraryMemoryRegion nativeLibraryMemoryRegion;
@@ -152,12 +153,15 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
     }
 
     public String entityName() {
-        String name = new File(path).getName();
-        int index = name.lastIndexOf('.');
-        if (index > 0) {
-            name = name.substring(0, index);
+        if (entityName == null) {
+            String name = new File(path).getName();
+            int index = name.lastIndexOf('.');
+            if (index > 0) {
+                name = name.substring(0, index);
+            }
+            entityName = "Native-" + name;
         }
-        return name;
+        return entityName;
     }
 
     @Override
