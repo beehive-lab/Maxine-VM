@@ -112,6 +112,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
                     if (teleNativeLibrary.functions() != null && !libraries.contains(teleNativeLibrary)) {
                         libraries.add(teleNativeLibrary);
                         nativeFunctionMemoryRegions.add(teleNativeLibrary.memoryRegion());
+                        vm().addressSpace().add(teleNativeLibrary.memoryRegion());
                         Trace.line(TRACE_VALUE, tracePrefix() + "adding dynamically loaded library: " + teleNativeLibrary.entityName());
                     }
                 }

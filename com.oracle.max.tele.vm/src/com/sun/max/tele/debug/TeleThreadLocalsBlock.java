@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -140,6 +140,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
         this.teleNativeThread = teleNativeThread;
         this.entityName = regionName;
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, nBytes);
+        teleNativeThread.vm().addressSpace().add(threadLocalsBlockMemoryRegion);
         this.areas = new EnumMap<SafepointPoll.State, TeleThreadLocalsArea>(SafepointPoll.State.class);
         this.offsetToTTLA = Platform.platform().pageSize - Word.size();
         this.entityDescription = "VM thread-local variables owned by thread " + teleNativeThread.entityName();
@@ -286,6 +287,7 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
      */
     void clear() {
         if (threadLocalsBlockMemoryRegion != null) {
+            vm().addressSpace().remove(threadLocalsBlockMemoryRegion);
             areas.clear();
             teleVmThread = null;
             lastUpdateEpoch = vm().teleProcess().epoch();

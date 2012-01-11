@@ -134,8 +134,11 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
 
         teleCodeManager = (TeleCodeManager) objects().makeTeleObject(fields().Code_codeManager.readReference(vm()));
         bootCodeCacheRegion = new VmBootCodeCacheRegion(vm(), teleCodeManager.teleBootCodeRegion(), this);
+        vm().addressSpace().add(bootCodeCacheRegion.memoryRegion());
         dynamicBaselineCodeCacheRegion = new VmSemiSpaceCodeCacheRegion(vm(), teleCodeManager.teleRuntimeBaselineCodeRegion(), this);
+        vm().addressSpace().add(dynamicBaselineCodeCacheRegion.memoryRegion());
         dynamicOptCodeCacheRegion = new VmUnmanagedCodeCacheRegion(vm(), teleCodeManager.teleRuntimeOptCodeRegion(), this);
+        vm().addressSpace().add(dynamicOptCodeCacheRegion.memoryRegion());
 
         vmCodeCacheRegions = Arrays.asList(bootCodeCacheRegion, dynamicBaselineCodeCacheRegion, dynamicOptCodeCacheRegion);
         maxCodeCacheRegions = Collections.unmodifiableList(new ArrayList<MaxCodeCacheRegion>(vmCodeCacheRegions));

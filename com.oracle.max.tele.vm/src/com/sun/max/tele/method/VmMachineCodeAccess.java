@@ -298,7 +298,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
         if (address.isZero()) {
             throw new InvalidCodeAddressException(address, "Zero address");
         }
-        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
+        final MaxMemoryRegion memoryRegion = vm().addressSpace().find(address);
         if (memoryRegion != null) {
             throw new InvalidCodeAddressException(address, "points into non-code region=\"" + memoryRegion.regionName() + "\"");
         }
@@ -422,7 +422,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
          * external to anything else we know about.
          */
         public boolean isValidCodePointer(Address address) {
-            return vm().findMemoryRegion(address) == null;
+            return vm().addressSpace().find(address) == null;
         }
 
         public RemoteCodePointer makeCodePointer(Address address) {
