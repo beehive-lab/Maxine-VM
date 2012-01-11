@@ -161,7 +161,7 @@ public class Log2RegionToByteMapTable {
      * @return address to the first byte of the region
      */
     Address rangeStart(int index) {
-        return coveredAreaStart.plus(Address.fromLong(1L).shiftedLeft(log2RangeSize));
+        return coveredAreaStart.plus(Address.fromInt(index).shiftedLeft(log2RangeSize));
     }
 
     /**

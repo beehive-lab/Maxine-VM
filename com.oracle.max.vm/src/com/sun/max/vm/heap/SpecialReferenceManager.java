@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,6 +102,8 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
+    public static final int REFERENT_WORD_INDEX =  JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
+
     /**
      * The head of the list of discovered references.
      * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
@@ -143,7 +145,7 @@ public class SpecialReferenceManager {
      *     null.
      * <p>
      *     Pending: queue = ReferenceQueue with which instance is registered;
-     *     next = Following instance in queue, or this if at end of list.
+     *     next = Following instance in queue, or this if at end of list.Reference
      * <p>
      *     Enqueued: queue = ReferenceQueue.ENQUEUED; next = Following instance
      *     in queue, or this if at end of list.
@@ -229,6 +231,8 @@ public class SpecialReferenceManager {
                 FatalError.unexpected("Duplicate on discovered list");
             }
             final Reference referent = Reference.fromJava(refAlias.referent);
+            // WATCH OUT: the following two lines will cause a write barrier to be executed. Depending on its implementation, this may
+            // resulting in implicit modification to a remember set during GC.
             refAlias.discovered = discoveredList;
             discoveredList = ref;
             if (TraceReferenceGC || Heap.traceGC()) {

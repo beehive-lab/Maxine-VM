@@ -83,6 +83,8 @@ public final class NoAgingEvacuator extends Evacuator {
      */
     private Pointer end;
 
+    private Pointer nextCardBoundary;
+
     private Address nextLABChunk;
 
     /**
