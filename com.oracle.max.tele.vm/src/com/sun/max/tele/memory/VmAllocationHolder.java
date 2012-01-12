@@ -44,6 +44,14 @@ import com.sun.max.tele.*;
 public interface VmAllocationHolder<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type> {
 
     /**
+     * Causes this entity to refresh state related to memory allocations and
+     * memory management status.
+     *
+     * @param epoch the number of times the VM process has run so far.
+     */
+    void updateMemoryStatus(long epoch);
+
+    /**
      * Gets the regions of memory allocated from the OS that this entity
      * <em>owns</em>, in the sense that this entity tracks its allocation
      * and possible deallocation.

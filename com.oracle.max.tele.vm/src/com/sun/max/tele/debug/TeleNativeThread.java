@@ -166,7 +166,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         tracer.end(null);
     }
 
-    public void updateCache(long epoch) {
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Memory-related updates get handled specially for threads, together with other state refresh.
+     */
+    public final void updateMemoryStatus(long epoch) {
+    }
+
+    public final void updateCache(long epoch) {
         if (epoch > lastUpdateEpoch) {
             Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
             if (state.allowsDataAccess()) {
@@ -184,7 +192,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         return entityName;
     }
 
-    public String entityDescription() {
+    public final String entityDescription() {
         return entityDescription;
     }
 
