@@ -28,7 +28,7 @@ import com.sun.max.tele.*;
 /**
  * A allocatable area in the VM that can contain objects.
  */
-public interface MaxObjectHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type>  {
+public interface VmObjectHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type>  {
 
     /**
      * Returns the manager for dealing with remote references to objects allocated in this VM region.

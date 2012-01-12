@@ -38,7 +38,7 @@ public interface RemoteObjectReferenceManager {
     /**
      * Gets the region whose remote object references are being managed.
      */
-    MaxObjectHoldingRegion objectRegion();
+    VmObjectHoldingRegion objectRegion();
 
     /**
      * Describes the phase of the manager with respect to GC.
