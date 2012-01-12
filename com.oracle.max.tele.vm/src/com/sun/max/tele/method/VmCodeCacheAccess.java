@@ -59,7 +59,7 @@ import com.sun.max.vm.compiler.target.*;
  * @see com.sun.max.vm.code.CodeManager
  * @see TeleTargetMethod
  */
-public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMCache, MaxCodeCache, AllocationHolder {
+public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMCache, MaxCodeCache, VmAllocationHolder<MaxCodeCache> {
 
     private static final int TRACE_VALUE = 1;
 

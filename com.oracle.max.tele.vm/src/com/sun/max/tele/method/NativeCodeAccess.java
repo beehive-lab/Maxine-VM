@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
 /**
  * The singleton manager for managing information about native function code in libraries external to the VM.
  */
-public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxNativeCode, AllocationHolder {
+public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxNativeCode, VmAllocationHolder<MaxNativeCode> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -59,7 +59,6 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
     private final String entityName = "Native function code";
 
     private final String entityDescription;
-
 
     /**
      * Information about native function code regions discovered in the VM process.

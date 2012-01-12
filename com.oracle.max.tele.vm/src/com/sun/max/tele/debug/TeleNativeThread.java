@@ -52,7 +52,7 @@ import com.sun.max.vm.value.*;
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  */
 public abstract class TeleNativeThread extends AbstractVmHolder
-    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, AllocationHolder, ThreadProvider {
+    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, VmAllocationHolder<MaxThread>, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
