@@ -46,6 +46,26 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         VMOptions.addFieldOption("-XX:", "TraceEvacVisitedCell", Evacuator.class, "Trace cells visited by the evacuator (Debug mode only)", Phase.PRISTINE);
     }
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
+
+    private boolean refDiscoveryEnabled = true;
+
+    private void updateSpecialReference(Pointer origin) {
+        if (refDiscoveryEnabled) {
+            SpecialReferenceManager.discoverSpecialReference(origin);
+        } else {
+            // Treat referent as strong reference.
+            updateEvacuatedRef(origin,  SpecialReferenceManager.REFERENT_WORD_INDEX);
+        }
+    }
+
+    final void enableSpecialRefDiscovery() {
+        refDiscoveryEnabled = true;
+    }
+
+    final void disableSpecialRefDiscovery() {
+        refDiscoveryEnabled = false;
+    }
+
     private void updateReferenceArray(Pointer refArrayOrigin, final int firstIndex, final int length) {
         for (int index = firstIndex; index < length; index++) {
             updateEvacuatedRef(refArrayOrigin, index);
@@ -57,7 +77,6 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         updateReferenceArray(refArrayOrigin, FIRST_ELEMENT_INDEX, length);
     }
 
-
     private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
         final int length = Layout.readArrayLength(refArrayOrigin);
         final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
@@ -66,6 +85,8 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
+
+
   /**
      * Indicate whether the cell at the specified origin is in an area under evacuation.
      * @param origin origin of a cell
@@ -220,7 +241,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
-                SpecialReferenceManager.discoverSpecialReference(origin);
+                updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
@@ -273,7 +294,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
             if (hub.isJLRReference) {
-                SpecialReferenceManager.discoverSpecialReference(origin);
+                updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
@@ -305,11 +326,11 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         evacuateFromBootHeap();
         evacuateFromCode();
         evacuateFromRSets();
-        // TraceVisitedCell = MaxineVM.isDebug();
         evacuateReachables();
-        // TraceVisitedCell = false;
+        disableSpecialRefDiscovery();
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         evacuateReachables();
+        enableSpecialRefDiscovery();
         doAfterEvacuation();
     }
 }
