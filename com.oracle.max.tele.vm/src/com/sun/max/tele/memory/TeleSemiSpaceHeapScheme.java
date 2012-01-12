@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,6 @@ import com.sun.max.vm.runtime.*;
  * @see SemiSpaceHeapScheme
  */
 final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
-
-    private static final List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
 
     TeleSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);
