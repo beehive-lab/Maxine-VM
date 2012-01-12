@@ -23,6 +23,8 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A FIFO queue used to keep track of ranges of survivors relocated from evacuated areas that haven't been scanned yet for references.
@@ -38,17 +40,17 @@ public class SurvivorRangesQueue {
      * Cursor on the first free slot in the queue.
      * Insertion is at the head.
      */
-    int head;
+    private int head;
     /**
      * Cursor on the oldest range in the queue.
      * Peek and removal is at the tail.
      */
-    int tail;
+    private int size;
 
     /**
      * Circular queue where the ranges are stored.
      */
-    final long [] queue;
+    private final long [] queue;
 
     public SurvivorRangesQueue(int maxSurvivorRanges) {
         queue = new long[maxSurvivorRanges * 2];
@@ -63,11 +65,24 @@ public class SurvivorRangesQueue {
      * @return true if the range was added, false if the queue is full and cannot accept the range.
      */
     boolean add(Address start, Address end) {
-        if (isFull()) {
-            return false;
+        if (size > 0) {
+            int i = head > 0 ? head - 1 : queue.length - 1;
+            if (start.toLong() == queue[i]) {
+                // collapse the range.
+                queue[i] = end.toLong();
+                return true;
+            }
+            if (isFull()) {
+                FatalError.unimplemented();
+                return false;
+            }
         }
         queue[head++] = start.toLong();
         queue[head++] = end.toLong();
+        if (head == queue.length) {
+            head = 0;
+        }
+        size += 2;
         return true;
     }
 
@@ -76,11 +91,11 @@ public class SurvivorRangesQueue {
      * @return true if the queue is empty, false otherwise
      */
     boolean isEmpty() {
-        return head == tail;
+        return size == 0;
     }
 
     boolean isFull() {
-        return tail == (head - 2);
+        return size == queue.length;
     }
 
     /**
@@ -96,8 +111,7 @@ public class SurvivorRangesQueue {
      * @return
      */
     int size() {
-        final int d = head - tail;
-        return (d >= 0 ? d : queue.length - d  + 2) >> 1;
+        return size;
     }
 
     /**
@@ -107,14 +121,24 @@ public class SurvivorRangesQueue {
         if (isEmpty()) {
             return;
         }
-        final int newTail = tail + 2;
-        if (head == newTail) {
-            // Circular buffer is empty. Reset both head and tail to  first entry.
+        size -= 2;
+        if (size == 0) {
+            // reset head to start.
+            if (MaxineVM.isDebug()) {
+                for (int i = 0; i < queue.length; i++) {
+                    queue[i] = 0L;
+                }
+            }
             head = 0;
-            tail = 0;
-        } else {
-            tail = newTail;
         }
+    }
+
+    private int tail() {
+        int tail = head - size;
+        if (tail < 0) {
+            tail += queue.length;
+        }
+        return tail;
     }
 
     /**
@@ -122,7 +146,7 @@ public class SurvivorRangesQueue {
      * @return a pointer to a cell beginning a survivor range
      */
     Pointer start() {
-        return Pointer.fromLong(queue[tail]);
+        return Pointer.fromLong(queue[tail()]);
     }
 
     /**
@@ -130,11 +154,11 @@ public class SurvivorRangesQueue {
      * @return a pointer to the end of a cell ending a survivor range
      */
     Pointer end() {
-        return Pointer.fromLong(queue[tail + 1]);
+        return Pointer.fromLong(queue[tail() + 1]);
     }
 
     void clear() {
-        tail = 0;
+        size = 0;
         head = 0;
     }
 }
