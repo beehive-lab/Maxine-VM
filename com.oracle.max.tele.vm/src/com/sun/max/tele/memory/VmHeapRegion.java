@@ -45,7 +45,7 @@ import com.sun.max.unsafe.*;
  *
  * @see RemoteObjectReferenceManager
  */
-public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, MaxObjectHoldingRegion<MaxHeapRegion> {
+public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegion, VmObjectHoldingRegion<MaxHeapRegion> {
 
     private static final int TRACE_VALUE = 1;
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();

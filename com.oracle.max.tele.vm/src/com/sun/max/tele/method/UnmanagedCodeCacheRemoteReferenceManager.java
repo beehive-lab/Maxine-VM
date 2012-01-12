@@ -82,7 +82,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
     }
 
-    public MaxObjectHoldingRegion objectRegion() {
+    public VmObjectHoldingRegion objectRegion() {
         return codeCacheRegion;
     }
 

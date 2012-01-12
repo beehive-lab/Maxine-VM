@@ -43,7 +43,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
 
     private static final int TRACE_VALUE = 1;
 
-    private final MaxObjectHoldingRegion objectRegion;
+    private final VmObjectHoldingRegion objectRegion;
 
     /**
      * Map:  address in VM --> a {@link TeleReference} that refers to the object whose origin is at that location.
@@ -55,12 +55,12 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
      * of memory in the VM, presumed to be an unmanaged region in which object
      * never move and are never collected.
      */
-    public FixedObjectRemoteReferenceManager(TeleVM vm, MaxObjectHoldingRegion objectRegion) {
+    public FixedObjectRemoteReferenceManager(TeleVM vm, VmObjectHoldingRegion objectRegion) {
         super(vm);
         this.objectRegion = objectRegion;
     }
 
-    public MaxObjectHoldingRegion objectRegion() {
+    public VmObjectHoldingRegion objectRegion() {
         return objectRegion;
     }
 
