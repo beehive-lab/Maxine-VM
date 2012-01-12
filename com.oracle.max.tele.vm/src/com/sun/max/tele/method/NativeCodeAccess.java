@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
 /**
  * The singleton manager for managing information about native function code in libraries external to the VM.
  */
-public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxNativeCode, VmAllocationHolder<MaxNativeCode> {
+public final class NativeCodeAccess extends AbstractVmHolder implements MaxNativeCode, VmAllocationHolder<MaxNativeCode> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -102,7 +102,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
      * <p>
      * See if any new native libraries have been loaded since the last refresh.
      */
-    public void updateCache(long epoch) {
+    public void updateMemoryStatus(long epoch) {
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             try {

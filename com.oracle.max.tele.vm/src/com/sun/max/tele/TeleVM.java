@@ -840,13 +840,13 @@ public abstract class TeleVM implements MaxVM {
             // The standard update cycle follows; it is sensitive to ordering.
 
             // Update status of the heap, including GC status and any new allocations.
-            heapAccess.updateCache(epoch);
+            heapAccess.updateMemoryStatus(epoch);
 
             // Update the general status of the code cache, including eviction status and any new allocations.
-            codeCacheAccess.updateCache(epoch);
+            codeCacheAccess.updateMemoryStatus(epoch);
 
-            // Update the general status of any native, dynamically loaded libraries.
-            nativeCodeAccess.updateCache(epoch);
+            // Update the general status of any native, dynamically loaded libraries in the address space
+            nativeCodeAccess.updateMemoryStatus(epoch);
 
             // Update registry of loaded classes, so we can understand object types
             classAccess.updateCache(epoch);
@@ -860,9 +860,8 @@ public abstract class TeleVM implements MaxVM {
             // Check the status of breakpoints, for example if any are set in recently evicted compilations.
             breakpointManager.updateCache(epoch);
 
-
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
-            // What's not done yet is updating the thread memory regions.
+            // What's not done yet is updating the thread memory regions, which happens by refresh calls in TeleProcess.
 
             updateTracer.end("epoch=" + epoch);
 

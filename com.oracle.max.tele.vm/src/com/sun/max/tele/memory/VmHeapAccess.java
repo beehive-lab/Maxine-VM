@@ -69,7 +69,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap, VmAllocationHolder<MaxHeap> {
+public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmAllocationHolder<MaxHeap> {
 
     private static final int STATS_NUM_TYPE_COUNTS = 10;
 
@@ -334,7 +334,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         vm().addressSpace().add(this.bootHeapRegion.memoryRegion());
         isInitialized = true;
 
-        updateCache(epoch);
+        updateMemoryStatus(epoch);
         tracer.end(statsPrinter);
     }
 
@@ -352,7 +352,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
      * every heap object, allocation marks for example, we have to force an early update of the objects holding
      * that information.
      */
-    public void updateCache(long epoch) {
+    public void updateMemoryStatus(long epoch) {
         // Replaces local cache of information about heap regions in the VM.
         // During this update, any method calls to check heap containment are handled specially.
 
