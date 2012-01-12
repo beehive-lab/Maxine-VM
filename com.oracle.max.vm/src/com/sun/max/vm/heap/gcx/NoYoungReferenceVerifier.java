@@ -47,6 +47,9 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
         final Pointer origin = Layout.cellToOrigin(cell);
         checkNotYoung(origin, HUB_WORD_INDEX);
         final Hub hub = getHub(origin);
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
+        }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
@@ -78,6 +81,9 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
             checkNotYoung(origin, HUB_WORD_INDEX);
         }
         final Hub hub = getHub(origin);
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
+        }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
