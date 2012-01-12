@@ -89,9 +89,6 @@ public final class TeleThreadLocalsBlock extends AbstractVmHolder implements Tel
             return teleThreadLocalsBlock;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     private final String entityName;

@@ -76,9 +76,4 @@ public final class TeleSemiSpaceCodeRegion extends TeleCodeRegion {
         return true;
     }
 
-    @Override
-    public boolean isBootCodeRegion() {
-        return false;
-    }
-
 }

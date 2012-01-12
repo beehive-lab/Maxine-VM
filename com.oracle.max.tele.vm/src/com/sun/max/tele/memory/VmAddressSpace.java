@@ -210,10 +210,6 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
             return VmAddressSpace.this;
         }
 
-        public boolean isBootRegion() {
-            // TODO (mlvdv)  ??
-            return false;
-        }
     }
 
 

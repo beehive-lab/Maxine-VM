@@ -52,7 +52,6 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
 
     private final String entityDescription;
     private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
-    private final boolean isBootRegion;
     private final MaxEntityMemoryRegion<MaxHeapRegion> memoryRegion;
     private final RemoteObjectReferenceManager objectReferenceManager;
 
@@ -61,17 +60,12 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      * a VM object describing the memory region.  The region is assumed to be at a fixed location, and
      * it is assumed to be unmanaged: objects, once created are never moved or collected.
      */
-    public VmHeapRegion(TeleVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion, boolean isBootRegion) {
+    public VmHeapRegion(TeleVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
         super(vm);
         this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
-        this.isBootRegion = isBootRegion;
         this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleRuntimeMemoryRegion);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
-        if (isBootRegion) {
-            this.entityDescription = "The boot image area " + memoryRegion.regionName() + " owned by the VM heap";
-        } else {
-            this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
-        }
+        this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 
@@ -80,17 +74,12 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      * memory region described explicitly.  The region is assumed to be at a fixed location, and
      * it is assumed to be unmanaged: objects, once created are never moved or collected.
      */
-    public VmHeapRegion(TeleVM vm, String name, Address start, long nBytes, boolean isBootRegion) {
+    public VmHeapRegion(TeleVM vm, String name, Address start, long nBytes) {
         super(vm);
         this.teleRuntimeMemoryRegion = null;
-        this.isBootRegion = isBootRegion;
         this.memoryRegion = new FixedHeapRegionMemoryRegion(vm, name, start, nBytes);
         this.objectReferenceManager = new FixedObjectRemoteReferenceManager(vm, this);
-        if (isBootRegion) {
-            this.entityDescription = "The boot image area " + memoryRegion.regionName() + " owned by the VM heap";
-        } else {
-            this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
-        }
+        this.entityDescription = "The allocation area " + memoryRegion.regionName() + " owned by the VM heap";
         Trace.line(TRACE_VALUE, tracePrefix() + "heap region created for " + memoryRegion.regionName() + " with " + objectReferenceManager.getClass().getSimpleName());
     }
 
@@ -112,10 +101,6 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
 
     public TeleObject representation() {
         return teleRuntimeMemoryRegion;
-    }
-
-    public boolean isBootRegion() {
-        return memoryRegion().isBootRegion();
     }
 
     public RemoteObjectReferenceManager objectReferenceManager() {
@@ -175,9 +160,6 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
             return VmHeapRegion.this;
         }
 
-        public boolean isBootRegion() {
-            return isBootRegion;
-        }
     }
 
     /**
@@ -209,9 +191,6 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
             return VmHeapRegion.this;
         }
 
-        public boolean isBootRegion() {
-            return isBootRegion;
-        }
     }
 
 

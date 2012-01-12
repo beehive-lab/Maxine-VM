@@ -91,9 +91,6 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return owner.isBootRegion();
-        }
     }
 
     private final TeleCodeRegion teleCodeRegion;
@@ -107,10 +104,6 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
         super(vm);
         this.teleCodeRegion = teleCodeRegion;
         this.codeCacheMemoryRegion = new CodeCacheMemoryRegion(vm, this, teleCodeRegion);
-    }
-
-    public boolean isBootRegion() {
-        return teleCodeRegion.isBootCodeRegion();
     }
 
     public String entityName() {
