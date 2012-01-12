@@ -69,7 +69,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap, AllocationHolder {
+public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap, VmAllocationHolder<MaxHeap> {
 
     private static final int STATS_NUM_TYPE_COUNTS = 10;
 

@@ -27,12 +27,21 @@ import java.util.*;
 import com.sun.max.tele.*;
 
 
-//TODO (mlvdv) decide whether to expose this in the VMI interfaces
-
 /**
  * A VM entity that can <em>own</em> regions of memory allocated from the OS.
+ * <p>
+ * This interface serves as much as a marker as anything else, indicating something
+ * important about the entity.
+ * <p>
+ * Any entity implementing this interface must
+ * {@linkplain VmAddressSpace#add(MaxEntityMemoryRegion) register} and
+ * {@linkplain VmAddressSpace#remove(MaxEntityMemoryRegion) unregister}
+ * with the global {@linkplain VmAddressSpace memory map} all
+ * allocations as soon as these changes are known.
+ *
+ * @see VmAddressSpace
  */
-public interface AllocationHolder {
+public interface VmAllocationHolder<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type> {
 
     /**
      * Gets the regions of memory allocated from the OS that this entity
