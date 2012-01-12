@@ -69,7 +69,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache, MaxHeap, AllocationHolder {
+public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmAllocationHolder<MaxHeap> {
 
     private static final int STATS_NUM_TYPE_COUNTS = 10;
 
@@ -116,7 +116,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
      * after the {@link VmClassAccess} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
-    public static VmHeapAccess make(TeleVM vm) {
+    public static VmHeapAccess make(TeleVM vm, VmAddressSpace addressSpace) {
         if (vmHeap ==  null) {
             final String heapSchemeName = vm.heapScheme().name();
             TeleHeapScheme teleHeapScheme = null;
@@ -134,7 +134,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                 TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
                 e.printStackTrace();
             }
-            vmHeap = new VmHeapAccess(vm, teleHeapScheme);
+            vmHeap = new VmHeapAccess(vm, addressSpace, teleHeapScheme);
             Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
         }
         return vmHeap;
@@ -225,7 +225,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         }
     };
 
-    private VmHeapAccess(TeleVM vm, TeleHeapScheme teleHeapScheme) {
+    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace, TeleHeapScheme teleHeapScheme) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
@@ -244,14 +244,16 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         final Pointer bootHeapStart = vm().bootImageStart();
         final int bootHeapSize = vm().bootImage().header.heapSize;
         bootHeapRegion =
-            new VmHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
+            new VmHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize);
+        addressSpace.add(bootHeapRegion.memoryRegion());
         heapRegions.add(bootHeapRegion);
 
         // There might already be dynamically allocated regions in a dumped image or when attaching to a running VM
         for (MaxMemoryRegion dynamicHeapRegion : getDynamicHeapRegionsUnsafe()) {
             final VmHeapRegion fakeDynamicHeapRegion =
-                new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes(), false);
+                new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes());
             heapRegions.add(fakeDynamicHeapRegion);
+            addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
         }
         this.allHeapRegions = Collections.unmodifiableList(heapRegions);
 
@@ -326,11 +328,13 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         this.teleBootHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
-        this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion, true);
+        vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
+        this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion);
         allocations.add(this.bootHeapRegion.memoryRegion());
+        vm().addressSpace().add(this.bootHeapRegion.memoryRegion());
         isInitialized = true;
 
-        updateCache(epoch);
+        updateMemoryStatus(epoch);
         tracer.end(statsPrinter);
     }
 
@@ -348,7 +352,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
      * every heap object, allocation marks for example, we have to force an early update of the objects holding
      * that information.
      */
-    public void updateCache(long epoch) {
+    public void updateMemoryStatus(long epoch) {
         // Replaces local cache of information about heap regions in the VM.
         // During this update, any method calls to check heap containment are handled specially.
 
@@ -399,7 +403,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         maybeAllocatedRegion.updateCache(epoch);
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleImmortalHeapRegion = maybeAllocatedRegion;
-                            immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion, false);
+                            immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
+                            vm().addressSpace().add(immortalHeapRegion.memoryRegion());
                         }
                     }
                 }
@@ -423,9 +428,10 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                             // Force an early update of the cached data about the region
                             knownVmHeapRegion.updateStatus(epoch);
                         } else {
-                            final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion, false);
+                            final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion);
                             discoveredHeapRegions.add(newVmHeapRegion);
                             addressToVmHeapRegion.put(dynamicHeapRegion.getRegionStart().toLong(), newVmHeapRegion);
+                            vm().addressSpace().add(newVmHeapRegion.memoryRegion());
                         }
                     } else {
                         // This can happen when inspecting VM startup
@@ -448,6 +454,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleRootsRegion = maybeAllocatedRegion;
                             teleRootsTable = new TeleRootsTable(vm(), teleRootsRegion);
+                            vm().addressSpace().add(teleRootsTable.memoryRegion());
                         }
                     }
                 }
@@ -526,7 +533,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
     public boolean containsInDynamicHeap(Address address) {
         final MaxHeapRegion heapRegion = findHeapRegion(address);
-        return heapRegion != null && !heapRegion.isBootRegion() && !heapRegion.equals(immortalHeapRegion);
+        return heapRegion != null && !heapRegion.equals(bootHeapRegion) && !heapRegion.equals(immortalHeapRegion);
     }
 
     public MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion() {
@@ -599,8 +606,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
-            locations.add(vm().codeLocationFactory().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
+            locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
+            locations.add(vm().codeLocations().createMachineCodeLocation(methods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
             // There may be implementation-specific methods of interest
             locations.addAll(teleHeapScheme.inspectableMethods());
             inspectableMethods = Collections.unmodifiableList(locations);

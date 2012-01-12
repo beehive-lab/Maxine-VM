@@ -217,7 +217,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      * to the first bytecode instruction and to the beginning of the prologue in any machine code compilation.
     * It is not bound to any particular compilation, and so never had a machine code address.
      *
-     * @see MaxCodeLocationFactory#createBytecodeLocation(MethodKey, String)
+     * @see MaxCodeLocationManager#createBytecodeLocation(MethodKey, String)
      */
     private static final class MethodKeyLocation extends BytecodeLocation {
 
@@ -255,7 +255,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      * A code location in the VM specified only as a bytecode position in a loaded classfile method.
      * It is not bound to any particular compilation, and so never had a machine code address.
      *
-     * @see MaxCodeLocationFactory#createBytecodeLocation(TeleClassMethodActor, int, String)
+     * @see MaxCodeLocationManager#createBytecodeLocation(TeleClassMethodActor, int, String)
      */
     private static final class ClassMethodActorLocation extends BytecodeLocation {
 
@@ -351,7 +351,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
      * A code location in the VM specified both as a bytecode position in a loaded classfile and the
      * memory location of the corresponding machine code instruction in a compilation of the method.
      *
-     * @see MaxCodeLocationFactory#createMachineCodeLocation(Address, TeleClassMethodActor, int, String)
+     * @see MaxCodeLocationManager#createMachineCodeLocation(Address, TeleClassMethodActor, int, String)
      */
     private static final class ClassMethodActorAddressLocation extends MachineCodeLocation {
 
@@ -441,29 +441,26 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
     }
 
-    // TODO (mlvdv)  to be replaced
     /**
      * Singleton for creating representations of code locations in the VM.
      */
-    public static final class CodeLocationFactory extends AbstractVmHolder implements MaxCodeLocationFactory {
+    public static final class VmCodeLocationManager extends AbstractVmHolder implements MaxCodeLocationManager {
 
         private static final int TRACE_VALUE = 1;
 
-        private static CodeLocationFactory codeLocationFactory;
+        private static VmCodeLocationManager codeLocationManager;
 
         /**
-         * Create a factory for creating code locations in VM memory.
-         * <p>
-         * <strong>Note:</strong> this legacy implementation is being replaced.
+         * Create a manager for creating code locations in VM memory.
          */
-        public static CodeLocationFactory make(TeleVM vm) {
-            if (codeLocationFactory == null) {
-                codeLocationFactory = new CodeLocationFactory(vm);
+        public static VmCodeLocationManager make(TeleVM vm) {
+            if (codeLocationManager == null) {
+                codeLocationManager = new VmCodeLocationManager(vm);
             }
-            return codeLocationFactory;
+            return codeLocationManager;
         }
 
-        private CodeLocationFactory(TeleVM vm) {
+        private VmCodeLocationManager(TeleVM vm) {
             super(vm);
         }
 

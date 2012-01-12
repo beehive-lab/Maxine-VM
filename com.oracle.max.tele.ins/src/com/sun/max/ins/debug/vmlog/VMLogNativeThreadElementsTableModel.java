@@ -93,10 +93,10 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
             do {
                 Pointer recordAddress = logBuffer.plus(offset);
                 assert recordAddress.lessThan(logBufferEnd);
-                int header = vma.readInt(recordAddress);
+                int header = vmIO.readInt(recordAddress);
                 // variable length records can cause holes
                 if (!Record.isFree(header)) {
-                    int sharedId = vma.readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
+                    int sharedId = vmIO.readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
                     NativeThreadRecordAccess nativeThreadRecordAccess = new NativeThreadRecordAccess(vmLog, recordAddress, sharedId);
                     sharedModelList.add(nativeThreadRecordAccess);
                 }

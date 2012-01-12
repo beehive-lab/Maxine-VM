@@ -447,7 +447,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.WORD, MemoryWordsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return vm().memory().readWordValue(address);
+                        return vm().memoryIO().readWordValue(address);
                     }
                 };
                 label.setOpaque(true);
@@ -490,7 +490,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as chars = ");
             final byte[] bytes = new byte[vm().platform().nBytesInWord()];
-            vm().memory().readBytes(address, bytes);
+            vm().memoryIO().readBytes(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -513,7 +513,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as Unicode = ");
             final byte[] bytes = new byte[vm().platform().nBytesInWord()];
-            vm().memory().readBytes(address, bytes);
+            vm().memoryIO().readBytes(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(preference().style().defaultPaneTopBorder());
             } else {
@@ -535,7 +535,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as float = ");
-            final Value wordValue = vm().memory().readWordValue(address);
+            final Value wordValue = vm().memoryIO().readWordValue(address);
             final float f = Float.intBitsToFloat((int) (wordValue.toLong() & 0xffffffffL));
             setValue(f);
             if (isBoundaryRow(row)) {
@@ -558,7 +558,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as double = ");
-            final Value wordValue = vm().memory().readWordValue(address);
+            final Value wordValue = vm().memoryIO().readWordValue(address);
             final double f = Double.longBitsToDouble(wordValue.toLong());
             setValue(f);
             if (isBoundaryRow(row)) {

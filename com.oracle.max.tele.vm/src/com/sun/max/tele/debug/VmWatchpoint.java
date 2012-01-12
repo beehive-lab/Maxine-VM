@@ -351,7 +351,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             memoryCache = new byte[(int) nBytes];
         }
         try {
-            memoryCache = watchpointManager.vm().memory().readBytes(memoryRegion().start(), (int) nBytes);
+            memoryCache = watchpointManager.vm().memoryIO().readBytes(memoryRegion().start(), (int) nBytes);
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;

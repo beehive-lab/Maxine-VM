@@ -314,7 +314,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 if (instanceViewPreferences.hideNullArrayElements()) {
                     visibleElementCount = 0;
                     for (int index = 0; index < arrayLength; index++) {
-                        if (!vm().memory().readArrayElementValue(elementKind,  teleObject.reference(), index).isZero()) {
+                        if (!vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), index).isZero()) {
                             rowToElementIndex[visibleElementCount++] = index;
                         }
                     }
@@ -381,7 +381,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     labels[elementIndex] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memory().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -393,7 +393,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     labels[elementIndex] = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memory().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -405,7 +405,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     labels[elementIndex] = new PrimitiveValueLabel(inspection, elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return vm().memory().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().memoryIO().readArrayElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {

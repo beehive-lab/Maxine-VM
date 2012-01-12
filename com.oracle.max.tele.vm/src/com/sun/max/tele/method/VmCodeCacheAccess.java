@@ -59,7 +59,7 @@ import com.sun.max.vm.compiler.target.*;
  * @see com.sun.max.vm.code.CodeManager
  * @see TeleTargetMethod
  */
-public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMCache, MaxCodeCache, AllocationHolder {
+public final class VmCodeCacheAccess extends AbstractVmHolder implements MaxCodeCache, VmAllocationHolder<MaxCodeCache> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -134,8 +134,11 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
 
         teleCodeManager = (TeleCodeManager) objects().makeTeleObject(fields().Code_codeManager.readReference(vm()));
         bootCodeCacheRegion = new VmBootCodeCacheRegion(vm(), teleCodeManager.teleBootCodeRegion(), this);
+        vm().addressSpace().add(bootCodeCacheRegion.memoryRegion());
         dynamicBaselineCodeCacheRegion = new VmSemiSpaceCodeCacheRegion(vm(), teleCodeManager.teleRuntimeBaselineCodeRegion(), this);
+        vm().addressSpace().add(dynamicBaselineCodeCacheRegion.memoryRegion());
         dynamicOptCodeCacheRegion = new VmUnmanagedCodeCacheRegion(vm(), teleCodeManager.teleRuntimeOptCodeRegion(), this);
+        vm().addressSpace().add(dynamicOptCodeCacheRegion.memoryRegion());
 
         vmCodeCacheRegions = Arrays.asList(bootCodeCacheRegion, dynamicBaselineCodeCacheRegion, dynamicOptCodeCacheRegion);
         maxCodeCacheRegions = Collections.unmodifiableList(new ArrayList<MaxCodeCacheRegion>(vmCodeCacheRegions));
@@ -163,7 +166,7 @@ public final class VmCodeCacheAccess extends AbstractVmHolder implements TeleVMC
      * This must be done before heap objects are refreshed, in particular so that the code cache region status can be
      * used to determine refresh behavior in instances of {@link TargetMethod}.
      */
-    public void updateCache(long epoch) {
+    public void updateMemoryStatus(long epoch) {
         updateTracer.begin();
         for (VmCodeCacheRegion region : vmCodeCacheRegions) {
             region.updateStatus(epoch);

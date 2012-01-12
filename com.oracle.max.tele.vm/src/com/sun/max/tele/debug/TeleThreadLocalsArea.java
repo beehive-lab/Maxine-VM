@@ -94,9 +94,6 @@ public final class TeleThreadLocalsArea extends AbstractVmHolder implements Tele
             return teleThreadLocalsArea;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     private long lastUpdateEpoch = -1L;

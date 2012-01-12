@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
@@ -56,7 +56,7 @@ public interface TeleVMAccess {
      * Gets access to low level reading & writing methods
      * for VM memory.
      */
-    VmMemoryAccess memory();
+    VmMemoryIO memory();
 
     /**
      * Gets access to information and services for managing
@@ -103,7 +103,7 @@ public interface TeleVMAccess {
      *
      * @return the singleton manager for information about code locations in the VM.
      */
-    CodeLocationFactory codeLocationFactory();
+    VmCodeLocationManager codeLocations();
 
     /**
      * Gets the factory for creating and managing VM breakpoints.

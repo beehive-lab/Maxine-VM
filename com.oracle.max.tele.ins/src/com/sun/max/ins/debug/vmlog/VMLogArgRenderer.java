@@ -49,7 +49,7 @@ public abstract class VMLogArgRenderer {
         byte[] bytes = new byte[1024];
         int index = 0;
         while (true) {
-            byte b = vm.memory().readByte(cString, index);
+            byte b = vm.memoryIO().readByte(cString, index);
             if (b == 0) {
                 break;
             }

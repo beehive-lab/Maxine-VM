@@ -48,7 +48,7 @@ import com.sun.max.vm.compiler.target.*;
  * @see VmCodeCacheAccess
  */
 public abstract class VmCodeCacheRegion extends AbstractVmHolder
-    implements TeleVMCache, MaxCodeCacheRegion, MaxObjectHoldingRegion<MaxCodeCacheRegion>, MaxCodeHoldingRegion<MaxCodeCacheRegion> {
+    implements TeleVMCache, MaxCodeCacheRegion, VmObjectHoldingRegion<MaxCodeCacheRegion>, MaxCodeHoldingRegion<MaxCodeCacheRegion> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -91,9 +91,6 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return owner.isBootRegion();
-        }
     }
 
     private final TeleCodeRegion teleCodeRegion;
@@ -107,10 +104,6 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
         super(vm);
         this.teleCodeRegion = teleCodeRegion;
         this.codeCacheMemoryRegion = new CodeCacheMemoryRegion(vm, this, teleCodeRegion);
-    }
-
-    public boolean isBootRegion() {
-        return teleCodeRegion.isBootCodeRegion();
     }
 
     public String entityName() {

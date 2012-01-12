@@ -1576,7 +1576,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         }
                     }
                     try {
-                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(address, "user specified address"));
+                        focus().setCodeLocation(vm().codeLocations().createMachineCodeLocation(address, "user specified address"));
                     } catch (InvalidCodeAddressException e) {
                         gui().errorMessage("Unable to view, no code @ " + e.getAddressString() + ":  " + e.getMessage());
                     }
@@ -1708,7 +1708,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation teleCodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "view method bytecode action");
+            final MaxCodeLocation teleCodeLocation = vm().codeLocations().createBytecodeLocation(teleClassMethodActor, 0, "view method bytecode action");
             focus().setCodeLocation(teleCodeLocation);
         }
     }
@@ -1756,7 +1756,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecodes for Method...", "View");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                    final MaxCodeLocation teleCodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
+                    final MaxCodeLocation teleCodeLocation = vm().codeLocations().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
                     focus().setCodeLocation(teleCodeLocation);
                 }
             }
@@ -1834,7 +1834,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final List<MaxNativeFunction> functions = NativeFunctionSearchDialog.show(inspection(), nativeLibrary, "View Native Function...", "View Code", false);
                 if (functions != null) {
                     try {
-                        focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
+                        focus().setCodeLocation(vm().codeLocations().createMachineCodeLocation(Utils.first(functions).getCodeStart(), "native function address from library"), true);
                     } catch (InvalidCodeAddressException e) {
                         gui().errorMessage("Unable to view code, no code @ " + e.getAddressString() + ":  " + e.getMessage());
                     }
@@ -1958,7 +1958,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                focus().setCodeLocation(vm().codeLocationFactory().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
+                focus().setCodeLocation(vm().codeLocations().createMachineCodeLocation(vm().bootImageStart().plus(offset), "address from boot image"), true);
             } catch (InvalidCodeAddressException e) {
                 gui().errorMessage("Unable to view, no machine code @ " + e.getAddressString() + ":  " + e.getMessage());
             }
@@ -2508,7 +2508,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void entered(Address address, String description) {
                     MaxBreakpoint breakpoint = null;
                     try {
-                        breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(address, "set machine breakpoint"));
+                        breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeLocations().createMachineCodeLocation(address, "set machine breakpoint"));
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
                         return;
@@ -2729,7 +2729,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         for (MaxNativeFunction nativeFunction : functions) {
                             try {
                                 machineCodeBreakpoint =
-                                    vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
+                                    vm().breakpointManager().makeBreakpoint(vm().codeLocations().createMachineCodeLocation(nativeFunction.getCodeStart(), "set machine breakpoint"));
                             } catch (InvalidCodeAddressException e) {
                                 gui().errorMessage("Unable to set breakpoint, no code @ " + e.getAddressString() + ":  " + e.getMessage());
                             }
@@ -2883,7 +2883,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation location = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
+            final MaxCodeLocation location = vm().codeLocations().createBytecodeLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
             try {
                 vm().breakpointManager().makeBreakpoint(location);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -2930,7 +2930,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecodes method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     try {
-                        vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                        vm().breakpointManager().makeBreakpoint(vm().codeLocations().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
                     }
@@ -2971,7 +2971,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
                 try {
-                    vm().breakpointManager().makeBreakpoint(vm().codeLocationFactory().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                    vm().breakpointManager().makeBreakpoint(vm().codeLocations().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                 } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
                 }

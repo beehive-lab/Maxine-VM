@@ -74,9 +74,6 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     /**
@@ -100,7 +97,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             try {
                 for (int index = 0; index < length; index++) {
                     final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                    locations.add(codeLocationFactory().createMachineCodeLocation(targetCodeInstruction.address, "native function code instruction"));
+                    locations.add(codeLocations().createMachineCodeLocation(targetCodeInstruction.address, "native function code instruction"));
                     if (targetCodeInstruction.label != null) {
                         labels.add(index);
                     }
@@ -345,7 +342,7 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
     public CodeLocation getCodeStartLocation() {
         if (codeStartLocation == null) {
             try {
-                codeStartLocation = codeLocationFactory().createMachineCodeLocation(getCodeStart(), "code start location in external native code");
+                codeStartLocation = codeLocations().createMachineCodeLocation(getCodeStart(), "code start location in external native code");
             } catch (InvalidCodeAddressException e) {
             }
         }

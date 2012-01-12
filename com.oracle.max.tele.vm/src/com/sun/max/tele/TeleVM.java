@@ -55,7 +55,7 @@ import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
-import com.sun.max.tele.method.CodeLocation.CodeLocationFactory;
+import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -582,7 +582,9 @@ public abstract class TeleVM implements MaxVM {
 
     final File programFile;
 
-    private final VmMemoryAccess memoryAccess;
+    private final VmAddressSpace addressSpace;
+
+    private final VmMemoryIO memoryIO;
 
     private final VmObjectAccess objectAccess;
 
@@ -594,8 +596,7 @@ public abstract class TeleVM implements MaxVM {
 
     private NativeCodeAccess nativeCodeAccess = null;
 
-    // TODO (mlvdv) to be replaced
-    private final CodeLocationFactory codeLocationFactory;
+    private final VmCodeLocationManager codeLocationManager;
 
     private final VmMachineCodeAccess machineCodeAccess;
 
@@ -607,21 +608,6 @@ public abstract class TeleVM implements MaxVM {
     private final VmWatchpoint.VmWatchpointManager watchpointManager;
 
     private final VmThreadAccess threadAccess;
-
-    /**
-     * A collection of all known memory allocations, both those allocated by the VM and
-     * those discovered from the OS, for example thread allocation areas and loaded
-     * native libraries.
-     * <p>
-     * This collection is updated incrementally during the VM refresh cycle.  This means
-     * that it may be inconsistent (unlike the list of regions recorded in the current
-     * {@link MaxVMState}, which is not assigned until the conclusion of the refresh cycle.
-     * However, it always reflects the most current information available, which is necessary
-     * to have available <em>within</em> the refresh cycle.
-     * <p>
-     * Should never contain {@code null}
-     */
-    private final Set<MaxEntityMemoryRegion<? extends MaxEntity> > memoryAllocations = new HashSet<MaxEntityMemoryRegion<? extends MaxEntity> >();
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -749,20 +735,21 @@ public abstract class TeleVM implements MaxVM {
         }
         this.bootImageStart = loadBootImage();
         this.vmConfiguration = VMConfiguration.vmConfig();
-        this.memoryAccess = VmMemoryAccess.make(this, this.teleProcess);
+        this.addressSpace = VmAddressSpace.make(this);
+        this.memoryIO = VmMemoryIO.make(this, this.teleProcess);
         this.referenceManager = VmReferenceManager.make(this, (RemoteReferenceScheme) this.vmConfiguration.referenceScheme());
 
         this.threadAccess = VmThreadAccess.make(this);
-        this.codeLocationFactory = CodeLocationFactory.make(this);
+        this.codeLocationManager = VmCodeLocationManager.make(this);
         this.machineCodeAccess = VmMachineCodeAccess.make(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");
         }
         this.fieldAccess = VmFieldAccess.make(this);
-        this.methodAccess = VmMethodAccess.make(this, codeLocationFactory);
+        this.methodAccess = VmMethodAccess.make(this, codeLocationManager);
         this.objectAccess = VmObjectAccess.make(this);
-        this.heapAccess = VmHeapAccess.make(this);
+        this.heapAccess = VmHeapAccess.make(this, this.addressSpace);
         unlock();
 
         // Provide access to JDWP server - DISABLED - not being used now.
@@ -836,16 +823,12 @@ public abstract class TeleVM implements MaxVM {
                  *  the {@link VmClassAccess} is fully created, otherwise there's a cycle.
                  */
                 heapAccess.initialize(epoch);
-                // Now we have a legitimate representation for the boot heap
-                memoryAllocations.addAll(heapAccess.memoryAllocations());
 
                 // Now set up the initial map of the compiled code cache
                 codeCacheAccess = new VmCodeCacheAccess(this);
                 codeCacheAccess.initialize(epoch);
-                memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
                 nativeCodeAccess = new NativeCodeAccess(this);
-                memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
 
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
@@ -857,19 +840,13 @@ public abstract class TeleVM implements MaxVM {
             // The standard update cycle follows; it is sensitive to ordering.
 
             // Update status of the heap, including GC status and any new allocations.
-            heapAccess.updateCache(epoch);
-            memoryAllocations.addAll(heapAccess.memoryAllocations());
+            heapAccess.updateMemoryStatus(epoch);
 
             // Update the general status of the code cache, including eviction status and any new allocations.
-            codeCacheAccess.updateCache(epoch);
-            memoryAllocations.addAll(codeCacheAccess.memoryAllocations());
+            codeCacheAccess.updateMemoryStatus(epoch);
 
-            // Update the general status of any native, dynamically loaded libraries.
-            nativeCodeAccess.updateCache(epoch);
-            memoryAllocations.addAll(nativeCodeAccess.memoryAllocations());
-
-            // A hook for any other memory regions that might be getting allocated for special platforms
-            memoryAllocations.addAll(platformMemoryRegions());
+            // Update the general status of any native, dynamically loaded libraries in the address space
+            nativeCodeAccess.updateMemoryStatus(epoch);
 
             // Update registry of loaded classes, so we can understand object types
             classAccess.updateCache(epoch);
@@ -883,9 +860,8 @@ public abstract class TeleVM implements MaxVM {
             // Check the status of breakpoints, for example if any are set in recently evicted compilations.
             breakpointManager.updateCache(epoch);
 
-
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.
-            // What's not done yet is updating the thread memory regions.
+            // What's not done yet is updating the thread memory regions, which happens by refresh calls in TeleProcess.
 
             updateTracer.end("epoch=" + epoch);
 
@@ -962,8 +938,12 @@ public abstract class TeleVM implements MaxVM {
         return classAccess;
     }
 
-    public final VmMemoryAccess memory() {
-        return memoryAccess;
+    public final VmAddressSpace addressSpace() {
+        return addressSpace;
+    }
+
+    public final VmMemoryIO memoryIO() {
+        return memoryIO;
     }
 
     public final VmObjectAccess objects() {
@@ -986,8 +966,8 @@ public abstract class TeleVM implements MaxVM {
         return nativeCodeAccess;
     }
 
-    public final CodeLocationFactory codeLocationFactory() {
-        return codeLocationFactory;
+    public final VmCodeLocationManager codeLocations() {
+        return codeLocationManager;
     }
 
     public final VmMachineCodeAccess machineCode() {
@@ -1060,26 +1040,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
         gcCompletedListeners.remove(listener);
-    }
-
-
-    /**
-     * Gets the top level allocated memory region, if any, that includes the
-     * specified memory location in the VM.
-     * <p>
-     * This method relies on the collection of allocated regions that is
-     * updated incrementally during the update cycle.  It therefore has
-     * the latest information, but may not be consistent.  For example, during
-     * the update cycle the VM's direct allocations may have been refreshed, but
-     * the allocations corresponding to threads may have not yet been refreshed.
-     */
-    public final MaxMemoryRegion findMemoryRegion(Address address) {
-        for (MaxMemoryRegion memoryRegion : memoryAllocations) {
-            if (memoryRegion.contains(address)) {
-                return memoryRegion;
-            }
-        }
-        return null;
     }
 
     public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
@@ -1254,20 +1214,11 @@ public abstract class TeleVM implements MaxVM {
                     List<TeleBreakpointEvent> breakpointEvents,
                     VmWatchpointEvent watchpointEvent) {
 
-        // We've already updated the allocation information for the VM-allocated regions
-        // Now update it for the thread-allocated regions we've discovered.
-        for (TeleNativeThread thread : threadsDied) {
-            memoryAllocations.removeAll(thread.memoryAllocations());
-        }
-        for (TeleNativeThread thread : threads) {
-            memoryAllocations.addAll(thread.memoryAllocations());
-        }
-
         this.teleVMState = new TeleVMState(
             mode,
             processState,
             epoch,
-            Collections.unmodifiableList(new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity> >(memoryAllocations)),
+            addressSpace.allocations(),
             threads,
             singleStepThread,
             threadsStarted,
@@ -1409,7 +1360,7 @@ public abstract class TeleVM implements MaxVM {
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
-            final MachineCodeLocation entryLocation = codeLocationFactory().createMachineCodeLocation(startEntryAddress, "vm start address");
+            final MachineCodeLocation entryLocation = codeLocations().createMachineCodeLocation(startEntryAddress, "vm start address");
             runToInstruction(entryLocation, true, false);
         } catch (InvalidCodeAddressException exception) {
             TeleError.unexpected("Unable to set breakpoint at Java entry point " + exception.getAddressString() + ": " + exception.getMessage());
@@ -1929,7 +1880,7 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final BytecodeLocation methodCodeLocation = codeLocationFactory().createBytecodeLocation(teleClassMethodActor, 0, "");
+            final BytecodeLocation methodCodeLocation = codeLocations().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
                 TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -1942,7 +1893,7 @@ public abstract class TeleVM implements MaxVM {
             if (codeLocation.isMachineCode()) {
                 MachineCodeLocation location = null;
                 try {
-                    location = codeLocationFactory().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                    location = codeLocations().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
                     final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
                     if (breakpoint != null) {
                         breakpoint.remove();
@@ -1960,7 +1911,7 @@ public abstract class TeleVM implements MaxVM {
 
         public byte[] accessMemory(long start, int length) {
             final byte[] bytes = new byte[length];
-            TeleVM.this.memory().readBytes(Address.fromLong(start), bytes);
+            TeleVM.this.memoryIO().readBytes(Address.fromLong(start), bytes);
             return bytes;
         }
 

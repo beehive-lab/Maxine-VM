@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,9 +88,14 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxClasses classes();
 
     /**
+     * @return access to a map of top level allocations in the VM address space.
+     */
+    MaxAddressSpace addressSpace();
+
+    /**
      * @return access to low level memory reading from the VM.
      */
-    MaxMemory memory();
+    MaxMemoryIO memoryIO();
 
     /**
      * @return access to objects in the VM
@@ -119,7 +124,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      *
      * @return the singleton manager for information about code in the VM.
      */
-    MaxCodeLocationFactory codeLocationFactory();
+    MaxCodeLocationManager codeLocations();
 
     /**
      * @returns access to information about machine code in the VM.

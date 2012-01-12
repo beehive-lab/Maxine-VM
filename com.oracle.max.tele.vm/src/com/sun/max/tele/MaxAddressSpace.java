@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
+import java.io.*;
 
 
 /**
- * A allocatable area in the VM that can contain objects.
+ * Access to the layout of memory in the VM process.
  */
-public interface MaxObjectHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type>  {
+public interface MaxAddressSpace extends MaxEntity<MaxAddressSpace> {
 
     /**
-     * Returns the manager for dealing with remote references to objects allocated in this VM region.
+     * Writes current statistics concerning inspection of the VM's memory map.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
      */
-    RemoteObjectReferenceManager objectReferenceManager();
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,11 +30,6 @@ import com.sun.max.unsafe.*;
  * Access to an individual allocation area of the compiled code cache.
  */
 public interface MaxCodeCacheRegion extends MaxEntity<MaxCodeCacheRegion> {
-
-    /**
-     * @return whether this code cache region is in the boot image.
-     */
-    boolean isBootRegion();
 
     /**
      * Gets the total number of compilations currently allocated in this code cache region,
