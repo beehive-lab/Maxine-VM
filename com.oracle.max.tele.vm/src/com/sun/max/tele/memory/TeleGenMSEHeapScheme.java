@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,8 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 
 
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
@@ -41,37 +43,45 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     }
 
     public int gcForwardingPointerOffset() {
-        // FIXME (ld): need to check if the region the origin points to is in an evacuated area, and if so, check if it is forwarded.
-        return -1;
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
-
 
     public boolean isObjectForwarded(Pointer origin) {
-        // FIXME (ld): need to check if the region the origin points to is in an evacuated area, and if so, check if it is forwarded.
+        if (origin.isNotZero()) {
+            Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            if (isForwardingPointer(possibleForwardingPointer)) {
+                return true;
+            }
+        }
         return false;
     }
-
 
     public boolean isForwardingPointer(Pointer pointer) {
         // FIXME (ld): need to check if the region the origin points to is in an evacuated area, and if so, check if it is forwarded.
-        return false;
+        return (pointer.isNotZero()) && pointer.and(1).toLong() == 1;
     }
-
 
     public Pointer getTrueLocationFromPointer(Pointer pointer) {
-        // TODO Auto-generated method stub
-        return pointer;
+        return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
     }
-
 
     public Pointer getForwardedOrigin(Pointer origin) {
         // FIXME (ld): need to check if the region the origin points to is in an evacuated area, and if so, get the forwarded address if any.
+        if (origin.isNotZero()) {
+            Pointer possibleForwardingPointer = memory().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            if (isForwardingPointer(possibleForwardingPointer)) {
+                final Pointer newCell = getTrueLocationFromPointer(possibleForwardingPointer);
+                if (newCell.isNotZero()) {
+                    return Layout.generalLayout().cellToOrigin(newCell);
+                }
+            }
+        }
         return origin;
     }
 
     public List<MaxCodeLocation> inspectableMethods() {
         // TODO (ld)
-        return Collections.emptyList();
+        return EMPTY_METHOD_LIST;
     }
 
     public MaxMarkBitsInfo markBitInfo() {
