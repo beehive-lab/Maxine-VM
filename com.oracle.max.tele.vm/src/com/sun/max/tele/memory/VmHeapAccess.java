@@ -244,14 +244,14 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
         final Pointer bootHeapStart = vm().bootImageStart();
         final int bootHeapSize = vm().bootImage().header.heapSize;
         bootHeapRegion =
-            new VmHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
+            new VmHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize);
         addressSpace.add(bootHeapRegion.memoryRegion());
         heapRegions.add(bootHeapRegion);
 
         // There might already be dynamically allocated regions in a dumped image or when attaching to a running VM
         for (MaxMemoryRegion dynamicHeapRegion : getDynamicHeapRegionsUnsafe()) {
             final VmHeapRegion fakeDynamicHeapRegion =
-                new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes(), false);
+                new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes());
             heapRegions.add(fakeDynamicHeapRegion);
             addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
         }
@@ -329,7 +329,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
         vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
-        this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion, true);
+        this.bootHeapRegion = new VmHeapRegion(vm(), teleBootHeapMemoryRegion);
         allocations.add(this.bootHeapRegion.memoryRegion());
         vm().addressSpace().add(this.bootHeapRegion.memoryRegion());
         isInitialized = true;
@@ -403,7 +403,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                         maybeAllocatedRegion.updateCache(epoch);
                         if (maybeAllocatedRegion.isAllocated()) {
                             teleImmortalHeapRegion = maybeAllocatedRegion;
-                            immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion, false);
+                            immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
                             vm().addressSpace().add(immortalHeapRegion.memoryRegion());
                         }
                     }
@@ -428,7 +428,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
                             // Force an early update of the cached data about the region
                             knownVmHeapRegion.updateStatus(epoch);
                         } else {
-                            final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion, false);
+                            final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapRegion);
                             discoveredHeapRegions.add(newVmHeapRegion);
                             addressToVmHeapRegion.put(dynamicHeapRegion.getRegionStart().toLong(), newVmHeapRegion);
                             vm().addressSpace().add(newVmHeapRegion.memoryRegion());
@@ -533,7 +533,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements TeleVMCache,
 
     public boolean containsInDynamicHeap(Address address) {
         final MaxHeapRegion heapRegion = findHeapRegion(address);
-        return heapRegion != null && !heapRegion.isBootRegion() && !heapRegion.equals(immortalHeapRegion);
+        return heapRegion != null && !heapRegion.equals(bootHeapRegion) && !heapRegion.equals(immortalHeapRegion);
     }
 
     public MaxEntityMemoryRegion<MaxRootsTable> rootsMemoryRegion() {

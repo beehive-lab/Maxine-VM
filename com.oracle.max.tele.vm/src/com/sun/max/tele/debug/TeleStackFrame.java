@@ -77,9 +77,6 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return teleStackFrame;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     /**

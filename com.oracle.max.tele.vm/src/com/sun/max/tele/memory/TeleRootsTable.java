@@ -55,10 +55,6 @@ public class TeleRootsTable extends AbstractVmHolder implements MaxRootsTable {
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
-
     }
 
     private final RootsTableMemoryRegion rootsTableMemoryRegion;

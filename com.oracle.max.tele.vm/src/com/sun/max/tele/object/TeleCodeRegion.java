@@ -67,7 +67,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      * @return whether the {@link CodeRegion} object describes the "boot code" region,
      * which is contained in the boot image of the VM.
      */
-    public boolean isBootCodeRegion() {
+    private boolean isBootCodeRegion() {
         initialize();
         return isBootCodeRegion;
     }
@@ -117,7 +117,8 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
     @Override
     public final long getRegionNBytes() {
-        if (isBootCodeRegion()) {
+        initialize();
+        if (isBootCodeRegion) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
             // We lie about this and return the size allocated for the whole region, as recorded in the boot image.

@@ -74,9 +74,6 @@ public class TeleNativeFunction extends AbstractVmHolder implements MaxNativeFun
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     /**

@@ -93,9 +93,6 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
             return teleStack;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     private final TeleNativeThread teleNativeThread;

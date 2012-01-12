@@ -55,13 +55,11 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
         private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final TeleCompilation owner;
-        private final boolean isBootCode;
         private final VmCodeCacheAccess codeCache;
 
-        private CompiledCodeMemoryRegion(TeleVM vm, TeleCompilation owner, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
+        private CompiledCodeMemoryRegion(TeleVM vm, TeleCompilation owner, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache) {
             super(vm, teleTargetMethod);
             this.owner = owner;
-            this.isBootCode = isBootCode;
             this.codeCache = codeCache;
         }
 
@@ -79,9 +77,6 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return isBootCode;
-        }
     }
 
     private final TeleTargetMethod teleTargetMethod;
@@ -94,12 +89,11 @@ public final class TeleCompilation extends AbstractVmHolder implements MaxCompil
      * @param vm the VM
      * @param teleTargetMethod surrogate for the compilation in the VM
      * @param codeCache the owner of all cached code in the VM
-     * @param isBootCode is this code in the boot region?
      */
-    public TeleCompilation(TeleVM vm, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache, boolean isBootCode) {
+    public TeleCompilation(TeleVM vm, TeleTargetMethod teleTargetMethod, VmCodeCacheAccess codeCache) {
         super(vm);
         this.teleTargetMethod = teleTargetMethod;
-        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(vm, this, teleTargetMethod, codeCache, isBootCode);
+        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(vm, this, teleTargetMethod, codeCache);
     }
 
     public String entityName() {

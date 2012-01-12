@@ -68,10 +68,6 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
             return library;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
-
     }
 
     protected String path;
