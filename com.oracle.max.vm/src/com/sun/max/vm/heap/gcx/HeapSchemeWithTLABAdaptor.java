@@ -112,8 +112,8 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.traceGCTime()) {
                 reportTotalGCTimes();
+                VirtualMemory.reportMetrics();
             }
-            VirtualMemory.reportMetrics();
         }
     }
 
