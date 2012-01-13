@@ -54,7 +54,15 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             SpecialReferenceManager.discoverSpecialReference(origin);
         } else {
             // Treat referent as strong reference.
-            updateEvacuatedRef(origin,  SpecialReferenceManager.REFERENT_WORD_INDEX);
+            if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
+                final int index = SpecialReferenceManager.REFERENT_WORD_INDEX;
+                Log.print("Resurecting referent");
+                Log.print(origin.getReference(index).toOrigin());
+                Log.print(" from special ref ");
+                Log.print(origin); Log.print(" + ");
+                Log.println(index);
+            }
+            updateEvacuatedRef(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
         }
     }
 
