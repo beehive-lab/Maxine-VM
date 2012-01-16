@@ -46,7 +46,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * Only the elements in the range{@code 0 .. actualLogBufferEntries - 1} are valid.
      *
      */
-    HostedLogRecord[] logRecordCache;
+    protected HostedLogRecord[] logRecordCache;
 
     /**
      * Usually equal to {@link #logBufferEntries} but, in the case of per-thread buffers
@@ -68,6 +68,8 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     protected VMLogView vmLogView;
 
+    private int[] displayedRows;
+
     protected VMLogElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection);
         vm = (TeleVM) vm();
@@ -84,14 +86,27 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * @return
      */
     public int getRowCount() {
-        return actualLogBufferEntries;
+        return displayedRows == null ? actualLogBufferEntries : displayedRows.length;
+    }
+
+    public void setDisplayedRows(int[] displayedRows) {
+        this.displayedRows = displayedRows;
+        this.fireTableDataChanged();
+    }
+
+    private int displayed2ModelRow(int displayedRow) {
+        return displayedRows == null ? displayedRow : displayedRows[displayedRow];
+    }
+
+    HostedLogRecord getRecord(int row) {
+        return logRecordCache[displayed2ModelRow(row)];
     }
 
     /**
      * Get the value of the slot in the log buffer at the given logical row and column.
      */
     public Object getValueAt(int row, int col) {
-        HostedLogRecord record = logRecordCache[row];
+        HostedLogRecord record = getRecord(row);
         if (record == null) {
             TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
         }

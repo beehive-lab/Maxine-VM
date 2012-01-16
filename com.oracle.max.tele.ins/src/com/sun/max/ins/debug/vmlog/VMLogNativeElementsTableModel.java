@@ -45,7 +45,7 @@ abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
      */
     protected int nativeRecordSize(Pointer r) {
         if (nativeRecordSize == 0) {
-            nativeRecordSize = vm.fields().VMLogNative_nativeRecordSize.readInt(vmLogView.vmLogRef);
+            nativeRecordSize = vm.fields().VMLogNative_maxNativeRecordSize.readInt(vmLogView.vmLogRef);
         }
         return nativeRecordSize;
     }

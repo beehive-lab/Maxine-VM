@@ -22,7 +22,15 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.type.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.VMLog.Record;
+
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
 
 
 public class JNIVMLogArgRenderer extends VMLogArgRenderer {
@@ -30,10 +38,42 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
     @Override
     String getText(TeleVM vm, int header, int argNum, long argValue) {
         if (argNum == 1) {
-            return argValue == 0 ? "EXIT" : "ENTRY";
-        } else {
-            return VMLogArgRendererFactory.defaultVMLogArgRenderer.getText(vm, header, argNum, argValue);
+            Word mode = Address.fromLong(argValue);
+            if (mode.equals(UPCALL_ENTRY)) {
+                return "UPCALL_ENTRY";
+            } else if (mode.equals(UPCALL_EXIT)) {
+                return "UPCALL_EXIT";
+            } else if (mode.equals(DOWNCALL_ENTRY)) {
+                return "DOWNCALL_ENTRY";
+            } else if (mode.equals(DOWNCALL_EXIT)) {
+                return "DOWNCALL_EXIT";
+            } else if (mode.equals(INVOKE_ENTRY)) {
+                return "INVOKE_ENTRY";
+            } else if (mode.equals(LINK_ENTRY)) {
+                return "DYNAMIC_LINK";
+            } else if (mode.equals(REGISTER_ENTRY)) {
+                return "REGISTER NATIVE";
+            } else {
+                return "UNKNOWN MODE: " + argValue;
+            }
+        } else if (argNum == 2) {
+            int op = Record.getOperation(header);
+            if (op == JniFunctions.LogOperations.ReflectiveInvocation.ordinal() ||
+                op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
+                op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
+                op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
+                final MethodID methodID = MethodID.fromWord(Address.fromLong(argValue));
+                MethodActor methodActor = VmClassAccess.usingTeleClassIDs(new Function<MethodActor>() {
+                    @Override
+                    public MethodActor call() throws Exception {
+                        return MethodID.toMethodActor(methodID);
+                    }
+                });
+                return methodActor.format("%H.%n(%p)");
+            }
         }
+        // default
+        return VMLogArgRendererFactory.defaultVMLogArgRenderer.getText(vm, header, argNum, argValue);
     }
 
 }

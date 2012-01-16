@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.log.nat.*;
 import com.sun.max.vm.thread.*;
 
@@ -56,24 +57,12 @@ public abstract class VMLogNativeThread extends VMLogNative {
     public static final long WRAPPED = 0x100000000L; // set in FIRST_OFFSET to indicate buffer has wrapped (sticky)
     public static final long FIRST_OFFSET_WRAP_MASK = 0x7FFFFFF00000000L;
 
-    /**
-     * Size in bytes of the per-thread log buffer.
-     */
-    @INSPECTED
-    protected int threadLogSize;
-
     @Override
-    public void initialize() {
-        super.initialize();
-        // Perhaps we should reduce the log size per thread.
-        // Problem is we don't know how many threads there will be.
-        // In case of a single threaded application we want
-        // similar behavior to the shared buffer, which means
-        // it has to be the same size.
-        // N.B. The total number of records is inherently variable
-        // but the Inspector view currently only shows the number
-        // defined by VMLog.logEntries.
-        threadLogSize = logEntries * nativeRecordSize;
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            VMLOG_BUFFER.store3(logBuffer);
+        }
     }
 
     @Override
@@ -81,9 +70,14 @@ public abstract class VMLogNativeThread extends VMLogNative {
         return ARGS_OFFSET;
     }
 
+    @Override
+    protected int getLogSize() {
+        return logEntries * maxNativeRecordSize;
+    }
+
     @NEVER_INLINE
     private Pointer allocateBuffer() {
-        Pointer buffer = Memory.allocate(Size.fromInt(threadLogSize));
+        Pointer buffer = Memory.allocate(Size.fromInt(logSize));
         VMLOG_BUFFER.store3(buffer);
         return buffer;
     }
@@ -99,7 +93,7 @@ public abstract class VMLogNativeThread extends VMLogNative {
 
     @INLINE
     protected final int modLogSize(int offset) {
-        // offset is either < threadLogSize or < 2 * threadLogSize
-        return offset < threadLogSize ? offset : offset - threadLogSize;
+        // offset is either < logSize or < 2 * logSize
+        return offset < logSize ? offset : offset - logSize;
     }
 }
