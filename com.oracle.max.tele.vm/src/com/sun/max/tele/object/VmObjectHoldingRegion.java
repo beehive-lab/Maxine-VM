@@ -20,21 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.object;
 
-import java.io.*;
+import com.sun.max.tele.*;
+
 
 /**
- * Access to an individual allocation area of the VM heap.
+ * A allocatable area in the VM that can contain objects.
  */
-public interface MaxHeapRegion extends MaxEntity<MaxHeapRegion> {
+public interface VmObjectHoldingRegion<Entity_Type extends MaxEntity> extends MaxEntity<Entity_Type>  {
 
     /**
-     * Writes current statistics concerning inspection of the VM's heap.
-     *
-     * @param printStream stream to which to write
-     * @param indent number of spaces to indent each line
-     * @param verbose possibly write extended information when true
+     * Returns the manager for dealing with remote references to objects allocated in this VM region.
      */
-    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+    RemoteObjectReferenceManager objectReferenceManager();
+
 }
+

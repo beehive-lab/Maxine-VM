@@ -300,11 +300,13 @@ public final class HeapRegionManager implements HeapAccountOwner {
             HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions);
 
             // First, uncommit reserved space after the fact. All the space between the end of the initial boot heap and the end of the provided reserved space should be uncommitted.
-            final Address endOfInitialBootHeap = startOfManagedSpace.plus(bootHeapSize);
-            final Address endOfRegions = bounds().end();
-            Size uncommitedSpaceSize = endOfRegions.minus(endOfInitialBootHeap).asSize();
-            if (!VirtualMemory.uncommitMemory(endOfInitialBootHeap, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
-                MaxineVM.reportPristineMemoryFailure("uncommitted regions", "uncommit", uncommitedSpaceSize);
+            if (!Heap.AvoidsAnonOperations) {
+                final Address endOfInitialBootHeap = startOfManagedSpace.plus(bootHeapSize);
+                final Address endOfRegions = bounds().end();
+                Size uncommitedSpaceSize = endOfRegions.minus(endOfInitialBootHeap).asSize();
+                if (!VirtualMemory.uncommitMemory(endOfInitialBootHeap, uncommitedSpaceSize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("uncommitted regions", "uncommit", uncommitedSpaceSize);
+                }
             }
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();

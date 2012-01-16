@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,8 @@ import static com.sun.cri.xir.CiXirAssembler.XirOp.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -228,11 +228,20 @@ public abstract class CiXirAssembler {
     }
 
     public static class XirConstant extends XirOperand implements XirConstantOperand {
-        public final CiConstant value;
+        protected CiConstant value;
 
         XirConstant(CiXirAssembler asm, CiConstant value) {
             super(asm, value, value.kind);
             this.value = value;
+        }
+
+        protected XirConstant(CiXirAssembler asm, Object name, CiConstant value) {
+            super(asm, name, value.kind);
+            this.value = value;
+        }
+
+        public final CiConstant value() {
+            return value;
         }
 
         public int getIndex() {
@@ -879,6 +888,11 @@ public abstract class CiXirAssembler {
         XirConstant temp = new XirConstant(this, constant);
         constants.add(temp);
         return temp;
+    }
+
+    public void recordConstant(XirConstant constant) {
+        assert !finished;
+        constants.add(constant);
     }
 
     public XirOperand createTemp(String name, CiKind kind) {

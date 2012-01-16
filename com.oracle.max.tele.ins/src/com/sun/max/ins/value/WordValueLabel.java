@@ -955,7 +955,7 @@ public class WordValueLabel extends ValueLabel {
             case UNCHECKED_CALL_POINT: {
                 try {
                     final Address address = taggedCodePointer == null ? value.toWord().asAddress() : taggedCodePointer.getAddress();
-                    final MaxCodeLocation codeLocation = vm().codeLocationFactory().createMachineCodeLocation(address, "code address from WordValueLabel");
+                    final MaxCodeLocation codeLocation = vm().codeLocations().createMachineCodeLocation(address, "code address from WordValueLabel");
                     action = new InspectorAction(inspection(), "View Code at address") {
                         @Override
                         public void procedure() {

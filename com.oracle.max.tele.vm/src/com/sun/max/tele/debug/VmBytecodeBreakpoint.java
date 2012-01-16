@@ -663,7 +663,7 @@ public final class VmBytecodeBreakpoint extends VmBreakpoint {
                 TeleWarning.message("Invalid breakpoint address " + e.getAddressString() + ":  " + e.getMessage());
             }
             if (codePointer != null && breakpointManager().targetBreakpoints().find(codePointer) == null) {
-                final CodeLocation location = vm().codeLocationFactory().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
+                final CodeLocation location = vm().codeLocations().createMachineCodeLocation(codePointer, "For bytecode breakpoint=" + owner.codeLocation());
                 if (bci == -1) {
                     breakpointManager().targetBreakpoints().makeTransientBreakpoint(location);
                 } else {

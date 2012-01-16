@@ -75,13 +75,4 @@ public interface MaxEntityMemoryRegion<Entity_Type extends MaxEntity> extends Ma
      */
     Entity_Type owner();
 
-    /**
-     * Returns whether the region is allocated in the boot image.
-     * {code true} implies that the region is fully utilized, and
-     * that nothing in it will be relocated.
-     *
-     * @return whether the region is part of the boot image.
-     */
-    boolean isBootRegion();
-
 }

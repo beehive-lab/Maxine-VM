@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,10 +91,18 @@ public final class Heap {
 
     public static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
+    /**
+     * Avoid using commit / uncommit operations that relies on anonymous memory operations.
+     * These have been shown to be very expensive (on Solaris) although the cause isn't clear yet.
+     * We keep this until we understand better the performance issues.
+     */
+    public static boolean AvoidsAnonOperations = true;
+
     public static boolean OptimizeJNICritical = true;
 
     static {
         VMOptions.addFieldOption("-XX:", "OptimizeJNICritical", Heap.class, "Use GC disabling to optimize JNI 'critical' functions when heap scheme doesn't support object pinning.", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AvoidsAnonOperations", Heap.class, "Avoids using Anonymous Memory operations as much as possible.", MaxineVM.Phase.PRISTINE);
     }
 
     static class InitialHeapSizeOption extends VMSizeOption {

@@ -373,7 +373,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                         return;
                     }
                 }
-                final MaxCodeLocation bytecodeLocation = vm().codeLocationFactory().createBytecodeLocation(teleClassMethodActor, -1, "Pool constant bytecode operand");
+                final MaxCodeLocation bytecodeLocation = vm().codeLocations().createBytecodeLocation(teleClassMethodActor, -1, "Pool constant bytecode operand");
                 focus().setCodeLocation(bytecodeLocation);
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Table providing support for  linear scanning of arbitrary cards of a contiguous range of virtual addresses associated with a card table.
  *
- * Walking arbitrary cards requires that the contiguous range of virtual address is formatted to allow walking it linearly.
+ * Walking arbitrary cards requires that every contiguous range of virtual address is formatted to allow walking it linearly.
  * It also requires that the header of any object overlapping with the first word of any card
  * can be quickly retrieved (in order to figure out the layout of the object, its size, and its references locations).
  * The CardFirstObjectTable (or FOT for short) encodes per-card information allowing to find the
@@ -66,7 +66,7 @@ import com.sun.max.vm.runtime.*;
  * address and size of an object crossing a card boundary.
  *
  */
-public class CardFirstObjectTable extends Log2RegionToByteMapTable {
+public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
     static final int LOG2_NUM_WORD_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
     static final int NUM_WORD_PER_CARD = 1 << LOG2_NUM_WORD_PER_CARD;
     static final byte ZERO = 0;
@@ -75,6 +75,8 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
     static {
         VMOptions.addFieldOption("-XX:", "TraceFOT", CardFirstObjectTable.class, "Trace CardFirstObjectTable updates", Phase.PRISTINE);
     }
+
+    static private final byte HIGH_BIT = (byte) 128;
     /**
      * Bias to subtract to encoded power of two stored in FOT.
      */
@@ -112,6 +114,9 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         return cellEnd.minus(1).and(Address.fromInt(CARD_SIZE).minus(1).not()).greaterEqual(cellStart);
     }
 
+    private void setOffset(int index, byte numWords) {
+        set(index, (byte) (-numWords));
+    }
     /**
      * Set FOT entries corresponding to the cards overlapped by the specified cell.
      * If the object fit within a single card and doesn't overlap with its first word, no update take place.
@@ -138,18 +143,23 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
         // FOT entry next to that for the card that contains the start of the cell always encode a negative offset.
         final int offsetCard = firstCard + 1;
         final byte numWords = (byte) rangeStart(offsetCard).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-        set(offsetCard, numWords);
+        if (MaxineVM.isDebug() && TraceFOT) {
+            Log.print("setting FOT for card ");  Log.print(offsetCard);
+            Log.print(" = ");
+            Log.print(" #words = ");
+            Log.println(numWords);
+        }
+        setOffset(offsetCard, numWords);
         int remainingCards = numCards - 1;
         if (remainingCards == 0) {
             return;
         }
         // Subsequent LOG2_ENCODING_THRESHOLD entries encode a distance (in number of cards) to the cards holding the offset information.
         int numNonLogEncodedCards = remainingCards >= LOG2_ENCODING_THRESHOLD ? LOG2_ENCODING_THRESHOLD : remainingCards;
-        int nextCard = offsetCard + 1;
-        for (byte i = 0; i < numNonLogEncodedCards; i++) {
-            set(nextCard + i, i);
+        for (byte i = 1; i <= numNonLogEncodedCards; i++) {
+            set(offsetCard + i, i);
         }
-        nextCard += numNonLogEncodedCards;
+        int nextCard = offsetCard + numNonLogEncodedCards + 1;
 
         if (MaxineVM.isDebug() && TraceFOT) {
             Log.print("setting FOT for range [");  Log.print(cell);
@@ -189,22 +199,46 @@ public class CardFirstObjectTable extends Log2RegionToByteMapTable {
                 startInfo = get(nextCardIndex);
             }
             if (startInfo > ZERO) {
+                nextCardIndex -= startInfo;
                 startInfo = get(nextCardIndex);
             }
         }
+        if (MaxineVM.isDebug() && startInfo > 0) {
+            Log.print("Incorrect format of FOT for card #");
+            Log.print(cardIndex);
+            Log.print(" :  card #");
+            Log.print(nextCardIndex);
+            Log.print(" has negative word index ");
+            Log.println(startInfo);
+            FatalError.unexpected("word index encoded in FOT entries must be negative");
+        }
         int offset = startInfo << Word.widthValue().log2numberOfBytes;
-        assert offset <= 0 : "offset encoded in FOT entries must be negative";
-        return rangeStart(cardIndex).plus(offset);
+        return rangeStart(nextCardIndex).plus(offset);
     }
 
     void verify(Address start, Address end) {
         // iterate over all entry and verify the invariant on the first object.
         int firstCard = tableEntryIndex(start);
         int lastCard = tableEntryIndex(end);
+        if (MaxineVM.isDebug()) {
+            Log.println("Verify FOT for cards [");
+            Log.print(firstCard);
+            Log.print(", ");
+            Log.print(lastCard);
+            Log.println("]");
+        }
         for (int card = firstCard; card < lastCard; card++) {
-            Address cardStart = rangeStart(firstCard);
+            Address cardStart = rangeStart(card);
             Address firstObjectStart = cellStart(card);
-            FatalError.check(firstObjectStart.lessEqual(cardStart), "First object must be before or at the card start");
+            if (firstObjectStart.greaterThan(cardStart)) {
+                Log.print("Incorrect FOT entry for card ");
+                Log.print(card);
+                Log.print(" card start = ");
+                Log.print(cardStart);
+                Log.print(" first object = ");
+                Log.println(firstCard);
+                FatalError.unexpected("First object must be before or at the card start");
+            }
         }
     }
 

@@ -35,7 +35,7 @@ class VMLogNativeThreadVariableElementsTableModel extends VMLogNativeThreadEleme
 
     @Override
     protected int nativeRecordSize(Pointer r) {
-        int argCount = Record.getArgCount(vma.readInt(r));
+        int argCount = Record.getArgCount(vmIO.readInt(r));
         return VMLogNativeThread.ARGS_OFFSET + argCount * Word.size();
     }
 }

@@ -52,7 +52,7 @@ import com.sun.max.vm.value.*;
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  */
 public abstract class TeleNativeThread extends AbstractVmHolder
-    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, AllocationHolder, ThreadProvider {
+    implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, VmAllocationHolder<MaxThread>, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
@@ -169,12 +169,21 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.nBytes());
+        teleProcess.vm().addressSpace().add(this.teleStack.memoryRegion());
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
     }
 
-    public void updateCache(long epoch) {
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Memory-related updates get handled specially for threads, together with other state refresh.
+     */
+    public final void updateMemoryStatus(long epoch) {
+    }
+
+    public final void updateCache(long epoch) {
         if (epoch > lastUpdateEpoch) {
             Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
             if (state.allowsDataAccess()) {
@@ -192,7 +201,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         return entityName;
     }
 
-    public String entityDescription() {
+    public final String entityDescription() {
         return entityDescription;
     }
 
@@ -286,7 +295,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         // ensures that it is always in sync.
         if (isLive()) {
             try {
-                return codeLocationFactory().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
+                return codeLocations().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
             } catch (InvalidCodeAddressException e) {
                 TeleWarning.message("Bad IP address " + e.getAddressString() + " in thread " + entityName() + ": " + e.getMessage());
             }
@@ -425,6 +434,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
      * Marks the thread as having died in the process; flushes all state accordingly.
      */
     final void setDead() {
+        vm().addressSpace().remove(teleStack.memoryRegion());
         state = DEAD;
         clearFrames();
         breakpoint = null;

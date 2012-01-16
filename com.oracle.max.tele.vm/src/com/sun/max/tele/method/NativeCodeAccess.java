@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
 /**
  * The singleton manager for managing information about native function code in libraries external to the VM.
  */
-public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCache, MaxNativeCode, AllocationHolder {
+public final class NativeCodeAccess extends AbstractVmHolder implements MaxNativeCode, VmAllocationHolder<MaxNativeCode> {
 
     private static final int TRACE_VALUE = 1;
 
@@ -59,7 +59,6 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
     private final String entityName = "Native function code";
 
     private final String entityDescription;
-
 
     /**
      * Information about native function code regions discovered in the VM process.
@@ -103,7 +102,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
      * <p>
      * See if any new native libraries have been loaded since the last refresh.
      */
-    public void updateCache(long epoch) {
+    public void updateMemoryStatus(long epoch) {
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             try {
@@ -112,6 +111,7 @@ public final class NativeCodeAccess extends AbstractVmHolder implements TeleVMCa
                     if (teleNativeLibrary.functions() != null && !libraries.contains(teleNativeLibrary)) {
                         libraries.add(teleNativeLibrary);
                         nativeFunctionMemoryRegions.add(teleNativeLibrary.memoryRegion());
+                        vm().addressSpace().add(teleNativeLibrary.memoryRegion());
                         Trace.line(TRACE_VALUE, tracePrefix() + "adding dynamically loaded library: " + teleNativeLibrary.entityName());
                     }
                 }

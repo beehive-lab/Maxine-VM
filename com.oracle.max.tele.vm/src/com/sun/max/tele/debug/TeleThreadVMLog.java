@@ -57,9 +57,6 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
             return owner;
         }
 
-        public boolean isBootRegion() {
-            return false;
-        }
     }
 
     private VMLogMemoryRegion vmLogMemoryRegion;

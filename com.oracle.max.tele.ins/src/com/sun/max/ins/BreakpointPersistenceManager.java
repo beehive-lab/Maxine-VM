@@ -142,7 +142,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final String description = settings.get(this, prefix + "." + DESCRIPTION_KEY, OptionTypes.STRING_TYPE, null);
             if (inspection.vm().codeCache().contains(address)) {
                 try {
-                    final MaxCodeLocation codeLocation = inspection.vm().codeLocationFactory().createMachineCodeLocation(address, "loaded by breakpoint persistence manager");
+                    final MaxCodeLocation codeLocation = inspection.vm().codeLocations().createMachineCodeLocation(address, "loaded by breakpoint persistence manager");
                     final MaxBreakpoint breakpoint = inspection.vm().breakpointManager().makeBreakpoint(codeLocation);
                     if (condition != null) {
                         breakpoint.setCondition(condition);
@@ -195,7 +195,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 InspectorWarning.message(inspection, "Ignoring non-zero bytecode index for saved breakpoint in " + methodKey);
             }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
-            final MaxCodeLocation location = inspection.vm().codeLocationFactory().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
+            final MaxCodeLocation location = inspection.vm().codeLocations().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
             MaxBreakpoint bytecodeBreakpoint;
             try {
                 bytecodeBreakpoint = inspection.vm().breakpointManager().makeBreakpoint(location);

@@ -87,7 +87,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
     }
 
-    public MaxObjectHoldingRegion objectRegion() {
+    public VmObjectHoldingRegion objectRegion() {
         return codeCacheRegion;
     }
 

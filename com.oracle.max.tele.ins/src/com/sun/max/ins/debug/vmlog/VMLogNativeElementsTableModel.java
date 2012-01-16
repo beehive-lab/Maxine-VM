@@ -30,11 +30,11 @@ import com.sun.max.vm.log.VMLog.Record;
 
 
 abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
-    protected VmMemoryAccess vma;
+    protected VmMemoryIO vmIO;
 
     protected VMLogNativeElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection, vmLogView);
-        vma = vm.memory();
+        vmIO = vm.memoryIO();
     }
 
     private int nativeRecordSize;
@@ -69,11 +69,11 @@ abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
         if (recordAddress.isZero()) {
             return new HostedLogRecord();
         } else {
-            int header = vma.readInt(recordAddress);
+            int header = vmIO.readInt(recordAddress);
             int argCount = Record.getArgCount(header);
             Word[] args = new Word[argCount];
             for (int i = 0; i < argCount; i++) {
-                args[i] = vma.getWord(recordAddress, nativeRecordArgsOffset(), i);
+                args[i] = vmIO.getWord(recordAddress, nativeRecordArgsOffset(), i);
             }
             return new HostedLogRecord(id, header, args);
         }
