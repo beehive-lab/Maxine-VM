@@ -303,6 +303,10 @@ public class JVMTIFunctionsGenerator {
             super.close(writer);
         }
 
+        @Override
+        public void customizeOperations(PrintWriter writer) {
+        }
+
         private static String toFirstLower(String s) {
             return s.substring(0, 1).toLowerCase() + s.substring(1);
         }
@@ -329,7 +333,7 @@ public class JVMTIFunctionsGenerator {
             sb.append(INDENT8);
             sb.append("if (logger.enabled()) {\n");
             sb.append(INDENT12);
-            sb.append("logger.log(EntryPoints.");
+            sb.append("logger.log(LogOperations.");
             sb.append(JniFunctionsGenerator.currentMethod.name);
             sb.append('.');
             sb.append("ordinal()");

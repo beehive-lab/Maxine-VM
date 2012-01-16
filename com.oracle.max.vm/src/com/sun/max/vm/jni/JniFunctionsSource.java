@@ -84,19 +84,6 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static native int GetVersion(Pointer env);
 
-    private static String dottify(String slashifiedName) {
-        return slashifiedName.replace('/', '.');
-    }
-
-    private static void traceReflectiveInvocation(MethodActor methodActor) {
-        if (TraceJNI) {
-            Log.print("[Thread \"");
-            Log.print(VmThread.current().getName());
-            Log.print("\" --> JNI invoke: ");
-            Log.println(methodActor.format("%H.%n(%p)"));
-        }
-    }
-
     private static final Class[] defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
 
     @VM_ENTRY_POINT
@@ -324,7 +311,7 @@ public final class JniFunctionsSource {
         final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(virtualMethodActor);
+        logReflectiveInvocation(virtualMethodActor);
         return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
@@ -468,7 +455,7 @@ public final class JniFunctionsSource {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(selectedMethod);
+        logReflectiveInvocation(selectedMethod);
         return checkResult(expectedReturnKind, methodActor, selectedMethod.invoke(argumentValues));
 
     }
@@ -582,7 +569,7 @@ public final class JniFunctionsSource {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(virtualMethodActor);
+        logReflectiveInvocation(virtualMethodActor);
         return checkResult(expectedReturnKind, methodActor, virtualMethodActor.invoke(argumentValues));
     }
 
@@ -864,7 +851,7 @@ public final class JniFunctionsSource {
         final SignatureDescriptor signature = methodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(methodActor);
+        logReflectiveInvocation(methodActor);
         return checkResult(expectedReturnKind, methodActor, methodActor.invoke(argumentValues));
     }
 

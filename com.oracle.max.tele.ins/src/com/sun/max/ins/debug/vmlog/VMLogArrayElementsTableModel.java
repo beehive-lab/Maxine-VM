@@ -42,7 +42,7 @@ class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
     @Override
     protected HostedLogRecord getRecordFromVM(int id) {
         TeleVM vm = (TeleVM) vm();
-        int index = id % logRecordCache.length;
+        int index = id % vmLogView.logBufferEntries;
         Reference recordRef = teleLogArrayBuffer.readElementValue(index).asReference();
         return new HostedLogRecord(
                     id,

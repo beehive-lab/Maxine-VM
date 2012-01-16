@@ -69,7 +69,7 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
         super(vm);
         this.teleNativeThread = teleNativeThread;
         this.entityName = "VM log for Thread-" + teleNativeThread.localHandle();
-        this.entityDescription = "VM log for rhe thread named " + teleNativeThread.entityName();
+        this.entityDescription = "VM log for the thread named " + teleNativeThread.entityName();
     }
 
     public void updateCache(long epoch) {
@@ -81,7 +81,7 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
                         MaxThreadLocalVariable tlaBuf = tla.getThreadLocalVariable(vmtl.index);
                         Address addr = tlaBuf.value().toWord().asAddress();
                         if (addr.isNotZero()) {
-                            int size = vm().fields().VMLogNativeThread_threadLogSize.readInt(vm().fields().VMLog_vmLog.readReference(vm()));
+                            int size = vm().fields().VMLogNative_logSize.readInt(vm().fields().VMLog_vmLog.readReference(vm()));
                             vmLogMemoryRegion = new VMLogMemoryRegion(vm(), this, entityName + " VMLog", addr, size);
                         }
                     } else if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME)) {

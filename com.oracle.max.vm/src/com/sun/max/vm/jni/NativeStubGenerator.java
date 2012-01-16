@@ -25,7 +25,6 @@ package com.sun.max.vm.jni;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -35,9 +34,11 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger;
 
 /**
  * A utility class for generating bytecode that implements the transition
@@ -107,7 +108,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      */
     private static final ClassMethodRefConstant jniEnv = createClassMethodConstant(VmThread.class, makeSymbol("jniEnv"));
     private static final ClassMethodRefConstant currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
-    private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
     private static final ClassMethodRefConstant handlesCount = createClassMethodConstant(JniHandles.class, makeSymbol("handlesCount"), SignatureDescriptor.class);
     private static final ClassMethodRefConstant throwJniException = createClassMethodConstant(VmThread.class, makeSymbol("throwJniException"));
     private static final ClassMethodRefConstant getHandle = createClassMethodConstant(JniHandles.class, makeSymbol("getHandle"), Pointer.class, int.class, Object.class);
@@ -115,18 +115,23 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
     private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(VmThread.class, makeSymbol("jniHandlesTop"));
     private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(VmThread.class, makeSymbol("resetJniHandlesTop"), int.class);
-    private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
-    private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
-    private static final FieldRefConstant traceJNI = createFieldConstant(JniFunctions.class, makeSymbol("TraceJNI"));
+    private static final FieldRefConstant jniLogger = createFieldConstant(JniFunctions.class, makeSymbol("logger"));
+    private static final FieldRefConstant downCallEntry = createFieldConstant(JxxFunctionsLogger.class, makeSymbol("DOWNCALL_ENTRY"));
+    private static final FieldRefConstant downCallExit = createFieldConstant(JxxFunctionsLogger.class, makeSymbol("DOWNCALL_EXIT"));
+    private static final ClassMethodRefConstant log0 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class);
+    private static final ClassMethodRefConstant fromMethodActor = createClassMethodConstant(MethodID.class, makeSymbol("fromMethodActor"), MethodActor.class);
+    private static final ClassMethodRefConstant log1 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class, Word.class);
+    private static final ClassMethodRefConstant log2 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class, Word.class, Word.class);
+    private static final FieldRefConstant logEnabled = createFieldConstant(VMLogger.class, makeSymbol("logEnabled"));
     private static final ClassMethodRefConstant link = createClassMethodConstant(NativeFunction.class, makeSymbol("link"));
     private static final ClassMethodRefConstant nativeCallPrologue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologue"), NativeFunction.class);
     private static final ClassMethodRefConstant nativeCallPrologueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologueForC"), NativeFunction.class);
     private static final ClassMethodRefConstant nativeCallEpilogue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallEpilogue"));
     private static final ClassMethodRefConstant nativeCallEpilogueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallEpilogueForC"));
-    private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private static final ClassMethodRefConstant writeObject = createClassMethodConstant(Pointer.class, makeSymbol("writeObject"), int.class, Object.class);
 
+    private int methodIDLocal;
     /**
      * Allocates a block of handles and copies the object arguments into the block.
      *
@@ -204,6 +209,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             currentThread = allocateLocal(Kind.REFERENCE);
             astore(currentThread);
 
+            methodIDLocal = allocateLocal(Kind.WORD);
             verboseJniEntry();
 
             // Save current JNI frame.
@@ -341,21 +347,26 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-                getstatic(traceJNI);
+                getfield(logEnabled);
                 final Label noTracing = newLabel();
                 ifeq(noTracing);
-                traceJniEntry();
+                logJniEntry();
                 noTracing.bind();
             } else {
-                traceJniEntry();
+                logJniEntry();
             }
         }
     }
 
-    private void traceJniEntry() {
-        invokestatic(traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" --> JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
-        invokestatic(logPrintln_String, 1, 0);
+    private void logJniEntry() {
+        getstatic(jniLogger);
+        ldc(PoolConstantFactory.createIntegerConstant(JniFunctions.LogOperations.NativeMethodCall.ordinal()));
+        getstatic(downCallEntry);
+        ldc(PoolConstantFactory.createObjectConstant(classMethodActor));
+        invokestatic(fromMethodActor, 1, 1);
+        dup();
+        astore(methodIDLocal);
+        invokevirtual(log2, 4, 0);
     }
 
     /**
@@ -365,27 +376,23 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-                getstatic(traceJNI);
+                getfield(logEnabled);
                 final Label notVerbose = newLabel();
                 ifeq(notVerbose);
-                traceJniExit();
+                logJniExit();
                 notVerbose.bind();
             } else {
-                traceJniExit();
+                logJniExit();
             }
         }
     }
 
-    @NEVER_INLINE
-    private void traceJniExit() {
-        invokestatic(traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
-        invokestatic(logPrintln_String, 1, 0);
+    private void logJniExit() {
+        getstatic(jniLogger);
+        ldc(PoolConstantFactory.createIntegerConstant(JniFunctions.LogOperations.NativeMethodCall.ordinal()));
+        getstatic(downCallExit);
+        aload(methodIDLocal);
+        invokevirtual(log2, 4, 0);
     }
 
-    @NEVER_INLINE
-    private static void traceCurrentThreadPrefix() {
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
-    }
 }
