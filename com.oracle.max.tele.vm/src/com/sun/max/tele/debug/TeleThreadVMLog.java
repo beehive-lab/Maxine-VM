@@ -64,6 +64,7 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
     private final String entityName;
     private final String entityDescription;
     MaxThreadLocalVariable bufOffsets;
+    private int lastId;
 
     public TeleThreadVMLog(TeleVM vm, TeleNativeThread teleNativeThread) {
         super(vm);
