@@ -27,6 +27,7 @@ import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.*;
@@ -67,6 +68,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     private static final int TRACE_VALUE = 1;
 
     private static VmObjectAccess vmObjectAccess;
+
+    final Address zappedMarker = Address.fromLong(Memory.ZAPPED_MARKER);
 
     public static VmObjectAccess make(TeleVM vm) {
         if (vmObjectAccess == null) {
@@ -204,9 +207,10 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * to complete the check, for example if the VM is busy or terminated
      */
     public boolean isObjectOriginHeuristic(Address origin) {
-        if (origin.isZero()) {
+        if (origin.isZero() || origin.equals(zappedMarker)) {
             return false;
         }
+
         try {
             // Check using none of the higher level services in the Inspector,
             // since this predicate is necessary to build those services.
@@ -222,12 +226,22 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             // class {@link DynamicHub}.
             //
             //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin));
+            Pointer p = origin.asPointer();
+            if (heap().isInGC() && heap().contains(origin) && isObjectForwarded(p)) {
+                p = heap().getForwardedOrigin(p).asPointer();
+            }
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(p));
             for (int i = 0; i < 3; i++) {
+                if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
+                    return false;
+                }
                 final RemoteTeleReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
-                final Pointer hubOrigin = hubRef.toOrigin();
+                Pointer hubOrigin = hubRef.toOrigin();
                 if (!heap().contains(hubOrigin)) {
                     return false;
+                }
+                if (heap().isInGC() && isObjectForwarded(hubOrigin)) {
+                    hubOrigin = heap().getForwardedOrigin(hubOrigin).asPointer();
                 }
                 final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
                 if (nextHubWord.equals(hubWord)) {
@@ -238,7 +252,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                     }
                     // This longer chain can only happen when we started with a {@link StaticTuple}.
                     // Perform a more precise test to check for this.
-                    return isStaticTuple(origin);
+                    return isStaticTuple(p);
                 }
                 hubWord = nextHubWord;
             }
