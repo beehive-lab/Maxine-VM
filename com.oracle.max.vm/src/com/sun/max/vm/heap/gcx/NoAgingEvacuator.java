@@ -266,8 +266,10 @@ public final class NoAgingEvacuator extends Evacuator {
     protected void evacuateReachables() {
         updateSurvivorRanges();
         while (!survivorRanges.isEmpty()) {
-            evacuateRange(survivorRanges.start(), survivorRanges.end());
+            final Pointer start = survivorRanges.start();
+            final Pointer end = survivorRanges.end();
             survivorRanges.remove();
+            evacuateRange(start, end);
             updateSurvivorRanges();
         }
     }
