@@ -26,8 +26,10 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 /**
  * A simple evacuator that evacuates only from one space to another, without aging.
  * The evacuator is parameterized with two heap space.
@@ -37,7 +39,7 @@ import com.sun.max.vm.reference.*;
  * This makes the evacuator independent of the detail of survivor ranges tracking and imprecise rset subtleties.
  */
 public final class NoAgingEvacuator extends Evacuator {
-    /**
+   /**
      * Heap Space that is being evacuated.
      */
     final HeapSpace fromSpace;
@@ -111,11 +113,19 @@ public final class NoAgingEvacuator extends Evacuator {
     private final HeapSpaceRangeVisitor heapSpaceDirtyCardClosure = new HeapSpaceRangeVisitor() {
         @Override
         public void visitCells(Address start, Address end) {
+            if (MaxineVM.isDebug() && HeapRangeDumper.DumpOnError && dumper != null) {
+                dumper.setRange(start, end);
+                FatalError.setOnVMOpError(dumper);
+            }
             rset.cleanAndVisitCards(start, end, NoAgingEvacuator.this);
+            if (MaxineVM.isDebug()) {
+                FatalError.setOnVMOpError(null);
+            }
         }
     };
 
-    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold, SurvivorRangesQueue queue, Size labSize) {
+    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold, SurvivorRangesQueue queue, Size labSize, HeapRangeDumper dumper) {
+        super(dumper);
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;

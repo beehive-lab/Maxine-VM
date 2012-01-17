@@ -78,12 +78,18 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     }
 
     private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
-        final int length = Layout.readArrayLength(refArrayOrigin);
+        final int endOfArrayIndex = Layout.readArrayLength(refArrayOrigin) + FIRST_ELEMENT_INDEX;
         final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
-        final Address endOfArrayAddr = firstElementAddr.plusWords(length);
-        final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
-        final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
+        final Address endOfArrayAddr = refArrayOrigin.plusWords(endOfArrayIndex);
+        final int firstIndex = start.greaterThan(firstElementAddr) ? start.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : FIRST_ELEMENT_INDEX;
+        final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : endOfArrayIndex;
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
+    }
+
+    protected final HeapRangeDumper dumper;
+
+    protected Evacuator(HeapRangeDumper dumper) {
+        this.dumper = dumper;
     }
 
 
@@ -236,7 +242,10 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         // the reference map needed to find the other references in the object
         updateEvacuatedRef(origin,  HUB_WORD_INDEX);
         final Hub hub = getHub(origin);
-        // Update the other references in the object
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
+        }
+       // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
@@ -289,6 +298,9 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             updateEvacuatedRef(origin,  HUB_WORD_INDEX);
         }
         final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
+        }
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
