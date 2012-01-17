@@ -54,7 +54,7 @@ public class JniFunctionsGenerator {
     static final int BEFORE_FIRST_JNI_FUNCTION = -1;
     static final int BEFORE_JNI_FUNCTION = 0;
     static final int BEFORE_PROLOGUE = 1;
-    static ArrayList<String> entryPointNames;
+    static ArrayList<String> logOperations;
     public static JniFunctionDeclaration currentMethod;
 
     /**
@@ -134,25 +134,26 @@ public class JniFunctionsGenerator {
         }
     }
 
-    public static class Customizer {
+    public abstract static class Customizer {
         public String customizeBody(String line) {
             return line;
         }
 
         public void startFunction(JniFunctionDeclaration decl) {
             currentMethod = decl;
-            entryPointNames.add(decl.name);
+            logOperations.add(decl.name);
         }
 
         public void close(PrintWriter writer) {
-            writer.println("    public static enum EntryPoints {");
-            for (int i = 0; i < entryPointNames.size(); i++) {
-                String methodName = entryPointNames.get(i);
+            writer.println("    public static enum LogOperations {");
+            for (int i = 0; i < logOperations.size(); i++) {
+                String methodName = logOperations.get(i);
                 if (i > 0) {
                     writer.println(",");
                 }
                 writer.printf("        /* %d */ %s", i, methodName);
             }
+            customizeOperations(writer);
             writer.println(";\n");
             writer.println("    }");
         }
@@ -165,10 +166,32 @@ public class JniFunctionsGenerator {
             return result;
         }
 
+        public void customizeOperations(PrintWriter writer) {
+            // op for user downcalls/invoke
+            writer.printf(",\n        // operation for logging native method down call\n");
+            writer.printf("        /* %d */ %s", logOperations.size(), "NativeMethodCall");
+            writer.printf(",\n        // operation for logging reflective invocation\n");
+            writer.printf("        /* %d */ %s", logOperations.size() + 1, "ReflectiveInvocation");
+            writer.printf(",\n        // operation for logging dynamic linking\n");
+            writer.printf("        /* %d */ %s", logOperations.size() + 2, "DynamicLink");
+            writer.printf(",\n        // operation for logging native method registration\n");
+            writer.printf("        /* %d */ %s", logOperations.size() + 3, "RegisterNativeMethod");
+        }
+
+        public abstract String customizeTracePrologue(JniFunctionDeclaration decl);
+
+        public abstract String customizeTraceEpilogue(JniFunctionDeclaration decl);
+
+    }
+
+    public static class JniCustomizer extends Customizer {
+
+        @Override
         public String customizeTracePrologue(JniFunctionDeclaration decl) {
             return entryLogging();
         }
 
+        @Override
         public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
             return exitLogging();
         }
@@ -177,10 +200,10 @@ public class JniFunctionsGenerator {
             StringBuilder sb = new StringBuilder();
             String[] args = getDefaultArgs();
             sb.append("        if (logger.enabled()) {\n");
-            sb.append("            logger.log(EntryPoints.");
+            sb.append("            logger.log(LogOperations.");
             sb.append(currentMethod.name);
             sb.append('.');
-            sb.append("ordinal(), ENTRY, anchor");
+            sb.append("ordinal(), UPCALL_ENTRY, anchor");
             for (int i = 0; i < args.length; i++) {
                 String tag = args[i];
                 sb.append(", ");
@@ -194,10 +217,10 @@ public class JniFunctionsGenerator {
         private static String exitLogging() {
             StringBuilder sb = new StringBuilder();
             sb.append("            if (logger.enabled()) {\n");
-            sb.append("                logger.log(EntryPoints.");
+            sb.append("                logger.log(LogOperations.");
             sb.append(currentMethod.name);
             sb.append('.');
-            sb.append("ordinal(), EXIT);\n");
+            sb.append("ordinal(), UPCALL_EXIT);\n");
             sb.append("            }\n");
             return sb.toString();
         }
@@ -225,7 +248,7 @@ public class JniFunctionsGenerator {
     }
 
     public static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
-        return generate(checkOnly, source, target, new Customizer());
+        return generate(checkOnly, source, target, new JniCustomizer());
     }
 
     /**
@@ -255,7 +278,7 @@ public class JniFunctionsGenerator {
         int state = BEFORE_FIRST_JNI_FUNCTION;
         Writer writer = new StringWriter();
         PrintWriter out = new PrintWriter(writer);
-        entryPointNames = new ArrayList<String>();
+        logOperations = new ArrayList<String>();
 
         while ((line = lr.readLine()) != null) {
 

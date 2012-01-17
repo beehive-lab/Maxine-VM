@@ -41,6 +41,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.Package;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -295,6 +296,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
+        VMLog.bootImageInitialize();
         VmThreadLocal.completeInitialization();
     }
 

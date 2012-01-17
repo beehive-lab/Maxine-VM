@@ -280,7 +280,8 @@ void* getJVMTIInterface(int version);
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
-                Address etla,
+                Address tlBlock,
+                int tlBlockSize,
                 Address bootHeapRegionStart,
                 void *openLibrary(char *),
                 void *dlsym(void *, const char *),
@@ -343,14 +344,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
-
-    Address etla = ETLA_FROM_TLBLOCK(tlBlock);
+    NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
-                    etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
+                    tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

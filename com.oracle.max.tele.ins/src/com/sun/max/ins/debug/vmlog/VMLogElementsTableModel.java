@@ -22,38 +22,100 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
 
 
 abstract class VMLogElementsTableModel extends InspectorTableModel {
 
+    public static class HostedLogRecord extends VMLog.Record implements Comparable<HostedLogRecord> {
+        public final int header;
+        public final int id;
+        public final Word[] args;
+
+        HostedLogRecord(int id, int header, Word... args) {
+            this.id = id;
+            this.header = header;
+            this.args = args;
+        }
+
+        /**
+         * For when we can't access VM but need to create a record.
+         */
+        HostedLogRecord() {
+            header = 0;
+            id = 0;
+            args = new Word[0];
+        }
+
+        @Override
+        public String toString() {
+            if (VMLog.Record.isFree(header)) {
+                return "free";
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append("id=");
+                sb.append(id);
+                sb.append(",lid=");
+                sb.append(VMLog.Record.getLoggerId(header));
+                sb.append(",th=");
+                sb.append(VMLog.Record.getThreadId(header));
+                sb.append(",op=");
+                sb.append(VMLog.Record.getOperation(header));
+                sb.append(",ac");
+                sb.append(VMLog.Record.getArgCount(header));
+                return sb.toString();
+            }
+        }
+
+        @Override
+        public int getHeader() {
+            return header;
+        }
+
+        @Override
+        public void setHeader(int header) {
+            assert false;
+        }
+
+        public int compareTo(HostedLogRecord other) {
+            if (id < other.id) {
+                return -1;
+            } else if (id > other.id) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+
+
     protected TeleVM vm;
 
     /**
-     * Cache of the (logical) circular buffer of log records in the target VM.
+     * Cache of the (logical) buffer of log records in the target VM.
      * Logical in the sense that per-thread log buffers are reconstituted into
      * a single, ordered, log in the Inspector.
      *
-     * The length may change in the case of per-thread buffers
-     * with variable length records, {@link VMLogNativeThreadVariableElementsTableModel},
-     * and will always be at least {@link #actualLogBufferEntries}.
+     * Although most VM implementations use a circular buffer and eventually
+     * overwrite records we keep them all. (At some point may add a capability
+     * to flush old records).
      *
-     * Only the elements in the range{@code 0 .. actualLogBufferEntries - 1} are valid.
+     * Note that overwritten records may not be seen if the time between entries to the
+     * Inspector is sufficiently long that the circular buffer wraps.
+     * This could be addressed by a hidden breakpoint that was triggered
+     * appropriately.
      *
      */
-    HostedLogRecord[] logRecordCache;
+    protected List<HostedLogRecord> logRecordCache;
 
-    /**
-     * Usually equal to {@link #logBufferEntries} but, in the case of per-thread buffers
-     * and/or variable length records, {@link VMLogNativeThreadVariableElementsTableModel},
-     * the values may differ.
-     */
-    protected int actualLogBufferEntries;
     /**
      * During {@link #refresh}, this holds the new value of the {@link VMLog#nextId} field,
      * which is the id of the next record that will be written.
@@ -68,11 +130,13 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     protected VMLogView vmLogView;
 
+    private int[] displayedRows;
+
     protected VMLogElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection);
         vm = (TeleVM) vm();
         this.vmLogView = vmLogView;
-        logRecordCache = new HostedLogRecord[vmLogView.logBufferEntries];
+        logRecordCache = new ArrayList<HostedLogRecord>(vmLogView.logBufferEntries);
     }
 
     public int getColumnCount() {
@@ -84,14 +148,27 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      * @return
      */
     public int getRowCount() {
-        return actualLogBufferEntries;
+        return displayedRows == null ? logRecordCache.size() : displayedRows.length;
+    }
+
+    public void setDisplayedRows(int[] displayedRows) {
+        this.displayedRows = displayedRows;
+        this.fireTableDataChanged();
+    }
+
+    private int displayed2ModelRow(int displayedRow) {
+        return displayedRows == null ? displayedRow : displayedRows[displayedRow];
+    }
+
+    HostedLogRecord getRecord(int row) {
+        return logRecordCache.get(displayed2ModelRow(row));
     }
 
     /**
      * Get the value of the slot in the log buffer at the given logical row and column.
      */
     public Object getValueAt(int row, int col) {
-        HostedLogRecord record = logRecordCache[row];
+        HostedLogRecord record = getRecord(row);
         if (record == null) {
             TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
         }
@@ -154,10 +231,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
     public void refresh() {
         nextId = vmLogView.nextIdFieldAccess.readInt(vmLogView.vmLogRef);
         if (nextId != lastNextId) {
-            // Some new records; we could try to be clever and just figure out what changed
-            // but for now we just read everything into the record cache (underlying page caching helps).
-            // This also makes it easy to keep the record cache logical in the sense that index 0 is the first
-            // slot in the circular buffer and not index 0 in (any) target VM log array.
+            // Some new records.
             // The maximum possible number of records is nextId - lastNextId,
             // as that is the total number allocated since the last refresh.
             // However, depending on the target implementation, it is entirely possible
@@ -165,23 +239,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
             modelSpecificRefresh();
 
-            int id = firstId();
-            int cacheIndex = 0;
-
-            while (id < nextId) {
-                logRecordCache[cacheIndex++] = getRecordFromVM(id);
-                id = stepId(id);
-            }
             lastNextId = nextId;
-        } else {
-            // one very special case - the last refresh was after nextId was bumped
-            // but before the record was filled in.
-            if (lastNextId != 0 && logRecordCache[actualLogBufferEntries - 1].header == 0) {
-                int id = lastNextId - 1;
-                // re-read the record
-                HostedLogRecord record = getRecordFromVM(id);
-                logRecordCache[actualLogBufferEntries - 1] = record;
-            }
         }
         super.refresh();
     }
@@ -208,37 +266,37 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
 
     /**
-     * Responsible for setting the value of {@link #actualLogBufferEntries}.
-     * Plus do any model-specific refresh before the main refresh happens.
+     * Responsible for any model-specific refresh before the main refresh happens.
      * E.g., collecting together the thread-specific records in {@link NativeThreadFixedLogElementsTableModel per-thread buffer model}.
-     * Default assume shared buffer with fixed size records.
      */
     protected void modelSpecificRefresh() {
-        actualLogBufferEntries = nextId > vmLogView.logBufferEntries ? vmLogView.logBufferEntries : nextId;
+        int id = firstId();
+
+        while (id < nextId) {
+            logRecordCache.add(getRecordFromVM(id));
+            id++;
+        }
     }
 
     /**
-     * Return the first id available in this model.
-     * Default assumes contiguous id range, i.e. shared buffer.
+     * Return the first id to start gathering new records from.
+     * Default assumes contiguous id range, i.e. global, shared, buffer, handling case
+     * where some records have been overwritten.
      * @return
      */
     protected int firstId() {
-        return nextId > actualLogBufferEntries ? nextId - actualLogBufferEntries : 0;
-    }
-
-    /**
-     * Step to the next id in this model.
-     * Default assumes contiguous id range, i.e. shared buffer.
-     * @param id
-     * @return
-     */
-    protected int stepId(int id) {
-        return id + 1;
+        if (nextId - lastNextId > vmLogView.logBufferEntries) {
+            // missed some records
+            return nextId - vmLogView.logBufferEntries;
+        } else {
+            // pick up where we left off
+            return lastNextId;
+        }
     }
 
     /**
      * Create a {@link HostedLogRecord} from the target VM record.
-     * @param id the id of the record (B.B. may not be stored in target). {@code nextId - logRecordCache.length <= id < nextId}.
+     * @param id the id of the record (N.B. may not be stored in target).
      * @return
      */
     protected abstract HostedLogRecord getRecordFromVM(int id);

@@ -39,7 +39,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
+import com.sun.max.vm.jni.JniFunctionsGenerator.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 
@@ -297,13 +297,13 @@ public final class NativeInterfaces {
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
      */
     public static boolean verbose() {
-        return verboseOption.verboseJNI || JniFunctions.TraceJNI;
+        return verboseOption.verboseJNI;
     }
 
     @HOSTED_ONLY
     private static void checkGenerateSourcesInSync(Class source, Class target, Customizer customizer) {
         try {
-            if (JniFunctionsGenerator.generate(true, source, target, customizer == null ? new Customizer() : customizer)) {
+            if (JniFunctionsGenerator.generate(true, source, target, customizer == null ? new JniCustomizer() : customizer)) {
                 String thisFile = target.getSimpleName() + ".java";
                 String sourceFile = source.getSimpleName() + ".java";
                 FatalError.unexpected(String.format("%n%n" + thisFile +

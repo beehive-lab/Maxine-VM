@@ -30,6 +30,7 @@ import java.util.regex.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -104,10 +105,10 @@ public class VMLogger {
     private final VMBooleanXXOption traceOption;
     private final VMStringOption logIncludeOption;
     private final VMStringOption logExcludeOption;
-    private boolean log;
-    private boolean trace;
+    private boolean logEnabled;
+    private boolean traceEnabled;
 
-    private final VMLog vmLog;
+    private VMLog vmLog;
 
     @HOSTED_ONLY
     protected VMLogger(String name, int numOps) {
@@ -117,7 +118,7 @@ public class VMLogger {
         logOp = new BitSet(numOps);
         // At VM startup we log everything; this gets refined once the VM is up in checkLogging.
         // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
-        log = true;
+        logEnabled = true;
         for (int i = 0; i < numOps; i++) {
             logOp.set(i, true);
         }
@@ -130,8 +131,11 @@ public class VMLogger {
         VMOptions.register(traceOption, MaxineVM.Phase.PRISTINE);
         VMOptions.register(logIncludeOption, MaxineVM.Phase.PRISTINE);
         VMOptions.register(logExcludeOption, MaxineVM.Phase.PRISTINE);
-        vmLog = VMLog.vmLog();
-        vmLog.registerLogger(this);
+        VMLog.registerLogger(this);
+    }
+
+    public void setVMLog(VMLog vmLog) {
+        this.vmLog = vmLog;
     }
 
     public String threadName(int id) {
@@ -160,12 +164,12 @@ public class VMLogger {
 
     @INLINE
     public final boolean enabled() {
-        return log;
+        return logEnabled;
     }
 
     @INLINE
     public final boolean traceEnabled() {
-        return trace;
+        return traceEnabled;
     }
 
     /**
@@ -190,9 +194,9 @@ public class VMLogger {
     }
 
     protected void checkLogOptions() {
-        trace = traceOption.getValue();
-        log = trace | logOption.getValue();
-        if (log) {
+        traceEnabled = traceOption.getValue();
+        logEnabled = traceEnabled | logOption.getValue();
+        if (logEnabled) {
             String logInclude = logIncludeOption.getValue();
             String logExclude = logExcludeOption.getValue();
             if (logInclude != null || logExclude != null) {
@@ -219,9 +223,9 @@ public class VMLogger {
         }
     }
 
-    private Record log(int op, int argCount) {
+    private Record logSetup(int op, int argCount) {
         Record r = null;
-        if (log && logOp.get(op)) {
+        if (logEnabled && logOp.get(op)) {
             r = vmLog.getRecord(argCount);
             r.setHeader(op, argCount, loggerId);
         }
@@ -229,83 +233,86 @@ public class VMLogger {
     }
 
     public void log(int op) {
-        Record r = log(op, 0);
-        if (r != null && trace) {
+        Record r = logSetup(op, 0);
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1) {
-        Record r = log(op, 1);
+        Record r = logSetup(op, 1);
         if (r != null) {
             r.setArgs(arg1);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2) {
-        Record r = log(op, 2);
+        Record r = logSetup(op, 2);
         if (r != null) {
             r.setArgs(arg1, arg2);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3) {
-        Record r = log(op, 3);
+        Record r = logSetup(op, 3);
         if (r != null) {
             r.setArgs(arg1, arg2, arg3);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4) {
-        Record r = log(op, 4);
+        Record r = logSetup(op, 4);
         if (r != null) {
             r.setArgs(arg1, arg2, arg3, arg4);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5) {
-        Record r = log(op, 5);
+        Record r = logSetup(op, 5);
         if (r != null) {
             r.setArgs(arg1, arg2, arg3, arg4, arg5);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6) {
-        Record r = log(op, 6);
+        Record r = logSetup(op, 6);
         if (r != null) {
             r.setArgs(arg1, arg2, arg3, arg4, arg5, arg6);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
-        Record r = log(op, 7);
+        Record r = logSetup(op, 7);
         if (r != null) {
             r.setArgs(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
-        if (r != null && trace) {
+        if (r != null && traceEnabled) {
             doTrace(r);
         }
     }
 
     private void doTrace(Record r) {
+        if (!DynamicLinker.isCriticalLinked()) {
+            return;
+        }
         boolean lockDisabledSafepoints = Log.lock();
         trace(r);
         Log.unlock(lockDisabledSafepoints);

@@ -26,6 +26,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -44,6 +45,9 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class VMLogNative extends VMLog {
 
+    /**
+     * Where the per-thread instance of {@link NativeRecord} is stored.
+     */
     private static final VmThreadLocal VMLOG_RECORD = new VmThreadLocal("VMLOG_RECORD", true, "VMLog.Record");
 
     @INTRINSIC(UNSAFE_CAST) private static native NativeRecord asNativeRecord(Object object);
@@ -128,28 +132,74 @@ public abstract class VMLogNative extends VMLog {
             this.argsOffset = argsOffset;
         }
 
+        /**
+         * Size of a log record in the native buffer.
+         * Default implementation assumes maximum args, fixed size.
+         * @return
+         */
         public int size() {
             return argsOffset + VMLog.Record.MAX_ARGS * Word.size();
         }
 
     }
 
-    protected static final NativeRecord primordialNativeRecord = new NativeRecord();
+    /**
+     * Used to communicate with {@link VMLogger} in PRIMORDIAL phase, so allocated at BOOTSTRAPPING.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    protected static NativeRecord primordialNativeRecord;
 
+    /**
+     * Size of a native log record in bytes (sans arguments).
+     */
+    @CONSTANT_WHEN_NOT_ZERO
     @INSPECTED
-    protected int nativeRecordSize;
+    protected int maxNativeRecordSize;
 
+    /**
+     * Offset to start of arguments area.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
     @INSPECTED
-    protected int nativeRecordArgsOffset;
+    private int nativeRecordArgsOffset;
+
+    /**
+     * Since we must log before it is even possible to call any native functions,
+     * this byte array provides s pre-allocated, non-moving area.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    private byte[] primordialLogBufferArray;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Offset byteDataOffset;
+
+    /**
+     * Size of primordial logBuffer and subsequently allocated log buffers.
+     */
+    @INSPECTED
+    protected int logSize;
+
+    /**
+     * Address of the actual data area in {@link #primordialLogBufferArray}.
+     */
+    @INSPECTED
+    protected Address logBuffer;
 
     @Override
-    public void initialize() {
-        super.initialize();
-        nativeRecordArgsOffset = getArgsOffset();
-        primordialNativeRecord.setArgsOffset(nativeRecordArgsOffset);
-        nativeRecordSize = primordialNativeRecord.size();
-        // make sure we have a NativeRecord for the primordial phase
-        VMLOG_RECORD.store3(Reference.fromJava(primordialNativeRecord));
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
+            nativeRecordArgsOffset = getArgsOffset();
+            primordialNativeRecord = new NativeRecord(nativeRecordArgsOffset);
+            primordialNativeRecord.setArgsOffset(nativeRecordArgsOffset);
+            maxNativeRecordSize = primordialNativeRecord.size();
+            logSize = getLogSize();
+            primordialLogBufferArray = new byte[logSize];
+        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            logBuffer = Reference.fromJava(primordialLogBufferArray).toOrigin().plus(byteDataOffset);
+            VMLOG_RECORD.store3(Reference.fromJava(primordialNativeRecord));
+        }
     }
 
     @NEVER_INLINE
@@ -171,5 +221,8 @@ public abstract class VMLogNative extends VMLog {
     }
 
     protected abstract int getArgsOffset();
+
+    protected abstract int getLogSize();
+
 
 }
