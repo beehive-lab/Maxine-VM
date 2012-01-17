@@ -220,7 +220,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         // iterate over all entry and verify the invariant on the first object.
         int firstCard = tableEntryIndex(start);
         int lastCard = tableEntryIndex(end);
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && TraceFOT) {
             Log.println("Verify FOT for cards [");
             Log.print(firstCard);
             Log.print(", ");

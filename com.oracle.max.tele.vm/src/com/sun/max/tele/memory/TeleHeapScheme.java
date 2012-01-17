@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.memory;
 
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
@@ -29,6 +31,8 @@ import com.sun.max.unsafe.*;
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
  */
 public interface TeleHeapScheme extends TeleScheme {
+
+    List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
 
     /**
      * Gets whatever is known about a particular location in VM memory with respect

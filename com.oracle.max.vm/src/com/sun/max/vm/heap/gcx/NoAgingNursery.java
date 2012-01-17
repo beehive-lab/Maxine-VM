@@ -41,11 +41,8 @@ public class NoAgingNursery implements HeapSpace {
                 size = allocator.size();
                 // TODO: condition for OOM
             }
-            FatalError.check(allocator.usedSpace().equals(Size.zero()) && allocator.freeSpace().equals(allocator.size()), "GC must have reseted the nursery's allocator");
-            // Format the allocator's space as a heap free chunk to comply with the allocateRefill interface.
-            // This is pure overhead induced by the BaseAtomicBumpPointerAllocator interface.
-            HeapFreeChunk.format(allocator.top, allocator.freeSpace());
-            return allocator.top;
+            // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
+            return allocator.start;
         }
 
         @Override
@@ -145,7 +142,13 @@ public class NoAgingNursery implements HeapSpace {
         if (MaxineVM.isDebug()) {
             allocator.zap();
         }
-        allocator.reset();
+        // Format the allocator's space as a heap free chunk to comply with the allocateRefill interface.
+        // This is pure overhead induced by the BaseAtomicBumpPointerAllocator interface.
+        HeapFreeChunk.format(allocator.start, allocator.size());
+        // We leave the allocator in the "full state" (i.e., top == hardLimit) to avoid the mutator doing the refill racing with
+        // other mutators allocating as soon as we're out of the safepoint. That is, allocating requeste will be forced to
+        // queue on the refill lock until the thread that caused the GC has perform the refill.
+        // Doing otherwise requires changing the BaseAtomicBumpPointerAllocator.refillOrAllocate logic.
     }
 
     @Override
