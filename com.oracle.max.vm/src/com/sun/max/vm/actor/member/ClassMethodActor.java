@@ -67,6 +67,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * {@link #compilee()} works as expected. This correctness is guaranteed as long as the
      * compiler follows all the rules of the Java Memory Model as of JDK5 (JSR-133).
      */
+    @INSPECTED
     private volatile ClassMethodActor compilee;
 
     /**
