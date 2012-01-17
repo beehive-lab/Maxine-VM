@@ -43,6 +43,10 @@ public final class Memory {
     }
 
     public static final OutOfMemoryError OUT_OF_MEMORY_ERROR = new OutOfMemoryError();
+    /**
+     * Marker used for filling dead heap area when in debug mode.
+     * Note: the low-order bit must be 0 so the marker isn't confused with a forwarder.
+     */
     public static final long ZAPPED_MARKER = 0xDEADBEEFCAFEBABEL;
 
     @C_FUNCTION

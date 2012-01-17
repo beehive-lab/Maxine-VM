@@ -46,6 +46,34 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         VMOptions.addFieldOption("-XX:", "TraceEvacVisitedCell", Evacuator.class, "Trace cells visited by the evacuator (Debug mode only)", Phase.PRISTINE);
     }
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this);
+
+    private boolean refDiscoveryEnabled = true;
+
+    private void updateSpecialReference(Pointer origin) {
+        if (refDiscoveryEnabled) {
+            SpecialReferenceManager.discoverSpecialReference(origin);
+        } else {
+            // Treat referent as strong reference.
+            if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
+                final int index = SpecialReferenceManager.REFERENT_WORD_INDEX;
+                Log.print("Resurecting referent");
+                Log.print(origin.getReference(index).toOrigin());
+                Log.print(" from special ref ");
+                Log.print(origin); Log.print(" + ");
+                Log.println(index);
+            }
+            updateEvacuatedRef(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+        }
+    }
+
+    final void enableSpecialRefDiscovery() {
+        refDiscoveryEnabled = true;
+    }
+
+    final void disableSpecialRefDiscovery() {
+        refDiscoveryEnabled = false;
+    }
+
     private void updateReferenceArray(Pointer refArrayOrigin, final int firstIndex, final int length) {
         for (int index = firstIndex; index < length; index++) {
             updateEvacuatedRef(refArrayOrigin, index);
@@ -57,15 +85,22 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         updateReferenceArray(refArrayOrigin, FIRST_ELEMENT_INDEX, length);
     }
 
-
     private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
-        final int length = Layout.readArrayLength(refArrayOrigin);
+        final int endOfArrayIndex = Layout.readArrayLength(refArrayOrigin) + FIRST_ELEMENT_INDEX;
         final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
-        final Address endOfArrayAddr = firstElementAddr.plusWords(length);
-        final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
-        final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;
+        final Address endOfArrayAddr = refArrayOrigin.plusWords(endOfArrayIndex);
+        final int firstIndex = start.greaterThan(firstElementAddr) ? start.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : FIRST_ELEMENT_INDEX;
+        final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : endOfArrayIndex;
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
+
+    protected final HeapRangeDumper dumper;
+
+    protected Evacuator(HeapRangeDumper dumper) {
+        this.dumper = dumper;
+    }
+
+
   /**
      * Indicate whether the cell at the specified origin is in an area under evacuation.
      * @param origin origin of a cell
@@ -215,12 +250,15 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         // the reference map needed to find the other references in the object
         updateEvacuatedRef(origin,  HUB_WORD_INDEX);
         final Hub hub = getHub(origin);
-        // Update the other references in the object
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
+        }
+       // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
-                SpecialReferenceManager.discoverSpecialReference(origin);
+                updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
@@ -268,12 +306,15 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             updateEvacuatedRef(origin,  HUB_WORD_INDEX);
         }
         final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
+        }
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
             if (hub.isJLRReference) {
-                SpecialReferenceManager.discoverSpecialReference(origin);
+                updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
@@ -305,11 +346,11 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         evacuateFromBootHeap();
         evacuateFromCode();
         evacuateFromRSets();
-        // TraceVisitedCell = MaxineVM.isDebug();
         evacuateReachables();
-        // TraceVisitedCell = false;
+        disableSpecialRefDiscovery();
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         evacuateReachables();
+        enableSpecialRefDiscovery();
         doAfterEvacuation();
     }
 }
