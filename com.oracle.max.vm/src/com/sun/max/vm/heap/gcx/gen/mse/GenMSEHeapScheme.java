@@ -225,11 +225,20 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             youngSpace.initialize(heapResizingPolicy);
             oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
 
+            HeapRangeDumper dumper = null;
+            if (HeapRangeDumper.DumpOnError) {
+                MemoryRegion dumpingCoverage = new MemoryRegion();
+                dumpingCoverage.setStart(Heap.bootHeapRegion.start());
+                dumpingCoverage.setEnd(heapBounds.end());
+                dumper = new HeapRangeDumper(heapBounds);
+                dumper.refineOnFirstUnparsableWith(new RefineDumpRangeToCard(cardTableRSet));
+            }
+
             // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
             // worst case evacuation and the number of fragments of old space available for allocation.
             // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
             youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
-                            new SurvivorRangesQueue(1000), ELABSize);
+                            new SurvivorRangesQueue(1000), ELABSize, dumper);
             cardTableRSet.initializeXirStartupConstants();
              // Make the heap inspectable
             InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());

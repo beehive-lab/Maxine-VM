@@ -263,6 +263,8 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
                 Log.print(cardTable.rangeStart(startCardIndex));
                 Log.print(", ");
                 Log.print(cardTable.rangeStart(endCardIndex));
+                Log.print(")  R = ");
+                Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
                 Log.println(")");
             }
             visitCards(startCardIndex, endCardIndex, cellVisitor);

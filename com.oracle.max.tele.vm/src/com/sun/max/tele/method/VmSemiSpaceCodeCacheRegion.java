@@ -172,7 +172,7 @@ public final class VmSemiSpaceCodeCacheRegion extends VmCodeCacheRegion {
                     // Have we seen this compilation before, independent of its location in the region?
                     TeleCompilation compilation = getCompilation(targetMethodReference);
                     if (compilation == null) {
-                        // This element in the target method array refers to a compilation net yet seen.
+                        // This element in the target method array refers to a compilation not yet seen.
                         TeleTargetMethod teleTargetMethod = (TeleTargetMethod) objects().makeTeleObject(targetMethodReference);
                         if (teleTargetMethod == null) {
                             vm().invalidReferencesLogger().record(targetMethodReference, TeleTargetMethod.class);
