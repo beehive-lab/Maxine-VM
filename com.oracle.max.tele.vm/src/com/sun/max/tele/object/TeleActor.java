@@ -194,6 +194,10 @@ public abstract class TeleActor extends TeleTupleObject {
         return Arrays.copyOf(flags, nextFlagIndex);
     }
 
+    public boolean isNative() {
+        return Actor.isNative(getFlags());
+    }
+
     /**
      * Gets the local {@link Actor} instance corresponding to this tele actor.
      */
