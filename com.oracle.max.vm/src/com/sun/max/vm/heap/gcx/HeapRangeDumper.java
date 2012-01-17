@@ -37,18 +37,26 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Debugging support for dump a non-empty range of heap space to the log output stream.
- * The dump tolerates zapped area, zero-filled area, and unparseable area, and indicate the  of these
- *  addresses taken by these areas.
- *  The dump also print conservatively any value from unparseable words that look like a heap address.
- *  This may be use with Trap Handler to print an area surrounding the faulting address.
+ * Debugging support for dumping a non-empty range of heap space to the log output stream.
+ * The dump tolerates zapped areas and zero-filled areas, and indicates the range of addresses occupied by these areas.
+ *  The dump also conservatively prints  the content of unparseable location in the range where an object is expected, and report
+ *  reference field that don't comprise valid object addresses.
+ *
+ *  A heap range dumper may be used with @link {@link FatalError#setOnVMOpError(Runnable)} to dump a range of heap responsible for an
+ *  unexpected memory fault. This is typically used to catch corrupted memory due to GC bugs: before iterating over an assumed iterable heap range,
+ *  a heap dumper for the range may be passed to @link {@link FatalError#setOnVMOpError(Runnable)} so that if a memory error occur the
+ *  range is dumped.
+ *
+ *  A HeapRangeDump may be specified a {@link #HeapRangeDumper.DumpRangeRefinement} object that can be used to refined the area to be dumped.
+ *  For instance, heap using a cards may specify a refinement of the dumping range by reseting the bounds of the range to the card holding the corrupted
+ *  cell or reference.
+ *  @see RefineDumpRangeToCard
  */
 public final class HeapRangeDumper implements Runnable {
     public static boolean DumpOnError = false;
     static {
         VMOptions.addFieldOption("-XX:", "DumpOnError", HeapRangeDumper.class, "Dump faulty heap range on error (Debug mode only)", Phase.PRISTINE);
     }
-
 
     /**
      * Handler to refine the range of heap to dump after a first unparseable location is found.
@@ -58,7 +66,7 @@ public final class HeapRangeDumper implements Runnable {
      * The provided handler is then called to narrow the range to dump, and restart iterating with this new range,
      * with dumping on.
      */
-    public static interface DumpRangeRefinement {
+    public interface DumpRangeRefinement {
         void refineRange(HeapRangeDumper heapDumper, Address unparsable);
     }
 
@@ -89,6 +97,11 @@ public final class HeapRangeDumper implements Runnable {
      */
     private boolean printReferences = true;
 
+    /**
+     * Create an instance of an HeapRangeDumper.
+     *
+     * @param heapBounds bounds of the contiguous virtual space range holding all valid heap references.
+     */
     public HeapRangeDumper(MemoryRegion heapBounds) {
         this.heapBounds = heapBounds;
         dynamicHubHubPtr = Reference.fromJava(ClassActor.fromJava(DynamicHub.class).dynamicHub()).toOrigin();
