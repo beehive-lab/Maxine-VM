@@ -257,48 +257,6 @@ public class VMLogView extends AbstractView<VMLogView> {
 
     }
 
-    public static class HostedLogRecord {
-        final int header;
-        final long id;
-        final Word[] args;
-
-        HostedLogRecord(int id, int header, Word... args) {
-            this.id = id;
-            this.header = header;
-            this.args = args;
-        }
-
-        /**
-         * For when we can't access VM but need to create a record.
-         */
-        HostedLogRecord() {
-            header = 0;
-            id = 0;
-            args = new Word[0];
-        }
-
-        @Override
-        public String toString() {
-            if (VMLog.Record.isFree(header)) {
-                return "free";
-            } else {
-                StringBuilder sb = new StringBuilder();
-                sb.append("id=");
-                sb.append(id);
-                sb.append(",lid=");
-                sb.append(VMLog.Record.getLoggerId(header));
-                sb.append(",th=");
-                sb.append(VMLog.Record.getThreadId(header));
-                sb.append(",op=");
-                sb.append(VMLog.Record.getOperation(header));
-                sb.append(",ac");
-                sb.append(VMLog.Record.getArgCount(header));
-                return sb.toString();
-            }
-        }
-    }
-
-
     private static class VMLogColumnModel extends InspectorTableColumnModel<VMLogColumnKind>  {
         private VMLogColumnModel(VMLogView vmLogView) {
             super(VMLogColumnKind.values().length, vmLogView.viewPreferences);
@@ -360,8 +318,8 @@ public class VMLogView extends AbstractView<VMLogView> {
             if (value == null) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            long index = (Long) value;
-            setText(Long.toString(index));
+            int index = (Integer) value;
+            setText(Integer.toString(index));
             return this;
         }
     }

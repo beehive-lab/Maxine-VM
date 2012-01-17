@@ -23,13 +23,18 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.log.java.fix.*;
 import com.sun.max.vm.reference.*;
 
 
+/**
+ * Model corresponds to {@link VMLogArrayFixed}.
+ * Fixed length records stored in fixed length array (circular buffer).
+ * So the {@code id} trivially maps to the array index of the associated record.
+ */
 class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
     private TeleArrayObject teleLogArrayBuffer;
 

@@ -23,7 +23,6 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.VMLog.Record;
