@@ -25,7 +25,7 @@ package com.sun.max.tele;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.method.CodeLocation.VmCodeLocationManager;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.reference.*;

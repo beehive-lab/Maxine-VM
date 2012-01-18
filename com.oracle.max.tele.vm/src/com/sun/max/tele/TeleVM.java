@@ -50,6 +50,7 @@ import com.sun.max.tele.debug.VmBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.VmWatchpoint.VmWatchpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;

@@ -20,18 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
-
-import com.sun.max.vm.heap.*;
-
 /**
- * Listener interface for GC phase changes in the VM.
+ * Access to heap state in the VM.
  */
-public interface MaxGCPhaseListener {
-
-    /**
-     * Notifies listeners that a GC in the VM has just changed phases.
-     */
-    void gcPhaseChange(HeapPhase phase);
-
-}
+package com.sun.max.tele.heap;
