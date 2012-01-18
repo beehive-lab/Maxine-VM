@@ -204,6 +204,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private long gcStartedCount = -1;
     private long gcCompletedCount = -1;
+    private HeapPhase phase = HeapPhase.ALLOCATING;
 
     private int lastRegionCount = 0;
 
@@ -215,8 +216,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             msg.append("#regions=(").append(size);
             msg.append(", new=").append(size - lastRegionCount).append(")");
             lastRegionCount = size;
-            if (isInGC()) {
-                msg.append(", IN GC(");
+            if (phase.isCollecting()) {
+                msg.append(", GC phase=" + phase.label() + "(");
                 msg.append("#starts=").append(gcStartedCount);
                 msg.append(", #complete=").append(gcCompletedCount).append(")");
             } else if (gcCompletedCount >= 0) {
@@ -364,6 +365,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
         } else {
             updateTracer.begin();
+
+            phase = HeapPhase.values()[fields().InspectableHeapInfo_heapPhaseOrdinal.readInt(vm())];
 
             // Check GC status and update references if a GC has completed since last time we checked
             final long oldGcStartedCount = gcStartedCount;
@@ -596,14 +599,13 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         return bootHeapRegionName;
     }
 
-
-    // TODO (mlvdv) does this continue to make sense, or should there be a finer granularity about GC?
     /**
-     * @return is the VM in GC
+     * Gets the current GC phase for the heap.
      */
-    public boolean isInGC() {
-        return gcCompletedCount != gcStartedCount;
+    public HeapPhase phase() {
+        return phase;
     }
+
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
@@ -636,8 +638,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             totalHeapSize += region.memoryRegion().nBytes();
         }
         printStream.println(indentation + "Total size: " + formatter.format(totalHeapSize) + " bytes");
-        if (isInGC()) {
-            printStream.print(indentation + "IN GC(#starts=" + formatter.format(gcStartedCount) + ", #complete=" + formatter.format(gcCompletedCount) + ")\n");
+        if (phase.isCollecting()) {
+            printStream.print(indentation + "phase=" + phase.label() + "(#starts=" + formatter.format(gcStartedCount) + ", #complete=" + formatter.format(gcCompletedCount) + ")\n");
         } else if (gcCompletedCount >= 0) {
             printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
         }

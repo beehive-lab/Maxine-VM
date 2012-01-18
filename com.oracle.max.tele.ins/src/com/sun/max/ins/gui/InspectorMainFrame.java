@@ -43,6 +43,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * The main GUI window for an inspection of a VM, with related GUI services.
@@ -600,7 +601,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             final InspectorStyle style = inspection.preference().style();
             switch (maxVMState.processState()) {
                 case STOPPED:
-                    if (maxVMState.isInGC()) {
+                    if (maxVMState.heapPhase() != HeapPhase.ALLOCATING) {
                         desktopPane.setBackground(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
                         menuBar.setStateColor(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
                     } else if (maxVMState.isInEviction()) {

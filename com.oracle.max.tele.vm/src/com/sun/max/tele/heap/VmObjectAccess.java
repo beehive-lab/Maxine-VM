@@ -180,7 +180,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             if (!heap().contains(address) && (codeCache() == null || !codeCache().contains(address))) {
                 return false;
             }
-            if (false && heap().isInGC() && heap().containsInDynamicHeap(address)) {
+            if (false && heap().phase().isCollecting() && heap().containsInDynamicHeap(address)) {
                 //  Assume that any reference to the dynamic heap is invalid during GC.
                 return false;
             }
@@ -227,7 +227,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             //
             //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
             Pointer p = origin.asPointer();
-            if (heap().isInGC() && heap().contains(origin) && isObjectForwarded(p)) {
+            if (heap().phase().isCollecting() && heap().contains(origin) && isObjectForwarded(p)) {
                 p = heap().getForwardedOrigin(p).asPointer();
             }
             Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(p));
@@ -240,7 +240,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 if (!heap().contains(hubOrigin)) {
                     return false;
                 }
-                if (heap().isInGC() && isObjectForwarded(hubOrigin)) {
+                if (heap().phase().isCollecting() && isObjectForwarded(hubOrigin)) {
                     hubOrigin = heap().getForwardedOrigin(hubOrigin).asPointer();
                 }
                 final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);

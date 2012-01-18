@@ -78,4 +78,12 @@ public enum HeapPhase {
     public String description() {
         return description;
     }
+
+    /**
+     * Returns {@code true} if the heap is in one of the GC phase,
+     * {@code false} if allocating normally.
+     */
+    public boolean isCollecting() {
+        return this != ALLOCATING;
+    }
 }

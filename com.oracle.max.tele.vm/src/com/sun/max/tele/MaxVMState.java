@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * <p>
@@ -170,11 +171,11 @@ public interface MaxVMState  {
     MaxWatchpointEvent watchpointEvent();
 
     /**
-     * Is the VM in the midst of a Garbage Collection at this state transition?
+     * Gets the heap's state with respect to GC.
      *
-     * @return whether the VM, when paused, is in the middle of a GC.
+     * @return the heap's current GC phase
      */
-    boolean isInGC();
+    HeapPhase heapPhase();
 
     /**
      * Is the VM in the midst of a code eviction at this state transition?

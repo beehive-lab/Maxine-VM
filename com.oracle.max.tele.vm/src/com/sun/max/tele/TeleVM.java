@@ -1250,7 +1250,7 @@ public abstract class TeleVM implements MaxVM {
             threadsDied,
             breakpointEvents,
             watchpointEvent,
-            heapAccess.isInGC(), codeCacheAccess.isInEviction(), teleVMState);
+            heapAccess.phase(), codeCacheAccess.isInEviction(), teleVMState);
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }

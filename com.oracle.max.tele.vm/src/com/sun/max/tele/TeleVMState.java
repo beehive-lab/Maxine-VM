@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Implements the (mostly) immutable history of Maxine VM states during a debugging sessions.
@@ -50,7 +51,7 @@ public final class TeleVMState implements MaxVMState {
     private final List<MaxThread> threadsDied;
     private final List<MaxBreakpointEvent> breakpointEvents;
     private final MaxWatchpointEvent maxWatchpointEvent;
-    private final boolean isInGC;
+    private final HeapPhase heapPhase;
     private final boolean isInEviction;
     private final TeleVMState previous;
 
@@ -80,7 +81,7 @@ public final class TeleVMState implements MaxVMState {
                     List<TeleNativeThread> threadsDied,
                     List<TeleBreakpointEvent> breakpointEvents,
                     VmWatchpointEvent watchpointEvent,
-                    boolean isInGC,
+                    HeapPhase heapPhase,
                     boolean isInEviction,
                     TeleVMState previous) {
         this.inspectionMode = inspectionMode;
@@ -128,7 +129,7 @@ public final class TeleVMState implements MaxVMState {
         }
 
         this.maxWatchpointEvent = watchpointEvent;
-        this.isInGC = isInGC;
+        this.heapPhase = heapPhase;
         this.isInEviction = isInEviction;
         this.previous = previous;
 
@@ -194,8 +195,8 @@ public final class TeleVMState implements MaxVMState {
         return maxWatchpointEvent;
     }
 
-    public boolean isInGC() {
-        return isInGC;
+    public HeapPhase heapPhase() {
+        return heapPhase;
     }
 
     public boolean isInEviction() {
@@ -217,7 +218,7 @@ public final class TeleVMState implements MaxVMState {
         sb.append(Long.toString(serialID)).append(", ");
         sb.append(processState.toString()).append(", ");
         sb.append("epoch=").append(Long.toString(epoch)).append(", ");
-        sb.append("gc=").append(Boolean.toString(isInGC)).append(", ");
+        sb.append("phase=").append(heapPhase.label()).append(", ");
         sb.append("prev=");
         if (previous == null) {
             sb.append("null");
@@ -234,7 +235,7 @@ public final class TeleVMState implements MaxVMState {
             final StringBuilder sb = new StringBuilder(100);
             sb.append(Long.toString(state.serialID())).append(":  ");
             sb.append("proc=(").append(state.processState().label()).append(", epoch=").append(Long.toString(state.epoch())).append(") ");
-            sb.append("gc=").append(state.isInGC()).append(" ");
+            sb.append("phase=").append(heapPhase.label()).append(" ");
             sb.append("eviction=").append(state.isInEviction()).append(" ");
             printStream.println(sb.toString());
             if (state.singleStepThread() != null) {
@@ -302,7 +303,7 @@ public final class TeleVMState implements MaxVMState {
                        EMPTY_THREAD_LIST,
                        EMPTY_THREAD_LIST,
                        EMPTY_BREAKPOINTEVENT_LIST,
-                       (VmWatchpointEvent) null, false, false, (TeleVMState) null);
+                       (VmWatchpointEvent) null, null, false, (TeleVMState) null);
     }
 
 }

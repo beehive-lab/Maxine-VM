@@ -65,7 +65,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
                     // The location is not in any memory region allocated by the heap.
                     return MaxMemoryStatus.UNKNOWN;
                 }
-                if (heap().isInGC()) {
+                if (heap().phase().isCollecting()) {
                     // Don't quibble if we're in a GC, as long as the address is in either the To or From regions.
                     return MaxMemoryStatus.LIVE;
                 }
