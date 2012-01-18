@@ -35,8 +35,8 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * A view that displays the content of a low level heap object in the VM.
