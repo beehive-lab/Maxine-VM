@@ -393,9 +393,8 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * A collection of methods that support certain inspection services.
-     * The public methods are to be called by all implementations when
+     * The public methods are to be called by all scheme implementations when
      * the specified events occur.
-     *
      */
     public static final class Inspect {
 
