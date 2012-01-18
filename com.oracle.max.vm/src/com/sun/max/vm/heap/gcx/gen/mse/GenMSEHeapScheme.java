@@ -279,13 +279,13 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         @Override
         protected void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            HeapScheme.Inspect.notifyGCStarted();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
             if (VerifyAfterGC) {
                 verifyAfterGC();
             }
-            HeapScheme.Inspect.notifyGCCompleted();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
         }
     }
 
@@ -296,8 +296,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         @Override
         protected void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            HeapScheme.Inspect.notifyGCStarted();
-            HeapScheme.Inspect.notifyGCCompleted();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -399,27 +399,38 @@ public interface HeapScheme extends VMScheme {
     public static final class Inspect {
 
         /**
-         * Announces that a GC is about to begin.  It does almost nothing, but it
-         * must be called by GC implementations for certain Inspector services to work.
+         * Announces that the heap's GC has just changed to a new phase.  It does almost nothing,
+         * but it must be called by GC implementations for certain Inspector services to work.
+         * <p>
+         * It is assumed that the heap pass through the three phases in the following order:
+         * <ol>
+         * <li>{@link HeapPhase#ALLOCATING}: this is the initial phase, and a transition
+         * into this phase is taken to be the conclusion of a GC.</li>
+         * <li>{@link HeapPhase#ANALYZING}: a transition into this phase is taken to be
+         * the beginning of a GC.</li>
+         * <li>{@link HeapPhase#RECLAIMING}: an internal transition within a GC, the point
+         * in the GC where analysis has been concluded, without loss of historical information.</li>
+         * </ol>
          */
-        public static void notifyGCStarted() {
-            InspectableHeapInfo.notifyGCStarted();
-            inspectableGCStarted();
-        }
-
-        /**
-         * Announces that a GC has concluded.  It does almost nothing, but it
-         * must be called by GC implementations for certain Inspector services to work.
-         */
-        public static void notifyGCCompleted() {
-            InspectableHeapInfo.notifyGCCompleted();
-            inspectableGCCompleted();
+        public static void notifyHeapPhaseChange(HeapPhase phase) {
+            InspectableHeapInfo.notifyPhaseChange(phase);
+            switch (phase) {
+                case ANALYZING:
+                    inspectableGCStarting();
+                    break;
+                case RECLAIMING:
+                    inspectableGCReclaiming();
+                    break;
+                case ALLOCATING:
+                    inspectableGCCompleted();
+                    break;
+            }
         }
 
         /**
          * Announces that an object has just been relocated.  It does almost nothing,
          * but it must be called for certain Inspector services to work.
-         * <br>
+         * <p>
          * Should be called as late as possible, but before a forwarding pointer
          * gets written; this is so that some implementations can set a watchpoint
          * on the forwarding pointer location to trigger on a specific object relocation.
@@ -435,7 +446,7 @@ public interface HeapScheme extends VMScheme {
         /**
          * Announces that a request has been made to increase the size of the heap.
          * It does nothing, but it must be called for certain Inspector services to work.
-         * <br>
+         * <p>
          * This method should be called by implementations first thing when the request
          * is received, before action is taken.
          *
@@ -450,7 +461,7 @@ public interface HeapScheme extends VMScheme {
         /**
          * Announces that a request has been made to decrease the size of the heap.
          * It does nothing, but it must be called for certain Inspector services to work.
-         * <br>
+         * <p>
          * This method should be called by implementations first thing when the request
          * is received, before action is taken.
          *
@@ -467,31 +478,51 @@ public interface HeapScheme extends VMScheme {
 
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
-         * at the beginning of a GC.
-         * <br>
+         * at the beginning of a GC, i.e. when the phase has just changed to {@link HeapPhase#ANALYZING}.
+         * <p>
          * This particular method is intended for  use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
-         * <br>
+         * <p>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          */
         @INSPECTED
         @NEVER_INLINE
-        private static void inspectableGCStarted() {
+        private static void inspectableGCStarting() {
         }
 
         // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
-        private static CriticalMethod inspectableGCStartedCriticalMethod =
-            new CriticalMethod(HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.create(void.class));
+        private static CriticalMethod inspectableGCStartingCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableGCStarting", SignatureDescriptor.create(void.class));
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector just before the GC starts
+         * cleaning up, i.e. when the phase has just changed to {@link HeapPhase#RECLAIMING}.
+         * <p>
+         * This particular method is intended for  use by users of the Inspector, and
+         * is distinct from a method used by the Inspector for internal use.
+         * <p>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableGCReclaiming() {
+        }
+
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableGCReclaimingCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableGCReclaiming", SignatureDescriptor.create(void.class));
+
 
 
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
-         * at the conclusions of a GC.
-         * <br>
+         * at the conclusions of a GC, i.e. when the phase has just changed back to {@link HeapPhase#ALLOCATING}.
+         * <p>
          * This particular method is intended for use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
-         * <br>
+         * <p>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          */
@@ -507,10 +538,10 @@ public interface HeapScheme extends VMScheme {
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
          * at the conclusions of an object relocation..
-         * <br>
+         * <p>
          * This particular method is intended for  use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
-         * <br>
+         * <p>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          */
@@ -526,9 +557,9 @@ public interface HeapScheme extends VMScheme {
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
          * when a change in heap size is requested.
-         * <br>
+         * <p>
          * This particular method is intended for use by users of the Inspector.
-         * <br>
+         * <p>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          *
@@ -547,9 +578,9 @@ public interface HeapScheme extends VMScheme {
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
          * when a change in heap size is requested.
-         * <br>
+         * <p>
          * This particular method is intended for use by users of the Inspector.
-         * <br>
+         * <p>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          *

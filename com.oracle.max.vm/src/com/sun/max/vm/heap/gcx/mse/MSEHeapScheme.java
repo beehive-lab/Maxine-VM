@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -279,7 +279,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
-            HeapScheme.Inspect.notifyGCStarted();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
             markSweepSpace.doBeforeGC();
@@ -308,7 +308,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 Log.println(collectionCount);
             }
             markSweepSpace.doAfterGC();
-            HeapScheme.Inspect.notifyGCCompleted();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {

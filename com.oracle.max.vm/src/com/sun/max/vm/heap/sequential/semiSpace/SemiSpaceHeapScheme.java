@@ -52,7 +52,7 @@ import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A simple semi-space scavenger heap.
+ * A simple semispace scavenger heap.
  */
 public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
@@ -366,7 +366,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 verifyObjectSpaces("before GC");
 
                 JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
-                HeapScheme.Inspect.notifyGCStarted();
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
                 vmConfig().monitorScheme().beforeGarbageCollection();
 
@@ -452,7 +452,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
                 JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
 
-                HeapScheme.Inspect.notifyGCCompleted();
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
