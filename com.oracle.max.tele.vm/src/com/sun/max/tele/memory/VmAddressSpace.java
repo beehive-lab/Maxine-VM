@@ -40,8 +40,6 @@ import com.sun.max.unsafe.*;
  * <p>
  * Managers for other entities in the VM are expected to register/unregister
  * top level memory allocations when they are identified during the refresh cycle.
- * <p>
- * Iterates over registered top level memory allocations in memory address order.
  */
 public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace {
 
@@ -107,7 +105,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
      * <p>
      * Should never contain {@code null}
      *
-     * @return an unmodifiable list of the current allocations
+     * @return an unmodifiable list of the current allocations, sorted by start location
      */
     public List<MaxEntityMemoryRegion<? extends MaxEntity> > allocations() {
         return map.regions();

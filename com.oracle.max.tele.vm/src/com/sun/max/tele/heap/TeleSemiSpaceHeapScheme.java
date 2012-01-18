@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.memory;
+package com.sun.max.tele.heap;
 
 import java.util.*;
 
@@ -36,13 +36,13 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Implementation details about the heap in the VM, specialized
- * for the semi-space implementation.
+ * for the semispace implementation.
  * <p>
  * Assumes forwarding pointer stored in the "Hub" field of objects.
  *
  * @see SemiSpaceHeapScheme
  */
-final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
+final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
 
     TeleSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);

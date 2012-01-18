@@ -23,9 +23,9 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.vmlog.VMLogView.*;
+import com.sun.max.ins.debug.vmlog.VMLogView.HostedLogRecord;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.reference.*;
 
