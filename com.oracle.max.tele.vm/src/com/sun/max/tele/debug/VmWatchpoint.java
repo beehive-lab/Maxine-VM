@@ -34,6 +34,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -751,7 +752,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         /**
          * A listener for GC completions, whenever there are any watchpoints; null when no watchpoints.
          */
-        private MaxGCCompletedListener gcCompletedListener = null;
+        private MaxGCPhaseListener gcCompletedListener = null;
 
         private volatile List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
 
@@ -1095,9 +1096,9 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             // there are watchpoints.
             if (watchpointCount() > 0) {
                 if (gcCompletedListener == null) {
-                    gcCompletedListener = new MaxGCCompletedListener() {
+                    gcCompletedListener = new MaxGCPhaseListener() {
 
-                        public void gcCompleted() {
+                        public void gcPhaseChange(HeapPhase phase) {
 
                             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
                                 final VmWatchpoint watchpoint = (VmWatchpoint) maxWatchpoint;
@@ -1107,7 +1108,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
                         }
                     };
                     try {
-                        vm().addGCCompletedListener(gcCompletedListener);
+                        vm().addGCPhaseListener(gcCompletedListener, HeapPhase.ALLOCATING);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleWarning.message("update after watchpoint changes failed to set GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;
@@ -1116,7 +1117,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             } else { // no watchpoints
                 if (gcCompletedListener != null) {
                     try {
-                        vm().removeGCCompletedListener(gcCompletedListener);
+                        vm().removeGCPhaseListener(gcCompletedListener, HeapPhase.ALLOCATING);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleWarning.message("update after watchpoint changes failed to remove GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;

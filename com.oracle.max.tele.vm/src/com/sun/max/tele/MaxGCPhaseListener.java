@@ -22,14 +22,16 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.vm.heap.*;
+
 /**
- * Listener interface for GC completions in the VM.
+ * Listener interface for GC phase changes in the VM.
  */
-public interface MaxGCCompletedListener {
+public interface MaxGCPhaseListener {
 
     /**
-     * Notifies listeners that a GC in the VM has completed.
+     * Notifies listeners that a GC in the VM has just changed phases.
      */
-    void gcCompleted();
+    void gcPhaseChange(HeapPhase phase);
 
 }

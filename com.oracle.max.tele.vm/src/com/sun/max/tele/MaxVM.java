@@ -33,6 +33,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -186,38 +187,22 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Adds a listener for GC starts in the VM.
+     * Adds a listener for GC phase changes in the VM.
      *
-     * @param listener a listener for GC starts
+     * @param listener a listener for GC phase changes
      * @throws MaxVMBusyException
      */
-    void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
+    void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
 
     /**
-     * Removes a listener for GC starts in the VM.
+     * Removes a listener for GC phase changes in the VM.
      *
-     * @param listener a listener for GC starts
+     * @param listener a listener for GC phase changes
      * @throws MaxVMBusyException
      */
-    void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
+    void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
 
-    /**
-     * Adds a listener for GC completions in the VM.
-     *
-     * @param listener a listener for GC completions
-     * @throws MaxVMBusyException
-     */
-    void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
-
-    /**
-     * Removes a listener for GC completions in the VM.
-     *
-     * @param listener a listener for GC completions
-     * @throws MaxVMBusyException
-     */
-    void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
-
-    /**
+   /**
      * Adds a listener for VmThreads entering their run methods in the VM.
      * @param listener a listener for thread enter
      * @throws MaxVMBusyException
