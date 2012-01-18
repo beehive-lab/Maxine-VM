@@ -71,7 +71,8 @@ public final class VmMethodAccess extends AbstractVmHolder {
     public final TeleStaticMethodAccess CodeManager$Inspect_inspectableCodeEvictionStarted = new TeleStaticMethodAccess(vm(), CodeManager.Inspect.class, "inspectableCodeEvictionStarted", SignatureDescriptor.fromJava(void.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCCompleted", SignatureDescriptor.fromJava(void.class));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.fromJava(void.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCReclaiming = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCReclaiming", SignatureDescriptor.fromJava(void.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarting = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarting", SignatureDescriptor.fromJava(void.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableObjectRelocated", SignatureDescriptor.fromJava(void.class, Address.class, Address.class));
     public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCodeEvictionCompleted = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCodeEvictionCompleted", SignatureDescriptor.fromJava(void.class, CodeRegion.class));
@@ -79,8 +80,9 @@ public final class VmMethodAccess extends AbstractVmHolder {
     public final TeleStaticMethodAccess InspectableCompilationInfo_inspectableCompilationCompleted = new TeleStaticMethodAccess(vm(), InspectableCompilationInfo.class, "inspectableCompilationCompleted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class, TargetMethod.class));
     public final TeleStaticMethodAccess InspectableCompilationInfo_inspectableCompilationStarted = new TeleStaticMethodAccess(vm(), InspectableCompilationInfo.class, "inspectableCompilationStarted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.fromJava(void.class, long.class));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCAllocating = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCAllocating", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCAnalyzing = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCAnalyzing", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCReclaiming = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCReclaiming", SignatureDescriptor.fromJava(void.class, long.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableObjectRelocated", SignatureDescriptor.fromJava(void.class, Address.class, Address.class));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(vm(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.fromJava(byte[].class, long.class));
@@ -92,8 +94,9 @@ public final class VmMethodAccess extends AbstractVmHolder {
 
     private final CodeLocation compilationStarted;
     private final CodeLocation compilationCompleted;
-    private final CodeLocation gcCompleted;
-    private final CodeLocation gcStarted;
+    private final CodeLocation gcAllocating;
+    private final CodeLocation gcAnalyzing;
+    private final CodeLocation gcReclaiming;
     private final CodeLocation vmThreadRunning;
     private final CodeLocation vmThreadDetached;
 
@@ -108,13 +111,15 @@ public final class VmMethodAccess extends AbstractVmHolder {
 
         compilationStarted = codeManager.createMachineCodeLocation(InspectableCompilationInfo_inspectableCompilationStarted, "Compilation start (internal)");
         compilationCompleted = codeManager.createMachineCodeLocation(InspectableCompilationInfo_inspectableCompilationCompleted, "Compilation complete (internal)");
-        gcCompleted = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
-        gcStarted = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
+        gcAllocating = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCAllocating, "GC completed (internal)");
+        gcAnalyzing = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCAnalyzing, "GC starting (internal)");
+        gcReclaiming = codeManager.createMachineCodeLocation(InspectableHeapInfo_inspectableGCReclaiming, "GC reclaiming (internal)");
         vmThreadRunning = codeManager.createMachineCodeLocation(VmThread_run, "VmThread running (internal) ");
         vmThreadDetached = codeManager.createMachineCodeLocation(VmThread_detached, "VmThread detached (internal) ");
 
         final List<CodeLocation> methods = new ArrayList<CodeLocation>();
-        methods.add(codeManager.createMachineCodeLocation(HeapScheme$Inspect_inspectableGCStarted, "Start of GC"));
+        methods.add(codeManager.createMachineCodeLocation(HeapScheme$Inspect_inspectableGCStarting, "Start of GC analyzing"));
+        methods.add(codeManager.createMachineCodeLocation(HeapScheme$Inspect_inspectableGCReclaiming, "Start of GC reclaiming"));
         methods.add(codeManager.createMachineCodeLocation(HeapScheme$Inspect_inspectableGCCompleted, "End of GC"));
         methods.add(codeManager.createMachineCodeLocation(HeapScheme$Inspect_inspectableObjectRelocated, "Object relocated"));
         methods.add(codeManager.createMachineCodeLocation(CodeManager$Inspect_inspectableCodeEvictionStarted, "Start of Code Eviction"));
@@ -164,17 +169,27 @@ public final class VmMethodAccess extends AbstractVmHolder {
     }
 
     /**
-     * @return a VM method for internal (non-client) use that is called just after each GC starts.
+     * @return a VM method for internal (non-client) use that is called just after each GC starts,
+     * i.e. when it enters the {@link HeapPhase#ANALYZING} phase.
      */
-    public CodeLocation gcStartedMethodLocation() {
-        return gcStarted;
+    public CodeLocation gcAnalyzingMethodLocation() {
+        return gcAnalyzing;
     }
 
     /**
-     * @return a VM method for internal (non-client) use that is called just after each GC end.
+     * @return a VM method for internal (non-client) use that is called just after each GC starts
+     * reclaiming, i.e. when it enters the {@link HeapPhase#RECLAIMING} phase.
      */
-    public CodeLocation gcCompletedMethodLocation() {
-        return gcCompleted;
+    public CodeLocation gcReclaimingMethodLocation() {
+        return gcAnalyzing;
+    }
+
+     /**
+     * @return a VM method for internal (non-client) use that is called just after each GC end,
+     * i.e. when it enters the {@link HeapPhase#ALLOCATING}.
+     */
+    public CodeLocation gcAllocatingMethodLocation() {
+        return gcAllocating;
     }
 
     /**

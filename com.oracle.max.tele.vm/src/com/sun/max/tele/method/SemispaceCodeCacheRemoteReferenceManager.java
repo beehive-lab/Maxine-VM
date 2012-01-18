@@ -22,8 +22,6 @@
  */
 package com.sun.max.tele.method;
 
-import static com.sun.max.tele.object.ObjectManagerStatus.*;
-
 import java.lang.ref.*;
 import java.util.*;
 
@@ -35,6 +33,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * A manager for remote references to objects allocated in a {@link SemiSpaceCodeRegion}.  This manager:
@@ -60,9 +59,9 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     private final VmCodeCacheRegion codeCacheRegion;
 
     /**
-     * The status of the manager with respect to object status and memory management.
+     * The status of the region with respect to object management.
      */
-    private ObjectManagerStatus objectManagerStatus;
+    private HeapPhase heapPhase;
 
     /**
      * A two level map.  For each of the possible kinds of references that can be created,
@@ -80,7 +79,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
         super(vm);
         this.codeCacheRegion = codeCacheRegion;
-        this.objectManagerStatus = ALLOCATING;
+        this.heapPhase = HeapPhase.ALLOCATING;
         // Create a separate map for references of each kind
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
             refMaps.put(kind, new HashMap<TeleTargetMethod, WeakReference<SemispaceCodeCacheRemoteReference> >());
@@ -92,8 +91,8 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     }
 
     // TODO (mlvdv) Interpret this status for the special case of objects in the code cache.
-    public ObjectManagerStatus objectManagerStatus() {
-        return objectManagerStatus;
+    public HeapPhase heapPhase() {
+        return heapPhase;
     }
 
     /**

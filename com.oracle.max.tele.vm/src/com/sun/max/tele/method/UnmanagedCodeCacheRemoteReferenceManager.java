@@ -22,8 +22,6 @@
  */
 package com.sun.max.tele.method;
 
-import static com.sun.max.tele.object.ObjectManagerStatus.*;
-
 import java.lang.ref.*;
 import java.util.*;
 
@@ -34,6 +32,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * A manager for remote references to objects allocated in an <em>unmanaged</em> {@linkplain VmCodeCacheRegion code cache region}.
@@ -92,8 +91,8 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
      * There is no GC cycle for an unmanaged code cache; object
      * are neither relocated nor collected.
      */
-    public ObjectManagerStatus objectManagerStatus() {
-        return ALLOCATING;
+    public HeapPhase heapPhase() {
+        return HeapPhase.ALLOCATING;
     }
 
     /**

@@ -618,14 +618,19 @@ public abstract class TeleVM implements MaxVM {
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
     /**
-     * Dispatcher for GC start events.
+     * Dispatcher for GC start events, i.e. when entering the {@link HeapPhase#ANALYZING} phase.
      */
-    private VMEventDispatcher<MaxGCStartedListener> gcStartedListeners;
+    private VMEventDispatcher<MaxGCStartedListener> gcAnalyzingListeners;
 
     /**
-     * Dispatcher for GC completion events.
+     * Dispatcher for GC start events, i.e. when entering the {@link HeapPhase#RECLAIMING} phase.
      */
-    private VMEventDispatcher<MaxGCCompletedListener> gcCompletedListeners;
+    private VMEventDispatcher<MaxGCStartedListener> gcReclaimingListeners;
+
+    /**
+     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#ALLOCATING} phase.
+     */
+    private VMEventDispatcher<MaxGCCompletedListener> gcAllocatingListeners;
 
     /**
      * Dispatcher for thread entry events (i.e., when a {@link VmThread} enters its run method).
@@ -762,14 +767,14 @@ public abstract class TeleVM implements MaxVM {
         this.watchpointManager = teleProcess.watchpointsEnabled() ? VmWatchpointManager.make(this, teleProcess) : null;
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
-        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStartedMethodLocation(), "before gc begins") {
+        this.gcAnalyzingListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcAnalyzingMethodLocation(), "before gc begins") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
                 listener.gcStarted();
             }
         };
 
-        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompletedMethodLocation(), "after gc completion") {
+        this.gcAllocatingListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcAllocatingMethodLocation(), "after gc completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
                 listener.gcCompleted();
@@ -1011,11 +1016,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        gcStartedListeners.add(listener, teleProcess);
+        gcAnalyzingListeners.add(listener, teleProcess);
     }
 
     public final void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        gcStartedListeners.remove(listener);
+        gcAnalyzingListeners.remove(listener);
     }
 
     public final void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
@@ -1035,11 +1040,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        gcCompletedListeners.add(listener, teleProcess);
+        gcAllocatingListeners.add(listener, teleProcess);
     }
 
     public final void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        gcCompletedListeners.remove(listener);
+        gcAllocatingListeners.remove(listener);
     }
 
     public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
