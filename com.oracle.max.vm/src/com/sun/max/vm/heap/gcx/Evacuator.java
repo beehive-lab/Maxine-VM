@@ -342,6 +342,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
 
     public void evacuate() {
         doBeforeEvacuation();
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
         evacuateFromRoots();
         evacuateFromBootHeap();
         evacuateFromCode();
@@ -351,6 +352,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         SpecialReferenceManager.processDiscoveredSpecialReferences(this);
         evacuateReachables();
         enableSpecialRefDiscovery();
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
         doAfterEvacuation();
     }
 }

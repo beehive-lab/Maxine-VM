@@ -439,6 +439,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     Log.println("END: Processing special references");
                 }
 
+                // The reclaiming phase doesn't do anything in a semi-space collector since all
+                // space of the from space is implicitly reclaimed  once the liveness analysis (i.e.,
+                // the copying of all objects reachable from roots) is done.
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
+
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
 

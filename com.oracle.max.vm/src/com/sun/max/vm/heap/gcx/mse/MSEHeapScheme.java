@@ -293,6 +293,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
             markSweepSpace.mark(heapMarker);
             startTimer(reclaimTimer);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
             markSweepSpace.sweep(heapMarker);
             Size freeSpaceAfterGC = markSweepSpace.freeSpace();
             stopTimer(reclaimTimer);

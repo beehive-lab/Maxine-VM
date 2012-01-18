@@ -262,14 +262,15 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
+            objectSpace.doBeforeGC();
 
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
-            objectSpace.doBeforeGC();
             heapMarker.markAll();
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
             Size freeSpaceAfterGC = reclaim();
             if (VerifyAfterGC) {
                 afterGCVerifier.run();

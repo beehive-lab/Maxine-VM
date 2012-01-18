@@ -279,7 +279,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         @Override
         protected void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
             // Evacuate young space
             youngSpaceEvacuator.evacuate();
             if (VerifyAfterGC) {
