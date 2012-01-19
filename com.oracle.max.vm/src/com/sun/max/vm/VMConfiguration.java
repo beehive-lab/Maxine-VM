@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,21 @@ public final class VMConfiguration {
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
 
-    @CONSTANT_WHEN_NOT_ZERO private ReferenceScheme referenceScheme;
-    @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
-    @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
-    @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
-    @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
+    @CONSTANT_WHEN_NOT_ZERO
+    private ReferenceScheme referenceScheme;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private LayoutScheme layoutScheme;
+
+    @INSPECTED
+    @CONSTANT_WHEN_NOT_ZERO
+    private HeapScheme heapScheme;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private MonitorScheme monitorScheme;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private RunScheme runScheme;
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,

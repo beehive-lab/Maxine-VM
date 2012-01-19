@@ -112,7 +112,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private CollectHeap collectHeap;
 
+    @INSPECTED
     private LinearAllocationMemoryRegion fromSpace = null;
+    @INSPECTED
     private LinearAllocationMemoryRegion toSpace = null;
 
     /**
