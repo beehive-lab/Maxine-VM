@@ -22,7 +22,11 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.reflect.*;
+
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
@@ -42,7 +46,24 @@ public final class TeleConstantPool extends TeleTupleObject{
     @Override
     protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
-        return getTeleHolder().classActor().constantPool();
+        ConstantPool constantPool = getTeleHolder().classActor().constantPool();
+        if (context instanceof TeleClassMethodActor.NativeStubCodeAttributeDeepCopier) {
+            TeleArrayObject teleConstants = (TeleArrayObject) VmObjectAccess.make(vm()).makeTeleObject(constantsArrayReference());
+            PoolConstant[] constants = (PoolConstant[]) teleConstants.deepCopy(context);
+            Field constantsField = fields().ConstantPool_constants.fieldActor().toJava();
+            constantsField.setAccessible(true);
+            try {
+                // Patch the constants
+                constantsField.set(constantPool, constants);
+            } catch (IllegalArgumentException e) {
+                TeleWarning.message("Failed to patch local ContantPool with copied constants");
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                TeleWarning.message("Failed to patch local ConstantPool with copied constants");
+                e.printStackTrace();
+            }
+        }
+        return constantPool;
     }
 
     private Reference constantsArrayReference() {

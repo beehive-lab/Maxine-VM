@@ -222,7 +222,7 @@ public abstract class TeleActor extends TeleTupleObject {
      * For the purposes of inspection, use a locally loaded copy of each actor.
      */
     @Override
-    protected final Object createDeepCopy(DeepCopier context) {
+    protected Object createDeepCopy(DeepCopier context) {
         return actor();
     }
 }
