@@ -229,6 +229,16 @@ public abstract class TeleVM implements MaxVM {
     private static File vmDirectory;
 
     /**
+     * The VM object that represents the VM itself.
+     */
+    private static TeleMaxineVM teleMaxineVM;
+
+    /**
+     * The VM object that holds configuration information, including scheme implementations.
+     */
+    private static TeleVMConfiguration teleVMConfiguration;
+
+    /**
      * An abstraction description of the VM's platform, suitable for export.
      */
     private VmPlatform platform;
@@ -455,6 +465,10 @@ public abstract class TeleVM implements MaxVM {
                 vm = createReadOnly(bootImageFile, sourcepath);
                 vm.updateVMCaches(0L);
         }
+
+
+        teleMaxineVM = (TeleMaxineVM) vm.objects().makeTeleObject(vm.fields().MaxineVM_vm.readReference(vm));
+        teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
 
         final File commandFile = options.commandFileOption.getValue();
         if (commandFile != null && !commandFile.equals("")) {
@@ -911,8 +925,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final TeleObject representation() {
-        // No distinguished object in VM runtime represents the VM.
-        return null;
+        return teleMaxineVM;
     }
 
     public final String getVersion() {
@@ -1455,6 +1468,13 @@ public abstract class TeleVM implements MaxVM {
 
     public final void executeCommandsFromFile(String fileName) {
         FileCommands.executeCommandsFromFile(this, fileName);
+    }
+
+    /**
+     * @return the VM object that hold configuration information.
+     */
+    public final TeleVMConfiguration teleVMConfiguration() {
+        return teleVMConfiguration;
     }
 
     //

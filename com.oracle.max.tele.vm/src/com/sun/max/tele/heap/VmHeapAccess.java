@@ -60,14 +60,14 @@ import com.sun.max.vm.tele.*;
  * to track object locations when they are relocated by GC.
  * <p>
  * This class needs to be specialized by a helper class that
- * implements the interface {@link TeleHeapScheme}, typically
+ * implements the interface {@link LegacyTeleHeapScheme}, typically
  * a class that contains knowledge of the heap implementation
  * configured into the VM.
  *
  * @see InspectableHeapInfo
  * @see TeleRoots
  * @see HeapScheme
- * @see TeleHeapScheme
+ * @see LegacyTeleHeapScheme
  */
 public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmAllocationHolder<MaxHeap> {
 
@@ -119,7 +119,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     public static VmHeapAccess make(TeleVM vm, VmAddressSpace addressSpace) {
         if (vmHeap ==  null) {
             final String heapSchemeName = vm.heapScheme().name();
-            TeleHeapScheme teleHeapScheme = null;
+            LegacyTeleHeapScheme teleHeapScheme = null;
             RemoteHeapScheme remoteHeapScheme = null;
             try {
                 // TODO (mlvdv)  Old Heap
@@ -130,7 +130,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 String thisPackageName = thisClassName.substring(0, thisClassName.lastIndexOf("."));
                 Class<?> teleHeapSchemeClass = Class.forName(thisPackageName + ".Tele" + heapSchemeName);
                 Constructor c = teleHeapSchemeClass.getDeclaredConstructor(new Class[]  {TeleVM.class});
-                teleHeapScheme = (TeleHeapScheme) c.newInstance(new Object[] {vm});
+                teleHeapScheme = (LegacyTeleHeapScheme) c.newInstance(new Object[] {vm});
 
                 // TODO (mlvdv) New Heap
                 Class<?> remoteHeapSchemeClass = Class.forName(thisPackageName + ".Remote" + heapSchemeName);
@@ -199,7 +199,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
     private TeleRootsTable teleRootsTable = null;
 
-    private final TeleHeapScheme legacyTeleHeapScheme;
+    private final LegacyTeleHeapScheme legacyTeleHeapScheme;
     private RemoteHeapScheme remoteHeapScheme = null;
 
     private List<MaxCodeLocation> inspectableMethods = null;
@@ -229,7 +229,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         }
     };
 
-    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace, TeleHeapScheme teleHeapScheme) {
+    private VmHeapAccess(TeleVM vm, VmAddressSpace addressSpace, LegacyTeleHeapScheme teleHeapScheme) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();

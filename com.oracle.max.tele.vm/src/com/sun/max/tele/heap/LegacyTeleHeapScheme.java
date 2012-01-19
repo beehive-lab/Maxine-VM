@@ -31,7 +31,7 @@ import com.sun.max.unsafe.*;
 /**
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
  */
-public interface TeleHeapScheme extends TeleScheme {
+public interface LegacyTeleHeapScheme extends TeleScheme {
 
     List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
 
