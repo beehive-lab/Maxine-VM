@@ -68,7 +68,7 @@ public interface RemoteObjectReferenceManager {
      *
      * @throws TeleError if the origin is not in the memory region being managed.
      */
-    TeleReference makeReference(Address origin) throws TeleError;
+    RemoteReference makeReference(Address origin) throws TeleError;
 
     /**
      * Returns the total number of remote object references being held by

@@ -45,9 +45,9 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
     private final VmObjectHoldingRegion objectRegion;
 
     /**
-     * Map:  address in VM --> a {@link TeleReference} that refers to the object whose origin is at that location.
+     * Map:  address in VM --> a {@link RemoteReference} that refers to the object whose origin is at that location.
      */
-    private Map<Long, WeakReference<RemoteTeleReference>> originToReference = new HashMap<Long, WeakReference<RemoteTeleReference>>();
+    private Map<Long, WeakReference<RemoteReference>> originToReference = new HashMap<Long, WeakReference<RemoteReference>>();
 
     /**
      * Creates a manager for remote references to objects in a particular region
@@ -79,23 +79,23 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
         return objects().isObjectOriginHeuristic(origin);
     }
 
-    public TeleReference makeReference(Address origin) {
+    public RemoteReference makeReference(Address origin) {
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Attempt to make reference at location outside region");
-        RemoteTeleReference teleReference = null;
-        final WeakReference<RemoteTeleReference> existingRef = originToReference.get(origin.toLong());
+        RemoteReference teleReference = null;
+        final WeakReference<RemoteReference> existingRef = originToReference.get(origin.toLong());
         if (existingRef != null) {
             teleReference = existingRef.get();
         }
         if (teleReference == null && objects().isObjectOriginHeuristic(origin)) {
             teleReference = new UnmanagedCanonicalTeleReference(vm(), origin);
-            originToReference.put(origin.toLong(), new WeakReference<RemoteTeleReference>(teleReference));
+            originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(teleReference));
         }
         return teleReference;
     }
 
     public int activeReferenceCount() {
         int count = 0;
-        for (WeakReference<RemoteTeleReference> weakRef : originToReference.values()) {
+        for (WeakReference<RemoteReference> weakRef : originToReference.values()) {
             if (weakRef.get() != null) {
                 count++;
             }

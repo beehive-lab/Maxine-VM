@@ -40,7 +40,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @see TargetMethod
  */
-abstract class AbstractCodeCacheRemoteReference extends RemoteTeleReference {
+abstract class AbstractCodeCacheRemoteReference extends RemoteReference {
 
     private final TeleTargetMethod teleTargetMethod;
     private final CodeCacheReferenceKind kind;

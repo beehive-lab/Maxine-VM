@@ -61,7 +61,7 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
      * apparent at the conclusion of a GC when the root table gets refreshed.  At that point, this map, which is intended
      * keep References canonical, is unreliable and must be rebuilt.  Duplicates may be discovered, which must then be resolved.
      */
-    private Map<Long, WeakReference<RemoteTeleReference>> rawReferenceToRemoteTeleReference = new HashMap<Long, WeakReference<RemoteTeleReference>>(100);
+    private Map<Long, WeakReference<RemoteReference>> rawReferenceToRemoteReference = new HashMap<Long, WeakReference<RemoteReference>>(100);
 
     /**
      * Called by MutableTeleReference.finalize() and CanonicalConstantTeleReference.finalize().
@@ -95,16 +95,16 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
      * @return a special kind of {@link Reference} implementation that encapsulates a remote
      * location in VM memory, allowing the reuse of much VM code that deals with references.
      */
-    public synchronized TeleReference makeReference(Address address) {
+    public synchronized RemoteReference makeReference(Address address) {
 
         // For everything else, use the old machinery; by now this should only be the dynamic heap.
 
-        final WeakReference<RemoteTeleReference> existingCanonicalTeleReference = rawReferenceToRemoteTeleReference.get(address.toLong());
+        final WeakReference<RemoteReference> existingCanonicalTeleReference = rawReferenceToRemoteReference.get(address.toLong());
         if (existingCanonicalTeleReference != null) {
-            final RemoteTeleReference remoteTeleReference = existingCanonicalTeleReference.get();
-            if (remoteTeleReference != null) {
+            final RemoteReference remoteReference = existingCanonicalTeleReference.get();
+            if (remoteReference != null) {
                 // Found an existing canonical reference that points here; return it.
-                return remoteTeleReference;
+                return remoteReference;
             }
         }
         if (!objects().isValidOrigin(address.asPointer())) {
@@ -135,10 +135,10 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
 
 
     /**
-     * @param remoteTeleReference
+     * @param remoteReference
      */
-    private void makeCanonical(RemoteTeleReference remoteTeleReference) {
-        rawReferenceToRemoteTeleReference.put(remoteTeleReference.raw().toLong(), new WeakReference<RemoteTeleReference>(remoteTeleReference));
+    private void makeCanonical(RemoteReference remoteReference) {
+        rawReferenceToRemoteReference.put(remoteReference.raw().toLong(), new WeakReference<RemoteReference>(remoteReference));
     }
 
     synchronized Address getRawReference(MutableTeleReference mutableTeleReference) {
@@ -147,7 +147,7 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
 
     void finalizeMutableTeleReference(int index) {
         synchronized (this) {
-            rawReferenceToRemoteTeleReference.remove(teleRoots.getRawReference(index).toLong());
+            rawReferenceToRemoteReference.remove(teleRoots.getRawReference(index).toLong());
         }
         // Synchronizing the following statement on 'this' often causes deadlock on
         // Linux when the SingleThread used by ptrace is trying to update the cache
@@ -159,41 +159,41 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
      * Rebuild the canonicalization table when we know that the raw (remote) bits of the remote location have changed by GC.
      */
     private void refreshTeleReferenceCanonicalization() {
-        final Map<Long, WeakReference<RemoteTeleReference>> newMap = new HashMap<Long, WeakReference<RemoteTeleReference>>();
+        final Map<Long, WeakReference<RemoteReference>> newMap = new HashMap<Long, WeakReference<RemoteReference>>();
 
         // Make a copy of the values in the map as the loop may alter the map by causing 'finalizeCanonicalConstantTeleReference()'
         // to be called as weak references are cleaned up.
-        ArrayList<WeakReference<RemoteTeleReference>> remoteTeleReferences = new ArrayList<WeakReference<RemoteTeleReference>>(rawReferenceToRemoteTeleReference.values());
-        for (WeakReference<RemoteTeleReference> r : remoteTeleReferences) {
-            final RemoteTeleReference remoteTeleReference = r.get();
-            if (remoteTeleReference != null && !remoteTeleReference.raw().equals(Word.zero())) {
-                WeakReference<RemoteTeleReference> remoteTeleReferenceRef = newMap.get(remoteTeleReference.raw().toLong());
-                if (remoteTeleReferenceRef != null) {
-                    RemoteTeleReference alreadyInstalledRemoteTeleReference = remoteTeleReferenceRef.get();
-                    Log.println("Drop Duplicate: " + remoteTeleReference.toString() + " " + alreadyInstalledRemoteTeleReference.makeOID() + " " + remoteTeleReference.makeOID());
+        ArrayList<WeakReference<RemoteReference>> remoteReferences = new ArrayList<WeakReference<RemoteReference>>(rawReferenceToRemoteReference.values());
+        for (WeakReference<RemoteReference> r : remoteReferences) {
+            final RemoteReference remoteReference = r.get();
+            if (remoteReference != null && !remoteReference.raw().equals(Word.zero())) {
+                WeakReference<RemoteReference> remoteReferenceRef = newMap.get(remoteReference.raw().toLong());
+                if (remoteReferenceRef != null) {
+                    RemoteReference alreadyInstalledRemoteReference = remoteReferenceRef.get();
+                    Log.println("Drop Duplicate: " + remoteReference.toString() + " " + alreadyInstalledRemoteReference.makeOID() + " " + remoteReference.makeOID());
 
-                    if (alreadyInstalledRemoteTeleReference instanceof MutableTeleReference) {
-                        if (alreadyInstalledRemoteTeleReference.makeOID() > remoteTeleReference.makeOID()) {
-                            MutableTeleReference mutableRemoteTeleReference = (MutableTeleReference) remoteTeleReference;
-                            int index = mutableRemoteTeleReference.index();
+                    if (alreadyInstalledRemoteReference instanceof MutableTeleReference) {
+                        if (alreadyInstalledRemoteReference.makeOID() > remoteReference.makeOID()) {
+                            MutableTeleReference mutableRemoteReference = (MutableTeleReference) remoteReference;
+                            int index = mutableRemoteReference.index();
                             if (index >= 0) {
                                 teleRoots.unregister(index);
                             }
-                            mutableRemoteTeleReference.setForwardedTeleReference(alreadyInstalledRemoteTeleReference);
+                            mutableRemoteReference.setForwardedTeleReference(alreadyInstalledRemoteReference);
                         } else {
-                            teleRoots.unregister(((MutableTeleReference) alreadyInstalledRemoteTeleReference).index());
-                            ((MutableTeleReference) alreadyInstalledRemoteTeleReference).setForwardedTeleReference(remoteTeleReference);
-                            newMap.put(remoteTeleReference.raw().toLong(), r);
+                            teleRoots.unregister(((MutableTeleReference) alreadyInstalledRemoteReference).index());
+                            ((MutableTeleReference) alreadyInstalledRemoteReference).setForwardedTeleReference(remoteReference);
+                            newMap.put(remoteReference.raw().toLong(), r);
                         }
                     }
 
                 } else {
-                    newMap.put(remoteTeleReference.raw().toLong(), r);
+                    newMap.put(remoteReference.raw().toLong(), r);
                 }
             }
         }
         teleRoots.flushUnregisteredRoots();
-        rawReferenceToRemoteTeleReference = newMap;
+        rawReferenceToRemoteReference = newMap;
     }
 
     // TODO (mlvdv) Debug this and replace the above

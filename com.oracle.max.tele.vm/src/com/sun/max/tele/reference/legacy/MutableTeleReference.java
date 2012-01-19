@@ -29,11 +29,11 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
-// TODO (mlvdv) this will eventually be replaced.
+// TODO (mlvdv) Old Heap
 /**
  * Raw bits may change due to tele GC.
  */
-public final class MutableTeleReference extends RemoteTeleReference {
+public final class MutableTeleReference extends RemoteReference {
 
     private int index;
     private final LegacyReferenceManager legacyReferenceManager;

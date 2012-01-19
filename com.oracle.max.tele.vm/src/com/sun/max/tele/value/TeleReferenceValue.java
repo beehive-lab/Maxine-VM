@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ import com.sun.max.vm.value.*;
 public final class TeleReferenceValue extends ReferenceValue {
 
     private final TeleVM vm;
-    public final TeleReference reference;
+    public final RemoteReference reference;
 
     public static TeleReferenceValue from(TeleVM vm, Reference reference) {
         return new TeleReferenceValue(vm, reference);
@@ -61,7 +61,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     private TeleReferenceValue(TeleVM vm, Reference reference) {
         this.vm = vm;
-        this.reference = (TeleReference) reference;
+        this.reference = (RemoteReference) reference;
     }
 
     @Override
