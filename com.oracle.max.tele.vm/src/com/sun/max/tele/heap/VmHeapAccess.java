@@ -265,7 +265,6 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             TeleWarning.message("Unable to construct implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
             e.printStackTrace();
         }
-                 remoteHeapScheme = new UnknownRemoteHeapScheme(vm);
         // In a normal session the dynamic heap will not have been allocated yet, but there might be when attaching
         // to a dumped image or running VM
         for (VmHeapRegion heapRegion : remoteHeapScheme.dynamicHeapRegions()) {

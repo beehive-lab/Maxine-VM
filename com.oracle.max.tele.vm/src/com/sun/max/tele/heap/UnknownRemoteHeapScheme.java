@@ -35,10 +35,12 @@ import com.sun.max.vm.reference.*;
  * Implementation details about the dynamic heap in the VM, specialized
  * for situations where there is no specific support code available for the heap scheme.
  * <p>
- * Look in {@link InspectableHeapInfo} for information reported about heap regions,
- * and assume that any address in any of them is valid. Assume that the heap is always
- * in the {@linkplain HeapPhase#ALLOCATING ALLOCATING} phase.
- *
+ * Assumes:
+ * <ul>
+ * <li>Information about VM heap regions will be reported in {@link InspectableHeapInfo}</li>
+ * <li>Any address in any of regions is valid</li>
+ * <li>The heap is always in the {@linkplain HeapPhase#ALLOCATING ALLOCATING} phase.</li>
+ * <ul>
  */
 public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
 
