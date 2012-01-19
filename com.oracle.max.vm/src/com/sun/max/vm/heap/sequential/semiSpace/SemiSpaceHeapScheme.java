@@ -38,7 +38,7 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
@@ -48,7 +48,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -221,7 +220,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             // From now on we can allocate
 
-            InspectableHeapInfo.init(true, toSpace, fromSpace);
+            HeapScheme.Inspect.init(true);
+            HeapScheme.Inspect.notifyHeapRegions(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {

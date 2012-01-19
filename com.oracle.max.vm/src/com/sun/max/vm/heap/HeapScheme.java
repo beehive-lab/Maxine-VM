@@ -25,6 +25,7 @@ package com.sun.max.vm.heap;
 import java.lang.management.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -397,6 +398,28 @@ public interface HeapScheme extends VMScheme {
      * the specified events occur.
      */
     public static final class Inspect {
+
+        /**
+         * Sets up machinery for inspection of heap activity.
+         * <p>
+         * No-op when VM is not being inspected.
+         * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion}
+         * must be allocated in immortal memory
+         */
+        public static void init(boolean useImmortalMemory) {
+            InspectableHeapInfo.init(useImmortalMemory);
+        }
+
+        /**
+         * Announces the collection of memory regions currently being
+         * used for the heap.  This should be called whenever the
+         * collection changes.
+         * <p>
+         * No-op when VM is not being inspected.
+         */
+        public static void notifyHeapRegions(MemoryRegion... memoryRegions) {
+            InspectableHeapInfo.setMemoryRegions(memoryRegions);
+        }
 
         /**
          * Announces that the heap's GC has just changed to a new phase.  It does almost nothing,

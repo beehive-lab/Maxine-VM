@@ -39,7 +39,6 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 
@@ -240,8 +239,10 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
                             new SurvivorRangesQueue(1000), ELABSize, dumper);
             cardTableRSet.initializeXirStartupConstants();
+
              // Make the heap inspectable
-            InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());
+            HeapScheme.Inspect.init(false);
+            HeapScheme.Inspect.notifyHeapRegions(heapBounds, heapMarker.memory(), cardTableRSet.memory());
         } finally {
             disableCustomAllocation();
         }
