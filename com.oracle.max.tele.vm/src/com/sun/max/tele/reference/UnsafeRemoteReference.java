@@ -36,9 +36,9 @@ import com.sun.max.vm.heap.*;
  * <p>
  * Its memory status is permanently {@link ObjectMemoryStatus#DEAD}.
  */
-public final class TemporaryTeleReference extends ConstantTeleReference {
+public final class UnsafeRemoteReference extends ConstantTeleReference {
 
-    TemporaryTeleReference(TeleVM vm, Address raw) {
+    UnsafeRemoteReference(TeleVM vm, Address raw) {
         super(vm, raw);
     }
 

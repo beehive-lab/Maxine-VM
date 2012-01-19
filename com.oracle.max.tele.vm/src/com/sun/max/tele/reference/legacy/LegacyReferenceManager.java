@@ -110,7 +110,7 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
         if (!objects().isValidOrigin(address.asPointer())) {
             // Doesn't point at an object; create what amounts to a wrapped
             // address that is unsafe with respect to GC.
-            return vmReferenceManager.makeTemporaryRemoteReference(address);
+            return vmReferenceManager.makeUnsafeRemoteReference(address);
         }
         if (!heap().containsInDynamicHeap(address) || TeleVM.targetLocation().kind == TeleVM.TargetLocation.Kind.FILE) {
             // Points to an object that's not collectible; create a canonical reference but don't
@@ -123,7 +123,7 @@ public class LegacyReferenceManager extends AbstractVmHolder implements TeleVMCa
             // Points to an object that is in a collectible heap, but
             // which is known not to be live; create what amounts to a wrapped
             // address that is unsafe with respect to GC.
-            return vmReferenceManager.makeTemporaryRemoteReference(address);
+            return vmReferenceManager.makeUnsafeRemoteReference(address);
         }
         // The common case:  points to a live object in a collectible heap;
         // return a new canonical reference that is traced for possible GC relocation.

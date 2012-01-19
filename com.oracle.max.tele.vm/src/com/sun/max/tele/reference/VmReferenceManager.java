@@ -150,8 +150,8 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
      * @param address a location in VM memory
      * @return the address wrapped as a remote object reference
      */
-    public RemoteReference makeTemporaryRemoteReference(Address address) {
-        return new TemporaryTeleReference(vm(), address);
+    public UnsafeRemoteReference makeUnsafeRemoteReference(Address address) {
+        return new UnsafeRemoteReference(vm(), address);
     }
 
     public ReferenceValue createReferenceValue(Reference reference) {

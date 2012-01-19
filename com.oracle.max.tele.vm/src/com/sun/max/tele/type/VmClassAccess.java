@@ -169,7 +169,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                         for (int j = 0; j != entryArrayLength; j++) {
                             Reference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
                             while (!entryRef.isZero()) {
-                                if (entryRef instanceof TemporaryTeleReference && vm.isAttaching()) {
+                                if (entryRef instanceof UnsafeRemoteReference && vm.isAttaching()) {
                                     // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
                                     // fully initialized yet so we add it to a fix-up list and handle it later
                                     attachFixupList.add(entryRef);
