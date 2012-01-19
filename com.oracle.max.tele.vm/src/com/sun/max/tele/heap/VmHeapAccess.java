@@ -34,6 +34,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.reference.legacy.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -647,8 +648,23 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         for (MaxHeapRegion region : allHeapRegions) {
             region.printSessionStats(printStream, indent + 5, verbose);
         }
-        printStream.println(indentation + "Registered semispace roots: " + formatter.format(vm().referenceManager().registeredRootCount()));
     }
+
+
+    static {
+        if (Trace.hasLevel(1)) {
+            Runtime.getRuntime().addShutdownHook(new Thread("Reference counts") {
+
+                @Override
+                public void run() {
+//                    System.out.println("References(by type):");
+//                    System.out.println("    " + "local = " + vmReferenceManager.localTeleReferenceManager.referenceCount());
+                }
+            });
+        }
+
+    }
+
 
 
 }

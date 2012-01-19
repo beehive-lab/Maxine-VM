@@ -20,11 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.tele.reference.legacy;
 
 import static com.sun.max.vm.heap.ObjectMemoryStatus.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
@@ -35,11 +36,13 @@ import com.sun.max.vm.heap.*;
 public final class MutableTeleReference extends RemoteTeleReference {
 
     private int index;
+    private final LegacyReferenceManager legacyReferenceManager;
     private Address lastValidPointer = Address.zero();
 
-    MutableTeleReference(TeleVM vm, int index) {
+    MutableTeleReference(TeleVM vm, int index, LegacyReferenceManager legacyReferenceManager) {
         super(vm);
         this.index = index;
+        this.legacyReferenceManager = legacyReferenceManager;
     }
 
     @Override
@@ -62,7 +65,7 @@ public final class MutableTeleReference extends RemoteTeleReference {
         if (index == -1 || forwardedTeleRef != null) {
             return lastValidPointer;
         }
-        Address tmp = vm().referenceManager().getRawReference(this);
+        Address tmp = legacyReferenceManager.getRawReference(this);
         if (!tmp.equals(Address.zero())) {
             lastValidPointer = tmp;
             return tmp;
@@ -88,7 +91,7 @@ public final class MutableTeleReference extends RemoteTeleReference {
     @Override
     public void finalize() throws Throwable {
         if (memoryStatus().isLive()) {
-            vm().referenceManager().finalizeMutableTeleReference(index);
+            legacyReferenceManager.finalizeMutableTeleReference(index);
         }
         super.finalize();
     }

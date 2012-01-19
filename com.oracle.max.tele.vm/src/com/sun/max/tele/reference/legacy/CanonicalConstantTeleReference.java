@@ -20,13 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.tele.reference.legacy;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-
-// TODO (mlvdv) this will eventually be replaced.
 
 /**
  * Canonicalized constant remote {@link Reference}, for addresses of VM objects
@@ -34,14 +33,16 @@ import com.sun.max.vm.heap.*;
  */
 public class CanonicalConstantTeleReference extends ConstantTeleReference {
 
-    CanonicalConstantTeleReference(TeleVM vm, Address raw) {
+    private final LegacyReferenceManager legacyReferenceManager;
+
+    CanonicalConstantTeleReference(TeleVM vm, Address raw, LegacyReferenceManager legacyReferenceManager) {
         super(vm, raw);
+        this.legacyReferenceManager = legacyReferenceManager;
     }
 
-    // TODO (mlvdv) review whether this is necessary.
     @Override
     public void finalize() throws Throwable {
-        vm().referenceManager().finalizeCanonicalConstantTeleReference(this);
+        legacyReferenceManager.finalizeCanonicalConstantTeleReference(this);
         super.finalize();
     }
 

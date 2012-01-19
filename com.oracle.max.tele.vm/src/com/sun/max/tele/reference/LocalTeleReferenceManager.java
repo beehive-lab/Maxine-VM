@@ -44,10 +44,11 @@ import com.sun.max.vm.reference.Reference;
  */
 public final class LocalTeleReferenceManager extends AbstractVmHolder {
 
+
     private final Map<Object, WeakReference<LocalTeleReference>> objectToLocalTeleReference = new HashMap<Object, WeakReference<LocalTeleReference>>();
 
     public LocalTeleReferenceManager(TeleVM vm) {
-      super(vm);
+        super(vm);
     }
 
     /**
@@ -81,7 +82,7 @@ public final class LocalTeleReferenceManager extends AbstractVmHolder {
      *
      * @see {@link TeleInterpreter}
      */
-    public final class LocalTeleReference extends TeleReference {
+    public class LocalTeleReference extends TeleReference {
 
         private final Object object;
 
@@ -130,6 +131,7 @@ public final class LocalTeleReferenceManager extends AbstractVmHolder {
         public String toString() {
             return object.toString();
         }
+
     }
 
 }

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.tele.reference.legacy;
 
 import java.util.*;
 
@@ -28,6 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.heap.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.tele.*;
@@ -104,7 +105,7 @@ public final class TeleRoots extends AbstractVmHolder implements TeleVMCache {
      */
     private final BitSet unregistrationQueue = new BitSet();
 
-    TeleRoots(TeleVM vm, VmReferenceManager teleReferenceManager) {
+    public TeleRoots(TeleVM vm, VmReferenceManager teleReferenceManager) {
         super(vm);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
