@@ -124,7 +124,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     }
 
     @Override
-    public TeleReference makeReference(Address origin) throws TeleError {
+    public RemoteReference makeReference(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
@@ -172,7 +172,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     /**
      * @return a canonical reference of the specified kind for the specified target method
      */
-    private TeleReference makeCanonicalReference(TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
+    private RemoteReference makeCanonicalReference(TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
         SemispaceCodeCacheRemoteReference remoteRef = null;
         final Map<TeleTargetMethod, WeakReference<SemispaceCodeCacheRemoteReference> > kindMap = refMaps.get(kind);
         WeakReference<SemispaceCodeCacheRemoteReference> weakRef = kindMap.get(teleTargetMethod);

@@ -34,7 +34,7 @@ import com.sun.max.unsafe.*;
  * @see Reference
  * @see VmReferenceManager
  */
-public abstract class ConstantTeleReference extends RemoteTeleReference {
+public abstract class ConstantTeleReference extends RemoteReference {
 
     private final Address raw;
 

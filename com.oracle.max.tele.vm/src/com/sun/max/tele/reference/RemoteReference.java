@@ -25,6 +25,7 @@ package com.sun.max.tele.reference;
 import java.util.concurrent.atomic.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 
@@ -34,7 +35,7 @@ import com.sun.max.vm.reference.*;
  *
  * @see VmReferenceManager
  */
-public abstract class TeleReference extends Reference {
+public abstract class RemoteReference extends Reference {
 
     private final TeleVM vm;
 
@@ -42,11 +43,11 @@ public abstract class TeleReference extends Reference {
 
     private static final AtomicLong nextOID = new AtomicLong(1);
 
-    protected TeleReference forwardedTeleRef = null;
+    protected RemoteReference forwardedTeleRef = null;
 
     protected boolean collectedByGC = false;
 
-    protected TeleReference(TeleVM vm) {
+    protected RemoteReference(TeleVM vm) {
         this.vm = vm;
     }
 
@@ -62,6 +63,8 @@ public abstract class TeleReference extends Reference {
         }
         return refOID;
     }
+
+    public abstract Address raw();
 
     /**
      * @return whether this instance is actually a local value dressed up to look like a remote reference
@@ -81,7 +84,7 @@ public abstract class TeleReference extends Reference {
      * @param forwardedMutableTeleRef reference to another VM object that has superseded the one
      * to which this instance refers.
      */
-    public final void setForwardedTeleReference(TeleReference forwardedMutableTeleRef) {
+    public final void setForwardedTeleReference(RemoteReference forwardedMutableTeleRef) {
         this.forwardedTeleRef = forwardedMutableTeleRef;
     }
 
@@ -89,7 +92,7 @@ public abstract class TeleReference extends Reference {
      * @return reference to the VM object to which this instance refers, possibly following
      * a forwarding reference if set.
      */
-    public final TeleReference getForwardedTeleRef() {
+    public final RemoteReference getForwardedTeleRef() {
         if (forwardedTeleRef != null) {
             return forwardedTeleRef.getForwardedTeleRef();
         }

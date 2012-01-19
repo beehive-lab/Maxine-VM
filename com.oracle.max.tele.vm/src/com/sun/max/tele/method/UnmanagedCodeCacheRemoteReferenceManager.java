@@ -131,7 +131,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
      * If the location is an origin of such an object, return an object reference
      * that indirects through the {@link TargetMethod} that points at the object.
      */
-    public TeleReference makeReference(Address origin) throws TeleError {
+    public RemoteReference makeReference(Address origin) throws TeleError {
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
@@ -179,7 +179,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     /**
      * @return a canonical reference of the specified kind for the specified target method
      */
-    private TeleReference makeCanonicalReference(TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
+    private RemoteReference makeCanonicalReference(TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
         UnmanagedCodeCacheRemoteReference remoteRef = null;
         final Map<TeleTargetMethod, WeakReference<UnmanagedCodeCacheRemoteReference> > kindMap = refMaps.get(kind);
         WeakReference<UnmanagedCodeCacheRemoteReference> weakRef = kindMap.get(teleTargetMethod);

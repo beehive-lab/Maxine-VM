@@ -37,7 +37,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv) this should be eliminated, cleaned up and possibly folded into VMObjectAccess.
 // TODO (mlvdv) as of October 2011, only references to the dynamic heap are handled by the old mechanism,
 // which is specialized for the semispace GC.  That mechanism should first be folded into VmHeapAccess
 // and then encapsulated so that it is only used when the VM is configured with that collector.
@@ -74,7 +73,7 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
 
     private final RemoteReferenceScheme referenceScheme;
 
-    private final TeleReference zeroReference;
+    private final RemoteReference zeroReference;
 
     private final LegacyReferenceManager legacyReferenceManager;
 
@@ -84,7 +83,7 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
         referenceScheme.setContext(vm);
         legacyReferenceManager = new LegacyReferenceManager(vm, this);
 
-        this.zeroReference = new TeleReference(vm) {
+        this.zeroReference = new RemoteReference(vm) {
 
             @Override
             public ObjectMemoryStatus memoryStatus() {
@@ -104,6 +103,11 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
             @Override
             public int hashCode() {
                 return 0;
+            }
+
+            @Override
+            public Address raw() {
+                return Address.zero();
             }
         };
     }
@@ -146,12 +150,12 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
      * @param address a location in VM memory
      * @return the address wrapped as a remote object reference
      */
-    public RemoteTeleReference makeTemporaryRemoteReference(Address address) {
+    public RemoteReference makeTemporaryRemoteReference(Address address) {
         return new TemporaryTeleReference(vm(), address);
     }
 
     public ReferenceValue createReferenceValue(Reference reference) {
-        if (reference instanceof TeleReference) {
+        if (reference instanceof RemoteReference) {
             return TeleReferenceValue.from(vm(), reference);
         } else if (reference instanceof HostedReference) {
             return TeleReferenceValue.from(vm(), Reference.fromJava(reference.toJava()));
@@ -162,7 +166,7 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
     /**
      * @return the canonical null/zero reference, can be compared with {@code ==}
      */
-    public TeleReference zeroReference() {
+    public RemoteReference zeroReference() {
         return zeroReference;
     }
 
@@ -200,26 +204,26 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
      * @return a special kind of {@link Reference} implementation that encapsulates a remote
      * location in VM memory, allowing the reuse of much VM code that deals with references.
      */
-    public synchronized TeleReference makeReference(Address address) {
+    public synchronized RemoteReference makeReference(Address address) {
         if (address.isZero()) {
             return zeroReference();
         }
         // TODO (mlvdv) Transition to the new reference management framework; use it for the regions supported so far
         final VmHeapRegion bootHeapRegion = vm().heap().bootHeapRegion();
         if (bootHeapRegion.contains(address)) {
-            TeleReference teleReference = bootHeapRegion.objectReferenceManager().makeReference(address);
+            RemoteReference teleReference = bootHeapRegion.objectReferenceManager().makeReference(address);
             return teleReference == null ? zeroReference() : teleReference;
         }
 
         final VmHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
         if (immortalHeapRegion != null && immortalHeapRegion.contains(address)) {
-            TeleReference teleReference = immortalHeapRegion.objectReferenceManager().makeReference(address);
+            RemoteReference teleReference = immortalHeapRegion.objectReferenceManager().makeReference(address);
             return teleReference == null ? zeroReference() : teleReference;
         }
 
         final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
         if (compiledCodeRegion != null) {
-            TeleReference teleReference = compiledCodeRegion.objectReferenceManager().makeReference(address);
+            RemoteReference teleReference = compiledCodeRegion.objectReferenceManager().makeReference(address);
             return teleReference == null ? zeroReference() : teleReference;
         }
 

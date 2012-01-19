@@ -315,7 +315,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         if (reference instanceof TemporaryTeleReference) {
             TeleWarning.message("Attempt to create TeleObject with temporary Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
         }
-        if (!((TeleReference) reference).isLive()) {
+        if (!((RemoteReference) reference).isLive()) {
             TeleError.unexpected("Attempt to create TeleObject with non-live Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
         }
 

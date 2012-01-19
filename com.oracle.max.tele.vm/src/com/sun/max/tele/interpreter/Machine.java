@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -236,7 +236,7 @@ public final class Machine extends AbstractVmHolder {
                     return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
                 }
                 case REFERENCE: {
-                    final TeleReference reference = referenceManager().makeReference(staticTupleReference.readWord(fieldActor.offset()).asAddress());
+                    final RemoteReference reference = referenceManager().makeReference(staticTupleReference.readWord(fieldActor.offset()).asAddress());
                     return referenceManager().createReferenceValue(reference);
                 }
             }
@@ -271,8 +271,8 @@ public final class Machine extends AbstractVmHolder {
             return widenIfNecessary(fieldActor.readValue(instance));
         } else {
             assert kind.isReference;
-            if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-                final TeleReference reference = referenceManager().makeReference(instance.readWord(fieldActor.offset()).asAddress());
+            if (instance instanceof RemoteReference && !((RemoteReference) instance).isLocal()) {
+                final RemoteReference reference = referenceManager().makeReference(instance.readWord(fieldActor.offset()).asAddress());
                 return referenceManager().createReferenceValue(reference);
             } else {
                 return fieldActor.readValue(instance);
@@ -281,14 +281,14 @@ public final class Machine extends AbstractVmHolder {
     }
 
     public void putField(Object instance, int cpIndex, Value value) {
-        if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
+        if (instance instanceof RemoteReference && !((RemoteReference) instance).isLocal()) {
             TeleError.unexpected("Cannot run putfield remotely!");
         } else {
             final ConstantPool cp = currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
 
             if (value instanceof TeleReferenceValue) {
-                fieldActor.writeValue(instance, TeleReferenceValue.from(vm(), makeLocalReference((TeleReference) value.asReference())));
+                fieldActor.writeValue(instance, TeleReferenceValue.from(vm(), makeLocalReference((RemoteReference) value.asReference())));
             } else {
                 final Value val = fieldActor.kind.convert(value);
                 fieldActor.writeValue(instance, val);
@@ -302,7 +302,7 @@ public final class Machine extends AbstractVmHolder {
         return methodRef.resolve(cp, cpIndex);
     }
 
-    private Object readRemoteArray(TeleReference remoteArray, int length, TypeDescriptor type) {
+    private Object readRemoteArray(RemoteReference remoteArray, int length, TypeDescriptor type) {
         Object localArray = null;
         // TODO: this could probably ask the kind to perform the operation
         if (type == JavaTypeDescriptor.BOOLEAN) {
@@ -376,7 +376,7 @@ public final class Machine extends AbstractVmHolder {
         return localArray;
     }
 
-    Reference makeLocalReference(TeleReference remoteReference) {
+    Reference makeLocalReference(RemoteReference remoteReference) {
         if (remoteReference.isLocal()) {
             return remoteReference;
         }
@@ -400,7 +400,7 @@ public final class Machine extends AbstractVmHolder {
 
             if (arguments[i] instanceof TeleReferenceValue) {
                 final TeleReferenceValue inspectorReferenceArgument = (TeleReferenceValue) arguments[i];
-                final TeleReference reference = (TeleReference) inspectorReferenceArgument.asReference();
+                final RemoteReference reference = (RemoteReference) inspectorReferenceArgument.asReference();
                 if (!reference.isLocal()) {
                     arguments[i] = TeleReferenceValue.from(vm(), makeLocalReference(reference));
                 }

@@ -1339,9 +1339,9 @@ public abstract class TeleVM implements MaxVM {
         // Work only with temporary references that are unsafe across GC
         // Do no testing to determine if the reference points to a valid String object in live memory.
         try {
-            final RemoteTeleReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
+            final RemoteReference stringRef = referenceManager().makeTemporaryRemoteReference(origin);
             final Address charArrayAddress = stringRef.readWord(fields().String_value.fieldActor().offset()).asAddress();
-            final RemoteTeleReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
+            final RemoteReference charArrayRef = referenceManager().makeTemporaryRemoteReference(charArrayAddress);
             int offset = stringRef.readInt(fieldAccess.String_offset.fieldActor().offset());
             final int charArrayCount = stringRef.readInt(fieldAccess.String_count.fieldActor().offset());
             final char[] chars = new char[charArrayCount];

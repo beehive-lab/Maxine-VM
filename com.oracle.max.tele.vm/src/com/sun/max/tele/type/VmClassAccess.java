@@ -49,7 +49,7 @@ import com.sun.max.vm.type.*;
  * The singleton cache of information that identifies all classes known to
  * be loaded in the VM.
  * <p>
- * The registry identifies each loaded class with a {@link TeleReference} that points at the {@link ClassActor} for the
+ * The registry identifies each loaded class with a {@link RemoteReference} that points at the {@link ClassActor} for the
  * class in the VM. The registry does <em>not</em> created any instances of {@link TeleClassActor} for them, however, in
  * order to avoid unnecessary overhead.
  * <p>
