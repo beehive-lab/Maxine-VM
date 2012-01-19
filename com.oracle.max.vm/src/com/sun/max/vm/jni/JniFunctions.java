@@ -74,9 +74,6 @@ import com.sun.max.vm.value.*;
  */
 public final class JniFunctions {
 
-    @RESET
-    public static boolean TraceJNI;
-
     public static boolean CheckJNI;
     static {
         VMOptions.register(new VMOption("-Xcheck:jni", "Perform additional checks for JNI functions.") {
@@ -287,14 +284,9 @@ public final class JniFunctions {
             return logOperations[op].name();
         }
 
-        @Override
-        protected void checkLogOptions() {
-            super.checkLogOptions();
-            TraceJNI = logger.traceEnabled();
-        }
     }
 
-    public static JniFunctionsLogger logger = new JniFunctionsLogger();
+    public static final JniFunctionsLogger logger = new JniFunctionsLogger();
 
     static String dottify(String slashifiedName) {
         return slashifiedName.replace('/', '.');
