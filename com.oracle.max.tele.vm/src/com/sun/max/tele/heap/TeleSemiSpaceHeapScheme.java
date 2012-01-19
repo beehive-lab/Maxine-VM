@@ -42,7 +42,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @see SemiSpaceHeapScheme
  */
-final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
+final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements LegacyTeleHeapScheme {
 
     TeleSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);

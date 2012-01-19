@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
@@ -50,6 +51,11 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
 
     public MaxMarkBitsInfo markBitInfo() {
         return null;
+    }
+
+    public TeleHeapScheme teleHeapScheme() {
+        final TeleVMConfiguration vmConfiguration = vm().teleVMConfiguration();
+        return vmConfiguration == null ? null : vmConfiguration.teleHeapScheme();
     }
 
     /**
