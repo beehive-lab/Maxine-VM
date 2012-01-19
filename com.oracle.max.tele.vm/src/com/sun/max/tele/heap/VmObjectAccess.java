@@ -231,12 +231,12 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
             if (heap().phase().isCollecting() && heap().contains(origin) && isObjectForwarded(p)) {
                 p = heap().getForwardedOrigin(p).asPointer();
             }
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(p));
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeUnsafeRemoteReference(p));
             for (int i = 0; i < 3; i++) {
                 if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
                     return false;
                 }
-                final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
+                final RemoteReference hubRef = referenceManager().makeUnsafeRemoteReference(hubWord.asAddress());
                 Pointer hubOrigin = hubRef.toOrigin();
                 if (!heap().contains(hubOrigin)) {
                     return false;
@@ -502,8 +502,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin));
-        final RemoteReference staticHubRef = referenceManager().makeTemporaryRemoteReference(staticHubWord.asAddress());
+        Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeUnsafeRemoteReference(origin));
+        final RemoteReference staticHubRef = referenceManager().makeUnsafeRemoteReference(staticHubWord.asAddress());
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
             return false;
@@ -511,7 +511,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
         final int hubClassActorOffset = fields().Hub_classActor.fieldActor().offset();
         final Word classActorWord = memory().readWord(staticHubOrigin, hubClassActorOffset);
-        final RemoteReference classActorRef = referenceManager().makeTemporaryRemoteReference(classActorWord.asAddress());
+        final RemoteReference classActorRef = referenceManager().makeUnsafeRemoteReference(classActorWord.asAddress());
         final Pointer classActorOrigin = classActorRef.toOrigin();
         if (!heap().contains(classActorOrigin) && !codeCache().contains(classActorOrigin)) {
             return false;
@@ -519,7 +519,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
         final int classActorStaticTupleOffset = fields().ClassActor_staticTuple.fieldActor().offset();
         final Word staticTupleWord = memory().readWord(classActorOrigin, classActorStaticTupleOffset);
-        final RemoteReference staticTupleRef = referenceManager().makeTemporaryRemoteReference(staticTupleWord.asAddress());
+        final RemoteReference staticTupleRef = referenceManager().makeUnsafeRemoteReference(staticTupleWord.asAddress());
         final Pointer staticTupleOrigin = staticTupleRef.toOrigin();
         // If we really started with a {@link StaticTuple}, then this field will point at it
         return staticTupleOrigin.equals(origin);

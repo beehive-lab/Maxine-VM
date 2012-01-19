@@ -305,15 +305,15 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      *
      * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
-     * @throws TeleError if the reference is not live or is an instance of {@link TemporaryTeleReference}
+     * @throws TeleError if the reference is not live or is an instance of {@link UnsafeRemoteReference}
      */
     public TeleObject make(Reference reference) throws TeleError {
         assert reference != null;
         if (reference.isZero()) {
             return null;
         }
-        if (reference instanceof TemporaryTeleReference) {
-            TeleWarning.message("Attempt to create TeleObject with temporary Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
+        if (reference instanceof UnsafeRemoteReference) {
+            TeleWarning.message("Creating a TeleObject with an unsafe Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());
         }
         if (!((RemoteReference) reference).isLive()) {
             TeleError.unexpected("Attempt to create TeleObject with non-live Reference" + reference.toString() + " @" + reference.toOrigin().to0xHexString());

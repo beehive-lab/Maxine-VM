@@ -294,7 +294,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
         if (fieldValue.isNotZero()) {
             // Assert that this points to an array of references, read as words
-            final RemoteReference wordArrayRef = referenceManager().makeTemporaryRemoteReference(fieldValue.asAddress());
+            final RemoteReference wordArrayRef = referenceManager().makeUnsafeRemoteReference(fieldValue.asAddress());
             final int wordArrayLength = objects().unsafeReadArrayLength(wordArrayRef);
 
             // Read the references as words to avoid using too much machinery
@@ -302,7 +302,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 // Read an entry from the array
                 final Word regionReferenceWord = Layout.getWord(wordArrayRef, index);
                 // Assert that this points to an object of type {@link MemoryRegion} in the VM
-                RemoteReference memoryRegionRef = referenceManager().makeTemporaryRemoteReference(regionReferenceWord.asAddress());
+                RemoteReference memoryRegionRef = referenceManager().makeUnsafeRemoteReference(regionReferenceWord.asAddress());
                 // Read the field MemoryRegion.start
                 final Address regionStartAddress = memoryRegionRef.readWord(fields().MemoryRegion_start.fieldActor().offset()).asAddress();
                 // Read the field MemoryRegion.size
