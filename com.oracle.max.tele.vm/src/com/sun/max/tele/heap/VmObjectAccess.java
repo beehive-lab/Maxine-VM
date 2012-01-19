@@ -175,6 +175,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         if (compiledCodeRegion != null) {
             return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
         }
+        // TODO (mlvdv) Old Heap
         // For everything else use the old machinery
         try {
             if (!heap().contains(address) && (codeCache() == null || !codeCache().contains(address))) {
@@ -478,20 +479,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
-    // TODO (mlvdv) this is specific to copying collectors
-    /**
-     * Finds an object in the VM that has been located at a particular place in memory, but which
-     * may have been relocated.
-     * <p>
-     * Must be called in thread holding the VM lock
-     *
-     * @param origin an object origin in the VM
-     * @return the object originally at the origin, possibly relocated
-     */
-    public TeleObject getForwardedObject(Pointer origin) {
-        final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
-        return teleObjectFactory.make(forwardedObjectReference);
-    }
 
     /**
      * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
@@ -538,15 +525,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         return staticTupleOrigin.equals(origin);
     }
 
-    public int gcForwardingPointerOffset() {
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        return heap().gcForwardingPointerOffset();
-    }
-
-    public  boolean isObjectForwarded(Pointer origin) {
-        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
-        return heap().isObjectForwarded(origin);
-    }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
@@ -573,6 +551,34 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
                 printStream.println("    " + count.value + "\t" + count.type.getSimpleName());
             }
         }
+    }
+
+
+    // TODO (mlvdv) Old Heap
+    /**
+     * Finds an object in the VM that has been located at a particular place in memory, but which
+     * may have been relocated.
+     * <p>
+     * Must be called in thread holding the VM lock
+     *
+     * @param origin an object origin in the VM
+     * @return the object originally at the origin, possibly relocated
+     */
+    public TeleObject getForwardedObject(Pointer origin) {
+        final Reference forwardedObjectReference = referenceManager().makeReference(heap().getForwardedOrigin(origin));
+        return teleObjectFactory.make(forwardedObjectReference);
+    }
+
+    // TODO (mlvdv) Old Heap
+    public int gcForwardingPointerOffset() {
+        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
+        return heap().gcForwardingPointerOffset();
+    }
+
+    // TODO (mlvdv) Old Heap
+    public  boolean isObjectForwarded(Pointer origin) {
+        // TODO (mlvdv) Should only be called if in a region being managed by relocating GC
+        return heap().isObjectForwarded(origin);
     }
 
 }

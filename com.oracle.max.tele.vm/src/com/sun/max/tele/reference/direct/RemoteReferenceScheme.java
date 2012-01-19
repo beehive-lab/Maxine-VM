@@ -28,7 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.tele.reference.LocalTeleReferenceManager.LocalTeleReference;
+import com.sun.max.tele.reference.LocalTeleReferenceManager.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -49,10 +49,12 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
     private TeleVM vm;
     private DataAccess dataAccess;
+    protected LocalTeleReferenceManager localTeleReferenceManager;
 
     // TODO (mlvdv) (pass in data access specifically)
     public void setContext(TeleVM vm) {
         this.vm = vm;
+        this.localTeleReferenceManager = new LocalTeleReferenceManager(vm);
         this.dataAccess = vm.memoryIO().access();
         assert dataAccess != null;
     }
@@ -73,7 +75,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public Reference fromJava(Object object) {
-        return vm.referenceManager().localTeleReferenceManager().make(object);
+        return localTeleReferenceManager.make(object);
     }
 
     public Object toJava(Reference ref) {

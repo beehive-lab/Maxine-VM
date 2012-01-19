@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,12 +49,12 @@ public abstract class ConstantTeleReference extends RemoteTeleReference {
      * In this implementation, the remote location does not change, so this method is constant.
      */
     @Override
-    public Address raw() {
+    public final Address raw() {
         return raw;
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other instanceof ConstantTeleReference) {
             final ConstantTeleReference constantTeleRef = (ConstantTeleReference) other;
             return raw.equals(constantTeleRef.raw);
