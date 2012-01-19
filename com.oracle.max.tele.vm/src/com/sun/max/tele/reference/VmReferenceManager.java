@@ -204,7 +204,7 @@ public final class VmReferenceManager extends AbstractVmHolder implements TeleVM
      * @return a special kind of {@link Reference} implementation that encapsulates a remote
      * location in VM memory, allowing the reuse of much VM code that deals with references.
      */
-    public synchronized RemoteReference makeReference(Address address) {
+    public RemoteReference makeReference(Address address) {
         if (address.isZero()) {
             return zeroReference();
         }
