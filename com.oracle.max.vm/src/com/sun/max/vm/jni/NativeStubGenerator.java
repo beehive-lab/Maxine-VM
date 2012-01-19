@@ -118,11 +118,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final FieldRefConstant jniLogger = createFieldConstant(JniFunctions.class, makeSymbol("logger"));
     private static final FieldRefConstant downCallEntry = createFieldConstant(JxxFunctionsLogger.class, makeSymbol("DOWNCALL_ENTRY"));
     private static final FieldRefConstant downCallExit = createFieldConstant(JxxFunctionsLogger.class, makeSymbol("DOWNCALL_EXIT"));
-    private static final ClassMethodRefConstant log0 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class);
-    private static final ClassMethodRefConstant fromMethodActor = createClassMethodConstant(MethodID.class, makeSymbol("fromMethodActor"), MethodActor.class);
-    private static final ClassMethodRefConstant log1 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class, Word.class);
+    private static final ClassMethodRefConstant toWord = createClassMethodConstant(Address.class, makeSymbol("fromInt"), int.class);
     private static final ClassMethodRefConstant log2 = createClassMethodConstant(VMLogger.class, makeSymbol("log"), int.class, Word.class, Word.class);
-    private static final FieldRefConstant logEnabled = createFieldConstant(VMLogger.class, makeSymbol("logEnabled"));
+    private static final ClassMethodRefConstant enabled = createClassMethodConstant(VMLogger.class, makeSymbol("enabled"));
     private static final ClassMethodRefConstant link = createClassMethodConstant(NativeFunction.class, makeSymbol("link"));
     private static final ClassMethodRefConstant nativeCallPrologue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologue"), NativeFunction.class);
     private static final ClassMethodRefConstant nativeCallPrologueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologueForC"), NativeFunction.class);
@@ -131,7 +129,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     private static final ClassMethodRefConstant writeObject = createClassMethodConstant(Pointer.class, makeSymbol("writeObject"), int.class, Object.class);
 
-    private int methodIDLocal;
+    private int methodIDAsInt;
     /**
      * Allocates a block of handles and copies the object arguments into the block.
      *
@@ -209,8 +207,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             currentThread = allocateLocal(Kind.REFERENCE);
             astore(currentThread);
 
-            methodIDLocal = allocateLocal(Kind.WORD);
-            verboseJniEntry();
+            methodIDAsInt = MethodID.fromMethodActor(classMethodActor).asAddress().toInt();
+            logJniEntry();
 
             // Save current JNI frame.
             top = allocateLocal(Kind.INT);
@@ -320,7 +318,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             iload(top);
             invokevirtual(resetHandlesTop, 2, 0);
 
-            verboseJniExit();
+            logJniExit();
 
             // throw (and clear) any pending exception
             aload(currentThread);
@@ -340,59 +338,26 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         return_(resultKind);
     }
 
-    /**
-     * Generates the code to trace a call to a native function from a native stub.
-     */
-    private void verboseJniEntry() {
-        if (JniFunctions.TraceJNI) {
-            if (MaxineVM.isHosted()) {
-                // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-                getfield(logEnabled);
-                final Label noTracing = newLabel();
-                ifeq(noTracing);
-                logJniEntry();
-                noTracing.bind();
-            } else {
-                logJniEntry();
-            }
-        }
+    private void logJni(FieldRefConstant callType) {
+        getstatic(jniLogger);
+        invokevirtual(enabled, 1, 1);
+        final Label noTracing = newLabel();
+        ifeq(noTracing);
+        getstatic(jniLogger);
+        ldc(PoolConstantFactory.createIntegerConstant(JniFunctions.LogOperations.NativeMethodCall.ordinal()));
+        getstatic(callType);
+        ldc(PoolConstantFactory.createIntegerConstant(methodIDAsInt));
+        invokestatic(toWord, 1, 1);
+        invokevirtual(log2, 4, 0);
+        noTracing.bind();
     }
 
     private void logJniEntry() {
-        getstatic(jniLogger);
-        ldc(PoolConstantFactory.createIntegerConstant(JniFunctions.LogOperations.NativeMethodCall.ordinal()));
-        getstatic(downCallEntry);
-        ldc(PoolConstantFactory.createObjectConstant(classMethodActor));
-        invokestatic(fromMethodActor, 1, 1);
-        dup();
-        astore(methodIDLocal);
-        invokevirtual(log2, 4, 0);
-    }
-
-    /**
-     * Generates the code to trace a return to a native stub from a native function.
-     */
-    private void verboseJniExit() {
-        if (JniFunctions.TraceJNI) {
-            if (MaxineVM.isHosted()) {
-                // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-                getfield(logEnabled);
-                final Label notVerbose = newLabel();
-                ifeq(notVerbose);
-                logJniExit();
-                notVerbose.bind();
-            } else {
-                logJniExit();
-            }
-        }
+        logJni(downCallEntry);
     }
 
     private void logJniExit() {
-        getstatic(jniLogger);
-        ldc(PoolConstantFactory.createIntegerConstant(JniFunctions.LogOperations.NativeMethodCall.ordinal()));
-        getstatic(downCallExit);
-        aload(methodIDLocal);
-        invokevirtual(log2, 4, 0);
+        logJni(downCallExit);
     }
 
 }
