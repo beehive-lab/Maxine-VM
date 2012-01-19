@@ -37,7 +37,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -149,8 +148,11 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
         }
 
-        // From now on, we can allocate. The following does this because of the var-arg arguments.
-        InspectableHeapInfo.init(true, markedSpace);
+        // From now on, we can allocate.
+
+        // Make the heap inspectable
+        HeapScheme.Inspect.init(true);
+        HeapScheme.Inspect.notifyHeapRegions(markedSpace);
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {

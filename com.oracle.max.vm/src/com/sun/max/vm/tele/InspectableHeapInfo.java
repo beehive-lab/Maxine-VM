@@ -54,6 +54,11 @@ public final class InspectableHeapInfo {
     }
 
     /**
+     * Should inspectable information about heap regions be allocated in immortal memory.
+     */
+    private static boolean useImmortalMemory = false;
+
+    /**
      * Inspectable array of memory regions allocated dynamically for heap memory management.
      * @see com.sun.max.vm.heap.HeapScheme
      */
@@ -123,6 +128,36 @@ public final class InspectableHeapInfo {
     private static long recentHeapSizeRequest;
 
     /**
+     * Sets up root table and other information needed for heap inspection.
+     * <p>
+     * No-op when VM is not being inspected.
+     * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
+     */
+    public static void init(boolean useImmortalMemory) {
+        if (Inspectable.isVmInspected()) {
+            InspectableHeapInfo.useImmortalMemory = useImmortalMemory;
+            // Create the roots region, but allocate the descriptor object
+            // in non-collected memory so that we don't lose track of it
+            // during GC.
+            if (useImmortalMemory) {
+                try {
+                    Heap.enableImmortalMemoryAllocation();
+                    rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
+                } finally {
+                    Heap.disableImmortalMemoryAllocation();
+                }
+            } else {
+                rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
+            }
+
+            final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
+            rootsPointer = Memory.allocate(size);
+            rootTableMemoryRegion.setStart(rootsPointer);
+            rootTableMemoryRegion.setSize(size);
+        }
+    }
+
+    /**
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <p>
@@ -135,7 +170,7 @@ public final class InspectableHeapInfo {
      * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
      * @param memoryRegions regions allocated by the heap implementation
      */
-    public static void init(boolean useImmortalMemory, MemoryRegion... memoryRegions) {
+    public static void setMemoryRegions(MemoryRegion[] memoryRegions) {
         if (Inspectable.isVmInspected()) {
             // Create the roots region, but allocate the descriptor object
             // in non-collected memory so that we don't lose track of it
@@ -144,19 +179,12 @@ public final class InspectableHeapInfo {
                 try {
                     Heap.enableImmortalMemoryAllocation();
                     dynamicHeapMemoryRegions = Arrays.copyOf(memoryRegions, memoryRegions.length);
-                    rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
                 } finally {
                     Heap.disableImmortalMemoryAllocation();
                 }
             } else {
                 dynamicHeapMemoryRegions = memoryRegions;
-                rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
             }
-
-            final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
-            rootsPointer = Memory.allocate(size);
-            rootTableMemoryRegion.setStart(rootsPointer);
-            rootTableMemoryRegion.setSize(size);
         }
     }
 
