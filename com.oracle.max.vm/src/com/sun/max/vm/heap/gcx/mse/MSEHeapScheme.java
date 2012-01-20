@@ -36,6 +36,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -275,40 +276,44 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
         @Override
         protected void collect(int invocationCount) {
+            final boolean traceGCPhases = Heap.traceGCPhases();
             traceGCTimes = Heap.traceGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
+            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
             markSweepSpace.doBeforeGC();
             collectionCount++;
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
-                Log.print("Begin mark-sweep #");
-                Log.println(collectionCount);
-            }
 
             theHeapRegionManager().checkOutgoingReferences();
 
             markSweepSpace.mark(heapMarker);
-            startTimer(reclaimTimer);
+
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
+
+            if (traceGCPhases) {
+                Log.println("BEGIN: Sweeping");
+            }
+            startTimer(reclaimTimer);
             markSweepSpace.sweep(heapMarker);
             Size freeSpaceAfterGC = markSweepSpace.freeSpace();
             stopTimer(reclaimTimer);
+            if (traceGCPhases) {
+                Log.println("END: Sweeping");
+            }
+
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
             heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, markSweepSpace);
-
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
-                Log.print("End mark-sweep #");
-                Log.println(collectionCount);
-            }
             markSweepSpace.doAfterGC();
+
+            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
             stopTimer(totalPauseTime);
 
