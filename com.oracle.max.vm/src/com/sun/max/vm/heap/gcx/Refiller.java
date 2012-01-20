@@ -31,11 +31,13 @@ import com.sun.max.vm.heap.*;
 public abstract class Refiller {
 
     /**
-     * Dispose of the contiguous space left in the allocator and return a new chunk of memory to refill it.
+     * Dispose of the contiguous space left in the allocator and return a new chunk of memory to refill it, or refill directly.
+     * If the refill is done directly, a zero address is returned, otherwise, an address to a cell formated as a {@linkplain HeapFreeChunk} is
+     * returned.
      *
      * @param startOfSpaceLeft address of the first byte of the space left at the end of the linear space allocator being asking for refill.
      * @param spaceLeft size, in bytes, of the space left
-     * @return
+     * @return a zero Address if the managed allocator was refilled, the address to a {@linkplain HeapFreeChunk} otherwise.
      */
     public abstract Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft);
 

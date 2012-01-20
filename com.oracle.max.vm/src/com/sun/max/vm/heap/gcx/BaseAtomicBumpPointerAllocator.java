@@ -236,10 +236,9 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 Pointer startOfSpaceLeft = atomicSetTopToLimit();
 
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
-                if (MaxineVM.isDebug()) {
-                    FatalError.check(!chunk.isZero(), "refill must not be null");
+                if (chunk.isNotZero()) {
+                    refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
                 }
-                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
                 // Fall-off to return to the non-blocking allocation loop.
             }
             // There was a race for refilling the allocator. Just return to
