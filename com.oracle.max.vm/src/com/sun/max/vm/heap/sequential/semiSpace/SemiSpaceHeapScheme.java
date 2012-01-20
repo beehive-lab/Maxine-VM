@@ -368,7 +368,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 verifyObjectSpaces("before GC");
 
                 JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
                 vmConfig().monitorScheme().beforeGarbageCollection();
 
@@ -379,6 +378,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 startTimer(clearTimer);
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 stopTimer(clearTimer);
+
+                // As soon as we announce the phase change, the Inspector will assume that
+                // the spaces have been swapped.
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
                 if (Heap.traceGCPhases()) {
                     Log.println("BEGIN: Scanning roots");
