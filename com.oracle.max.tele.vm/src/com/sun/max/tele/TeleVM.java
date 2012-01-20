@@ -1037,30 +1037,42 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
-        switch (phase) {
-            case ANALYZING:
-                gcAnalyzingListeners.add(listener, teleProcess);
-                break;
-            case RECLAIMING:
-                gcReclaimingListeners.add(listener, teleProcess);
-                break;
-            case ALLOCATING:
-                gcAllocatingListeners.add(listener, teleProcess);
-                break;
+        if (phase == null) {
+            gcAnalyzingListeners.add(listener, teleProcess);
+            gcReclaimingListeners.add(listener, teleProcess);
+            gcAllocatingListeners.add(listener, teleProcess);
+        } else {
+            switch (phase) {
+                case ANALYZING:
+                    gcAnalyzingListeners.add(listener, teleProcess);
+                    break;
+                case RECLAIMING:
+                    gcReclaimingListeners.add(listener, teleProcess);
+                    break;
+                case ALLOCATING:
+                    gcAllocatingListeners.add(listener, teleProcess);
+                    break;
+            }
         }
     }
 
     public final void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
-        switch (phase) {
-            case ANALYZING:
-                gcAnalyzingListeners.remove(listener);
-                break;
-            case RECLAIMING:
-                gcReclaimingListeners.remove(listener);
-                break;
-            case ALLOCATING:
-                gcAllocatingListeners.remove(listener);
-                break;
+        if (phase == null) {
+            gcAnalyzingListeners.remove(listener);
+            gcReclaimingListeners.remove(listener);
+            gcAllocatingListeners.remove(listener);
+        } else {
+            switch (phase) {
+                case ANALYZING:
+                    gcAnalyzingListeners.remove(listener);
+                    break;
+                case RECLAIMING:
+                    gcReclaimingListeners.remove(listener);
+                    break;
+                case ALLOCATING:
+                    gcAllocatingListeners.remove(listener);
+                    break;
+            }
         }
     }
 
