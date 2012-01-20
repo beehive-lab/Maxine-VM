@@ -128,6 +128,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
     void set(Address cell, Size size) {
         set(cell, cell.plus(size));
     }
+
     void set(Address cell, Address cellEnd) {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);

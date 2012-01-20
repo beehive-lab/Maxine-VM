@@ -39,6 +39,8 @@ class CardTable extends  Log2RegionToByteMapTable {
      */
     static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
 
+    static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
+
     static final int NO_CARD_INDEX = -1;
 
     static enum CardState {
@@ -164,5 +166,31 @@ class CardTable extends  Log2RegionToByteMapTable {
             }
         }
         return cursor.minus(tableAddress).toInt();
+    }
+
+    Address alignDownToCard(Address coveredAddress) {
+        return coveredAddress.and(CARD_ADDRESS_MASK);
+    }
+
+    Address alignUpToCard(Address coveredAddress) {
+        return coveredAddress.plus(CARD_SIZE).and(CARD_ADDRESS_MASK);
+    }
+
+ /**
+     * Set all cards completely covered by the specified range to the specified card state.
+     * @param start
+     * @param end
+     * @param cardState
+     */
+    void setCardsInRange(Address start, Address end, CardState cardState) {
+        Address firstCard = alignUpToCard(start.minus(Word.size()));
+        Address lastCard = alignDownToCard(end);
+        if (lastCard.greaterThan(firstCard)) {
+            final byte cardValue = cardState.value;
+            do {
+                unsafeSet(firstCard, cardValue);
+                firstCard = firstCard.plus(CARD_SIZE);
+            } while(lastCard.greaterThan(firstCard));
+        }
     }
 }

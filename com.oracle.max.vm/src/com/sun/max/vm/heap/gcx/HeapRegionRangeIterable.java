@@ -28,7 +28,7 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
  * The iterator return ranges of contiguous regions in the order of the list.
  */
 public final class HeapRegionRangeIterable extends HeapRegionListIterable {
-    HeapRegionRangeIterable() {
+    public HeapRegionRangeIterable() {
     }
 
     public RegionRange next() {
