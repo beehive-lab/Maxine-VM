@@ -46,6 +46,10 @@ import com.sun.max.vm.reference.*;
  * A pure card-table based remembered set.
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
+    static boolean TraceCardTableRSet = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceCardTableRSet", CardTableRSet.class, "Enables CardTableRSet Debugging Traces", Phase.PRISTINE);
+    }
     /**
      * Contiguous regions of virtual memory holding the card table data.
      * Mostly used to feed the inspector.
@@ -248,7 +252,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, cardState);
-            if (MaxineVM.isDebug() && true) {
+            if (MaxineVM.isDebug() && TraceCardTableRSet) {
                 Log.print("Visiting ");
                 Log.print(cardState.name());
                 Log.print(" cards [");
@@ -259,6 +263,8 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
                 Log.print(cardTable.rangeStart(startCardIndex));
                 Log.print(", ");
                 Log.print(cardTable.rangeStart(endCardIndex));
+                Log.print(")  R = ");
+                Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
                 Log.println(")");
             }
             visitCards(startCardIndex, endCardIndex, cellVisitor);

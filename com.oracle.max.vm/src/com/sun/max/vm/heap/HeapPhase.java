@@ -20,36 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.vm.heap;
 
-import com.sun.max.tele.reference.*;
-
-// TODO (mlvdv) articulate behavior with respect to relocated/forwarded objects.
 /**
- * The phases of a "region manager" that is responsible for object
- * memory allocation and reclamation for one or more extends of
- * heap memory.  The manager cycles in order through he following three
- * phases:
+ * The object management phases of a {@link HeapScheme} implementation.
+ * The heap cycles in order through he following three phases:
  * <ol>
  * <li> {@link #ALLOCATING}: normal operation, new memory being allocated on demand.</li>
  * <li> {@link #ANALYZING}: first ("liveness analysis") phase of GC.</li>
  * <li> {@link #RECLAIMING}: final ("clean up") phase of GC.</li>
  * </ol>
  */
-public enum ObjectManagerStatus {
+public enum HeapPhase {
 
     /**
      * This is the non-GC phase, during which the only activity
-     * by the manager is to allocate object memory from its free
+     * is to allocate object memory from its free
      * list, which is initially {@link ObjectMemoryStatus#LIVE}.
      * During this phase any {@link ObjectMemoryStatus#LIVE}
-     * object in one of the manager's regions remains
+     * object in one of the heap's regions remains
      * {@link ObjectMemoryStatus#LIVE}, unmoved, and of constant type.
      */
     ALLOCATING("Allocating", "Allocating only, no GC"),
 
     /**
-     * The first phase of a GC, during which the  manager investigates
+     * The first phase of a GC, during which the heap investigates
      * the liveness of every object in its region without loss of historical
      * information. During this phase no new objects are allocated.  The status
      * of all objects becomes {@link ObjectMemoryStatus#UNKNOWN} at the beginning
@@ -61,7 +56,7 @@ public enum ObjectManagerStatus {
     ANALYZING("Analyzing", "First (liveness analysis) phase of GC"),
 
     /**
-     * The second phase of a GC, during which the manager finalizes the status of
+     * The second phase of a GC, during which the heap finalizes the status of
      * objects and reclaims unreachable memory that had been allocated to objects
      * now determined to be {@link ObjectMemoryStatus#DEAD}, as well as any other
      * information produced during GC that is no longer needed.
@@ -71,7 +66,7 @@ public enum ObjectManagerStatus {
     private final String label;
     private final String description;
 
-    private ObjectManagerStatus(String label, String description) {
+    private HeapPhase(String label, String description) {
         this.label = label;
         this.description = description;
     }

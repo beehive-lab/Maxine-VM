@@ -22,10 +22,11 @@
  */
 package com.sun.max.tele.reference;
 
-import static com.sun.max.tele.reference.ObjectMemoryStatus.*;
+import static com.sun.max.vm.heap.ObjectMemoryStatus.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 // TODO (mlvdv) this will eventually be replaced.
 /**

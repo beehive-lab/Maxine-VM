@@ -25,6 +25,7 @@ package com.sun.max.tele.reference;
 import java.util.concurrent.atomic.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 
 /**

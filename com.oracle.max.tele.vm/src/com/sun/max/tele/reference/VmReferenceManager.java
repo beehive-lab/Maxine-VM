@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.reference.direct.*;
 import com.sun.max.tele.type.*;
@@ -35,13 +35,14 @@ import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.value.*;
 
 // TODO (mlvdv) this should be eliminated, cleaned up and possibly folded into VMObjectAccess.
 // TODO (mlvdv) as of October 2011, only references to the dynamic heap are handled by the old mechanism,
-// which is specialized for the semi-space GC.  That mechanism should first be folded into VmHeapAccess
+// which is specialized for the semispace GC.  That mechanism should first be folded into VmHeapAccess
 // and then encapsulated so that it is only used when the VM is configured with that collector.
 /**
  * The singleton manager for instances of {@link Reference} that point (or pretend to point) at

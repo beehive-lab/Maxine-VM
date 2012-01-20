@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.vm.heap;
 
 import java.util.*;
 

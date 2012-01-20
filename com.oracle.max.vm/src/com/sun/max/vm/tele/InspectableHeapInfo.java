@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,15 +33,15 @@ import com.sun.max.vm.heap.*;
 /**
  * Makes critical state information about the object heap
  * remotely inspectable.
- * <br>
+ * <p>
  * Active only when VM is being inspected.
- * <br>
+ * <p>
  * Dynamic object allocation is to be avoided.
- * <br>
+ * <p>
  * The methods in this with names inspectable* are intended to act as a kind of hook for the Inspector, so that it
  * can interrupt the VM at certain interesting moments.  This could also be used as a kind of low-wattage event
  * mechanism.
- * <br>
+ * <p>
  * The inspectable* methods here are distinct from those with similar or identical names in {@link HeapScheme.Inspect},
  * which are intended to act as convenient places for a user to set a breakpoint, perhaps from a menu of standard
  * locations.  The intention is that those locations would not land the user in this class.
@@ -80,8 +80,16 @@ public final class InspectableHeapInfo {
     private static Pointer rootsPointer = Pointer.zero();
 
     /**
+     * The ordinal value of the enum describing the current heap phase.
+     * This permits inspection of the phase at any time and, if needed,
+     * detection of phase change by watchpoint.
+     */
+    @INSPECTED
+    private static int heapPhaseOrdinal = HeapPhase.ALLOCATING.ordinal();
+
+    /**
      * Inspectable counter of the number of Garbage Collections that have <strong>begun</strong>.
-     * <br>
+     * <p>
      * Used by the Inspector to determine if the VM is currently collecting.
      */
     @INSPECTED
@@ -89,7 +97,7 @@ public final class InspectableHeapInfo {
 
     /**
      * Inspectable counter of the number of Garbage Collections that have <strong>completed</strong>.
-     * <br>
+     * <p>
      * Used by the Inspector to determine if the VM is currently collecting, and to
      * determine if the Inspector's cache of the root locations is current.
      */
@@ -117,12 +125,12 @@ public final class InspectableHeapInfo {
     /**
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
-     * <br>
+     * <p>
      * It is a good idea to use instances of {@link MemoryRegion} that have
      * been allocated in the boot heap if at all possible, thus avoiding having
      * meta information about the dynamic heap being described by objects
      * in the dynamic heap.
-     * <br>
+     * <p>
      * No-op when VM is not being inspected.
      * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
      * @param memoryRegions regions allocated by the heap implementation
@@ -177,27 +185,36 @@ public final class InspectableHeapInfo {
     private static void inspectableObjectRelocated(Address oldCellLocation,  Address newCellLocation) {
     }
 
-    /**
-     * Records that a GC has just begun, using an inspectable counter.
-     */
-    public static void notifyGCStarted() {
-        gcStartedCounter++;
-        // From the Inspector's perspective, a GC begins when
-        // the epoch counter gets incremented.  So the following
-        // method call makes it possible
-        // for the inspector to take an interrupt, if needed, just
-        // as the GC begins.
-        inspectableGCStarted(gcStartedCounter);
+    public static void notifyPhaseChange(HeapPhase phase) {
+        heapPhaseOrdinal = phase.ordinal();
+        switch (phase) {
+            case ANALYZING:
+                gcStartedCounter++;
+                // From the Inspector's perspective, a GC begins when
+                // the epoch counter gets incremented.
+                inspectableGCAnalyzing(gcStartedCounter);
+                break;
+            case RECLAIMING:
+                inspectableGCReclaiming(gcStartedCounter);
+                break;
+            case ALLOCATING:
+                gcCompletedCounter++;
+                // From the Inspector's perspective, a GC is complete when
+                // the two epoch counters become equal.
+                inspectableGCAllocating(gcCompletedCounter);
+                break;
+        }
     }
 
     /**
      * An empty method whose purpose is to be interrupted by the Inspector
-     * when it needs to observe the VM at the beginning of a GC.
-     * <br>
+     * when it needs to observe the VM at the beginning of a GC, i.e. when
+     * it enters the {@link HeapPhase#ANALYZING}.
+     * <p>
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the beginning of GC, another, more
      * convenient inspectable method is provided
-     * <br>
+     * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
@@ -206,30 +223,38 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCStarted(long gcStartedCounter) {
-    }
-
-    /**
-     * Records that a GC has concluded, using an inspectable counter.
-     */
-    public static void notifyGCCompleted() {
-        gcCompletedCounter++;
-        // From the Inspector's perspective, a GC is complete when
-        // the two epoch counters become equal.  The following
-        // method call makes it possible
-        // for the inspector to take an interrupt, if needed, just
-        // after the GC has concluded.
-        inspectableGCCompleted(gcCompletedCounter);
+    private static void inspectableGCAnalyzing(long gcStartedCounter) {
     }
 
     /**
      * An empty method whose purpose is to be interrupted by the Inspector
-     * when it needs to observe the VM at the conclusion of a GC.
-     * <br>
+     * when it needs to observe the VM when GC is ready to start reclaiming,
+     * i.e. when it enters the {@link HeapPhase#RECLAIMING}.
+     * <p>
+     * This particular method is intended for internal use by the inspector.
+     * Should a user wish to break at this phase, another, more
+     * convenient inspectable method is provided
+     * <p>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
+     *
+     * @param gcStartedCounter the GC epoch that is starting.
+     * @see HeapScheme.Inspect#inspectableGCReclaiming()
+     */
+    @INSPECTED
+    @NEVER_INLINE
+    private static void inspectableGCReclaiming(long gcStartedCounter) {
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector
+     * when it needs to observe the VM at the conclusion of a GC, i.e. hwen
+     * it enters the {@link HeapPhase#ALLOCATING}.
+     * <p>
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the conclusion of GC, another, more
      * convenient inspectable method is provided
-     * <br>
+     * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
@@ -238,7 +263,7 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCCompleted(long gcCompletedCounter) {
+    private static void inspectableGCAllocating(long gcCompletedCounter) {
     }
 
     /**
@@ -254,18 +279,18 @@ public final class InspectableHeapInfo {
     /**
      * An empty method whose purpose is to be interrupted by the Inspector
      * when it needs to observe a request for heap memory size increase.
-     * <br>
+     * <p>
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the request,  another, more
      * convenient inspectable method is provided
-     * <br>
+     * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param
      * @see HeapScheme.Inspect#inspectableGCComplete()
      */
-    @ INSPECTED
+    @INSPECTED
     @NEVER_INLINE
     private static void inspectableIncreaseMemoryRequested(Size size) {
     }
@@ -283,18 +308,18 @@ public final class InspectableHeapInfo {
     /**
      * An empty method whose purpose is to be interrupted by the Inspector
      * when it needs to observe a request for heap memory size decrease.
-     * <br>
+     * <p>
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the request,  another, more
      * convenient inspectable method is provided
-     * <br>
+     * <p>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param size the desired new heap size
      * @see HeapScheme.Inspect#inspectableGCComplete()
      */
-    @ INSPECTED
+    @INSPECTED
     @NEVER_INLINE
     private static void inspectableDecreaseMemoryRequested(Size size) {
     }

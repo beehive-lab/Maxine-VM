@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
-
 /**
- * Listener interface for GC starts in the VM.
+ * Access to heap state in the VM.
  */
-public interface MaxGCStartedListener {
-
-    /**
-     * Notifies listeners that a GC in the VM has just started, but no actual work has been done..
-     */
-    void gcStarted();
-
-}
+package com.sun.max.tele.heap;

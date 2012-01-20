@@ -50,6 +50,7 @@ import com.sun.max.tele.debug.VmBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.VmWatchpoint.VmWatchpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
@@ -618,14 +619,19 @@ public abstract class TeleVM implements MaxVM {
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
     /**
-     * Dispatcher for GC start events.
+     * Dispatcher for GC start events, i.e. when entering the {@link HeapPhase#ANALYZING} phase.
      */
-    private VMEventDispatcher<MaxGCStartedListener> gcStartedListeners;
+    private VMEventDispatcher<MaxGCPhaseListener> gcAnalyzingListeners;
 
     /**
-     * Dispatcher for GC completion events.
+     * Dispatcher for GC start events, i.e. when entering the {@link HeapPhase#RECLAIMING} phase.
      */
-    private VMEventDispatcher<MaxGCCompletedListener> gcCompletedListeners;
+    private VMEventDispatcher<MaxGCPhaseListener> gcReclaimingListeners;
+
+    /**
+     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#ALLOCATING} phase.
+     */
+    private VMEventDispatcher<MaxGCPhaseListener> gcAllocatingListeners;
 
     /**
      * Dispatcher for thread entry events (i.e., when a {@link VmThread} enters its run method).
@@ -762,17 +768,24 @@ public abstract class TeleVM implements MaxVM {
         this.watchpointManager = teleProcess.watchpointsEnabled() ? VmWatchpointManager.make(this, teleProcess) : null;
         this.invalidReferencesLogger = new InvalidReferencesLogger(this);
 
-        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(methodAccess.gcStartedMethodLocation(), "before gc begins") {
+        this.gcAnalyzingListeners = new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcAnalyzingMethodLocation(), "at GC start") {
             @Override
-            protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
-                listener.gcStarted();
+            protected void listenerDo(MaxThread thread, MaxGCPhaseListener listener) {
+                listener.gcPhaseChange(HeapPhase.ANALYZING);
             }
         };
 
-        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(methodAccess.gcCompletedMethodLocation(), "after gc completion") {
+        this.gcReclaimingListeners = new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcReclaimingMethodLocation(), "at GC transition to reclaiming") {
             @Override
-            protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
-                listener.gcCompleted();
+            protected void listenerDo(MaxThread thread, MaxGCPhaseListener listener) {
+                listener.gcPhaseChange(HeapPhase.RECLAIMING);
+            }
+        };
+
+        this.gcAllocatingListeners =  new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcAllocatingMethodLocation(), "at GC completion") {
+            @Override
+            protected void listenerDo(MaxThread thread, MaxGCPhaseListener listener) {
+                listener.gcPhaseChange(HeapPhase.ALLOCATING);
             }
         };
 
@@ -1013,12 +1026,32 @@ public abstract class TeleVM implements MaxVM {
         vmStateListeners.remove(listener);
     }
 
-    public final void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        gcStartedListeners.add(listener, teleProcess);
+    public final void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
+        switch (phase) {
+            case ANALYZING:
+                gcAnalyzingListeners.add(listener, teleProcess);
+                break;
+            case RECLAIMING:
+                gcReclaimingListeners.add(listener, teleProcess);
+                break;
+            case ALLOCATING:
+                gcAllocatingListeners.add(listener, teleProcess);
+                break;
+        }
     }
 
-    public final void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        gcStartedListeners.remove(listener);
+    public final void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
+        switch (phase) {
+            case ANALYZING:
+                gcAnalyzingListeners.remove(listener);
+                break;
+            case RECLAIMING:
+                gcReclaimingListeners.remove(listener);
+                break;
+            case ALLOCATING:
+                gcAllocatingListeners.remove(listener);
+                break;
+        }
     }
 
     public final void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
@@ -1035,14 +1068,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
         threadDetachListeners.remove(listener);
-    }
-
-    public final void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        gcCompletedListeners.add(listener, teleProcess);
-    }
-
-    public final void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        gcCompletedListeners.remove(listener);
     }
 
     public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
@@ -1371,16 +1396,16 @@ public abstract class TeleVM implements MaxVM {
             throw new IOException(exception);
         }
         try {
-            addGCCompletedListener(new MaxGCCompletedListener() {
+            addGCPhaseListener(new MaxGCPhaseListener() {
                 // The purpose of this listener, which doesn't do anything explicitly,
                 // is to force a VM stop at the end of each GC cycle, even if there are
                 // no other listeners.  This presents an opportunity for the Reference/Object
                 // code to update heap-related information that may have been changed as
                 // a result of the GC.
-                public void gcCompleted() {
+                public void gcPhaseChange(HeapPhase phase) {
                     Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
                 }
-            });
+            }, HeapPhase.ALLOCATING);
         } catch (MaxVMBusyException maxVMBusyException) {
             TeleError.unexpected("Unable to set initial GC completed listener");
         }

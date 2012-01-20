@@ -106,6 +106,14 @@ public class Log2RegionToByteMapTable {
         initialize(coveredAreaStart, coveredAreaSize, new byte[tableLength(coveredAreaSize)], noWriteBarrier);
     }
 
+    Address coveredAreaStart() {
+        return coveredAreaStart;
+    }
+
+    Address coveredAreaEnd() {
+        return coveredAreaEnd;
+    }
+
     void initialize(Address coveredAreaStart, Size coveredAreaSize, Address storageArea) {
         final byte [] table =  (byte[]) Cell.plantArray(storageArea.asPointer(), ClassRegistry.BYTE_ARRAY.dynamicHub(), tableLength(coveredAreaSize));
         initialize(coveredAreaStart, coveredAreaSize, table, true);

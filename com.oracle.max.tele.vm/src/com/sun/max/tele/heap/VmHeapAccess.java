@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.memory;
+package com.sun.max.tele.heap;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;

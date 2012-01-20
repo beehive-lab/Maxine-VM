@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.memory;
+package com.sun.max.tele.heap;
 
 import java.util.*;
 
@@ -36,15 +36,13 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Implementation details about the heap in the VM, specialized
- * for the semi-space implementation.
+ * for the semispace implementation.
  * <p>
  * Assumes forwarding pointer stored in the "Hub" field of objects.
  *
  * @see SemiSpaceHeapScheme
  */
-final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
-
-    private static final List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
+final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
 
     TeleSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);

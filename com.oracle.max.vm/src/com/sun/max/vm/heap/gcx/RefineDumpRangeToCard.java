@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.gcx.HeapRangeDumper.*;
 
-// TODO (mlvdv) this will eventually be replaced.
+public class RefineDumpRangeToCard implements DumpRangeRefinement {
+    private CardTableRSet cardTableRSet;
 
-/**
- * Canonicalized constant remote {@link Reference}, for addresses of VM objects
- * that do not move and will not be collected.
- */
-public class CanonicalConstantTeleReference extends ConstantTeleReference {
-
-    CanonicalConstantTeleReference(TeleVM vm, Address raw) {
-        super(vm, raw);
+    public RefineDumpRangeToCard(CardTableRSet cardTableRSet) {
+        this.cardTableRSet = cardTableRSet;
     }
 
-    // TODO (mlvdv) review whether this is necessary.
-    @Override
-    public void finalize() throws Throwable {
-        vm().referenceManager().finalizeCanonicalConstantTeleReference(this);
-        super.finalize();
-    }
-
-    @Override
-    public ObjectMemoryStatus memoryStatus() {
-        return ObjectMemoryStatus.LIVE;
+    public void refineRange(HeapRangeDumper heapDumper, Address unparsable) {
+        int startCardIndex = cardTableRSet.cardTable.tableEntryIndex(unparsable);
+        if (MaxineVM.isDebug() && CardTableRSet.TraceCardTableRSet) {
+            Log.print("Refining heap dumping range to card #");
+            Log.println(startCardIndex);
+        }
+        Address start = cardTableRSet.cfoTable.cellStart(startCardIndex).asPointer();
+        Address end = cardTableRSet.cardTable.rangeStart(startCardIndex).plus(CardTable.CARD_SIZE);
+        heapDumper.setRange(start, end);
     }
 }
