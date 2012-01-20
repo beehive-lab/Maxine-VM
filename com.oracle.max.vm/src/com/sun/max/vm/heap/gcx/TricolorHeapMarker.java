@@ -188,22 +188,43 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     }
 
     private static enum MARK_PHASE {
-        SCAN_THREADS("T"),
-        SCAN_BOOT_HEAP("B"),
-        SCAN_CODE("C"),
-        SCAN_IMMORTAL("I"),
-        VISIT_GREY_FORWARD("V"),
-        SPECIAL_REF("W"),
-        DONE("D");
+        SCAN_THREADS("T", "Marking roots from threads and monitors"),
+        SCAN_BOOT_HEAP("B", "Marking roots from boot heap"),
+        SCAN_CODE("C", "Marking roots from code"),
+        SCAN_IMMORTAL("I", "Marking roots from immortal heap"),
+        VISIT_GREY_FORWARD("V", "Tracing grey objects"),
+        SPECIAL_REF("W", "Processing special references"),
+        DONE("D", "");
 
-        String tag;
-        private MARK_PHASE(String tag) {
+        final String tag;
+        final String traceMessage;
+
+        private MARK_PHASE(String tag, String traceMessage) {
             this.tag = tag;
+            this.traceMessage = traceMessage;
         }
 
         @Override
         final public String toString() {
             return tag;
+        }
+
+        final void traceBegin() {
+            Log.print("BEGIN: "); Log.println(traceMessage);
+        }
+
+        final  void traceEnd() {
+            Log.print("END: "); Log.println(traceMessage);
+        }
+        final void traceBegin(boolean traceOn) {
+            if (traceOn) {
+                traceBegin();
+            }
+        }
+        final  void traceEnd(boolean traceOn) {
+            if (traceOn) {
+                traceEnd();
+            }
         }
     }
 
@@ -1321,41 +1342,39 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * is drained whenever reaching a drain threshold.
      */
     public void markRoots() {
+        final boolean traceGCPhases = Heap.traceGCPhases();
         rootCellVisitor.reset();
-        if (Heap.traceGCPhases()) {
-            Log.println("Scanning external roots...");
-        }
+
         // Mark all out of heap roots first (i.e., thread).
         // This only needs setting grey marks blindly (there are no black mark at this stage).
-        startTimer(rootScanTimer);
         markPhase = MARK_PHASE.SCAN_THREADS;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(rootScanTimer);
         heapRootsScanner.run();
         stopTimer(rootScanTimer);
+        markPhase.traceEnd(traceGCPhases);
 
         // Next, mark all reachable from the boot area.
-        if (Heap.traceGCPhases()) {
-            Log.println("Marking roots from boot heap...");
-        }
-        startTimer(bootHeapScanTimer);
         markPhase = MARK_PHASE.SCAN_BOOT_HEAP;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(bootHeapScanTimer);
         markBootHeap();
         stopTimer(bootHeapScanTimer);
+        markPhase.traceEnd(traceGCPhases);
 
-        if (Heap.traceGCPhases()) {
-            Log.println("Marking roots from code...");
-        }
-        startTimer(codeScanTimer);
         markPhase = MARK_PHASE.SCAN_CODE;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(codeScanTimer);
         markCode();
         stopTimer(codeScanTimer);
+        markPhase.traceEnd(traceGCPhases);
 
-        if (Heap.traceGCPhases()) {
-            Log.println("Marking roots from immortal heap...");
-        }
-        startTimer(immortalSpaceScanTimer);
         markPhase = MARK_PHASE.SCAN_IMMORTAL;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(immortalSpaceScanTimer);
         markImmortalHeap();
         stopTimer(immortalSpaceScanTimer);
+        markPhase.traceEnd(traceGCPhases);
     }
 
     /*
@@ -1951,6 +1970,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     }
 
     public void markAll() {
+        final boolean traceGCPhases = Heap.traceGCPhases();
         traceGCTimes = Heap.traceGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
@@ -1959,13 +1979,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
 
         clearColorMap();
         markRoots();
-        if (Heap.traceGCPhases()) {
-            Log.println("Tracing grey objects...");
-        }
-        startTimer(heapMarkingTimer);
+
         markPhase = MARK_PHASE.VISIT_GREY_FORWARD;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(heapMarkingTimer);
         visitGreyObjectsAfterRootMarking();
         stopTimer(heapMarkingTimer);
+        markPhase.traceEnd(traceGCPhases);
+
         if (traceGCTimes) {
             totalRecoveryScanCount += recoveryScanTimer.getCount();
             totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
@@ -1975,15 +1996,18 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
         }
 
-        startTimer(weakRefTimer);
         markPhase = MARK_PHASE.SPECIAL_REF;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(weakRefTimer);
         SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
         visitGreyObjects();
         stopTimer(weakRefTimer);
+        markPhase.traceEnd(traceGCPhases);
 
         if (VerifyAfterMarking) {
             verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
         }
+        markPhase = MARK_PHASE.DONE;
     }
 
     /**
@@ -1992,21 +2016,22 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param regionsRanges
      */
     private void mark(HeapRegionRangeIterable regionsRanges) {
-        traceGCTimes = Heap.traceGCTime();
+        final boolean traceGCPhases = Heap.traceGCPhases();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
         markingStack.reset();
         clearColorMap();
         overflowScanState.setHeapRegionsRanges(regionsRanges);
+
         markRoots();
-        if (Heap.traceGCPhases()) {
-            Log.println("Tracing grey objects...");
-        }
-        startTimer(heapMarkingTimer);
+
         markPhase = MARK_PHASE.VISIT_GREY_FORWARD;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(heapMarkingTimer);
         visitGreyObjectsAfterRootMarking(regionsRanges);
         stopTimer(heapMarkingTimer);
+        markPhase.traceEnd(traceGCPhases);
 
         if (traceGCTimes) {
             totalRecoveryScanCount += recoveryScanTimer.getCount();
@@ -2024,6 +2049,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param regionsRanges enumerate ranges of heap regions holding objects to trace
      */
     public void markAll(HeapRegionRangeIterable regionsRanges) {
+        final boolean traceGCPhases = Heap.traceGCPhases();
         traceGCTimes = Heap.traceGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
@@ -2061,8 +2087,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         } else {
             mark(regionsRanges);
         }
-        startTimer(weakRefTimer);
+
         markPhase = MARK_PHASE.SPECIAL_REF;
+        markPhase.traceBegin(traceGCPhases);
+        startTimer(weakRefTimer);
         SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
         // Note: the VISIT_GREY_FORWARD has already visited the whole heap, so any additional grey reference added by the special reference
         // manager are on the marking stack. Draining that stack may nevertheless add new grey reference after the finger, so we still
@@ -2070,6 +2098,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         regionsRanges.reset();
         visitGreyObjects(regionsRanges);
         stopTimer(weakRefTimer);
+        markPhase.traceEnd(traceGCPhases);
         FatalError.check(markingStack.isEmpty(), "Marking Stack must be empty after special references are processed.");
         markPhase = MARK_PHASE.DONE;
     }
