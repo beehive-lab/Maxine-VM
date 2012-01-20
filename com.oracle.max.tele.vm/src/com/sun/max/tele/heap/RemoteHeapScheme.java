@@ -56,7 +56,7 @@ public interface RemoteHeapScheme extends RemoteScheme {
      *
      * @return the list of dynamic heap regions currently known....
      */
-    List<VmHeapRegion> dynamicHeapRegions();
+    List<VmHeapRegion> heapRegions();
 
 
     // TODO (mlvdv) what to do if address not in heap?

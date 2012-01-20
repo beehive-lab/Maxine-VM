@@ -44,7 +44,7 @@ import com.sun.max.vm.reference.*;
  */
 public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
 
-    List<VmHeapRegion> dynamicHeapRegions = new ArrayList<VmHeapRegion>();
+    List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>();
 
     protected UnknownRemoteHeapScheme(TeleVM vm) {
         super(vm);
@@ -53,7 +53,7 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
         for (MaxMemoryRegion dynamicHeapRegion : getDynamicHeapRegionsUnsafe()) {
             final VmHeapRegion fakeDynamicHeapRegion =
                 new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes());
-            dynamicHeapRegions.add(fakeDynamicHeapRegion);
+            heapRegions.add(fakeDynamicHeapRegion);
             addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
         }
     }
@@ -62,8 +62,8 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
         return null;
     }
 
-    public List<VmHeapRegion> dynamicHeapRegions() {
-        return dynamicHeapRegions;
+    public List<VmHeapRegion> heapRegions() {
+        return heapRegions;
     }
 
     /**
@@ -87,7 +87,7 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
                         oldHeapRegion.updateStatus(epoch);
                     } else {
                         final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapMemoryRegion);
-                        dynamicHeapRegions.add(newVmHeapRegion);
+                        heapRegions.add(newVmHeapRegion);
                         vm().addressSpace().add(newVmHeapRegion.memoryRegion());
                     }
                 }
@@ -131,7 +131,7 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
      * remote object describing it.
      */
     private VmHeapRegion find(TeleRuntimeMemoryRegion runtimeMemoryRegion) {
-        for (VmHeapRegion heapRegion : dynamicHeapRegions) {
+        for (VmHeapRegion heapRegion : heapRegions) {
             if (runtimeMemoryRegion == heapRegion.representation()) {
                 return heapRegion;
             }

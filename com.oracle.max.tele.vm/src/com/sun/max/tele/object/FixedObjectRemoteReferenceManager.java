@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * A manager for remote references to objects allocated in a region of VM memory where:
+ * A manager for remote references to objects allocated in a single region of VM memory where:
  * <ul>
  * <li>The region is assumed not to move during its lifetime; and</li>
  * <li>Objects, once created never move and are never collected/evicted.</li>
@@ -50,17 +50,13 @@ public final class FixedObjectRemoteReferenceManager extends AbstractRemoteRefer
     private Map<Long, WeakReference<RemoteReference>> originToReference = new HashMap<Long, WeakReference<RemoteReference>>();
 
     /**
-     * Creates a manager for remote references to objects in a particular region
+     * Creates a manager for remote references to objects in a single region
      * of memory in the VM, presumed to be an unmanaged region in which object
      * never move and are never collected.
      */
     public FixedObjectRemoteReferenceManager(TeleVM vm, VmObjectHoldingRegion objectRegion) {
         super(vm);
         this.objectRegion = objectRegion;
-    }
-
-    public VmObjectHoldingRegion objectRegion() {
-        return objectRegion;
     }
 
     /**

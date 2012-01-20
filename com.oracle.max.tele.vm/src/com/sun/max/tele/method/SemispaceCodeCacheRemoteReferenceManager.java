@@ -86,10 +86,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
     }
 
-    public VmObjectHoldingRegion objectRegion() {
-        return codeCacheRegion;
-    }
-
     // TODO (mlvdv) Interpret this status for the special case of objects in the code cache.
     public HeapPhase heapPhase() {
         return heapPhase;
