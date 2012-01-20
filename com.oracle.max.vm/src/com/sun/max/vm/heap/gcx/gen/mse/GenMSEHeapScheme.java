@@ -21,6 +21,7 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx.gen.mse;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
@@ -94,14 +95,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     private Evacuator youngSpaceEvacuator;
 
     /**
-     * Operation to submit to the {@link VmOperationThread} to perform a minor collection.
+     * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
      */
-    private final MinorCollection minorCollection;
-
-    /**
-     * Operation to submit to the {@link VmOperationThread} to perform a full collection.
-     */
-    private final MajorCollection fullCollection;
+    private final GenCollection genCollection;
 
     /**
      * Marking algorithm used to trace the heap.
@@ -123,8 +119,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         cardTableRSet = new CardTableRSet();
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
-        minorCollection = new MinorCollection();
-        fullCollection = new MajorCollection();
+        genCollection = new GenCollection();
     }
 
     @Override
@@ -261,13 +256,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // See allocateHeapAndGCStorage
     }
 
-
-    final class MinorCollection extends GCOperation {
-        MinorCollection() {
-            super("MinorCollection");
+    final class GenCollection extends GCOperation {
+        HeapRegionRangeIterable regionsRangeIterable;
+        int fullCollectionCount = 0;
+        GenCollection() {
+            super("GenCollection");
+            regionsRangeIterable = new HeapRegionRangeIterable();
         }
-
-        private void verifyAfterGC() {
+        private void verifyAfterEvacuation() {
             // Verify that:
             // 1. offset table is correctly setup
             // 2. there are no pointer from old to young.
@@ -276,27 +272,43 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             oldSpace.visit(noYoungReferencesVerifier);
         }
 
+        private void doFullCollection() {
+            youngSpaceEvacuator.doBeforeGC();
+            youngSpace.doBeforeGC();
+            oldSpace.doBeforeGC();
+            regionsRangeIterable.initialize(heapAccount.committedRegions());
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
+            heapMarker.markAll(regionsRangeIterable);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
+            // TODO: precise sweeping that makes all dead area parseable.
+            FatalError.unimplemented();
+            oldSpace.sweep(heapMarker);
+            oldSpace.doAfterGC();
+            youngSpaceEvacuator.doAfterGC();
+            fullCollectionCount++;
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+        }
+
         @Override
         protected void collect(int invocationCount) {
+            // Collector proceeds as follows:
+            // 1. evacuate nursery
+            // 2. if old gen free space smaller than worst case evacuation (WCE) , do a full collection
+            // 3. if old gen free space still smaller than WCE, resize the heap (either grow it, or shrink the young gen
+            // 4. if heap resizing fail, GC failed, we're out of memory.
+
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            // Evacuate young space
+            vmConfig().monitorScheme().beforeGarbageCollection();
             youngSpaceEvacuator.evacuate();
             if (VerifyAfterGC) {
-                verifyAfterGC();
+                verifyAfterEvacuation();
             }
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
-        }
-    }
-
-    final class MajorCollection extends GCOperation {
-        MajorCollection() {
-            super("MajorCollection");
-        }
-        @Override
-        protected void collect(int invocationCount) {
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            Size worstCaseEvac = youngSpace.totalSpace();
+            Size freeSpace = oldSpace.freeSpace();
+            if (worstCaseEvac.greaterThan(freeSpace)) {
+                doFullCollection();
+                // TODO: 3 and 4.
+            }
         }
     }
 
@@ -307,9 +319,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        // TODO:
-        // Right now, we do a minor collection just for testing the code.
-        minorCollection.submit();
+        genCollection.submit();
+        /*
+        // FIXME: this is a naive policy, just for the sake of testing what's in place so far.
+        Size oldFreeSpace = oldSpace.freeSpace();
+        Size worstCaseEvac = youngSpace.totalSpace();
+        if (oldFreeSpace.lessThan(worstCaseEvac)) {
+            fullCollection.submit();
+        } else {
+            minorCollection.submit();
+        }*/
         return true;
     }
 
