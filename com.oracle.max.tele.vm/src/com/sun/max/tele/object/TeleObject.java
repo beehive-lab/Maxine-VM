@@ -583,7 +583,16 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     protected static class DeepCopier {
 
         int level = 0;
-        final Map<TeleObject, Object> teleObjectToObject = new HashMap<TeleObject, Object>();
+        final Map<TeleObject, Object> teleObjectToObject;
+
+        DeepCopier() {
+            teleObjectToObject = new HashMap<TeleObject, Object>();
+        }
+
+        DeepCopier(DeepCopier parent) {
+            level = parent.level;
+            teleObjectToObject = parent.teleObjectToObject;
+        }
 
         /**
          * @return the depth of the object graph currently being copied
@@ -747,10 +756,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * Creates a local copy of the remote VM object.  Deep copying is truncated at reference fields
      * marked with the {@link INSPECTED} annotation specifying the value {@code false} for {@link INSPECTED#deepCopied()}.
      *
+     * @param enclosing copier context of {@code null} is none.
      * @return a best effort deep copy, truncated at reference fields for which {@link INSPECTED#deepCopied()} returns {@code false}.
      * @see INSPECTED#deepCopied()
      */
-    public final Object deepCopy() {
+    public final Object deepCopy(DeepCopier copier) {
         Object objectCopy = null;
         Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
         long start = System.currentTimeMillis();
@@ -760,7 +770,9 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         }
         if (vm().tryLock()) {
             try {
-                DeepCopier copier = newDeepCopier();
+                if (copier == null) {
+                    copier = newDeepCopier();
+                }
                 objectCopy = makeDeepCopy(copier);
                 Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
             } finally {
@@ -770,6 +782,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
             TeleWarning.message("Deep copy failed (VM busy) for " + this);
         }
         return objectCopy;
+    }
+
+    public final Object deepCopy() {
+        return deepCopy(null);
     }
 
     /**
