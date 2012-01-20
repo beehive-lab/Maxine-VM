@@ -136,12 +136,24 @@ public final class NoAgingEvacuator extends Evacuator {
         this.LAB_HEADROOM =  MIN_OBJECT_SIZE;
     }
 
+    /**
+     * Retire promotion buffer before a GC on the promotion space is performed.
+     */
+    @Override
+    public void doBeforeGC() {
+        if (MaxineVM.isDebug() && !top.isZero()) {
+            FatalError.check(HeapFreeChunk.isTailFreeChunk(top, end.plus(LAB_HEADROOM)), "Evacuator's allocation buffer must be parseable");
+        }
+        top = Pointer.zero();
+        end = Pointer.zero();
+    }
+
     @Override
     protected void doBeforeEvacuation() {
+        fromSpace.doBeforeGC();
         promotedBytes = Size.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
-        fromSpace.doBeforeGC();
         if (top.isZero()) {
             Address chunk = toSpace.allocateTLAB(labSize);
             nextLABChunk = HeapFreeChunk.getFreeChunkNext(chunk);
@@ -159,11 +171,11 @@ public final class NoAgingEvacuator extends Evacuator {
         Size spaceLeft = limit.minus(top).asSize();
         if (spaceLeft.lessThan(minRefillThreshold)) {
             // Will trigger refill in doBeforeEvacution on next GC
-            top = Pointer.zero();
-            end = Pointer.zero();
-            if (spaceLeft.isZero()) {
+            if (!spaceLeft.isZero()) {
                 fillWithDeadObject(top, limit);
             }
+            top = Pointer.zero();
+            end = Pointer.zero();
         } else {
             // Leave remaining space in an iterable format.
             // Next evacuation will start from top again.

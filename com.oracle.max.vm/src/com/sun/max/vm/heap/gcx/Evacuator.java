@@ -222,6 +222,18 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     abstract protected void doAfterEvacuation();
 
     /**
+     * Action to performed before a GC on the heap space where objects are evacuated begins.
+     */
+    public void doBeforeGC() {
+    }
+
+    /**
+     * Action to performed after a GC on the heap space where objects are evacuated begins.
+     */
+    public void doAfterGC() {
+
+    }
+    /**
      * Evacuate all objects of the evacuated area directly reachable from the boot heap.
      */
     void evacuateFromBootHeap() {
