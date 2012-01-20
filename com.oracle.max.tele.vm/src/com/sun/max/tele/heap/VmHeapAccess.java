@@ -125,7 +125,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 // TODO (mlvdv)  Old Heap
                 // Reflect a constructor of a TeleHeapScheme implementation based on the name of the HeapScheme for the inspected VM.
                 // The current convention is: the name of the implementation of a TeleHeapScheme is the heap scheme name prefixed with "Tele" and located in the
-                // same package as the VmHeapAccess..
+                // same package as the VmHeapAccess.
                 String thisClassName = VmHeapAccess.class.getName();
                 String thisPackageName = thisClassName.substring(0, thisClassName.lastIndexOf("."));
                 Class<?> teleHeapSchemeClass = Class.forName(thisPackageName + ".Tele" + heapSchemeName);
@@ -267,7 +267,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         }
         // In a normal session the dynamic heap will not have been allocated yet, but there might be when attaching
         // to a dumped image or running VM
-        for (VmHeapRegion heapRegion : remoteHeapScheme.dynamicHeapRegions()) {
+        for (VmHeapRegion heapRegion : remoteHeapScheme.heapRegions()) {
             heapRegions.add(heapRegion);
         }
 
@@ -366,7 +366,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             discoveredHeapRegions.add(bootHeapRegion);
 
             remoteHeapScheme.updateMemoryStatus(epoch);
-            discoveredHeapRegions.addAll(remoteHeapScheme.dynamicHeapRegions());
+            discoveredHeapRegions.addAll(remoteHeapScheme.heapRegions());
 
             // Check for the {@link ImmortalHeap} description
             if (teleImmortalHeapRegion == null) {

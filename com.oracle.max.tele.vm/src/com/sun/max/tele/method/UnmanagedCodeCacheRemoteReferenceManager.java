@@ -81,10 +81,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
     }
 
-    public VmObjectHoldingRegion objectRegion() {
-        return codeCacheRegion;
-    }
-
     /**
      * {@inheritDoc}
      * <p>

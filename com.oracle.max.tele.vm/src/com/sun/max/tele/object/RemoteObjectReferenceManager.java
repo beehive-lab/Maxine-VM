@@ -30,16 +30,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * A manager for remote references to objects allocated in a
- * VM region. Each implementation will likely need to take into account
+ * A manager for remote references to objects allocated in one or more
+ * VM regions. Each implementation will take into account
  * specific object management implementations in the VM.
  */
 public interface RemoteObjectReferenceManager {
-
-    /**
-     * Gets the region whose remote object references are being managed.
-     */
-    VmObjectHoldingRegion objectRegion();
 
     /**
      * Describes the management phase of a heap.
@@ -47,10 +42,10 @@ public interface RemoteObjectReferenceManager {
     HeapPhase heapPhase();
 
     /**
-     * Determines whether there is an object in the VM memory region
+     * Determines whether there is an object in the VM memory regions
      * with specified origin.
      *
-     * @throws TeleError if the origin is not in the memory region being managed.
+     * @throws TeleError if the origin is not in the memory regions being managed.
      */
     boolean isObjectOrigin(Address origin) throws TeleError;
 
@@ -61,12 +56,8 @@ public interface RemoteObjectReferenceManager {
      * <p>
      * The origin of the object may change over time, for example if
      * a relocating collector is being used for the region by the VM.
-     * <p>
-     * Remote references are collected when no longer used, or when the
-     * objects to which they point cease to be live in the VM (as well
-     * as can be determined).
      *
-     * @throws TeleError if the origin is not in the memory region being managed.
+     * @throws TeleError if the origin is not in the memory regions being managed.
      */
     RemoteReference makeReference(Address origin) throws TeleError;
 

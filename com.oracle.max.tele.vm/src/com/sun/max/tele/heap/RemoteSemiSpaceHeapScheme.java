@@ -40,7 +40,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme {
     private TeleRuntimeMemoryRegion fromSpaceMemoryRegion = null;
     private com.sun.max.tele.object.TeleSemiSpaceHeapScheme scheme;
 
-    private final List<VmHeapRegion> dynamicHeapRegions = new ArrayList<VmHeapRegion>(2);
+    private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(2);
 
 
     protected RemoteSemiSpaceHeapScheme(TeleVM vm) {
@@ -51,7 +51,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme {
         for (MaxMemoryRegion dynamicHeapRegion : getDynamicHeapRegionsUnsafe()) {
             final VmHeapRegion fakeDynamicHeapRegion =
                 new VmHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes());
-            dynamicHeapRegions.add(fakeDynamicHeapRegion);
+            heapRegions.add(fakeDynamicHeapRegion);
             addressSpace.add(fakeDynamicHeapRegion.memoryRegion());
         }
     }
@@ -60,8 +60,8 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme {
         return SemiSpaceHeapScheme.class;
     }
 
-    public List<VmHeapRegion> dynamicHeapRegions() {
-        return dynamicHeapRegions;
+    public List<VmHeapRegion> heapRegions() {
+        return heapRegions;
     }
 
     /**
@@ -69,44 +69,25 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme {
      * <p>
      * No need to look for heap regions that disappear for this collector.
      * <p>
-     * Once allocated, the two regions never change, but we force a refresh on the memory region descriptions.
+     * Once allocated, the two regions never change, but we force a refresh on the
+     * memory region descriptions, since their locations change when swapped.
      */
     public void updateMemoryStatus(long epoch) {
 
-        if (dynamicHeapRegions.isEmpty() && scheme() != null) {
+        if (heapRegions.isEmpty() && scheme() != null) {
             toSpaceMemoryRegion = scheme().teleToRegion();
             final VmHeapRegion toVmHeapRegion = new VmHeapRegion(vm(), toSpaceMemoryRegion);
-            dynamicHeapRegions.add(toVmHeapRegion);
+            heapRegions.add(toVmHeapRegion);
             vm().addressSpace().add(toVmHeapRegion.memoryRegion());
 
             fromSpaceMemoryRegion = scheme().teleFromRegion();
             final VmHeapRegion fromVmHeapRegion = new VmHeapRegion(vm(), fromSpaceMemoryRegion);
-            dynamicHeapRegions.add(fromVmHeapRegion);
+            heapRegions.add(fromVmHeapRegion);
             vm().addressSpace().add(fromVmHeapRegion.memoryRegion());
-
+        } else {
+            toSpaceMemoryRegion.updateCache(epoch);
+            fromSpaceMemoryRegion.updateCache(epoch);
         }
-
-
-//        final Reference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
-//        if (!runtimeHeapRegionsArrayReference.isZero()) {
-//            final TeleArrayObject teleArrayObject = (TeleArrayObject) objects().makeTeleObject(runtimeHeapRegionsArrayReference);
-//            final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
-//            for (int i = 0; i < heapRegionReferences.length; i++) {
-//                final TeleRuntimeMemoryRegion dynamicHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(heapRegionReferences[i]);
-//                if (dynamicHeapMemoryRegion != null) {
-//                    final VmHeapRegion oldHeapRegion = find(dynamicHeapMemoryRegion);
-//                    if (oldHeapRegion != null) {
-//                        // We've seen this VM heap region object before and already have an entity that models the state
-//                        // Force an early update of the cached data about the region
-//                        oldHeapRegion.updateStatus(epoch);
-//                    } else {
-//                        final VmHeapRegion newVmHeapRegion = new VmHeapRegion(vm(), dynamicHeapMemoryRegion);
-//                        dynamicHeapRegions.add(newVmHeapRegion);
-//                        vm().addressSpace().add(newVmHeapRegion.memoryRegion());
-//                    }
-//                }
-//            }
-//        }
     }
 
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
@@ -181,7 +162,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme {
      * remote object describing it.
      */
     private VmHeapRegion find(TeleRuntimeMemoryRegion runtimeMemoryRegion) {
-        for (VmHeapRegion heapRegion : dynamicHeapRegions) {
+        for (VmHeapRegion heapRegion : heapRegions) {
             if (runtimeMemoryRegion == heapRegion.representation()) {
                 return heapRegion;
             }
