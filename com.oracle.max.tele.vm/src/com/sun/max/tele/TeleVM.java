@@ -835,6 +835,9 @@ public abstract class TeleVM implements MaxVM {
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     classAccess.processAttachFixupList();
                 }
+
+                // read the list of actual VmThreadLocal values from the target
+                TeleThreadLocalsArea.Static.values(this);
             }
 
             // The standard update cycle follows; it is sensitive to ordering.
