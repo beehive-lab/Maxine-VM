@@ -187,17 +187,21 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Adds a listener for GC phase changes in the VM.
+     * Adds a listener for GC phase changes in the VM, either limited to the start of a specific
+     * phase or for every phase transition if the phase argument is {@code null}.
      *
      * @param listener a listener for GC phase changes
+     * @param phase a specific phase for which phase change notification is requested, null for every phase
      * @throws MaxVMBusyException
      */
     void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
 
     /**
-     * Removes a listener for GC phase changes in the VM.
+     * Removes a listener for GC phase changes in the VM, either limited to the start of a specific
+     * phase or for every phase transition if the phase argument is {@code null}.
      *
      * @param listener a listener for GC phase changes
+     * @param phase a specific phase for which phase change notification was requested, null for every phase
      * @throws MaxVMBusyException
      */
     void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException;
