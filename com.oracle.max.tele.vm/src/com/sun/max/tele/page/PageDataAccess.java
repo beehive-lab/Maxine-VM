@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
@@ -42,13 +43,15 @@ public class PageDataAccess extends DataAccessAdapter {
         return "[PageDataAccess] ";
     }
 
+    private final TeleVM vm;
     private final TeleIO teleIO;
     private final int indexShift;
     private final int offsetMask;
     private final ByteBuffer writeBuffer;
 
-    public PageDataAccess(TeleIO teleProcess, DataModel dataModel) {
+    public PageDataAccess(TeleVM vm, TeleIO teleProcess, DataModel dataModel) {
         super(dataModel.wordWidth, dataModel.endianness.asByteOrder());
+        this.vm = vm;
         teleIO = teleProcess;
         TeleError.check(Ints.isPowerOfTwoOrZero(teleIO.pageSize()), "Page size is not a power of 2: " + teleIO.pageSize());
         indexShift = Integer.numberOfTrailingZeros(teleProcess.pageSize());
@@ -102,7 +105,7 @@ public class PageDataAccess extends DataAccessAdapter {
     private Page getPage(long index) {
         Page page = indexToPage.get(index);
         if (page == null) {
-            page = new Page(teleIO, index, byteOrder);
+            page = new Page(vm, teleIO, index, byteOrder);
             indexToPage.put(index, page);
             if ((indexToPage.size() % 1000) == 0) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + indexToPage.size() + " pages");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     private UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
-        dataAccess = new PageDataAccess(this, platform.dataModel);
+        dataAccess = new PageDataAccess(teleVM, this, platform.dataModel);
         protocol.initialize(teleVM.bootImage().header.tlaSize, platform().endianness() == Endianness.BIG ? true : false);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
