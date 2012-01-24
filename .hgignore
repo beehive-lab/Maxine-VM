@@ -17,6 +17,8 @@ generated-classes.jar
 .DS_Store
 Maxine.ipr
 Maxine.iws
+build.xml
+nbproject
 maxine-tester
 test-logs.zip
 mx/.checkstyle*.timestamp
