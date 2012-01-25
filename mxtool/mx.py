@@ -453,7 +453,8 @@ class ArgParser(ArgumentParser):
         ArgumentParser.__init__(self, prog='mx')
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
-        self.add_argument('-d', action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
+        self.add_argument('--dbg', type=int, dest='java_dbg_port', help='make Java processes wait on <port> for a debugger', metavar='<port>')
+        self.add_argument('-d', action='store_const', const=8000, dest='java_dbg_port', help='alias for "-dbg 8000"')
         self.add_argument('--cp-pfx', dest='cp_prefix', help='class path prefix', metavar='<arg>')
         self.add_argument('--cp-sfx', dest='cp_suffix', help='class path suffix', metavar='<arg>')
         self.add_argument('--J', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
@@ -647,7 +648,7 @@ A JavaConfig object encapsulates info on how Java commands are run.
 class JavaConfig:
     def __init__(self, opts):
         self.jdk = opts.java_home
-        self.debug = opts.java_dbg
+        self.debug_port = opts.java_dbg_port
         self.java =  exe_suffix(join(self.jdk, 'bin', 'java'))
         self.javac = exe_suffix(join(self.jdk, 'bin', 'javac'))
         self.javap = exe_suffix(join(self.jdk, 'bin', 'javap'))
@@ -677,8 +678,8 @@ class JavaConfig:
         assert output[1] == 'version'
         self.version = output[2].strip('"')
         
-        if self.debug:
-            self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+        if self.debug_port is not None:
+            self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(self.debug_port)]
 
     def format_cmd(self, args):
         return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
