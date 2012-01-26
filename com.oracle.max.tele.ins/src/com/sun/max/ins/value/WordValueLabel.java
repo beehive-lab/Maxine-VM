@@ -617,20 +617,26 @@ public class WordValueLabel extends ValueLabel {
                 setFont(wordDataFont);
                 setForeground(style.wordUncheckedReferenceDataColor());
                 setWrappedText(hexString);
+                final StringBuilder toolTipSB = new StringBuilder();
+                toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipHtmlText(htmlify("<unchecked>"));
+                    toolTipSB.append("<br>").append(htmlify("<unchecked>"));
                 } else {
-                    setWrappedToolTipHtmlText("Unchecked Reference");
+                    toolTipSB.append("<br>").append(htmlify("Unchecked Reference"));
                 }
+                setWrappedToolTipHtmlText(toolTipSB.toString());
                 break;
             }
             case INVALID_OBJECT_REFERENCE: {
                 setFont(wordDataFont);
                 setForeground(style.wordInvalidObjectReferenceDataColor());
                 setWrappedText(hexString);
+                final StringBuilder toolTipSB = new StringBuilder();
+                toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipHtmlText(htmlify("<invalid>"));
+                    toolTipSB.append("<br>").append(htmlify("<invalid>"));
                 }
+                setWrappedToolTipHtmlText(toolTipSB.toString());
                 break;
             }
             case CALL_ENTRY_POINT: {
