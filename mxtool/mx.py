@@ -1190,6 +1190,16 @@ Given a command name, print help for that command."""
         doc = doc.format(*fmtArgs)
     print 'mx {0} {1}\n\n{2}\n'.format(name, usage, doc)
 
+def projectgraph(args, suite=None):
+    """create dot graph for project structure ("mx projectgraph | dot -Tpdf -oprojects.pdf")"""
+    
+    print 'digraph projects {'
+    print 'rankdir=BT;'
+    print 'node [shape=rect];'
+    for p in projects():
+        for dep in p.canonical_deps():
+            print '"' + p.name + '"->"' + dep + '"'
+    print '}'
 
 def eclipseinit(args, suite=None):
     """(re)generate Eclipse project configurations"""
@@ -1587,6 +1597,7 @@ commands = {
     'help': [help_, '[command]'],
     'ideclean': [ideclean, ''],
     'ideinit': [ideinit, ''],
+    'projectgraph': [projectgraph, ''],
     'javap': [javap, ''],
     'netbeansinit': [netbeansinit, ''],
     'projects': [show_projects, ''],
@@ -1620,6 +1631,9 @@ def main():
         abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(command, _format_commands()))
         
     c, _ = commands[command][:2]
+    def term_handler(signum, frame):
+        abort(1)
+    signal.signal(signal.SIGTERM, term_handler)
     try:
         if opts.timeout != 0:
             def alarm_handler(signum, frame):
