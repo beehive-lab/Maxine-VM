@@ -521,7 +521,7 @@ public class WordValueLabel extends ValueLabel {
                     // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                     final StringBuilder toolTipSB = new StringBuilder();
                     toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                    toolTipSB.append("<br>Reference to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
+                    toolTipSB.append("<br>Reference(").append(teleObject.status().label()).append(") to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                     toolTipSB.append("<br>In ");
                     final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                     if (memoryRegion == null) {
@@ -546,11 +546,10 @@ public class WordValueLabel extends ValueLabel {
                     final String labelText = nameDisplay.referenceLabelText(teleObject);
                     if (labelText != null) {
                         setWrappedText(labelText);
-                        final String toolTipText = nameDisplay.referenceToolTipText(teleObject);
                         // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                        toolTipSB.append("<br>Reference to ").append(htmlify(toolTipText));
+                        toolTipSB.append("<br>Reference(").append(teleObject.status().label()).append(") to ").append(htmlify(nameDisplay.referenceToolTipText(teleObject)));
                         toolTipSB.append("<br>In ");
                         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
