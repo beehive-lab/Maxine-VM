@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,7 @@ public abstract class Prototype {
      */
     public static synchronized void loadLibrary(String name) {
         if (!isPathHacked) {
-            final File workspacePath =  JavaProject.findWorkspaceDirectory();
+            final File workspacePath =  JavaProject.findHgRoot();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String maxLibPath = name.equals(HOSTED_LIBRARY_NAME) ? HOSTED_GENERATED_ROOT : TARGET_GENERATED_ROOT;
             final String libraryPath = new File(workspacePath, maxLibPath).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);

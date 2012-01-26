@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1499,7 +1499,7 @@ public class T1XTemplateGenerator {
      * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
     static boolean generate(boolean checkOnly, Class target) throws Exception {
-        File base = new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm.ext.t1x/src");
+        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm.ext.t1x/src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(baos);
