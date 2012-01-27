@@ -297,7 +297,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             observer.compilationStarted(NativeStubGraphBuilder.class.getSimpleName() + ":" + name);
         }
 
-        GraphBuilderConfiguration config = GraphBuilderConfiguration.getDeoptFreeDefault();
+        GraphBuilderConfiguration config = new GraphBuilderConfiguration(false, false, null);
         apply(new GraphBuilderPhase(runtime, method, null, config), graph);
         apply(new FoldPhase(runtime), graph);
         apply(new MaxineIntrinsicsPhase(), graph);
