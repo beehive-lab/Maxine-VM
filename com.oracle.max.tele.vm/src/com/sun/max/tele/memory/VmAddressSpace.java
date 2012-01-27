@@ -298,7 +298,7 @@ public class VmAddressSpace extends AbstractVmHolder implements MaxAddressSpace 
             for (int index = 0; index < size; index++) {
                 if (regions[index] == oldRegion) {
                     if (index < size - 1) {
-                        System.arraycopy(regions, index + 1, regions, index, size - index);
+                        System.arraycopy(regions, index + 1, regions, index, size - (index + 1));
                     }
                     size--;
                     Trace.line(TRACE_VALUE, tracePrefix() + "Removing: " + oldRegion.owner().entityName());
