@@ -22,21 +22,46 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.awt.*;
+
+import javax.swing.table.*;
+
+import com.sun.max.ins.value.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Base class for custom {@link VMlog.Logger} argument renderers.
  */
 public abstract class VMLogArgRenderer {
+    protected VMLogView vmLogView;
+    protected TeleVM vm;
+
+    public VMLogArgRenderer(VMLogView vmLogView) {
+        this.vmLogView = vmLogView;
+        this.vm = (TeleVM) vmLogView.vm();
+    }
+
     /**
+     * Returns an appropriate {@link TableCellRenderer} for this argument.
+     * The default renderer is passed in as argument and the default action
+     * should be to call {@code argCellRenderer.setText} with return it.
      *
      * @param header value from log buffer
      * @param argNum argument index {@code [1 .. N-1]}
      * @param argValue argument value (can't be a reference)
      * @return
      */
-    abstract String getText(TeleVM vm, int header, int argNum, long argValue);
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        return VMLogArgRendererFactory.defaultVMLogArgRenderer.getRenderer(header, argNum, argValue);
+    }
 
     /**
      * Convenience method for converting a C string to a {@link String}.
@@ -56,6 +81,52 @@ public abstract class VMLogArgRenderer {
             bytes[index++] = b;
         }
         return new String(bytes, 0, index);
+    }
 
+    MethodActor getMethodActor(long arg) {
+        final MethodID methodID = MethodID.fromWord(Address.fromLong(arg));
+        MethodActor methodActor = VmClassAccess.usingTeleClassIDs(new Function<MethodActor>() {
+            @Override
+            public MethodActor call() throws Exception {
+                return MethodID.toMethodActor(methodID);
+            }
+        });
+        return methodActor;
+    }
+
+    TeleClassMethodActor getTeleClassMethodActor(long arg) {
+        final MethodActor methodActor = getMethodActor(arg);
+        final MethodKey methodKey = new MethodKey.MethodActorKey(methodActor);
+        final TeleClassMethodActor teleClassMethodActor =  vm.methods().findClassMethodActor(methodKey);
+        return teleClassMethodActor;
+    }
+
+    WordValueLabel getReferenceValueLabel(Reference reference) {
+        return new WordValueLabel(vmLogView.inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
+    }
+
+    ClassActor getClassActor(final long arg) {
+        ClassActor classActor = VmClassAccess.usingTeleClassIDs(new Function<ClassActor>() {
+            @Override
+            public ClassActor call() throws Exception {
+                return ClassID.toClassActor((int) arg);
+            }
+        });
+        return classActor;
+    }
+
+    TeleClassActor getTeleClassActor(long arg) {
+        ClassActor classActor = getClassActor(arg);
+        TeleClassActor teleClassActor = vm.classes().findTeleClassActor((int) arg);
+        assert teleClassActor.classActor() == classActor;
+        return teleClassActor;
+    }
+
+    String formatMethodActor(long arg) {
+        return getMethodActor(arg).format("%H.%n(%p)");
+    }
+
+    String classActorName(final long arg) {
+        return getClassActor(arg).toString();
     }
 }

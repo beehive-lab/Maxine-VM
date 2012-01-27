@@ -347,7 +347,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
      *         matching {@code methodKey}
      */
     public List<TeleTargetMethod> findCompilations(MethodKey methodKey) {
-        final TeleClassMethodActor teleClassMethodActor = methods().findClassMathodActor(methodKey);
+        final TeleClassMethodActor teleClassMethodActor = methods().findClassMethodActor(methodKey);
         if (teleClassMethodActor != null) {
             final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
