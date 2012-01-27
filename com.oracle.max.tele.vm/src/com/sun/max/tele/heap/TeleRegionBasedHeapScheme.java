@@ -83,4 +83,13 @@ public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder impleme
             }
         };
     }
+
+    /**
+     * Return heap region tag's name for the specified tag.
+     * @param tag a valid region tag used by this heap scheme
+     * @return a textual representation of the tag, or the empty string if the tag is invalid or if the heap scheme doesn't tag its regions
+     */
+    public String tagName(int tag) {
+        return "";
+    }
 }
