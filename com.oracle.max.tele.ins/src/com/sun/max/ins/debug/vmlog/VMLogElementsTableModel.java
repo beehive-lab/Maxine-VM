@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.awt.Component;
 import java.util.*;
 
 import com.sun.max.ins.*;
@@ -30,15 +31,12 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.hosted.*;
 
 
 abstract class VMLogElementsTableModel extends InspectorTableModel {
 
-    public static class HostedLogRecord extends VMLog.Record implements Comparable<HostedLogRecord> {
-        public final int header;
-        public final int id;
-        public final Word[] args;
-
+    public static class HostedLogRecord extends VMLogHosted.HostedLogRecord implements Comparable<HostedLogRecord> {
         HostedLogRecord(int id, int header, Word... args) {
             this.id = id;
             this.header = header;
@@ -55,31 +53,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
         }
 
         @Override
-        public String toString() {
-            if (VMLog.Record.isFree(header)) {
-                return "free";
-            } else {
-                StringBuilder sb = new StringBuilder();
-                sb.append("id=");
-                sb.append(id);
-                sb.append(",lid=");
-                sb.append(VMLog.Record.getLoggerId(header));
-                sb.append(",th=");
-                sb.append(VMLog.Record.getThreadId(header));
-                sb.append(",op=");
-                sb.append(VMLog.Record.getOperation(header));
-                sb.append(",ac");
-                sb.append(VMLog.Record.getArgCount(header));
-                return sb.toString();
-            }
-        }
-
-        @Override
-        public int getHeader() {
-            return header;
-        }
-
-        @Override
         public void setHeader(int header) {
             assert false;
         }
@@ -93,7 +66,10 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
                 return 0;
             }
         }
+    }
 
+    private class ColumnRenderers {
+        Component[] renderers = new Component[VMLogColumnKind.values().length];
     }
 
 
@@ -132,11 +108,14 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
 
     private int[] displayedRows;
 
+    private ArrayList<ColumnRenderers> tableRenderers;
+
     protected VMLogElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection);
         vm = (TeleVM) vm();
         this.vmLogView = vmLogView;
         logRecordCache = new ArrayList<HostedLogRecord>(vmLogView.logBufferEntries);
+        tableRenderers = new ArrayList<ColumnRenderers>(vmLogView.logBufferEntries);
     }
 
     public int getColumnCount() {
@@ -164,6 +143,27 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
         return logRecordCache.get(displayed2ModelRow(row));
     }
 
+    private ColumnRenderers getColumnRenderers(int row) {
+        row = displayed2ModelRow(row);
+        int size = tableRenderers.size();
+        if (row >= size) {
+            for (int r = size; r <= row; r++) {
+                tableRenderers.add(new ColumnRenderers());
+            }
+        }
+        return tableRenderers.get(row);
+    }
+
+    Component getRenderer(int row, int column) {
+        ColumnRenderers cr = getColumnRenderers(row);
+        return cr.renderers[column];
+    }
+
+    void setRenderer(int row, int column, Component renderer) {
+        ColumnRenderers cr = getColumnRenderers(row);
+        cr.renderers[column] = renderer;
+    }
+
     /**
      * Get the value of the slot in the log buffer at the given logical row and column.
      */
@@ -173,56 +173,24 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
             TeleError.unexpected("null log record in LogElementsTableModel.getValueAt");
         }
         Object result = null;
-        int argCount = VMLog.Record.getArgCount(record.header);
+        int argCount = VMLog.Record.getArgCount(record.getHeader());
 
         switch (VMLogColumnKind.values()[col]) {
             case ID:
-                result = record.id;
+                result = record.getId();
                 break;
             case THREAD:
-                result = VMLog.Record.getThreadId(record.header);
+                result = VMLog.Record.getThreadId(record.getHeader());
                 break;
             case OPERATION:
-                result = VMLog.Record.getOperation(record.header);
-                break;
-            case ARG1:
-                if (argCount > 0) {
-                    result = record.args[0];
-                }
-                break;
-            case ARG2:
-                if (argCount > 1) {
-                    result = record.args[1];
-                }
-                break;
-            case ARG3:
-                if (argCount > 2) {
-                    result = record.args[2];
-                }
-                break;
-            case ARG4:
-                if (argCount > 3) {
-                    result = record.args[3];
-                }
-                break;
-            case ARG5:
-                if (argCount > 4) {
-                    result = record.args[4];
-                }
-                break;
-            case ARG6:
-                if (argCount > 5) {
-                    result = record.args[5];
-                }
-                break;
-            case ARG7:
-                if (argCount > 6) {
-                    result = record.args[6];
-                }
+                result = VMLog.Record.getOperation(record.getHeader());
                 break;
             default:
-                TeleError.unexpected("illegal column value kind");
-                result = null;
+                // arguments
+                int argNum = col - VMLogColumnKind.ARG1.ordinal() + 1;
+                if (argNum <= argCount) {
+                    result = record.getArg(argNum);
+                }
         }
         return result;
     }
@@ -232,11 +200,6 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
         nextId = vmLogView.nextIdFieldAccess.readInt(vmLogView.vmLogRef);
         if (nextId != lastNextId) {
             // Some new records.
-            // The maximum possible number of records is nextId - lastNextId,
-            // as that is the total number allocated since the last refresh.
-            // However, depending on the target implementation, it is entirely possible
-            // that enough change has occurred that some records were overwritten in the target.
-
             modelSpecificRefresh();
 
             lastNextId = nextId;
