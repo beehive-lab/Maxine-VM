@@ -67,8 +67,9 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         final int firstRegion = cursor;
         int endRange = cursor + 1;
         int next = regionList.next(cursor);
+        final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (next == endRange) {
-            if (!RegionTable.theRegionTable().regionInfo(next).isIterable()) {
+            if (!theRegionTable.regionInfo(next).isIterable()) {
                 break;
             }
             endRange++;
@@ -77,6 +78,46 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         final int numRegions = endRange - firstRegion;
         cursor = next;
         nextIterable();
+        return RegionRange.from(firstRegion, numRegions);
+    }
+
+
+    /**
+     * Reset the iterator to the first iterable region if any.
+     * @see HeapRegionInfo#isIterable()
+     */
+    public void resetToFirstIterable(int tag) {
+        reset();
+        nextIterable(tag);
+    }
+
+    private void nextIterable(int tag) {
+        final RegionTable theRegionTable = RegionTable.theRegionTable();
+        while (cursor != INVALID_REGION_ID) {
+            HeapRegionInfo rinfo = theRegionTable.regionInfo(cursor);
+            if (rinfo.tag == tag && rinfo.isIterable()) {
+                return;
+            }
+            cursor = regionList.next(cursor);
+        }
+    }
+
+    public RegionRange nextIterableRange(int tag) {
+        final int firstRegion = cursor;
+        int endRange = cursor + 1;
+        int next = regionList.next(cursor);
+        final RegionTable theRegionTable = RegionTable.theRegionTable();
+        while (next == endRange) {
+            HeapRegionInfo rinfo = theRegionTable.regionInfo(next);
+            if (!(rinfo.tag == tag && rinfo.isIterable())) {
+                break;
+            }
+            endRange++;
+            next = regionList.next(next);
+        }
+        final int numRegions = endRange - firstRegion;
+        cursor = next;
+        nextIterable(tag);
         return RegionRange.from(firstRegion, numRegions);
     }
 }

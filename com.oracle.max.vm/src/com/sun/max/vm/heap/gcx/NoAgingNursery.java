@@ -49,7 +49,6 @@ public class NoAgingNursery implements HeapSpace {
         protected void doBeforeGC() {
             // Nothing to do.
         }
-
     }
 
     /**
@@ -57,6 +56,7 @@ public class NoAgingNursery implements HeapSpace {
      */
     private final HeapAccount<? extends HeapAccountOwner> heapAccount;
 
+    private final int regionTag;
     /**
      * List of region allocated to the nursery.
      */
@@ -71,14 +71,19 @@ public class NoAgingNursery implements HeapSpace {
      */
     private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
 
-    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
+    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
         this.heapAccount = heapAccount;
+        this.regionTag = regionTag;
+    }
+
+    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
+        this(heapAccount, 0);
     }
 
     public void initialize(GenHeapSizingPolicy genSizingPolicy) {
         nurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         uncommitedNurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false)) {
+        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false, regionTag)) {
             FatalError.unexpected("Couldn't allocate contiguous range to the nursery");
         }
         int regionID = nurseryRegionsList.head();

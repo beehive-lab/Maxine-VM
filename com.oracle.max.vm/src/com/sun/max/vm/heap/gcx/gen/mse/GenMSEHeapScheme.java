@@ -24,7 +24,7 @@ package com.sun.max.vm.heap.gcx.gen.mse;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
-
+import static com.sun.max.vm.heap.gcx.gen.mse.GenMSEHeapScheme.GenMSEHeapRegionTag.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
@@ -61,6 +61,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     static {
         VMOptions.addFieldOption("-XX:", "YoungGenHeapPercent", GenMSEHeapScheme.class, "Fixed percentage of heap size that must be used by young gen", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of local allocation buffers for evacuation to old gen", Phase.PRISTINE);
+    }
+
+    public enum GenMSEHeapRegionTag {
+        UNTAGGED,
+        YOUNG,
+        OLD,
+        BOOT;
+        public int tag() {
+            return ordinal();
+        }
     }
 
     /**
@@ -114,9 +124,19 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     public GenMSEHeapScheme() {
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
-        youngSpace = new NoAgingNursery(heapAccount);
-        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
         cardTableRSet = new CardTableRSet();
+        youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
+
+        // TODO: replace this with the dead space updater of the Evacuator, who knows how to format dead space to enable dirty card walking while
+        // enabling allocation of over reclaimed dead space.
+        final DeadSpaceRSetUpdater deadSpaceRSetUpdater = new DeadSpaceRSetUpdater() {
+            final CardTableRSet rset = GenMSEHeapScheme.this.cardTableRSet;
+            @Override
+            public void updateRSet(Address deadSpace, Size numDeadBytes) {
+                rset.updateForFreeSpace(deadSpace, numDeadBytes);
+            }
+        };
+        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, true, deadSpaceRSetUpdater, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -173,7 +193,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
-        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, BOOT.tag());
 
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
@@ -280,9 +300,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
             heapMarker.markAll(regionsRangeIterable);
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
-            // TODO: precise sweeping that makes all dead area parseable.
-            FatalError.unimplemented();
-            oldSpace.sweep(heapMarker);
+            oldSpace.sweep(heapMarker, false);
             oldSpace.doAfterGC();
             youngSpaceEvacuator.doAfterGC();
             fullCollectionCount++;
@@ -296,7 +314,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // 2. if old gen free space smaller than worst case evacuation (WCE) , do a full collection
             // 3. if old gen free space still smaller than WCE, resize the heap (either grow it, or shrink the young gen
             // 4. if heap resizing fail, GC failed, we're out of memory.
-
+            //
+            // The rationale for this is that in order for mutator to proceeds, the nursery must be empty again.
+            // This requires evacuating all of its objects somehow. Rather that doing a full GC covering both
+            // the old and young gen and somehow reclaim enough regions for a fresh nursery, we just perform a nursery evacuation.
+            // The full GC is thereafter just a old gen GC with an empty young gen.
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
             vmConfig().monitorScheme().beforeGarbageCollection();
             youngSpaceEvacuator.evacuate();
@@ -307,7 +329,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             Size freeSpace = oldSpace.freeSpace();
             if (worstCaseEvac.greaterThan(freeSpace)) {
                 doFullCollection();
-                // TODO: 3 and 4.
+                freeSpace = oldSpace.freeSpace();
+                if (worstCaseEvac.greaterThan(freeSpace)) {
+                    // TODO: 3 and 4.
+                    FatalError.unimplemented();
+                }
             }
         }
     }
@@ -320,15 +346,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
         genCollection.submit();
-        /*
-        // FIXME: this is a naive policy, just for the sake of testing what's in place so far.
-        Size oldFreeSpace = oldSpace.freeSpace();
-        Size worstCaseEvac = youngSpace.totalSpace();
-        if (oldFreeSpace.lessThan(worstCaseEvac)) {
-            fullCollection.submit();
-        } else {
-            minorCollection.submit();
-        }*/
         return true;
     }
 

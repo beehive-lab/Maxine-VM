@@ -89,6 +89,21 @@ public abstract class HeapRegionSweeper extends Sweeper {
      */
     Address csrLastLiveAddress;
 
+    /**
+     * True if all dead spaces require their references to be erased. This is required if an imprecise remembered set (e.g., card table) is used for
+     * root tracing. Erasing dead references is equivalent to turning dead space into reference-less heap cell.
+     */
+    final boolean zapDeadReferences;
+
+    /**
+     * Action to performed on a remembered set when dead space is identified.
+     */
+    final DeadSpaceRSetUpdater deadSpaceRSetUpdater;
+
+    protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceRSetUpdater deadSpaceRSetUpdater) {
+        this.zapDeadReferences = zapDeadReferences;
+        this.deadSpaceRSetUpdater = deadSpaceRSetUpdater == null ? DeadSpaceRSetUpdater.nullDeadSpaceRSetUpdater() : deadSpaceRSetUpdater;
+    }
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
         final boolean lockDisabledSafepoints = Log.lock();
@@ -167,7 +182,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrInfo.resetOccupancy();
     }
 
-    void recordFreeSpace(Address chunk, Size chunkSize) {
+    final void recordFreeSpace(Address chunk, Size chunkSize) {
         HeapFreeChunk c = HeapFreeChunk.format(chunk, chunkSize);
         if (csrTail == null) {
             csrHead = c;
@@ -256,5 +271,23 @@ public abstract class HeapRegionSweeper extends Sweeper {
             printNotifiedDeadSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);
+    }
+
+    @Override
+    public Pointer processLiveObject(Pointer liveObject) {
+        final Size numDeadBytes = liveObject.minus(csrLastLiveAddress).asSize();
+        if (!numDeadBytes.isZero()) {
+            final Pointer deadSpace = csrLastLiveAddress.asPointer();
+            if (numDeadBytes.greaterThan(minReclaimableSpace)) {
+                recordFreeSpace(deadSpace, numDeadBytes);
+            } else if (zapDeadReferences) {
+                HeapSchemeAdaptor.fillWithDeadObject(deadSpace, liveObject);
+            }
+            deadSpaceRSetUpdater.updateRSet(deadSpace, numDeadBytes);
+        }
+        final Size numLiveBytes = Layout.size(Layout.cellToOrigin(liveObject));
+        csrLastLiveAddress = liveObject.plus(numLiveBytes);
+        csrLiveBytes += numLiveBytes.toInt();
+        return csrLastLiveAddress.asPointer();
     }
 }

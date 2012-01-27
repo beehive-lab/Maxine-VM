@@ -223,7 +223,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * @param regionInfoClass the sub-class of HeapRegionInfo used for region management.
      *
      */
-    public void initialize(Address reservedSpace, Address endOfReservedSpace, Size heapSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
+    public void initialize(Address reservedSpace, Address endOfReservedSpace, Size heapSpaceSize, Class<HeapRegionInfo> regionInfoClass, int bootTag) {
         // Initialize region constants (size and log constants).
         // The size of regions is computed from the requested heap size so as to keep the region table bounded and adapt region size to the heap size
         // (in particular, very large heap command large region size).
@@ -297,7 +297,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
             // Now fix up the boot heap account to records the regions used up to now.
             // They are recorded committed
-            HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions);
+            HeapAccount.completeBootHeapAccountBootstrap(initialNumRegions, bootTag);
 
             // First, uncommit reserved space after the fact. All the space between the end of the initial boot heap and the end of the provided reserved space should be uncommitted.
             if (!Heap.AvoidsAnonOperations) {

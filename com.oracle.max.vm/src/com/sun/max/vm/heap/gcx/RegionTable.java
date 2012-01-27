@@ -196,6 +196,12 @@ public final class RegionTable {
         }
     }
 
+    void walk(RegionRange regionRange, HeapSpaceRangeVisitor visitor) {
+        final Address start = regionAddress(regionRange.firstRegion()).asPointer();
+        final Address end = start.plus(Pointer.fromInt(regionRange.numRegions()).shiftedLeft(log2RegionSizeInBytes));
+        visitor.visitCells(start, end);
+    }
+
     HeapRegionInfo next(HeapRegionInfo regionInfo) {
         return toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().plus(regionInfoSize));
     }
