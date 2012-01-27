@@ -30,6 +30,8 @@ import java.util.regex.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -111,7 +113,16 @@ public class VMLogger {
     private VMLog vmLog;
 
     @HOSTED_ONLY
-    protected VMLogger(String name, int numOps) {
+    private static VMLog hostedVMLog;
+
+    /**
+     * Create a new logger instance.
+     * @param name name used in option name, i.e., -XX:+Logname
+     * @param numOps number of logger operations
+     * @param optionDescription if not {@code null}, string used in option description.
+     */
+    @HOSTED_ONLY
+    protected VMLogger(String name, int numOps, String optionDescription) {
         this.name = name;
         this.numOps = numOps;
         loggerId = nextLoggerId++;
@@ -123,8 +134,9 @@ public class VMLogger {
             logOp.set(i, true);
         }
         String logName = "Log" + name;
-        logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + name);
-        traceOption = new VMBooleanXXOption("-XX:-" + "Trace" + name, "Trace" + name);
+        String description = optionDescription ==  null ? name : optionDescription;
+        logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + description);
+        traceOption = new VMBooleanXXOption("-XX:-" + "Trace" + name, "Trace" + description);
         logIncludeOption = new VMStringOption("-XX:" + logName + "Include=", false, null, "list of " + name + " operations to include");
         logExcludeOption = new VMStringOption("-XX:" + logName + "Exclude=", false, null, "list of " + name + " operations to exclude");
         VMOptions.register(logOption, MaxineVM.Phase.PRISTINE);
@@ -134,8 +146,11 @@ public class VMLogger {
         VMLog.registerLogger(this);
     }
 
-    public void setVMLog(VMLog vmLog) {
+    @HOSTED_ONLY
+    public void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
         this.vmLog = vmLog;
+        VMLogger.hostedVMLog = hostedVMLog;
+        checkLogOptions();
     }
 
     public String threadName(int id) {
@@ -226,7 +241,7 @@ public class VMLogger {
     private Record logSetup(int op, int argCount) {
         Record r = null;
         if (logEnabled && logOp.get(op)) {
-            r = vmLog.getRecord(argCount);
+            r = (MaxineVM.isHosted() ? hostedVMLog : vmLog).getRecord(argCount);
             r.setHeader(op, argCount, loggerId);
         }
         return r;
@@ -310,13 +325,36 @@ public class VMLogger {
     }
 
     private void doTrace(Record r) {
-        if (!DynamicLinker.isCriticalLinked()) {
-            return;
+        if (MaxineVM.isHosted()) {
+            trace(r);
+        } else {
+            if (!DynamicLinker.isCriticalLinked()) {
+                return;
+            }
+            boolean lockDisabledSafepoints = Log.lock();
+            try {
+                trace(r);
+            } finally {
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
-        boolean lockDisabledSafepoints = Log.lock();
-        trace(r);
-        Log.unlock(lockDisabledSafepoints);
     }
 
+    // Convenience methods for handling logging/tracing arguments.
+
+    @INLINE
+    public static Word intArg(int i) {
+        return Address.fromInt(i);
+    }
+
+    @INLINE
+    public static MethodActor toMethodActor(Word arg) {
+        return MethodID.toMethodActor(MethodID.fromWord(arg));
+    }
+
+    @INLINE
+    public static ClassActor toClassActor(Word arg) {
+        return ClassID.toClassActor(arg.asAddress().toInt());
+    }
 
 }

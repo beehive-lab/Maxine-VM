@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,16 @@ import java.util.concurrent.locks.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -46,7 +50,7 @@ import com.sun.max.vm.type.*;
  * a <i>dependency</i> of a compiled method.
  * <p>
  * Compilers issue queries against the class hierarchy and encode the answers as dependencies
- * which enable speculative optimizations (e.g., devirtualization, type check elimination).
+ * which enable speculative optimizations (e.g., de-virtualization, type check elimination).
  * A dynamic compiler aggregates dependencies when compiling a method.
  * The dependencies must be validated before a target method is installed.
  * If validation fails (because of changes in the class hierarchy since the assumptions
@@ -63,10 +67,148 @@ public final class DependenciesManager {
 
     private static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
-    public static boolean TraceDeps;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceDeps", DependenciesManager.class, "Trace dependencies", MaxineVM.Phase.PRISTINE);
+
+    /**
+     * Logging and tracing of Dependency operations.
+     */
+    public static class Logger extends VMLogger {
+        public static final Word NULL_TM = Address.fromInt(0xFFFFFFFF);
+        public static enum Operation {
+            Add,
+            Remove,
+            Register,
+            InvalidateDeps,
+            Invalidated,
+            InvalidateUCT,
+            InvalidateUCM
+        }
+
+        Logger() {
+            super("Deps", Operation.values().length, "dependencies");
+        }
+
+        /*
+         * Type-friendly logging methods.
+         * Since we are currently limited to logging Word values, we use ClassIDs for ClassActors,
+         * MethodIDs for MethodActors and the ClassID associated with a TargetMethod (or NULL_TM) if none.
+         * These allow the Inspector and "trace" to recover the values.
+         * If logging reference types becomes available, all changes will be localized to here.
+         */
+
+        void logAddRemove(Operation operation, TargetMethod targetMethod, int id, ClassActor type) {
+            log(operation.ordinal(), targetMethod == null ? NULL_TM : targetMethod.toLog(), VMLogger.intArg(id), VMLogger.intArg(type.id));
+        }
+
+        void logRegister(TargetMethod targetMethod, int id) {
+            log(Operation.Register.ordinal(), targetMethod == null ? NULL_TM : targetMethod.toLog(), Address.fromInt(id));
+            // Currently do not log "packed" as logging arrays is problematic. "packed" is not needed for tracing,
+            // as it can be accessed via "id".
+        }
+
+        void logInvalidateDeps(ClassActor type) {
+            log(Operation.InvalidateDeps.ordinal(), NULL_TM, VMLogger.intArg(type.id));
+        }
+
+        void logInvalidated(TargetMethod targetMethod, int id) {
+            log(Operation.Invalidated.ordinal(), targetMethod.toLog(), VMLogger.intArg(id));
+        }
+
+        void logInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
+            log(Operation.InvalidateUCT.ordinal(), targetMethod.toLog(),
+                            VMLogger.intArg(context.id), VMLogger.intArg(subtype.id));
+        }
+
+        void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
+            log(Operation.InvalidateUCM.ordinal(), targetMethod.toLog(),
+                            VMLogger.intArg(context.id), MethodID.fromMethodActor(method), MethodID.fromMethodActor(impl));
+        }
+
+        @Override
+        public String operationName(int op) {
+            return Operation.values()[op].name();
+        }
+
+        @Override
+        public void trace(Record r) {
+            int opCode = r.getOperation();
+            Word tmArg = r.getArg(1);
+            Log.print("DEPS: ");
+            switch (Operation.values()[opCode]) {
+                case Add:
+                case Remove: {
+                    int id = r.getArg(2).asAddress().toInt();
+                    Dependencies deps = Dependencies.fromId(id);
+                    Word typeArg = r.getArg(3);
+                    String verb = opCode == Operation.Add.ordinal() ? "Added" : "Removed";
+                    Log.println(verb + " dependency from " + deps + " to " + toClassActor(typeArg));
+                    break;
+                }
+
+                case Register: {
+                    int id = r.getArg(2).asAddress().toInt();
+                    Dependencies deps = Dependencies.fromId(id);
+                    Log.println("Register " + deps.toString(true));
+                    break;
+                }
+
+                case InvalidateDeps: {
+                    Log.println("adding " + toClassActor(r.getArg(2)) + " to the hierarchy invalidates:");
+                    break;
+                }
+
+                case Invalidated: {
+                    int id = r.getArg(2).asAddress().toInt();
+                    Dependencies deps = Dependencies.fromId(id);
+                    Log.println("   " + deps);
+                    break;
+                }
+
+                case InvalidateUCT: {
+                    Word contextArg = r.getArg(2);
+                    Word subTypeArg = r.getArg(3);
+                    StringBuilder sb = invalidateSB(tmArg, "UCT[").append(toClassActor(contextArg));
+                    if (!contextArg.equals(subTypeArg)) {
+                        sb.append(",").append(toClassActor(subTypeArg));
+                    }
+                    sb.append(']');
+                    Log.println(sb.toString());
+                    break;
+                }
+
+                case InvalidateUCM: {
+                    Word methodArg = r.getArg(3);
+                    Word implArg = r.getArg(4);
+                    StringBuilder sb = invalidateSB(tmArg, "UCM[").append(toMethodActor(methodArg));
+                    if (!methodArg.equals(implArg)) {
+                        sb.append(",").append(toMethodActor(methodArg));
+                    }
+                    sb.append("]");
+                    Log.println(sb.toString());
+                    break;
+                }
+
+            }
+        }
+
+        private static StringBuilder invalidateSB(Word tm, String iKind) {
+            StringBuilder sb = new StringBuilder("invalidated ");
+            sb.append(tmString(tm));
+            sb.append(", invalid dep: ");
+            sb.append(iKind);
+            return sb;
+        }
+
+        private static String tmString(Word tm) {
+            return tm.equals(NULL_TM) ? "null" : toMethodActor(tm).format("%H.%n(%p)");
+        }
+
+        private static String tmString(Word tm, int id) {
+            return tm.equals(NULL_TM) ? String.valueOf(id) : id + "#" + toMethodActor(tm).format("%H.%n(%p)");
+        }
+
     }
+
+    public static final Logger logger = new Logger();
 
     /**
      * Read-write lock used to synchronize modifications to the class hierarchy with validation of dependencies.
@@ -154,13 +296,8 @@ public final class DependenciesManager {
             // Adding a new concrete sub-type in this case always invalidate this assumption no matter what.
             assert this.context == context && subtype != concreteSubtype : "can never happen";
             valid = false;
-            if (TraceDeps) {
-                StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCT[").append(context);
-                if (context != subtype) {
-                    sb.append(",").append(subtype);
-                }
-                sb.append(']');
-                Log.println(sb.toString());
+            if (logger.enabled()) {
+                logger.logInvalidateUCT(targetMethod, context, subtype);
             }
 
             return false;
@@ -171,13 +308,8 @@ public final class DependenciesManager {
             RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
             if (newImpl != impl) {
                 valid = false;
-                if (TraceDeps) {
-                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(method);
-                    if (method != impl) {
-                        sb.append(",").append(impl);
-                    }
-                    sb.append("] dependency of " + targetMethod);
-                    Log.println(sb.toString());
+                if (logger.enabled()) {
+                    logger.logInvalidateUCM(targetMethod, context, method, impl);
                 }
             }
             return valid;
@@ -205,6 +337,9 @@ public final class DependenciesManager {
             deps.setTargetMethod(targetMethod);
         } finally {
             classHierarchyLock.readLock().unlock();
+        }
+        if (logger.enabled()) {
+            deps.logRegister();
         }
     }
 
@@ -492,13 +627,11 @@ public final class DependenciesManager {
         if (invalidated == null) {
             return;
         }
-        if (TraceDeps) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.println("DEPS: adding " + classActor + " to the hierarchy invalidates:");
+        if (logger.enabled()) {
+            logger.logInvalidateDeps(classActor);
             for (Dependencies deps : invalidated) {
-                Log.println("DEPS:   " + deps);
+                deps.logInvalidated();
             }
-            Log.unlock(lockDisabledSafepoints);
         }
 
         ArrayList<TargetMethod> methods = new ArrayList<TargetMethod>(invalidated.size());

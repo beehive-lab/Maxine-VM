@@ -51,7 +51,7 @@ public class JVMTIEvent {
 
     private static class JVMTIEventLogger extends VMLogger {
         private JVMTIEventLogger() {
-            super("JVMTIEvents", EVENT_COUNT);
+            super("JVMTIEvents", EVENT_COUNT, null);
         }
 
         @Override
