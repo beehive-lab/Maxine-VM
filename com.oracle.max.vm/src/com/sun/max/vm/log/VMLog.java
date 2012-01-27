@@ -29,6 +29,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.log.hosted.*;
+import com.sun.max.vm.log.java.fix.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -46,6 +48,10 @@ import com.sun.max.vm.thread.*;
  *
  * Since logging has to execute before monitors are available, any synchronization
  * must be handled with compare and swap operations.
+ *
+ * This code can also execute in {@link MaxineVM#isHosted() hosted} mode, to support
+ * logging/tracing during boot image generation. The {@link VMLogArrayFixed} implementation
+ * is used during hosted mode.
  */
 public abstract class VMLog {
 
@@ -234,12 +240,13 @@ public abstract class VMLog {
     /**
      * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
      */
+    @HOSTED_ONLY
     public static void bootImageInitialize() {
         nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
         vmLog = Factory.create();
         vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
         for (VMLogger logger : loggers.values()) {
-            logger.setVMLog(vmLog);
+            logger.setVMLog(vmLog, new VMLogHosted());
         }
     }
 
@@ -285,16 +292,23 @@ public abstract class VMLog {
 
     /**
      * Allocate a monotonically increasing unique id for a log record.
+     *
      * @return
      */
     @INLINE
     @NO_SAFEPOINT_POLLS("atomic")
     protected final int getUniqueId() {
-        int myId = nextId;
-        while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
-            myId = nextId;
+        if (MaxineVM.isHosted()) {
+            synchronized (this) {
+                return nextId++;
+            }
+        } else {
+            int myId = nextId;
+            while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
+                myId = nextId;
+            }
+            return myId;
         }
-        return myId;
     }
 
     /**

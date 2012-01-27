@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
+import static com.sun.max.vm.compiler.deps.DependenciesManager.Logger.*;
 
 import java.io.*;
 import java.util.*;
@@ -31,7 +32,6 @@ import java.util.concurrent.*;
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.profile.ValueMetrics.IntegerDistribution;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
@@ -181,8 +181,8 @@ final class ContextDependents {
                 dset = map.putIfAbsent(type, new DSet(deps.id));
                 if (dset == null) {
                     // won the race to add the first dependency
-                    if (TraceDeps) {
-                        Log.println("DEPS: Added dependency from " + deps + " to " + type);
+                    if (logger.enabled()) {
+                        deps.logAddRemove(Operation.Add, type);
                     }
                     continue;
                 }
@@ -192,8 +192,8 @@ final class ContextDependents {
             synchronized (dset) {
                 dset.addUnique(deps.id);
             }
-            if (TraceDeps) {
-                Log.println("DEPS: Added dependency from " + deps + " to " + type);
+            if (logger.enabled()) {
+                deps.logAddRemove(Operation.Add, type);
             }
         }
     }
@@ -209,14 +209,15 @@ final class ContextDependents {
         final int[] removed = {0};
         deps.iterate(new DependencyClosure() {
             @Override
-            public boolean nextClass(ClassActor type, ClassActor prev) {
+            public boolean nextContextClass(ClassActor type, ClassActor prev) {
                 if (type != null) {
                     DSet dset = map.get(type);
                     if (dset != null) {
                         if (dset.remove(deps.id)) {
                             removed[0]++;
-                            if (DependenciesManager.TraceDeps) {
-                                Log.println("DEPS: Removed dependency from " + deps.toString() + " to " + type);
+                            if (logger.enabled()) {
+                                deps.logAddRemove(Operation.Remove, type);
+//                                Log.println("DEPS: Removed dependency from " + deps.toString() + " to " + type);
                             }
                         }
                         if (dset.size == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,32 +37,42 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
     public abstract static class Assumption implements Serializable {
     }
 
-    /**
-     * An assumption about a unique subtype of a given type.
-     */
-    public static final class ConcreteSubtype extends Assumption {
+    public abstract static class ContextAssumption extends Assumption {
         /**
          * Type the assumption is made about.
          */
         public final RiResolvedType context;
 
+        public ContextAssumption(RiResolvedType context) {
+            this.context = context;
+        }
+
+        protected final int prime = 31;
+
+        @Override
+        public int hashCode() {
+            return prime + context.hashCode();
+        }
+
+    }
+
+    /**
+     * An assumption about a unique subtype of a given type.
+     */
+    public static final class ConcreteSubtype extends ContextAssumption {
         /**
          * Assumed unique concrete sub-type of the context type.
          */
         public final RiResolvedType subtype;
 
         public ConcreteSubtype(RiResolvedType context, RiResolvedType subtype) {
-            this.context = context;
+            super(context);
             this.subtype = subtype;
         }
 
         @Override
         public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + context.hashCode();
-            result = prime * result + subtype.hashCode();
-            return result;
+            return super.hashCode() * prime + subtype.hashCode();
         }
 
         @Override
@@ -76,47 +86,87 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
     }
 
     /**
-     * An assumption about a unique implementation of a virtual method.
+     * Captures a generic dependency between two methods.
      */
-    public static final class ConcreteMethod extends Assumption {
-
-        /**
-         * A virtual (or interface) method whose unique implementation for the receiver type
-         * in {@link #context} is {@link #impl}.
-         */
+    public static abstract class DependentMethod extends ContextAssumption {
         public final RiResolvedMethod method;
 
         /**
-         * A receiver type.
+         * A {@link RiResolvedMethod} that {@link #dependee} depends on in some way.
          */
-        public final RiResolvedType context;
+        public final RiResolvedMethod dependee;
 
-        /**
-         * The unique implementation of {@link #method} for {@link #context}.
-         */
-        public final RiResolvedMethod impl;
-
-        public ConcreteMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
+        public DependentMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod dependee) {
+            super(context);
             this.method = method;
-            this.context = context;
-            this.impl = impl;
+            this.dependee = dependee;
         }
 
         @Override
         public int hashCode() {
-            final int prime = 31;
-            int result = 1;
+            int result = super.hashCode();
             result = prime * result + method.hashCode();
-            result = prime * result + context.hashCode();
-            result = prime * result + impl.hashCode();
-            return result;
+            return prime * result + dependee.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof DependentMethod) {
+                DependentMethod other = (DependentMethod) obj;
+                return other.method == method && other.context == context && other.dependee == dependee;
+            }
+            return false;
+        }
+
+    }
+
+    /**
+     * An assumption about a unique implementation of a virtual method.
+     */
+    public static final class ConcreteMethod extends DependentMethod {
+
+        /**
+         *
+         * @param method a virtual (or interface) method whose unique implementation for the receiver type
+         * in {@link #context} is {@link #dependee}.
+         * @param context
+         * @param impl the unique implementation of {@link #method} for {@link #context}
+         */
+        public ConcreteMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
+            // dependee == impl
+            super(method, context, impl);
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ConcreteMethod) {
-                ConcreteMethod other = (ConcreteMethod) obj;
-                return other.method == method && other.context == context && other.impl == impl;
+                return super.equals(obj);
+            }
+            return false;
+        }
+
+    }
+
+    /**
+     * An assumption about a inlined method.
+     */
+    public static final class InlinedMethod extends DependentMethod {
+
+        /**
+         *
+         * @param method the method in which {@code includee} is being inlined into
+         * @param context {@code method.holder()}
+         * @param includee the method being inlined
+         */
+        public InlinedMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod includee) {
+            // dependee == includee
+            super(method, context, includee);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof InlinedMethod) {
+                return super.equals(obj);
             }
             return false;
         }
@@ -185,6 +235,15 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
      */
     public void recordConcreteMethod(RiResolvedMethod method, RiResolvedType context, RiResolvedMethod impl) {
         record(new ConcreteMethod(method, context, impl));
+    }
+
+    /**
+     * Record that {@code inlinee} has been inlined into {@code method}.
+     * @param method the method that is inlining the inlinee
+     * @param inlinee the method being inlined
+     */
+    public void recordInlinedMethod(RiResolvedMethod method, RiResolvedMethod inlinee) {
+        record(new InlinedMethod(method, method.holder(), inlinee));
     }
 
     private void record(Assumption assumption) {

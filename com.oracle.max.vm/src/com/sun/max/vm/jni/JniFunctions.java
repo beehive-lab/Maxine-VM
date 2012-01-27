@@ -199,7 +199,7 @@ public final class JniFunctions {
         public static final Word REGISTER_ENTRY = Address.fromInt(17);
 
         JxxFunctionsLogger(String name, int entryPointsLength) {
-            super(name, entryPointsLength);
+            super(name, entryPointsLength, null);
         }
 
         /**
