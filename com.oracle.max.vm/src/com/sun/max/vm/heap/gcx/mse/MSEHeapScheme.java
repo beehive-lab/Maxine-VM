@@ -54,9 +54,11 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     private static final int WORDS_COVERED_PER_BIT = 1;
     static boolean DumpFragStatsAfterGC = false;
     static boolean DumpFragStatsAtGCFailure = false;
+    static boolean DoImpreciseSweep = false;
     static {
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAfterGC", MSEHeapScheme.class, "Dump region fragmentation stats after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAtGCFailure", MSEHeapScheme.class, "Dump region fragmentation when GC failed to reclaim enough space", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSEHeapScheme.class, "Control whether to do precise or imprecise sweep", Phase.PRISTINE);
     }
 
     /**
@@ -123,7 +125,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
 
-        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, 0);
         // All reserved space (but the one used by the heap region manager) is now uncommitted.
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
@@ -298,7 +300,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 Log.println("BEGIN: Sweeping");
             }
             startTimer(reclaimTimer);
-            markSweepSpace.sweep(heapMarker);
+            markSweepSpace.sweep(heapMarker, DoImpreciseSweep);
             Size freeSpaceAfterGC = markSweepSpace.freeSpace();
             stopTimer(reclaimTimer);
             if (traceGCPhases) {

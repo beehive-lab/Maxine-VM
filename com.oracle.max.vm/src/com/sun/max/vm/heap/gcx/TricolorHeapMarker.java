@@ -1583,7 +1583,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param lastBitIndex index in the color map to the last bit of the range to scan
      * @return bit index in the color map to the first live mark, or -1 if there is no black mark in the range.
      */
-    private int firstBlackMark(int firstBitIndex, int lastBitIndex) {
+    int firstBlackMark(int firstBitIndex, int lastBitIndex) {
         final Pointer colorMapBase = base.asPointer();
         final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
         int bitmapWordIndex = bitmapWordIndex(firstBitIndex);
@@ -1603,18 +1603,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         return -1;
     }
 
-    public void sweep(Sweeper sweeper) {
-        if (Sweeper.DoImpreciseSweep) {
-            impreciseSweep(sweeper);
-        } else {
-            preciseSweep(sweeper);
-        }
-    }
-
-    private void preciseSweep(Sweeper sweeper) {
+    private void preciseSweep(Sweeper sweeper, int leftmostBitIndex, int rightmostBitIndex) {
         final Pointer colorMapBase = base.asPointer();
-        final int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(forwardScanState.rightmost));
-        int bitmapWordIndex = bitmapWordIndex(bitIndexOf(coveredAreaStart));
+        final int rightmostBitmapWordIndex = bitmapWordIndex(rightmostBitIndex);
+        int bitmapWordIndex = bitmapWordIndex(leftmostBitIndex);
 
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
             long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
@@ -1651,6 +1643,31 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         }
     }
 
+    private void preciseRegionSweep(HeapRegionSweeper sweeper) {
+        final Address rightmostLiveObject = forwardScanState.rightmost;
+        final Address endOfRightmostLiveObject = endOfCell(rightmostLiveObject);
+        final Address regionLeftmost = sweeper.startOfSweepingRegion();
+        final Address regionRightmost = sweeper.endOfSweepingRegion();
+        final Address rightmost = regionRightmost.greaterThan(rightmostLiveObject) ? endOfRightmostLiveObject : regionRightmost.minusWords(1);
+
+        final int rightmostBitIndex = bitIndexOf(rightmost);
+        final int leftmostBitIndex = bitIndexOf(regionLeftmost);
+        int lastLiveMark = firstBlackMark(leftmostBitIndex, rightmostBitIndex);
+        if (lastLiveMark < 0) {
+            // No live mark found on this region.
+            sweeper.processDeadRegion();
+            return;
+        }
+        if (lastLiveMark == leftmostBitIndex && sweeper.sweepingRegionIsLargeHead()) {
+            return;
+        }
+        preciseSweep(sweeper, leftmostBitIndex, rightmostBitIndex);
+    }
+
+    public void preciseSweep(Sweeper sweeper) {
+        preciseSweep(sweeper, bitIndexOf(coveredAreaStart), bitIndexOf(forwardScanState.rightmost));
+    }
+
     /**
      * Imprecise sweeping of the heap.
      * The sweeper is notified only when the distance between two live marks is larger than a specified minimum amount of
@@ -1660,7 +1677,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param sweeper
      * @param minReclaimableSpace
      */
-    private void impreciseSweep(Sweeper sweeper) {
+    public void impreciseSweep(Sweeper sweeper) {
         final Address rightmost = forwardScanState.rightmost;
         final int rightmostBitIndex = bitIndexOf(rightmost);
         int lastLiveMark = firstBlackMark(0, rightmostBitIndex);
@@ -1688,12 +1705,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param sweeper
      * @return
      */
-    public void sweep(HeapRegionSweeper regionsSweeper) {
+    public void sweep(HeapRegionSweeper regionsSweeper, boolean doImprecise) {
         final Address endOfRightmostLiveObject = endOfCell(forwardScanState.rightmost);
         do {
             assert regionsSweeper.hasNextSweepingRegion();
             regionsSweeper.beginSweep();
-            impreciseSweep(regionsSweeper);
+            if (doImprecise) {
+                impreciseRegionSweep(regionsSweeper);
+            } else {
+                preciseRegionSweep(regionsSweeper);
+            }
             regionsSweeper.endSweep();
         } while(regionsSweeper.endOfSweepingRegion().lessThan(endOfRightmostLiveObject));
         regionsSweeper.reachedRightmostLiveRegion();
@@ -1730,7 +1751,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * of every encountered dead space larger or equal to {@link HeapRegionSweeper#minReclaimableSpace()}.
      * @param sweeper
      */
-    private void impreciseSweep(HeapRegionSweeper sweeper) {
+    private void impreciseRegionSweep(HeapRegionSweeper sweeper) {
         final Address regionLeftmost = sweeper.startOfSweepingRegion();
         final Address regionRightmost = sweeper.endOfSweepingRegion();
         final Address rightmost =  regionRightmost.greaterThan(forwardScanState.rightmost) ? endOfCell(forwardScanState.rightmost) : regionRightmost.minusWords(1);
@@ -1767,7 +1788,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param rightmostBitIndex rightmost bound of the color map scan
      * @return the bit index of the rightmost live object scanned by the sweep
      */
-    private int impreciseSweep(Sweeper sweeper, int lastLiveMark, int rightmostBitIndex) {
+    int impreciseSweep(Sweeper sweeper, int lastLiveMark, int rightmostBitIndex) {
         final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         final Pointer colorMapBase = base.asPointer();
         int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);

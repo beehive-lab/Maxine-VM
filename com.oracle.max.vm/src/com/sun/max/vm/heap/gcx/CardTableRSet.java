@@ -306,6 +306,8 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
      */
     public void updateForFreeSpace(Address start, Size size) {
         final Address end = start.plus(size);
+        // Note: this doesn't invalid subsequent entries of the FOT table since free space does break
+        // former object boundaries.
         cfoTable.set(start, end);
         cardTable.setCardsInRange(start, end, CardState.DIRTY_CARD);
     }

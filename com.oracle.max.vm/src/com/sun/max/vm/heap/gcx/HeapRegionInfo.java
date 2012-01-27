@@ -140,6 +140,12 @@ public class HeapRegionInfo {
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     /**
+     * A customizable tag used to discriminate regions.
+     */
+    @INSPECTED
+    int tag;
+
+    /**
      * Offset (in bytes) relative to the beginning of a region to the first free chunk of the region.
      * Zero if the region is empty.
      */
@@ -308,6 +314,13 @@ public class HeapRegionInfo {
         this.owner = owner;
     }
 
+    final void setTag(int tag) {
+        this.tag = tag;
+    }
+
+    final int getTag() {
+        return tag;
+    }
     final HeapRegionInfo next() {
         return RegionTable.theRegionTable().next(this);
     }

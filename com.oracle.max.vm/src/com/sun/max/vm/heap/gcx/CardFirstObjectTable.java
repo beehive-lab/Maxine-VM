@@ -129,6 +129,15 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         set(cell, cell.plus(size));
     }
 
+    /**
+     * Set entries of the FOT for the cell whose boundary is specified in parameters.
+     *
+     * Note: this must be used carefully as it does not update the subsequent entries of the FOT and may make these entries
+     * invalid and the corresponding cards non-iterable.  The subsequent become invalid if the cell overlay over a bigger previous cell.
+     *
+     * @param cell
+     * @param cellEnd
+     */
     void set(Address cell, Address cellEnd) {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);
