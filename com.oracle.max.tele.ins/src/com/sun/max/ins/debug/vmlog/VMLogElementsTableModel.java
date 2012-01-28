@@ -221,7 +221,7 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
             return false;
         }
         int loggerId = VMLog.Record.getLoggerId(header);
-        if (vmLogView.loggers.get(loggerId) == null) {
+        if (vmLogView.getLogger(loggerId) == null) {
             return false;
         }
         return true;

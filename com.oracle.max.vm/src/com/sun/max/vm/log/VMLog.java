@@ -22,15 +22,12 @@
  */
 package com.sun.max.vm.log;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.hosted.*;
-import com.sun.max.vm.log.java.fix.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -43,14 +40,13 @@ import com.sun.max.vm.thread.*;
  * A variety of implementations of the log buffer are possible,
  * varying in performance, space overhead and complexity.
  * To allow experimentation, a specific logger is chosen by a factory class
- * at image build time, based on a system property. The default implementation is very
- * simple but space inefficient.
+ * at image build time, based on a system property.
  *
  * Since logging has to execute before monitors are available, any synchronization
  * must be handled with compare and swap operations.
  *
  * This code can also execute in {@link MaxineVM#isHosted() hosted} mode, to support
- * logging/tracing during boot image generation. The {@link VMLogArrayFixed} implementation
+ * logging/tracing during boot image generation. The {@link VMLogHosted} implementation
  * is used during hosted mode.
  */
 public abstract class VMLog {
@@ -212,11 +208,13 @@ public abstract class VMLog {
     @CONSTANT_WHEN_NOT_ZERO
     private static int nextIdOffset;
     private final static int DEFAULT_LOG_ENTRIES = 8192;
+
     /**
-     * Map of registered {@link VMLogger} instances.
+     * Array of registered {@link VMLogger} instances.
      */
     @INSPECTED
-    private static final Map<Integer, VMLogger> loggers = new HashMap<Integer, VMLogger>();
+    private static VMLogger[] loggers = new VMLogger[8];
+    private static int nextLoggerIndex;
 
     /**
      * Number of log records maintained in the circular buffer.
@@ -245,8 +243,10 @@ public abstract class VMLog {
         nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
         vmLog = Factory.create();
         vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-        for (VMLogger logger : loggers.values()) {
-            logger.setVMLog(vmLog, new VMLogHosted());
+        for (VMLogger logger : loggers) {
+            if (logger != null) {
+                logger.setVMLog(vmLog, new VMLogHosted());
+            }
         }
     }
 
@@ -256,14 +256,30 @@ public abstract class VMLog {
      * @param phase the phase
      */
     public void initialize(MaxineVM.Phase phase) {
+        // logging options will have been checked and set during BOOTSTRAPPING,
+        // they need to be reset now for the actual VM run.
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            for (int i = 0; i < loggers.length; i++) {
+                VMLogger logger = loggers[i];
+                if (logger != null) {
+                    logger.setDefaultStartupOptions();
+                }
+            }
+        }
     }
 
     public static VMLog vmLog() {
         return vmLog;
     }
 
+    @HOSTED_ONLY
     public static void registerLogger(VMLogger logger) {
-        loggers.put(logger.loggerId, logger);
+        if (nextLoggerIndex >= loggers.length) {
+            VMLogger[] newLoggers = new VMLogger[2 * loggers.length];
+            System.arraycopy(loggers, 0, newLoggers, 0, loggers.length);
+            loggers = newLoggers;
+        }
+        loggers[nextLoggerIndex++] = logger;
     }
 
     private void checkLogEntriesProperty() {
@@ -285,8 +301,10 @@ public abstract class VMLog {
      *
      */
     public static void checkLogOptions() {
-        for (VMLogger logger : loggers.values()) {
-            logger.checkLogOptions();
+        for (int i = 0; i < loggers.length; i++) {
+            if (loggers[i] != null) {
+                loggers[i].checkLogOptions();
+            }
         }
     }
 

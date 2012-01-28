@@ -93,7 +93,7 @@ public class VMLogger {
     /**
      * Creates a unique id when combined with operation id. Identifies the logger in the loggers map.
      */
-    final int loggerId;
+    public final int loggerId;
     /**
      * Number of distinct operations that can be logged.
      */
@@ -127,12 +127,6 @@ public class VMLogger {
         this.numOps = numOps;
         loggerId = nextLoggerId++;
         logOp = new BitSet(numOps);
-        // At VM startup we log everything; this gets refined once the VM is up in checkLogging.
-        // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
-        logEnabled = true;
-        for (int i = 0; i < numOps; i++) {
-            logOp.set(i, true);
-        }
         String logName = "Log" + name;
         String description = optionDescription ==  null ? name : optionDescription;
         logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + description);
@@ -206,6 +200,15 @@ public class VMLogger {
             Log.print(argString(i, r.getArg(i)));
         }
         Log.println();
+    }
+
+    public void setDefaultStartupOptions() {
+        // At VM startup we log everything; this gets refined once the VM is up in checkLogOptions.
+        // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
+        logEnabled = true;
+        for (int i = 0; i < numOps; i++) {
+            logOp.set(i, true);
+        }
     }
 
     protected void checkLogOptions() {

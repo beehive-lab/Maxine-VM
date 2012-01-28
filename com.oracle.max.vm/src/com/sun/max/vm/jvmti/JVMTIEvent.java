@@ -39,7 +39,6 @@ import com.sun.max.vm.thread.*;
  * or it is enabled for the generating thread, for that agent.
  *
  * Pan-agent caches are maintained for fast lookup.
- * The pan-agent per-thread setting is cached in {@link JVMTIVmThreadLocal#JVMTI_STATE}.
  *
  * Certain events, e.g. breakpoints, frame pop, require the method to be specially compiled.
  * To avoid routinely compiling in the support, a pan-agent event setting is maintained

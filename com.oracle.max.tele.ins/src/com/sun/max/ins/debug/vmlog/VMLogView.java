@@ -132,7 +132,7 @@ public class VMLogView extends AbstractView<VMLogView> {
     /**
      * The deep-copied set of {@link VMLogger} instances, used for operation/argument customization.
      */
-    final Map<Integer, VMLogger> loggers;
+    final VMLogger[] loggers;
 
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
@@ -144,7 +144,8 @@ public class VMLogView extends AbstractView<VMLogView> {
         logBufferEntries = vm.fields().VMLog_logEntries.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
         Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
-        loggers = (Map<Integer, VMLogger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
+        TeleArrayObject teleLoggersArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(loggersRef);
+        loggers = (VMLogger[]) teleLoggersArray.deepCopy();
 
         emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
@@ -167,6 +168,16 @@ public class VMLogView extends AbstractView<VMLogView> {
         viewMenu.add(showFilterCheckboxMenuItem);
         viewMenu.addSeparator();
         viewMenu.add(defaultViewMenuItems);
+    }
+
+    VMLogger getLogger(int id) {
+        for (VMLogger logger : loggers) {
+            if (logger.loggerId == id) {
+                return logger;
+            }
+        }
+        TeleError.unexpected("No VMLogger with id: " + id);
+        return null;
     }
 
     private final RowMatchListener rowMatchListener = new RowMatchListener() {
@@ -407,7 +418,7 @@ public class VMLogView extends AbstractView<VMLogView> {
                 int key = loggerId << 16 | op;
                 renderer = operationRenderers.get(key);
                 if (renderer == null) {
-                    VMLogger logger = vmLogView.loggers.get(loggerId);
+                    VMLogger logger = vmLogView.getLogger(loggerId);
                     renderer = new PlainLabel(vmLogView.inspection(), logger.name + "." + logger.operationName(op));
                     operationRenderers.put(key, renderer);
                 }
@@ -438,7 +449,7 @@ public class VMLogView extends AbstractView<VMLogView> {
                 }
 
                 long argValue = ((Boxed) value).value();
-                VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.loggers.get(VMLog.Record.getLoggerId(header)).name, vmLogView);
+                VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.getLogger(VMLog.Record.getLoggerId(header)).name, vmLogView);
                 renderer = vmLogArgRenderer.getRenderer(header, argNum, argValue);
                 vmLogView.tableModel.setRenderer(row, column, renderer);
             }
