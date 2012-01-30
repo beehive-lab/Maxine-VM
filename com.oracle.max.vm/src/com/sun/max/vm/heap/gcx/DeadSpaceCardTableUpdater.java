@@ -80,11 +80,13 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
                     deadObjectAddress = end.minus(deadObjectSize);
                 }
                 if (MaxineVM.isDebug() && true) {
-                    Log.print("Update Card Table for range [");
+                    Log.print("Update Card Table for reclaimed range [");
                     Log.print(deadSpace); Log.print(", ");
                     Log.print(end);
-                    Log.print("format tail at");
-                    Log.println(deadObjectAddress);
+                    Log.print("] / tail dead object at ");
+                    Log.print(deadObjectAddress);
+                    Log.print(" card # ");
+                    Log.println(rset.cardTable.tableEntryIndex(deadObjectAddress));
                 }
                 HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
                 rset.updateForFreeSpace(deadSpace, deadObjectAddress.minus(deadSpace).asSize());
