@@ -102,7 +102,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private Evacuator youngSpaceEvacuator;
+    private NoAgingEvacuator youngSpaceEvacuator;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -129,13 +129,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         // TODO: replace this with the dead space updater of the Evacuator, who knows how to format dead space to enable dirty card walking while
         // enabling allocation of over reclaimed dead space.
-        final DeadSpaceRSetUpdater deadSpaceRSetUpdater = new DeadSpaceRSetUpdater() {
-            final CardTableRSet rset = GenMSEHeapScheme.this.cardTableRSet;
-            @Override
-            public void updateRSet(Address deadSpace, Size numDeadBytes) {
-                rset.updateForFreeSpace(deadSpace, numDeadBytes);
-            }
-        };
+        final DeadSpaceCardTableUpdater deadSpaceRSetUpdater = new DeadSpaceCardTableUpdater(cardTableRSet);
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, true, deadSpaceRSetUpdater, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
@@ -240,20 +234,21 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             youngSpace.initialize(heapResizingPolicy);
             oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
 
-            HeapRangeDumper dumper = null;
+            // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
+            // worst case evacuation and the number of fragments of old space available for allocation.
+            // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
+            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace());
+            youngSpaceEvacuator.initialize(1000, ELABSize);
+
             if (HeapRangeDumper.DumpOnError) {
                 MemoryRegion dumpingCoverage = new MemoryRegion();
                 dumpingCoverage.setStart(Heap.bootHeapRegion.start());
                 dumpingCoverage.setEnd(heapBounds.end());
-                dumper = new HeapRangeDumper(heapBounds);
+                HeapRangeDumper dumper = new HeapRangeDumper(heapBounds);
                 dumper.refineOnFirstUnparsableWith(new RefineDumpRangeToCard(cardTableRSet));
+                youngSpaceEvacuator.setDumper(dumper);
             }
 
-            // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
-            // worst case evacuation and the number of fragments of old space available for allocation.
-            // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
-                            new SurvivorRangesQueue(1000), ELABSize, dumper);
             cardTableRSet.initializeXirStartupConstants();
              // Make the heap inspectable
             InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());

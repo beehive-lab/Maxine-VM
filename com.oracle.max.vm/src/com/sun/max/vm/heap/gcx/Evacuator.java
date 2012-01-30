@@ -94,9 +94,12 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
 
-    protected final HeapRangeDumper dumper;
+    protected HeapRangeDumper dumper;
 
-    protected Evacuator(HeapRangeDumper dumper) {
+    protected Evacuator() {
+    }
+
+    public void setDumper(HeapRangeDumper dumper) {
         this.dumper = dumper;
     }
 
