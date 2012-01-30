@@ -57,7 +57,7 @@ public final class NoAgingEvacuator extends Evacuator {
     /**
      * Hint of amount of space to use to refill the promotion allocation buffer.
      */
-    private final Size pSize;
+    private Size pSize;
 
     private final Size LAB_HEADROOM;
 
@@ -110,60 +110,8 @@ public final class NoAgingEvacuator extends Evacuator {
     /**
      * Queue of survivor ranges remaining to process for evacuation.
      */
-    private final SurvivorRangesQueue survivorRanges;
+    private SurvivorRangesQueue survivorRanges;
 
-
-    final DeadSpaceRSetUpdater deadSpaceRSetUpdater = new DeadSpaceRSetUpdater() {
-        @Override
-        public void updateRSet(Address deadSpace, Size numDeadBytes) {
-            // Allocation may occur while iterating over dirty cards to evacuate young objects. Such allocations may temporarily invalidate
-            // the FOT for cards overlapping with the allocator, and may break the ability to walk over these cards.
-            // One solution is keep the FOT up to date at every allocation, which may be expensive.
-            // Another solution is to make the last card of free chunk used by allocator independent of most allocation activity.
-            // The last card is the only one that may be dirtied, and therefore the only one that can be walked over during evacuation.
-            //
-            // Let s and e be the start and end of a free chunk.
-            // Let c be the top-most card address such that c >= e, and C be the card starting at c, with FOT(C) denoting the entry
-            // of the FOT for card C.
-            // If e == c,  whatever objects are allocated between s and e, FOT(C) == 0, i.e., allocations never invalidate FOT(C).
-            // Thus C is iterable at all time by a dirty card walker.
-            //
-            // If e > c, then FOT(C) might be invalidated by allocation.
-            // We may avoid this by formatting the space delimited by [c,e] as a dead object embedded in the heap free chunk.
-            // This will allow FOT(C) to be zero, and not be invalidated by any allocation of space before C.
-            // Formatting [c,e] has however several corner cases:
-            // 1. [c,e] may be smaller than the minimum object size, so we can't format it.
-            // Instead, we can format [x,e], such x < e and [x,e] is the min object size. In this case, FOT(C) = x - e.
-            // [x,e] can only be overwritten by the last allocation from the buffer,
-            // so FOT(C) doesn't need to be updated until that last allocation,
-            // which is always special cased (see why below).
-            // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C
-            // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
-            // always set the FOT table for the newly allocated cells. Since this one always
-
-            if (numDeadBytes.greaterEqual(CardTable.CARD_SIZE)) {
-                Address lastCardStart = rset.cardTable.alignDownToCard(deadSpace);
-                if (lastCardStart.minus(deadSpace).greaterThan(HeapFreeChunk.HEAP_FREE_CHUNK_HUB.tupleSize)) {
-                    // Format the end of the heap free chunk as a dead object.
-                    Pointer deadObjectAddress = lastCardStart.asPointer();
-                    Pointer end = deadSpace.plus(numDeadBytes).asPointer();
-                    Size deadObjectSize = end.minus(deadObjectAddress).asSize();
-
-                    if (deadObjectSize.lessThan(MIN_OBJECT_SIZE)) {
-                        deadObjectSize = MIN_OBJECT_SIZE;
-                        deadObjectAddress = end.minus(deadObjectSize);
-                    }
-                    HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
-                    rset.updateForFreeSpace(deadSpace, deadObjectAddress.minus(deadSpace).asSize());
-                    rset.updateForFreeSpace(deadObjectAddress, deadObjectSize);
-                    return;
-                }
-            }
-
-            // TODO: Revisit this in order to enable all-time parsability of the old space during evacuation from RSet.
-            rset.updateForFreeSpace(deadSpace, numDeadBytes);
-        }
-    };
     /**
      * Closure for evacuating cells in dirty card. A dirty card may overlap with an area currently used for allocation.
      * Allocation is made via the evacuator's promotion lab, which may during iteration over dirty cards.
@@ -209,16 +157,18 @@ public final class NoAgingEvacuator extends Evacuator {
 
     private final HeapSpaceRangeVisitor heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
 
-    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold, SurvivorRangesQueue queue, Size labSize, HeapRangeDumper dumper) {
-        super(dumper);
+    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
         this.minRefillThreshold = minRefillThreshold;
-        this.survivorRanges = queue;
-        this.pSize = labSize;
         this.LAB_HEADROOM =  MIN_OBJECT_SIZE;
+    }
+
+    public void initialize(int maxSurvivorRanges, Size labSize) {
+        this.survivorRanges = new SurvivorRangesQueue(maxSurvivorRanges);
+        this.pSize = labSize;
     }
 
     /**
