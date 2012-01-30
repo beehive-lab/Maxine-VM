@@ -37,6 +37,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -228,6 +229,16 @@ public final class Log {
         out.print(word);
     }
 
+    public static void print(RegionRange regionRange) {
+        final int first = regionRange.firstRegion();
+        final int last = first + regionRange.numRegions() - 1;
+        out.print("[");
+        out.print(first);
+        out.print(",");
+        out.print(last);
+        out.print("]");
+    }
+
     /**
      * Equivalent to calling {@link LogPrintStream#print(CodePointer)} on {@link #out}.
      */
@@ -317,6 +328,11 @@ public final class Log {
      */
     public static void println(Word word) {
         out.println(word);
+    }
+
+    public static void println(RegionRange regionRange) {
+        print(regionRange);
+        out.println();
     }
 
     /**
