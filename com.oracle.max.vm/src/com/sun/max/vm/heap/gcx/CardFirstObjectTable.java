@@ -131,9 +131,11 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
 
     /**
      * Set entries of the FOT for the cell whose boundary is specified in parameters.
+     * This assumes that subsequent slots in the slots aren't initialized.
      *
-     * Note: this must be used carefully as it does not update the subsequent entries of the FOT and may make these entries
-     * invalid and the corresponding cards non-iterable.  The subsequent become invalid if the cell overlay over a bigger previous cell.
+     * Note: this must be used carefully as it does not update the subsequent entries of the FOT, which may make these entries
+     * invalid and the corresponding cards non-iterable. The subsequent cards become invalid if the new cell overwrite a
+     * larger previous cell (e.g., typically, a formatted heap free chunk).
      *
      * @param cell
      * @param cellEnd
