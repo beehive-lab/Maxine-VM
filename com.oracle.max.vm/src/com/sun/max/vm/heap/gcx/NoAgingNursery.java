@@ -42,14 +42,13 @@ public class NoAgingNursery implements HeapSpace {
                 // TODO: condition for OOM
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
-            return allocator.start;
+            return Address.zero();
         }
 
         @Override
         protected void doBeforeGC() {
             // Nothing to do.
         }
-
     }
 
     /**
@@ -57,6 +56,7 @@ public class NoAgingNursery implements HeapSpace {
      */
     private final HeapAccount<? extends HeapAccountOwner> heapAccount;
 
+    private final int regionTag;
     /**
      * List of region allocated to the nursery.
      */
@@ -71,14 +71,19 @@ public class NoAgingNursery implements HeapSpace {
      */
     private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
 
-    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
+    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
         this.heapAccount = heapAccount;
+        this.regionTag = regionTag;
+    }
+
+    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
+        this(heapAccount, 0);
     }
 
     public void initialize(GenHeapSizingPolicy genSizingPolicy) {
         nurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         uncommitedNurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false)) {
+        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false, regionTag)) {
             FatalError.unexpected("Couldn't allocate contiguous range to the nursery");
         }
         int regionID = nurseryRegionsList.head();
@@ -142,13 +147,7 @@ public class NoAgingNursery implements HeapSpace {
         if (MaxineVM.isDebug()) {
             allocator.zap();
         }
-        // Format the allocator's space as a heap free chunk to comply with the allocateRefill interface.
-        // This is pure overhead induced by the BaseAtomicBumpPointerAllocator interface.
-        HeapFreeChunk.format(allocator.start, allocator.size());
-        // We leave the allocator in the "full state" (i.e., top == hardLimit) to avoid the mutator doing the refill racing with
-        // other mutators allocating as soon as we're out of the safepoint. That is, allocating requeste will be forced to
-        // queue on the refill lock until the thread that caused the GC has perform the refill.
-        // Doing otherwise requires changing the BaseAtomicBumpPointerAllocator.refillOrAllocate logic.
+        allocator.reset();
     }
 
     @Override

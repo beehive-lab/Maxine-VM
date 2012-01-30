@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * After mark-sweep verifier for a free space manager with tracing based on TricolorHeapMarker.
  */
-public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellVisitor {
+public class AfterMarkSweepVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, CellVisitor {
     final TricolorHeapMarker heapMarker;
     final Sweeper sweeper;
     long darkMatterByteCount;
@@ -89,6 +89,10 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
     }
 
     public Pointer visitCell(Pointer cell) {
+        return verifyCell(cell);
+    }
+
+    private Pointer verifyCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
         visitedCellOrigin = origin;
         final Reference hubRef = Layout.readHubReference(origin);
@@ -130,5 +134,13 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         liveDataByteCount = 0L;
         sweeper.verify(this);
         bootHeapVerifier.run();
+    }
+
+    @Override
+    public void visitCells(Address start, Address end) {
+        Pointer p = start.asPointer();
+        while (p.lessThan(end)) {
+            p = verifyCell(p);
+        }
     }
 }

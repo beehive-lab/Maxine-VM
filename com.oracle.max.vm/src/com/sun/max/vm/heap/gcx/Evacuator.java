@@ -94,9 +94,12 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
 
-    protected final HeapRangeDumper dumper;
+    protected HeapRangeDumper dumper;
 
-    protected Evacuator(HeapRangeDumper dumper) {
+    protected Evacuator() {
+    }
+
+    public void setDumper(HeapRangeDumper dumper) {
         this.dumper = dumper;
     }
 
@@ -115,7 +118,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     abstract Pointer evacuate(Pointer origin);
 
     /**
-     * Remembered set updates to apply to reference a to an evacuated cells.
+     * Remembered set updates to apply to a reference to an evacuated cell.
      * Default is to do nothing.
      *
      * @param refHolderOrigin origin of the reference holder
@@ -222,6 +225,18 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     abstract protected void doAfterEvacuation();
 
     /**
+     * Action to performed before a GC on the heap space where objects are evacuated begins.
+     */
+    public void doBeforeGC() {
+    }
+
+    /**
+     * Action to performed after a GC on the heap space where objects are evacuated begins.
+     */
+    public void doAfterGC() {
+
+    }
+    /**
      * Evacuate all objects of the evacuated area directly reachable from the boot heap.
      */
     void evacuateFromBootHeap() {
@@ -237,11 +252,10 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
 
     /**
      * Scan a cell to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
-     *
-     * @param cell a pointer to a cell
-     * @return pointer to the end of the cell
+     * @param cell
+     * @return
      */
-    final public Pointer visitCell(Pointer cell) {
+    final protected Pointer scanCellForEvacuatees(Pointer cell) {
         if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
             Log.print("visitCell "); Log.println(cell);
         }
@@ -298,7 +312,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
      * @param end end of the region overlapping with the cell
      * @return pointer to the end of the cell
      */
-    final public Pointer visitCell(Pointer cell, Address start, Address end) {
+    final protected Pointer scanCellForEvacuatees(Pointer cell, Address start, Address end) {
         checkCellOverlap(cell, start, end);
         final Pointer origin = Layout.cellToOrigin(cell);
         Pointer hubReferencePtr = origin.plus(HUB_WORD_INDEX);

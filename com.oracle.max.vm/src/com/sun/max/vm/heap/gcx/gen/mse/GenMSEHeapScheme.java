@@ -21,9 +21,10 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx.gen.mse;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
-
+import static com.sun.max.vm.heap.gcx.gen.mse.GenMSEHeapScheme.GenMSEHeapRegionTag.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
@@ -62,6 +63,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         VMOptions.addFieldOption("-XX:", "ELABSize", GenMSEHeapScheme.class, "Size of local allocation buffers for evacuation to old gen", Phase.PRISTINE);
     }
 
+    public enum GenMSEHeapRegionTag {
+        UNTAGGED,
+        YOUNG,
+        OLD,
+        BOOT;
+        public int tag() {
+            return ordinal();
+        }
+    }
+
     /**
      * Account for the application's generational heap. Both old and young generations tap in this account for their storage.
      */
@@ -91,17 +102,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private Evacuator youngSpaceEvacuator;
+    private NoAgingEvacuator youngSpaceEvacuator;
 
     /**
-     * Operation to submit to the {@link VmOperationThread} to perform a minor collection.
+     * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
      */
-    private final MinorCollection minorCollection;
-
-    /**
-     * Operation to submit to the {@link VmOperationThread} to perform a full collection.
-     */
-    private final MajorCollection fullCollection;
+    private final GenCollection genCollection;
 
     /**
      * Marking algorithm used to trace the heap.
@@ -118,13 +124,16 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     public GenMSEHeapScheme() {
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
-        youngSpace = new NoAgingNursery(heapAccount);
-        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount);
         cardTableRSet = new CardTableRSet();
+        youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
+
+        // TODO: replace this with the dead space updater of the Evacuator, who knows how to format dead space to enable dirty card walking while
+        // enabling allocation of over reclaimed dead space.
+        final DeadSpaceCardTableUpdater deadSpaceRSetUpdater = new DeadSpaceCardTableUpdater(cardTableRSet);
+        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, true, deadSpaceRSetUpdater, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
-        minorCollection = new MinorCollection();
-        fullCollection = new MajorCollection();
+        genCollection = new GenCollection();
     }
 
     @Override
@@ -178,7 +187,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
-        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, BOOT.tag());
 
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
@@ -225,20 +234,21 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             youngSpace.initialize(heapResizingPolicy);
             oldSpace.initialize(heapResizingPolicy.initialOldGenSize(), heapResizingPolicy.maxOldGenSize());
 
-            HeapRangeDumper dumper = null;
+            // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
+            // worst case evacuation and the number of fragments of old space available for allocation.
+            // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
+            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace());
+            youngSpaceEvacuator.initialize(1000, ELABSize);
+
             if (HeapRangeDumper.DumpOnError) {
                 MemoryRegion dumpingCoverage = new MemoryRegion();
                 dumpingCoverage.setStart(Heap.bootHeapRegion.start());
                 dumpingCoverage.setEnd(heapBounds.end());
-                dumper = new HeapRangeDumper(heapBounds);
+                HeapRangeDumper dumper = new HeapRangeDumper(heapBounds);
                 dumper.refineOnFirstUnparsableWith(new RefineDumpRangeToCard(cardTableRSet));
+                youngSpaceEvacuator.setDumper(dumper);
             }
 
-            // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
-            // worst case evacuation and the number of fragments of old space available for allocation.
-            // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace(),
-                            new SurvivorRangesQueue(1000), ELABSize, dumper);
             cardTableRSet.initializeXirStartupConstants();
              // Make the heap inspectable
             InspectableHeapInfo.init(false, heapBounds, heapMarker.memory(), cardTableRSet.memory());
@@ -261,13 +271,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // See allocateHeapAndGCStorage
     }
 
-
-    final class MinorCollection extends GCOperation {
-        MinorCollection() {
-            super("MinorCollection");
+    final class GenCollection extends GCOperation {
+        HeapRegionRangeIterable regionsRangeIterable;
+        int fullCollectionCount = 0;
+        GenCollection() {
+            super("GenCollection");
+            regionsRangeIterable = new HeapRegionRangeIterable();
         }
-
-        private void verifyAfterGC() {
+        private void verifyAfterEvacuation() {
             // Verify that:
             // 1. offset table is correctly setup
             // 2. there are no pointer from old to young.
@@ -276,27 +287,49 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             oldSpace.visit(noYoungReferencesVerifier);
         }
 
+        private void doFullCollection() {
+            youngSpaceEvacuator.doBeforeGC();
+            youngSpace.doBeforeGC();
+            oldSpace.doBeforeGC();
+            regionsRangeIterable.initialize(heapAccount.committedRegions());
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
+            heapMarker.markAll(regionsRangeIterable);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
+            oldSpace.sweep(heapMarker, false);
+            oldSpace.doAfterGC();
+            youngSpaceEvacuator.doAfterGC();
+            fullCollectionCount++;
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+        }
+
         @Override
         protected void collect(int invocationCount) {
+            // Collector proceeds as follows:
+            // 1. evacuate nursery
+            // 2. if old gen free space smaller than worst case evacuation (WCE) , do a full collection
+            // 3. if old gen free space still smaller than WCE, resize the heap (either grow it, or shrink the young gen
+            // 4. if heap resizing fail, GC failed, we're out of memory.
+            //
+            // The rationale for this is that in order for mutator to proceeds, the nursery must be empty again.
+            // This requires evacuating all of its objects somehow. Rather that doing a full GC covering both
+            // the old and young gen and somehow reclaim enough regions for a fresh nursery, we just perform a nursery evacuation.
+            // The full GC is thereafter just a old gen GC with an empty young gen.
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            // Evacuate young space
+            vmConfig().monitorScheme().beforeGarbageCollection();
             youngSpaceEvacuator.evacuate();
             if (VerifyAfterGC) {
-                verifyAfterGC();
+                verifyAfterEvacuation();
             }
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
-        }
-    }
-
-    final class MajorCollection extends GCOperation {
-        MajorCollection() {
-            super("MajorCollection");
-        }
-        @Override
-        protected void collect(int invocationCount) {
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            Size worstCaseEvac = youngSpace.totalSpace();
+            Size freeSpace = oldSpace.freeSpace();
+            if (worstCaseEvac.greaterThan(freeSpace)) {
+                doFullCollection();
+                freeSpace = oldSpace.freeSpace();
+                if (worstCaseEvac.greaterThan(freeSpace)) {
+                    // TODO: 3 and 4.
+                    FatalError.unimplemented();
+                }
+            }
         }
     }
 
@@ -307,9 +340,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
-        // TODO:
-        // Right now, we do a minor collection just for testing the code.
-        minorCollection.submit();
+        genCollection.submit();
         return true;
     }
 

@@ -142,6 +142,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess HeapRegionInfo_firstFreeChunkOffset = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "firstFreeChunkOffset");
     public final TeleInstanceIntFieldAccess HeapRegionInfo_flags = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "flags");
     public final TeleInstanceIntFieldAccess HeapRegionInfo_numFreeChunks = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "numFreeChunks");
+    public final TeleInstanceIntFieldAccess HeapRegionInfo_tag = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "tag");
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "classActor", ClassActor.class);
     public final TeleInstanceIntFieldAccess Hub_mTableLength = new TeleInstanceIntFieldAccess(Hub.class, "mTableLength");
     public final TeleInstanceIntFieldAccess Hub_mTableStartIndex = new TeleInstanceIntFieldAccess(Hub.class, "mTableStartIndex");

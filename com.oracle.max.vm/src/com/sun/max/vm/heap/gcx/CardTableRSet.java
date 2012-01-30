@@ -194,10 +194,21 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
     }
 
+    /**
+     * Record update to a reference slot of a cell.
+     * @param ref the cell whose reference is updated
+     * @param offset the offset from the origin of the cell to the updated reference.
+     */
     public void record(Reference ref, Offset offset) {
         cardTable.dirtyCovered(ref.toOrigin().plus(offset));
     }
 
+    /**
+     * Record update to a reference slot of a cell.
+     * @param ref the cell whose reference is updated
+     * @param displacement a displacement from the origin of the cell
+     * @param index a word index to the updated reference
+     */
     public void record(Reference ref,  int displacement, int index) {
         cardTable.dirtyCovered(ref.toOrigin().plus(Address.fromInt(index).shiftedLeft(Word.widthValue().log2numberOfBytes).plus(displacement)));
     }
@@ -288,4 +299,15 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         return cardTableMemory;
     }
 
+    /**
+     * Update the remembered set to take into account the newly freed space.
+     * @param start address to the first word of the freed chunk
+     * @param size size of the freed chunk
+     */
+    public void updateForFreeSpace(Address start, Size size) {
+        final Address end = start.plus(size);
+        // Note: this doesn't invalid subsequent entries of the FOT table.
+        cfoTable.set(start, end);
+        cardTable.setCardsInRange(start, end, CardState.CLEAN_CARD);
+    }
 }

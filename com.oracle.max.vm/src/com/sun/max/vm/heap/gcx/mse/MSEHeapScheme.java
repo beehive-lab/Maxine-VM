@@ -36,6 +36,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -53,9 +54,11 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     private static final int WORDS_COVERED_PER_BIT = 1;
     static boolean DumpFragStatsAfterGC = false;
     static boolean DumpFragStatsAtGCFailure = false;
+    static boolean DoImpreciseSweep = false;
     static {
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAfterGC", MSEHeapScheme.class, "Dump region fragmentation stats after GC", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "DumpFragStatsAtGCFailure", MSEHeapScheme.class, "Dump region fragmentation when GC failed to reclaim enough space", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSEHeapScheme.class, "Control whether to do precise or imprecise sweep", Phase.PRISTINE);
     }
 
     /**
@@ -122,7 +125,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
 
-        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, 0);
         // All reserved space (but the one used by the heap region manager) is now uncommitted.
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
@@ -275,40 +278,44 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
         @Override
         protected void collect(int invocationCount) {
+            final boolean traceGCPhases = Heap.traceGCPhases();
             traceGCTimes = Heap.traceGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
+            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
             vmConfig().monitorScheme().beforeGarbageCollection();
             markSweepSpace.doBeforeGC();
             collectionCount++;
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
-                Log.print("Begin mark-sweep #");
-                Log.println(collectionCount);
-            }
 
             theHeapRegionManager().checkOutgoingReferences();
 
             markSweepSpace.mark(heapMarker);
-            startTimer(reclaimTimer);
+
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
-            markSweepSpace.sweep(heapMarker);
+
+            if (traceGCPhases) {
+                Log.println("BEGIN: Sweeping");
+            }
+            startTimer(reclaimTimer);
+            markSweepSpace.sweep(heapMarker, DoImpreciseSweep);
             Size freeSpaceAfterGC = markSweepSpace.freeSpace();
             stopTimer(reclaimTimer);
+            if (traceGCPhases) {
+                Log.println("END: Sweeping");
+            }
+
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
             heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, markSweepSpace);
-
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
-                Log.print("End mark-sweep #");
-                Log.println(collectionCount);
-            }
             markSweepSpace.doAfterGC();
+
+            JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
             HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
             stopTimer(totalPauseTime);
 

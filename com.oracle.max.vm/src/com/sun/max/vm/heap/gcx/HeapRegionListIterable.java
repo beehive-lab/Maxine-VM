@@ -45,7 +45,7 @@ public abstract class HeapRegionListIterable {
      * Specifies to the iterator what region list it should iterate over.
      * @param regionList
      */
-    void initialize(HeapRegionList regionList) {
+    public void initialize(HeapRegionList regionList) {
         this.regionList = regionList;
     }
 
@@ -57,7 +57,7 @@ public abstract class HeapRegionListIterable {
     /**
      * Reset the iterator to the head of the region list.
      */
-    void reset() {
+    public void reset() {
         cursor = regionList.head();
         last = INVALID_REGION_ID;
     }

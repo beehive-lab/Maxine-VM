@@ -32,13 +32,15 @@ import com.sun.max.vm.runtime.*;
 public enum HeapRegionState {
     EMPTY_REGION(0),
     ALLOCATING_REGION(IS_ALLOCATING.or(0)),
+    ITERABLE_ALLOCATING_REGIONS(IS_ITERABLE.or(IS_ALLOCATING.or(0))),
     FULL_REGION(IS_ITERABLE.or(0)),
     FREE_CHUNKS_REGION(IS_ITERABLE.or(HAS_FREE_CHUNK.or(0))),
     LARGE_HEAD(IS_ITERABLE.or(IS_LARGE.or(IS_HEAD.or(0)))),
     LARGE_BODY(IS_ITERABLE.or(IS_LARGE.or(0))),
     LARGE_FULL_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(0)))),
     LARGE_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(HAS_FREE_CHUNK.or(0))))),
-    LARGE_ALLOCATING_TAIL(IS_ALLOCATING.or(IS_LARGE.or(IS_TAIL.or(0))));
+    LARGE_ALLOCATING_TAIL(IS_ALLOCATING.or(IS_LARGE.or(IS_TAIL.or(0)))),
+    LARGE_ITERABLE_ALLOCATING_TAIL(IS_ITERABLE.or(IS_ALLOCATING.or(IS_LARGE.or(IS_TAIL.or(0)))));
 
     private static final boolean [][] validStateTransitions = new boolean[HeapRegionState.values().length][HeapRegionState.values().length];
     private static final IntHashMap<HeapRegionState> allValidStates = new IntHashMap<HeapRegionState>(values().length);
@@ -64,14 +66,16 @@ public enum HeapRegionState {
         // FIXME: may want to introduce a special  "SWEPT" state  to distinguish between valid empty->state transitions that correspond to sweeping transitions from the empty -> allocating
         // transitions.
         initialize(EMPTY_REGION, new HeapRegionState [] {EMPTY_REGION, ALLOCATING_REGION, FULL_REGION, FREE_CHUNKS_REGION, LARGE_HEAD, LARGE_BODY, LARGE_FULL_TAIL, LARGE_TAIL});
-        initialize(ALLOCATING_REGION, new HeapRegionState [] {FULL_REGION, FREE_CHUNKS_REGION});
+        initialize(ALLOCATING_REGION, new HeapRegionState [] {FULL_REGION, FREE_CHUNKS_REGION, ITERABLE_ALLOCATING_REGIONS});
+        initialize(ITERABLE_ALLOCATING_REGIONS, new HeapRegionState[] {ALLOCATING_REGION });
         initialize(FULL_REGION, new HeapRegionState [] {EMPTY_REGION, FREE_CHUNKS_REGION});
         initialize(FREE_CHUNKS_REGION, new HeapRegionState [] {EMPTY_REGION, ALLOCATING_REGION, FREE_CHUNKS_REGION});
         initialize(LARGE_HEAD, new HeapRegionState [] {EMPTY_REGION, FREE_CHUNKS_REGION});
         initialize(LARGE_BODY, new HeapRegionState [] {EMPTY_REGION, FREE_CHUNKS_REGION});
         initialize(LARGE_FULL_TAIL, new HeapRegionState [] {EMPTY_REGION, FREE_CHUNKS_REGION, LARGE_TAIL});
         initialize(LARGE_TAIL, new HeapRegionState [] {EMPTY_REGION, LARGE_ALLOCATING_TAIL});
-        initialize(LARGE_ALLOCATING_TAIL, new HeapRegionState [] {LARGE_FULL_TAIL, LARGE_TAIL});
+        initialize(LARGE_ALLOCATING_TAIL, new HeapRegionState [] {LARGE_FULL_TAIL, LARGE_TAIL, LARGE_ITERABLE_ALLOCATING_TAIL});
+        initialize(LARGE_ITERABLE_ALLOCATING_TAIL, new HeapRegionState [] {LARGE_ALLOCATING_TAIL});
     }
 
     static public boolean isValidTransition(HeapRegionState from, HeapRegionState to) {
@@ -117,6 +121,14 @@ public enum HeapRegionState {
 
     public final static void toAllocatingState(HeapRegionInfo rinfo) {
         int flags = IS_ALLOCATING.or(HAS_FREE_CHUNK.clear(IS_ITERABLE.clear(rinfo.flags)));
+        if (MaxineVM.isDebug()) {
+            checkStateTransition(rinfo, toHeapRegionState(flags));
+        }
+        rinfo.flags = flags;
+    }
+
+    public final static void toIterableAllocatingState(HeapRegionInfo rinfo) {
+        int flags = IS_ITERABLE.or(rinfo.flags);
         if (MaxineVM.isDebug()) {
             checkStateTransition(rinfo, toHeapRegionState(flags));
         }
