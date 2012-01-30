@@ -37,7 +37,7 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
             // Env
             text = Long.toHexString(argValue);
         } else {
-            switch (JVMTIFunctions.EntryPoints.values()[VMLog.Record.getOperation(header)]) {
+            switch (JVMTIFunctions.LogOperations.values()[VMLog.Record.getOperation(header)]) {
                 // arg0 is always the env value
                 case SetEventNotificationMode:
                     if (argNum == 2) {

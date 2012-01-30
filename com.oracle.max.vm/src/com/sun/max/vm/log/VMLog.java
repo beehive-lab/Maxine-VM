@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -53,7 +54,7 @@ public abstract class VMLog {
      */
     public static class Factory {
         private static final String VMLOG_FACTORY_CLASS = "max.vmlog.class";
-        public static final String DEFAULT_VMLOG_CLASS = "java.fix.VMLogArrayFixed";
+        public static final String DEFAULT_VMLOG_CLASS = "nat.thread.var.VMLogNativeThreadVariable";
 
         private static VMLog create() {
             String prop = System.getProperty(VMLOG_FACTORY_CLASS);
@@ -138,8 +139,13 @@ public abstract class VMLog {
         public abstract int getHeader();
 
         public void setHeader(int op, int argCount, int loggerId) {
-            setHeader((VmThread.current().id() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
+            setHeader((safeGetThreadId() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
                       (loggerId << Record.LOGGER_ID_SHIFT) | argCount);
+        }
+
+        private static int safeGetThreadId() {
+            VmThread vmThread = VmThread.current();
+            return vmThread == null ? 0 : vmThread.id();
         }
 
         public void setFree() {
@@ -197,7 +203,14 @@ public abstract class VMLog {
     }
 
     private static final String LOG_ENTRIES_PROPERTY = "max.vmlog.entries";
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int nextIdOffset;
     private final static int DEFAULT_LOG_ENTRIES = 8192;
+    /**
+     * Map of registered {@link VMLogger} instances.
+     */
+    @INSPECTED
+    private static final Map<Integer, VMLogger> loggers = new HashMap<Integer, VMLogger>();
 
     /**
      * Number of log records maintained in the circular buffer.
@@ -206,16 +219,10 @@ public abstract class VMLog {
     protected int logEntries;
 
     /**
-     * Map of registered {@link VMLogger} instances.
-     */
-    @INSPECTED
-    protected Map<Integer, VMLogger> loggers;
-
-    /**
      * The actual {@link VMLog} instance in this VM image.
      */
     @INSPECTED
-    private static VMLog vmLog = Factory.create();
+    private static VMLog vmLog;
 
     /**
      * Monotonically increasing global unique id for a log record.
@@ -224,22 +231,32 @@ public abstract class VMLog {
     @INSPECTED
     protected volatile int nextId;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    protected int nextIdOffset;
+    /**
+     * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
+     */
+    public static void bootImageInitialize() {
+        nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
+        vmLog = Factory.create();
+        vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+        for (VMLogger logger : loggers.values()) {
+            logger.setVMLog(vmLog);
+        }
+    }
 
     /**
-     * Invoked on early VM startup.
+     * Phase specific initialization.
+     * Only called for BOOTSTRAPPING, PRIMORDIAL, TERMINATING.
+     * @param phase the phase
      */
-    public void initialize() {
-        nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
+    public void initialize(MaxineVM.Phase phase) {
     }
 
     public static VMLog vmLog() {
         return vmLog;
     }
 
-    void registerLogger(VMLogger logger) {
-        vmLog.loggers.put(logger.loggerId, logger);
+    public static void registerLogger(VMLogger logger) {
+        loggers.put(logger.loggerId, logger);
     }
 
     private void checkLogEntriesProperty() {
@@ -253,7 +270,6 @@ public abstract class VMLog {
 
     protected VMLog() {
         checkLogEntriesProperty();
-        loggers = new HashMap<Integer, VMLogger>();
     }
 
 
@@ -262,7 +278,7 @@ public abstract class VMLog {
      *
      */
     public static void checkLogOptions() {
-        for (VMLogger logger : vmLog.loggers.values()) {
+        for (VMLogger logger : loggers.values()) {
             logger.checkLogOptions();
         }
     }
@@ -272,6 +288,7 @@ public abstract class VMLog {
      * @return
      */
     @INLINE
+    @NO_SAFEPOINT_POLLS("atomic")
     protected final int getUniqueId() {
         int myId = nextId;
         while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {

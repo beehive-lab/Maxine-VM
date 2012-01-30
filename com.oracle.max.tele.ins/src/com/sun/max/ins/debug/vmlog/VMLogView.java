@@ -23,6 +23,7 @@
 package com.sun.max.ins.debug.vmlog;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -33,6 +34,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.AbstractView.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
@@ -98,9 +100,16 @@ public class VMLogView extends AbstractView<VMLogView> {
         return viewManager;
     }
 
+    private InspectorPanel contentPane;
     private final LogViewPreferences viewPreferences;
-    private ObjectScrollPane elementsPane;
+    private VMLogElementsTable table;
     private VMLogElementsTableModel tableModel;
+    private TableRowFilterToolBar filterToolBar = null;
+    private JCheckBoxMenuItem showFilterCheckboxMenuItem;
+    private int[] filterMatchingRows = null;
+
+
+
     final Reference vmLogRef;
     private final TeleObject vmLog;
     final TeleInstanceIntFieldAccess nextIdFieldAccess;
@@ -126,16 +135,67 @@ public class VMLogView extends AbstractView<VMLogView> {
     VMLogView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         TeleVM vm = (TeleVM) vm();
-        viewPreferences = LogViewPreferences.globalPreferences(inspection());
         vmLogRef = vm.fields().VMLog_vmLog.readReference(vm);
         vmLog = VmObjectAccess.make(vm).makeTeleObject(vmLogRef);
         vmLogClassActor = vmLog.classActorForObjectType();
         logBufferEntries = vm.fields().VMLog_logEntries.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
-        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vmLogRef);
+        Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
         loggers = (Map<Integer, VMLogger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
-        /*final InspectorFrame frame = */ createFrame(true);
-//        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+        viewPreferences = LogViewPreferences.globalPreferences(inspection());
+//        viewPreferences.addListener(this);
+        showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
+        showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem checkBoxMenuItem = (JCheckBoxMenuItem) e.getSource();
+                if (checkBoxMenuItem.isSelected()) {
+                    openFilter();
+                } else {
+                    closeFilter();
+                }
+            }
+        });
+        final InspectorFrame frame = createFrame(true);
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = frame.makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(showFilterCheckboxMenuItem);
+        viewMenu.addSeparator();
+        viewMenu.add(defaultViewMenuItems);
+    }
+
+    private final RowMatchListener rowMatchListener = new RowMatchListener() {
+
+        public void setSearchResult(int[] result) {
+            filterMatchingRows = result;
+            table.setDisplayedRows(filterMatchingRows);
+            //System.out.println("Match=" + Arrays.toString(filterMatchingRows));
+        }
+
+        public void closeRequested() {
+            closeFilter();
+            showFilterCheckboxMenuItem.setState(false);
+        }
+    };
+
+    private void openFilter() {
+        if (filterToolBar == null) {
+            filterToolBar = new TableRowFilterToolBar(inspection(), rowMatchListener, table);
+            contentPane.add(filterToolBar, BorderLayout.NORTH);
+            pack();
+            filterToolBar.getFocus();
+        }
+    }
+
+    private void closeFilter() {
+        if (filterToolBar != null) {
+            contentPane.remove(filterToolBar);
+            table.setDisplayedRows(null);
+            pack();
+            filterToolBar = null;
+            filterMatchingRows = null;
+        }
     }
 
     @Override
@@ -145,23 +205,34 @@ public class VMLogView extends AbstractView<VMLogView> {
 
     @Override
     protected void createViewContent() {
-        elementsPane = createVMLogElementsPane(inspection());
-        getContentPane().add(elementsPane);
+        table = new VMLogElementsTable(inspection(), this);
+        final InspectorScrollPane vmLogViewScrollPane = new InspectorScrollPane(inspection(), table);
+        contentPane = new InspectorPanel(inspection(), new BorderLayout());
+        contentPane.add(vmLogViewScrollPane, BorderLayout.CENTER);
+        setContentPane(contentPane);
     }
 
     @Override
     protected void refreshState(boolean force) {
-        elementsPane.refresh(force);
+        if (inspection().hasProcess()) {
+            table.refresh(force);
+        }
+        if (filterToolBar != null) {
+            filterToolBar.refresh(force);
+        }
     }
 
-    private ObjectScrollPane createVMLogElementsPane(Inspection inspection) {
-        final VMLogElementsTable elementsTable = new VMLogElementsTable(inspection, this);
-        return new ObjectScrollPane(inspection, elementsTable);
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     private static class VMLogElementsTable extends InspectorTable {
+        private VMLogView vmLogView;
+
         VMLogElementsTable(Inspection inspection, VMLogView vmLogView) {
             super(inspection);
+            this.vmLogView = vmLogView;
             String vmLogClassName = vmLogView.vmLogClassActor.simpleName();
             try {
                 Class<?> klass = Class.forName(VMLogView.class.getPackage().getName() + "." + vmLogClassName + "ElementsTableModel");
@@ -175,49 +246,17 @@ public class VMLogView extends AbstractView<VMLogView> {
             configureDefaultTable(vmLogView.tableModel, columnModel);
         }
 
-    }
-
-    public static class HostedLogRecord {
-        final int header;
-        final long id;
-        final Word[] args;
-
-        HostedLogRecord(int id, int header, Word... args) {
-            this.id = id;
-            this.header = header;
-            this.args = args;
-        }
-
         /**
-         * For when we can't access VM but need to create a record.
+         * Sets a display filter that will cause only the specified rows
+         * to be displayed.
+         *
+         * @param displayedRows the rows to be displayed, sorted in ascending order, null if all should be displayed.
          */
-        HostedLogRecord() {
-            header = 0;
-            id = 0;
-            args = new Word[0];
+        public void setDisplayedRows(int[] displayedRows) {
+            vmLogView.tableModel.setDisplayedRows(displayedRows);
         }
 
-        @Override
-        public String toString() {
-            if (VMLog.Record.isFree(header)) {
-                return "free";
-            } else {
-                StringBuilder sb = new StringBuilder();
-                sb.append("id=");
-                sb.append(id);
-                sb.append(",lid=");
-                sb.append(VMLog.Record.getLoggerId(header));
-                sb.append(",th=");
-                sb.append(VMLog.Record.getThreadId(header));
-                sb.append(",op=");
-                sb.append(VMLog.Record.getOperation(header));
-                sb.append(",ac");
-                sb.append(VMLog.Record.getArgCount(header));
-                return sb.toString();
-            }
-        }
     }
-
 
     private static class VMLogColumnModel extends InspectorTableColumnModel<VMLogColumnKind>  {
         private VMLogColumnModel(VMLogView vmLogView) {
@@ -280,8 +319,8 @@ public class VMLogView extends AbstractView<VMLogView> {
             if (value == null) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            long index = (Long) value;
-            setText(Long.toString(index));
+            int index = (Integer) value;
+            setText(Integer.toString(index));
             return this;
         }
     }
@@ -296,11 +335,15 @@ public class VMLogView extends AbstractView<VMLogView> {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             int threadID = (Integer) value;
-            MaxThread thread = vm().threadManager().getThread(threadID);
-            if (thread == null) {
-                return gui().getUnavailableDataTableCellRenderer();
+            if (threadID == 0) {
+                setText("primordial");
+            } else {
+                MaxThread thread = vm().threadManager().getThread(threadID);
+                if (thread == null) {
+                    return gui().getUnavailableDataTableCellRenderer();
+                }
+                setText(thread.vmThreadName());
             }
-            setText(thread.vmThreadName());
             return this;
         }
     }
@@ -319,7 +362,7 @@ public class VMLogView extends AbstractView<VMLogView> {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             int op = (Integer) value;
-            int header = vmLogView.tableModel.logRecordCache[row].header;
+            int header = vmLogView.tableModel.getRecord(row).header;
             if (!vmLogView.tableModel.wellFormedHeader(header)) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
@@ -345,7 +388,7 @@ public class VMLogView extends AbstractView<VMLogView> {
                 setText("");
                 return this;
             }
-            int header = vmLogView.tableModel.logRecordCache[row].header;
+            int header = vmLogView.tableModel.getRecord(row).header;
             if (!vmLogView.tableModel.wellFormedHeader(header)) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
