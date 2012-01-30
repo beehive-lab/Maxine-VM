@@ -78,7 +78,8 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all cards in the index range to the {@link CardState#CLEAN_CARD} value.
+     * Set all cards in the specified index range to the {@link CardState#CLEAN_CARD} value.
+     * The range extends from index fromIndex, inclusive, to index toIndex, exclusive.
      * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
@@ -87,8 +88,9 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all cards in the index range to the {@link CardState#DIRTY_CARD} value.
-     * @param fromIndex index to the first card of the range (inclusive)
+     * Set all cards in the specified index range to the {@link CardState#DIRTY_CARD} value.
+      * The range extends from index fromIndex, inclusive, to index toIndex, exclusive.
+    * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
     void dirty(int fromIndex, int toIndex) {
@@ -168,11 +170,11 @@ class CardTable extends  Log2RegionToByteMapTable {
         return cursor.minus(tableAddress).toInt();
     }
 
-    Address alignDownToCard(Address coveredAddress) {
+    static Address alignDownToCard(Address coveredAddress) {
         return coveredAddress.and(CARD_ADDRESS_MASK);
     }
 
-    Address alignUpToCard(Address coveredAddress) {
+    static Address alignUpToCard(Address coveredAddress) {
         return coveredAddress.plus(CARD_SIZE).and(CARD_ADDRESS_MASK);
     }
 

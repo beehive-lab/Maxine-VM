@@ -24,7 +24,9 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
 public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
@@ -32,6 +34,11 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
 
     public DeadSpaceCardTableUpdater(CardTableRSet rset) {
         this.rset = rset;
+    }
+
+    @FOLD
+    private Size heapFreeChunkHeaderSize() {
+        return HeapFreeChunk.HEAP_FREE_CHUNK_HUB.tupleSize;
     }
 
     @Override
@@ -60,18 +67,24 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
         // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C
         // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
         // always set the FOT table for the newly allocated cells. Since this one always
-
         if (numDeadBytes.greaterEqual(CardTable.CARD_SIZE)) {
-            Address lastCardStart = rset.cardTable.alignDownToCard(deadSpace);
-            if (lastCardStart.minus(deadSpace).greaterThan(HeapFreeChunk.HEAP_FREE_CHUNK_HUB.tupleSize.toInt())) {
+            final Pointer end = deadSpace.plus(numDeadBytes).asPointer();
+            final Address lastCardStart = CardTable.alignDownToCard(end);
+            if (lastCardStart.minus(deadSpace).greaterThan(heapFreeChunkHeaderSize())) {
                 // Format the end of the heap free chunk as a dead object.
                 Pointer deadObjectAddress = lastCardStart.asPointer();
-                Pointer end = deadSpace.plus(numDeadBytes).asPointer();
                 Size deadObjectSize = end.minus(deadObjectAddress).asSize();
 
                 if (deadObjectSize.lessThan(MIN_OBJECT_SIZE)) {
                     deadObjectSize = MIN_OBJECT_SIZE;
                     deadObjectAddress = end.minus(deadObjectSize);
+                }
+                if (MaxineVM.isDebug() && true) {
+                    Log.print("Update Card Table for range [");
+                    Log.print(deadSpace); Log.print(", ");
+                    Log.print(end);
+                    Log.print("format tail at");
+                    Log.println(deadObjectAddress);
                 }
                 HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
                 rset.updateForFreeSpace(deadSpace, deadObjectAddress.minus(deadSpace).asSize());
@@ -79,6 +92,7 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
                 return;
             }
         }
+        // Otherwise, the free chunk is either smaller than a
         rset.updateForFreeSpace(deadSpace, numDeadBytes);
     }
 }

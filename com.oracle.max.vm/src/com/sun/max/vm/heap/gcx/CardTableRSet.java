@@ -42,6 +42,7 @@ import com.sun.max.vm.heap.gcx.CardTable.CardState;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 /**
  * A pure card-table based remembered set.
  */
@@ -224,7 +225,9 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     }
 
     /**
-     * Visit the cells that overlap a contiguous range of cards.
+     * Visit all the cells that overlap the specified range of cards.
+     * The range of visited cards extends from the card startCardIndex, inclusive, to the
+     * card endCardIndex, exclusive.
      *
      * @param cardIndex index of the card
      * @param cellVisitor the logic to apply to the visited cell
@@ -235,7 +238,31 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         Pointer cell = cfoTable.cellStart(startCardIndex).asPointer();
         do {
             cell = cellVisitor.visitCell(cell, start, end);
+            if (MaxineVM.isDebug()) {
+                // FIXME: this is too strong, because DeadSpaceCardTableUpdater may leave a FOT entry temporarily out-dated by up
+                // to MIN_OBJECT_SIZE words when the HeapFreeChunkHeader of the space the allocator was refill with is immediately
+                // before a card boundary.
+                // I 'm leaving this as is now to see whether we ever run into this case, but this
+                // should really be cell.plus(MIN_OBJECT_SIZE).greaterThan(start);
+                FatalError.check(cell.greaterThan(start), "visited cell must overlap visited card.");
+            }
         } while (cell.lessThan(end));
+    }
+
+    private void traceVisitedCard(int startCardIndex, int endCardIndex, CardState cardState) {
+        Log.print("Visiting ");
+        Log.print(cardState.name());
+        Log.print(" cards [");
+        Log.print(startCardIndex);
+        Log.print(", ");
+        Log.print(endCardIndex);
+        Log.print("]  (");
+        Log.print(cardTable.rangeStart(startCardIndex));
+        Log.print(", ");
+        Log.print(cardTable.rangeStart(endCardIndex));
+        Log.print(")  R = ");
+        Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
+        Log.println(")");
     }
 
     /**
@@ -249,6 +276,9 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, CardState.DIRTY_CARD);
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, CardState.DIRTY_CARD);
+            if (MaxineVM.isDebug() && TraceCardTableRSet) {
+                traceVisitedCard(startCardIndex, endCardIndex, CardState.DIRTY_CARD);
+            }
             cardTable.clean(startCardIndex, endCardIndex);
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {
@@ -264,19 +294,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, cardState);
             if (MaxineVM.isDebug() && TraceCardTableRSet) {
-                Log.print("Visiting ");
-                Log.print(cardState.name());
-                Log.print(" cards [");
-                Log.print(startCardIndex);
-                Log.print(", ");
-                Log.print(endCardIndex);
-                Log.print("]  (");
-                Log.print(cardTable.rangeStart(startCardIndex));
-                Log.print(", ");
-                Log.print(cardTable.rangeStart(endCardIndex));
-                Log.print(")  R = ");
-                Log.print(RegionTable.theRegionTable().regionID(cardTable.rangeStart(startCardIndex)));
-                Log.println(")");
+                traceVisitedCard(startCardIndex, endCardIndex, cardState);
             }
             visitCards(startCardIndex, endCardIndex, cellVisitor);
             if (++endCardIndex >= endOfRange) {

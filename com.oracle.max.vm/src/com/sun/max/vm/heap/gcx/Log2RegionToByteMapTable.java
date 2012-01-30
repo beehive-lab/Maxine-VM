@@ -227,7 +227,8 @@ public class Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all the entries of the table in the specified range of indexes to the specified value.
+     * Set all the entries of the table in the specified range of indexes to the specified byte value.
+     * The range extends from index fromIndex, inclusive, to index toIndex, exclusive.
      * @param fromIndex first entry of the range (inclusive)
      * @param toIndex index to the last entry of the range (exclusive)
      * @param value
