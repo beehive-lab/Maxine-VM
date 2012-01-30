@@ -290,7 +290,8 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
 
     private void checkCellOverlap(Pointer cell, Address start, Address end) {
         if (MaxineVM.isDebug()) {
-            final Pointer endOfCell = cell.plus(Layout.size(Layout.cellToOrigin(cell)));
+            final Pointer origin = Layout.cellToOrigin(cell);
+            final Pointer endOfCell = HeapFreeChunk.isHeapFreeChunkOrigin(origin) ? cell.plus(HeapFreeChunk.getFreechunkSize(cell)) : cell.plus(Layout.size(origin));
             if ((cell.lessThan(end) && endOfCell.greaterThan(start)) || cellInRegion(cell, endOfCell, start, end)) {
                 return;
             }

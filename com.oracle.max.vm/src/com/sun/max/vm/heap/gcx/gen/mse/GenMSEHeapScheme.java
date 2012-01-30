@@ -324,6 +324,9 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             Size freeSpace = oldSpace.freeSpace();
             if (worstCaseEvac.greaterThan(freeSpace)) {
                 doFullCollection();
+                if (VerifyAfterGC) {
+                    verifyAfterEvacuation();
+                }
                 freeSpace = oldSpace.freeSpace();
                 if (worstCaseEvac.greaterThan(freeSpace)) {
                     // TODO: 3 and 4.

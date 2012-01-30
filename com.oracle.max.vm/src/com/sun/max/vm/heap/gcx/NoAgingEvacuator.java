@@ -27,6 +27,7 @@ import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -39,7 +40,11 @@ import com.sun.max.vm.runtime.*;
  * This makes the evacuator independent of the detail of survivor ranges tracking and imprecise rset subtleties.
  */
 public final class NoAgingEvacuator extends Evacuator {
-   /**
+    public static boolean TraceDirtyCardWalk = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceDirtyCardWalk", NoAgingEvacuator.class, "Trace Dirty Card Walk", Phase.PRISTINE);
+    }
+    /**
      * Heap Space that is being evacuated.
      */
     final HeapSpace fromSpace;
@@ -122,6 +127,7 @@ public final class NoAgingEvacuator extends Evacuator {
      */
     final class DirtyCardEvacuationClosure implements CellVisitor, OverlappingCellVisitor,  HeapSpaceRangeVisitor {
         private final CardTableRSet cachedRSet;
+
         DirtyCardEvacuationClosure() {
             cachedRSet = rset;
         }
@@ -155,7 +161,7 @@ public final class NoAgingEvacuator extends Evacuator {
         }
     }
 
-    private final HeapSpaceRangeVisitor heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
+    private final DirtyCardEvacuationClosure heapSpaceDirtyCardClosure;
 
     public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold) {
         this.fromSpace = fromSpace;
@@ -164,6 +170,7 @@ public final class NoAgingEvacuator extends Evacuator {
         this.cfoTable = rset.cfoTable;
         this.minRefillThreshold = minRefillThreshold;
         this.LAB_HEADROOM =  MIN_OBJECT_SIZE;
+        this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
     }
 
     public void initialize(int maxSurvivorRanges, Size labSize) {
@@ -339,7 +346,14 @@ public final class NoAgingEvacuator extends Evacuator {
     @Override
     protected void evacuateFromRSets() {
         // Visit the dirty cards of the old gen (i.e., the toSpace).
+        final boolean traceRSet = CardTableRSet.TraceCardTableRSet;
+        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
+            CardTableRSet.TraceCardTableRSet = true;
+        }
         toSpace.visit(heapSpaceDirtyCardClosure);
+        if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
+            CardTableRSet.TraceCardTableRSet = traceRSet;
+        }
     }
 
     @Override

@@ -100,6 +100,9 @@ public class HeapFreeChunk {
         chunkAddress.asPointer().setWord(SIZE_INDEX, size);
     }
 
+    public static boolean isHeapFreeChunkOrigin(Pointer origin) {
+        return Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()));
+    }
     /**
      * Return true if the specified area is formated as a tail chunk (i.e., chunk with a null next field).
      * @param start start of the heap area
@@ -110,9 +113,9 @@ public class HeapFreeChunk {
         if (end.lessThan(start.plus(HEAP_FREE_CHUNK_HUB.tupleSize))) {
             return false;
         }
-        final Pointer origin = Layout.arrayCellToOrigin(start);
+        final Pointer origin = Layout.cellToOrigin(start);
         // First, do we have a HEAP_FREE_CHUNK_HUB at the location corresponding to a cell's hub:
-        if (!Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()))) {
+        if (!isHeapFreeChunkOrigin(origin)) {
             return false;
         }
         // Next free should be null
@@ -121,6 +124,7 @@ public class HeapFreeChunk {
         }
         return end.equals(start.plus(getFreechunkSize(start)));
     }
+
 
     void dump() {
         Log.print(fromHeapFreeChunk(this));

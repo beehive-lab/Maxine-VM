@@ -145,6 +145,8 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      */
     private Size minOverflowRefillSize;
 
+    private boolean traceVisitedRegionsRanges = false;
+
     /**
      * Indicate whether a size is categorized as large. Request for large size must go to the large object allocator.
      * @param size size in words
@@ -1042,17 +1044,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return Size.zero();
     }
 
-    private void visit(HeapSpaceRangeVisitor visitor, BaseAtomicBumpPointerAllocator<?> allocator, int allocatingRegion) {
-        if (allocatingRegion == INVALID_REGION_ID) {
-            return;
-        }
-        final HeapRegionInfo rinfo = HeapRegionInfo.fromRegionID(allocatingRegion);
-        allocator.unsafeMakeParsable();
-        final Address start = rinfo.regionStart();
-        final Address end = start.plus(regionSizeInBytes);
-        visitor.visitCells(start, end);
-    }
-
     /**
      * Change state of an allocating region to iterable allocating region.
      *
@@ -1091,7 +1082,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         } else {
             regionsRangeIterable.resetToFirstIterable(regionTag);
             while (regionsRangeIterable.hasNext()) {
-                regionTable.walk(regionsRangeIterable.nextIterableRange(regionTag), visitor);
+                final RegionRange regionsRange = regionsRangeIterable.nextIterableRange(regionTag);
+                if (MaxineVM.isDebug() && traceVisitedRegionsRanges) {
+                    Log.print(" visiting ");
+                    Log.println(regionsRange);
+                }
+                regionTable.walk(regionsRange, visitor);
             }
         }
     }
