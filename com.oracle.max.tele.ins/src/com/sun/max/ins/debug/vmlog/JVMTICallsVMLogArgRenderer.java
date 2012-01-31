@@ -22,6 +22,9 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jvmti.*;
@@ -30,8 +33,14 @@ import com.sun.max.vm.reference.*;
 
 
 public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
+
+    public JVMTICallsVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
+    }
+
     @Override
-    public String getText(TeleVM vm, int header, int argNum, long argValue) {
+    public Component getRenderer(int header, int argNum, long argValue) {
+        TeleVM vm = (TeleVM) vmLogView.vm();
         String text = "";
         if (argNum == 1) {
             // Env
@@ -84,7 +93,7 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                     text = Long.toHexString(argValue);
             }
         }
-        return text;
+        return new PlainLabel(vmLogView.inspection(), text);
     }
 
 }

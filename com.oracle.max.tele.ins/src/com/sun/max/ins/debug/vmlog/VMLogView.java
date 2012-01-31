@@ -39,6 +39,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.field.*;
@@ -107,6 +108,8 @@ public class VMLogView extends AbstractView<VMLogView> {
     private TableRowFilterToolBar filterToolBar = null;
     private JCheckBoxMenuItem showFilterCheckboxMenuItem;
     private int[] filterMatchingRows = null;
+    private static Component emptyStringRenderer;
+
 
 
 
@@ -127,9 +130,9 @@ public class VMLogView extends AbstractView<VMLogView> {
      */
     final int logBufferEntries;
     /**
-     * The deep-copied set of {@link VMLogger} instances, used for ooperation/argument customization.
+     * The deep-copied set of {@link VMLogger} instances, used for operation/argument customization.
      */
-    final Map<Integer, VMLogger> loggers;
+    final VMLogger[] loggers;
 
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
@@ -141,8 +144,10 @@ public class VMLogView extends AbstractView<VMLogView> {
         logBufferEntries = vm.fields().VMLog_logEntries.readInt(vmLogRef);
         nextIdFieldAccess = vm.fields().VMLog_nextId;
         Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
-        loggers = (Map<Integer, VMLogger>) VmObjectAccess.make(vm).makeTeleObject(loggersRef).deepCopy();
+        TeleArrayObject teleLoggersArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(loggersRef);
+        loggers = (VMLogger[]) teleLoggersArray.deepCopy();
 
+        emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
 //        viewPreferences.addListener(this);
         showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
@@ -163,6 +168,16 @@ public class VMLogView extends AbstractView<VMLogView> {
         viewMenu.add(showFilterCheckboxMenuItem);
         viewMenu.addSeparator();
         viewMenu.add(defaultViewMenuItems);
+    }
+
+    VMLogger getLogger(int id) {
+        for (VMLogger logger : loggers) {
+            if (logger.loggerId == id) {
+                return logger;
+            }
+        }
+        TeleError.unexpected("No VMLogger with id: " + id);
+        return null;
     }
 
     private final RowMatchListener rowMatchListener = new RowMatchListener() {
@@ -262,8 +277,8 @@ public class VMLogView extends AbstractView<VMLogView> {
         private VMLogColumnModel(VMLogView vmLogView) {
             super(VMLogColumnKind.values().length, vmLogView.viewPreferences);
             Inspection inspection = vmLogView.inspection();
-            addColumn(VMLogColumnKind.ID, new IdCellRenderer(inspection), null);
-            addColumn(VMLogColumnKind.THREAD, new ThreadCellRenderer(inspection), null);
+            addColumn(VMLogColumnKind.ID, new IdCellRenderer(inspection, vmLogView), null);
+            addColumn(VMLogColumnKind.THREAD, new ThreadCellRenderer(inspection, vmLogView), null);
             addColumn(VMLogColumnKind.OPERATION, new OperationCellRenderer(inspection, vmLogView), null);
             addColumn(VMLogColumnKind.ARG1, new ArgCellRenderer(inspection, vmLogView, 1), null);
             addColumn(VMLogColumnKind.ARG2, new ArgCellRenderer(inspection, vmLogView, 2), null);
@@ -310,95 +325,136 @@ public class VMLogView extends AbstractView<VMLogView> {
         }
     }
 
-    private static class IdCellRenderer extends WordValueLabel implements TableCellRenderer {
-        private IdCellRenderer(Inspection inspection) {
-            super(inspection, WordValueLabel.ValueMode.WORD, null);
-        }
+    private static abstract class CellRendererHelper {
+        protected final VMLogView vmLogView;
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (value == null) {
-                return gui().getUnavailableDataTableCellRenderer();
-            }
-            int index = (Integer) value;
-            setText(Integer.toString(index));
-            return this;
-        }
-    }
-
-    private static class ThreadCellRenderer extends PlainLabel implements TableCellRenderer {
-        private ThreadCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (value == null) {
-                return gui().getUnavailableDataTableCellRenderer();
-            }
-            int threadID = (Integer) value;
-            if (threadID == 0) {
-                setText("primordial");
-            } else {
-                MaxThread thread = vm().threadManager().getThread(threadID);
-                if (thread == null) {
-                    return gui().getUnavailableDataTableCellRenderer();
-                }
-                setText(thread.vmThreadName());
-            }
-            return this;
-        }
-    }
-
-    private static class OperationCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        private VMLogView vmLogView;
-
-        private OperationCellRenderer(Inspection inspection, VMLogView vmLogView) {
-            super(inspection, null);
+        CellRendererHelper(VMLogView vmLogView) {
             this.vmLogView = vmLogView;
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getRenderer(Object value, int row, int column) {
             if (value == null) {
-                return gui().getUnavailableDataTableCellRenderer();
+                return vmLogView.gui().getUnavailableDataTableCellRenderer();
             }
-            int op = (Integer) value;
-            int header = vmLogView.tableModel.getRecord(row).header;
-            if (!vmLogView.tableModel.wellFormedHeader(header)) {
-                return gui().getUnavailableDataTableCellRenderer();
-            }
-            VMLogger logger = vmLogView.loggers.get(VMLog.Record.getLoggerId(header));
-            setText(logger.name + "." + logger.operationName(op));
-            return this;
+            return vmLogView.tableModel.getRenderer(row, column);
         }
     }
 
-    private static class ArgCellRenderer extends WordValueLabel implements TableCellRenderer {
-        private VMLogView vmLogView;
+    private static class IdCellRenderer extends CellRendererHelper implements TableCellRenderer {
+
+        private IdCellRenderer(Inspection inspection, VMLogView vmLogView) {
+            super(vmLogView);
+        }
+
+        private long calls;
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            calls++;
+            if ((calls % 1000) == 0) {
+                Trace.line(0, "IdCellRenderer.getTableCellRendererComponent: " + calls);
+            }
+
+            Component renderer = super.getRenderer(value, row, column);
+            if (renderer == null) {
+                WordValueLabel wvl = new WordValueLabel(vmLogView.inspection(), WordValueLabel.ValueMode.WORD, vmLogView.table);
+                int id = (Integer) value;
+                wvl.setText(Integer.toString(id));
+                renderer = wvl;
+                vmLogView.tableModel.setRenderer(row, column, wvl);
+            }
+            return renderer;
+        }
+    }
+
+    private static class ThreadCellRenderer extends CellRendererHelper implements TableCellRenderer {
+        private Map<Integer, Component> threadRenderers = new HashMap<Integer, Component>();
+
+        private ThreadCellRenderer(Inspection inspection, VMLogView vmLogView) {
+            super(vmLogView);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component renderer = super.getRenderer(value, row, column);
+            if (renderer == null) {
+                int threadID = (Integer) value;
+                renderer = threadRenderers.get(threadID);
+                if (renderer == null) {
+                    String name;
+                    if (threadID == 0) {
+                        name = "primordial";
+                    } else {
+                        MaxThread thread = vmLogView.vm().threadManager().getThread(threadID);
+                        if (thread == null) {
+                            return vmLogView.gui().getUnavailableDataTableCellRenderer();
+                        }
+                        name = thread.vmThreadName();
+                    }
+                    renderer = new PlainLabel(vmLogView.inspection(), name);
+                    threadRenderers.put(new Integer(threadID), renderer);
+                }
+                vmLogView.tableModel.setRenderer(row, column, renderer);
+            }
+            return renderer;
+        }
+    }
+
+    private static class OperationCellRenderer extends CellRendererHelper implements TableCellRenderer {
+
+        private Map<Integer, Component> operationRenderers = new HashMap<Integer, Component>();
+
+        private OperationCellRenderer(Inspection inspection, VMLogView vmLogView) {
+            super(vmLogView);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component renderer = super.getRenderer(value, row, column);
+            if (renderer == null) {
+                int op = (Integer) value;
+                int header = vmLogView.tableModel.getRecord(row).getHeader();
+                if (!vmLogView.tableModel.wellFormedHeader(header)) {
+                    return vmLogView.gui().getUnavailableDataTableCellRenderer();
+                }
+                int loggerId = VMLog.Record.getLoggerId(header);
+                int key = loggerId << 16 | op;
+                renderer = operationRenderers.get(key);
+                if (renderer == null) {
+                    VMLogger logger = vmLogView.getLogger(loggerId);
+                    renderer = new PlainLabel(vmLogView.inspection(), logger.name + "." + logger.operationName(op));
+                    operationRenderers.put(key, renderer);
+                }
+                vmLogView.tableModel.setRenderer(row, column, renderer);
+            }
+            return renderer;
+        }
+    }
+
+    public static class ArgCellRenderer extends CellRendererHelper implements TableCellRenderer {
         private int argNum;
 
         private ArgCellRenderer(Inspection inspection, VMLogView vmLogView, int argNum) {
-            super(inspection, WordValueLabel.ValueMode.WORD, null);
-            this.vmLogView = vmLogView;
+            super(vmLogView);
             this.argNum = argNum;
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            // null for an argument means absent
             if (value == null) {
-                // non-existent argument
-                setText("");
-                return this;
+                return emptyStringRenderer;
             }
-            int header = vmLogView.tableModel.getRecord(row).header;
-            if (!vmLogView.tableModel.wellFormedHeader(header)) {
-                return gui().getUnavailableDataTableCellRenderer();
-            }
+            Component renderer = super.getRenderer(value, row, column);
+            if (renderer == null) {
+                int header = vmLogView.tableModel.getRecord(row).getHeader();
+                if (!vmLogView.tableModel.wellFormedHeader(header)) {
+                    return vmLogView.gui().getUnavailableDataTableCellRenderer();
+                }
 
-            long argValue = ((Boxed) value).value();
-            VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.loggers.get(VMLog.Record.getLoggerId(header)).name);
-            setText(vmLogArgRenderer.getText((TeleVM) vm(), header, argNum, argValue));
-            return this;
+                long argValue = ((Boxed) value).value();
+                VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.getLogger(VMLog.Record.getLoggerId(header)).name, vmLogView);
+                renderer = vmLogArgRenderer.getRenderer(header, argNum, argValue);
+                vmLogView.tableModel.setRenderer(row, column, renderer);
+            }
+            return renderer;
         }
-
     }
 
 }

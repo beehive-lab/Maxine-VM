@@ -22,39 +22,42 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.lang.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.type.*;
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.VMLog.Record;
-
 import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
 
 
 public class JNIVMLogArgRenderer extends VMLogArgRenderer {
 
+    public JNIVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
+    }
+
     @Override
-    String getText(TeleVM vm, int header, int argNum, long argValue) {
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        String text = null;
         if (argNum == 1) {
             Word mode = Address.fromLong(argValue);
             if (mode.equals(UPCALL_ENTRY)) {
-                return "UPCALL_ENTRY";
+                text = "UPCALL_ENTRY";
             } else if (mode.equals(UPCALL_EXIT)) {
-                return "UPCALL_EXIT";
+                text = "UPCALL_EXIT";
             } else if (mode.equals(DOWNCALL_ENTRY)) {
-                return "DOWNCALL_ENTRY";
+                text = "DOWNCALL_ENTRY";
             } else if (mode.equals(DOWNCALL_EXIT)) {
-                return "DOWNCALL_EXIT";
+                text = "DOWNCALL_EXIT";
             } else if (mode.equals(INVOKE_ENTRY)) {
-                return "INVOKE_ENTRY";
+                text = "INVOKE_ENTRY";
             } else if (mode.equals(LINK_ENTRY)) {
-                return "DYNAMIC_LINK";
+                text = "DYNAMIC_LINK";
             } else if (mode.equals(REGISTER_ENTRY)) {
-                return "REGISTER NATIVE";
+                text = "REGISTER NATIVE";
             } else {
-                return "UNKNOWN MODE: " + argValue;
+                text = "UNKNOWN MODE: " + argValue;
             }
         } else if (argNum == 2) {
             int op = Record.getOperation(header);
@@ -62,18 +65,14 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
                 op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
                 op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
                 op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
-                final MethodID methodID = MethodID.fromWord(Address.fromLong(argValue));
-                MethodActor methodActor = VmClassAccess.usingTeleClassIDs(new Function<MethodActor>() {
-                    @Override
-                    public MethodActor call() throws Exception {
-                        return MethodID.toMethodActor(methodID);
-                    }
-                });
-                return methodActor.format("%H.%n(%p)");
+                return getReferenceValueLabel(getTeleClassMethodActor(argValue).getReference());
             }
         }
-        // default
-        return VMLogArgRendererFactory.defaultVMLogArgRenderer.getText(vm, header, argNum, argValue);
+        if (text != null) {
+            return new PlainLabel(vmLogView.inspection(), text);
+        } else {
+            return super.getRenderer(header, argNum, argValue);
+        }
     }
 
 }

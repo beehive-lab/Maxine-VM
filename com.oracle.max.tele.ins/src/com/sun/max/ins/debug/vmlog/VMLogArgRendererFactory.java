@@ -22,10 +22,12 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.awt.*;
+import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 
 /**
  * Factory for custom renderers for {@link VMLog.Logger} arguments.
@@ -38,20 +40,28 @@ public abstract class VMLogArgRendererFactory {
 
     private static Map<String, VMLogArgRenderer> renderers = new HashMap<String, VMLogArgRenderer>();
 
-    static DefaultVMLogArgRenderer defaultVMLogArgRenderer = new DefaultVMLogArgRenderer();
+    static DefaultVMLogArgRenderer defaultVMLogArgRenderer;
 
     static class DefaultVMLogArgRenderer extends VMLogArgRenderer {
+
+        public DefaultVMLogArgRenderer(VMLogView vmLogView) {
+            super(vmLogView);
+        }
+
         @Override
-        String getText(TeleVM vm, int op, int argNum, long argValue) {
-            return Long.toHexString(argValue);
+        protected Component getRenderer(int op, int argNum, long argValue) {
+            return new PlainLabel(vmLogView.inspection(), Long.toHexString(argValue));
         }
     }
 
-    static VMLogArgRenderer getArgRenderer(String loggerName) {
+    static VMLogArgRenderer getArgRenderer(String loggerName, VMLogView vmLogView) {
+        setDefaultVMLogArgRenderer(vmLogView);
         VMLogArgRenderer result = renderers.get(loggerName);
         if (result == null) {
             try {
-                result = (VMLogArgRenderer) Class.forName(VMLogArgRendererFactory.class.getPackage().getName() + "." + loggerName + "VMLogArgRenderer").newInstance();
+                Class<?> klass = Class.forName(VMLogArgRendererFactory.class.getPackage().getName() + "." + loggerName + "VMLogArgRenderer");
+                Constructor<?> cons = klass.getDeclaredConstructor(VMLogView.class);
+                result = (VMLogArgRenderer) cons.newInstance(vmLogView);
             } catch (Exception ex) {
                 Trace.line(1, "no custom VMLog argument renderer found for " + loggerName);
                 result =  defaultVMLogArgRenderer;
@@ -59,5 +69,11 @@ public abstract class VMLogArgRendererFactory {
             renderers.put(loggerName, result);
         }
         return result;
+    }
+
+    static void setDefaultVMLogArgRenderer(VMLogView vmLogView) {
+        if (defaultVMLogArgRenderer ==  null) {
+            defaultVMLogArgRenderer = new DefaultVMLogArgRenderer(vmLogView);
+        }
     }
 }

@@ -67,7 +67,7 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
                 threadVMLogs.put(vmLog, threadLogRecordCache);
             }
 
-            int threadLastId = threadLogRecordCache.size() == 0 ? -1 : threadLogRecordCache.get(threadLogRecordCache.size() - 1).id;
+            int threadLastId = threadLogRecordCache.size() == 0 ? -1 : threadLogRecordCache.get(threadLogRecordCache.size() - 1).getId();
 
             Pointer logBuffer = vmLog.start().asPointer();
             int size = vmLog.size();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.*;
 import com.sun.max.vm.thread.*;
@@ -71,20 +72,41 @@ public class JVMTICode {
     }
 
     /**
-     * A new breakpoint is being set in code that is already compiled.
+     * A new breakpoint is being set.
      * @param classMethodActor
      */
     static void deOptForNewBreakpoint(ClassMethodActor classMethodActor) {
-        // Potentially need to deopt the code in all threads, but note that it
-        // may not be active on any thread stack, in which case we just need to recompile
-        // and patch call sites. If it is not active, Deoptimization.go does
-        // invalidation but does not recompile the method.
-        long codeEventSettings = JVMTIEvent.codeEventSettings(null, null);
-        checkDeOptForMethod(classMethodActor, codeEventSettings);
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        if (!targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
-            // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
-            vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
+        if (targetMethod != null) {
+            // It was compiled already, need to recompile
+            // Potentially need to deopt the code in all threads, but note that it
+            // may not be active on any thread stack, in which case we just need to recompile
+            // and patch call sites. If it is not active, Deoptimization.go does
+            // invalidation but does not recompile the method.
+            long codeEventSettings = JVMTIEvent.codeEventSettings(null, null);
+            checkDeOptForMethod(classMethodActor, codeEventSettings);
+            // recheck
+            targetMethod = classMethodActor.currentTargetMethod();
+            if (!targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
+                // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
+                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
+            }
+        } else {
+            // There are three possibilities in this case
+            // 1. It was inlined everywhere so never compiled in isolation.
+            // 2. It was inlined somewhere but also compiled in isolation
+            // 3. It has never been compiled or inlined.
+            // Have to check the inline dependencies to distinguish these cases.
+            ArrayList<TargetMethod> inliners = DependenciesManager.getInliners(classMethodActor);
+            if (inliners.size() == 0) {
+                // Case 3 requires nothing to be done as the breakpoint will be
+                // added when the method is compiled.
+                return;
+            } else {
+                // all the inliners need to be deopted and the inlinee needs to be (re)compiled
+                new Deoptimization(inliners).go();
+                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
+            }
         }
     }
 
