@@ -101,8 +101,8 @@ public final class Dependencies {
      *     {
      *         s2 type;            // identifier of the context class
      *         s2 flags            // bit mask specifying which dependencies are present
-     *         concrete_methods cmDeps; // present iff (flags & DEP_CONCRETE_METHODS) != 0
-     *         included_methods imDeps; // present iff (flags & DEP_INLINED_METHODS) != 0
+     *         concrete_methods cmDeps; // present iff (flags & CONCRETE_METHOD_MASK) != 0
+     *         inlined_methods imDeps;  // present iff (flags & INLINED_METHOD_MASK) != 0
      *     }[] packed;
      *
      *     concrete_methods {
@@ -116,7 +116,7 @@ public final class Dependencies {
      *                           // the context class is always the holder of an inlining method, and the ClassMethodActor
      *                           // of the TargetMethod always denotes the inlining method, so it does not need to be recorded
      *                           // in the dependency data. N.B. This means that the inlining method is lost
-     *                           // until the TargetMethod is set by DependendciesManager.registerValidated.
+     *                           // until the TargetMethod is {@link DependenciesManager#registerValidatedTarget(Dependencies, TargetMethod) set}
      *     }
      *
      *     // identifies a concrete method in the same class as 'type'
@@ -143,13 +143,14 @@ public final class Dependencies {
      *     }
      * </pre>
      */
+    volatile short[] packed;
 
     /**
-     * The kinds of dependency supported to date.
+     * The kinds of dependency supported.
      */
     private static enum DependencyKind {
         CONCRETE_SUBTYPE,
-        CONCRETE_METHOD{
+        CONCRETE_METHOD {
             @Override
             int skip(short[] packed, int index) {
                 return skipArray(packed, index);
@@ -195,8 +196,6 @@ public final class Dependencies {
         }
 
     }
-
-    volatile short[] packed;
 
     @HOSTED_ONLY
     private Dependencies() {
@@ -331,13 +330,9 @@ public final class Dependencies {
                 for (DependencyKind depKind : DependencyKind.VALUES) {
                     ClassDeps.Records records = classDeps.records[depKind.ordinal()];
                     if (records != null && records.count > 0) {
-                        if (i >= packed.length) {
-                            crash(i, records, packed);
-                        }
+                        assert i < packed.length;
                         packed[i++] = records.count;
-                        if (i + records.count > packed.length) {
-                            crash(i, records, packed);
-                        }
+                        assert i + records.count <= packed.length;
                         System.arraycopy(records.buf, 0, packed, i, records.count);
                         i += records.count;
                     }
@@ -351,11 +346,6 @@ public final class Dependencies {
         } finally {
             classHierarchyLock.readLock().unlock();
         }
-    }
-
-    @NEVER_INLINE
-    private static void crash(int i, ClassDeps.Records records, short[] packed) {
-
     }
 
     private static short getMIndex(MethodActor methodActor) {

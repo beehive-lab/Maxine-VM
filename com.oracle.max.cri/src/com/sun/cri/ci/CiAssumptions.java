@@ -47,7 +47,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
             this.context = context;
         }
 
-        protected final int prime = 31;
+        protected static final int prime = 31;
 
         @Override
         public int hashCode() {
