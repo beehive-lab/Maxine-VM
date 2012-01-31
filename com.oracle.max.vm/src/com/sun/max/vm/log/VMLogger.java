@@ -128,7 +128,7 @@ public class VMLogger {
         loggerId = nextLoggerId++;
         logOp = new BitSet(numOps);
         String logName = "Log" + name;
-        String description = optionDescription ==  null ? name : optionDescription;
+        String description = optionDescription ==  null ? name : " " + optionDescription;
         logOption = new VMBooleanXXOption("-XX:-" + logName, "Log" + description);
         traceOption = new VMBooleanXXOption("-XX:-" + "Trace" + name, "Trace" + description);
         logIncludeOption = new VMStringOption("-XX:" + logName + "Include=", false, null, "list of " + name + " operations to include");
