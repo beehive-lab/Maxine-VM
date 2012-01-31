@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,7 +241,7 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
      */
     public boolean doNewTargetMethods(TargetMethod.Closure c) {
         TargetMethod[] targetMethods = this.targetMethods;
-        assert length < targetMethods.length;
+        assert length <= targetMethods.length;
         for (int i = 0; i < length; i++) {
             TargetMethod targetMethod = targetMethods[i];
             if (targetMethod != null && isInToSpace(targetMethod.codeStart().toAddress()) && !c.doTargetMethod(targetMethod)) {
@@ -256,7 +256,7 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
      */
     public boolean doOldTargetMethods(TargetMethod.Closure c) {
         TargetMethod[] tms = this.fromTargetMethods;
-        assert fromLength < tms.length;
+        assert fromLength <= tms.length;
         for (int i = 0; i < fromLength; i++) {
             TargetMethod targetMethod = tms[i];
             if (targetMethod != null && isInFromSpace(targetMethod.codeStart().toAddress()) && !c.doTargetMethod(targetMethod)) {

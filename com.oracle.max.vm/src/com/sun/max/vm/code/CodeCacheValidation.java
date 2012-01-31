@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -129,12 +130,12 @@ public final class CodeCacheValidation extends VmOperation {
         public boolean doTargetMethod(TargetMethod targetMethod) {
             assert targetMethod.start().greaterThan(lastAddress) : "method order violation: " + targetMethod.start().to0xHexString() + " must be greater than " + lastAddress.to0xHexString();
             lastAddress = targetMethod.start();
-            final Address tmStart = targetMethod.start();
+            final Address tmDataStart = DebugHeap.adjustForDebugTag(targetMethod.start().asPointer());
             final Address tmRefLits = Reference.fromJava(targetMethod.referenceLiterals()).toOrigin().asAddress();
-            assert tmStart.equals(tmRefLits) : "reference literals not at method start for " + targetMethod + " should: " + tmStart.to0xHexString() + " is: " + tmRefLits.to0xHexString();
+            assert tmDataStart.equals(tmRefLits) : "reference literals not at method start for " + targetMethod + " should: " + tmDataStart.to0xHexString() + " is: " + tmRefLits.to0xHexString();
             CodePointer tmCodeStart = targetMethod.codeStart();
             final Offset tmCodeSize = Offset.fromLong(targetMethod.codeLength());
-            final Address tmUpperBound = tmStart.plus(targetMethod.size()).minus(1);
+            final Address tmUpperBound = tmDataStart.plus(targetMethod.size()).minus(1);
             CodePointer tmCodeEnd = tmCodeStart.plus(tmCodeSize).minus(1);
             assert tmCodeEnd.toAddress().lessEqual(tmUpperBound)
                 : "code exceeds upper bound for " + targetMethod + " code start: " + tmCodeStart.to0xHexString() + " size: " + tmCodeSize.to0xHexString() +
