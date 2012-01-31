@@ -244,7 +244,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
                 // before a card boundary.
                 // I 'm leaving this as is now to see whether we ever run into this case, but this
                 // should really be cell.plus(MIN_OBJECT_SIZE).greaterThan(start);
-                FatalError.check(cell.greaterThan(start), "visited cell must overlap visited card.");
+                FatalError.check(cell.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE).greaterThan(start), "visited cell must overlap visited card.");
             }
         } while (cell.lessThan(end));
     }
@@ -326,6 +326,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         final Address end = start.plus(size);
         // Note: this doesn't invalid subsequent entries of the FOT table.
         cfoTable.set(start, end);
+        // Clean cards that are completely overlapped by the free space only.
         cardTable.setCardsInRange(start, end, CardState.CLEAN_CARD);
     }
 }

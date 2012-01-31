@@ -196,6 +196,41 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         }
     }
 
+    boolean isFirstCellOfCard(Address cell) {
+        int card = tableEntryIndex(cell);
+        if (alignDownToCard(cell) == cell) {
+            return get(card) == 0;
+        }
+        byte offsetToCell = (byte) -alignUpToCard(cell).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        return get(card + 1) == offsetToCell;
+    }
+
+    /**
+     * Update the FOT to take into account the split of a cell in two. i.e., a cell [a,b] is split into two cells
+     * [a, c] and [c,b].
+     *
+     * @param leftCell start of the cell being split
+     * @param rightCell start of the new cell being split off from the first
+     * @param end end of the original cell
+     */
+    void split(Address leftCell, Address rightCell, Address end) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(isFirstCellOfCard(leftCell), "Cell isn't current first cell of card");
+        }
+        int offsetCard = tableEntryIndex(leftCell) + 1;
+        Address nextCardAddress = alignUpToCard(leftCell);
+        if (rightCell.lessThan(nextCardAddress)) {
+            byte offsetToNewCell = (byte) nextCardAddress.minus(rightCell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+            setOffset(offsetCard, offsetToNewCell);
+            // No need to update any subsequent FOT entries, they remain valid.
+        } else if (rightCell.greaterThan(nextCardAddress)) {
+            set(rightCell, end);
+        } else {
+            // Split at card boundary. No need to update any subsequent FOT entries, they remain valid.
+            set(offsetCard, (byte) 0);
+        }
+    }
+
     /**
      * Return the address of the cell that overlaps the first word of the card specified by the card index.
      * @param cardIndex the index of a card
