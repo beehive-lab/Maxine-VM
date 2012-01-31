@@ -268,7 +268,7 @@ public class JniFunctionsGenerator {
      * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
     public static boolean generate(boolean checkOnly, Class source, Class target, Customizer customizer) throws Exception {
-        File base = new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm/src");
+        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm/src");
         File inputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
 

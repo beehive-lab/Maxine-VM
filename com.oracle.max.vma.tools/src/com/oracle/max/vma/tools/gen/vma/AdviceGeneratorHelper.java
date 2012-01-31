@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public class AdviceGeneratorHelper {
     }
 
     public static int updateSource(Class target, String updatedContent, boolean checkOnly) throws IOException {
-        File base = new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm.ext.vma/src");
+        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm.ext.vma/src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (updatedContent == null) {
             updatedContent = bsOut.toString();
