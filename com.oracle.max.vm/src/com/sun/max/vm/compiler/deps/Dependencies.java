@@ -42,10 +42,19 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Assumptions on one or more classes made when compiling a target method.
- * Each class in a set of assumptions is a <i>context</i> class. Every time
- * a new class is {@linkplain ClassRegistry#define(ClassActor) defined},
- * the context classes that are ancestors of the new class must be checked
+ * Encodes the {@link CiAssumptions assumptions} made when compiling a target method.
+ * The assumptions, which initially are specified using {@link Actor} subtypes,
+ * are encoded in an efficient, packed, format using {@link MemberID member ids}.
+ * Once the assumptions are validated initially, they are associated with
+ * the {@link TargetMethod} that resulted from the compilation.
+ * <p>
+ * An assumption always involves a {@link ClassActor class}, which is referred to
+ * as the <i>context</i> class. All the {@link Dependencies dependencies} with
+ * the same context class are kept together in {@link ContextDependents}.
+ * <p>
+ * Changes in the VM may necessitate validation that the {@link Dependencies dependencies}
+ * are still valid. E.g., every time a new class is {@linkplain ClassRegistry#define(ClassActor) defined},
+ * the classes that are ancestors of the new class must be checked
  * to see if any of their dependent assumptions are invalidated as a result
  * of adding the new class to the hierarchy.
  */
@@ -104,7 +113,10 @@ public final class Dependencies {
      *     inlined_methods {
      *         s2 length;        // length of 'deps'
      *         s2 deps[length];  // array of local_inlined_method_dep and non_local_inlined_method_dep structs (defined below)
-     *                           // inlining methods are always defined in context class
+     *                           // the context class is always the holder of an inlining method, and the ClassMethodActor
+     *                           // of the TargetMethod always denotes the inlining method, so it does not need to be recorded
+     *                           // in the dependency data. N.B. This means that the inlining method is lost
+     *                           // until the TargetMethod is set by DependendciesManager.registerValidated.
      *     }
      *
      *     // identifies a concrete method in the same class as 'type'
@@ -121,13 +133,11 @@ public final class Dependencies {
      *
      *     // identifies an inlined method in same class as inliner
      *     local_inlined_method_dep {
-     *         s2 mindex;        // positive; mindex  is the member index of the inlining method
      *         s2 inlinee_mindex // positive; inlinee_mindex is the member index of the inlinee method in same class
      *     }
      *
      *     // identifies an inlined method in different class to inliner
      *     non_local_inlined_method_dep {
-     *         s2 mindex;        // positive; mindex  is the member index of the inlining method
      *         s2 inlinee_mindex // negative; (-mindex - 1) is the member index of the inlinee method in inlineHolder
      *         s2 inlineHolder;  // identifier of the class in which the inlinee method is defined
      *     }
@@ -285,10 +295,7 @@ public final class Dependencies {
                     }
                     ClassDeps classDeps = get(packedDeps, contextClassActor);
                     classDeps.flags |= DependencyKind.INLINED_METHOD_MASK;
-                    MethodActor method = (MethodActor) inlineMethod.method;
                     short inlineeMIndex = getMIndex(inlinee);
-                    short mIndex = getMIndex(method);
-                    classDeps.add(DependencyKind.INLINED_METHOD, mIndex);
                     if (inlinee.holder() == contextClassActor) {
                         // inlinee in same class, use shorter form
                         classDeps.add(DependencyKind.INLINED_METHOD, inlineeMIndex);
@@ -529,7 +536,7 @@ public final class Dependencies {
                                         }
                                     } else {
                                         // INLINED_METHOD
-                                        int inlineeMIndex = packed[i++];
+                                        int inlineeMIndex = mindex;
                                         ClassActor inlineeHolder;
                                         if (inlineeMIndex >= 0) {
                                             inlineeHolder = contextClassActor;
@@ -538,7 +545,7 @@ public final class Dependencies {
                                             int inlineeHolderID = packed[i++];
                                             inlineeHolder = ClassID.toClassActor(inlineeHolderID);
                                         }
-                                        ClassMethodActor inliningMethod = (ClassMethodActor) MethodID.toMethodActor(MethodID.fromWord(MemberID.create(contextClassID, mindex)));
+                                        ClassMethodActor inliningMethod = targetMethod.classMethodActor;
                                         ClassMethodActor inlineeMethod = (ClassMethodActor) MethodID.toMethodActor(MethodID.fromWord(MemberID.create(inlineeHolder.id, inlineeMIndex)));
                                         if (!dc.doInlinedMethod(targetMethod, inliningMethod, inlineeMethod, contextClassActor)) {
                                             return;
@@ -619,7 +626,7 @@ public final class Dependencies {
                 }
                 @Override
                 public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
-                    sb.append(" INL[").append(method).append(",").append(inlinee).append(']');
+                    sb.append(" INL[").append(inlinee).append(']');
                     return true;
                 }
             });

@@ -355,6 +355,15 @@ public final class DependenciesManager {
         return Dependencies.validate(assumptions);
     }
 
+    /**
+     * Returns all the {@link TargetMethod} instances that inlined {@code inlinee}.
+     * @param inlinee
+     * @return
+     */
+    public static ArrayList<TargetMethod> getInliners(ClassMethodActor inlinee) {
+        return contextDependents.getInliners(inlinee);
+    }
+
     private static void dump(ClassActor classActor) {
         Log.print(classActor.id);
         Log.print(", ");

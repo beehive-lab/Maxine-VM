@@ -217,7 +217,6 @@ final class ContextDependents {
                             removed[0]++;
                             if (logger.enabled()) {
                                 deps.logAddRemove(Operation.Remove, type);
-//                                Log.println("DEPS: Removed dependency from " + deps.toString() + " to " + type);
                             }
                         }
                         if (dset.size == 0) {
@@ -242,7 +241,7 @@ final class ContextDependents {
      * @return the invalidated dependencies
      */
     ArrayList<Dependencies> flushInvalidDependencies(ClassActor ancestor, ClassActor concreteType, ArrayList<Dependencies> invalidated) {
-        assert classHierarchyLock.isWriteLockedByCurrentThread() : "must hold the class hierarchy lock in read mode";
+        assert classHierarchyLock.isWriteLockedByCurrentThread() : "must hold the class hierarchy lock in write mode";
         // We hold the classHierarchyLock in write mode.
         // This means there cannot be any concurrent modifications to the dependencies.
         DSet dset = map.get(ancestor);
@@ -271,6 +270,38 @@ final class ContextDependents {
 
         return invalidated;
     }
+
+    /**
+     * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
+     *
+     * @param inlineeToCheck
+     * @return
+     */
+    public ArrayList<TargetMethod> getInliners(final ClassMethodActor inlineeToCheck) {
+        // TODO Worry about a concurrent compilation adding a new class with a method that inlines inlineeToCheck?
+        //      Only solution now is to hold the classHierarchyLock in write mode
+        final ArrayList<TargetMethod> result = new ArrayList<TargetMethod>();
+        for (DSet dset : contextDependents.map.values()) {
+            synchronized (dset) {
+                int i = 0;
+                while (i < dset.size) {
+                    Dependencies deps = dset.getDeps(i);
+                    deps.iterate(new DependencyClosure() {
+                        @Override
+                        public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
+                            if (inlinee == inlineeToCheck) {
+                                result.add(targetMethod);
+                            }
+                            return true;
+                        }
+                    });
+                    i++;
+                }
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Dump statistics.
