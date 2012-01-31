@@ -28,8 +28,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-//import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -122,11 +120,7 @@ public class JVMTIBreakpoints {
             return JVMTI_ERROR_DUPLICATE;
         }
         methodBreakpointsMap.put(classMethodActor, SENTINEL);
-        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        if (targetMethod != null) {
-            // compiled already, need to recompile
-            JVMTICode.deOptForNewBreakpoint(classMethodActor);
-        }
+        JVMTICode.deOptForNewBreakpoint(classMethodActor);
         return JVMTI_ERROR_NONE;
     }
 
