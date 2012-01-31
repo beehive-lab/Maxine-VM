@@ -94,7 +94,7 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
                 return;
             }
         }
-        // Otherwise, the free chunk is either smaller than a
+        // Otherwise, the free chunk is either smaller than a card, or it is smaller than two cards and its header spawn the two cards.
         rset.updateForFreeSpace(deadSpace, numDeadBytes);
     }
 }
