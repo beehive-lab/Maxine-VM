@@ -146,8 +146,12 @@ public abstract class VMLog {
         }
 
         private static int safeGetThreadId() {
-            VmThread vmThread = VmThread.current();
-            return vmThread == null ? 0 : vmThread.id();
+            if (MaxineVM.isHosted()) {
+                return (int) Thread.currentThread().getId();
+            } else {
+                VmThread vmThread = VmThread.current();
+                return vmThread == null ? 0 : vmThread.id();
+            }
         }
 
         public void setFree() {
