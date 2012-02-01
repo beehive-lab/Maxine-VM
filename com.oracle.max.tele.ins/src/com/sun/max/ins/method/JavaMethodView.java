@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -435,7 +435,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
             contentPane.remove(splitPane);
             contentPane.add(keepComponent);
             codeViewers.remove(viewer.codeKind());
-            pack();
+            validate();
         }
     }
 
@@ -544,7 +544,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
                 // final Component newComponent = (Component) newInspectorFrame;
                 if (codeViewers.size() == 0) {
                     getContentPane().add(newViewer);
-                    pack();
+                    validate();
                 } else if (codeViewers.size() == 1) {
                     final CodeViewer oldViewer = firstViewer();
                     // final Component oldComponent = (Component) oldInspector.frame();
@@ -557,7 +557,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
                     splitPane.setOneTouchExpandable(true);
                     splitPane.setResizeWeight(0.5);
                     getContentPane().add(splitPane);
-                    pack();
+                    validate();
                 }
                 codeViewers.put(kind, newViewer);
             }

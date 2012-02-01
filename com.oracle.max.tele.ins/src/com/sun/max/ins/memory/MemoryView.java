@@ -689,7 +689,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         setViewMode(originalViewMode);
         table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
         table.scrollToBeginning();
-        pack();
+        validate();
         regionName = originalRegionName;
         setTitle();
     }

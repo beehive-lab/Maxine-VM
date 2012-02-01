@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -382,7 +382,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame = new InspectorRootPane(this, parent, true);
         setTitle();
         createViewContent();
-        frame.pack();
+        frame.validate();
         gui().addView(this);
         inspection().addInspectionListener(this);
         focus().addListener(this);
@@ -427,7 +427,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         final Dimension size = frame.getSize();
         createViewContent();
         frame.setPreferredSize(size);
-        frame.pack();
+        frame.validate();
     }
 
     public void setContentPane(Container contentPane) {
@@ -474,8 +474,12 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         frame.setStateColor(color);
     }
 
-    public void pack() {
-        frame.pack();
+//    public void pack() {
+//        frame.pack();
+//    }
+
+    public void validate() {
+        frame.validate();
     }
 
     public void flash() {

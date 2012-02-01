@@ -198,7 +198,7 @@ public class VMLogView extends AbstractView<VMLogView> {
         if (filterToolBar == null) {
             filterToolBar = new TableRowFilterToolBar(inspection(), rowMatchListener, table);
             contentPane.add(filterToolBar, BorderLayout.NORTH);
-            pack();
+            validate();
             filterToolBar.getFocus();
         }
     }
@@ -207,7 +207,7 @@ public class VMLogView extends AbstractView<VMLogView> {
         if (filterToolBar != null) {
             contentPane.remove(filterToolBar);
             table.setDisplayedRows(null);
-            pack();
+            validate();
             filterToolBar = null;
             filterMatchingRows = null;
         }
