@@ -29,6 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -46,6 +47,15 @@ import com.sun.max.vm.runtime.*;
  */
 public final class RegionTable {
     public static final HeapRegionInfo nullHeapRegionInfo = new HeapRegionInfo();
+
+    public static int DebuggedRegion = INVALID_REGION_ID;
+    static {
+        VMOptions.addFieldOption("-XX:", "DebuggedRegion", RegionTable.class, "Do specific debug for the specified region only", Phase.PRISTINE);
+    }
+
+    public static boolean inDebuggedRegion(Address address) {
+        return theRegionTable.regionID(address) == DebuggedRegion;
+    }
 
     @INSPECTED
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();

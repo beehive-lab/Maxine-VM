@@ -389,7 +389,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
     @Override
     protected boolean logTLABEvents(Address tlabStart) {
-        return RegionTable.theRegionTable().regionID(tlabStart) == FirstFitMarkSweepSpace.DebuggedRegion;
+        return RegionTable.inDebuggedRegion(tlabStart);
     }
 
     /**
@@ -483,7 +483,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 return markSweepSpace.allocate(size);
             }
         }
-        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepSpace.DebuggedRegion) {
+        if (MaxineVM.isDebug() && RegionTable.inDebuggedRegion(tlabMark)) {
             TLABLog.doOnRetireTLAB(etla);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
