@@ -35,6 +35,8 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.AbstractView.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
@@ -72,7 +74,7 @@ import com.sun.max.vm.thread.*;
  * Variant 3 requires the global view to be reconstituted from the various threads in the target.
  */
 @SuppressWarnings("unused")
-public class VMLogView extends AbstractView<VMLogView> {
+public class VMLogView extends AbstractView<VMLogView> implements TableColumnViewPreferenceListener {
     private static final ViewKind VIEW_KIND = ViewKind.VMLOG;
     private static final String SHORT_NAME = "VM Log";
     private static final String LONG_NAME = "VM Log View";
@@ -110,14 +112,11 @@ public class VMLogView extends AbstractView<VMLogView> {
     private int[] filterMatchingRows = null;
     private static Component emptyStringRenderer;
 
-
-
-
     final Reference vmLogRef;
     private final TeleObject vmLog;
     final TeleInstanceIntFieldAccess nextIdFieldAccess;
     /**
-     * Defines the actual {@link VMLog} subclass in ther target VM.
+     * Defines the actual {@link VMLog} subclass in the target VM.
      * Used to select the correct {@link VMLogElementsTableModel}.
      */
     private final ClassActor vmLogClassActor;
@@ -149,7 +148,7 @@ public class VMLogView extends AbstractView<VMLogView> {
 
         emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());
-//        viewPreferences.addListener(this);
+        viewPreferences.addListener(this);
         showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
         showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
@@ -240,6 +239,20 @@ public class VMLogView extends AbstractView<VMLogView> {
     @Override
     protected InspectorTable getTable() {
         return table;
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<VMLogColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     private static class VMLogElementsTable extends InspectorTable {
