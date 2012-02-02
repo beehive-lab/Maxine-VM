@@ -23,12 +23,29 @@
 package com.sun.max.ins.debug.vmlog;
 
 import com.sun.max.ins.debug.*;
+import com.sun.max.vm.log.*;
 
 
+/**
+ * Defines the columns that can be displayed describing VM log entries.
+ * @see VMLog
+ */
 enum VMLogColumnKind implements ColumnKind {
-    ID("Id", "unique id", true, 5),
+    ID("Id", "unique id", true, 5) {
+
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
     THREAD("Thread", "thread that created the entry", true, -1),
-    OPERATION("Operation", "operation name", true, -1),
+    OPERATION("Operation", "operation name", true, -1) {
+
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
     ARG1("Arg1", "argument 1", true, -1),
     ARG2("Arg2", "argument 2", true, -1),
     ARG3("Arg3", "argument 3", true, -1),
@@ -68,7 +85,7 @@ enum VMLogColumnKind implements ColumnKind {
     }
 
     public boolean canBeMadeInvisible() {
-        return false;
+        return true;
     }
 
     public boolean defaultVisibility() {
