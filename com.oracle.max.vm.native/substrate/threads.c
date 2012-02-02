@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@
 #include <limits.h>
 #include "log.h"
 #include "image.h"
-#include "jni.h"
+#include "vm.h"
 #include "word.h"
 #include "mutex.h"
 #include "trap.h"
@@ -303,7 +303,6 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #endif
     if (tla_current() != 0) {
         // If the thread has been attached, this operation is a no-op
-        extern JNIEnv *currentJniEnv();
         *penv = (void *) currentJniEnv();
 #if log_THREADS
     log_println("thread_attach: END t=%p (already attached)", nativeThread);

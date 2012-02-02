@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,9 +61,6 @@ public final class JDK_java_lang_Throwable {
      */
     @INTRINSIC(UNSAFE_CAST)
     private native Throwable thisThrowable();
-
-    @INTRINSIC(UNSAFE_CAST)
-    static native JDK_java_lang_Throwable asThis(Throwable t);
 
     @ALIAS(declaringClass = Throwable.class)
     StackTraceElement[] stackTrace;
@@ -261,7 +258,7 @@ public final class JDK_java_lang_Throwable {
      * @return the number of stack trace elements
      */
     @SUBSTITUTE
-    private int getStackTraceDepth() {
+    public int getStackTraceDepth() {
         return getOurStackTrace().length;
     }
 
@@ -275,7 +272,7 @@ public final class JDK_java_lang_Throwable {
      * @return the element at the specified index
      */
     @SUBSTITUTE
-    private StackTraceElement getStackTraceElement(int index) {
+    public StackTraceElement getStackTraceElement(int index) {
         final StackTraceElement[] elements = getOurStackTrace();
         if (elements != null && index >= 0 && index < elements.length) {
             return elements[index];

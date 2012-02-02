@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
  * <b>DO NOT EDIT CODE BETWEEN "START GENERATED CODE" AND "END GENERATED CODE" IN THIS FILE.</b>
  * <p>
  * Instead, modify the corresponding source in JmmFunctionsSource.java denoted by the "// Source: ..." comments.
- * Once finished with editing, execute {@link JniFunctionsGenerator} as a Java application to refresh this file.
+ * Once finished with editing, execute 'mx jnigen' to refresh this file.
  *
  * @see NativeInterfaces
  * @see JmmFunctionsSource

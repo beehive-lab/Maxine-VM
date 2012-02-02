@@ -41,6 +41,7 @@
 #include "image.h"
 #include "threads.h"
 #include "os.h"
+#include "vm.h"
 #include "virtualMemory.h"
 
 #include "maxine.h"
@@ -262,21 +263,6 @@ void debugger_initialize() {
 #endif
 
 /**
- * Gets a pointer to the global JNI function table.
- *
- * Defined in Native/substrate/jni.c
- */
-extern JNIEnv jniEnv();
-
-/**
- * Get pointers to the global JMM/JVMTI function tables.
- *
- * Defined in Native/substrate/{jmm.c,jvmti.c}
- */
-void* getJMMInterface(int version);
-void* getJVMTIInterface(int version);
-
-/**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
@@ -286,6 +272,7 @@ typedef jint (*VMRunMethod)(
                 void *openLibrary(char *),
                 void *dlsym(void *, const char *),
                 char *dlerror(void),
+                void* vmInterface,
                 JNIEnv jniEnv,
                 void *jmmInterface,
                 void *jvmtiInterface,
@@ -347,10 +334,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
-                    tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
+                    tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
