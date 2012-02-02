@@ -283,16 +283,22 @@ public class JniFunctionsGenerator {
 
         @Override
         public String customizeTracePrologue(VmEntryFunctionDeclaration decl) {
-            return "        // Log entry";
+            return  JniCustomizer.entryLogging();
         }
 
         @Override
         public String customizeTraceEpilogue(VmEntryFunctionDeclaration decl) {
-            return "        // Log exit";
+            return JniCustomizer.exitLogging();
+        }
+
+        @Override
+        public void customizeOperations(PrintWriter writer) {
+            // no special operations
         }
 
         @Override
         public void close(PrintWriter writer) throws Exception {
+            super.close(writer);
             final File vmHeaderFile = new File(new File(JavaProject.findHgRoot(), "com.oracle.max.vm.native/substrate/vm.h").getAbsolutePath());
             ProgramError.check(vmHeaderFile.exists(), "JMM header file " + vmHeaderFile + " does not exist");
 
