@@ -22,13 +22,16 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
+
 import java.awt.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.VMLog.Record;
-import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
 
 
 public class JNIVMLogArgRenderer extends VMLogArgRenderer {
@@ -67,9 +70,16 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
                 op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
                 return getReferenceValueLabel(getTeleClassMethodActor(argValue).getReference());
             }
+        } else if (argNum == 3) {
+            final Address address = Address.fromLong(argValue);
+            if (vm.codeCache().findCodeCacheRegion(address) == null) {
+                // TODO (mlvdv)  This isn't quite accurate, but we don't have a better interface.
+                return new WordValueLabel(inspection(), ValueMode.CALL_ENTRY_POINT, Address.fromLong(argValue), vmLogView.getTable());
+            }
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
         }
         if (text != null) {
-            return new PlainLabel(vmLogView.inspection(), text);
+            return new PlainLabel(inspection(), text);
         } else {
             return super.getRenderer(header, argNum, argValue);
         }

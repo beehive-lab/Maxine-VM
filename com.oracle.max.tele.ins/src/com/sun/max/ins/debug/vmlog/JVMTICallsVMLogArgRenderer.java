@@ -93,7 +93,7 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                     text = Long.toHexString(argValue);
             }
         }
-        return new PlainLabel(vmLogView.inspection(), text);
+        return new PlainLabel(inspection(), text);
     }
 
 }
