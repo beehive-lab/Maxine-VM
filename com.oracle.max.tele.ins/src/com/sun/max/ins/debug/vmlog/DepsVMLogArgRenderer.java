@@ -85,7 +85,7 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
             }
         }
         if (text != null) {
-            return new PlainLabel(vmLogView.inspection(), text);
+            return new PlainLabel(inspection(), text);
         } else {
             return super.getRenderer(header, argNum, argValue);
         }
@@ -93,7 +93,7 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
 
     private Component tryGetReferenceValueLabel(TeleObject teleObject) {
         if (teleObject == null) {
-            return vmLogView.gui().getUnavailableDataTableCellRenderer();
+            return gui().getUnavailableDataTableCellRenderer();
         } else {
             return getReferenceValueLabel(teleObject.getReference());
         }

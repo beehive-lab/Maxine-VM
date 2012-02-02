@@ -26,6 +26,7 @@ import java.awt.*;
 
 import javax.swing.table.*;
 
+import com.sun.max.ins.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -40,11 +41,14 @@ import com.sun.max.vm.reference.*;
 /**
  * Base class for custom {@link VMlog.Logger} argument renderers.
  */
-public abstract class VMLogArgRenderer {
+public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
     protected VMLogView vmLogView;
+
+    // TODO (mlvdv) extend MaxVM interfaces so that the implementation class is not needed.
     protected TeleVM vm;
 
     public VMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView.inspection());
         this.vmLogView = vmLogView;
         this.vm = (TeleVM) vmLogView.vm();
     }
@@ -102,7 +106,7 @@ public abstract class VMLogArgRenderer {
     }
 
     WordValueLabel getReferenceValueLabel(Reference reference) {
-        return new WordValueLabel(vmLogView.inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
+        return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }
 
     ClassActor getClassActor(final long arg) {
@@ -129,4 +133,5 @@ public abstract class VMLogArgRenderer {
     String classActorName(final long arg) {
         return getClassActor(arg).toString();
     }
+
 }

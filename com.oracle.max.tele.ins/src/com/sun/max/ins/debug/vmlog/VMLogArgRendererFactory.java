@@ -50,7 +50,7 @@ public abstract class VMLogArgRendererFactory {
 
         @Override
         protected Component getRenderer(int op, int argNum, long argValue) {
-            return new PlainLabel(vmLogView.inspection(), Long.toHexString(argValue));
+            return new PlainLabel(inspection(), Long.toHexString(argValue));
         }
     }
 
