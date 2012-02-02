@@ -39,7 +39,17 @@ class CardTable extends  Log2RegionToByteMapTable {
      */
     static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
 
+    static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
+
     static final int NO_CARD_INDEX = -1;
+
+    static Address alignDownToCard(Address coveredAddress) {
+        return coveredAddress.and(CARD_ADDRESS_MASK);
+    }
+
+    static Address alignUpToCard(Address coveredAddress) {
+        return coveredAddress.plus(CARD_SIZE).and(CARD_ADDRESS_MASK);
+    }
 
     static enum CardState {
         CLEAN_CARD(0xff),
@@ -76,7 +86,8 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all cards in the index range to the {@link CardState#CLEAN_CARD} value.
+     * Set all cards in the specified index range to the {@link CardState#CLEAN_CARD} value.
+     * The range extends from index fromIndex, inclusive, to index toIndex, exclusive.
      * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
@@ -85,8 +96,9 @@ class CardTable extends  Log2RegionToByteMapTable {
     }
 
     /**
-     * Set all cards in the index range to the {@link CardState#DIRTY_CARD} value.
-     * @param fromIndex index to the first card of the range (inclusive)
+     * Set all cards in the specified index range to the {@link CardState#DIRTY_CARD} value.
+      * The range extends from index fromIndex, inclusive, to index toIndex, exclusive.
+    * @param fromIndex index to the first card of the range (inclusive)
      * @param toIndex index to the last card of the range (exclusive)
      */
     void dirty(int fromIndex, int toIndex) {
@@ -164,5 +176,24 @@ class CardTable extends  Log2RegionToByteMapTable {
             }
         }
         return cursor.minus(tableAddress).toInt();
+    }
+
+
+ /**
+     * Set all cards completely covered by the specified range to the specified card state.
+     * @param start
+     * @param end
+     * @param cardState
+     */
+    void setCardsInRange(Address start, Address end, CardState cardState) {
+        Address firstCard = alignUpToCard(start.minus(Word.size()));
+        Address lastCard = alignDownToCard(end);
+        if (lastCard.greaterThan(firstCard)) {
+            final byte cardValue = cardState.value;
+            do {
+                unsafeSet(firstCard, cardValue);
+                firstCard = firstCard.plus(CARD_SIZE);
+            } while(lastCard.greaterThan(firstCard));
+        }
     }
 }

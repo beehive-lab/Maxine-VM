@@ -245,7 +245,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         private Size reclaim() {
             startTimer(reclaimTimer);
             objectSpace.beginSweep();
-            heapMarker.sweep(objectSpace);
+            heapMarker.impreciseSweep(objectSpace);
             objectSpace.endSweep();
             stopTimer(reclaimTimer);
             return objectSpace.freeSpaceAfterSweep();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,8 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Space allocator that allocates discontinuous chunks
- * of memory. Used for allocating TLABs made of possibly discontinuous area. TLABs allocation differs in two ways from object allocations.
+ * Space allocator that allocates discontinuous chunks of memory.
+ * Used for allocating TLABs made of possibly discontinuous area. TLABs allocation differs in two ways from object allocations.
  * First, the space returned may not be of the requested size: it may be slightly smaller or larger if it helps
  * avoiding fragmentation. Second, the space returned may not be a single contiguous chunks, but a linked list of
  * of chunks no smaller than a minimum size.
@@ -38,6 +38,19 @@ import com.sun.max.vm.runtime.*;
 public class ChunkListAllocator<T extends ChunkListRefillManager> extends AtomicBumpPointerAllocator<T> {
     ChunkListAllocator(T refillManager) {
         super(refillManager);
+    }
+
+    /**
+     * Initialize the allocator with an initial refill.
+     * @param initialRefillSize
+     * @param sizeLimit
+     */
+    void initialize(Size initialRefillSize, Size sizeLimit) {
+        this.sizeLimit = sizeLimit;
+        super.initialize(Address.zero(), Size.zero());
+        Address chunk = refillManager.allocateChunkListOrRefill(this, initialRefillSize, Pointer.zero(), Size.zero());
+        // A zero chunk means the allocator is refilled -- see allocateChunkListOrRefill for details.
+        FatalError.check(chunk.isZero() && start.isNotZero() && top.equals(start) && end.greaterThan(top), "allocator must be refilled");
     }
 
     /**

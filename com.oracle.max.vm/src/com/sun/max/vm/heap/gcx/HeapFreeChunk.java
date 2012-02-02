@@ -31,6 +31,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -99,19 +100,31 @@ public class HeapFreeChunk {
         chunkAddress.asPointer().setWord(SIZE_INDEX, size);
     }
 
-    public static boolean isValidChunk(Pointer cell, MemoryRegion chunkRegion) {
-        final Address hub = Layout.originToCell(Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin());
-        if (cell.readWord(0).asAddress().equals(hub)) {
-            Pointer nextChunk = getFreeChunkNext(cell).asPointer();
-            if (nextChunk.isZero()) {
-                return true;
-            }
-            if (chunkRegion.contains(nextChunk)) {
-                return nextChunk.readWord(0).asAddress().equals(hub);
-            }
-        }
-        return false;
+    public static boolean isHeapFreeChunkOrigin(Pointer origin) {
+        return Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()));
     }
+    /**
+     * Return true if the specified area is formated as a tail chunk (i.e., chunk with a null next field).
+     * @param start start of the heap area
+     * @param end   end of the heap area
+     * @return
+     */
+    public static boolean isTailFreeChunk(Pointer start, Pointer end) {
+        if (end.lessThan(start.plus(HEAP_FREE_CHUNK_HUB.tupleSize))) {
+            return false;
+        }
+        final Pointer origin = Layout.cellToOrigin(start);
+        // First, do we have a HEAP_FREE_CHUNK_HUB at the location corresponding to a cell's hub:
+        if (!isHeapFreeChunkOrigin(origin)) {
+            return false;
+        }
+        // Next free should be null
+        if (!getFreeChunkNext(start).isZero()) {
+            return false;
+        }
+        return end.equals(start.plus(getFreechunkSize(start)));
+    }
+
 
     void dump() {
         Log.print(fromHeapFreeChunk(this));
