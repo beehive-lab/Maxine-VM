@@ -344,12 +344,13 @@ def inspect(args):
         mx.run(cmd)
 
 def jnigen(args):
-    """(re)generate content in JniFunctions.java from JniFunctionsSource.java
+    """(re)generate Java source for native function interfaces (i.e. JNI, JMM, JVMTI)
 
-    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
-    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+    Run JniFunctionsGenerator.java to update the methods in [Jni|JMM|JVMTI]Functions.java
+    by adding a prologue and epilogue to the @VM_ENTRY_POINT annotated methods in
+    [Jni|JMM|JVMTI]FunctionsSource.java.
 
-    The exit code is non-zero if JniFunctions.java was modified."""
+    The exit code is non-zero if a Java source file was modified."""
 
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
 
@@ -558,6 +559,11 @@ def vm(args):
     
     mx.expand_project_in_args(args)  
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
+    
+    debug_port = mx.java().debug_port
+    if debug_port is not None:
+        maxvmOptions += ['-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(debug_port)]
+    
     mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + args)
             
 _patternHelp="""

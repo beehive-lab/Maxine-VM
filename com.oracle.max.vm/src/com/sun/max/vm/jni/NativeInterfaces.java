@@ -39,7 +39,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.JniFunctionsGenerator.*;
+import com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
+import com.sun.max.vm.jni.JniFunctionsGenerator.JniCustomizer;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 
@@ -49,6 +50,7 @@ import com.sun.max.vm.runtime.*;
 public final class NativeInterfaces {
 
     static {
+        checkGenerateSourcesInSync(VMFunctionsSource.class, VMFunctions.class, new JniFunctionsGenerator.VMCustomizer(true));
         checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
         checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
         checkGenerateSourcesInSync(JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
@@ -115,11 +117,7 @@ public final class NativeInterfaces {
         jniFunctionNames.add("reserved2");
         jniFunctionNames.add("reserved3");
 
-        parseJniFunctions(jniHeaderFile, jniFunctionNames);
-
-        // Add the two Maxine specific JNI functions
-        jniFunctionNames.add("GetNumberOfArguments");
-        jniFunctionNames.add("GetKindsOfArguments");
+        parseInterfaceFunctions(jniHeaderFile, jniFunctionNames);
 
         for (int i = 0; i != jniFunctionActors.length; ++i) {
             final String jniFunctionName = jniFunctionNames.get(i);
@@ -148,7 +146,7 @@ public final class NativeInterfaces {
         jmmFunctionNames.add("reserved1");
         jmmFunctionNames.add("reserved2");
 
-        parseJniFunctions(jmmHeaderFile, jmmFunctionNames);
+        parseInterfaceFunctions(jmmHeaderFile, jmmFunctionNames);
 
         // Insert some other reserved function slots
         jmmFunctionNames.add(jmmFunctionNames.indexOf("GetMemoryUsage"), "reserved4");
@@ -167,6 +165,32 @@ public final class NativeInterfaces {
 
     @HOSTED_ONLY
     private static StaticMethodActor[] checkAgainstJvmtiHeaderFile(StaticMethodActor[] jvmtiFunctionActors) {
+        String jniHeaderFilePath = System.getProperty("max.jni.headerFile");
+        if (jniHeaderFilePath == null) {
+            jniHeaderFilePath = Platform.jniHeaderFilePath();
+        }
+
+        File jvmtiHeaderFile = new File(new File(jniHeaderFilePath).getParentFile(), "jvmti.h");
+        ProgramError.check(jvmtiHeaderFile.isFile(), "JVMTI header file " + jvmtiHeaderFile + " does not exist or is not a file");
+
+        List<String> jvmtiFunctionNames = new ArrayList<String>();
+
+        parseJvmtiFunctions(jvmtiHeaderFile, jvmtiFunctionNames);
+
+        for (int i = 0; i != jvmtiFunctionNames.size(); ++i) {
+            final String jvmtiFunctionName = jvmtiFunctionNames.get(i);
+            final String jvmtiFunctionActorName = jvmtiFunctionActors[i].name.toString();
+            ProgramError.check(jvmtiFunctionName.equals(jvmtiFunctionActorName), "JVMTI function " + jvmtiFunctionName + " at index " + i + " does not match JVMTI function actor " + jvmtiFunctionActorName);
+        }
+
+        if (jvmtiFunctionNames.size() < jvmtiFunctionActors.length) {
+            // This means that an older version of jvmti.h is being used that does not
+            // define functions added in later versions.
+            jvmtiFunctionActors = Arrays.copyOf(jvmtiFunctionActors, jvmtiFunctionNames.size());
+        } else {
+            ProgramError.check(jvmtiFunctionNames.size() == jvmtiFunctionActors.length);
+        }
+
         return jvmtiFunctionActors;
     }
 
@@ -177,10 +201,10 @@ public final class NativeInterfaces {
      *     (JNICALL *<function name>)
      *
      * @param nativeHeaderFile the C header file to parse
-     * @param jniFunctionNames the list to which the matched function names are added
+     * @param functionNames the list to which the matched function names are added
      */
     @HOSTED_ONLY
-    private static void parseJniFunctions(File nativeHeaderFile, List<String> jniFunctionNames) {
+    private static void parseInterfaceFunctions(File nativeHeaderFile, List<String> functionNames) {
         final Pattern pattern = Pattern.compile("\\(JNICALL \\*([^\\)]+)\\)\\s*\\(JNIEnv\\s*\\*");
 
         try {
@@ -188,7 +212,44 @@ public final class NativeInterfaces {
             Matcher matcher = pattern.matcher(content);
             while (matcher.find()) {
                 final String functionName = matcher.group(1);
-                jniFunctionNames.add(functionName);
+                functionNames.add(functionName);
+            }
+        } catch (IOException ioException) {
+            throw ProgramError.unexpected("Error reading native header file " + nativeHeaderFile.getPath(), ioException);
+        }
+    }
+
+    /**
+     * Parses a given file for declarations of functions in a VM native interface.
+     * The declaration of such functions match this pattern:
+     *
+     *     (JNICALL *<function name>)
+     *
+     * @param nativeHeaderFile the C header file to parse
+     * @param jvmtiFunctionNames the list to which the matched function names are added
+     */
+    @HOSTED_ONLY
+    private static void parseJvmtiFunctions(File nativeHeaderFile, List<String> jvmtiFunctionNames) {
+        final Pattern structDeclPattern = Pattern.compile(".*typedef struct jvmtiInterface_1_ \\{(.*)\\} jvmtiInterface_1;.*", Pattern.DOTALL);
+
+        try {
+            String content = new String(Files.toChars(nativeHeaderFile));
+            Matcher m = structDeclPattern.matcher(content);
+            if (m.matches()) {
+                Pattern functionDeclPattern = Pattern.compile("(?:void \\*(reserved\\d+))|(?:\\(JNICALL \\*([^\\)]+)\\)\\s*\\(jvmtiEnv\\s*\\*)", Pattern.DOTALL);
+                String structDecl = m.group(1);
+                m = functionDeclPattern.matcher(structDecl);
+                while (m.find()) {
+                    String functionName = m.group(1);
+                    if (functionName == null) {
+                        functionName = m.group(2);
+                        assert functionName != null;
+                    }
+                    jvmtiFunctionNames.add(functionName);
+                }
+
+            } else {
+                FatalError.unexpected("Could not find JVMTI function table decl");
             }
         } catch (IOException ioException) {
             throw ProgramError.unexpected("Error reading native header file " + nativeHeaderFile.getPath(), ioException);
@@ -207,10 +268,12 @@ public final class NativeInterfaces {
         return result;
     }
 
+    private static final StaticMethodActor[] vmFunctionActors = getNativeInterfaceFunctionActors(VMFunctions.class);
     private static final StaticMethodActor[] jniFunctionActors = checkAgainstJniHeaderFile(getNativeInterfaceFunctionActors(JniFunctions.class));
     private static final StaticMethodActor[] jmmFunctionActors = checkAgainstJmmHeaderFile(getNativeInterfaceFunctionActors(JmmFunctions.class));
     private static final StaticMethodActor[] jvmtiFunctionActors = checkAgainstJvmtiHeaderFile(getNativeInterfaceFunctionActors(JVMTIFunctions.class));
 
+    private static final CriticalMethod[] vmFunctions = toCriticalMethods(vmFunctionActors);
     private static final CriticalMethod[] jniFunctions = toCriticalMethods(jniFunctionActors);
     private static final CriticalMethod[] jmmFunctions = toCriticalMethods(jmmFunctionActors);
     private static final CriticalMethod[] jvmtiFunctions = toCriticalMethods(jvmtiFunctionActors);
@@ -234,13 +297,14 @@ public final class NativeInterfaces {
 
     /**
      * Completes the JNI function table for the JNI functions that are implemented in Java.
-     *
+     * @param vmInterface pointer to the VM function table
      * @param jniEnv pointer to the JNI function table
      * @param jmmInterface pointer to the JMM function table
      * @param jvmtiInterface pointer to the JVMTI function table
      */
-    public static void initialize(Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface) {
+    public static void initialize(Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface) {
         NativeInterfaces.jniEnv = jniEnv;
+        initFunctionTable(vmInterface, vmFunctions, vmFunctionActors);
         initFunctionTable(jniEnv, jniFunctions, jniFunctionActors);
         initFunctionTable(jmmInterface, jmmFunctions, jmmFunctionActors);
         initFunctionTable(jvmtiInterface, jvmtiFunctions, jvmtiFunctionActors);
@@ -308,7 +372,7 @@ public final class NativeInterfaces {
                 String sourceFile = source.getSimpleName() + ".java";
                 FatalError.unexpected(String.format("%n%n" + thisFile +
                     " is out of sync with respect to " + sourceFile + ".%n" +
-                    "Run " + JniFunctionsGenerator.class.getSimpleName() + ".java (via 'max jnigen'), recompile " + thisFile + " (or refresh it in your IDE)" +
+                    "Run 'mx jnigen', recompile " + thisFile + " (or refresh it in your IDE)" +
                     " and restart the bootstrapping process.%n%n"));
             }
         } catch (Exception exception) {

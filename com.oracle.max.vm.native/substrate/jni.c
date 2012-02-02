@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@
 #include "word.h"
 #include "threads.h"
 
-#include "jni.h"
+#include "vm.h"
 
 #ifndef  JNI_VERSION_1_6
 #error The version of jni.h being included must define the JNI_VERSION_1_6 macro
@@ -46,19 +46,9 @@
 static jint CurrentVersion = JNI_VERSION_1_6;
 
 /**
- * Type that extends the standard JNI function table to add GetNumberOfArguments() and GetKindsOfArguments() at the end.
+ * The global JNI function table.
  */
-typedef struct ExtendedJNINativeInterface_ {
-    struct JNINativeInterface_ jniNativeInterface;
-
-    jint (JNICALL *GetNumberOfArguments)(JNIEnv *env, jmethodID methodID);
-    void (JNICALL *GetKindsOfArguments)(JNIEnv *env, jmethodID methodID, char *kinds);
-} *ExtendedJniEnv;
-
-/**
- * The global (extended) JNI function table.
- */
-extern struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface;
+extern struct JNINativeInterface_ jni_NativeInterface;
 
 /**
  * The global JNI Invocation API function table.
@@ -69,7 +59,7 @@ extern struct JavaVM_ main_vm;
  * Gets a pointer to the global JNI function table.
  */
 JNIEnv jniEnv() {
-    return &jni_ExtendedNativeInterface.jniNativeInterface;
+    return &jni_NativeInterface;
 }
 
 /**
@@ -143,16 +133,14 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
  * of arguments is determined by parsing the method's signature.
  */
 #define PREPARE_CALL \
-    ExtendedJniEnv extendedJniEnv; \
     int numberOfVarArgs; \
     jvalue *argumentArray; \
     char *kinds; \
     \
-    extendedJniEnv = (ExtendedJniEnv) *env; \
-    numberOfVarArgs = extendedJniEnv->GetNumberOfArguments(env, methodID); \
+    numberOfVarArgs = getVMInterface()->GetNumberOfArguments(env, methodID); \
     /* Space for array of argument kinds is stack allocated and so needs no corresponding deallocation */ \
     kinds = (char *) alloca(numberOfVarArgs); \
-    extendedJniEnv->GetKindsOfArguments(env, methodID, kinds); \
+    getVMInterface()->GetKindsOfArguments(env, methodID, kinds); \
     /* Space for arguments is stack allocated and so needs no corresponding deallocation */ \
     argumentArray = (jvalue *) alloca(sizeof(jvalue) * numberOfVarArgs); \
     \
@@ -522,8 +510,7 @@ static void jni_reserved() {
 }
 
 // Structure containing all  functions
-struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
-    {
+struct JNINativeInterface_ jni_NativeInterface = {
     (void *) jni_reserved,
     (void *) jni_reserved,
     (void *) jni_reserved,
@@ -800,13 +787,7 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
 
     // New 1_6 features
 
-    /* jni_GetObjectRefType */ NULL,
-    },
-
-    // Maxine specific
-
-    /* jni_GetNumberOfArguments */ NULL,
-    /* jni_GetNumberOfArguments */ NULL
+    /* jni_GetObjectRefType */ NULL
 };
 
 #define JVMTI_VERSION_MASK 0x30000000
@@ -857,7 +838,7 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 }
 
 const struct JNIInvokeInterface_ jni_InvokeInterface = {
-    (void *) &jni_ExtendedNativeInterface,
+    (void *) &jni_NativeInterface,
     NULL,
     NULL,
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jdk;
+package com.sun.max.vm.heap.gcx;
 
-import java.util.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.vm.jni.*;
-
-@METHOD_SUBSTITUTIONS(ResourceBundle.class)
-final class JDK_java_util_ResourceBundle {
-
-    @SUBSTITUTE
-    public static Class[] getClassContext() {
-        return VMFunctions.getClassContext();
-    }
+/**
+ * Interface for getting / retiring allocating region from a region-based space.
+ * Allow to compose heap space with allocators.
+ */
+public interface RegionProvider {
+    /**
+     * Allocator disposed of the region obtained via getAllocatingRegion.
+     * @param regionID
+     */
+    void retireAllocatingRegion(int regionID);
+    /**
+     * Obtain a region with free space from the region provider.
+     * TODO: may need to refine this with argument specify constraint on the requested region, e.g., empty, with minimum number of fragment or free space,
+     * suitable for TLAB allocation, etc..
+     * @return
+     */
+    int getAllocatingRegion();
 }

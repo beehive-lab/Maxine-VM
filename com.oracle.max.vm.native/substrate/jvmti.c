@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <jvmti.h>
 #include <jni.h>
+#include "vm.h"
 #include "mutex.h"
 #include "condition.h"
 
@@ -181,15 +182,7 @@ void setThreadGroupInfo(jvmtiThreadGroupInfo *info, jobject parent, char *name, 
 static void jvmti_reserved() {
 }
 
-typedef struct ExtendedJVMTINativeInterface_ {
-    struct jvmtiInterface_1_ jvmtiNativeInterface;
-
-    void (JNICALL *SetJVMTIEnv)(jvmtiEnv *env);
-} *ExtendedJvmtiEnv;
-
-
-struct /*jvmtiInterface_1_*/ ExtendedJVMTINativeInterface_ jvmti_extended_interface = {
-    {
+struct jvmtiInterface_1_ jvmti_interface = {
     (void *) jvmti_reserved,
     /* jvmti_*SetEventNotificationMode */ NULL,
     (void *) jvmti_reserved,
@@ -347,22 +340,18 @@ struct /*jvmtiInterface_1_*/ ExtendedJVMTINativeInterface_ jvmti_extended_interf
 #ifdef JAVA_7
     /* jvmti_*GetLocalInstance */ NULL,
 #endif
-    },
-
-    // Maxine
-    /* jvmti_SetJVMTIEnv */ NULL
 };
 
 
 typedef struct {
-    const struct /*jvmtiInterface_1_*/ExtendedJVMTINativeInterface_ *functions;
+    const struct jvmtiInterface_1_ *functions;
     jvmtiEventCallbacks *callbacks;
     jvmtiCapabilities *capabilities;
 } JVMTIEnvImplStruct, *JVMTIEnvImpl;
 
 void *getJVMTIInterface(int version) {
     if (version == -1 || version == JVMTI_VERSION) {
-        return (void*) &jvmti_extended_interface.jvmtiNativeInterface;
+        return (void*) &jvmti_interface;
     }
     return NULL;
 }
@@ -370,13 +359,13 @@ void *getJVMTIInterface(int version) {
 void *getJVMTIImpl(JNIEnv *env, int version) {
     JVMTIEnvImplStruct *jvmtienv_impl = malloc(sizeof(JVMTIEnvImplStruct));
     if (jvmtienv_impl == NULL) return NULL;
-    jvmtienv_impl->functions = &jvmti_extended_interface;
+    jvmtienv_impl->functions = &jvmti_interface;
     jvmtienv_impl->callbacks = malloc(sizeof(jvmtiEventCallbacks));
     if (jvmtienv_impl->callbacks == NULL) return NULL;
     jvmtienv_impl->capabilities = malloc(sizeof(jvmtiCapabilities));
     if (jvmtienv_impl->capabilities == NULL) return NULL;
-    ExtendedJvmtiEnv *jvmti = (ExtendedJvmtiEnv*) jvmtienv_impl;
-    (*jvmti)->SetJVMTIEnv((jvmtiEnv*) jvmti);
+    JVMTIEnvImpl jvmti = (JVMTIEnvImpl) jvmtienv_impl;
+    getVMInterface()->SetJVMTIEnv(env, jvmti);
     return (void *)jvmti;
 }
 

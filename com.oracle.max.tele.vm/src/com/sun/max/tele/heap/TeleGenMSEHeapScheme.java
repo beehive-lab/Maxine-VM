@@ -89,4 +89,12 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
         return null;
     }
 
+    @Override
+    public String tagName(int tag) {
+        final Enum [] tagValues = GenMSEHeapScheme.GenMSEHeapRegionTag.values();
+        if (tag >= 0 && tag < tagValues.length) {
+            return tagValues[tag].name();
+        }
+        return "";
+    }
 }

@@ -26,9 +26,12 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.jvmti.*;
 
 /**
  * This class implements the {@linkplain #generate process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}
@@ -50,12 +53,12 @@ public class JniFunctionsGenerator {
      */
     private static final boolean TIME_JNI_FUNCTIONS = false;
 
-    private static final String JNI_FUNCTION_ANNOTATION = "@VM_ENTRY_POINT";
-    static final int BEFORE_FIRST_JNI_FUNCTION = -1;
-    static final int BEFORE_JNI_FUNCTION = 0;
+    private static final String VM_ENTRY_POINT_ANNOTATION = "@" + VM_ENTRY_POINT.class.getSimpleName();
+    static final int BEFORE_FIRST_VM_ENTRY_POINT_FUNCTION = -1;
+    static final int BEFORE_VM_ENTRY_POINT_FUNCTION = 0;
     static final int BEFORE_PROLOGUE = 1;
     static ArrayList<String> logOperations;
-    public static JniFunctionDeclaration currentMethod;
+    public static VmEntryFunctionDeclaration currentMethod;
 
     /**
      * An extension of {@link BufferedReader} that tracks the line number.
@@ -87,24 +90,26 @@ public class JniFunctionsGenerator {
         }
     }
 
-    public static class JniFunctionDeclaration {
-        static Pattern PATTERN = Pattern.compile("    private static (native )?(\\w+) (\\w+)\\(([^)]*)\\).*");
+    public static class VmEntryFunctionDeclaration {
+        static Pattern PATTERN = Pattern.compile("    private static (native )?(\\w+(?:\\[\\])*) (\\w+)\\(([^)]*)\\).*");
 
         String line;
         String returnType;
+        String jniReturnType;
         boolean isNative;
         public String name;
         public String parameters;
+        public String jniParameters;
         public String arguments;
         String sourcePos;
 
-        static JniFunctionDeclaration parse(String line, String sourcePos) {
+        static VmEntryFunctionDeclaration parse(String line, String sourcePos) {
             Matcher m = PATTERN.matcher(line);
             if (!m.matches()) {
                 return null;
             }
 
-            JniFunctionDeclaration decl = new JniFunctionDeclaration();
+            VmEntryFunctionDeclaration decl = new VmEntryFunctionDeclaration();
             decl.line = line;
             decl.isNative = m.group(1) != null;
             decl.returnType = m.group(2);
@@ -112,16 +117,50 @@ public class JniFunctionsGenerator {
             decl.parameters = m.group(4);
 
             String[] parameters = decl.parameters.split(",\\s*");
+            StringBuilder jniParameters = new StringBuilder();
             StringBuilder arguments = new StringBuilder();
             for (int i = 0; i < parameters.length; ++i) {
-                if (arguments.length() != 0) {
-                    arguments.append(", ");
+                String parameter = parameters[i];
+                if (parameter.length() != 0) {
+                    if (arguments.length() != 0) {
+                        arguments.append(", ");
+                        jniParameters.append(", ");
+                    }
+                    String[] typeAndName = parameter.split("\\s+");
+                    assert typeAndName.length == 2 : line;
+                    jniParameters.append(toJniType(typeAndName[0])).append(' ').append(typeAndName[1]);
+                    arguments.append(parameter.substring(parameter.lastIndexOf(' ') + 1));
                 }
-                arguments.append(parameters[i].substring(parameters[i].lastIndexOf(' ') + 1));
             }
             decl.arguments = arguments.toString();
             decl.sourcePos = sourcePos;
+            decl.jniParameters = jniParameters.toString(); decl.jniReturnType = toJniType(decl.returnType);
             return decl;
+        }
+
+        static Map<String, String> jniTypes = Utils.addEntries(new HashMap<String, String>(),
+                        "boolean", "jboolean",
+                        "byte", "jbyte",
+                        "char", "jchar",
+                        "short", "jshort",
+                        "int", "jint",
+                        "long", "jlong",
+                        "float", "jfloat",
+                        "double", "jdouble",
+                        "void", "void",
+                        "MethodID", "jmethodID",
+                        "FieldID", "jfieldID",
+                        "JniHandle", "jobject",
+                        "Pointer", "void*",
+                        "Word", "void*",
+                        "Address", "void*",
+                        "Size", "size_t",
+                        "Offset", "off_t");
+
+        static String toJniType(String type) {
+            String jniType = jniTypes.get(type);
+            assert jniType != null : "Type cannot present in a native interface signature: " + type;
+            return jniType;
         }
 
         public String declareHelper() {
@@ -139,12 +178,12 @@ public class JniFunctionsGenerator {
             return line;
         }
 
-        public void startFunction(JniFunctionDeclaration decl) {
+        public void startFunction(VmEntryFunctionDeclaration decl) {
             currentMethod = decl;
             logOperations.add(decl.name);
         }
 
-        public void close(PrintWriter writer) {
+        public void close(PrintWriter writer) throws Exception {
             writer.println("    public static enum LogOperations {");
             for (int i = 0; i < logOperations.size(); i++) {
                 String methodName = logOperations.get(i);
@@ -178,21 +217,21 @@ public class JniFunctionsGenerator {
             writer.printf("        /* %d */ %s", logOperations.size() + 3, "RegisterNativeMethod");
         }
 
-        public abstract String customizeTracePrologue(JniFunctionDeclaration decl);
+        public abstract String customizeTracePrologue(VmEntryFunctionDeclaration decl);
 
-        public abstract String customizeTraceEpilogue(JniFunctionDeclaration decl);
+        public abstract String customizeTraceEpilogue(VmEntryFunctionDeclaration decl);
 
     }
 
     public static class JniCustomizer extends Customizer {
 
         @Override
-        public String customizeTracePrologue(JniFunctionDeclaration decl) {
+        public String customizeTracePrologue(VmEntryFunctionDeclaration decl) {
             return entryLogging();
         }
 
         @Override
-        public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
+        public String customizeTraceEpilogue(VmEntryFunctionDeclaration decl) {
             return exitLogging();
         }
 
@@ -223,6 +262,54 @@ public class JniFunctionsGenerator {
             sb.append("ordinal(), UPCALL_EXIT);\n");
             sb.append("            }\n");
             return sb.toString();
+        }
+    }
+
+    public static class VMCustomizer extends Customizer {
+
+        private final boolean checkOnly;
+
+        public VMCustomizer(boolean checkOnly) {
+            this.checkOnly = checkOnly;
+        }
+
+        private ArrayList<VmEntryFunctionDeclaration> decls = new ArrayList<JniFunctionsGenerator.VmEntryFunctionDeclaration>();
+
+        @Override
+        public void startFunction(VmEntryFunctionDeclaration decl) {
+            super.startFunction(decl);
+            decls.add(decl);
+        }
+
+        @Override
+        public String customizeTracePrologue(VmEntryFunctionDeclaration decl) {
+            return "        // Log entry";
+        }
+
+        @Override
+        public String customizeTraceEpilogue(VmEntryFunctionDeclaration decl) {
+            return "        // Log exit";
+        }
+
+        @Override
+        public void close(PrintWriter writer) throws Exception {
+            final File vmHeaderFile = new File(new File(JavaProject.findHgRoot(), "com.oracle.max.vm.native/substrate/vm.h").getAbsolutePath());
+            ProgramError.check(vmHeaderFile.exists(), "JMM header file " + vmHeaderFile + " does not exist");
+
+            Writer vmDecls = new StringWriter();
+            PrintWriter out = new PrintWriter(vmDecls);
+            for (VmEntryFunctionDeclaration decl : decls) {
+                assert decl.jniParameters.startsWith("void* env") : "First parameter of a VM function must be 'void* env': " + decl.jniParameters;
+                String parameters = decl.jniParameters.replace("void* env", "JNIEnv *env");
+                out.println("        " + decl.jniReturnType + " (JNICALL *" + decl.name + ") (" + parameters + ");");
+
+            }
+            vmDecls.close();
+
+            if (Files.updateGeneratedContent(vmHeaderFile, ReadableSource.Static.fromString(vmDecls.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly)) {
+                System.out.println("Source for " + vmHeaderFile.getPath() + " was updated");
+                System.exit(1);
+            }
         }
     }
 
@@ -275,7 +362,7 @@ public class JniFunctionsGenerator {
         LineReader lr = new LineReader(inputFile);
         String line = null;
 
-        int state = BEFORE_FIRST_JNI_FUNCTION;
+        int state = BEFORE_FIRST_VM_ENTRY_POINT_FUNCTION;
         Writer writer = new StringWriter();
         PrintWriter out = new PrintWriter(writer);
         logOperations = new ArrayList<String>();
@@ -287,9 +374,9 @@ public class JniFunctionsGenerator {
                 break;
             }
 
-            if (line.trim().equals(JNI_FUNCTION_ANNOTATION)) {
-                lr.check(state == BEFORE_JNI_FUNCTION || state == BEFORE_FIRST_JNI_FUNCTION, "Illegal state (" + state + ") when parsing @JNI_FUNCTION");
-                if (state == BEFORE_FIRST_JNI_FUNCTION) {
+            if (line.trim().equals(VM_ENTRY_POINT_ANNOTATION)) {
+                lr.check(state == BEFORE_VM_ENTRY_POINT_FUNCTION || state == BEFORE_FIRST_VM_ENTRY_POINT_FUNCTION, "Illegal state (" + state + ") when parsing @JNI_FUNCTION");
+                if (state == BEFORE_FIRST_VM_ENTRY_POINT_FUNCTION) {
                     out.println();
                     out.println("    private static final boolean INSTRUMENTED = " + TIME_JNI_FUNCTIONS + ";");
                     out.println();
@@ -301,8 +388,8 @@ public class JniFunctionsGenerator {
 
             if (state == BEFORE_PROLOGUE) {
 
-                JniFunctionDeclaration decl = JniFunctionDeclaration.parse(line, inputFile.getName() + ":" + lr.lineNo);
-                lr.check(decl != null, "JNI function declaration does not match pattern \"" + JniFunctionDeclaration.PATTERN + "\"");
+                VmEntryFunctionDeclaration decl = VmEntryFunctionDeclaration.parse(line, inputFile.getName() + ":" + lr.lineNo);
+                lr.check(decl != null, "JNI function declaration does not match pattern \"" + VmEntryFunctionDeclaration.PATTERN + "\"");
 
                 out.println(line);
                 out.println("        // Source: " + decl.sourcePos);
@@ -332,11 +419,11 @@ public class JniFunctionsGenerator {
                         generateNonVoidFunction(out, decl, body, customizer);
                     }
                 }
-                state = BEFORE_JNI_FUNCTION;
+                state = BEFORE_VM_ENTRY_POINT_FUNCTION;
                 continue;
             }
 
-            if (state == BEFORE_FIRST_JNI_FUNCTION) {
+            if (state == BEFORE_FIRST_VM_ENTRY_POINT_FUNCTION) {
                 continue;
             }
             out.println(line);
@@ -347,7 +434,7 @@ public class JniFunctionsGenerator {
         return Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
 
-    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body, Customizer customizer) {
+    private static void generateNonVoidFunction(PrintWriter out, VmEntryFunctionDeclaration decl, String body, Customizer customizer) {
         final String errReturnValue;
         if (decl.returnType.equals("boolean")) {
             errReturnValue = "false";
@@ -368,11 +455,11 @@ public class JniFunctionsGenerator {
         generateFunction(out, decl, body, "return " + errReturnValue + ";", customizer);
     }
 
-    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body, Customizer customizer) {
+    private static void generateVoidFunction(PrintWriter out, VmEntryFunctionDeclaration decl, String body, Customizer customizer) {
         generateFunction(out, decl, body, null, customizer);
     }
 
-    private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
+    private static void generateFunction(PrintWriter out, VmEntryFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
         out.println("        Pointer anchor = prologue(env);");
@@ -414,6 +501,13 @@ public class JniFunctionsGenerator {
             System.out.println("Source for " + JmmFunctions.class + " was updated");
             updated = true;
         }
+        if (generate(false, VMFunctionsSource.class, VMFunctions.class, new VMCustomizer(false))) {
+            System.out.println("Source for " + VMFunctions.class + " was updated");
+            updated = true;
+        }
+
+        JVMTIFunctionsGenerator.main(args);
+
         if (updated) {
             System.exit(1);
         }

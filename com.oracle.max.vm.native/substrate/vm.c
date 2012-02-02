@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 /**
  * This file implements the parts of HotSpot's "JVM" interface
  * that the native libraries of the JDK require to have something to call back into.
@@ -42,7 +43,7 @@
 #include <poll.h>
 #endif
 
-#include "jni.h"
+#include "vm.h"
 #include "log.h"
 #include "trap.h"
 #include "mutex.h"
@@ -53,11 +54,6 @@
 #if os_SOLARIS
 #include <sys/filio.h>
 #endif
-
-/**
- * Defined in Native/substrate/jni.c
- */
-extern JNIEnv *currentJniEnv();
 
 #if os_DARWIN
 #define lseek64 lseek
@@ -93,38 +89,13 @@ enum OSReturn {
 #define JVM_EEXIST -100
 //#define DEBUG_JVM_X 1
 
-typedef struct {
-    jclass jClass;
-    jmethodID jMethod;
-} JNIMethod;
-
-JNIMethod resolveCriticalStaticMethod(JNIEnv *env, char *className, char *methodName, char *signature) {
-    JNIMethod result;
-    result.jClass = (*env)->FindClass(env, className);
-    if (result.jClass == NULL) {
-        log_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
-    }
-    result.jMethod = (*env)->GetStaticMethodID(env, result.jClass, methodName, signature);
-    if (result.jMethod == NULL) {
-        log_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
-    }
-    return result;
-}
-
-JNIMethod resolveCriticalInstanceMethod(JNIEnv *env, char *className, char *methodName, char *signature) {
-    JNIMethod result;
-    result.jClass = (*env)->FindClass(env, className);
-    if (result.jClass == NULL) {
-        log_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
-    }
-    result.jMethod = (*env)->GetMethodID(env, result.jClass, methodName, signature);
-    if (result.jMethod == NULL) {
-        log_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
-    }
-    return result;
-}
-
 #define JVM_INTERFACE_VERSION 4
+
+struct vmInterface_ vm;
+
+VMInterface *getVMInterface() {
+    return &vm;
+}
 
 jint JVM_GetInterfaceVersion(void) {
     return JVM_INTERFACE_VERSION;
@@ -132,17 +103,14 @@ jint JVM_GetInterfaceVersion(void) {
 
 #define UNIMPLEMENTED_WITH_ENV() { \
     log_println("UNIMPLEMENTED: %s in %s:%d", __func__, __FILE__, __LINE__); \
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "Unimplemented", "()V"); \
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod); \
+    vm.Unimplemented(env); \
 }
 
 #define UNIMPLEMENTED() { \
     log_println("UNIMPLEMENTED: %s in %s:%d", __func__, __FILE__, __LINE__); \
     JNIEnv *env = currentJniEnv(); \
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "Unimplemented", "()V"); \
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod); \
+    vm.Unimplemented(env); \
 }
-
 
 /*************************************************************************
  PART 1: Functions for Native Libraries
@@ -151,28 +119,23 @@ jint JVM_GetInterfaceVersion(void) {
  * java.lang.Object
  */
 jint JVM_IHashCode(JNIEnv *env, jobject obj) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Object", "hashCode", "()I");
-    return (*env)->CallIntMethod(env, obj, result.jMethod);
+    return vm.HashCode(env, obj);
 }
 
 void JVM_MonitorWait(JNIEnv *env, jobject obj, jlong ms) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Object", "wait", "(J)V");
-    (*env)->CallVoidMethod(env, obj, result.jMethod, ms);
+    vm.MonitorWait(env, obj, ms);
 }
 
 void JVM_MonitorNotify(JNIEnv *env, jobject obj) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Object", "notify", "()V");
-    (*env)->CallVoidMethod(env, obj, result.jMethod);
+    vm.MonitorNotify(env, obj);
 }
 
 void JVM_MonitorNotifyAll(JNIEnv *env, jobject obj) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Object", "notifyAll", "()V");
-    (*env)->CallVoidMethod(env, obj, result.jMethod);
+    vm.MonitorNotifyAll(env, obj);
 }
 
 jobject JVM_Clone(JNIEnv *env, jobject obj) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Object", "clone", "()Ljava/lang/Object;");
-    return (*env)->CallObjectMethod(env, obj, result.jMethod);
+    return vm.Clone(env, obj);
 }
 
 
@@ -180,8 +143,7 @@ jobject JVM_Clone(JNIEnv *env, jobject obj) {
  * java.lang.String
  */
 jstring JVM_InternString(JNIEnv *env, jstring str) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/String", "intern", "()Ljava/lang/String;");
-    return (*env)->CallObjectMethod(env, str, result.jMethod);
+    return vm.InternString(env, str);
 }
 
 /*
@@ -197,8 +159,7 @@ jlong JVM_NanoTime(JNIEnv *env, jclass ignored) {
 
 void
 JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos, jobject dst, jint dst_pos, jint length) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, src, src_pos, dst, dst_pos, length);
+    vm.ArrayCopy(env, src, src_pos, dst, dst_pos, length);
 }
 
 jobject JVM_InitProperties(JNIEnv *env, jobject p) {
@@ -219,26 +180,22 @@ void JVM_OnExit(void (*func)(void)) {
  */
 void JVM_Exit(jint code) {
     JNIEnv *env = currentJniEnv();
-     JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "exit", "(I)V");
-     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code);
+    vm.Exit(env, code);
 }
 
 void JVM_Halt(jint code) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(I)V");
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code, JNI_TRUE);
+    vm.Halt(env, code);
 }
 
 void JVM_GC(void) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "gc", "()V");
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod);
+    vm.GC(env);
 }
 
 jlong JVM_MaxObjectInspectionAge(void) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxObjectInspectionAge", "()J");
-    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
+    return vm.MaxObjectInspectionAge(env);
 }
 
 void JVM_TraceInstructions(jboolean on) {
@@ -251,15 +208,13 @@ void JVM_TraceMethodCalls(jboolean on) {
 
 jlong JVM_FreeMemory(void) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "reportFreeSpace", "()J");
-    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
+    return vm.FreeMemory(env);
 }
 
 jlong
 JVM_MaxMemory(void) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxSizeLong", "()J");
-    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
+    return vm.MaxMemory(env);
 }
 
 jlong JVM_TotalMemory(void) {
@@ -356,8 +311,7 @@ JVM_IsNaN(jdouble x) {
  */
 void
 JVM_FillInStackTrace(JNIEnv *env, jobject throwable) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Throwable", "fillInStackTrace", "()V");
-    (*env)->CallVoidMethod(env, throwable, result.jMethod);
+    vm.FillInStackTrace(env, throwable);
 }
 
 void
@@ -367,14 +321,12 @@ JVM_PrintStackTrace(JNIEnv *env, jobject throwable, jobject printable) {
 
 jint
 JVM_GetStackTraceDepth(JNIEnv *env, jobject throwable) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Throwable", "getStackTraceDepth", "()I");
-    return (*env)->CallIntMethod(env, throwable, result.jMethod);
+    return vm.GetStackTraceDepth(env, throwable);
 }
 
 jobject
 JVM_GetStackTraceElement(JNIEnv *env, jobject throwable, jint index) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Throwable", "getStackTraceElement", "(I)Ljava/lang/StackTraceElement;");
-    return (*env)->CallObjectMethod(env, throwable, result.jMethod, index);
+    return vm.GetStackTraceElement(env, throwable, index);
 }
 
 /*
@@ -423,38 +375,32 @@ JVM_DisableCompiler(JNIEnv *env, jclass compCls) {
  */
 void
 JVM_StartThread(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "start", "()V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod);
+    vm.StartThread(env, thread);
 }
 
 void
 JVM_StopThread(JNIEnv *env, jobject thread, jobject exception) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "stop", "(Ljava/lang/Throwable;)V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod, exception);
+    vm.StopThread(env, thread, exception);
 }
 
 jboolean
 JVM_IsThreadAlive(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "isAlive", "()Z");
-    return (*env)->CallBooleanMethod(env, thread, result.jMethod);
+    return vm.IsThreadAlive(env, thread);
 }
 
 void
 JVM_SuspendThread(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "suspend", "()V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod);
+    vm.SuspendThread(env, thread);
 }
 
 void
 JVM_ResumeThread(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "resume", "()V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod);
+    vm.ResumeThread(env, thread);
 }
 
 void
 JVM_SetThreadPriority(JNIEnv *env, jobject thread, jint prio) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "setPriority", "(I)V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod, prio);
+    vm.SetThreadPriority(env, thread, prio);
 }
 
 #if os_DARWIN
@@ -467,44 +413,37 @@ JVM_SetNativeThreadName(JNIEnv *env, jobject thread, jobject name) {
 
 void
 JVM_Yield(JNIEnv *env, jclass threadClass) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "yield", "()V");
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod);
+    vm.Yield(env);
 }
 
 void
 JVM_Sleep(JNIEnv *env, jclass threadClass, jlong millis) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "sleep", "(J)V");
-    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, millis);
+    vm.Sleep(env, millis);
 }
 
 jobject
 JVM_CurrentThread(JNIEnv *env, jclass threadClass) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
+    return vm.CurrentThread(env);
 }
 
 jint
 JVM_CountStackFrames(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "countStackFrames", "()I");
-    return (*env)->CallIntMethod(env, thread, result.jMethod);
+    return vm.CountStackFrames(env, thread);
 }
 
 void
 JVM_Interrupt(JNIEnv *env, jobject thread) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "interrupt", "()V");
-    (*env)->CallVoidMethod(env, thread, result.jMethod);
+    vm.Interrupt(env, thread);
 }
 
 jboolean
 JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "isInterrupted", "()Z");
-    return (*env)->CallBooleanMethod(env, thread, result.jMethod);
+    return vm.IsInterrupted(env, thread);
 }
 
 jboolean
 JVM_HoldsLock(JNIEnv *env, jclass threadClass, jobject obj) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "holdsLock", "(Ljava/lang/Object;)Z");
-    return (*env)->CallStaticBooleanMethod(env, result.jClass, result.jMethod, obj);
+    return vm.HoldsLock(env, obj);
 }
 
 void
@@ -514,8 +453,7 @@ JVM_DumpAllStacks(JNIEnv *env, jclass unused) {
 
 jobjectArray
 JVM_GetAllThreads(JNIEnv *env, jclass dummy) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetAllThreads", "()[Ljava/lang/Thread;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
+    return vm.GetAllThreads(env);
 }
 
 /* getStackTrace() and getAllStackTraces() method */
@@ -543,8 +481,7 @@ JVM_CurrentClassLoader(JNIEnv *env) {
 
 jobjectArray
 JVM_GetClassContext(JNIEnv *env) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetClassContext", "()[Ljava/lang/Class;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
+    return vm.GetClassContext(env);
 }
 
 jint
@@ -564,14 +501,12 @@ JVM_ClassLoaderDepth(JNIEnv *env) {
  */
 jstring
 JVM_GetSystemPackage(JNIEnv *env, jstring name) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetSystemPackage", "(Ljava/lang/String;)Ljava/lang/String;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, name);
+    return vm.GetSystemPackage(env, name);
 }
 
 jobjectArray
 JVM_GetSystemPackages(JNIEnv *env) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetSystemPackages", "()[Ljava/lang/String;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
+    return vm.GetSystemPackages(env);
 }
 
 /*
@@ -593,8 +528,7 @@ JVM_AllocateNewArray(JNIEnv *env, jobject obj, jclass currClass,
 
 jobject
 JVM_LatestUserDefinedLoader(JNIEnv *env) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "LatestUserDefinedLoader", "()Ljava/lang/ClassLoader;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
+    return vm.LatestUserDefinedLoader(env);
 }
 
 /*
@@ -664,8 +598,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim) {
  */
 jclass
 JVM_GetCallerClass(JNIEnv *env, int n) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetCallerClass", "(I)Ljava/lang/Class;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, n);
+    return vm.GetCallerClass(env, n);
 }
 
 /*
@@ -738,8 +671,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
 
 jstring
 JVM_GetClassName(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getName", "()Ljava/lang/String;");
-    return (*env)->CallObjectMethod(env, cls, result.jMethod);
+    return vm.GetClassName(env, cls);
 }
 
 jobjectArray
@@ -750,50 +682,42 @@ JVM_GetClassInterfaces(JNIEnv *env, jclass cls) {
 
 jobject
 JVM_GetClassLoader(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;");
-    return (*env)->CallObjectMethod(env, cls, result.jMethod);
+    return vm.GetClassLoader(env, cls);
 }
 
 jboolean
 JVM_IsInterface(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "isInterface", "()Z");
-    return (*env)->CallBooleanMethod(env, cls, result.jMethod);
+    return vm.IsInterface(env, cls);
 }
 
 jobjectArray
 JVM_GetClassSigners(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getSigners", "()[Ljava/lang/Object;");
-    return (*env)->CallObjectMethod(env, cls, result.jMethod);
+    return vm.GetClassSigners(env, cls);
 }
 
 void
 JVM_SetClassSigners(JNIEnv *env, jclass cls, jobjectArray signers) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "setSigners", "([Ljava/lang/Object;)V");
-    (*env)->CallObjectMethod(env, cls, result.jMethod, signers);
+    vm.SetClassSigners(env, cls, signers);
 }
 
 jobject
 JVM_GetProtectionDomain(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getProtectionDomain", "()Ljava/security/ProtectionDomain;");
-    return (*env)->CallObjectMethod(env, cls, result.jMethod);
+    return vm.GetProtectionDomain(env, cls);
 }
 
 void
 JVM_SetProtectionDomain(JNIEnv *env, jclass cls, jobject protection_domain) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "setProtectionDomain0", "(Ljava/security/ProtectionDomain;)V");
-    (*env)->CallObjectMethod(env, cls, result.jMethod, protection_domain);
+    vm.SetProtectionDomain(env, cls, protection_domain);
 }
 
 jboolean
 JVM_IsArrayClass(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "isArray", "()Z");
-    return (*env)->CallBooleanMethod(env, cls, result.jMethod);
+    return vm.IsArrayClass(env, cls);
 }
 
 jboolean
 JVM_IsPrimitiveClass(JNIEnv *env, jclass cls) {
-    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "isPrimitive", "()Z");
-    return (*env)->CallBooleanMethod(env, cls, result.jMethod);
+    return vm.IsPrimitiveClass(env, cls);
 }
 
 jclass
@@ -2294,8 +2218,7 @@ void *JVM_GetManagement(jint version) {
  */
 jobject
 JVM_InitAgentProperties(JNIEnv *env, jobject agent_props) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "InitAgentProperties", "(Ljava/util/Properties;)Ljava/util/Properties;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, agent_props);
+    return vm.InitAgentProperties(env, agent_props);
 }
 
 /* Generics reflection support.
@@ -2336,8 +2259,7 @@ enum {
  */
 jintArray
 JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetThreadStateValues", "(I)[I");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, javaThreadState);
+    return vm.GetThreadStateValues(env, javaThreadState);
 }
 
 /*
@@ -2350,8 +2272,7 @@ JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
  */
 jobjectArray
 JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetThreadStateNames", "(I[I)[Ljava/lang/String;");
-    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, javaThreadState, values);
+    return vm.GetThreadStateNames(env, javaThreadState,values);
 }
 
 /* =========================================================================

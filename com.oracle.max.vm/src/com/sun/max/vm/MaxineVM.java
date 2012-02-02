@@ -441,7 +441,7 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
+    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
@@ -467,7 +467,7 @@ public final class MaxineVM {
 
         ImmortalHeap.initialize();
 
-        NativeInterfaces.initialize(jniEnv, jmmInterface, jvmtiInterface);
+        NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface, jvmtiInterface);
 
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();

@@ -3533,11 +3533,11 @@ public class JVMTIFunctions  {
     }
 
     @VM_ENTRY_POINT
-    private static int GetlongFormat(Pointer env, Pointer format_ptr) {
+    private static int GetJLocationFormat(Pointer env, Pointer format_ptr) {
         // Source: JVMTIFunctionsSource.java:1005
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(LogOperations.GetlongFormat.ordinal(), env, format_ptr);        }
+            logger.log(LogOperations.GetJLocationFormat.ordinal(), env, format_ptr);        }
 
         try {
             Env jvmtiEnv = JVMTI.getEnv(env);
@@ -4141,21 +4141,25 @@ public class JVMTIFunctions  {
         }
     }
 
-    /**
-     * This function is an extension and appears in the extended JVMTI interface table,
-     * as that is a convenient way to invoke it from native code. It's purpose is
-     * simply to record the value of the C struct that denotes the JVMTI environment.
-     */
     @VM_ENTRY_POINT
-    private static int SetJVMTIEnv(Pointer env) {
-        // Source: JVMTIFunctionsSource.java:1186
+    private static int GetLocalInstance(Pointer env, JniHandle thread, int depth, Pointer value_ptr) {
+        // Source: JVMTIFunctionsSource.java:1181
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(LogOperations.SetJVMTIEnv.ordinal(), env);        }
+            logger.log(LogOperations.GetLocalInstance.ordinal(), env, thread, Address.fromInt(depth), value_ptr);        }
 
         try {
-            JVMTI.setJVMTIEnv(env);
-            return 0;
+            if (!(phase == JVMTI_PHASE_START || phase == JVMTI_PHASE_LIVE)) {
+                return JVMTI_ERROR_WRONG_PHASE;
+            }
+            if (value_ptr.isZero()) {
+                return JVMTI_ERROR_NULL_POINTER;
+            }
+            Env jvmtiEnv = JVMTI.getEnv(env);
+            if (jvmtiEnv == null) {
+                return JVMTI_ERROR_INVALID_ENVIRONMENT;
+            }
+            return JVMTI_ERROR_NOT_AVAILABLE; // TODO
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {
@@ -4163,7 +4167,6 @@ public class JVMTIFunctions  {
             // currrently no return logging
         }
     }
-
     public static enum LogOperations {
         /* 0 */ SetEventNotificationMode,
         /* 1 */ GetAllThreads,
@@ -4278,7 +4281,7 @@ public class JVMTIFunctions  {
         /* 110 */ SetExtensionEventCallback,
         /* 111 */ DisposeEnvironment,
         /* 112 */ GetErrorName,
-        /* 113 */ GetlongFormat,
+        /* 113 */ GetJLocationFormat,
         /* 114 */ GetSystemProperties,
         /* 115 */ GetSystemProperty,
         /* 116 */ SetSystemProperty,
@@ -4303,7 +4306,7 @@ public class JVMTIFunctions  {
         /* 135 */ RetransformClasses,
         /* 136 */ GetOwnedMonitorStackDepthInfo,
         /* 137 */ GetObjectSize,
-        /* 138 */ SetJVMTIEnv;
+        /* 138 */ GetLocalInstance;
 
     }
 // END GENERATED CODE
