@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public abstract class RefillManager extends Refiller {
      * @param requestedSpace initial space requested
      * @param spaceLeft space left in the allocator requesting refill
      *
-     * @return
+     * @return a boolean indicating whether refill should be done
      */
     public abstract boolean shouldRefill(Size requestedSpace, Size spaceLeft);
 }
