@@ -1,0 +1,68 @@
+;
+; Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+;
+; Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+; that is described in this document. In particular, and without limitation, these intellectual property
+; rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+; more additional patents or pending patent applications in the U.S. and in other countries.
+;
+; U.S. Government Rights - Commercial software. Government users are subject to the Sun
+; Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+; supplements.
+;
+; Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+; registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+; are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+; U.S. and other countries.
+;
+; UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+; Company, Ltd.
+;
+
+; @Harness: java
+; @Runs: (0, 0) =  0; (0, 1) = -1; (0, 2) = -1; (0, 3) = -1;
+; @Runs: (1, 0) =  1; (1, 1) =  0; (1, 2) = -1; (1, 3) =  1;
+; @Runs: (2, 0) = -1; (2, 1) = -1; (2, 2) = -1; (2, 3) = -1;
+; @Runs: (3, 0) =  1; (3, 1) = -1; (3, 2) = -1; (3, 3) =  0;
+
+.class public jtt/jasm/BC_dcmpl2
+.super java/lang/Object
+
+.method public static test(II)I
+    .limit stack 4
+    .limit locals 2
+
+    iload 0
+    invokestatic jtt/jasm/BC_dcmpl2/arg(I)D
+    iload 1
+    invokestatic jtt/jasm/BC_dcmpl2/arg(I)D
+    dcmpl
+    ireturn
+
+.end method
+
+.method private static arg(I)D
+    .limit stack 2
+    .limit locals 1
+
+    iload 0
+    iconst_0
+    if_icmpne n0
+    getstatic java/lang/Double/NEGATIVE_INFINITY D
+    dreturn
+n0:
+    iload 0
+    iconst_1
+    if_icmpne n1
+    getstatic java/lang/Double/POSITIVE_INFINITY D
+    dreturn
+n1:
+    iload 0
+    iconst_2
+    if_icmpne n2
+    getstatic java/lang/Double/NaN D
+    dreturn
+n2:
+    dconst_0
+    dreturn
+    .end method
