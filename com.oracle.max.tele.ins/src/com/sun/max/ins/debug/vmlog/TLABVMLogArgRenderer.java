@@ -20,28 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
+import static com.sun.max.vm.heap.HeapSchemeWithTLAB.TLABLogger.Operation;
+import static com.sun.max.vm.heap.HeapSchemeWithTLAB.TLABLogger;
+
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
+import com.sun.max.vm.log.VMLog.Record;
 
 
-public class Package extends BootImagePackage {
-    public Package() {
-        if (isPartOfMaxineVM()) {
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
-        }
+public class TLABVMLogArgRenderer extends VMLogArgRenderer {
+    public TLABVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        Operation op = TLABLogger.Operation.VALUES[Record.getOperation(header)];
+        if (argNum == 1) {
+            return VMLogView.ThreadCellRenderer.getThreadRenderer((int) argValue);
+        }
+        if ((op == Operation.REFILL && argNum == 5) ||
+            (op == Operation.PAD && argNum == 2)) {
+            return new PlainLabel(vmLogView.inspection(), String.valueOf(argValue));
+        }
+        return super.getRenderer(header, argNum, argValue);
     }
 
-    private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
-        VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
-    }
 }

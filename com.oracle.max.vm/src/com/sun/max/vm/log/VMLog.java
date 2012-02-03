@@ -99,15 +99,15 @@ public abstract class VMLog {
      *
      */
     public abstract static class Record {
-        public static final int ARGCOUNT_MASK = 0x7;
-        public static final int LOGGER_ID_SHIFT = 3;
-        public static final int LOGGER_ID_MASK = 0xF;
-        public static final int OPERATION_SHIFT = 7;
-        public static final int OPERATION_MASK = 0x1FF;
-        public static final int THREAD_SHIFT = 16;
-        public static final int THREAD_MASK = 0x7FFF;
+        public static final int ARGCOUNT_MASK = 0xF;
+        public static final int LOGGER_ID_SHIFT = 4;
+        public static final int LOGGER_ID_MASK = 0x1F;
+        public static final int OPERATION_SHIFT = 9;
+        public static final int OPERATION_MASK = 0xFF;
+        public static final int THREAD_SHIFT = 17;
+        public static final int THREAD_MASK = 0x3FFF;
         public static final int FREE = 0x80000000;
-        public static final int MAX_ARGS = 7;
+        public static final int MAX_ARGS = 8;
 
         public static int getOperation(int header) {
             return (header >> Record.OPERATION_SHIFT) & OPERATION_MASK;
@@ -131,10 +131,10 @@ public abstract class VMLog {
 
         /**
          * Encodes the loggerId, the operation and the argument count.
-         * Bits 0-2: argument count (max 7)
-         * Bits 3-6: logger id (max 16)
-         * Bits 7-15: operation id (max 512)
-         * Bits 16-30: threadId (max 32768)
+         * Bits 0-3: argument count (max 15)
+         * Bits 4-8: logger id (max 32)
+         * Bits 9-16: operation id (max 256)
+         * Bits 17-30: threadId (max 16384)
          * Bit 31: FREE (1) for implementations that have free lists
          */
         public abstract void setHeader(int header);
@@ -180,6 +180,14 @@ public abstract class VMLog {
             return argError();
         }
 
+        public int getIntArg(int n) {
+            return getArg(n).asAddress().toInt();
+        }
+
+        public long getLongArg(int n) {
+            return getArg(n).asAddress().toLong();
+        }
+
         public void setArgs(Word arg1) {
             argError();
         }
@@ -199,6 +207,9 @@ public abstract class VMLog {
             argError();
         }
         public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
+            argError();
+        }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
             argError();
         }
     }
@@ -266,10 +277,16 @@ public abstract class VMLog {
             for (int i = 0; i < loggers.length; i++) {
                 VMLogger logger = loggers[i];
                 if (logger != null) {
-                    logger.setDefaultStartupOptions();
+                    logger.setDefaultState();
                 }
             }
         }
+    }
+
+    /**
+     * Called when a new thread is started so any thread-specific log state can be setup.
+     */
+    public void threadStart() {
     }
 
     public static VMLog vmLog() {
@@ -307,7 +324,7 @@ public abstract class VMLog {
     public static void checkLogOptions() {
         for (int i = 0; i < loggers.length; i++) {
             if (loggers[i] != null) {
-                loggers[i].checkLogOptions();
+                loggers[i].checkOptions();
             }
         }
     }
@@ -340,5 +357,21 @@ public abstract class VMLog {
      * @return
      */
     protected abstract Record getRecord(int argCount);
+
+    /**
+     * Controls logging (for all loggers) for the current thread.
+     * Initially logging is enabled.
+     *
+     * @param state {@code true} to enable, {@code false} to disable.
+     * @return state on entry
+     */
+    public abstract boolean setThreadState(boolean state);
+
+    /**
+     *
+     * @return {@code true} if logging is enabled for the current thread.
+     */
+    public abstract boolean threadIsEnabled();
+
 
 }

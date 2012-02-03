@@ -273,7 +273,7 @@ public final class JniFunctions {
      * Logging/Tracing of JNI entry/exit.
      */
     public static class JniFunctionsLogger extends JxxFunctionsLogger {
-        private static LogOperations[] logOperations = LogOperations.values();
+        private static final LogOperations[] logOperations = LogOperations.values();
 
         private JniFunctionsLogger() {
             super("JNI", logOperations.length);

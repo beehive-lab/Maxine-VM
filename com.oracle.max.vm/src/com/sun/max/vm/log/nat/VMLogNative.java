@@ -127,6 +127,17 @@ public abstract class VMLogNative extends VMLog {
             address.setWord(argsOffset, 5, arg6);
             address.setWord(argsOffset, 6, arg7);
         }
+        @Override
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+            address.setWord(argsOffset, 0, arg1);
+            address.setWord(argsOffset, 1, arg2);
+            address.setWord(argsOffset, 2, arg3);
+            address.setWord(argsOffset, 3, arg4);
+            address.setWord(argsOffset, 4, arg5);
+            address.setWord(argsOffset, 5, arg6);
+            address.setWord(argsOffset, 6, arg7);
+            address.setWord(argsOffset, 7, arg8);
+        }
 
         protected void setArgsOffset(int argsOffset) {
             this.argsOffset = argsOffset;
@@ -204,7 +215,11 @@ public abstract class VMLogNative extends VMLog {
 
     @NEVER_INLINE
     private Reference allocateNativeRecord() {
+        // We disable logging for this allocation because we cannot log until
+        // it is set and we could be logging heap allocation
+        boolean oldState = setThreadState(false);
         Reference nativeRecordRef = Reference.fromJava(new NativeRecord(getArgsOffset()));
+        setThreadState(oldState);
         VMLOG_RECORD.store3(nativeRecordRef);
         return nativeRecordRef;
     }
@@ -214,7 +229,6 @@ public abstract class VMLogNative extends VMLog {
         Reference nativeRecordRef = VMLOG_RECORD.loadRef(VmThread.currentTLA());
         if (nativeRecordRef.isZero()) {
             nativeRecordRef = allocateNativeRecord();
-            VMLOG_RECORD.store3(nativeRecordRef);
         }
         NativeRecord record = asNativeRecord(nativeRecordRef.toJava());
         return record;

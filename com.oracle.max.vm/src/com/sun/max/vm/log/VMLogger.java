@@ -74,16 +74,54 @@ import com.sun.max.vm.thread.*;
  * check happens inside the {@link VMLogger} log methods, so the cost of the argument marshalling
  * and method call is always paid when used in the straightforward manner, e.g.:
  *
- * {@code  logger.log("Operation", arg1, arg2);}
+ * {@code  logger.log(op, arg1, arg2);}
  *
  * If performance is an issue, replace the above with a guarded call, vis:
  *
- * {@code if (logger.enabled()) { logger.log("Operation", arg1, arg2);}
+ * {@code if (logger.enabled()) { logger.log(op, arg1, arg2);}}
  *
  * The {@code enabled} method is always inlined.
  *
+ * N.B. The guard can be a more complex condition. However, it is important not
+ * to use disjunctive conditions that could result in a value of {@code true} for
+ * the guard when {@code logger.enabled()} would return false when one of the conditions
+ * returned {@code true}. E.g.,
+ *
+ * {@code if {a || b} { logger.log(op, arg1, arg2);}}
+ *
+ * Conjunctive conditions can be useful. For example, say we wanted to suppress
+ * logging until a counter reaches a certain value:
+ *
+ * {@code if (logger.enabled() && count >= value) { logger.log(op, arg1, arg2);}}
+ * <p>
+ * It is possible to have one logger override the default settings for other loggers.
+ * E.g., say we have loggers A and B, but we want a way to turn both loggers on with
+ * a single overriding option. The way to do this is to create a logger, say ALL, typically with
+ * no operations, that forces A and B into the enabled state if, and only if, it is itself
+ * enabled. This can be achieved by overriding {@link #checkOptions()} for the ALL logger.
+ * See {@link Heap#gcLogger} for an example of this.
+ * <p>
+ * It is also possible for a logger, say C, to inherit the settings of another logger, say ALL,
+ * again by forcing ALL to check its options from within C's {@code checkOptions} and then use ALL's
+ * values to set C's settings. This is appropriate when ALL cannot know about C for abstraction
+ * reasons.
+ * <p>
+ * N.B. The order in which loggers have their options checked by the normal VM startup is unspecified.
+ * Hence, a logger must always force the checking of a dependent logger's options before accessing its state.
+ * <p>
+ * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid nasty circularities,
+ * see {@link VMLog#setThreadState(boolean)}.
+ *
  */
 public class VMLogger {
+    /**
+     * Convenience enum for BEGIN/END intervals.
+     */
+    public enum Interval {
+        BEGIN, END;
+        public static final Interval[] VALUES = values();
+    }
+
     private static int nextLoggerId = 1;
 
     /**
@@ -103,12 +141,13 @@ public class VMLogger {
      */
     private final BitSet logOp;
 
-    private final VMBooleanXXOption logOption;
-    private final VMBooleanXXOption traceOption;
-    private final VMStringOption logIncludeOption;
-    private final VMStringOption logExcludeOption;
+    public final VMBooleanXXOption logOption;
+    public final VMBooleanXXOption traceOption;
+    public final VMStringOption logIncludeOption;
+    public final VMStringOption logExcludeOption;
     private boolean logEnabled;
     private boolean traceEnabled;
+    private boolean optionsChecked;
 
     private VMLog vmLog;
 
@@ -122,7 +161,7 @@ public class VMLogger {
      * @param optionDescription if not {@code null}, string used in option description.
      */
     @HOSTED_ONLY
-    protected VMLogger(String name, int numOps, String optionDescription) {
+    public VMLogger(String name, int numOps, String optionDescription) {
         this.name = name;
         this.numOps = numOps;
         loggerId = nextLoggerId++;
@@ -140,16 +179,35 @@ public class VMLogger {
         VMLog.registerLogger(this);
     }
 
+    /**
+     * If you want to have the external existence of a logger be conditional on some value,
+     * e.g., the image build mode, this constructor can be used in the case where value
+     * is false. It effectively produces a null logger that is invisible.
+     */
+    @HOSTED_ONLY
+    protected VMLogger() {
+        this.name = "NULL";
+        this.numOps = 0;
+        loggerId = 0;
+        logOption = traceOption = null;
+        logIncludeOption = logExcludeOption = null;
+        logOp = null;
+    }
+
     @HOSTED_ONLY
     public void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
         this.vmLog = vmLog;
         VMLogger.hostedVMLog = hostedVMLog;
-        checkLogOptions();
+        checkOptions();
     }
 
-    public String threadName(int id) {
-        VmThread vmThread = VmThreadMap.ACTIVE.getVmThreadForID(id);
-        return vmThread == null ? "DEAD" : vmThread.getName();
+    public static String threadName(int id) {
+        if (MaxineVM.isHosted()) {
+            return "Thread[id=" + id + "]";
+        } else {
+            VmThread vmThread = VmThreadMap.ACTIVE.getVmThreadForID(id);
+            return vmThread == null ? "DEAD" : vmThread.getName();
+        }
     }
 
     /**
@@ -181,6 +239,17 @@ public class VMLogger {
         return traceEnabled;
     }
 
+    public void enable(boolean value) {
+        logEnabled = value;
+    }
+
+    public void enableTrace(boolean value) {
+        if (value && !logEnabled) {
+            logEnabled = true;
+        }
+        traceEnabled = value;
+    }
+
     /**
      * Implements the default trace option {@code -XX:+TraceXXX}.
      * {@link Log#lock()} and {@link Log#unlock(boolean)} are
@@ -202,16 +271,29 @@ public class VMLogger {
         Log.println();
     }
 
-    public void setDefaultStartupOptions() {
+    /**
+     * Called to reset the logger state to default values in case they were enabled during image build.
+     */
+    public void setDefaultState() {
         // At VM startup we log everything; this gets refined once the VM is up in checkLogOptions.
         // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
         logEnabled = true;
+        traceEnabled = false;
+        optionsChecked = false;
         for (int i = 0; i < numOps; i++) {
             logOp.set(i, true);
         }
     }
 
-    protected void checkLogOptions() {
+    /**
+     * Check the command line options that control this logger.
+     * This is done once to allow linked loggers to control each other without
+     * worrying about ordering.
+     */
+    public void checkOptions() {
+        if (optionsChecked) {
+            return;
+        }
         traceEnabled = traceOption.getValue();
         logEnabled = traceEnabled | logOption.getValue();
         if (logEnabled) {
@@ -239,11 +321,12 @@ public class VMLogger {
                 }
             }
         }
+        optionsChecked = true;
     }
 
     private Record logSetup(int op, int argCount) {
         Record r = null;
-        if (logEnabled && logOp.get(op)) {
+        if (logEnabled && logOp.get(op) && vmLog.threadIsEnabled()) {
             r = (MaxineVM.isHosted() ? hostedVMLog : vmLog).getRecord(argCount);
             r.setHeader(op, argCount, loggerId);
         }
@@ -327,6 +410,16 @@ public class VMLogger {
         }
     }
 
+    public void log(int op, Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+        Record r = logSetup(op, 8);
+        if (r != null) {
+            r.setArgs(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        }
+        if (r != null && traceEnabled) {
+            doTrace(r);
+        }
+    }
+
     private void doTrace(Record r) {
         if (MaxineVM.isHosted()) {
             trace(r);
@@ -348,6 +441,16 @@ public class VMLogger {
     @INLINE
     public static Word intArg(int i) {
         return Address.fromInt(i);
+    }
+
+    @INLINE
+    public static Word longArg(long i) {
+        return Address.fromLong(i);
+    }
+
+    @INLINE
+    public static Word threadArg(VmThread vmThread) {
+        return Address.fromInt(vmThread.id());
     }
 
     @INLINE

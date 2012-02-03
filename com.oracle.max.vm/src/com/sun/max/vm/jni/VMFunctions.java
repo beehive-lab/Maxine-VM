@@ -67,7 +67,7 @@ public class VMFunctions {
      * Logging/Tracing of VM entry/exit.
      */
     private static class VMFunctionsLogger extends JniFunctions.JxxFunctionsLogger {
-        private static LogOperations[] logOperations = LogOperations.values();
+        private static final LogOperations[] logOperations = LogOperations.values();
 
         private VMFunctionsLogger() {
             super("VM", logOperations.length);
