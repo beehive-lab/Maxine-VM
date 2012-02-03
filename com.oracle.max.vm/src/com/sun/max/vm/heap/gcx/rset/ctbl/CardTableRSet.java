@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset.ctbl;
 
 import java.util.*;
 
@@ -38,27 +38,67 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.CardTable.CardState;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 /**
- * A pure card-table based remembered set.
+ * Card-table based remembered set.
  */
 public class CardTableRSet implements HeapManagementMemoryRequirement {
-    static boolean TraceCardTableRSet = false;
+
+    /**
+     * Log2 of a card size in bytes.
+     */
+    static final int LOG2_CARD_SIZE = 9;
+
+    /**
+     * Number of bytes per card.
+     */
+    static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
+
+    static final int LOG2_NUM_WORDS_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
+
+    static final int NUM_WORDS_PER_CARD = 1 << LOG2_NUM_WORDS_PER_CARD;
+
+    static final int NO_CARD_INDEX = -1;
+
+    static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
+
+    private static boolean TraceCardTableRSet = false;
+
     static {
-        VMOptions.addFieldOption("-XX:", "TraceCardTableRSet", CardTableRSet.class, "Enables CardTableRSet Debugging Traces", Phase.PRISTINE);
+        if (MaxineVM.isDebug()) {
+            VMOptions.addFieldOption("-XX:", "TraceCardTableRSet", CardTableRSet.class, "Enables CardTableRSet Debugging Traces", Phase.PRISTINE);
+        }
     }
+
+    @INLINE
+    public static boolean traceCardTableRSet() {
+        return MaxineVM.isDebug() && TraceCardTableRSet;
+    }
+
+    public static void setTraceCardTableRSet(boolean flag) {
+        TraceCardTableRSet = flag;
+    }
+
     /**
      * Contiguous regions of virtual memory holding the card table data.
      * Mostly used to feed the inspector.
      */
     final MemoryRegion cardTableMemory;
 
-    final CardTable cardTable;
-    final CardFirstObjectTable cfoTable;
+    /**
+     * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitely by the GC.
+     */
+    public final CardTable cardTable;
+
+    /**
+     * The table recording the first object overlapping with every card.
+     * The table is updated by allocators and free space reclamation.
+     */
+    public final CardFirstObjectTable cfoTable;
 
     /**
      * CiConstant holding the card table's biased address in boot code region and used for all XirSnippets implementing the write barrier.
@@ -169,7 +209,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
     @HOSTED_ONLY
     public void genTuplePostWriteBarrier(CiXirAssembler asm, XirOperand tupleCell) {
         final XirOperand temp = asm.createTemp("temp", WordUtil.archKind());
-        asm.shr(temp, tupleCell, asm.i(CardTable.LOG2_CARD_SIZE));
+        asm.shr(temp, tupleCell, asm.i(CardTableRSet.LOG2_CARD_SIZE));
         // Watch out: this create a reference literal that will not point to an object!
         // The GC will need to carefully skip reference table entries holding the biased base of the card table.
         // final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
@@ -189,7 +229,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         final Scale scale = Scale.fromInt(Word.size());
         final int disp = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt();
         asm.lea(temp, arrayCell, elemIndex, disp, scale);
-        asm.shr(temp, temp, asm.i(CardTable.LOG2_CARD_SIZE));
+        asm.shr(temp, temp, asm.i(CardTableRSet.LOG2_CARD_SIZE));
         // final XirConstant biasedCardTableAddress = asm.createConstant(CiConstant.forObject(dummyCardTable));
         final XirConstant biasedCardTableAddress = biasedCardTableAddressXirConstant(asm);
         asm.pstore(CiKind.Byte, biasedCardTableAddress, temp, asm.i(CardState.DIRTY_CARD.value()), false);
@@ -271,12 +311,12 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
      * @param end
      * @param cellVisitor
      */
-    void cleanAndVisitCards(Address start, Address end, OverlappingCellVisitor cellVisitor) {
+    public void cleanAndVisitCards(Address start, Address end, OverlappingCellVisitor cellVisitor) {
         final int endOfRange = cardTable.tableEntryIndex(end);
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, CardState.DIRTY_CARD);
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, CardState.DIRTY_CARD);
-            if (MaxineVM.isDebug() && TraceCardTableRSet) {
+            if (traceCardTableRSet()) {
                 traceVisitedCard(startCardIndex, endCardIndex, CardState.DIRTY_CARD);
             }
             cardTable.clean(startCardIndex, endCardIndex);
@@ -293,7 +333,7 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         int startCardIndex = cardTable.first(cardTable.tableEntryIndex(start), endOfRange, cardState);
         while (startCardIndex < endOfRange) {
             int endCardIndex = cardTable.firstNot(startCardIndex + 1, endOfRange, cardState);
-            if (MaxineVM.isDebug() && TraceCardTableRSet) {
+            if (traceCardTableRSet()) {
                 traceVisitedCard(startCardIndex, endCardIndex, cardState);
             }
             visitCards(startCardIndex, endCardIndex, cellVisitor);
@@ -328,5 +368,13 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         cfoTable.set(start, end);
         // Clean cards that are completely overlapped by the free space only.
         cardTable.setCardsInRange(start, end, CardState.CLEAN_CARD);
+    }
+
+    public static Address alignUpToCard(Address coveredAddress) {
+        return coveredAddress.plus(CARD_SIZE).and(CARD_ADDRESS_MASK);
+    }
+
+    public static Address alignDownToCard(Address coveredAddress) {
+        return coveredAddress.and(CARD_ADDRESS_MASK);
     }
 }

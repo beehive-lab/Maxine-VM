@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset.ctbl;
 
-import com.sun.max.unsafe.*;
+/**
+ * Two value card-state.
+ */
+public enum CardState {
+    CLEAN_CARD(0xff),
+    DIRTY_CARD(0);
 
+    final byte value;
 
-public class FOTVerifier implements HeapSpaceRangeVisitor {
-    CardFirstObjectTable cfoTable;
-
-    public FOTVerifier(CardTableRSet cardTableRSet) {
-        cfoTable = cardTableRSet.cfoTable;
+    CardState(int value) {
+        this.value = (byte) value;
     }
-    @Override
-    public void visitCells(Address start, Address end) {
-        cfoTable.verify(start, end);
+    public byte value() {
+        return value;
     }
-
 }

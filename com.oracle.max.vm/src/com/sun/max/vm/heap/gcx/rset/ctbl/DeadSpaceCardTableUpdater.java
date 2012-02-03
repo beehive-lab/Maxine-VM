@@ -20,14 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset.ctbl;
 
 import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
+import static com.sun.max.vm.heap.gcx.rset.ctbl.CardTableRSet.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 
 public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
     final CardTableRSet rset;
@@ -67,9 +69,9 @@ public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
         // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C
         // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
         // always set the FOT table for the newly allocated cells. Since this one always
-        if (numDeadBytes.greaterEqual(CardTable.CARD_SIZE)) {
+        if (numDeadBytes.greaterEqual(CARD_SIZE)) {
             final Pointer end = deadSpace.plus(numDeadBytes).asPointer();
-            final Address lastCardStart = CardTable.alignDownToCard(end);
+            final Address lastCardStart = alignDownToCard(end);
             if (lastCardStart.minus(deadSpace).greaterThan(heapFreeChunkHeaderSize())) {
                 // Format the end of the heap free chunk as a dead object.
                 Pointer deadObjectAddress = lastCardStart.asPointer();
