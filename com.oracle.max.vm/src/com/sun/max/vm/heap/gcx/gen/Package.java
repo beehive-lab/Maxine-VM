@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.gen;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
-public class DeadSpaceRSetUpdater {
-    public static DeadSpaceRSetUpdater nullDeadSpaceRSetUpdater() {
-        return new DeadSpaceRSetUpdater();
+
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
     }
-
-    protected DeadSpaceRSetUpdater() {
-    }
-
-    /**
-     * Update the remembered set covering a dead reclaimed area.
-     * @param deadSpace start of the dead area
-     * @param numDeadBytes size of the dead area
-     */
-    public void updateRSet(Address deadSpace, Size numDeadBytes) {
-        // Default. Do nothing.
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage.isSubPackageOf(this);
     }
 }

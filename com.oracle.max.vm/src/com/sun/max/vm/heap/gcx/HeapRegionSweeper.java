@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
