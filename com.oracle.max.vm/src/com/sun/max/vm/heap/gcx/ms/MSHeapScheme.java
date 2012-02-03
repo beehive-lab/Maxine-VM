@@ -352,7 +352,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         Pointer tlab = objectSpace.allocateTLAB(tlabSize);
         Size effectiveSize = setNextTLABChunk(tlab);
 
-        if (Heap.traceAllocation()) {
+        if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
             Log.printCurrentThread(false);
