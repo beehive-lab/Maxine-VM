@@ -20,27 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.gcx.HeapRangeDumper.*;
 
-public class RefineDumpRangeToCard implements DumpRangeRefinement {
-    private CardTableRSet cardTableRSet;
-
-    public RefineDumpRangeToCard(CardTableRSet cardTableRSet) {
-        this.cardTableRSet = cardTableRSet;
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
     }
 
-    public void refineRange(HeapRangeDumper heapDumper, Address unparsable) {
-        int startCardIndex = cardTableRSet.cardTable.tableEntryIndex(unparsable);
-        if (MaxineVM.isDebug() && CardTableRSet.TraceCardTableRSet) {
-            Log.print("Refining heap dumping range to card #");
-            Log.println(startCardIndex);
-        }
-        Address start = cardTableRSet.cfoTable.cellStart(startCardIndex).asPointer();
-        Address end = cardTableRSet.cardTable.rangeStart(startCardIndex).plus(CardTable.CARD_SIZE);
-        heapDumper.setRange(start, end);
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage.isSubPackageOf(this);
     }
 }

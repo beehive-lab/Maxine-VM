@@ -22,13 +22,16 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.unsafe.*;
+
 /**
  * Interface for getting / retiring allocating region from a region-based space.
  * Allow to compose heap space with allocators.
  */
 public interface RegionProvider {
     /**
-     * Allocator disposed of the region obtained via getAllocatingRegion.
+     * Retire a region previously obtained via getAllocatingRegion.
+     *
      * @param regionID
      */
     void retireAllocatingRegion(int regionID);
@@ -36,7 +39,22 @@ public interface RegionProvider {
      * Obtain a region with free space from the region provider.
      * TODO: may need to refine this with argument specify constraint on the requested region, e.g., empty, with minimum number of fragment or free space,
      * suitable for TLAB allocation, etc..
-     * @return
+     * @return an region identifier, or {@link HeapRegionConstants#INVALID_REGION_ID} if free space is exhausted.
      */
     int getAllocatingRegion();
+
+    /**
+     * Obtain a region with at least the specified amount of free space, and at most the specified number of chunks.
+     * @param minFreeBytes
+     * @param maxFreeChunks
+     * @return an region identifier, or {@link HeapRegionConstants#INVALID_REGION_ID} if the request cannot be satisfied.
+     */
+    int getAllocatingRegion(Size minFreeBytes, int maxFreeChunks);
+
+    /**
+     * Minimum size of free chunks in regions being retired. Free space smaller than dead must be turned into dead objects as they will not be reused for allocation by
+     * the region provider. Free chunks available for allocation should be appended to the retiring region's list of free chunks.
+     * @return a size in bytes no larger than a region size.
+     */
+    Size minRetiredFreeChunkSize();
 }

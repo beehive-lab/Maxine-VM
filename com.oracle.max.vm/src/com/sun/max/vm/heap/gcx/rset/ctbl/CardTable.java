@@ -20,9 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset.ctbl;
 
-import static com.sun.max.vm.heap.gcx.CardTable.CardState.*;
+import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 
 import com.sun.max.unsafe.*;
 /**
@@ -30,41 +30,8 @@ import com.sun.max.unsafe.*;
  *
  */
 class CardTable extends  Log2RegionToByteMapTable {
-    /**
-     * Log2 of a card size in bytes.
-     */
-    static final int LOG2_CARD_SIZE = 9;
-    /**
-     * Number of bytes per card.
-     */
-    static final int CARD_SIZE = 1 << LOG2_CARD_SIZE;
-
-    static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
-
-    static final int NO_CARD_INDEX = -1;
-
-    static Address alignDownToCard(Address coveredAddress) {
-        return coveredAddress.and(CARD_ADDRESS_MASK);
-    }
-
-    static Address alignUpToCard(Address coveredAddress) {
-        return coveredAddress.plus(CARD_SIZE).and(CARD_ADDRESS_MASK);
-    }
-
-    static enum CardState {
-        CLEAN_CARD(0xff),
-        DIRTY_CARD(0);
-        byte value;
-        CardState(int value) {
-            this.value = (byte) value;
-        }
-        byte value() {
-            return value;
-        }
-    }
-
     CardTable() {
-        super(LOG2_CARD_SIZE);
+        super(CardTableRSet.LOG2_CARD_SIZE);
     }
 
     @Override
@@ -186,13 +153,13 @@ class CardTable extends  Log2RegionToByteMapTable {
      * @param cardState
      */
     void setCardsInRange(Address start, Address end, CardState cardState) {
-        Address firstCard = alignUpToCard(start.minus(Word.size()));
-        Address lastCard = alignDownToCard(end);
+        Address firstCard = CardTableRSet.alignUpToCard(start.minus(Word.size()));
+        Address lastCard = CardTableRSet.alignDownToCard(end);
         if (lastCard.greaterThan(firstCard)) {
             final byte cardValue = cardState.value;
             do {
                 unsafeSet(firstCard, cardValue);
-                firstCard = firstCard.plus(CARD_SIZE);
+                firstCard = firstCard.plus(CardTableRSet.CARD_SIZE);
             } while(lastCard.greaterThan(firstCard));
         }
     }

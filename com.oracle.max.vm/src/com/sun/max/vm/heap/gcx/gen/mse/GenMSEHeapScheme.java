@@ -37,6 +37,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -384,7 +385,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
         Size effectiveSize = tlabSize.minus(TLAB_HEADROOM);
-        if (Heap.traceAllocation()) {
+        if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
