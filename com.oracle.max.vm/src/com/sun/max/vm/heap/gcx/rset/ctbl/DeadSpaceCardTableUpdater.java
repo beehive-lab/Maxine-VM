@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 
 public class DeadSpaceCardTableUpdater extends DeadSpaceRSetUpdater  {
     final CardTableRSet rset;
