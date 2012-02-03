@@ -171,11 +171,10 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
 
     VMLogger getLogger(int id) {
         for (VMLogger logger : loggers) {
-            if (logger.loggerId == id) {
+            if (logger != null && logger.loggerId == id) {
                 return logger;
             }
         }
-        TeleError.unexpected("No VMLogger with id: " + id);
         return null;
     }
 
@@ -300,6 +299,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
             addColumn(VMLogColumnKind.ARG5, new ArgCellRenderer(inspection, vmLogView, 5), null);
             addColumn(VMLogColumnKind.ARG6, new ArgCellRenderer(inspection, vmLogView, 6), null);
             addColumn(VMLogColumnKind.ARG7, new ArgCellRenderer(inspection, vmLogView, 7), null);
+            addColumn(VMLogColumnKind.ARG8, new ArgCellRenderer(inspection, vmLogView, 8), null);
         }
     }
 
@@ -379,33 +379,40 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         }
     }
 
-    private static class ThreadCellRenderer extends CellRendererHelper implements TableCellRenderer {
-        private Map<Integer, Component> threadRenderers = new HashMap<Integer, Component>();
+    static class ThreadCellRenderer extends CellRendererHelper implements TableCellRenderer {
+        private static Map<Integer, Component> threadRenderers = new HashMap<Integer, Component>();
+        private static ThreadCellRenderer singleton;
 
         private ThreadCellRenderer(Inspection inspection, VMLogView vmLogView) {
             super(vmLogView);
+            singleton = this;
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component renderer = super.getRenderer(value, row, column);
             if (renderer == null) {
                 int threadID = (Integer) value;
-                renderer = threadRenderers.get(threadID);
-                if (renderer == null) {
-                    String name;
-                    if (threadID == 0) {
-                        name = "primordial";
-                    } else {
-                        MaxThread thread = vmLogView.vm().threadManager().getThread(threadID);
-                        if (thread == null) {
-                            return vmLogView.gui().getUnavailableDataTableCellRenderer();
-                        }
-                        name = thread.vmThreadName();
-                    }
-                    renderer = new PlainLabel(vmLogView.inspection(), name);
-                    threadRenderers.put(new Integer(threadID), renderer);
-                }
+                renderer = getThreadRenderer(threadID);
                 vmLogView.tableModel.setRenderer(row, column, renderer);
+            }
+            return renderer;
+        }
+
+        static Component getThreadRenderer(int threadID) {
+            Component renderer = threadRenderers.get(threadID);
+            if (renderer == null) {
+                String name;
+                if (threadID == 0) {
+                    name = "primordial";
+                } else {
+                    MaxThread thread = singleton.vmLogView.vm().threadManager().getThread(threadID);
+                    if (thread == null) {
+                        return singleton.vmLogView.gui().getUnavailableDataTableCellRenderer();
+                    }
+                    name = thread.vmThreadName();
+                }
+                renderer = new PlainLabel(singleton.vmLogView.inspection(), name);
+                threadRenderers.put(new Integer(threadID), renderer);
             }
             return renderer;
         }

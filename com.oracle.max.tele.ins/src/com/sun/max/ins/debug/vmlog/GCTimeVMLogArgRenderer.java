@@ -20,28 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
 
 
-public class Package extends BootImagePackage {
-    public Package() {
-        if (isPartOfMaxineVM()) {
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
-        }
+
+public class GCTimeVMLogArgRenderer extends VMLogArgRenderer {
+    public GCTimeVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        return new PlainLabel(vmLogView.inspection(), String.valueOf(argValue));
     }
 
-    private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
-        VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
-    }
 }

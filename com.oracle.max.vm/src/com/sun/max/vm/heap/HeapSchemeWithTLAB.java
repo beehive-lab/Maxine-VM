@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -57,8 +59,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
     public static boolean GenInlinedTLABAlloc = true;
 
-    private static boolean TraceTLAB;
-
     /**
      * Determines if TLABs should be traced.
      *
@@ -66,19 +66,16 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     @INLINE
     public static boolean traceTLAB() {
-        return TraceTLAB;
+        return logger.enabled();
     }
 
     public static void setTraceTLAB(boolean b) {
-        TraceTLAB = b;
+        logger.enableTrace(b);
     }
 
     private static boolean PrintTLABStats;
 
     static {
-        if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
-        }
         VMOptions.addFieldOption("-XX:", "PrintTLABStats", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "PrintTLABStats"),
                         "Print TLAB statistics at end of program.", MaxineVM.Phase.PRISTINE);
 
@@ -149,15 +146,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer tlabMark = TLAB_MARK.load(etla);
             Pointer tlabTop = TLAB_TOP.load(etla);
             if (traceTLAB()) {
-                final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printThread(vmThread, false);
-                Log.print(": Resetting TLAB [TOP=");
-                Log.print(tlabTop);
-                Log.print(", MARK=");
-                Log.print(tlabMark);
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
+                logger.logReset(UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava()), tlabTop, tlabMark);
             }
             if (tlabTop.equals(Address.zero())) {
                 // TLAB's top can be null in only two cases:
@@ -359,20 +348,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         TLAB_TOP.store(etla, tlabTop);
         TLAB_MARK.store(etla, tlab);
-        if (traceTLAB() || Heap.traceAllocation() || Heap.traceGC()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-            Log.printThread(vmThread, false);
-            Log.print(": Refill TLAB with [MARK = ");
-            Log.print(tlab);
-            Log.print(", TOP=");
-            Log.print(tlabTop);
-            Log.print(", end=");
-            Log.print(tlab.plus(initialTlabSize));
-            Log.print(", size=");
-            Log.print(initialTlabSize.toInt());
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
+        if (traceTLAB()) {
+            VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
+            logger.logRefill(vmThread, tlabTop, tlabTop, tlab.plus(initialTlabSize), initialTlabSize);
         }
     }
 
@@ -557,6 +535,81 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @Override
     public void notifyCurrentThreadDetach() {
         tlabReset(currentTLA());
+    }
+
+    public static final TLABLogger logger = /*MaxineVM.isDebug()*/ true  ? new TLABLogger(true) : new TLABLogger();
+
+    public static class TLABLogger extends VMLogger {
+        public enum Operation {
+            RESET, REFILL, PAD;
+
+            public static Operation[] VALUES = values();
+        }
+
+        TLABLogger(boolean active) {
+            super("TLAB", 2, null);
+        }
+
+        TLABLogger() {
+            super();
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            Heap.gcLogger.checkOptions();
+            // Turn on if dominant options are set.
+            if (Heap.gcLogger.enabled()) {
+                enable(true);
+            }
+            if (Heap.gcLogger.traceEnabled()) {
+                enableTrace(true);
+            }
+        }
+
+        void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            log(Operation.RESET.ordinal(), VMLogger.threadArg(vmThread), tlabTop, tlabMark);
+        }
+
+        void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, Size initialTlabSize) {
+            log(Operation.REFILL.ordinal(), VMLogger.threadArg(vmThread), tlab, tlabTop, tlabEnd, initialTlabSize);
+        }
+
+        public void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
+            log(Operation.PAD.ordinal(), VMLogger.threadArg(vmThread), tlabMark, VMLogger.intArg(padWords));
+        }
+
+        @Override
+        protected void trace(Record r) {
+            Operation op = Operation.VALUES[r.getOperation()];
+            Log.printThread(VmThreadMap.ACTIVE.getVmThreadForID(r.getIntArg(1)), false);
+            if (op == Operation.RESET) {
+                Log.print(": Resetting TLAB [TOP=");
+                Log.print(r.getArg(2));
+                Log.print(", MARK=");
+                Log.print(r.getArg(3));
+            } else if (op == Operation.REFILL) {
+                Log.print(": Refill TLAB with [MARK = ");
+                Log.print(r.getArg(2));
+                Log.print(", TOP=");
+                Log.print(r.getArg(3));
+                Log.print(", end=");
+                Log.print(r.getArg(4));
+                Log.print(", size=");
+                Log.print(r.getIntArg(5));
+            } else if (op == Operation.PAD) {
+                Log.print(": Placed TLAB padding at ");
+                Log.print(r.getArg(1));
+                Log.print(" [words=");
+                Log.print(r.getIntArg(2));
+            }
+            Log.println("]");
+        }
     }
 }
 

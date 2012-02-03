@@ -51,12 +51,10 @@ public abstract class VMLogArgRenderer {
 
     /**
      * Returns an appropriate {@link TableCellRenderer} for this argument.
-     * The default renderer is passed in as argument and the default action
-     * should be to call {@code argCellRenderer.setText} with return it.
      *
      * @param header value from log buffer
      * @param argNum argument index {@code [1 .. N-1]}
-     * @param argValue argument value (can't be a reference)
+     * @param argValue argument value
      * @return
      */
     protected Component getRenderer(int header, int argNum, long argValue) {

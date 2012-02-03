@@ -20,28 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
 import com.sun.max.vm.log.*;
 
 
-public class Package extends BootImagePackage {
-    public Package() {
-        if (isPartOfMaxineVM()) {
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
-        }
+public class GCPhasesLVMLogArgRenderer extends VMLogArgRenderer {
+
+    private final PlainLabel BEGIN_LABEL = new PlainLabel(vmLogView.inspection(), VMLogger.Interval.BEGIN.name());
+    private final PlainLabel END_LABEL = new PlainLabel(vmLogView.inspection(), VMLogger.Interval.END.name());
+
+    public GCPhasesLVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
-    }
-
-    private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
-        VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        if (argNum == 1) {
+            if (argValue == VMLogger.Interval.BEGIN.ordinal()) {
+                return BEGIN_LABEL;
+            } else {
+                return END_LABEL;
+            }
+        }
+        return super.getRenderer(header, argNum, argValue);
     }
 }
