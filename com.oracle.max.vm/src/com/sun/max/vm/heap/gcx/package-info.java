@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
-
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-
-public class Package extends BootImagePackage {
-
-    public Package() {
-        super();
-    }
-
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {LightweightLockword64.class};
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.monitorPackage.isSubPackageOf(this.superPackage().superPackage());
-    }
-}
+/**
+ * Umbrella for building blocks to implement HeapScheme.
+ */
+package com.sun.max.vm.heap.gcx;

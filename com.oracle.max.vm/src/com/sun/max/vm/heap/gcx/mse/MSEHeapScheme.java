@@ -327,18 +327,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
     private Size setNextTLABChunk(Pointer chunk) {
         if (MaxineVM.isDebug()) {
-            if (FirstFitMarkSweepSpace.DebugMSE) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("setNextTLABChunk(");
-                Log.print(chunk);
-                if (!chunk.isZero()) {
-                    Log.print(" [");
-                    Log.print(HeapFreeChunk.getFreechunkSize(chunk).toInt());
-                    Log.print(" bytes ]");
-                }
-                Log.println(")");
-                Log.unlock(lockDisabledSafepoints);
-            }
             FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
             FatalError.check(HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(markSweepSpace.minReclaimableSpace()), "TLAB chunk must be greater than min reclaimable space");
         }
