@@ -26,9 +26,6 @@ import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
-/**
- * @see MaxPackage
- */
 public class Package extends BootImagePackage {
     public Package() {
         registerScheme(HeapScheme.class, SemiSpaceHeapScheme.class);
