@@ -31,6 +31,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -390,6 +391,21 @@ public interface HeapScheme extends VMScheme {
      * @param visitor
      */
     void walkHeap(CallbackCellVisitor visitor);
+
+    VMLogger phaseLogger();
+
+    /**
+     * A logger for GC timings - implementation provided by the heap scheme.
+     */
+    public static abstract class TimeLogger extends VMLogger {
+        protected TimeLogger(String name, int numOps, String description) {
+            super(name, numOps, description);
+        }
+
+        public abstract void logStackRefMapTime(long stackReferenceMapPreparationTime);
+    }
+
+    TimeLogger timeLogger();
 
     /**
      * A collection of methods that support certain inspection services.
