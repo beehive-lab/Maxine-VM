@@ -41,10 +41,16 @@ import com.sun.max.vm.runtime.*;
  */
 final class RegionChunkListRefillManager extends ChunkListRefillManager {
     /**
-     * Region providing space for tlab allocation.
+     * Region providing space for refilling allocator.
      */
     private int allocatingRegion;
+
     /**
+     * Provider of regions.
+     */
+    private final RegionProvider regionProvider;
+
+   /**
      * Threshold below which the allocator should be refilled.
      */
     private Size refillThreshold;
@@ -63,11 +69,6 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
      * Space wasted on refill. For statistics only.
      */
     private Size wastedSpace;
-
-    /**
-     * Provider of regions.
-     */
-    private final RegionProvider regionProvider;
 
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
@@ -89,7 +90,7 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
         this.refillThreshold = refillThreshold;
     }
 
-    private void checkForSuspisciousGC(int gcCount) {
+    static private void checkForSuspisciousGC(int gcCount) {
         if (gcCount > 1) {
             FatalError.breakpoint();
         }
@@ -102,6 +103,7 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
         final int regionID = allocatingRegion;
         if (regionID != INVALID_REGION_ID) {
             allocatingRegion = INVALID_REGION_ID;
+            toFullState(fromRegionID(regionID));
             regionProvider.retireAllocatingRegion(regionID);
             if (MaxineVM.isDebug() && regionID == DebuggedRegion) {
                 // Not very precise: even if we retire the log, there might still be some Thread using a TLAB allocated from that region.

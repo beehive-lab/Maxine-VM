@@ -20,9 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
-
-import static com.sun.max.vm.heap.gcx.CardTable.*;
+package com.sun.max.vm.heap.gcx.rset.ctbl;
+import static com.sun.max.vm.heap.gcx.rset.ctbl.CardTableRSet.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -67,8 +66,6 @@ import com.sun.max.vm.runtime.*;
  *
  */
 public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
-    static final int LOG2_NUM_WORD_PER_CARD = LOG2_CARD_SIZE - Word.widthValue().log2numberOfBytes;
-    static final int NUM_WORD_PER_CARD = 1 << LOG2_NUM_WORD_PER_CARD;
     static final byte ZERO = 0;
 
     static boolean TraceFOT = false;
@@ -125,7 +122,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param cell address of an object
      * @param size size of the object
      */
-    void set(Address cell, Size size) {
+    public void set(Address cell, Size size) {
         set(cell, cell.plus(size));
     }
 
@@ -140,7 +137,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param cell
      * @param cellEnd
      */
-    void set(Address cell, Address cellEnd) {
+    public void set(Address cell, Address cellEnd) {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);
         int lastCard = tableEntryIndex(cellEnd);
@@ -196,7 +193,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         }
     }
 
-    boolean isFirstCellOfCard(Address cell) {
+    public boolean isFirstCellOfCard(Address cell) {
         int card = tableEntryIndex(cell);
         if (alignDownToCard(cell) == cell) {
             return get(card) == 0;
@@ -213,7 +210,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param rightCell start of the new cell being split off from the first
      * @param end end of the original cell
      */
-    void split(Address leftCell, Address rightCell, Address end) {
+    public void split(Address leftCell, Address rightCell, Address end) {
         if (MaxineVM.isDebug()) {
             FatalError.check(isFirstCellOfCard(leftCell), "Cell isn't current first cell of card");
         }
@@ -236,7 +233,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param cardIndex the index of a card
      * @return an address in the contiguous range of virtual memory covered by the card table associated with this FOT.
      */
-    Address cellStart(int cardIndex) {
+    public Address cellStart(int cardIndex) {
         int nextCardIndex = cardIndex;
         byte startInfo = get(nextCardIndex);
         if (startInfo > ZERO) {
@@ -263,7 +260,7 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
         return rangeStart(nextCardIndex).plus(offset);
     }
 
-    void verify(Address start, Address end) {
+    public void verify(Address start, Address end) {
         // iterate over all entry and verify the invariant on the first object.
         int firstCard = tableEntryIndex(start);
         int lastCard = tableEntryIndex(end);
