@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 /**
@@ -346,13 +347,13 @@ public final class NoAgingEvacuator extends Evacuator {
     @Override
     protected void evacuateFromRSets() {
         // Visit the dirty cards of the old gen (i.e., the toSpace).
-        final boolean traceRSet = CardTableRSet.TraceCardTableRSet;
+        final boolean traceRSet = CardTableRSet.traceCardTableRSet();
         if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
-            CardTableRSet.TraceCardTableRSet = true;
+            CardTableRSet.setTraceCardTableRSet(true);
         }
         toSpace.visit(heapSpaceDirtyCardClosure);
         if (MaxineVM.isDebug() && TraceDirtyCardWalk) {
-            CardTableRSet.TraceCardTableRSet = traceRSet;
+            CardTableRSet.setTraceCardTableRSet(traceRSet);
         }
     }
 

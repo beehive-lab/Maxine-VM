@@ -21,14 +21,14 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx;
-
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.CardTable.CardState;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
+import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 
 public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
     final CardTableRSet cardTableRSet;
@@ -40,7 +40,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
 
     @Override
     public void visitCells(Address start, Address end) {
-        cardTableRSet.visitCards(start, end, CardState.DIRTY_CARD, this);
+        cardTableRSet.visitCards(start, end, DIRTY_CARD, this);
     }
 
     private Pointer visitCell(Pointer cell) {
