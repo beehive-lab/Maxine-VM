@@ -26,8 +26,11 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.log.*;
 
 /**
  * Factory for custom renderers for {@link VMLog.Logger} arguments.
@@ -50,7 +53,7 @@ public abstract class VMLogArgRendererFactory {
 
         @Override
         protected Component getRenderer(int op, int argNum, long argValue) {
-            return new PlainLabel(inspection(), Long.toHexString(argValue));
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
         }
     }
 
