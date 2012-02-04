@@ -29,6 +29,7 @@ import javax.swing.border.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.debug.*;
+import com.sun.max.ins.debug.vmlog.VMLogView.LogViewPreferences;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
@@ -170,6 +171,15 @@ public class PreferenceDialog extends SimpleDialog {
         final JPanel tlaInspectorPanel = ThreadLocalsViewPreferences.globalPreferencesPanel(inspection);
         tlaInspectorPanel.setBorder(border);
         prefPanel.add(tlaInspectorPanel);
+
+        final JPanel logLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        logLabelPanel.setBorder(border);
+        logLabelPanel.add(new TextLabel(inspection, "VM Log"), BorderLayout.WEST);
+        prefPanel.add(logLabelPanel);
+
+        final JPanel logInspectorPanel = LogViewPreferences.globalPreferencesPanel(inspection);
+        logInspectorPanel.setBorder(border);
+        prefPanel.add(logInspectorPanel);
 
         final JPanel bootImageLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         bootImageLabelPanel.setBorder(border);
