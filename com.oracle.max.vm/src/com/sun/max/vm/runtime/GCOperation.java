@@ -205,8 +205,8 @@ public abstract class GCOperation extends VmOperation {
             Log.unlock(lockDisabledSafepoints);
         }
         invocationCount++;
-        if (Heap.TraceGCSuppressionCount > 0) {
-            Heap.TraceGCSuppressionCount--;
+        if (Heap.LogGCSuppressionCount > 0) {
+            Heap.LogGCSuppressionCount--;
         }
     }
 

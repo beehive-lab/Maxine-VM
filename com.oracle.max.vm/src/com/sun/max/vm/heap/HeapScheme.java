@@ -402,6 +402,11 @@ public interface HeapScheme extends VMScheme {
             super(name, numOps, description);
         }
 
+        /**
+         * Every scheme has this phase.
+         *
+         * @param stackReferenceMapPreparationTime
+         */
         public abstract void logStackRefMapTime(long stackReferenceMapPreparationTime);
     }
 

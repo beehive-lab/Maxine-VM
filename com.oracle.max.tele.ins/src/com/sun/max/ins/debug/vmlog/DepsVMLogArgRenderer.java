@@ -27,7 +27,6 @@ import static com.sun.max.vm.compiler.deps.DependenciesManager.Logger.*;
 import java.awt.*;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.log.VMLog.Record;
 
@@ -49,7 +48,7 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
             if (argValue == DependenciesManager.Logger.NULL_TM.asAddress().toLong()) {
                 text = "UNSET";
             } else {
-                return tryGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+                return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
             }
         } else {
             int opCode = Record.getOperation(header);
@@ -58,7 +57,7 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
                 if (argNum == 2) {
                     text = String.valueOf(argValue);
                 } else if (argNum == 3) {
-                    return tryGetReferenceValueLabel(getTeleClassActor(argValue));
+                    return safeGetReferenceValueLabel(getTeleClassActor(argValue));
                 }
             } else if (op == Operation.Register) {
                 if (argNum == 2) {
@@ -66,7 +65,7 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
                 }
             } else if (op == Operation.InvalidateDeps) {
                 if (argNum == 2) {
-                    return tryGetReferenceValueLabel(getTeleClassActor(argValue));
+                    return safeGetReferenceValueLabel(getTeleClassActor(argValue));
                 }
             } else if (op == Operation.Invalidated) {
                 if (argNum == 2) {
@@ -74,13 +73,13 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
                 }
             } else if (op == Operation.InvalidateUCT) {
                 if (argNum == 2 || argNum == 3) {
-                    return tryGetReferenceValueLabel(getTeleClassActor(argValue));
+                    return safeGetReferenceValueLabel(getTeleClassActor(argValue));
                 }
             } else if (op == Operation.InvalidateUCM) {
                 if (argNum == 2) {
-                    return tryGetReferenceValueLabel(getTeleClassActor(argValue));
+                    return safeGetReferenceValueLabel(getTeleClassActor(argValue));
                 } else if (argNum == 3 || argNum == 4) {
-                    return tryGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+                    return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
                 }
             }
         }
@@ -91,13 +90,5 @@ public class DepsVMLogArgRenderer extends VMLogArgRenderer {
         }
     }
 
-    private Component tryGetReferenceValueLabel(TeleObject teleObject) {
-        if (teleObject == null) {
-            return gui().getUnavailableDataTableCellRenderer();
-        } else {
-            return getReferenceValueLabel(teleObject.getReference());
-        }
-
-    }
 
 }

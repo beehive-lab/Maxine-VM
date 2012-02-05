@@ -20,32 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
+package com.sun.max.tele.object;
 
-import java.awt.*;
+import com.sun.max.tele.*;
+import com.sun.max.vm.reference.*;
 
-import com.sun.max.ins.gui.*;
-import com.sun.max.vm.log.*;
-
-
-public class GCPhasesLVMLogArgRenderer extends VMLogArgRenderer {
-
-    private final PlainLabel BEGIN_LABEL = new PlainLabel(vmLogView.inspection(), VMLogger.Interval.BEGIN.name());
-    private final PlainLabel END_LABEL = new PlainLabel(vmLogView.inspection(), VMLogger.Interval.END.name());
-
-    public GCPhasesLVMLogArgRenderer(VMLogView vmLogView) {
-        super(vmLogView);
+/**
+ * Exists solely to truncate the deep copy.
+ */
+public class TeleVMLog extends TeleTupleObject {
+    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
+        super(vm, vmLogReference);
     }
 
     @Override
-    protected Component getRenderer(int header, int argNum, long argValue) {
-        if (argNum == 1) {
-            if (argValue == VMLogger.Interval.BEGIN.ordinal()) {
-                return BEGIN_LABEL;
-            } else {
-                return END_LABEL;
-            }
-        }
-        return super.getRenderer(header, argNum, argValue);
+    public Object createDeepCopy(DeepCopier context) {
+        return null;
     }
 }

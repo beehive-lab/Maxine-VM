@@ -22,11 +22,9 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
-import java.awt.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 
 /**
@@ -41,18 +39,6 @@ public abstract class VMLogArgRendererFactory {
     private static Map<String, VMLogArgRenderer> renderers = new HashMap<String, VMLogArgRenderer>();
 
     static DefaultVMLogArgRenderer defaultVMLogArgRenderer;
-
-    static class DefaultVMLogArgRenderer extends VMLogArgRenderer {
-
-        public DefaultVMLogArgRenderer(VMLogView vmLogView) {
-            super(vmLogView);
-        }
-
-        @Override
-        protected Component getRenderer(int op, int argNum, long argValue) {
-            return new PlainLabel(inspection(), Long.toHexString(argValue));
-        }
-    }
 
     static VMLogArgRenderer getArgRenderer(String loggerName, VMLogView vmLogView) {
         setDefaultVMLogArgRenderer(vmLogView);

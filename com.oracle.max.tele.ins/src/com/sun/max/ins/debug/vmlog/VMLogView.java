@@ -359,14 +359,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
             super(vmLogView);
         }
 
-        private long calls;
-
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            calls++;
-            if ((calls % 1000) == 0) {
-                Trace.line(0, "IdCellRenderer.getTableCellRendererComponent: " + calls);
-            }
-
             Component renderer = super.getRenderer(value, row, column);
             if (renderer == null) {
                 WordValueLabel wvl = new WordValueLabel(vmLogView.inspection(), WordValueLabel.ValueMode.WORD, vmLogView.table);

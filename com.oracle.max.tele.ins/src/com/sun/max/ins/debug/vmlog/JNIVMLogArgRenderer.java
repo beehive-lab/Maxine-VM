@@ -68,7 +68,7 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
                 op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
                 op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
                 op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
-                return getReferenceValueLabel(getTeleClassMethodActor(argValue).getReference());
+                return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
             }
         } else if (argNum == 3) {
             final Address address = Address.fromLong(argValue);

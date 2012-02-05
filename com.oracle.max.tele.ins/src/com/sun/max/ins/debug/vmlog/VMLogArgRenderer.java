@@ -103,11 +103,20 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return teleClassMethodActor;
     }
 
-    WordValueLabel getReferenceValueLabel(Reference reference) {
+    private WordValueLabel getReferenceValueLabel(Reference reference) {
         return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }
 
-    ClassActor getClassActor(final long arg) {
+    protected Component safeGetReferenceValueLabel(TeleObject teleObject) {
+        if (teleObject == null) {
+            return gui().getUnavailableDataTableCellRenderer();
+        } else {
+            return getReferenceValueLabel(teleObject.getReference());
+        }
+
+    }
+
+    protected ClassActor getClassActor(final long arg) {
         ClassActor classActor = VmClassAccess.usingTeleClassIDs(new Function<ClassActor>() {
             @Override
             public ClassActor call() throws Exception {
@@ -117,18 +126,18 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return classActor;
     }
 
-    TeleClassActor getTeleClassActor(long arg) {
+    protected TeleClassActor getTeleClassActor(long arg) {
         ClassActor classActor = getClassActor(arg);
         TeleClassActor teleClassActor = vm.classes().findTeleClassActor((int) arg);
         assert teleClassActor.classActor() == classActor;
         return teleClassActor;
     }
 
-    String formatMethodActor(long arg) {
+    protected String formatMethodActor(long arg) {
         return getMethodActor(arg).format("%H.%n(%p)");
     }
 
-    String classActorName(final long arg) {
+    protected String classActorName(final long arg) {
         return getClassActor(arg).toString();
     }
 

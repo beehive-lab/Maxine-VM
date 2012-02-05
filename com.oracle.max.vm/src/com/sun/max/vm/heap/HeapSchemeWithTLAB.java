@@ -350,7 +350,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         TLAB_MARK.store(etla, tlab);
         if (traceTLAB()) {
             VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-            logger.logRefill(vmThread, tlabTop, tlabTop, tlab.plus(initialTlabSize), initialTlabSize);
+            logger.logRefill(vmThread, tlabTop, tlabTop, tlab.plus(initialTlabSize), initialTlabSize.toInt());
         }
     }
 
@@ -541,13 +541,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     public static class TLABLogger extends VMLogger {
         public enum Operation {
-            RESET, REFILL, PAD;
+            Reset, Refill, Pad;
 
-            public static Operation[] VALUES = values();
+            public static final Operation[] VALUES = values();
         }
 
         TLABLogger(boolean active) {
-            super("TLAB", 2, null);
+            super("TLAB", Operation.VALUES.length, null);
         }
 
         TLABLogger() {
@@ -573,27 +573,27 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
 
         void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
-            log(Operation.RESET.ordinal(), VMLogger.threadArg(vmThread), tlabTop, tlabMark);
+            log(Operation.Reset.ordinal(), VMLogger.threadArg(vmThread), tlabTop, tlabMark);
         }
 
-        void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, Size initialTlabSize) {
-            log(Operation.REFILL.ordinal(), VMLogger.threadArg(vmThread), tlab, tlabTop, tlabEnd, initialTlabSize);
+        void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
+            log(Operation.Refill.ordinal(), VMLogger.threadArg(vmThread), tlab, tlabTop, tlabEnd, VMLogger.intArg(initialTlabSize));
         }
 
         public void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
-            log(Operation.PAD.ordinal(), VMLogger.threadArg(vmThread), tlabMark, VMLogger.intArg(padWords));
+            log(Operation.Pad.ordinal(), VMLogger.threadArg(vmThread), tlabMark, VMLogger.intArg(padWords));
         }
 
         @Override
         protected void trace(Record r) {
             Operation op = Operation.VALUES[r.getOperation()];
             Log.printThread(VmThreadMap.ACTIVE.getVmThreadForID(r.getIntArg(1)), false);
-            if (op == Operation.RESET) {
+            if (op == Operation.Reset) {
                 Log.print(": Resetting TLAB [TOP=");
                 Log.print(r.getArg(2));
                 Log.print(", MARK=");
                 Log.print(r.getArg(3));
-            } else if (op == Operation.REFILL) {
+            } else if (op == Operation.Refill) {
                 Log.print(": Refill TLAB with [MARK = ");
                 Log.print(r.getArg(2));
                 Log.print(", TOP=");
@@ -602,7 +602,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                 Log.print(r.getArg(4));
                 Log.print(", size=");
                 Log.print(r.getIntArg(5));
-            } else if (op == Operation.PAD) {
+            } else if (op == Operation.Pad) {
                 Log.print(": Placed TLAB padding at ");
                 Log.print(r.getArg(1));
                 Log.print(" [words=");

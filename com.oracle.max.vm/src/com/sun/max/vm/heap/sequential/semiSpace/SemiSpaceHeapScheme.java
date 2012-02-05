@@ -381,64 +381,64 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 stopTimer(clearTimer);
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.SCAN_ROOTS);
+                    phaseLogger.logScanRoots(VMLogger.Interval.BEGIN);
                 }
                 startTimer(rootScanTimer);
                 heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
                 stopTimer(rootScanTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.SCAN_ROOTS);
+                    phaseLogger.logScanRoots(VMLogger.Interval.END);
                 }
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.SCAN_BOOTHEAP);
+                    phaseLogger.logScanBootHeap(VMLogger.Interval.BEGIN);
                 }
                 startTimer(bootHeapScanTimer);
                 scanBootHeap();
                 stopTimer(bootHeapScanTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.SCAN_BOOTHEAP);
+                    phaseLogger.logScanBootHeap(VMLogger.Interval.END);
                 }
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.SCAN_CODE);
+                    phaseLogger.logScanCode(VMLogger.Interval.BEGIN);
                 }
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.SCAN_CODE);
+                    phaseLogger.logScanCode(VMLogger.Interval.END);
                 }
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.SCAN_IMMHEAP);
+                    phaseLogger.logScanImmortalHeap(VMLogger.Interval.BEGIN);
                 }
                 startTimer(immortalSpaceScanTimer);
                 scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.SCAN_IMMHEAP);
+                    phaseLogger.logScanImmortalHeap(VMLogger.Interval.END);
                 }
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.MOVE_REACHABLE);
+                    phaseLogger.logMoveReachable(VMLogger.Interval.BEGIN);
                 }
                 startTimer(copyTimer);
                 moveReachableObjects(toSpace.start().asPointer());
                 stopTimer(copyTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.MOVE_REACHABLE);
+                    phaseLogger.logMoveReachable(VMLogger.Interval.END);
                 }
 
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.BEGIN, PhaseLogger.Operation.PROCESSING_REFS);
+                    phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.BEGIN);
                 }
                 startTimer(weakRefTimer);
                 SpecialReferenceManager.processDiscoveredSpecialReferences(refForwarder);
                 stopTimer(weakRefTimer);
                 stopTimer(gcTimer);
                 if (Heap.traceGCPhases()) {
-                    phaseLogger.log(PhaseLogger.Interval.END, PhaseLogger.Operation.PROCESSING_REFS);
+                    phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
                 }
 
                 // The reclaiming phase doesn't do anything in a semi-space collector since all
@@ -1257,22 +1257,25 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     public static class PhaseLogger extends HeapSchemeAdaptor.PhaseLogger {
 
         public enum Operation {
-            SCAN_ROOTS("roots"), SCAN_BOOTHEAP("boot heap"), SCAN_CODE("code"), SCAN_IMMHEAP("immortal heap"),
-            MOVE_REACHABLE("reachable") {
+            ScanRoots("roots"), ScanBootHeap("boot heap"), ScanCode("code"), ScanImmortalHeap("immortal heap"),
+            MoveReachable("reachable") {
                 @Override
                 String phaseString() {
                     return "Moving ";
                 }
-            }, PROCESSING_REFS("special references") {
+            }, ProcessingSpecialReferences("special references") {
                 @Override
                 String phaseString() {
                     return "Processing ";
                 }
             };
+
             private String phaseSubString;
+
             Operation(String phaseSubString) {
                 this.phaseSubString = phaseSubString;
             }
+
             String phaseString() {
                 return "Scanning ";
             }
@@ -1283,7 +1286,31 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             super(Operation.VALUES.length);
         }
 
-        void log(Interval interval, Operation operation) {
+        void logScanRoots(Interval interval) {
+            log(Operation.ScanRoots, interval);
+        }
+
+        void logScanBootHeap(Interval interval) {
+            log(Operation.ScanBootHeap, interval);
+        }
+
+        void logScanImmortalHeap(Interval interval) {
+            log(Operation.ScanImmortalHeap, interval);
+        }
+
+        void logScanCode(Interval interval) {
+            log(Operation.ScanRoots, interval);
+        }
+
+        void logMoveReachable(Interval interval) {
+            log(Operation.ScanCode, interval);
+        }
+
+        void logProcessingSpecialReferences(Interval interval) {
+            log(Operation.ProcessingSpecialReferences, interval);
+        }
+
+        private void log(Operation operation, Interval interval) {
             log(operation.ordinal(), VMLogger.intArg(interval.ordinal()));
         }
 
@@ -1307,25 +1334,28 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private static final GCTimeLogger timeLogger = new GCTimeLogger();
 
-    private static class GCTimeLogger extends HeapSchemeAdaptor.GCTimeLogger {
+    public static class GCTimeLogger extends HeapSchemeAdaptor.GCTimeLogger {
         private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
         private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for GC ";
 
-        public static final int PHASE_TIMES = 0;
-        public static final int STACKREFMAP_TIME = 1;
+        public enum Operation {
+            StackRefMapTime, PhaseTimes;
+
+            public static final Operation[] VALUES = values();
+        }
 
         GCTimeLogger() {
-            super(2);
+            super(Operation.VALUES.length);
         }
 
         @Override
         public String operationName(int opCode) {
-            return opCode == PHASE_TIMES ? "PHASES" : "STACKRM";
+            return Operation.VALUES[opCode].name();
         }
 
         void logPhaseTimes(int invocationCount, long clearTime, long rootScanTime, long bootHeapScanTime,
                         long codeScanTime, long copyTime, long weakRefTime, long gcTime) {
-            log(PHASE_TIMES, VMLogger.intArg(invocationCount), VMLogger.longArg(clearTime),
+            log(Operation.PhaseTimes.ordinal(), VMLogger.intArg(invocationCount), VMLogger.longArg(clearTime),
                             VMLogger.longArg(rootScanTime), VMLogger.longArg(bootHeapScanTime),
                             VMLogger.longArg(codeScanTime), VMLogger.longArg(copyTime),
                             VMLogger.longArg(weakRefTime), VMLogger.longArg(gcTime));
@@ -1333,13 +1363,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @Override
         public void logStackRefMapTime(long stackReferenceMapPreparationTime) {
-            log(STACKREFMAP_TIME, VMLogger.longArg(stackReferenceMapPreparationTime));
+            log(Operation.StackRefMapTime.ordinal(), VMLogger.longArg(stackReferenceMapPreparationTime));
         }
 
         @Override
         protected void trace(Record r) {
             int op = r.getOperation();
-            if (op == PHASE_TIMES) {
+            if (op == Operation.PhaseTimes.ordinal()) {
                 Log.print(TIMINGS_LEAD);
                 Log.print(r.getIntArg(1));
                 Log.print(": clear & initialize=");
@@ -1361,8 +1391,33 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 Log.print(r.getLongArg(1));
                 Log.println(HZ_SUFFIX);
             }
-
         }
+
+        /**
+         * Inspector use, mimic the trace.
+         */
+        @HOSTED_ONLY
+        @Override
+        public String inspectedArg(int op, int argNum, Word argValue) {
+            if (op == Operation.PhaseTimes.ordinal()) {
+                // Checkstyle: stop
+                switch (argNum) {
+                    case 1: return "gc=" + argValue.asAddress().toInt();
+                    case 2: return "init=" + argValue.asAddress().toLong();
+                    case 3: return "rs=" + argValue.asAddress().toLong();
+                    case 4: return "bs=" + argValue.asAddress().toLong();
+                    case 5: return "cs=" + argValue.asAddress().toLong();
+                    case 6: return "copy=" + argValue.asAddress().toLong();
+                    case 7: return "srefs=" + argValue.asAddress().toLong();
+                    case 8: return "total=" + argValue.asAddress().toLong();
+                    default: return "???";
+                }
+                // Checkstyle: resume
+            }
+            return null;
+        }
+
+
     }
 
     @Override
