@@ -239,117 +239,9 @@ public final class Heap {
         verboseOption.verboseGC = value;
     }
 
-    /**
-     * Determines if allocation should be traced.
-     *
-     * @returns Always {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
-     */
-    @INLINE
-    public static boolean traceAllocation() {
-        return MaxineVM.isDebug() && allocationLogger.enabled();
-    }
-
-    /**
-     * Modifies the value of the flag determining if allocation should be traced. This flag is ignored if the VM
-     * {@linkplain VMConfiguration#buildLevel() build level} is not {@link BuildLevel#DEBUG}. This is typically provided
-     * so that error situations can be reported without being confused by interleaving allocation traces.
-     */
-    public static void setTraceAllocation(boolean flag) {
-        allocationLogger.enableTrace(flag);
-    }
-
-    /**
-     * Determines if all garbage collection activity should be traced.
-     */
-    @INLINE
-    public static boolean traceGC() {
-        return gcLogger.enabled() && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Determines if the garbage collection phases should be traced.
-     */
-    @INLINE
-    public static boolean traceGCPhases() {
-        return (gcLogger.enabled()  || phaseLogger.enabled()) && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Determines if garbage collection root scanning should be traced.
-     */
-    @INLINE
-    public static boolean traceRootScanning() {
-        return (gcLogger.enabled() || TraceRootScanning) && TraceGCSuppressionCount <= 0;
-    }
-
-    public static void setTraceRootScanning(boolean flag) {
-        TraceRootScanning = flag;
-    }
-
-    /**
-     * Determines if garbage collection timings should be collected and printed.
-     */
-    @INLINE
-    public static boolean traceGCTime() {
-        return (gcLogger.enabled() || timeLogger.enabled()) && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Disables -XX:-TraceGC, -XX:-TraceRootScanning and -XX:-TraceGCPhases if greater than 0.
-     */
-    public static int TraceGCSuppressionCount;
-
-    /**
-     * A logger for the phases of the GC - implementation provided by the heap scheme.
-     */
-    public static final VMLogger phaseLogger = heapScheme().phaseLogger();
-
-    /**
-     * A logger for timing the phases of the GC.
-     */
-    public static final TimeLogger timeLogger = heapScheme().timeLogger();
-
-    /**
-     * A logger for object allocation, only visible in a DEBUG image build.
-     */
-    public static final AllocationLogger allocationLogger = MaxineVM.isDebug() ? new AllocationLogger(true) : new AllocationLogger();
-
-    /**
-     * A pseudo-logger that exists solely to define the {@code TraceGC/LogGC} options,
-     * which force all the separate options on.
-     */
-    public static final VMLogger gcLogger = new VMLogger("GC", 0,
-                    "all garbage collection activity. Enabling this option also enables the " +
-                    phaseLogger.traceOption +  " and " + timeLogger.traceOption + " options.") {
-        @Override
-        public void checkOptions() {
-            super.checkOptions();
-            // force the checking of our dependent loggers now
-            phaseLogger.checkOptions();
-            timeLogger.checkOptions();
-            // Now enforce our state on them.
-            if (enabled()) {
-                phaseLogger.enable(enabled());
-                timeLogger.enable(enabled());
-            }
-            if (traceEnabled()) {
-                phaseLogger.enableTrace(traceEnabled());
-                timeLogger.enableTrace(traceEnabled());
-            }
-        }
-    };
-
-    private static boolean TraceRootScanning;
     private static boolean GCDisabled;
 
     static {
-        VMOption traceRootScanningOption = VMOptions.addFieldOption("-XX:", "TraceRootScanning", Heap.class,
-            "Trace garbage collection root scanning.");
-
-        VMOptions.addFieldOption("-XX:", "TraceGCSuppressionCount", Heap.class,
-                        "Disable " + gcLogger.traceOption + ", " + traceRootScanningOption + " and " +
-                        phaseLogger.traceOption + " until the n'th GC");
-
         VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.", MaxineVM.Phase.STARTING);
     }
 
@@ -429,7 +321,7 @@ public final class Heap {
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
         if (Heap.traceAllocation()) {
-            allocationLogger.logExpandHybrid(hybrid, expandedHybrid);
+            allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }
         return expandedHybrid;
     }
@@ -438,7 +330,7 @@ public final class Heap {
     public static Object clone(Object object) {
         final Object clone = heapScheme().clone(object);
         if (Heap.traceAllocation()) {
-            allocationLogger.logClone(object, clone);
+            allocationLogger.logClone(ObjectAccess.readHub(object), clone);
         }
         return clone;
     }
@@ -691,10 +583,131 @@ public final class Heap {
         }
     }
 
+    /*
+     * Everything related to logging/tracing the heap is defined below.
+     */
+
+    /**
+     * A logger for the phases of the GC - implementation provided by the heap scheme.
+     */
+    public static final VMLogger phaseLogger = heapScheme().phaseLogger();
+
+    /**
+     * A logger for timing the phases of the GC - implementation provided by the heap scheme.
+     */
+    public static final TimeLogger timeLogger = heapScheme().timeLogger();
+
+    /**
+     * A logger for object allocation, only visible in a DEBUG image build.
+     */
+    public static final AllocationLogger allocationLogger = MaxineVM.isDebug() ? new AllocationLogger(true) : new AllocationLogger();
+
+    /**
+     * A pseudo-logger that exists solely to define the {@code TraceGC/LogGC} options,
+     * which force all the separate options on.
+     */
+    public static final VMLogger gcLogger = new VMLogger("GC", 0,
+                    "all garbage collection activity. Enabling this option also enables the " +
+                    phaseLogger.traceOption +  " and " + timeLogger.traceOption + " options.") {
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            // force the checking of our dependent loggers now
+            phaseLogger.checkOptions();
+            timeLogger.checkOptions();
+            // Now enforce our state on them.
+            if (enabled()) {
+                phaseLogger.enable(enabled());
+                timeLogger.enable(enabled());
+            }
+            if (traceEnabled()) {
+                phaseLogger.enableTrace(traceEnabled());
+                timeLogger.enableTrace(traceEnabled());
+            }
+        }
+    };
+
+    private static boolean TraceRootScanning;
+
+    static {
+        VMOption traceRootScanningOption = VMOptions.addFieldOption("-XX:", "TraceRootScanning", Heap.class,
+            "Trace garbage collection root scanning.");
+
+        VMOptions.addFieldOption("-XX:", "LogGCSuppressionCount", Heap.class,
+                        "Disable " + gcLogger.traceOption + ", " + traceRootScanningOption + " and " +
+                        phaseLogger.traceOption + " until the n'th GC");
+    }
+
+    /*
+     * Functions that act as guards for logging, and add additional conjunctive constraints
+     * beyond the setting of the log options.
+     */
+
+    /**
+     * Determines if allocation should be traced.
+     *
+     * @returns Always {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
+     */
+    @INLINE
+    public static boolean traceAllocation() {
+        return MaxineVM.isDebug() && allocationLogger.enabled();
+    }
+
+    /**
+     * Modifies the value of the flag determining if allocation should be traced. This flag is ignored if the VM
+     * {@linkplain VMConfiguration#buildLevel() build level} is not {@link BuildLevel#DEBUG}. This is typically provided
+     * so that error situations can be reported without being confused by interleaving allocation traces.
+     */
+    public static void setTraceAllocation(boolean flag) {
+        allocationLogger.enableTrace(flag);
+    }
+
+    /**
+     * Determines if all garbage collection activity should be traced.
+     */
+    @INLINE
+    public static boolean traceGC() {
+        return gcLogger.enabled() && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Determines if the garbage collection phases should be traced.
+     */
+    @INLINE
+    public static boolean traceGCPhases() {
+        return (gcLogger.enabled()  || phaseLogger.enabled()) && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Determines if garbage collection root scanning should be traced.
+     */
+    @INLINE
+    public static boolean traceRootScanning() {
+        return (gcLogger.enabled() || TraceRootScanning) && LogGCSuppressionCount <= 0;
+    }
+
+    public static void setTraceRootScanning(boolean flag) {
+        TraceRootScanning = flag;
+    }
+
+    /**
+     * Determines if garbage collection timings should be collected and printed.
+     */
+    @INLINE
+    public static boolean traceGCTime() {
+        return (gcLogger.enabled() || timeLogger.enabled()) && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Disables phase, time and roots logging if greater than 0.
+     */
+    public static int LogGCSuppressionCount;
+
+
     public static class AllocationLogger extends VMLogger {
         public enum Operation {
-            CLONE("clone"), CREATE_ARRAY(""), CREATE_HYBRID("hybrid"),
-            CREATE_TUPLE("tuple"), EXPAND_HYBRID("expanded hybrid");
+            Clone("clone"), CreateArray(""), CreateHybrid("hybrid"),
+            CreateTuple("tuple"), ExpandHybrid("expanded hybrid");
 
             public final String logName;
             public static Operation[] VALUES = values();
@@ -702,6 +715,7 @@ public final class Heap {
                 this.logName = logName;
             }
         }
+
         AllocationLogger(boolean active) {
             super("Allocation", Operation.values().length, "heap allocation.");
         }
@@ -716,31 +730,30 @@ public final class Heap {
         }
 
         @NEVER_INLINE
-        void logClone(Object object, Object clone) {
-            final Hub hub = ObjectAccess.readHub(object);
-            logCreateVariant(Operation.CLONE, hub, object);
+        void logClone(Hub hub, Object clone) {
+            logCreateVariant(Operation.Clone, hub, clone);
         }
 
         @NEVER_INLINE
-        void logCreateArray(DynamicHub hub, int length, Object array) {
-            log(Operation.CREATE_ARRAY.ordinal(), VMLogger.intArg(hub.classActor.id),
+        void logCreateArray(Hub hub, int length, Object array) {
+            log(Operation.CreateArray.ordinal(), VMLogger.intArg(hub.classActor.id),
                             VMLogger.intArg(length), Layout.originToCell(ObjectAccess.toOrigin(array)),
                                             Layout.size(Reference.fromJava(array)));
         }
 
         @NEVER_INLINE
         void logCreateTuple(Hub hub, Object object) {
-            logCreateVariant(Operation.CREATE_TUPLE, hub, object);
+            logCreateVariant(Operation.CreateTuple, hub, object);
         }
 
         @NEVER_INLINE
         void logCreateHybrid(Hub hub, Object hybrid) {
-            logCreateVariant(Operation.CREATE_HYBRID, hub, hybrid);
+            logCreateVariant(Operation.CreateHybrid, hub, hybrid);
         }
 
         @NEVER_INLINE
-        void logExpandHybrid(Hybrid hybrid, Hybrid expandedHybrid) {
-            logCreateVariant(Operation.EXPAND_HYBRID, ObjectAccess.readHub(hybrid), hybrid);
+        void logExpandHybrid(Hub hub, Hybrid expandedHybrid) {
+            logCreateVariant(Operation.ExpandHybrid, hub, expandedHybrid);
         }
 
         private void logCreateVariant(Operation op, Hub hub, Object object) {
@@ -755,9 +768,9 @@ public final class Heap {
             // Assumes the trace takes place on the same thread as the log operation, true today.
             Log.printCurrentThread(false);
             switch (op) {
-                case CLONE:
-                case CREATE_TUPLE:
-                case CREATE_HYBRID: {
+                case Clone:
+                case CreateTuple:
+                case CreateHybrid: {
                     Log.print(": Allocated ");
                     Log.print(op.logName);
                     Log.print(' ');
@@ -771,7 +784,7 @@ public final class Heap {
                     break;
                 }
 
-                case CREATE_ARRAY: {
+                case CreateArray: {
                     Log.print(": Allocated array ");
                     ClassActor classActor = ClassID.toClassActor(r.getIntArg(1));
                     Log.print(classActor.name.string);

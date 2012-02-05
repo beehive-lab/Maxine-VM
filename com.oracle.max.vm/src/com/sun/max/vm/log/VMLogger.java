@@ -40,10 +40,10 @@ import com.sun.max.vm.thread.*;
  * A {@link VMLogger} defines a set of operations, cardinality {@code N} each identified
  * by an {@code int} code in the range {@code [0 .. N-1]}.
  * A series of "log" methods are provided, that take the operation code
- * and a varying number of {@link Word} arguments (up to {@value VMLog.Record#MAX_ARGS}).
+ * and a varying number of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}).
  * Currently these must not be {@link Reference} types as no GC support is provided
- * for values in the log buffer. The thread (id) generating the log record
- * is automatically recorded.
+ * for values in the log buffer. N.B. This likely may change in the future.
+ * The thread (id) generating the log record is automatically recorded.
  * <p>
  * A logger typically will implement the {@link VMLogger#operationName(int)}
  * method that returns a descriptive name for the operation.
@@ -70,7 +70,8 @@ import com.sun.max.vm.thread.*;
  * number of arguments from the singleton {@link #vmLog} instance and then records the values.
  * The format of the log record is opaque to allow a variety of implementations.
  * <p>
- * Performance: Logging affects performance even when disabled because the disabled
+ * <h2>Performance</h2>
+ * In simple use logging affects performance even when disabled because the disabled
  * check happens inside the {@link VMLogger} log methods, so the cost of the argument marshalling
  * and method call is always paid when used in the straightforward manner, e.g.:
  *
@@ -86,13 +87,18 @@ import com.sun.max.vm.thread.*;
  * to use disjunctive conditions that could result in a value of {@code true} for
  * the guard when {@code logger.enabled()} would return false when one of the conditions
  * returned {@code true}. E.g.,
- *
- * {@code if {a || b} { logger.log(op, arg1, arg2);}}
- *
+ *<pre>
+ * if {a || b} {
+ *     logger.log(op, arg1, arg2);
+ * }
+ * </pre>
  * Conjunctive conditions can be useful. For example, say we wanted to suppress
  * logging until a counter reaches a certain value:
- *
- * {@code if (logger.enabled() && count >= value) { logger.log(op, arg1, arg2);}}
+ * <pre>
+ * if (logger.enabled() && count >= value) {
+ *     logger.log(op, arg1, arg2);
+ * }
+ * </pre>
  * <p>
  * It is possible to have one logger override the default settings for other loggers.
  * E.g., say we have loggers A and B, but we want a way to turn both loggers on with
@@ -111,6 +117,57 @@ import com.sun.max.vm.thread.*;
  * <p>
  * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid nasty circularities,
  * see {@link VMLog#setThreadState(boolean)}.
+ * <h2>Useful Conventions</h2>
+ * To simplify the display of arguments by the Inspector, given that {@link Reference} values
+ * cannot be logged, and to mitigate the code changes necessary should that change (likely),
+ * it is recommended to follow the conventions below:
+ *
+ * Create a public {@code enum} named {@code Operation} inside the logger class, with mnemomic
+ * names for the operations, e.g.:
+ * <pre>
+ * public static class AllocationLogger extends VMLogger {
+ *     public enum Operation {
+ *         Clone, ...
+ *     }
+ *     ...
+ * }
+ * </pre>
+ * Note that the enum constants are not all upper case, as is conventional, because they are used
+ * to match the log method names.
+ * <p>
+ * Override the {@link #operationName(int)}method as follows:
+ * <pre>
+ * public String operationName(int op) {
+ *     return Operation.values()[op].name();
+ * }
+ * </pre>
+ * <p>
+ * Create log methods with arguments that reflect the values you want to log (even if they are reference types}, e.g.:
+ *
+ * <pre>
+ * void logClone(Hub hub, Object clone) {
+ *     log(Operation.Copy.ordinal(), hub.classActor.id, Layout.originToCell(ObjectAccess.toOrigin(clone)));
+ * }
+ * </pre>
+ * Then invoke {@code logClone} at the appropriate place in the code, typically guarded by a check that
+ * the logger is enabled.
+ * <p>
+ * The Inspector will be able to display the arguments appropriately, by using reflection to discover the
+ * types of the arguments. If reference value logging becomes possible, only the implementation of
+ * the {@code logXXX} methods will need to be changed.
+ * <p>
+ * These methods will typically not exist in the boot image as they will be inlined at the use site.
+ *
+ * <h3>Tracing</h3>
+ * When the tracing option is enabled, {@link #doTrace(Record)} is invoked immediately after
+ * the log record is created. After checking that calls to the {@link Log} class are possible,
+ * {@link Log#lock} is called, then {@link #trace(Record)} is called, followed by {@link Log#unlock}.
+ * <p>
+ * A default implementation of {@link #trace} is provided that calls methods in the
+ * {@link Log} class to print the logger name, thread name and arguments. There are two ways to
+ * customize the output. The first is to override the {@link #logArg(int, Word)} method
+ * to customize the output of a particular argument - the default action is to print the value
+ * as a hex number. The second is to override {@link #trace}  and do full customization.
  *
  */
 public class VMLogger {
@@ -219,14 +276,24 @@ public class VMLogger {
     }
 
     /**
-     * Provides a string decoding of an argument value.
+     * Provides a custom string decoding of an argument value. Intended for simple Inspector use only.
      * @param op the operation id
      * @param argNum the argument index in the original log call, {@code [0 .. argCount - 1])
      * @param arg the argument value from the original log call
-     * @return a descriptive string. Default implementation is raw value as hex.
+     * @return a custom string or null if no custom decoding for this arg
      */
-    protected String argString(int argNum, Word arg) {
-        return Long.toHexString(arg.asAddress().toLong());
+    @HOSTED_ONLY
+    public String inspectedArg(int op, int argNum, Word arg) {
+        return null;
+    }
+
+    /**
+     * Custom logging of an argument. Default prints as hex.
+     * @param argNum
+     * @param arg
+     */
+    protected void logArg(int argNum, Word arg) {
+        Log.print(arg);
     }
 
     @INLINE
@@ -266,7 +333,7 @@ public class VMLogger {
         int argCount = r.getArgCount();
         for (int i = 1; i <= argCount; i++) {
             Log.print(' ');
-            Log.print(argString(i, r.getArg(i)));
+            logArg(i, r.getArg(i));
         }
         Log.println();
     }
