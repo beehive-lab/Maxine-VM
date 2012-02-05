@@ -106,11 +106,11 @@ public abstract class VMLogNativeThread extends VMLogNative {
 
     @Override
     public boolean setThreadState(boolean value) {
-        int bit = value ? 0 : 1;
+        int bit = value ? 0 : DISABLED;
         Pointer tla = VmThread.currentTLA();
         Address offsets = VMLOG_BUFFER_OFFSETS.load(tla);
         VMLOG_BUFFER_OFFSETS.store3(Address.fromLong((offsets.toLong() & DISABLED_MASK) | bit));
-        return (offsets.toLong() & DISABLED_MASK) == 0;
+        return (offsets.toLong() & DISABLED) == 0;
     }
 
     @Override
