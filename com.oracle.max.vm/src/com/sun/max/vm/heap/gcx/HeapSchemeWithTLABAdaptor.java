@@ -144,13 +144,13 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         return thread instanceof VmOperationThread;
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public boolean supportsTagging() {
         return false;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean pin(Object object) {
         // Objects never relocate. So this is always safe.
         if (MaxineVM.isDebug()) {
@@ -159,7 +159,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         return true;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void unpin(Object object) {
         if (MaxineVM.isDebug()) {
             pinnedCounter.decrement();

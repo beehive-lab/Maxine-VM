@@ -214,7 +214,7 @@ public final class Pointer extends Address implements Accessor {
     }
 
     @Override
-    @INLINE(override = true)
+    @INLINE
     public boolean isWordAligned() {
         return super.isWordAligned();
     }

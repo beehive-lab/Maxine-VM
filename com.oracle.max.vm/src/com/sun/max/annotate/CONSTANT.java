@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,26 +21,17 @@
  * questions.
  */
 package com.sun.max.annotate;
-
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated method is never to be inlined by the compiler.
+ * Marker indicating that a field is immutable with respect to all reads of its value.
+ * That is, it is never updated after the first time it is read.
  *
- * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
- * for semantic reasons. Typically, this is to ensure that a separate activation frame is
- * always used for a call to the method.
+ * <b>It is up to the programmer to maintain this invariant!</b>
  *
- * This annotation can also be applied to a class in which is equivalent to applying
- * it to all the methods in the class <b>except</b> for those explicitly annotated with
- * {@link INLINE}.
+ * The value may be the dewfault value of the field's type (e.g. {@code null}, 0, etc).
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface NEVER_INLINE {
-
-    /**
-     * Documents the reason why the annotated code must notbe inlined.
-     */
-    String value() default "";
+@Target(ElementType.FIELD)
+public @interface CONSTANT {
 }

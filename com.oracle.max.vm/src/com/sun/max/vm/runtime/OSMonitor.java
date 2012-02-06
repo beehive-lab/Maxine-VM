@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ public class OSMonitor {
     /**
      * A per-thread monitor used for suspend and resume.
      */
-    public static class SuspendMonitor {
+    public static final class SuspendMonitor {
         private Word condition;
         private Word mutex;
 

@@ -181,19 +181,19 @@ public final class Size extends Address {
         return super.wordAligned().asSize();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public Size alignUp(int alignment) {
         return super.alignUp(alignment).asSize();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public Size alignDown(int alignment) {
         return super.alignDown(alignment).asSize();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public boolean isWordAligned() {
         return super.isWordAligned();

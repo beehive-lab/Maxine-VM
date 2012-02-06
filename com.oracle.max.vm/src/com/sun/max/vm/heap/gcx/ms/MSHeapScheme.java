@@ -184,7 +184,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         return objectSpace.usedSpace();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void writeBarrier(Reference from, Reference to) {
     }
 

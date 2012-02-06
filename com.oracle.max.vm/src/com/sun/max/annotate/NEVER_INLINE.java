@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,17 +21,26 @@
  * questions.
  */
 package com.sun.max.annotate;
+
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated method must must have no arguments (apart from a receiver for a non-static method).
- * It must also be purely functional (without side-effects)
- * and idempotent (not influenced by any changing state).
+ * Every thus annotated method is never to be inlined by the compiler.
  *
- * If the method is static, it is to be meta-evaluated unconditionally by the compiler.
- * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
+ * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
+ * for semantic reasons. Typically, this is to ensure that a separate activation frame is
+ * always used for a call to the method.
+ *
+ * This annotation can also be applied to a class in which is equivalent to applying
+ * it to all the methods in the class <b>except</b> for those explicitly annotated with
+ * {@link INLINE}.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface FOLD {
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface NEVER_INLINE {
+
+    /**
+     * Documents the reason why the annotated code must notbe inlined.
+     */
+    String value() default "";
 }

@@ -20,33 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.annotate;
+import java.lang.annotation.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-
-final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
-
-    public ContiguousHeapRootCellVisitor() {
-        super();
-    }
-
-    @Override
-    void reset() {
-        super.reset();
-        bottom = heapMarker.coveredAreaStart;
-    }
-
-    /**
-     * Marking cell referenced from outside of the covered area.
-     * If the cell is itself outside of the covered area, nothing is done.
-     *
-     * @param cell a pointer read from an external root (may be zero).
-     */
-    @INLINE
-    @Override
-    boolean isNonNullCovered(Pointer cell) {
-        // Note: the first test also acts as a null pointer filter.
-        return true;
-    }
+/**
+ * Every thus annotated method is to be inlined unconditionally by the VM's optimizing compiler
+ * and the receiver is never null-checked.
+ *
+ * This annotation exists primarily for annotating methods that <b>must</b> be inlined
+ * for semantic reasons as opposed to those that could be inlined for performance reasons.
+ * Using this annotation for the latter should be done very rarely and only when
+ * profiling highlights a performance bottleneck or such a bottleneck is known <i>a priori</i>.
+ *
+ * Before checking for this annotation at a call site, the compiler should apply
+ * devirtualization first (if applicable). The result of this step is then checked
+ * for the annotation. As such, one should always check to the compiler output to
+ * ensure applying this annotation to a virtual method does what you expect(ed).
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface INLINE {
 }
