@@ -661,8 +661,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
     public void writeWord(Reference ref, int offset, Word value) {
         if (ref instanceof LocalTeleReference) {
-            final BoxedWord boxedWord = new BoxedWord(value); // avoiding word/ref kind mismatch
-            writeField(ref, offset, boxedWord);
+            writeField(ref, offset, value);
             return;
         }
 

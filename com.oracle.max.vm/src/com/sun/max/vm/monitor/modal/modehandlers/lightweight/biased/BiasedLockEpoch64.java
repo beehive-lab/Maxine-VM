@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
 /**
 
  */
-public abstract class BiasedLockEpoch64 extends Word {
+public final class BiasedLockEpoch64 extends Word {
 
     private static final BiasedLockEpoch64 UNUSED = BiasedLockEpoch64.from(Word.zero());
     private static final BiasedLockEpoch64 BULK_REVOCATION = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
@@ -39,16 +39,17 @@ public abstract class BiasedLockEpoch64 extends Word {
     private static final BiasedLockEpoch64 MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
 
     @HOSTED_ONLY
-    protected BiasedLockEpoch64() {
+    public BiasedLockEpoch64(long value) {
+        super(value);
     }
 
     @INTRINSIC(UNSAFE_CAST)
     public static BiasedLockEpoch64 from(Word word) {
-        return new BoxedBiasedLockEpoch64(word);
+        return new BiasedLockEpoch64(word.value);
     }
 
     @INLINE
-    final BiasedLockEpoch64 increment() {
+    BiasedLockEpoch64 increment() {
         if (this.equals(MAX)) {
             return MIN;
         }
@@ -57,12 +58,12 @@ public abstract class BiasedLockEpoch64 extends Word {
     }
 
     @INLINE
-    final boolean isBulkRevocation() {
+    boolean isBulkRevocation() {
         return equals(BULK_REVOCATION);
     }
 
     @INLINE
-    static final BiasedLockEpoch64 bulkRevocation() {
+    static BiasedLockEpoch64 bulkRevocation() {
         return BULK_REVOCATION;
     }
 

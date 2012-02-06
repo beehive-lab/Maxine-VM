@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,37 +90,29 @@ public final class JavaTypeDescriptor {
      */
     public static final class WordTypeDescriptor extends TypeDescriptorEntry {
         /**
-         * The {@link Class} instance of a {@linkplain Boxed non-boxed} word type descriptor
-         * or the {@link Class#getName() name} of the class implementing a boxed word type.
-         * The latter only exist when in hosted mode.
+         * The {@link Class} instance of a word type descriptor.
          */
-        public final Object javaClass;
+        public final Class javaClass;
 
         @HOSTED_ONLY
         WordTypeDescriptor(String name, Class javaClass) {
             super(name);
-            this.javaClass = Boxed.class.isAssignableFrom(javaClass) ? javaClass.getName() : javaClass;
+            this.javaClass = javaClass;
         }
 
         @Override
         public boolean isResolvableWithoutClassLoading(ClassLoader classLoader) {
-            return javaClass instanceof Class;
+            return true;
         }
 
         @Override
         public Class resolveType(ClassLoader classLoader) {
-            if (javaClass instanceof Class) {
-                return (Class) javaClass;
-            }
-            throw new NoClassDefFoundError(javaClass.toString());
+            return javaClass;
         }
 
         @Override
         public String toJavaString() {
-            if (javaClass instanceof Class) {
-                return ((Class) javaClass).getName();
-            }
-            return javaClass.toString();
+            return javaClass.getName();
         }
 
         @Override

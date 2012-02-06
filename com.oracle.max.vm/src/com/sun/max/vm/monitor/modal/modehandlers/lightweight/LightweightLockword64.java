@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.*;
 /**
  * Provides common bit-field definitions and method-level access for lightweight lock words.
  */
-public abstract class LightweightLockword64 extends HashableLockword64 {
+public class LightweightLockword64 extends HashableLockword64 {
 
     /*
      * Field layout:
@@ -59,7 +59,8 @@ public abstract class LightweightLockword64 extends HashableLockword64 {
     protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
 
     @HOSTED_ONLY
-    protected LightweightLockword64() {
+    public LightweightLockword64(long value) {
+        super(value);
     }
 
     /**
@@ -90,7 +91,7 @@ public abstract class LightweightLockword64 extends HashableLockword64 {
      */
     @INTRINSIC(UNSAFE_CAST)
     public static LightweightLockword64 from(Word word) {
-        return new BoxedLightweightLockword64(word);
+        return new LightweightLockword64(word.value);
     }
 
     /**

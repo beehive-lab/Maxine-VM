@@ -24,6 +24,9 @@ package com.sun.max.memory;
 
 import static com.sun.max.vm.MaxineVM.*;
 
+import java.nio.*;
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -42,6 +45,12 @@ public final class Memory {
     private Memory() {
     }
 
+    @HOSTED_ONLY
+    private static byte[] buf = new byte[1024];
+
+    @HOSTED_ONLY
+    public static ByteBuffer memory = ByteBuffer.wrap(buf);
+
     public static final OutOfMemoryError OUT_OF_MEMORY_ERROR = new OutOfMemoryError();
     /**
      * Marker used for filling dead heap area when in debug mode.
@@ -53,7 +62,7 @@ public final class Memory {
     private static native Pointer memory_allocate(Size size);
 
     /**
-     * Allocates an alligned chunk of memory using a malloc(3)-like facility.
+     * Allocates an aligned chunk of memory using a malloc(3)-like facility.
      *
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
@@ -62,7 +71,20 @@ public final class Memory {
         if (size.toLong() < 0) {
             throw new IllegalArgumentException();
         }
-        return isHosted() ? BoxedMemory.allocate(size) : memory_allocate(size);
+        if (isHosted()) {
+            return boxedAllocate(size);
+        }
+        return memory_allocate(size);
+    }
+
+    @HOSTED_ONLY
+    private static synchronized Pointer boxedAllocate(Size size) {
+        int offset = buf.length;
+        int newLength = offset + size.toInt();
+        buf = Arrays.copyOf(buf, newLength);
+        memory = ByteBuffer.wrap(buf);
+        memory.order(ByteOrder.nativeOrder());
+        return Pointer.fromInt(offset);
     }
 
     /**
@@ -71,7 +93,7 @@ public final class Memory {
      * @throws OutOfMemoryError if allocation failed or log message and VM termination if early in bootstrap
      */
     public static Pointer mustAllocate(Size size) throws OutOfMemoryError, IllegalArgumentException {
-        final Pointer result = isHosted() ? BoxedMemory.allocate(size) : memory_allocate(size);
+        final Pointer result = isHosted() ? boxedAllocate(size) : memory_allocate(size);
         if (result.isZero()) {
             if (MaxineVM.isPrimordialOrPristine()) {
                 MaxineVM.reportPristineMemoryFailure("unknown", "mustAllocate", size);
@@ -96,7 +118,12 @@ public final class Memory {
     private static native Pointer memory_reallocate(Pointer block, Size size);
 
     public static Pointer reallocate(Pointer block, Size size) throws OutOfMemoryError, IllegalArgumentException {
-        return isHosted() ? BoxedMemory.reallocate(block, size) : memory_reallocate(block, size);
+        if (isHosted()) {
+            Pointer newBlock = allocate(size);
+            Memory.copyBytes(block, newBlock, size);
+            return newBlock;
+        }
+        return memory_reallocate(block, size);
     }
 
     @C_FUNCTION
@@ -106,7 +133,7 @@ public final class Memory {
         if (block.isZero()) {
             throw new IllegalArgumentException();
         }
-        final int errorCode = isHosted() ? BoxedMemory.deallocate(block) : memory_deallocate(block);
+        final int errorCode = isHosted() ? 0 /* TODO (ds): implement a free list */ : memory_deallocate(block);
         if (errorCode != 0) {
             throw ProgramError.unexpected("Memory.deallocate() failed with OS error code: " + errorCode);
         }

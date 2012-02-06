@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -392,7 +392,7 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     public void setWord(Reference ref, int displacement, int index, Word value) {
-        setValue(ref, displacement, index, new BoxedWord(value));
+        setValue(ref, displacement, index, value);
     }
 
     public void writeReference(Reference ref, Offset offset, Reference value) {
