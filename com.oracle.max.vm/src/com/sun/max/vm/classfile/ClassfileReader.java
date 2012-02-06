@@ -909,6 +909,7 @@ public final class ClassfileReader {
                             flags |= TEMPLATE | UNSAFE | INLINE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
+                            ProgramError.check(!isAbstract(flags), "Cannot apply " + INLINE.class.getName() + " to an abstract method: " + memberString(name, descriptor));
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
                         } else if (annotation.annotationType() == INTRINSIC.class) {

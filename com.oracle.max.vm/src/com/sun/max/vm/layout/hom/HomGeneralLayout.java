@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,13 +95,13 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         this.arrayLengthOffset = hubOffset - Word.size();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Pointer cellToOrigin(Pointer cell) {
         return cell.readWord(0).asAddress().isBitSet(0) ? cell.plus(-arrayLengthOffset) : cell.plus(-hubOffset);
     }
 
     @ACCESSOR(Pointer.class)
-    @INLINE(override = true)
+    @INLINE
     public Pointer originToCell(Pointer origin) {
         return !isTuple(origin) ? origin.plus(arrayLengthOffset) : origin.plus(hubOffset);
     }
@@ -145,7 +145,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return getHub(accessor).specificLayout;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final Size size(Accessor accessor) {
         final Hub hub = getHub(accessor);
         switch (hub.layoutCategory) {

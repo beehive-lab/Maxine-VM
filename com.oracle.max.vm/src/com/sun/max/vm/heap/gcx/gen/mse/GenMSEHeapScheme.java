@@ -358,20 +358,20 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
     }
 
-    @INLINE(override = true)
+    @INLINE
     @FOLD
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public void postWriteBarrier(Reference ref, Offset offset, Reference value) {
         cardTableRSet.record(ref, offset);
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
         cardTableRSet.record(ref, displacement, index);

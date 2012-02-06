@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,33 @@
  */
 package test.output;
 
+import com.sun.max.annotate.*;
+
 public class HelloWorld {
+
+    public static HelloWorld HW = new Subclass();
+
     public static void main(String[] args) {
         // DO NOT HACK ME!
         System.out.println("Hello World!");
+
+        HelloWorld hw = new HelloWorld();
+        System.out.println(hw.foo());
+        hw = new Subclass();
+        System.out.println(hw.foo());
+    }
+
+
+    @INLINE
+    public int foo() {
+        return 41;
+    }
+
+    static class Subclass extends HelloWorld {
+        @INLINE
+        @Override
+        public int foo() {
+            return 53;
+        }
     }
 }

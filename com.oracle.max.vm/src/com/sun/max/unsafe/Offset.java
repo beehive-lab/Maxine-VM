@@ -298,7 +298,7 @@ public class Offset extends Word {
         return plus(numberOfBytes - remainder(numberOfBytes));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset and(Offset operand) {
         if (Word.width() == 64) {
             return fromLong(toLong() & operand.toLong());
@@ -306,17 +306,17 @@ public class Offset extends Word {
         return fromInt(toInt() & operand.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset and(int operand) {
         return and(fromInt(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset and(long operand) {
         return and(fromLong(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset or(Offset operand) {
         if (Word.width() == 64) {
             return fromLong(toLong() | operand.toLong());
@@ -324,17 +324,17 @@ public class Offset extends Word {
         return fromInt(toInt() | operand.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset or(int operand) {
         return or(fromInt(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset or(long operand) {
         return or(fromLong(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset not() {
         if (Word.width() == 64) {
             return fromLong(~toLong());
@@ -347,13 +347,13 @@ public class Offset extends Word {
         return minus(remainder(numberOfBytes));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Offset aligned() {
         int n = Word.size();
         return plus(n - 1).and(Offset.fromInt(n - 1).not());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean isAligned() {
         int n = Word.size();
         return and(n - 1).equals(Offset.zero());

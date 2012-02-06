@@ -225,7 +225,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         return markSweepSpace.usedSpace();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void writeBarrier(Reference from, Reference to) {
     }
 
