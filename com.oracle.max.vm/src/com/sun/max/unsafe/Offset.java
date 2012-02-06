@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,15 +32,16 @@ import com.sun.max.program.*;
  * Offsets from addresses or pointers. Unlike an 'Address', an 'Offset' can be negative. Both types have the identical
  * number of bits used for representation. However, 'Offset' uses twos complement, whereas 'Address' is simply unsigned.
  */
-public abstract class Offset extends Word {
+public class Offset extends Word {
 
     @HOSTED_ONLY
-    protected Offset() {
+    public Offset(long value) {
+        super(value);
     }
 
     @INLINE
     public static Offset zero() {
-        return isHosted() ? BoxedOffset.ZERO : fromInt(0);
+        return isHosted() ? ZERO : fromInt(0);
     }
 
     @INLINE
@@ -51,10 +52,10 @@ public abstract class Offset extends Word {
     @INLINE
     public static Offset fromInt(int value) {
         if (isHosted()) {
-            return BoxedOffset.from(value);
+            return fromLong(value);
         }
         if (Word.width() == 64) {
-            final long n = value;
+            long n = value;
             return UnsafeCast.asOffset(n);
         }
         return UnsafeCast.asOffset(value);
@@ -63,12 +64,18 @@ public abstract class Offset extends Word {
     @INLINE
     public static Offset fromLong(long value) {
         if (isHosted()) {
-            return BoxedOffset.from(value);
+            if (value == 0) {
+                return ZERO;
+            }
+            if (value >= Cache.LOWEST_VALUE && value <= Cache.HIGHEST_VALUE) {
+                return Cache.cache[(int) value - Cache.LOWEST_VALUE];
+            }
+            return new Offset(value);
         }
         if (Word.width() == 64) {
             return UnsafeCast.asOffset(value);
         }
-        final int n = (int) value;
+        int n = (int) value;
         return UnsafeCast.asOffset(n);
     }
 
@@ -79,23 +86,21 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final int toInt() {
+    public int toInt() {
         if (isHosted()) {
-            final BoxedOffset box = (BoxedOffset) this;
-            return (int) box.value();
+            return (int) value;
         }
         if (Word.width() == 64) {
-            final long n = UnsafeCast.asLong(this);
+            long n = UnsafeCast.asLong(this);
             return (int) n;
         }
         return UnsafeCast.asInt(this);
     }
 
     @INLINE
-    public final long toLong() {
+    public long toLong() {
         if (isHosted()) {
-            final BoxedOffset box = (BoxedOffset) this;
-            return box.value();
+            return value;
         }
         if (Word.width() == 64) {
             return UnsafeCast.asLong(this);
@@ -104,7 +109,7 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final int compareTo(Offset other) {
+    public int compareTo(Offset other) {
         if (greaterThan(other)) {
             return 1;
         }
@@ -115,7 +120,7 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean equals(int other) {
+    public boolean equals(int other) {
         if (isHosted()) {
             return toLong() == other;
         }
@@ -123,7 +128,7 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean lessEqual(Offset other) {
+    public boolean lessEqual(Offset other) {
         if (Word.width() == 64) {
             return toLong() <= other.toLong();
         }
@@ -131,12 +136,12 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean lessEqual(int other) {
+    public boolean lessEqual(int other) {
         return lessEqual(fromInt(other));
     }
 
     @INLINE
-    public final boolean lessThan(Offset other) {
+    public boolean lessThan(Offset other) {
         if (Word.width() == 64) {
             return toLong() < other.toLong();
         }
@@ -144,12 +149,12 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean lessThan(int other) {
+    public boolean lessThan(int other) {
         return lessThan(fromInt(other));
     }
 
     @INLINE
-    public final boolean greaterEqual(Offset other) {
+    public boolean greaterEqual(Offset other) {
         if (Word.width() == 64) {
             return toLong() >= other.toLong();
         }
@@ -157,12 +162,12 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean greaterEqual(int other) {
+    public boolean greaterEqual(int other) {
         return greaterEqual(fromInt(other));
     }
 
     @INLINE
-    public final boolean greaterThan(Offset other) {
+    public boolean greaterThan(Offset other) {
         if (Word.width() == 64) {
             return toLong() > other.toLong();
         }
@@ -170,12 +175,12 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean greaterThan(int other) {
+    public boolean greaterThan(int other) {
         return greaterThan(fromInt(other));
     }
 
     @INLINE
-    public final Offset negate() {
+    public Offset negate() {
         if (Word.width() == 64) {
             return fromLong(-toLong());
         }
@@ -183,7 +188,7 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final boolean isNegative() {
+    public boolean isNegative() {
         if (Word.width() == 64) {
             return toLong() < 0L;
         }
@@ -191,7 +196,7 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset plus(Offset addend) {
+    public Offset plus(Offset addend) {
         if (Word.width() == 64) {
             return fromLong(toLong() + addend.toLong());
         }
@@ -199,22 +204,22 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset plus(Size addend) {
+    public Offset plus(Size addend) {
         return plus(addend.asOffset());
     }
 
     @INLINE
-    public final Offset plus(int addend) {
+    public Offset plus(int addend) {
         return plus(fromInt(addend));
     }
 
     @INLINE
-    public final Offset plus(long addend) {
+    public Offset plus(long addend) {
         return plus(fromLong(addend));
     }
 
     @INLINE
-    public final Offset minus(Offset subtrahend) {
+    public Offset minus(Offset subtrahend) {
         if (Word.width() == 64) {
             return fromLong(toLong() - subtrahend.toLong());
         }
@@ -222,22 +227,22 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset minus(Size subtrahend) {
+    public Offset minus(Size subtrahend) {
         return minus(subtrahend.asOffset());
     }
 
     @INLINE
-    public final Offset minus(int subtrahend) {
+    public Offset minus(int subtrahend) {
         return minus(fromInt(subtrahend));
     }
 
     @INLINE
-    public final Offset minus(long subtrahend) {
+    public Offset minus(long subtrahend) {
         return minus(fromLong(subtrahend));
     }
 
     @INLINE
-    public final Offset times(Offset factor) {
+    public Offset times(Offset factor) {
         if (Word.width() == 64) {
             return fromLong(toLong() * factor.toLong());
         }
@@ -245,17 +250,17 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset times(Address factor) {
+    public Offset times(Address factor) {
         return times(factor.asOffset());
     }
 
     @INLINE
-    public final Offset times(int factor) {
+    public Offset times(int factor) {
         return times(fromInt(factor));
     }
 
     @INLINE
-    public final Offset dividedBy(Offset divisor) throws ArithmeticException {
+    public Offset dividedBy(Offset divisor) throws ArithmeticException {
         if (Word.width() == 64) {
             return fromLong(toLong() / divisor.toLong());
         }
@@ -263,12 +268,12 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset dividedBy(int divisor) throws ArithmeticException {
+    public Offset dividedBy(int divisor) throws ArithmeticException {
         return dividedBy(fromInt(divisor));
     }
 
     @INLINE
-    public final Offset remainder(Offset divisor) throws ArithmeticException {
+    public Offset remainder(Offset divisor) throws ArithmeticException {
         if (Word.width() == 64) {
             return fromLong(toLong() % divisor.toLong());
         }
@@ -276,17 +281,17 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final int remainder(int divisor) throws ArithmeticException {
+    public int remainder(int divisor) throws ArithmeticException {
         return remainder(fromInt(divisor)).toInt();
     }
 
     @INLINE
-    public final boolean isRoundedBy(int numberOfBytes) {
+    public boolean isRoundedBy(int numberOfBytes) {
         return remainder(numberOfBytes) == 0;
     }
 
     @INLINE
-    public final Offset roundedUpBy(int numberOfBytes) {
+    public Offset roundedUpBy(int numberOfBytes) {
         if (isRoundedBy(numberOfBytes)) {
             return this;
         }
@@ -338,32 +343,32 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
-    public final Offset roundedDownBy(int numberOfBytes) {
+    public Offset roundedDownBy(int numberOfBytes) {
         return minus(remainder(numberOfBytes));
     }
 
     @INLINE(override = true)
-    public final Offset aligned() {
-        final int n = Word.size();
+    public Offset aligned() {
+        int n = Word.size();
         return plus(n - 1).and(Offset.fromInt(n - 1).not());
     }
 
     @INLINE(override = true)
-    public final boolean isAligned() {
-        final int n = Word.size();
+    public boolean isAligned() {
+        int n = Word.size();
         return and(n - 1).equals(Offset.zero());
     }
 
     @HOSTED_ONLY
-    public final int numberOfEffectiveBits() {
+    public int numberOfEffectiveBits() {
         if (Word.width() == 64) {
-            final long n = toLong();
+            long n = toLong();
             if (n >= 0) {
                 return 64 - Long.numberOfLeadingZeros(n);
             }
             return 65 - Long.numberOfLeadingZeros(~n);
         }
-        final int n = toInt();
+        int n = toInt();
         if (n >= 0) {
             return 32 - Integer.numberOfLeadingZeros(n);
         }
@@ -371,8 +376,8 @@ public abstract class Offset extends Word {
     }
 
     @HOSTED_ONLY
-    public final WordWidth effectiveWidth() {
-        final int bit = numberOfEffectiveBits();
+    public WordWidth effectiveWidth() {
+        int bit = numberOfEffectiveBits();
         for (WordWidth width : WordWidth.values()) {
             if (bit < width.numberOfBits) {
                 return width;
@@ -380,4 +385,25 @@ public abstract class Offset extends Word {
         }
         throw ProgramError.unexpected();
     }
+
+    @HOSTED_ONLY
+    public static Offset ZERO = new Offset(0);
+
+    @HOSTED_ONLY
+    private static class Cache {
+        private Cache() {
+        }
+
+        static int LOWEST_VALUE = -100;
+        static int HIGHEST_VALUE = 1000;
+
+        static Offset[] cache = new Offset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
+
+        static {
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new Offset(i + LOWEST_VALUE);
+            }
+        }
+    }
 }
+

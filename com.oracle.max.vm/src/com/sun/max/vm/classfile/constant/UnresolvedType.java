@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,9 +54,7 @@ public abstract class UnresolvedType implements RiType {
             return ClassActor.fromJava(atom.toKind().javaClass);
         } else if (typeDescriptor instanceof WordTypeDescriptor) {
             final WordTypeDescriptor word = (WordTypeDescriptor) typeDescriptor;
-            if (word.javaClass instanceof Class) {
-                return ClassActor.fromJava((Class) word.javaClass);
-            }
+            return ClassActor.fromJava(word.javaClass);
         } else if (accessingClass != null) {
             if (accessingClass instanceof ClassActor) {
                 ClassLoader loader = ((ClassActor) accessingClass).classLoader;

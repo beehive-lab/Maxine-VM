@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 /**
  * Abstracts access to a thin lock word's bit fields.
  */
-public abstract class ThinLockword64 extends LightweightLockword64 {
+public class ThinLockword64 extends LightweightLockword64 {
 
     /*
      * bit [63........................................ 1  0]     Shape         Lock-state
@@ -52,7 +52,8 @@ public abstract class ThinLockword64 extends LightweightLockword64 {
     private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
     @HOSTED_ONLY
-    protected ThinLockword64() {
+    public ThinLockword64(long value) {
+        super(value);
     }
 
     /**
@@ -85,7 +86,7 @@ public abstract class ThinLockword64 extends LightweightLockword64 {
      */
     @INTRINSIC(UNSAFE_CAST)
     public static ThinLockword64 from(Word word) {
-        return new BoxedThinLockword64(word);
+        return new ThinLockword64(word.value);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -45,9 +44,6 @@ import com.sun.max.vm.value.*;
  * Subclasses define extra operations such as {@linkplain Offset signed} and {@linkplain Address unsigned}
  * arithmetic, and {@linkplain Pointer pointer} operations.
  *
- * In a {@linkplain MaxineVM#isHosted() hosted} runtime, {@code Word} type values are implemented with
- * {@linkplain Boxed boxed} values.
- *
  * The closure of {@code Word} types (i.e. all the classes that subclass {@link Word}) is {@linkplain #getSubclasses() discovered}
  * during initialization in a hosted environment. This discovery mechanism relies on the same package based
  * facility used to configure the schemes of a VM. Each package that defines one or more {@code Word} subclasses
@@ -55,11 +51,14 @@ import com.sun.max.vm.value.*;
  *
  * @see WordValue
  */
-public abstract class Word {
+public class Word {
+
+    @HOSTED_ONLY
+    public static final long INT_MASK = 0x00000000ffffffffL;
 
     /**
      * The array of all the subclasses of {@link Word} that are accessible in the VM boot image configuration
-     * in hosted mode. This value of this array and {@link #unboxedToBoxedTypes} is constructed
+     * in hosted mode. This value of this array is constructed
      * by scanning the {@link VMConfiguration#bootImagePackages packages (that subclasses {@link BootImagePackage}).
      * Any instance that overrides the {@link BootImagePackage#wordSubclasses()} method
      * has it invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
@@ -68,52 +67,38 @@ public abstract class Word {
     private static Class[] classes;
 
     /**
-     * Constructed as a side effect of the first call to {@link #getSubclasses()}.
-     */
-    @HOSTED_ONLY
-    private static Map<Class, Class> unboxedToBoxedTypes;
-
-    /**
      * Gets all the classes VM (boot image) configuration that subclass {@link Word}.
      */
     @HOSTED_ONLY
     public static Class[] getSubclasses() {
         if (classes == null) {
-            final Map<Class, Class> map = new HashMap<Class, Class>();
+            final ArrayList<Class> list = new ArrayList<Class>();
             for (BootImagePackage pkg : VMConfiguration.vmConfig().bootImagePackages) {
                 Class[] wordClasses = pkg.wordSubclasses();
                 if (wordClasses != null) {
                     for (Class wordClass : wordClasses) {
                         String wordClassName = wordClass.getName();
-                        assert !Boxed.class.isAssignableFrom(wordClass) : "Boxed types should not be explicitly registered: " + wordClass.getName();
                         assert Classes.getPackageName(wordClassName).equals(pkg.name()) :
                             "Word subclass " + wordClass.getName() + " should be registered by " +
                             Classes.getPackageName(wordClassName) + ".Package not " + pkg + ".Package";
-                        Class unboxedClass = wordClass;
-                        String boxedClassName = Classes.getPackageName(unboxedClass.getName()) + ".Boxed" + unboxedClass.getSimpleName();
-                        try {
-                            Class boxedClass = Class.forName(boxedClassName, false, Word.class.getClassLoader());
-                            map.put(unboxedClass, boxedClass);
-                        } catch (ClassNotFoundException e) {
-                            // There is no boxed version for this unboxed type
-                            map.put(unboxedClass, unboxedClass);
-                        }
+                        list.add(wordClass);
                     }
                 }
 
             }
-            HashSet<Class> allClasses = new HashSet<Class>();
-            allClasses.addAll(map.keySet());
-            allClasses.addAll(map.values());
-            classes = allClasses.toArray(new Class[allClasses.size()]);
-            unboxedToBoxedTypes = map;
+            classes = list.toArray(new Class[list.size()]);
         }
 
         return classes;
     }
 
     @HOSTED_ONLY
-    protected Word() {
+    public Word(long value) {
+        if (Word.width() == 64) {
+            this.value = value;
+        } else {
+            this.value = value & INT_MASK;
+        }
     }
 
     @INLINE
@@ -148,47 +133,42 @@ public abstract class Word {
 
     @INTRINSIC(UNSAFE_CAST)
     public final JniHandle asJniHandle() {
-        if (this instanceof BoxedJniHandle) {
-            return (BoxedJniHandle) this;
+        if (this instanceof JniHandle) {
+            return (JniHandle) this;
         }
-        final Boxed box = (Boxed) this;
-        return BoxedJniHandle.from(box.value());
+        return new JniHandle(value);
     }
 
     @INTRINSIC(UNSAFE_CAST)
     public final Address asAddress() {
-        if (this instanceof BoxedAddress) {
-            return (BoxedAddress) this;
+        if (this instanceof Address) {
+            return (Address) this;
         }
-        final Boxed box = (Boxed) this;
-        return BoxedAddress.from(box.value());
+        return Address.fromLong(value);
     }
 
     @INTRINSIC(UNSAFE_CAST)
     public final Offset asOffset() {
-        if (this instanceof BoxedOffset) {
-            return (BoxedOffset) this;
+        if (this instanceof Offset) {
+            return (Offset) this;
         }
-        final Boxed box = (Boxed) this;
-        return BoxedOffset.from(box.value());
+        return Offset.fromLong(value);
     }
 
     @INTRINSIC(UNSAFE_CAST)
     public final Size asSize() {
-        if (this instanceof BoxedSize) {
-            return (BoxedSize) this;
+        if (this instanceof Size) {
+            return (Size) this;
         }
-        final Boxed box = (Boxed) this;
-        return BoxedSize.from(box.value());
+        return Size.fromLong(value);
     }
 
     @INTRINSIC(UNSAFE_CAST)
     public final Pointer asPointer() {
-        if (this instanceof BoxedPointer) {
-            return (BoxedPointer) this;
+        if (this instanceof Pointer) {
+            return (Pointer) this;
         }
-        final Boxed box = (Boxed) this;
-        return BoxedPointer.from(box.value());
+        return Pointer.fromLong(value);
     }
 
     /**
@@ -205,15 +185,6 @@ public abstract class Word {
     @INLINE
     public final int mostSignificantBitSet() {
         return Intrinsics.mostSignificantBit(this);
-    }
-
-    @HOSTED_ONLY
-    public static <Word_Type extends Word> Class<? extends Word_Type> getBoxedType(Class<Word_Type> wordType) {
-        if (Boxed.class.isAssignableFrom(wordType)) {
-            return wordType;
-        }
-        final Class<Class<? extends Word_Type>> type = null;
-        return Utils.cast(type, unboxedToBoxedTypes.get(wordType));
     }
 
     @HOSTED_ONLY
@@ -234,8 +205,8 @@ public abstract class Word {
             return wordType.cast(asOffset());
         }
         try {
-            final Constructor constructor = getBoxedType(wordType).getConstructor(Boxed.class);
-            return wordType.cast(constructor.newInstance((Boxed) this));
+            final Constructor constructor = wordType.getConstructor(long.class);
+            return wordType.cast(constructor.newInstance(value));
         } catch (Throwable throwable) {
             throw ProgramError.unexpected(throwable);
         }
@@ -328,8 +299,7 @@ public abstract class Word {
     @INLINE
     public final boolean isZero() {
         if (isHosted()) {
-            final Boxed box = (Boxed) this;
-            return box.value() == 0;
+            return value == 0;
         }
         return equals(Word.zero());
     }
@@ -337,8 +307,7 @@ public abstract class Word {
     @INLINE
     public final boolean isNotZero() {
         if (isHosted()) {
-            final Boxed box = (Boxed) this;
-            return box.value() != 0;
+            return value != 0;
         }
         return !equals(Word.zero());
     }
@@ -346,8 +315,7 @@ public abstract class Word {
     @INLINE
     public final boolean isAllOnes() {
         if (isHosted()) {
-            final Boxed box = (Boxed) this;
-            return box.value() == -1;
+            return value == -1;
         }
         return equals(Word.allOnes());
     }
@@ -355,9 +323,7 @@ public abstract class Word {
     @INLINE
     public final boolean equals(Word other) {
         if (isHosted()) {
-            final Boxed thisBox = (Boxed) this;
-            final Boxed otherBox = (Boxed) other;
-            return thisBox.value() == otherBox.value();
+            return value == other.value;
         }
         if (Word.width() == 64) {
             return asOffset().toLong() == other.asOffset().toLong();
@@ -368,7 +334,7 @@ public abstract class Word {
     @INLINE
     public final boolean equals(CodePointer other) {
         if (isHosted()) {
-            return ((Boxed) this).value() == other.toLong();
+            return value == other.toLong();
         }
         return asAddress().toLong() == other.toLong();
     }
@@ -424,4 +390,7 @@ public abstract class Word {
             endianness.writeInt(outputStream, asAddress().toInt());
         }
     }
+
+    @HOSTED_ONLY
+    public final long value;
 }

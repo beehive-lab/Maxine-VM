@@ -410,6 +410,9 @@ public final class DependenciesManager {
             // This isn't true anymore, so update the mark.
             ancestor.uniqueConcreteType = HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
             ancestor = ancestor.superClassActor;
+            if (ancestor == null) {
+                break;
+            }
             assert ancestor.uniqueConcreteType != NO_CONCRETE_SUBTYPE_MARK : "must have at least one concrete sub-type";
         }
         // We reached an ancestor with multiple concrete sub types. From here on, all ancestors can only have

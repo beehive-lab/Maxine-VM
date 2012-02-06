@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -685,9 +685,9 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                 return (WordValue) boxedJavaValue;
             }
             if (isHosted()) {
-                if (boxedJavaValue instanceof Boxed) {
-                    final Boxed box = (Boxed) boxedJavaValue;
-                    return new WordValue(Address.fromLong(box.value()));
+                if (boxedJavaValue instanceof Word) {
+                    final Word box = (Word) boxedJavaValue;
+                    return new WordValue(box);
                 }
             }
             if (boxedJavaValue == null) {
