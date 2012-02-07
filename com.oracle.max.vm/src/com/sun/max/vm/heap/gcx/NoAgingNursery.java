@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
  * A simple nursery implementation that allocates objects in a single contiguous space and evacuate all survivors to the next generation on minor collections.
  * The next generation is responsible for keeping a reserve large enough to accommodate the worst-case evacuation.
  */
-public class NoAgingNursery implements HeapSpace {
+public final class NoAgingNursery implements HeapSpace {
 
     final class NurseryRefiller extends Refiller {
         @Override
@@ -69,7 +69,8 @@ public class NoAgingNursery implements HeapSpace {
     /**
      * Atomic bump pointer allocator over the nursery space. The current bounds and size of the nursery are obtained from the allocator's start and end addresses.
      */
-    private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
+    private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller()) {
+    };
 
     public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
         this.heapAccount = heapAccount;

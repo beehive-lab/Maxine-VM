@@ -51,6 +51,11 @@ public class HeapFreeChunk {
 
     public static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
+    @FOLD
+    public static Size heapFreeChunkHeaderSize() {
+        return HeapFreeChunk.HEAP_FREE_CHUNK_HUB.tupleSize;
+    }
+
     /**
      * Index of the word storing "next" field of the heap free chunk.
      */
