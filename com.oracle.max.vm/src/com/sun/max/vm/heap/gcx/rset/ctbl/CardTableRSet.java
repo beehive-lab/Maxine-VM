@@ -149,6 +149,11 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
         cardTableMemory = new MemoryRegion("Card and FOT tables");
     }
 
+    /**
+     * Initialization of the card-table remembered set according to VM initialization phase.
+     *
+     * @param phase the initializing phase the VM is initializing for
+     */
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
             if (phase == Phase.BOOTSTRAPPING) {
@@ -163,13 +168,35 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
                 literalRecorder.fillLiteralLocations();
             }
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            // We need to initialize the card table to cover the boot region before hitting any write barriers.
+            // If heap size is specified by the end user, it can only be known at PRISTINE time. We need to initialize the card table to a valid memory address
+            // before that as some write barrier may be exercised before the heap is even allocated (e.g., to initialize a  VMOption in the boot region for instance).
+            // To this end, we initialize at PRIMORDIAL time the card table with enough memory to cover the boot region.
+            // This card table is temporary and will be replaced with the table covering the heap once this one is allocated (typically in PRISTINE initialization).
+
+            // FIXME: this for now assume that the heap scheme using the card table has (i) reserved enough virtual space to hold the boot region and the
+            // temporary card table, and (ii), has mapped the boot region at the start of this reserved space.
+            // The following relies on these assumption to use the end of the reserved virtual space for the temporary card table.
             final Size reservedSpace = Size.K.times(VMConfiguration.vmConfig().heapScheme().reservedVirtualSpaceKB());
             final Size bootCardTableSize = memoryRequirement(Heap.bootHeapRegion.size()).roundedUpBy(Platform.platform().pageSize);
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
+            FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
+                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
+                            "card table initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }
 
+    /**
+     * Initialize a card table covering a contiguous range of virtual address. The memory for the card table's data must be provided by the caller as the
+     * caller may want to enforcement some specific order between card table address and heap addresses.
+     * The amount of memory needed by the card table for a specific area to cover is computed using  {@link #memoryRequirement(Size)}.
+     * The amount of space needed
+     * @param coveredAreaStart
+     * @param coveredAreaSize
+     * @param cardTableDataStart
+     * @param cardTableDataSize
+     */
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
         cardTableMemory.setStart(cardTableDataStart);
         cardTableMemory.setSize(cardTableDataSize);
@@ -192,6 +219,11 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
         }
     }
 
+    /**
+     * Set the constant values representing the biased address of the card table in XIR snippets.
+     * Must be done once, after the final card table is initialized and before the compiler generates code using these XIR snippets.
+     * Typically, this is called at the end of the PRISTINE initialization of the heap scheme.
+     */
     public void initializeXirStartupConstants() {
         final CiConstant biasedCardTableCiConstant = CiConstant.forLong(cardTable.biasedTableAddress.toLong());
         for (XirBiasedCardTableConstant c : biasedCardTableAddressXirConstants) {
@@ -347,6 +379,11 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
         }
     }
 
+    /**
+     * Returns the amount of memory needed by the card table to cover a contiguous range of memory of the specified size.
+     * @param maxCoveredAreaSize the size of the contiguous range of memory that the card table should cover
+     * @return the number of bytes needed by the card table remembered set
+     */
     @Override
     public Size memoryRequirement(Size maxCoveredAreaSize) {
         return cardTable.tableSize(maxCoveredAreaSize).plus(cfoTable.tableSize(maxCoveredAreaSize));
@@ -440,6 +477,8 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
 
     @Override
     public void notifySplit(Address start, Address end, Size leftSize) {
+        // splitting dead space. No need to update card table: the original coalescing should have cleared all cards
+        // that overlap completely with the dead space. Others should be touched.
         cfoTable.split(start, start.plus(leftSize), end);
     }
 }
