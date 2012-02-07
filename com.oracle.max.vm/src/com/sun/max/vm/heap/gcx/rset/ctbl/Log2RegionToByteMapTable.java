@@ -156,7 +156,7 @@ public class Log2RegionToByteMapTable {
         }
     }
 
-    final int tableEntryIndex(Address coveredAddress) {
+    public final int tableEntryIndex(Address coveredAddress) {
         return coveredAddress.minus(coveredAreaStart).unsignedShiftedRight(log2RangeSize).toInt();
     }
 

@@ -255,6 +255,13 @@ public final class NoAgingEvacuator extends Evacuator {
             if (ptop.lessThan(limit)) {
                 // format remaining storage into dead space for parsability
                 fillWithDeadObject(ptop, limit);
+                cfoTable.set(ptop, limit);
+                if (MaxineVM.isDebug()) {
+                    final Address deadSpaceLastWordAddress = limit.minus(Word.size());
+                    if (CardTableRSet.alignDownToCard(ptop).lessThan(CardTableRSet.alignDownToCard(deadSpaceLastWordAddress))) {
+                        FatalError.check(ptop.equals(cfoTable.cellStart(rset.cardTable.tableEntryIndex(deadSpaceLastWordAddress))), "corrupted FOT");
+                    }
+                }
             }
             // Check if there is another chunk in the lab.
             Address chunk = pnextChunk;

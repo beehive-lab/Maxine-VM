@@ -26,10 +26,10 @@ import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 
 import com.sun.max.unsafe.*;
 /**
- * A simple, two-valued card table.
+ * Card table implementation, when cards can have two states only: clean and dirty (@see {@link CardState}).
  *
  */
-class CardTable extends  Log2RegionToByteMapTable {
+public final class CardTable extends  Log2RegionToByteMapTable {
     CardTable() {
         super(CardTableRSet.LOG2_CARD_SIZE);
     }
@@ -103,7 +103,7 @@ class CardTable extends  Log2RegionToByteMapTable {
      * @param cardState a card state
     * @return the index to the first card in the specified state, or the end index if none of the cards in the range are set to that state.
     */
-    final int first(int start, int end, CardState cardState) {
+    int first(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
         // We may also get rid of the limit test by making the end of the range looking like a marked card.
         // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
@@ -128,7 +128,7 @@ class CardTable extends  Log2RegionToByteMapTable {
      * @param cardState a card state
     * @return the index to the first card in a state different than the specified state, or the end index if  all the cards in the range have that state.
     */
-    final int firstNot(int start, int end, CardState cardState) {
+    int firstNot(int start, int end, CardState cardState) {
         // This may be optimized with special support from the compiler to exploit cpu-specific instruction for string ops (e.g.).
         // We may also get rid of the limit test by making the end of the range looking like a marked card.
         // e.g.:   tmp = limit.getByte(); limit.setByte(1);  loop; limit.setByte(tmp); This could be factor over multiple call of firstNonZero...
