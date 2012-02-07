@@ -209,18 +209,18 @@ public class WordValueLabel extends ValueLabel {
 
     private DisplayMode displayMode;
 
-    private boolean forceTxt = true;
+    private final boolean forceTxt;
 
     private Font wordDataFont;
 
     /**
      * Creates a display label for a word of machine data, initially set to null.
-     * <br>
+     * <p>
      * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
      * Display state can be cycled among alternate presentations in some situations.
-     * <br>
+     * <p>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
      * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
@@ -235,12 +235,12 @@ public class WordValueLabel extends ValueLabel {
 
     /**
      * Creates a display label for a word of machine data, initially set to null.
-     * <br>
+     * <p>
      * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
-     * <br>
+     * <p>
      * Display state can be cycled among alternate presentations in some situations.
-     * <br>
+     * <p>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
      * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
@@ -251,11 +251,34 @@ public class WordValueLabel extends ValueLabel {
      * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
+        this(inspection, valueMode, word, parent, inspection.preference().forceTextualWordValueDisplay());
+    }
+
+    /**
+     * Creates a display label for a word of machine data, initially set to null.
+     * <p>
+     * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <p>
+     * Display state can be cycled among alternate presentations in some situations, and the {@code forceTxt} can specify
+     * which to use initially.
+     * <p>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is cycled; this will be done automatically if the table is passed in
+     * as the parent component.
+     *
+     * @param inspection
+     * @param valueMode presumed type of value for the word, influences display modes
+     * @param word initial value for content.
+     * @param parent a component that should be repainted when the display state is cycled;
+     * @param forceText if {@code true} causes any possible alternate (textual) display to be used initially.
+     */
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean forceText) {
         super(inspection, null);
         this.parent = parent;
         this.valueMode = valueMode;
         this.wordDataFont = inspection.preference().style().defaultWordDataFont();
-        this.forceTxt = inspection.preference().forceTextualWordValueDisplay();
+        this.forceTxt = forceText;
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -454,7 +477,6 @@ public class WordValueLabel extends ValueLabel {
 
     public void redisplay() {
         this.wordDataFont = inspection().preference().style().defaultWordDataFont();
-        this.forceTxt = inspection().preference().forceTextualWordValueDisplay();
         setValue(value());
     }
 
