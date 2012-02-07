@@ -205,7 +205,8 @@ public class TeleStack extends AbstractVmHolder implements MaxStack {
 
     public MaxStackFrame findStackFrame(Address address) {
         for (MaxStackFrame stackFrame : frames(Integer.MAX_VALUE)) {
-            if (stackFrame.memoryRegion().contains(address)) {
+            MaxEntityMemoryRegion<MaxStackFrame> memoryRegion = stackFrame.memoryRegion();
+            if (memoryRegion != null && memoryRegion.contains(address)) {
                 return stackFrame;
             }
         }
