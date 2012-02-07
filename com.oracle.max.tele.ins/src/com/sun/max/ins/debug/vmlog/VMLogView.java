@@ -30,34 +30,23 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.AbstractView.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
-import com.sun.max.ins.memory.*;
-import com.sun.max.ins.object.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.data.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.heap.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.log.VMLog.*;
-import com.sun.max.vm.log.nat.*;
-import com.sun.max.vm.log.nat.thread.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -441,7 +430,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         }
     }
 
-    public static class ArgCellRenderer extends CellRendererHelper implements TableCellRenderer {
+    public static class ArgCellRenderer extends CellRendererHelper implements TableCellRenderer, Prober {
         private int argNum;
 
         private ArgCellRenderer(Inspection inspection, VMLogView vmLogView, int argNum) {
@@ -467,6 +456,14 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 vmLogView.tableModel.setRenderer(row, column, renderer);
             }
             return renderer;
+        }
+
+        public void refresh(boolean force) {
+            vmLogView.tableModel.refreshColumnRenderers(argNum, force);
+        }
+
+        public void redisplay() {
+            vmLogView.tableModel.redisplayColumnRenderers(argNum);
         }
     }
 
