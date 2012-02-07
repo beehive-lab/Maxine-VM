@@ -337,6 +337,9 @@ public class WordValueLabel extends ValueLabel {
     /** Non-null if a stack reference. */
     private MaxThread thread;
 
+    /** Non-null if pointer at a thread local variable. */
+    private MaxThreadLocalsBlock threadLocalsBlock;
+
     @Override
     public final void setValue(Value newValue) {
         teleObject = null;
@@ -344,6 +347,7 @@ public class WordValueLabel extends ValueLabel {
         compilation = null;
         taggedCodePointer = null;
         thread = null;
+        threadLocalsBlock = null;
 
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
@@ -387,6 +391,7 @@ public class WordValueLabel extends ValueLabel {
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
+                        threadLocalsBlock = thread.localsBlock();
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
@@ -599,19 +604,53 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordThreadLocalsBlockLocationDataColor());
                 setWrappedText(hexString);
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(thread.localsBlock().memoryRegion().start()).toLong();
+                MaxThreadLocalVariable tlVariable = null;
+                MaxThreadLocalsArea tlArea = threadLocalsBlock.findTLA(address);
+                if (tlArea != null) {
+                    tlVariable = tlArea.findThreadLocalVariable(address);
+                }
+                final StringBuilder toolTipBuilder = new StringBuilder();
+                toolTipBuilder.append(value.toWord().to0xHexString());
+                if (tlVariable == null) {
+                    toolTipBuilder.append("<br>Points into thread locals area for thread ").append(threadName);
+                    toolTipBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    toolTipBuilder.append("<br>Points at thread local variable ").append(tlVariable.variableName()).append(" for:");
+                    toolTipBuilder.append("<br>  thread=").append(threadName);
+                    toolTipBuilder.append("<br>  state=").append(tlVariable.safepointState().name());
+                    toolTipBuilder.append("<br>  desc.=").append(tlVariable.entityDescription());
+                    toolTipBuilder.append("<br>  value=").append(tlVariable.value().toString());
+                }
+                setWrappedToolTipHtmlText(toolTipBuilder.toString());
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordThreadLocalsBlockLocationDataColor());
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(thread.localsBlock().memoryRegion().start()).toLong();
                 setWrappedText(threadName + " " + longToPlusMinusDecimal(offset));
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                MaxThreadLocalVariable tlVariable = null;
+                MaxThreadLocalsArea tlArea = threadLocalsBlock.findTLA(address);
+                if (tlArea != null) {
+                    tlVariable = tlArea.findThreadLocalVariable(address);
+                }
+                final StringBuilder toolTipBuilder = new StringBuilder();
+                toolTipBuilder.append(value.toWord().to0xHexString());
+                if (tlVariable == null) {
+                    toolTipBuilder.append("<br>Points into thread locals area for thread ").append(threadName);
+                    toolTipBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    toolTipBuilder.append("<br>Points at thread local variable ").append(tlVariable.variableName()).append(" for:");
+                    toolTipBuilder.append("<br>  thread=").append(threadName);
+                    toolTipBuilder.append("<br>  state=").append(tlVariable.safepointState().name());
+                    toolTipBuilder.append("<br>  desc.=").append(tlVariable.entityDescription());
+                    toolTipBuilder.append("<br>  value=").append(tlVariable.value().toString());
+                }
+                setWrappedToolTipHtmlText(toolTipBuilder.toString());
                 break;
             }
             case UNCHECKED_REFERENCE: {
