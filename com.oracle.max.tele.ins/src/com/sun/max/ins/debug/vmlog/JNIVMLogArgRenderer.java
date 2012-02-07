@@ -74,12 +74,7 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
         if (text != null) {
             return new PlainLabel(inspection(), text);
         } else {
-            final Address address = Address.fromLong(argValue);
-            if (vm.codeCache().findCodeCacheRegion(address) == null) {
-                // TODO (mlvdv)  This isn't quite accurate, but we don't have a better interface.
-                return new WordValueLabel(inspection(), ValueMode.CALL_ENTRY_POINT, Address.fromLong(argValue), vmLogView.getTable());
-            }
-            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable(), true);
         }
     }
 
