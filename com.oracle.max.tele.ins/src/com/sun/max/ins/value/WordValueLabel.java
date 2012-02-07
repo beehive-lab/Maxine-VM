@@ -684,24 +684,32 @@ public class WordValueLabel extends ValueLabel {
                 final String threadName = nameDisplay.longName(thread);
                 final Address address = value().asWord().asAddress();
                 final long offset = address.minus(thread.localsBlock().memoryRegion().start()).toLong();
-                setWrappedText(threadName + " " + longToPlusMinusDecimal(offset));
                 MaxThreadLocalVariable tlVariable = null;
                 MaxThreadLocalsArea tlArea = threadLocalsBlock.findTLA(address);
                 if (tlArea != null) {
                     tlVariable = tlArea.findThreadLocalVariable(address);
                 }
+
+                final StringBuilder textBuilder = new StringBuilder();
+                textBuilder.append(threadName).append(" ");
+
                 final StringBuilder ttBuilder = new StringBuilder();
                 ttBuilder.append(value.toWord().to0xHexString());
+
+
                 if (tlVariable == null) {
+                    textBuilder.append(longToPlusMinusDecimal(offset));
                     ttBuilder.append("<br>Points into thread locals area for thread ").append(threadName);
                     ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
                 } else {
+                    textBuilder.append(tlVariable.variableName());
                     ttBuilder.append("<br>Points at thread local variable ").append(tlVariable.variableName()).append(" for:");
                     ttBuilder.append("<br>  thread=").append(threadName);
                     ttBuilder.append("<br>  state=").append(tlVariable.safepointState().name());
                     ttBuilder.append("<br>  desc.=").append(tlVariable.entityDescription());
                     ttBuilder.append("<br>  value=").append(tlVariable.value().toString());
                 }
+                setWrappedText(textBuilder.toString());
                 setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
             }
