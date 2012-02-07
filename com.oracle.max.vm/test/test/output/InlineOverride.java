@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,30 @@
  */
 package test.output;
 
-public class HelloWorld {
+import com.sun.max.annotate.*;
+
+public class InlineOverride {
+
+    public static InlineOverride IO = new Subclass();
 
     public static void main(String[] args) {
-        // DO NOT HACK ME!
-        System.out.println("Hello World!");
+        InlineOverride io = new InlineOverride();
+        System.out.println(io.foo());
+        io = new Subclass();
+        System.out.println(io.foo());
+    }
+
+    @INLINE
+    public int foo() {
+        return 41;
+    }
+
+    static class Subclass extends InlineOverride {
+        @INLINE
+        @Override
+        public int foo() {
+            return 53;
+        }
     }
 
 }
