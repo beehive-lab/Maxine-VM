@@ -461,7 +461,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                     return vmLogView.gui().getUnavailableDataTableCellRenderer();
                 }
 
-                long argValue = ((Boxed) value).value();
+                long argValue = ((Word) value).value;
                 VMLogArgRenderer vmLogArgRenderer = VMLogArgRendererFactory.getArgRenderer(vmLogView.getLogger(VMLog.Record.getLoggerId(header)).name, vmLogView);
                 renderer = vmLogArgRenderer.getRenderer(header, argNum, argValue);
                 vmLogView.tableModel.setRenderer(row, column, renderer);

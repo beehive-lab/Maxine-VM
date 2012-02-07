@@ -208,17 +208,14 @@ public interface HeapScheme extends VMScheme {
      */
     boolean isAllocationDisabledForCurrentThread();
 
-    @INLINE
-    @FOLD
     boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec);
 
-    @INLINE
     void preWriteBarrier(Reference ref, Offset offset, Reference value);
-    @INLINE
+
     void postWriteBarrier(Reference ref, Offset offset, Reference value);
-    @INLINE
+
     void preWriteBarrier(Reference ref,  int displacement, int index, Reference value);
-    @INLINE
+
     void postWriteBarrier(Reference ref,  int displacement, int index, Reference value);
 
     enum PIN_SUPPORT_FLAG {
@@ -289,7 +286,7 @@ public interface HeapScheme extends VMScheme {
      * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
      * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
      *
-     * If pinning is not supported, make pin() and isPinned() always return false and declare @INLINE for both.
+     * If pinning is not supported, make pin() and isPinned() always return false.
      * Then all pinning client code will automatically be eliminated.
      *
      * @return whether pinning succeeded - callers are supposed to have an alternative plan when it fails
@@ -315,14 +312,12 @@ public interface HeapScheme extends VMScheme {
      * Is TLAB used in this heap scheme or not.
      * @return true if TLAB is used
      */
-    @INLINE
     boolean usesTLAB();
 
     /**
      * Object alignment required by the heap manager (in number of bytes).
      * @return number of bytes.
      */
-    @INLINE
     int objectAlignment();
 
     /**
@@ -371,7 +366,6 @@ public interface HeapScheme extends VMScheme {
      * Indicates whether this heap scheme supports tagging of heap object for debugging purposes.
      * @return true if tagging of heap object is supported
      */
-    @INLINE
     boolean supportsTagging();
 
     /**
@@ -380,7 +374,6 @@ public interface HeapScheme extends VMScheme {
      *
      * @param cell
      */
-    @INLINE
     void trackLifetime(Pointer cell);
 
     /**
