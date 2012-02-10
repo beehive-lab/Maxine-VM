@@ -511,7 +511,15 @@ public class WordValueLabel extends ValueLabel {
                     setWrappedToolTipHtmlText("zero");
                 } else {
                     setForeground(null);
-                    setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Decimal= " + Long.toString(value.toLong()));
+                    final StringBuilder ttText = new StringBuilder();
+                    ttText.append(hexString);
+                    ttText.append("<br>Decimal= ").append(Long.toString(value.toLong()));
+                    final Address address = value.toWord().asAddress();
+                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(address);
+                    if (memoryRegion != null) {
+                        ttText.append("<br>Points into region ").append(memoryRegion.regionName());
+                    }
+                    setWrappedToolTipHtmlText(ttText.toString());
                 }
                 break;
             }
