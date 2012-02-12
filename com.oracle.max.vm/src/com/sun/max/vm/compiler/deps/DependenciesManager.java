@@ -605,7 +605,7 @@ public final class DependenciesManager {
 
     @HOSTED_ONLY
     @VMLoggerInterface
-    private static interface DependenciesLoggerInterface {
+    private interface DependenciesLoggerInterface {
         void add(
                         @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
                         @VMLogParam(name = "id") int id,
