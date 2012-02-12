@@ -47,15 +47,22 @@ public abstract class VMLogNativeThread extends VMLogNative {
     public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
     public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
     public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
-    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsetsd");
+    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsets");
 
     public static final int ID_OFFSET = Ints.SIZE;
     public static final int ARGS_OFFSET = 2 * Ints.SIZE;
-    public static final int NEXT_OFFSET_MASK = 0x7FFFFFFF;
+    public static final int NEXT_OFFSET_MASK = 0x7FFFFFFE;
     public static final int FIRST_OFFSET_SHIFT = 32;
     public static final int SHIFTED_FIRST_OFFSET_MASK = 0x7FFFFFE;
     public static final long WRAPPED = 0x100000000L; // set in FIRST_OFFSET to indicate buffer has wrapped (sticky)
     public static final long FIRST_OFFSET_WRAP_MASK = 0x7FFFFFF00000000L;
+    /**
+     * We use bit 0 set to 1 to denote that logging is disabled for this thread.
+     * Since this will suppress all calls to {@link #getRecord(int)} we
+     * do not need to worry about masking it out in {@link #getRecord(int)}.
+     */
+    public static final int DISABLED = 0x1;
+    public static final long DISABLED_MASK = 0x7FFFFFFFFFFFFFFEL;
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -96,4 +103,19 @@ public abstract class VMLogNativeThread extends VMLogNative {
         // offset is either < logSize or < 2 * logSize
         return offset < logSize ? offset : offset - logSize;
     }
+
+    @Override
+    public boolean setThreadState(boolean value) {
+        int bit = value ? 0 : DISABLED;
+        Pointer tla = VmThread.currentTLA();
+        Address offsets = VMLOG_BUFFER_OFFSETS.load(tla);
+        VMLOG_BUFFER_OFFSETS.store3(Address.fromLong((offsets.toLong() & DISABLED_MASK) | bit));
+        return (offsets.toLong() & DISABLED) == 0;
+    }
+
+    @Override
+    public boolean threadIsEnabled() {
+        return (VMLOG_BUFFER_OFFSETS.load(VmThread.currentTLA()).toLong() & DISABLED) == 0;
+    }
+
 }

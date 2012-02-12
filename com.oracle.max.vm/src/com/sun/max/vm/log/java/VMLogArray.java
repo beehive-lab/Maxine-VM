@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Common superclass for implementations using an indexed array of {@link Record} instances.
@@ -237,6 +238,55 @@ public abstract class VMLogArray extends VMLog {
             this.arg6 = arg6;
             this.arg7 = arg7;
         }
+    }
+
+    public static class Record8 extends Record7 {
+        @INSPECTED
+        public Word arg8;
+
+        @Override
+        public Word getArg(int n) {
+            // Checkstyle: stop
+            switch (n) {
+                case 1: return arg1;
+                case 2: return arg2;
+                case 3: return arg3;
+                case 4: return arg4;
+                case 5: return arg5;
+                case 6: return arg6;
+                case 7: return arg7;
+                case 8: return arg8;
+                default: return argError();
+            }
+            // Checkstyle: resume
+        }
+
+        @Override
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+            this.arg1 = arg1;
+            this.arg2 = arg2;
+            this.arg3 = arg3;
+            this.arg4 = arg4;
+            this.arg5 = arg5;
+            this.arg6 = arg6;
+            this.arg7 = arg7;
+            this.arg7 = arg8;
+        }
+    }
+
+    static final VmThreadLocal VMLOG_THREADSTATE = new VmThreadLocal("VMLOG_THREADSTATE", false, "VMLog state");
+
+    @Override
+    public boolean setThreadState(boolean state) {
+        Word old = VMLOG_THREADSTATE.load(VmThread.currentTLA());
+        VMLOG_THREADSTATE.store3(state ? Word.zero() : Word.allOnes());
+        return old.isZero();
+    }
+
+    @Override
+    @INLINE(override = true)
+    public boolean threadIsEnabled() {
+        return VMLOG_THREADSTATE.load(VmThread.currentTLA()).isZero();
     }
 
 

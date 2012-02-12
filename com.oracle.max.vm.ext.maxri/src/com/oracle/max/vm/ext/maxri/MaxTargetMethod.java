@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -383,7 +383,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = csa;
             int byteIndex = debugInfo.regRefMapStart(safepointIndex);
-            preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
+            preparer.logPrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
 
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
@@ -392,9 +392,8 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                 while (b != 0) {
                     if ((b & 1) != 0) {
                         int offset = csl.offsetOf(reg);
-                        if (traceStackRootScanning()) {
-                            Log.print("    register: ");
-                            Log.println(csl.registers[reg].name);
+                        if (logStackRootScanning()) {
+                            StackReferenceMapPreparer.stackRootScanLogger.logRegisterState(csl.registers[reg]);
                         }
                         preparer.visitReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
@@ -407,7 +406,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.sp();
-        preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
+        preparer.logPrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
         int byteIndex = debugInfo.frameRefMapStart(safepointIndex);
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.visitReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);

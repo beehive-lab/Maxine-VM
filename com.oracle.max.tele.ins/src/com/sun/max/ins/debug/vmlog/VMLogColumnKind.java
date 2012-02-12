@@ -52,7 +52,8 @@ enum VMLogColumnKind implements ColumnKind {
     ARG4("Arg4", "argument 4", true, -1),
     ARG5("Arg5", "argument 5", true, -1),
     ARG6("Arg6", "argument 6", true, -1),
-    ARG7("Arg7", "argument 7", true, -1);
+    ARG7("Arg7", "argument 7", true, -1),
+    ARG8("Arg8", "argument 8", true, -1);
 
     private final String label;
     private final String toolTipText;

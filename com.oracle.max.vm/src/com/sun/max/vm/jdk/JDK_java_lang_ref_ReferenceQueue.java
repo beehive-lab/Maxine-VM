@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,16 +79,8 @@ public final class JDK_java_lang_ref_ReferenceQueue {
                     sun.misc.VM.addFinalRefCount(1);
                 }
                 lock.notifyAll();
-                if (SpecialReferenceManager.TraceReferenceGC) {
-                    boolean lockDisabledSafepoints = Log.lock();
-                    Log.printThread(VmThread.current(), false);
-                    Log.print(": Enqueued ");
-                    Log.print(ObjectAccess.readClassActor(r).name.string);
-                    Log.print(" at ");
-                    Log.print(Reference.fromJava(r).toOrigin());
-                    Log.print(" to queue ");
-                    Log.println(Reference.fromJava(this).toOrigin());
-                    Log.unlock(lockDisabledSafepoints);
+                if (SpecialReferenceManager.specialReferenceLogger.enabled()) {
+                    SpecialReferenceManager.specialReferenceLogger.logEnqueue(ObjectAccess.readClassActor(r), Reference.fromJava(r).toOrigin(), Reference.fromJava(this).toOrigin());
                 }
                 return true;
             }
@@ -124,16 +116,11 @@ public final class JDK_java_lang_ref_ReferenceQueue {
             if (ClassRegistry.JLR_FINAL_REFERENCE.isInstance(r)) {
                 sun.misc.VM.addFinalRefCount(-1);
             }
-            if (SpecialReferenceManager.TraceReferenceGC) {
-                boolean lockDisabledSafepoints = Log.lock();
-                Log.printThread(VmThread.current(), false);
-                Log.print(": Removed ");
-                Log.print(ObjectAccess.readClassActor(r).name.string);
-                Log.print(" at ");
-                Log.print(Reference.fromJava(r).toOrigin());
-                Log.print(" from queue ");
-                Log.println(Reference.fromJava(this).toOrigin());
-                Log.unlock(lockDisabledSafepoints);
+            if (SpecialReferenceManager.specialReferenceLogger.enabled()) {
+                SpecialReferenceManager.specialReferenceLogger.logRemove(
+                                ObjectAccess.readClassActor(r),
+                                Reference.fromJava(r).toOrigin(),
+                                Reference.fromJava(this).toOrigin());
             }
             return r;
         }

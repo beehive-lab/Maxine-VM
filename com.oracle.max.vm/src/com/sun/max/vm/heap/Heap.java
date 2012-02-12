@@ -36,9 +36,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.HeapScheme.PIN_SUPPORT_FLAG;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
@@ -225,9 +228,12 @@ public final class Heap {
 
     /**
      * Determines if information should be displayed about each garbage collection event.
+     * Beyond the {@link VMOptions#verboseOption}, this must depend on tracing being enabled, not logging,
+     * as it will generate output.
      */
     public static boolean verbose() {
-        return verboseOption.verboseGC || TraceGC || TraceRootScanning || Heap.traceGCTime();
+        return verboseOption.verboseGC || gcAllLogger.traceEnabled() ||
+               rootScanLogger.traceEnabled() || (timeLogger.traceEnabled() && LogGCSuppressionCount <= 0);
     }
 
     /**
@@ -237,98 +243,9 @@ public final class Heap {
         verboseOption.verboseGC = value;
     }
 
-    private static boolean TraceAllocation;
-
-    /**
-     * Determines if allocation should be traced.
-     *
-     * @returns {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
-     */
-    @INLINE
-    public static boolean traceAllocation() {
-        return MaxineVM.isDebug() && TraceAllocation;
-    }
-
-    /**
-     * Modifies the value of the flag determining if allocation should be traced. This flag is ignored if the VM
-     * {@linkplain VMConfiguration#buildLevel() build level} is not {@link BuildLevel#DEBUG}. This is typically provided
-     * so that error situations can be reported without being confused by interleaving allocation traces.
-     */
-    public static void setTraceAllocation(boolean flag) {
-        TraceAllocation = flag;
-    }
-
-    static {
-        if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.", MaxineVM.Phase.STARTING);
-        }
-    }
-
-    /**
-     * Determines if all garbage collection activity should be traced.
-     */
-    @INLINE
-    public static boolean traceGC() {
-        return TraceGC && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Determines if the garbage collection phases should be traced.
-     */
-    @INLINE
-    public static boolean traceGCPhases() {
-        return (TraceGC || TraceGCPhases) && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Determines if garbage collection root scanning should be traced.
-     */
-    @INLINE
-    public static boolean traceRootScanning() {
-        return (TraceGC || TraceRootScanning) && TraceGCSuppressionCount <= 0;
-    }
-
-    public static void setTraceRootScanning(boolean flag) {
-        TraceRootScanning = flag;
-    }
-
-    /**
-     * Determines if garbage collection timings should be collected and printed.
-     */
-    @INLINE
-    public static boolean traceGCTime() {
-        return (TraceGC || TimeGC) && TraceGCSuppressionCount <= 0;
-    }
-
-    /**
-     * Disables -XX:-TraceGC, -XX:-TraceRootScanning and -XX:-TraceGCPhases if greater than 0.
-     */
-    public static int TraceGCSuppressionCount;
-
-    private static boolean TraceGC;
-    private static boolean TraceGCPhases;
-    private static boolean TraceRootScanning;
-    private static boolean TimeGC;
     private static boolean GCDisabled;
 
     static {
-        VMOption timeOption = VMOptions.addFieldOption("-XX:", "TimeGC", Heap.class,
-            "Time and print garbage collection activity.");
-
-        VMOption traceGCPhasesOption = VMOptions.addFieldOption("-XX:", "TraceGCPhases", Heap.class,
-            "Trace garbage collection phases.");
-
-        VMOption traceRootScanningOption = VMOptions.addFieldOption("-XX:", "TraceRootScanning", Heap.class,
-            "Trace garbage collection root scanning.");
-
-        VMOption traceGCOption = VMOptions.addFieldOption("-XX:", "TraceGC", Heap.class,
-            "Trace all garbage collection activity. Enabling this option also enables the " +
-            traceRootScanningOption + ", " + traceGCPhasesOption + " and " + timeOption + " options.");
-
-        VMOptions.addFieldOption("-XX:", "TraceGCSuppressionCount", Heap.class,
-                        "Disable " + traceGCOption + ", " + traceRootScanningOption + " and " +
-                        traceGCPhasesOption + " until the n'th GC");
-
         VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.", MaxineVM.Phase.STARTING);
     }
 
@@ -380,120 +297,46 @@ public final class Heap {
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
         final Object array = heapScheme().createArray(hub, length);
-        if (Heap.traceAllocation()) {
-            traceCreateArray(hub, length, array);
+        if (Heap.logAllocation()) {
+            allocationLogger.logCreateArray(hub, length, array);
         }
         return array;
-    }
-
-    @NEVER_INLINE
-    public static void traceCreateArray(DynamicHub hub, int length, final Object array) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.printCurrentThread(false);
-        Log.print(": Allocated array ");
-        Log.print(hub.classActor.name.string);
-        Log.print(" of length ");
-        Log.print(length);
-        Log.print(" at ");
-        Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)));
-        Log.print(" [");
-        Log.print(Layout.size(Reference.fromJava(array)).toInt());
-        Log.println(" bytes]");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
-        if (Heap.traceAllocation()) {
-            traceCreateTuple(hub, object);
+        if (Heap.logAllocation()) {
+            allocationLogger.logCreateTuple(hub, object);
         }
         return object;
-    }
-
-    @NEVER_INLINE
-    public static void traceCreateTuple(Hub hub, final Object object) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.printCurrentThread(false);
-        Log.print(": Allocated tuple ");
-        Log.print(hub.classActor.name.string);
-        Log.print(" at ");
-        Log.print(Layout.originToCell(ObjectAccess.toOrigin(object)));
-        Log.print(" [");
-        Log.print(hub.tupleSize.toInt());
-        Log.println(" bytes]");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
         final Object hybrid = heapScheme().createHybrid(hub);
-        if (Heap.traceAllocation()) {
-            traceCreateHybrid(hub, hybrid);
+        if (Heap.logAllocation()) {
+            allocationLogger.logCreateHybrid(hub, hybrid);
         }
         return hybrid;
-    }
-
-    @NEVER_INLINE
-    private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.printCurrentThread(false);
-        Log.print(": Allocated hybrid ");
-        Log.print(hub.classActor.name.string);
-        Log.print(" at ");
-        Log.print(Layout.originToCell(ObjectAccess.toOrigin(hybrid)));
-        Log.print(" [");
-        Log.print(hub.tupleSize.toInt());
-        Log.println(" bytes]");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
-        if (Heap.traceAllocation()) {
-            traceExpandHybrid(hybrid, expandedHybrid);
+        if (Heap.logAllocation()) {
+            allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }
         return expandedHybrid;
-    }
-
-    @NEVER_INLINE
-    private static void traceExpandHybrid(Hybrid hybrid, final Hybrid expandedHybrid) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.printCurrentThread(false);
-        Log.print(": Allocated expanded hybrid ");
-        final Hub hub = ObjectAccess.readHub(hybrid);
-        Log.print(hub.classActor.name.string);
-        Log.print(" at ");
-        Log.print(Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)));
-        Log.print(" [");
-        Log.print(hub.tupleSize.toInt());
-        Log.println(" bytes]");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object clone(Object object) {
         final Object clone = heapScheme().clone(object);
-        if (Heap.traceAllocation()) {
-            traceClone(object, clone);
+        if (Heap.logAllocation()) {
+            allocationLogger.logClone(ObjectAccess.readHub(object), clone);
         }
         return clone;
-    }
-
-    @NEVER_INLINE
-    private static void traceClone(Object object, final Object clone) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.printCurrentThread(false);
-        Log.print(": Allocated cloned ");
-        final Hub hub = ObjectAccess.readHub(object);
-        Log.print(hub.classActor.name.string);
-        Log.print(" at ");
-        Log.print(Layout.originToCell(ObjectAccess.toOrigin(clone)));
-        Log.print(" [");
-        Log.print(hub.tupleSize.toInt());
-        Log.println(" bytes]");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     /**
@@ -597,17 +440,15 @@ public final class Heap {
 
     public static void enableImmortalMemoryAllocation() {
         heapScheme().enableCustomAllocation(Word.allOnes().asAddress());
-        if (ImmortalHeap.TraceImmortal) {
-            Log.printCurrentThread(false);
-            Log.println(": immortal heap allocation enabled");
+        if (ImmortalHeap.immortalHeapLogger.enabled()) {
+            ImmortalHeap.immortalHeapLogger.logEnable();
         }
     }
 
     public static void disableImmortalMemoryAllocation() {
         heapScheme().disableCustomAllocation();
-        if (ImmortalHeap.TraceImmortal) {
-            Log.printCurrentThread(false);
-            Log.println(": immortal heap allocation disabled");
+        if (ImmortalHeap.immortalHeapLogger.enabled()) {
+            ImmortalHeap.immortalHeapLogger.logDisable();
         }
     }
 
@@ -743,4 +584,396 @@ public final class Heap {
             MaxineVM.native_exit(1);
         }
     }
+
+    /*
+     * Everything related to logging/tracing the heap behavior is defined below.
+     */
+
+    /**
+     * A logger for the phases of the GC - implementation provided by the heap scheme.
+     */
+    public static final PhaseLogger phaseLogger = heapScheme().phaseLogger();
+
+    /**
+     * A logger for timing the phases of the GC - implementation provided by the heap scheme.
+     */
+    public static final TimeLogger timeLogger = heapScheme().timeLogger();
+
+    /**
+     * Logger for root scanning.
+     */
+    public static final RootScanLogger rootScanLogger = new RootScanLogger();
+
+    /**
+     * A logger for object allocation, only visible in a DEBUG image build.
+     */
+    public static final AllocationLogger allocationLogger = MaxineVM.isDebug() ? new AllocationLogger(true) : new AllocationLogger();
+
+    /**
+     * A pseudo-logger that exists solely to define the {@code LogGC and TraceGC} options,
+     * which, if enabled, force all the dependent loggers to enabled. It has no operations.
+     */
+    public static final VMLogger gcAllLogger = new VMLogger("GC", 0,
+                    "all garbage collection activity. Enabling this option also enables the " +
+                    rootScanLogger.logOption + ", " +
+                    phaseLogger.traceOption +  " and " + timeLogger.traceOption + " options.") {
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            forceDependentLoggerState(phaseLogger, rootScanLogger, timeLogger);
+        }
+    };
+
+    static {
+        VMOptions.addFieldOption("-XX:", "LogGCSuppressionCount", Heap.class,
+                        "Disable " + gcAllLogger.logOption + ", " + rootScanLogger.logOption + " and " +
+                        phaseLogger.logOption + " until the n'th GC");
+    }
+
+    /*
+     * Functions that act as guards for logging, and add additional conjunctive constraints
+     * beyond the setting of the log options.
+     */
+
+    /**
+     * Determines if object allocation should be logged.
+     *
+     * @returns Always {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
+     */
+    @INLINE
+    public static boolean logAllocation() {
+        return MaxineVM.isDebug() && allocationLogger.enabled();
+    }
+
+    /**
+     * Determines if all garbage collection activity should be logged.
+     */
+    @INLINE
+    public static boolean logAllGC() {
+        return gcAllLogger.enabled() && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Determines if the garbage collection phases should be logged.
+     */
+    @INLINE
+    public static boolean logGCPhases() {
+        return (gcAllLogger.enabled()  || phaseLogger.enabled()) && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Determines if garbage collection root scanning should be logged.
+     */
+    @INLINE
+    public static boolean logRootScanning() {
+        return (gcAllLogger.enabled() || rootScanLogger.enabled()) && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Determines if garbage collection timings should be collected and logged.
+     */
+    @INLINE
+    public static boolean logGCTime() {
+        return (gcAllLogger.enabled() || timeLogger.enabled()) && LogGCSuppressionCount <= 0;
+    }
+
+    /**
+     * Disables phase, time and roots logging if greater than 0.
+     */
+    public static int LogGCSuppressionCount;
+
+
+    /*
+     * Logging of root scanning.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private static interface RootScanLoggerInterface {
+        void scanningBootHeap(
+            @VMLogParam(name = "start") Address start,
+            @VMLogParam(name = "end") Address end,
+            @VMLogParam(name = "mutableReferencesEnd") Address mutableReferencesEnd);
+
+        void visitReferenceMapSlot(
+            @VMLogParam(name = "regionWordIndex") int regionWordIndex,
+            @VMLogParam(name = "address") Pointer address,
+            @VMLogParam(name = "value") Word value);
+    }
+
+    public static class RootScanLogger extends RootScanLoggerAuto {
+        RootScanLogger() {
+            super("RootScanning", "garbage collection root scanning.");
+        }
+
+        public void logScanningBootHeap(BootHeapRegion region, Address mutableReferencesEnd) {
+            logScanningBootHeap(region.start(), region.end(), mutableReferencesEnd);
+        }
+
+        @Override
+        protected  void traceScanningBootHeap(Address start, Address end, Address mutableReferencesEnd) {
+            Log.print("Scanning boot heap: start=");
+            Log.print(start);
+            Log.print(", end=");
+            Log.print(end);
+            Log.print(", mutable references end=");
+            Log.println(mutableReferencesEnd);
+        }
+
+        @Override
+        protected void traceVisitReferenceMapSlot(int regionWordIndex, Pointer address, Word value) {
+            Log.print("    Slot: ");
+            Log.print("index=");
+            Log.print(regionWordIndex);
+            Log.print(", address=");
+            Log.print(address);
+            Log.print(", value=");
+            Log.println(value);
+        }
+    }
+
+    /*
+     * Logging of object allocation.
+     */
+
+    /**
+     * Allocation logging interface.
+     * These methods are very similar in form, but we choose to distinguish them
+     * by the operation (method) name. Most of the implementation will be shared.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private static interface AllocationLoggerInterface {
+        void clone(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") Size size);
+
+        void createArray(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "length") int length,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") Size size);
+
+        void createTuple(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") Size size);
+
+        void createHybrid(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") Size size);
+
+        void expandHybrid(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") Size size);
+    }
+
+    /**
+     * Implementation of allocation logging.
+     * The actual methods traffic in {@link Hub} types, which we convert to
+     * {@link ClassActor}, since the tracing simply prints the class name,
+     * and we can log a {@link ClassActor} by its id.
+     */
+    public final static class AllocationLogger extends AllocationLoggerAuto {
+        AllocationLogger(boolean active) {
+            super("Allocation", "heap allocation.");
+        }
+
+        AllocationLogger() {
+            super();
+        }
+
+        @NEVER_INLINE
+        void logClone(Hub hub, Object clone) {
+            logClone(hub.classActor, Layout.originToCell(ObjectAccess.toOrigin(clone)), hub.tupleSize);
+        }
+
+        @NEVER_INLINE
+        void logCreateArray(Hub hub, int length, Object array) {
+            logCreateArray(hub.classActor, length, Layout.originToCell(ObjectAccess.toOrigin(array)), Layout.size(Reference.fromJava(array)));
+        }
+
+        @NEVER_INLINE
+        void logCreateTuple(Hub hub, Object object) {
+            logCreateTuple(hub.classActor, Layout.originToCell(ObjectAccess.toOrigin(object)), hub.tupleSize);
+        }
+
+        @NEVER_INLINE
+        void logCreateHybrid(Hub hub, Object hybrid) {
+            logCreateHybrid(hub.classActor, Layout.originToCell(ObjectAccess.toOrigin(hybrid)), hub.tupleSize);
+        }
+
+        @NEVER_INLINE
+        void logExpandHybrid(Hub hub, Hybrid expandedHybrid) {
+            logExpandHybrid(hub.classActor, Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)), hub.tupleSize);
+        }
+
+        @Override
+        protected void traceClone(ClassActor classActor, Pointer cell, Size size) {
+            traceAllocation(classActor, cell, size, -1, "clone");
+        }
+
+        @Override
+        protected void traceCreateTuple(ClassActor classActor, Pointer cell, Size size) {
+            traceAllocation(classActor, cell, size, -1, "tuple");
+        }
+
+        @Override
+        protected void traceCreateHybrid(ClassActor classActor, Pointer cell, Size size) {
+            traceAllocation(classActor, cell, size, -1, "hybrid");
+        }
+
+        @Override
+        protected void traceExpandHybrid(ClassActor classActor, Pointer cell, Size size) {
+            traceAllocation(classActor, cell, size, -1, "expanded hybrid");
+        }
+
+        @Override
+        protected void traceCreateArray(ClassActor classActor, int length, Pointer cell, Size size) {
+            traceAllocation(classActor, cell, size, length, "array");
+        }
+
+        private static void traceAllocation(ClassActor classActor, Pointer cell, Size size, int length, String variant) {
+            Log.print(": Allocated ");
+            Log.print(variant);
+            Log.print(' ');
+            Log.print(classActor.name.string);
+            if (length >= 0) {
+                Log.print(" of length ");
+                Log.print(length);
+            }
+            Log.print(" at ");
+            Log.print(cell);
+            Log.print(" [");
+            Log.print(size.toInt());
+            Log.println(" bytes]");
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class AllocationLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Clone, CreateTuple, ExpandHybrid,
+            CreateArray, CreateHybrid;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected AllocationLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        protected AllocationLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logClone(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.Clone.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceClone(ClassActor classActor, Pointer cell, Size size);
+
+        @INLINE
+        public final void logCreateTuple(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.CreateTuple.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceCreateTuple(ClassActor classActor, Pointer cell, Size size);
+
+        @INLINE
+        public final void logExpandHybrid(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.ExpandHybrid.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceExpandHybrid(ClassActor classActor, Pointer cell, Size size);
+
+        @INLINE
+        public final void logCreateArray(ClassActor classActor, int length, Pointer cell, Size size) {
+            log(Operation.CreateArray.ordinal(), classActorArg(classActor), intArg(length), cell, size);
+        }
+        protected abstract void traceCreateArray(ClassActor classActor, int length, Pointer cell, Size size);
+
+        @INLINE
+        public final void logCreateHybrid(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.CreateHybrid.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceCreateHybrid(ClassActor classActor, Pointer cell, Size size);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Clone
+                    traceClone(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+                case 1: { //CreateTuple
+                    traceCreateTuple(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+                case 2: { //ExpandHybrid
+                    traceExpandHybrid(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+                case 3: { //CreateArray
+                    traceCreateArray(toClassActor(r, 1), toInt(r, 2), toPointer(r, 3), toSize(r, 4));
+                    break;
+                }
+                case 4: { //CreateHybrid
+                    traceCreateHybrid(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static abstract class RootScanLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            ScanningBootHeap, VisitReferenceMapSlot;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected RootScanLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logScanningBootHeap(Address start, Address end, Address mutableReferencesEnd) {
+            log(Operation.ScanningBootHeap.ordinal(), start, end, mutableReferencesEnd);
+        }
+        protected abstract void traceScanningBootHeap(Address start, Address end, Address mutableReferencesEnd);
+
+        @INLINE
+        public final void logVisitReferenceMapSlot(int regionWordIndex, Pointer address, Word value) {
+            log(Operation.VisitReferenceMapSlot.ordinal(), intArg(regionWordIndex), address, value);
+        }
+        protected abstract void traceVisitReferenceMapSlot(int regionWordIndex, Pointer address, Word value);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ScanningBootHeap
+                    traceScanningBootHeap(toAddress(r, 1), toAddress(r, 2), toAddress(r, 3));
+                    break;
+                }
+                case 1: { //VisitReferenceMapSlot
+                    traceVisitReferenceMapSlot(toInt(r, 1), toPointer(r, 2), toWord(r, 3));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

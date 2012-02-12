@@ -68,20 +68,13 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
                 op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
                 op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
                 op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
-                return getReferenceValueLabel(getTeleClassMethodActor(argValue).getReference());
+                return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
             }
-        } else if (argNum == 3) {
-            final Address address = Address.fromLong(argValue);
-            if (vm.codeCache().findCodeCacheRegion(address) == null) {
-                // TODO (mlvdv)  This isn't quite accurate, but we don't have a better interface.
-                return new WordValueLabel(inspection(), ValueMode.CALL_ENTRY_POINT, Address.fromLong(argValue), vmLogView.getTable());
-            }
-            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
         }
         if (text != null) {
             return new PlainLabel(inspection(), text);
         } else {
-            return super.getRenderer(header, argNum, argValue);
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable(), true);
         }
     }
 

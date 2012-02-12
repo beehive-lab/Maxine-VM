@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,7 +116,7 @@ public class MarkingStack {
         }
         if (topIndex < last) {
             base.asPointer().setWord(topIndex++, cell);
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.print("MarkingStack.push(");
                 Log.print(cell);
                 Log.println(")");
@@ -124,18 +124,18 @@ public class MarkingStack {
             return;
         }
         if (!draining.isZero()) {
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.println("MarkingStack.push initiates overflow recovery");
             }
            // We're already draining. So this is an overflow situation. Store the cell in the last slot of the stack (reserved for overflow).
             base.asPointer().setWord(topIndex++, cell);
             // Set draining back to false. The recovering will empty the marking stack.
             overflowHandler.recoverFromOverflow();
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.println("MarkingStack.push ends overflow recovery");
             }
         } else {
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.println("MarkingStack.push initiates draining");
             }
             // Start draining with the cell requested to be pushed.
@@ -147,14 +147,14 @@ public class MarkingStack {
                 drainingCellVisitor.visitPoppedCell(draining);
             }
             draining = Pointer.zero();
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.println("MarkingStack.push ends draining");
             }
         }
     }
 
     void drain() {
-        if (MaxineVM.isDebug() && Heap.traceGC()) {
+        if (MaxineVM.isDebug() && Heap.logAllGC()) {
             Log.println("MarkingStack begin draining");
         }
         if (MaxineVM.isDebug()) {
@@ -165,7 +165,7 @@ public class MarkingStack {
             drainingCellVisitor.visitPoppedCell(draining);
         }
         draining = Pointer.zero();
-        if (MaxineVM.isDebug() && Heap.traceGC()) {
+        if (MaxineVM.isDebug() && Heap.logAllGC()) {
             Log.println("MarkingStack ends draining");
         }
     }
@@ -178,7 +178,7 @@ public class MarkingStack {
         while (topIndex > 0) {
             drainingCellVisitor.visitFlushedCell(base.asPointer().getWord(--topIndex).asPointer());
         }
-        if (MaxineVM.isDebug() && Heap.traceGC()) {
+        if (MaxineVM.isDebug() && Heap.logAllGC()) {
             Log.println("MarkingStack flushed");
         }
     }

@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -41,10 +42,14 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLogger.Interval;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -209,7 +214,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             top = toSpace.end().minus(safetyZoneSize);
 
             if (MaxineVM.isDebug()) {
-                zapRegion(toSpace, "at GC initialization");
+                zapRegion(toSpace, When.INIT);
             }
             if (MaxineVM.isDebug()) {
                 VerifyReferences = true;
@@ -234,25 +239,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
             increaseGrowPolicy = new LinearGrowPolicy();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
-            if (Heap.traceGCTime()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Timings (");
-                Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-                Log.print(") for all GC: clear & initialize=");
-                Log.print(clearTimer.getElapsedTime());
-                Log.print(", root scan=");
-                Log.print(rootScanTimer.getElapsedTime());
-                Log.print(", boot heap scan=");
-                Log.print(bootHeapScanTimer.getElapsedTime());
-                Log.print(", code scan=");
-                Log.print(codeScanTimer.getElapsedTime());
-                Log.print(", copy=");
-                Log.print(copyTimer.getElapsedTime());
-                Log.print(", weak refs=");
-                Log.print(weakRefTimer.getElapsedTime());
-                Log.print(", total=");
-                Log.println(gcTimer.getElapsedTime());
-                Log.unlock(lockDisabledSafepoints);
+            if (Heap.logGCTime()) {
+                timeLogger.logPhaseTimes(-1,
+                                clearTimer.getElapsedTime(), rootScanTimer.getElapsedTime(), bootHeapScanTimer.getElapsedTime(),
+                                codeScanTimer.getElapsedTime(), copyTimer.getElapsedTime(),
+                                weakRefTimer.getElapsedTime(), gcTimer.getElapsedTime());
             }
         }
 
@@ -287,13 +278,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     }
 
     private static void startTimer(Timer timer) {
-        if (Heap.traceGCTime()) {
+        if (Heap.logGCTime()) {
             timer.start();
         }
     }
 
     private static void stopTimer(Timer timer) {
-        if (Heap.traceGCTime()) {
+        if (Heap.logGCTime()) {
             timer.stop();
         }
     }
@@ -363,7 +354,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
 
                 // Pre-verification of the heap.
-                verifyObjectSpaces("before GC");
+                verifyObjectSpaces(When.BEFORE);
 
                 JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
@@ -378,69 +369,69 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Scanning roots");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
                 }
                 startTimer(rootScanTimer);
                 heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
                 stopTimer(rootScanTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Scanning roots");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningRoots(VMLogger.Interval.END);
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Scanning boot heap");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningBootHeap(VMLogger.Interval.BEGIN);
                 }
                 startTimer(bootHeapScanTimer);
                 scanBootHeap();
                 stopTimer(bootHeapScanTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Scanning boot heap");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningBootHeap(VMLogger.Interval.END);
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Scanning code");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningCode(VMLogger.Interval.BEGIN);
                 }
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Scanning code");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningCode(VMLogger.Interval.END);
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Scanning immortal heap");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningImmortalHeap(VMLogger.Interval.BEGIN);
                 }
                 startTimer(immortalSpaceScanTimer);
                 scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Scanning immortal heap");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logScanningImmortalHeap(VMLogger.Interval.END);
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Moving reachable");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logMovingReachable(VMLogger.Interval.BEGIN);
                 }
                 startTimer(copyTimer);
                 moveReachableObjects(toSpace.start().asPointer());
                 stopTimer(copyTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Moving reachable");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logMovingReachable(VMLogger.Interval.END);
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Processing special references");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.BEGIN);
                 }
                 startTimer(weakRefTimer);
                 SpecialReferenceManager.processDiscoveredSpecialReferences(refForwarder);
                 stopTimer(weakRefTimer);
                 stopTimer(gcTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Processing special references");
+                if (Heap.logGCPhases()) {
+                    phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
                 }
 
                 // The reclaiming phase doesn't do anything in a semi-space collector since all
-                // space of the from space is implicitly reclaimed  once the liveness analysis (i.e.,
+                // space of the from space is implicitly reclaimed once the liveness analysis (i.e.,
                 // the copying of all objects reachable from roots) is done.
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
 
@@ -453,33 +444,22 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 vmConfig().monitorScheme().afterGarbageCollection();
 
                 // Post-verification of the heap.
-                verifyObjectSpaces("after GC");
+                verifyObjectSpaces(When.AFTER);
 
                 JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
 
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
 
-                if (Heap.traceGCTime()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Timings (");
-                    Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-                    Log.print(") for GC ");
-                    Log.print(invocationCount);
-                    Log.print(": clear & initialize=");
-                    Log.print(clearTimer.getLastElapsedTime());
-                    Log.print(", root scan=");
-                    Log.print(rootScanTimer.getLastElapsedTime());
-                    Log.print(", boot heap scan=");
-                    Log.print(bootHeapScanTimer.getLastElapsedTime());
-                    Log.print(", code scan=");
-                    Log.print(codeScanTimer.getLastElapsedTime());
-                    Log.print(", copy=");
-                    Log.print(copyTimer.getLastElapsedTime());
-                    Log.print(", weak refs=");
-                    Log.print(weakRefTimer.getLastElapsedTime());
-                    Log.print(", total=");
-                    Log.println(gcTimer.getLastElapsedTime());
-                    Log.unlock(lockDisabledSafepoints);
+                if (Heap.logGCTime()) {
+                    timeLogger.logPhaseTimes(invocationCount,
+                                    clearTimer.getLastElapsedTime(),
+                                    rootScanTimer.getLastElapsedTime(),
+                                    bootHeapScanTimer.getLastElapsedTime(),
+                                    codeScanTimer.getLastElapsedTime(),
+                                    copyTimer.getLastElapsedTime(),
+                                    weakRefTimer.getLastElapsedTime(),
+                                    gcTimer.getLastElapsedTime());
+
                 }
             } catch (Throwable throwable) {
                 FatalError.unexpected("Exception during GC", throwable);
@@ -581,19 +561,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 DebugHeap.writeCellTag(toCell);
             }
 
-            if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
+            if (detailLogger.enabled()) {
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
-                Log.print("Forwarding ");
-                Log.print(hub.classActor.name.string);
-                Log.print(" from ");
-                Log.print(fromCell);
-                Log.print(" to ");
-                Log.print(toCell);
-                Log.print(" [");
-                Log.print(size.toInt());
-                Log.println(" bytes]");
-                Log.unlock(lockDisabledSafepoints);
+                detailLogger.logForward(hub.classActor, fromCell, toCell, size.toInt());
             }
 
             trackLifetime(fromCell);
@@ -633,11 +603,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param cell a cell in 'toSpace' to whose references are to be updated
      */
     public Pointer visitCell(Pointer cell) {
-        if (Heap.traceGC()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Visiting cell ");
-            Log.println(cell);
-            Log.unlock(lockDisabledSafepoints);
+        if (detailLogger.enabled()) {
+            detailLogger.logVisitCell(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
 
@@ -975,7 +942,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     /**
      * Inserts {@linkplain DebugHeap#writeCellPadding(Pointer, int) padding} into the unused portion of a thread's TLAB.
-     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
+     * This is required if {@linkplain DebugHeap#verifyRegion(SemiSpaceHeapScheme.RegionKind, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
      * of the heap will be performed.
      *
      * @param etla the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
@@ -984,15 +951,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     static void padTLAB(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
         if (traceTLAB()) {
-            final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-            Log.printThread(vmThread, false);
-            Log.print(": Placed TLAB padding at ");
-            Log.print(tlabMark);
-            Log.print(" [words=");
-            Log.print(padWords);
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
+            HeapSchemeWithTLAB.logger.logPad(vmThread, tlabMark, padWords);
         }
     }
 
@@ -1006,7 +966,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      *
      * @param when a description of the current GC phase
      */
-    private void verifyObjectSpaces(String when) {
+    private void verifyObjectSpaces(When when) {
         if (!MaxineVM.isDebug() && !VerifyReferences) {
             return;
         }
@@ -1015,55 +975,50 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             zapRegion(fromSpace, when);
         }
 
-        if (Heap.traceGCPhases()) {
-            Log.print("BEGIN: Verifying object spaces ");
-            Log.println(when);
+        if (Heap.logGCPhases()) {
+            phaseLogger.logVerifyingObjectSpaces(Interval.BEGIN, when);
         }
 
-        if (Heap.traceGCPhases()) {
-            Log.println("BEGIN: Verifying stack references");
+        if (Heap.logGCPhases()) {
+            phaseLogger.logVerifyingStackReferences(Interval.BEGIN);
         }
         gcRootsVerifier.run();
-        if (Heap.traceGCPhases()) {
-            Log.println("END: Verifying stack references");
+        if (Heap.logGCPhases()) {
+            phaseLogger.logVerifyingStackReferences(Interval.END);
         }
 
         if (MaxineVM.isDebug()) {
-            if (Heap.traceGCPhases()) {
-                Log.println("BEGIN: Verifying heap objects");
+            if (Heap.logGCPhases()) {
+                phaseLogger.logVerifyingHeapObjects(Interval.BEGIN);
             }
-            DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, refVerifier);
-            if (Heap.traceGCPhases()) {
-                Log.println("END: Verifying heap objects");
-                Log.println("BEGIN: Verifying code objects");
+            SemiSpaceDebugHeap.verifyRegion(toSpace, toSpace.start().asPointer(), allocationMark(), toSpace, refVerifier);
+            if (Heap.logGCPhases()) {
+                phaseLogger.logVerifyingHeapObjects(Interval.END);
+                phaseLogger.logVerifyingCodeObjects(Interval.BEGIN);
             }
 
             verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
             verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
 
-            if (Heap.traceGCPhases()) {
-                Log.println("END: Verifying code objects");
+            if (Heap.logGCPhases()) {
+                phaseLogger.logVerifyingCodeObjects(Interval.END);
             }
         }
 
-        if (Heap.traceGCPhases()) {
-            Log.print("END: Verifying object spaces ");
-            Log.println(when);
+        if (Heap.logGCPhases()) {
+            phaseLogger.logVerifyingObjectSpaces(Interval.END, when);
         }
     }
 
     private void verifyCodeRegion(CodeRegion cr) {
         if (!cr.size().isZero()) {
-            DebugHeap.verifyRegion(cr.regionName(), cr.start().asPointer(), cr.getAllocationMark(), toSpace, refVerifier);
+            SemiSpaceDebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), toSpace, refVerifier);
         }
     }
 
-    private void zapRegion(MemoryRegion region, String when) {
-        if (Heap.traceGCPhases()) {
-            Log.print("Zapping region ");
-            Log.print(region.regionName());
-            Log.print(' ');
-            Log.println(when);
+    private void zapRegion(MemoryRegion region, When when) {
+        if (Heap.logGCPhases()) {
+            phaseLogger.logZappingRegion(region, when);
         }
         Memory.zapRegion(region);
     }
@@ -1265,5 +1220,605 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             super(MemoryType.HEAP, region, manager);
         }
     }
+
+    // Logging
+
+    static final PhaseLogger phaseLogger = new PhaseLogger();
+
+    /**
+     * A way to avoid logging strings for before/after GC identification.
+     * Not really needed when we support objects in the log.
+     */
+    private static enum When {
+        INIT("GC initialization"), BEFORE("before GC"), AFTER("after GC");
+
+        private String traceString;
+        private static final When[] VALUES = values();
+
+        @HOSTED_ONLY
+        public static String inspectedValue(Word argValue) {
+            return values()[argValue.asAddress().toInt()].traceString;
+        }
+
+        When(String traceString) {
+            this.traceString = traceString;
+        }
+
+    }
+
+    private static When toWhen(Record r, int argNum) {
+        return When.VALUES[r.getIntArg(argNum)];
+    }
+
+    private static Word whenArg(When when) {
+        return Address.fromInt(when.ordinal());
+    }
+
+    /*
+     * Currently we log MemoryRegion objects as objects using VMLogger.objectArg. This may change.
+     */
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native MemoryRegion asMemoryRegion(Object arg);
+
+    private static Word memoryRegionArg(MemoryRegion region) {
+        return VMLogger.objectArg(region);
+    }
+
+    private static MemoryRegion toMemoryRegion(Record r, int argNum) {
+        return asMemoryRegion(VMLogger.toObject(r, argNum));
+    }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
+    private static interface PhaseLoggerInterface {
+        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
+        void scanningRoots(@VMLogParam(name = "interval") Interval interval);
+        void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
+        void scanningImmortalHeap(@VMLogParam(name = "interval") Interval interval);
+        void scanningCode(@VMLogParam(name = "interval") Interval interval);
+        void movingReachable(@VMLogParam(name = "interval") Interval interval);
+        void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
+        void verifyingObjectSpaces(@VMLogParam(name = "interval") Interval interval, @VMLogParam(name = "when") When when);
+        void verifyingStackReferences(@VMLogParam(name = "interval") Interval interval);
+        void verifyingHeapObjects(@VMLogParam(name = "interval") Interval interval);
+        void verifyingCodeObjects(@VMLogParam(name = "interval") Interval interval);
+        void verifyingRegion(@VMLogParam(name = "region") MemoryRegion region, @VMLogParam(name = "start") Address start, @VMLogParam(name = "end") Address end);
+        void zappingRegion(@VMLogParam(name = "region") MemoryRegion region, @VMLogParam(name = "when") When when);
+    }
+
+    public static final class PhaseLogger extends PhaseLoggerAuto {
+
+        PhaseLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceScanningBootHeap(Interval interval) {
+            tracePhase("Scanning boot heap", interval);
+        }
+
+        @Override
+        protected void traceScanningThreadRoots(VmThread vmThread) {
+            Log.print("Scanning thread local and stack roots for thread ");
+            Log.printThread(vmThread, true);
+        }
+
+        @Override
+        protected void traceScanningRoots(Interval interval) {
+            tracePhase("Scanning roots", interval);
+        }
+
+        @Override
+        protected void traceScanningImmortalHeap(Interval interval) {
+            tracePhase("Scanning immortal heap", interval);
+        }
+
+        @Override
+        protected void traceScanningCode(Interval interval) {
+            tracePhase("Scanning code", interval);
+        }
+
+        @Override
+        protected void traceMovingReachable(Interval interval) {
+            tracePhase("Moving reachable", interval);
+        }
+
+        @Override
+        protected void traceProcessingSpecialReferences(Interval interval) {
+            tracePhase("Processing special references", interval);
+        }
+
+        @Override
+        protected void traceVerifyingObjectSpaces(Interval interval, When when) {
+            Log.print(interval.name());
+            Log.print(": ");
+            Log.print("Verifying object spaces ");
+            Log.print(when.traceString);
+        }
+
+        @Override
+        protected void traceVerifyingStackReferences(Interval interval) {
+            tracePhase("Verifying stack references", interval);
+        }
+
+        @Override
+        protected void traceVerifyingHeapObjects(Interval interval) {
+            tracePhase("Verifying heap objects", interval);
+        }
+
+        @Override
+        protected void traceVerifyingCodeObjects(Interval interval) {
+            tracePhase("Verifying code objects", interval);
+        }
+
+        private static void tracePhase(String description, Interval interval) {
+            Log.print(interval.name()); Log.print(": "); Log.println(description);
+        }
+
+        @Override
+        protected void traceVerifyingRegion(MemoryRegion region, Address start, Address end) {
+            Log.print("Verifying region ");
+            Log.print(' ');
+            Log.print(region.regionName());
+            Log.print(' ');
+            Log.print(" [");
+            Log.print(start);
+            Log.print(" .. ");
+            Log.print(end);
+            Log.println(")");
+        }
+
+        @Override
+        protected void traceZappingRegion(MemoryRegion region, When when) {
+            Log.print("Zapping region ");
+            Log.print(' ');
+            Log.print(region.regionName());
+            Log.print(' ');
+            Log.println(when.traceString);
+
+        }
+
+    }
+
+    @Override
+    public PhaseLogger phaseLogger() {
+        return phaseLogger;
+    }
+
+    private static final TimeLogger timeLogger = new TimeLogger();
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.TimeLogger.class)
+    private static interface TimeLoggerInterface {
+        void stackReferenceMapPreparationTime(
+            @VMLogParam(name = "stackReferenceMapPreparationTime") long stackReferenceMapPreparationTime);
+
+        void phaseTimes(
+            @VMLogParam(name = "invocationCount") int invocationCount,
+            @VMLogParam(name = "clearTime") long clearTime,
+            @VMLogParam(name = "rootScanTime") long rootScanTime,
+            @VMLogParam(name = "bootHeapScanTime") long bootHeapScanTime,
+            @VMLogParam(name = "codeScanTime") long codeScanTime,
+            @VMLogParam(name = "copyTime") long copyTime,
+            @VMLogParam(name = "weakRefTime") long weakRefTime,
+            @VMLogParam(name = "gcTime") long gcTime);
+    }
+
+    public static final class TimeLogger extends TimeLoggerAuto {
+        private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
+        private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for ";
+
+        TimeLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            Log.print("Stack reference map preparation time: ");
+            Log.print(stackReferenceMapPreparationTime);
+            Log.println(HZ_SUFFIX);
+        }
+
+        @Override
+        protected void tracePhaseTimes(int invocationCount, long clearTime, long rootScanTime, long bootHeapScanTime,
+                        long codeScanTime, long copyTime, long weakRefTime, long gcTime) {
+            Log.print(TIMINGS_LEAD);
+            if (invocationCount < 0) {
+                Log.print("all GC");
+            } else {
+                Log.print("GC ");
+                Log.print(invocationCount);
+            }
+            Log.print(": clear & initialize=");
+            Log.print(clearTime);
+            Log.print(", root scan=");
+            Log.print(rootScanTime);
+            Log.print(", boot heap scan=");
+            Log.print(bootHeapScanTime);
+            Log.print(", code scan=");
+            Log.print(codeScanTime);
+            Log.print(", copy=");
+            Log.print(copyTime);
+            Log.print(", weak refs=");
+            Log.print(weakRefTime);
+            Log.print(", total=");
+            Log.println(gcTime);
+        }
+
+        /**
+         * Inspector use, mimic the trace.
+         * TODO use tool tips for this?
+         */
+        @HOSTED_ONLY
+        @Override
+        public String inspectedArgValue(int op, int argNum, Word argValue) {
+            if (op == Operation.PhaseTimes.ordinal()) {
+                // Checkstyle: stop
+                switch (argNum) {
+                    case 1: return "gc=" + argValue.asAddress().toInt();
+                    case 2: return "init=" + argValue.asAddress().toLong();
+                    case 3: return "rs=" + argValue.asAddress().toLong();
+                    case 4: return "bs=" + argValue.asAddress().toLong();
+                    case 5: return "cs=" + argValue.asAddress().toLong();
+                    case 6: return "copy=" + argValue.asAddress().toLong();
+                    case 7: return "srefs=" + argValue.asAddress().toLong();
+                    case 8: return "total=" + argValue.asAddress().toLong();
+                    default: return "???";
+                }
+                // Checkstyle: resume
+            }
+            return null;
+        }
+    }
+
+    @Override
+    public TimeLogger timeLogger() {
+        return timeLogger;
+    }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private static interface DetailLoggerInterface {
+        void visitCell(
+            @VMLogParam(name = "cell") Pointer cell);
+
+        void forward(
+            @VMLogParam(name = "classActor") ClassActor classActor,
+            @VMLogParam(name = "fromCell") Pointer fromCell,
+            @VMLogParam(name = "toCell") Pointer toCell,
+            @VMLogParam(name = "size") int size);
+
+        void skipped(
+            @VMLogParam(name = "padBytes") int padBytes);
+
+        void verifyObject(
+            @VMLogParam(name = "hubClassActor") ClassActor hubClassActor,
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "size") int size);
+    }
+
+    public static final class DetailLogger extends DetailLoggerAuto {
+
+        DetailLogger() {
+            super("GCDetail", "detailed operation.");
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.gcAllLogger);
+        }
+
+        @Override
+        protected void traceVisitCell(Pointer cell) {
+            Log.print("Visiting cell ");
+            Log.println(cell);
+        }
+
+        @Override
+        protected void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
+            Log.print("Forwarding ");
+            Log.print(classActor.name.string);
+            Log.print(" from ");
+            Log.print(fromCell);
+            Log.print(" to ");
+            Log.print(toCell);
+            Log.print(" [");
+            Log.print(size);
+            Log.println(" bytes]");
+        }
+
+        @Override
+        protected void traceSkipped(int padBytes) {
+            Log.print("Skipped ");
+            Log.print(padBytes);
+            Log.println(" cell padding bytes");
+        }
+
+        @Override
+        protected void traceVerifyObject(ClassActor hubClassActor, Pointer cell, int size) {
+            Log.print("Verifying ");
+            Log.print(hubClassActor.name.string);
+            Log.print(" at ");
+            Log.print(cell);
+            Log.print(" [");
+            Log.print(size);
+            Log.println(" bytes]");
+        }
+    }
+
+    static final DetailLogger detailLogger = new DetailLogger();
+
+// START GENERATED CODE
+    private static abstract class DetailLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            VisitCell, Forward, Skipped,
+            VerifyObject;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected DetailLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logVisitCell(Pointer cell) {
+            log(Operation.VisitCell.ordinal(), cell);
+        }
+        protected abstract void traceVisitCell(Pointer cell);
+
+        @INLINE
+        public final void logForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
+            log(Operation.Forward.ordinal(), classActorArg(classActor), fromCell, toCell, intArg(size));
+        }
+        protected abstract void traceForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size);
+
+        @INLINE
+        public final void logSkipped(int padBytes) {
+            log(Operation.Skipped.ordinal(), intArg(padBytes));
+        }
+        protected abstract void traceSkipped(int padBytes);
+
+        @INLINE
+        public final void logVerifyObject(ClassActor hubClassActor, Pointer cell, int size) {
+            log(Operation.VerifyObject.ordinal(), classActorArg(hubClassActor), cell, intArg(size));
+        }
+        protected abstract void traceVerifyObject(ClassActor hubClassActor, Pointer cell, int size);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //VisitCell
+                    traceVisitCell(toPointer(r, 1));
+                    break;
+                }
+                case 1: { //Forward
+                    traceForward(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 2: { //Skipped
+                    traceSkipped(toInt(r, 1));
+                    break;
+                }
+                case 3: { //VerifyObject
+                    traceVerifyObject(toClassActor(r, 1), toPointer(r, 2), toInt(r, 3));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
+        public enum Operation {
+            ScanningBootHeap, ScanningThreadRoots, ScanningRoots,
+            ScanningImmortalHeap, ScanningCode, MovingReachable, ProcessingSpecialReferences,
+            VerifyingObjectSpaces, VerifyingStackReferences, VerifyingHeapObjects, VerifyingCodeObjects,
+            VerifyingRegion, ZappingRegion;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected PhaseLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logScanningBootHeap(Interval interval) {
+            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningBootHeap(Interval interval);
+
+        @Override
+        @INLINE
+        public final void logScanningThreadRoots(VmThread vmThread) {
+            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanningThreadRoots(VmThread vmThread);
+
+        @INLINE
+        public final void logScanningRoots(Interval interval) {
+            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRoots(Interval interval);
+
+        @INLINE
+        public final void logScanningImmortalHeap(Interval interval) {
+            log(Operation.ScanningImmortalHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningImmortalHeap(Interval interval);
+
+        @INLINE
+        public final void logScanningCode(Interval interval) {
+            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningCode(Interval interval);
+
+        @INLINE
+        public final void logMovingReachable(Interval interval) {
+            log(Operation.MovingReachable.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceMovingReachable(Interval interval);
+
+        @INLINE
+        public final void logProcessingSpecialReferences(Interval interval) {
+            log(Operation.ProcessingSpecialReferences.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceProcessingSpecialReferences(Interval interval);
+
+        @INLINE
+        public final void logVerifyingObjectSpaces(Interval interval, When when) {
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), whenArg(when));
+        }
+        protected abstract void traceVerifyingObjectSpaces(Interval interval, When when);
+
+        @INLINE
+        public final void logVerifyingStackReferences(Interval interval) {
+            log(Operation.VerifyingStackReferences.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceVerifyingStackReferences(Interval interval);
+
+        @INLINE
+        public final void logVerifyingHeapObjects(Interval interval) {
+            log(Operation.VerifyingHeapObjects.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceVerifyingHeapObjects(Interval interval);
+
+        @INLINE
+        public final void logVerifyingCodeObjects(Interval interval) {
+            log(Operation.VerifyingCodeObjects.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceVerifyingCodeObjects(Interval interval);
+
+        @INLINE
+        public final void logVerifyingRegion(MemoryRegion region, Address start, Address end) {
+            log(Operation.VerifyingRegion.ordinal(), memoryRegionArg(region), start, end);
+        }
+        protected abstract void traceVerifyingRegion(MemoryRegion region, Address start, Address end);
+
+        @INLINE
+        public final void logZappingRegion(MemoryRegion region, When when) {
+            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), whenArg(when));
+        }
+        protected abstract void traceZappingRegion(MemoryRegion region, When when);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ScanningBootHeap
+                    traceScanningBootHeap(toInterval(r, 1));
+                    break;
+                }
+                case 1: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
+                    break;
+                }
+                case 2: { //ScanningRoots
+                    traceScanningRoots(toInterval(r, 1));
+                    break;
+                }
+                case 3: { //ScanningImmortalHeap
+                    traceScanningImmortalHeap(toInterval(r, 1));
+                    break;
+                }
+                case 4: { //ScanningCode
+                    traceScanningCode(toInterval(r, 1));
+                    break;
+                }
+                case 5: { //MovingReachable
+                    traceMovingReachable(toInterval(r, 1));
+                    break;
+                }
+                case 6: { //ProcessingSpecialReferences
+                    traceProcessingSpecialReferences(toInterval(r, 1));
+                    break;
+                }
+                case 7: { //VerifyingObjectSpaces
+                    traceVerifyingObjectSpaces(toInterval(r, 1), toWhen(r, 2));
+                    break;
+                }
+                case 8: { //VerifyingStackReferences
+                    traceVerifyingStackReferences(toInterval(r, 1));
+                    break;
+                }
+                case 9: { //VerifyingHeapObjects
+                    traceVerifyingHeapObjects(toInterval(r, 1));
+                    break;
+                }
+                case 10: { //VerifyingCodeObjects
+                    traceVerifyingCodeObjects(toInterval(r, 1));
+                    break;
+                }
+                case 11: { //VerifyingRegion
+                    traceVerifyingRegion(toMemoryRegion(r, 1), toAddress(r, 2), toAddress(r, 3));
+                    break;
+                }
+                case 12: { //ZappingRegion
+                    traceZappingRegion(toMemoryRegion(r, 1), toWhen(r, 2));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
+        public enum Operation {
+            StackReferenceMapPreparationTime, PhaseTimes;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected TimeLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @Override
+        @INLINE
+        public final void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            log(Operation.StackReferenceMapPreparationTime.ordinal(), longArg(stackReferenceMapPreparationTime));
+        }
+        protected abstract void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+
+        @INLINE
+        public final void logPhaseTimes(int invocationCount, long clearTime, long rootScanTime, long bootHeapScanTime, long codeScanTime,
+                long copyTime, long weakRefTime, long gcTime) {
+            log(Operation.PhaseTimes.ordinal(), intArg(invocationCount), longArg(clearTime), longArg(rootScanTime), longArg(bootHeapScanTime), longArg(codeScanTime),
+                longArg(copyTime), longArg(weakRefTime), longArg(gcTime));
+        }
+        protected abstract void tracePhaseTimes(int invocationCount, long clearTime, long rootScanTime, long bootHeapScanTime, long codeScanTime,
+                long copyTime, long weakRefTime, long gcTime);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //StackReferenceMapPreparationTime
+                    traceStackReferenceMapPreparationTime(toLong(r, 1));
+                    break;
+                }
+                case 1: { //PhaseTimes
+                    tracePhaseTimes(toInt(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6), toLong(r, 7), toLong(r, 8));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 
 }

@@ -20,28 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.nat.thread;
+package com.sun.max.tele.object;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.log.*;
+import com.sun.max.tele.*;
+import com.sun.max.vm.reference.*;
 
-
-public class Package extends BootImagePackage {
-    public Package() {
-        if (isPartOfMaxineVM()) {
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
-            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
-        }
+/**
+ * Exists solely to truncate the deep copy.
+ */
+public class TeleVMLog extends TeleTupleObject {
+    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
+        super(vm, vmLogReference);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return isPartOfMaxineVM();
-    }
-
-    private static boolean isPartOfMaxineVM() {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
-        VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
+    public Object createDeepCopy(DeepCopier context) {
+        return null;
     }
 }

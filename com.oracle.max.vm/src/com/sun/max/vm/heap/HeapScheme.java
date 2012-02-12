@@ -31,6 +31,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -383,6 +384,56 @@ public interface HeapScheme extends VMScheme {
      * @param visitor
      */
     void walkHeap(CallbackCellVisitor visitor);
+
+    /*
+     * Logging support.
+     */
+
+    public static abstract class PhaseLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
+        protected PhaseLogger(String name, int numOps, String description) {
+            super("GCPhases", numOps, "garbage collection phases.");
+        }
+
+        /**
+         * All heap schemes scan the {@link VMThreadLocal} references and thread stack roots.
+         * @param vmThread
+         */
+        public abstract void logScanningThreadRoots(VmThread vmThread);
+    }
+
+    /**
+     * Get the concrete implementation of {@link PhaseLogger}.
+     * @return
+     */
+    PhaseLogger phaseLogger();
+
+    /**
+     * A logger for GC timings - implementation provided by the heap scheme.
+     */
+    public static abstract class TimeLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
+        protected TimeLogger(String name, int numOps, String description) {
+            super("GCTime", numOps, "time of garbage collection phases.");
+        }
+
+        /**
+         * Every scheme has this phase.
+         *
+         * @param stackReferenceMapPreparationTime
+         */
+        public abstract void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+    }
+
+    /**
+     * Get the concrete implementation of {@link TimeLogger}.
+     * @return
+     */
+    TimeLogger timeLogger();
 
     /**
      * A collection of methods that support certain inspection services.
