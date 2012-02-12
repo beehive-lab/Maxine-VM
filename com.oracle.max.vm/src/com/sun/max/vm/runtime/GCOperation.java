@@ -139,8 +139,8 @@ public abstract class GCOperation extends VmOperation {
 
     @Override
     protected void doItEpilogue(boolean nested) {
-        if (Heap.traceGCTime()) {
-            Heap.timeLogger.logStackRefMapTime(stackReferenceMapPreparationTime);
+        if (Heap.logGCTime()) {
+            Heap.timeLogger.logStackReferenceMapPreparationTime(stackReferenceMapPreparationTime);
             stackReferenceMapPreparationTime = 0;
         }
 

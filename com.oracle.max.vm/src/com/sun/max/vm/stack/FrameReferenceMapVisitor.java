@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,17 +41,17 @@ public abstract class FrameReferenceMapVisitor {
      */
     public abstract void visitReferenceMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits);
 
-    public abstract void tracePrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label);
+    public abstract void logPrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label);
 
     /**
-     * @see StackReferenceMapPreparer#traceReferenceMapByteBefore(int, byte, String)
+     * @see StackReferenceMapPreparer#logReferenceMapByteBefore(int, byte, String)
      */
-    public abstract void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel);
+    public abstract void logReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel);
 
     /**
-     * @see StackReferenceMapPreparer#traceReferenceMapByteAfter(Pointer, int, byte)
+     * @see StackReferenceMapPreparer#logReferenceMapByteAfter(Pointer, int, byte)
      */
-    public abstract void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte);
+    public abstract void logReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte);
 
     /**
      * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).

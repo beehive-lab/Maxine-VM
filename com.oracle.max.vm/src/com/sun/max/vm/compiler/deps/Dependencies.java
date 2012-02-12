@@ -23,8 +23,6 @@
 package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
-import static com.sun.max.vm.compiler.deps.DependenciesManager.Logger.*;
-
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -566,16 +564,20 @@ public final class Dependencies {
         assert i == packed.length;
     }
 
-    void logAddRemove(Operation operation, ClassActor type) {
-        logger.logAddRemove(operation, targetMethod, id, type);
+    void logAdd(ClassActor type) {
+        dependenciesLogger.logAdd(targetMethod, id, type);
+    }
+
+    void logRemove(ClassActor type) {
+        dependenciesLogger.logRemove(targetMethod, id, type);
     }
 
     void logRegister() {
-        logger.logRegister(targetMethod, id);
+        dependenciesLogger.logRegister(targetMethod, id);
     }
 
     void logInvalidated() {
-        logger.logInvalidated(targetMethod, id);
+        dependenciesLogger.logInvalidated(targetMethod, id);
     }
 
     @Override

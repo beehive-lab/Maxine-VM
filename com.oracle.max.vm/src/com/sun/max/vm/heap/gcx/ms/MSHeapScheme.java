@@ -255,7 +255,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
         @Override
         public void collect(int invocationCount) {
-            traceGCTimes = Heap.traceGCTime();
+            traceGCTimes = Heap.logGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
@@ -265,7 +265,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             objectSpace.doBeforeGC();
 
             collectionCount++;
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+            if (MaxineVM.isDebug() && Heap.logGCPhases()) {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
@@ -283,7 +283,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
                 ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
                 heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
             }
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+            if (MaxineVM.isDebug() && Heap.logGCPhases()) {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
@@ -435,5 +435,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
+
 }
 

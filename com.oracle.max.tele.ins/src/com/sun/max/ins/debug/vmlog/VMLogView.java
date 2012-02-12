@@ -133,6 +133,9 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
      */
     final VMLogger[] loggers;
 
+    Object[] tempObjects;
+    final TeleArrayObject teleTempObjectsArray;
+
     @SuppressWarnings("unchecked")
     VMLogView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
@@ -145,6 +148,9 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         Reference loggersRef = vm.fields().VMLog_loggers.readReference(vm);
         TeleArrayObject teleLoggersArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(loggersRef);
         loggers = (VMLogger[]) teleLoggersArray.deepCopy();
+        Reference tempObjectsRef = vm.fields().VMLogger_tempObjectIds.readReference(vm);
+        teleTempObjectsArray = (TeleArrayObject) VmObjectAccess.make(vm).makeTeleObject(tempObjectsRef);
+        tempObjects = new Object[teleTempObjectsArray.length()];
 
         emptyStringRenderer = new PlainLabel(inspection, "");
         viewPreferences = LogViewPreferences.globalPreferences(inspection());

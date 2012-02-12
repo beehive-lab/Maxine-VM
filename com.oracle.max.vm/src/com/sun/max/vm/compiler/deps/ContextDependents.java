@@ -23,7 +23,6 @@
 package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
-import static com.sun.max.vm.compiler.deps.DependenciesManager.Logger.*;
 
 import java.io.*;
 import java.util.*;
@@ -181,8 +180,8 @@ final class ContextDependents {
                 dset = map.putIfAbsent(type, new DSet(deps.id));
                 if (dset == null) {
                     // won the race to add the first dependency
-                    if (logger.enabled()) {
-                        deps.logAddRemove(Operation.Add, type);
+                    if (dependenciesLogger.enabled()) {
+                        deps.logAdd(type);
                     }
                     continue;
                 }
@@ -192,8 +191,8 @@ final class ContextDependents {
             synchronized (dset) {
                 dset.addUnique(deps.id);
             }
-            if (logger.enabled()) {
-                deps.logAddRemove(Operation.Add, type);
+            if (dependenciesLogger.enabled()) {
+                deps.logRemove(type);
             }
         }
     }
@@ -215,8 +214,8 @@ final class ContextDependents {
                     if (dset != null) {
                         if (dset.remove(deps.id)) {
                             removed[0]++;
-                            if (logger.enabled()) {
-                                deps.logAddRemove(Operation.Remove, type);
+                            if (dependenciesLogger.enabled()) {
+                                deps.logRemove(type);
                             }
                         }
                         if (dset.size == 0) {

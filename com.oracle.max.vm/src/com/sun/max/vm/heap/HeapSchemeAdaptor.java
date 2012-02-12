@@ -37,9 +37,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -79,31 +78,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             }
         }
     }
-
-    public static class PhaseLogger extends VMLogger {
-        protected PhaseLogger(int numOps) {
-            super("GCPhases", numOps, "garbage collection phases.");
-        }
-    }
-
-    public VMLogger phaseLogger() {
-        return new PhaseLogger(0);
-    }
-
-    public static abstract class GCTimeLogger extends HeapScheme.TimeLogger {
-        protected GCTimeLogger(int numOps) {
-            super("GCTime", numOps, "time of garbage collection phases.");
-        }
-    }
-
-    public GCTimeLogger timeLogger() {
-        return new GCTimeLogger(0) {
-            @Override
-            public void logStackRefMapTime(long stackReferenceMapPreparationTime) {
-            }
-        };
-    }
-
 
     /**
      * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.

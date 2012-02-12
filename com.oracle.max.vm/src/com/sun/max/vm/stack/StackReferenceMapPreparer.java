@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,21 +26,27 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.max.cri.intrinsics.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.log.VMLogger.Interval;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * GC support: prepares the object reference map of a thread's stack.
@@ -71,30 +77,24 @@ import com.sun.max.vm.thread.*;
 public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
 
     /**
-     * Flag controlling tracing of stack root scanning (SRS).
+     * Disables stack root scanning if greater than 0.
      */
-    public static boolean TraceSRS;
+    private static int LogSRSSuppressionCount;
 
     /**
-     * Disables -XX:+TraceStackRootScanning if greater than 0.
-     */
-    private static int TraceSRSSuppressionCount;
-
-    /**
-     * A counter used purely for {@link #TraceSRSSuppressionCount}.
+     * A counter used purely for {@link #LogSRSSuppressionCount}.
      */
     private static AtomicInteger SRSCount = new AtomicInteger();
 
     static {
-        VMOptions.addFieldOption("-XX:", "TraceSRS", "Trace stack root scanning.");
-        VMOptions.addFieldOption("-XX:", "TraceSRSSuppressionCount", "Disable tracing of the first n stack root scans.");
+        VMOptions.addFieldOption("-XX:", "LogSRSSuppressionCount", "Disable logging of the first n stack root scans.");
     }
 
     /**
-     * Determines if stack root scanning should be traced.
+     * Determines if stack root scanning should be logged.
      */
-    public static boolean traceStackRootScanning() {
-        return Heap.traceRootScanning() || (TraceSRS && TraceSRSSuppressionCount <= 0);
+    public static boolean logStackRootScanning() {
+        return Heap.logRootScanning() || (stackRootScanLogger.enabled() && LogSRSSuppressionCount <= 0);
     }
 
     public static boolean VerifyRefMaps;
@@ -169,14 +169,8 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
                 referenceMap.writeByte(refMapByteIndex, (byte) 0);
             }
         }
-        if (traceStackRootScanning()) {
-            boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Cleared refmap indexes [");
-            Log.print(lowestBitIndex);
-            Log.print(" .. ");
-            Log.print(highestBitIndex);
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
+        if (logStackRootScanning()) {
+            StackReferenceMapPreparer.stackRootScanLogger.logClearedRefMapIndexes(lowestBitIndex, highestBitIndex);
         }
     }
 
@@ -218,10 +212,8 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
             for (int bitIndex = startBit; bitIndex < endBit; bitIndex++) {
                 if (((refMapByte >>> bitIndex) & 1) != 0) {
                     int stackWordIndex = baseIndex + bitIndex;
-                    if (traceStackRootScanning()) {
-                        Log.print("    Slot: ");
-                        printSlot(stackWordIndex, tla, Pointer.zero(), true);
-                        Log.println();
+                    if (logStackRootScanning()) {
+                        stackRootScanLogger.logStackSlot(stackWordIndex, tla, Pointer.zero(), true);
                     }
                     if (!Reference.fromOrigin(slotAddress(stackWordIndex, tla).readWord(0).asPointer()).isTagged()) {
                         // only visit non-tagged references
@@ -276,48 +268,6 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
      * @param checkTagging if this is {@code true}, all encountered reference values will be checked whether they
      * are tagged pointers, and according information is printed
      */
-    private static void printSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
-        Pointer slotAddress = slotAddress(slotIndex, tla);
-        Pointer referenceMap = STACK_REFERENCE_MAP.load(tla);
-        Log.print("index=");
-        Log.print(slotIndex);
-        if (!framePointer.isZero()) {
-            final int offset = slotAddress.minus(framePointer).toInt();
-            if (offset >= 0) {
-                Log.print(", fp+");
-            } else {
-                Log.print(", fp");
-            }
-            Log.print(offset);
-        }
-        Log.print(", address=");
-        Log.print(slotAddress);
-        Log.print(", value=");
-        final Word value = slotAddress.readWord(0);
-        Log.print(value);
-        if (checkTagging && Reference.fromOrigin(value.asPointer()).isTagged()) {
-            Log.print(" (tagged)");
-        }
-        if (slotAddress.lessThan(referenceMap)) {
-            Pointer etla = ETLA.load(tla);
-            Pointer dtla = DTLA.load(tla);
-            Pointer ttla = TTLA.load(tla);
-            if (slotAddress.greaterEqual(dtla)) {
-                Log.print(", name=");
-                int vmThreadLocalIndex = slotAddress.minus(dtla).dividedBy(Word.size()).toInt();
-                Log.print(values().get(vmThreadLocalIndex).name);
-            } else if (slotAddress.greaterEqual(etla)) {
-                Log.print(", name=");
-                int vmThreadLocalIndex = slotAddress.minus(etla).dividedBy(Word.size()).toInt();
-                Log.print(values().get(vmThreadLocalIndex).name);
-            } else if (slotAddress.greaterEqual(ttla)) {
-                Log.print(", name=");
-                int vmThreadLocalIndex = slotAddress.minus(ttla).dividedBy(Word.size()).toInt();
-                Log.print(values().get(vmThreadLocalIndex).name);
-            }
-        }
-    }
-
     /**
      * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer, boolean)}.
      * If there was an interleaving call to {@link #completeStackReferenceMap(com.sun.max.unsafe.Pointer)} completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
@@ -361,57 +311,44 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         // clear the reference map covering the stack contents
         clearReferenceMapRange(tla, stackPointer, highestStackSlot);
 
-        boolean lockDisabledSafepoints = traceStackRootScanStart(stackPointer, highestStackSlot, vmThread);
+        boolean lockDisabledSafepoints = logStackRootScanStart(stackPointer, highestStackSlot, vmThread);
 
         // walk the stack and prepare references for each stack frame
         StackFrameWalker sfw = vmThread.referenceMapPreparingStackFrameWalker();
         sfw.prepareReferenceMap(instructionPointer.toPointer(), stackPointer, framePointer, this);
 
-        traceStackRootScanEnd(lockDisabledSafepoints);
+        logStackRootScanEnd(lockDisabledSafepoints);
 
         timer.stop();
         preparationTime = timer.getLastElapsedTime();
         return preparationTime;
     }
 
-    private void traceStackRootScanEnd(boolean lockDisabledSafepoints) {
-        if (traceStackRootScanning()) {
-            Log.unlock(lockDisabledSafepoints);
+    private void logStackRootScanEnd(boolean lockDisabledSafepoints) {
+        if (logStackRootScanning()) {
+            stackRootScanLogger.unlock(lockDisabledSafepoints);
         }
     }
 
-    private boolean traceStackRootScanStart(Pointer stackPointer, Pointer highestStackSlot, VmThread vmThread) {
+    private boolean logStackRootScanStart(Pointer stackPointer, Pointer highestStackSlot, VmThread vmThread) {
         // Ideally this test and decrement should be atomic but it's ok
-        // for TraceSRSSuppressionCount to be approximate
-        if (TraceSRSSuppressionCount > 0) {
-            TraceSRSSuppressionCount--;
+        // for LogSRSSuppressionCount to be approximate
+        if (LogSRSSuppressionCount > 0) {
+            LogSRSSuppressionCount--;
         }
         SRSCount.incrementAndGet();
-        if (traceStackRootScanning()) {
-            boolean lockDisabledSafepoints = Log.lock(); // Note: This lock serializes stack reference map preparation
-            Log.print('[');
-            Log.print(SRSCount.get());
-            Log.print(prepare ? "] Preparing" : "] Verifying");
-            Log.print(" stack reference map for thread ");
-            Log.printThread(vmThread, false);
-            Log.println(":");
-            Log.print("  Highest slot: ");
-            Log.print(highestStackSlot);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(highestStackSlot));
-            Log.println("]");
-            Log.print("  Lowest active slot: ");
-            Log.print(stackPointer);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(stackPointer));
-            Log.println("]");
-            Log.print("  Lowest slot: ");
-            Log.print(lowestStackSlot);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(lowestStackSlot));
-            Log.println("]");
-            Log.print("  Current thread is ");
-            Log.printCurrentThread(true);
+        if (logStackRootScanning()) {
+            boolean lockDisabledSafepoints = stackRootScanLogger.lock();
+            stackRootScanLogger.logStart(
+                            SRSCount.get(),
+                            prepare,
+                            stackPointer,
+                            highestStackSlot,
+                            lowestStackSlot,
+                            vmThread,
+                            referenceMapBitIndex(highestStackSlot),
+                            referenceMapBitIndex(stackPointer),
+                            referenceMapBitIndex(lowestStackSlot));
             return lockDisabledSafepoints;
         }
         return false;
@@ -456,28 +393,15 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         clearReferenceMapRange(tla, stackPointer, highestSlot.minus(Word.size()));
 
         boolean lockDisabledSafepoints = false;
-        if (traceStackRootScanning()) {
-            lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
-            Log.print("Completing preparation of stack reference map for thread ");
-            Log.printThread(vmThread, false);
-            Log.println(":");
-            Log.print("  Highest slot: ");
-            Log.print(highestSlot);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(highestSlot));
-            Log.println("]");
-            Log.print("  Lowest active slot: ");
-            Log.print(stackPointer);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(stackPointer));
-            Log.println("]");
-            Log.print("  Lowest slot: ");
-            Log.print(lowestStackSlot);
-            Log.print(" [index=");
-            Log.print(referenceMapBitIndex(lowestStackSlot));
-            Log.println("]");
-            Log.print("  Current thread is ");
-            Log.printCurrentThread(true);
+        if (logStackRootScanning()) {
+            stackRootScanLogger.logComplete(
+                            vmThread,
+                            highestSlot,
+                            referenceMapBitIndex(stackPointer),
+                            stackPointer,
+                            referenceMapBitIndex(stackPointer),
+                            lowestStackSlot,
+                            referenceMapBitIndex(lowestStackSlot));
         }
 
         // walk the stack and prepare references for each stack frame
@@ -486,7 +410,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         sfw.prepareReferenceMap(instructionPointer.toPointer(), stackPointer, framePointer, this);
         completingReferenceMapLimit = Pointer.zero();
 
-        traceStackRootScanEnd(lockDisabledSafepoints);
+        logStackRootScanEnd(lockDisabledSafepoints);
         timer.stop();
         preparationTime += timer.getLastElapsedTime();
     }
@@ -503,10 +427,6 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         referenceMap.setBit(referenceMapBitIndex(lowestStackSlot, slotAddress));
     }
 
-    private void printSlot(int slotIndex, Pointer framePointer) {
-        printSlot(slotIndex, ttla, framePointer, false);
-    }
-
     /**
      * Prepares a reference map for the entire stack of a VM thread executing or blocked in native code.
      *
@@ -519,11 +439,8 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
             // This is a thread that has returned from VmThread.run() but has not
             // yet been terminated via a call to VmThread.detach(). In this state,
             // it has no Java stack frames that need scanning.
-            if (traceStackRootScanning()) {
-                boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Empty stack reference map for thread ");
-                Log.printThread(VmThread.fromTLA(tla), true);
-                Log.unlock(lockDisabledSafepoints);
+            if (logStackRootScanning()) {
+                StackReferenceMapPreparer.stackRootScanLogger.logEmptyMap(VmThread.fromTLA(tla));
             }
             return;
         }
@@ -563,27 +480,15 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
     }
 
     @Override
-    public void tracePrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
-        if (traceStackRootScanning()) {
-            Log.print(prepare ? "  Preparing" : "  Verifying");
-            Log.print(" reference map for ");
-            Log.print(label);
-            Log.print(" of ");
-            Log.printMethod(targetMethod, false);
-            Log.print(" +");
-            Log.println(targetMethod.safepoints().posAt(safepointIndex));
-            Log.print("    Stop index: ");
-            Log.println(safepointIndex);
-            if (!refmapFramePointer.isZero()) {
-                Log.print("    Frame pointer: ");
-                printSlot(referenceMapBitIndex(refmapFramePointer), Pointer.zero());
-                Log.println();
-            }
+    public void logPrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
+        if (logStackRootScanning()) {
+            stackRootScanLogger.logPrepare(prepare, targetMethod, safepointIndex, refmapFramePointer, label,
+                            referenceMapBitIndex(refmapFramePointer), ttla);
         }
     }
 
     /**
-     * If {@linkplain Heap#traceRootScanning() GC tracing} is enabled, then this method traces one byte's worth
+     * If {@linkplain Heap#logRootScanning() GC tracing} is enabled, then this method logs one byte's worth
      * of a frame/register reference map.
      *
      * @param byteIndex the index of the reference map byte
@@ -591,21 +496,14 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
      * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
      */
     @Override
-    public void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
-        if (traceStackRootScanning()) {
-            Log.print("    ");
-            Log.print(referenceMapLabel);
-            Log.print(" map byte index: ");
-            Log.println(byteIndex);
-            Log.print("    ");
-            Log.print(referenceMapLabel);
-            Log.print(" map byte:       ");
-            Log.println(Address.fromInt(referenceMapByte & 0xff));
+    public void logReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
+        if (logStackRootScanning()) {
+            stackRootScanLogger.logMapByteBefore(byteIndex, referenceMapByte, referenceMapLabel);
         }
     }
 
     /**
-     * If {@linkplain Heap#traceRootScanning() GC tracing} is enabled, then this method traces the stack slots corresponding to a
+     * If {@linkplain Heap#logRootScanning() GC tracing} is enabled, then this method logs the stack slots corresponding to a
      * frame or set of set of saved registers that are determined to contain references by a reference map.
      *
      * @param framePointer the frame pointer. This value should be {@link Pointer#zero()} if the reference map is for a
@@ -614,14 +512,12 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
      * @param referenceMapByte a the reference map byte
      */
     @Override
-    public void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
-        if (traceStackRootScanning()) {
+    public void logReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
+        if (logStackRootScanning()) {
             for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
                 if (((referenceMapByte >>> bitIndex) & 1) != 0) {
                     final int slotIndex = baseSlotIndex + bitIndex;
-                    Log.print("      Slot: ");
-                    printSlot(slotIndex, framePointer);
-                    Log.println();
+                    stackRootScanLogger.logStackSlot(slotIndex, ttla, framePointer, false);
                 }
             }
         }
@@ -656,21 +552,8 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
      */
     @Override
     public void visitReferenceMapBits(StackFrameCursor cursor, Pointer slotPointer, int refMap, int numBits) {
-        if (traceStackRootScanning()) {
-            boolean lockDisabledSafepoints = Log.lock();
-            Log.print("    setReferenceMapBits: sp = ");
-            Log.print(cursor.sp());
-            Log.print(" fp = ");
-            Log.print(cursor.fp());
-            Log.print(", slots @ ");
-            Log.print(slotPointer);
-            Log.print(", bits = ");
-            for (int i = 0; i < numBits; i++) {
-                Log.print((refMap >>> i) & 1);
-            }
-            Log.print(", description = ");
-            Log.println(cursor.targetMethod().regionName());
-            Log.unlock(lockDisabledSafepoints);
+        if (logStackRootScanning()) {
+            stackRootScanLogger.logSetReferenceMapBits(cursor.sp(), cursor.fp(), slotPointer, refMap, numBits, cursor.targetMethod().regionName());
         }
         if (!inThisStack(cursor.sp())) {
             throw FatalError.unexpected("sp not in this stack");
@@ -691,8 +574,12 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
                 if (((refMap >> i) & 1) == 1) {
                     Reference ref = slotPointer.getReference(i);
                     if (Heap.isValidRef(ref)) {
-                        if (traceStackRootScanning()) {
-                            printRef(ref, cursor, slotPointer, i, true);
+                        if (logStackRootScanning()) {
+                            stackRootScanLogger.logPrintRef(
+                                            slotPointer.plusWords(i),
+                                            slotPointer.plusWords(i).minus(cursor.sp()).toInt(),
+                                            ref.toOrigin(),
+                                            ref.isTagged());
                         }
                     } else {
                         invalidRef(ref, cursor, slotPointer, i);
@@ -722,22 +609,9 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
 
     }
 
-    private void printRef(Reference ref, StackFrameCursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
-        Log.print("    ref @ ");
-        Log.print(slotPointer.plusWords(slotIndex));
-        Log.print(" [sp + ");
-        Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
-        Log.print("] = ");
-        Log.print(ref.toOrigin());
-        if (ref.isTagged()) {
-            Log.print(" tagged");
-        }
-        Log.print(valid ? " ok\n" : " (invalid)\n");
-    }
-
     @NEVER_INLINE
     private void invalidRef(Reference ref, StackFrameCursor cursor, Pointer slotPointer, int slotIndex) {
-        printRef(ref, cursor, slotPointer, slotIndex, false);
+        StackRootScanLogger.printRef(slotPointer.plusWords(slotIndex), slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt(), ref.toOrigin(), ref.isTagged(), false);
         Log.print("invalid ref ### [SRSCount: ");
         Log.print(SRSCount.get());
         Log.print("] ");
@@ -773,8 +647,651 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
     private void verifyReferenceMaps0(VmThread thread, CodePointer ip, Pointer sp, Pointer fp) {
         Pointer tla = thread.tla();
         initRefMapFields(tla);
-        boolean lockDisabledSafepoints = traceStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), thread);
+        boolean lockDisabledSafepoints = logStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), thread);
         thread.stackDumpStackFrameWalker().verifyReferenceMap(ip.toPointer(), sp, fp, this);
-        traceStackRootScanEnd(lockDisabledSafepoints);
+        logStackRootScanEnd(lockDisabledSafepoints);
     }
+
+    /*
+     * Logging.
+     */
+
+    /**
+     * Stack root scan logger instance.
+     */
+    public static final StackRootScanLogger stackRootScanLogger = new StackRootScanLogger();
+
+    /**
+     * Stack root scan logger.
+     * Encapsulates all the loggable operations related to stack root scanning. (and there are a lot).
+     * This is by far the most complex logger in the system and was the most difficult to convert
+     * from the previous trace-only mode. It was necessary to store several {@link Reference} valued
+     * objects in the log in order to accurately preserve the tracing.
+     */
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private static interface StackRootScanLoggerInterface {
+        // pack 8/9th args to stay in 8 arg limit
+        void start(
+                        @VMLogParam(name = "count") int count,
+                        @VMLogParam(name = "prepare") boolean prepare,
+                        @VMLogParam(name = "stackPointer") Pointer stackPointer,
+                        @VMLogParam(name = "highestStackSlot") Pointer highestStackSlot,
+                        @VMLogParam(name = "lowestStackSlot") Pointer lowestStackSlot,
+                        @VMLogParam(name = "vmThread") VmThread vmThread,
+                        @VMLogParam(name = "highestStackSlotReferenceMapBitIndex") int highestStackSlotReferenceMapBitIndex,
+//                        @VMLogParam(name = "stackPointerReferenceMapBitIndex") int stackPointerReferenceMapBitIndex,
+//                        @VMLogParam(name = "lowestStackSlotReferenceMapBitIndex") int lowestStackSlotReferenceMapBitIndex);
+                        @VMLogParam(name = "stackAndLowestStackSlotReferenceMapBitIndex") long stackAndLowestStackSlotReferenceMapBitIndex);
+        void startThreadLocals();
+        void scanThread(
+                        @VMLogParam(name = "vmThread") VmThread vmThread);
+        void referenceThreadLocal(
+                        @VMLogParam(name = "index") int index,
+                        @VMLogParam(name = "address") Pointer address,
+                        @VMLogParam(name = "value") Word value,
+                        @VMLogParam(name = "name") String name,
+                        @VMLogParam(name = "categorySuffix") String categorySuffix);
+        void threadSlotRange(
+                        @VMLogParam(name = "highestSlot") Pointer highestSlot,
+                        @VMLogParam(name = "lowestActiveSlot") Pointer lowestActiveSlot,
+                        @VMLogParam(name = "lowestSlot") Pointer lowestSlot);
+        void prepare(
+                        @VMLogParam(name = "prepare") boolean prepare,
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "safepointIndex") int safepointIndex,
+                        @VMLogParam(name = "refmapFramePointer") Pointer refmapFramePointer,
+                        @VMLogParam(name = "label") String label,
+                        @VMLogParam(name = "refmapFramePointerBitIndex") int refmapFramePointerBitIndex,
+                        @VMLogParam(name = "ttla") Pointer ttla);
+        void printRef(
+                        @VMLogParam(name = "refPointer") Pointer refPointer,
+                        @VMLogParam(name = "spOffset") int spOffset,
+                        @VMLogParam(name = "refOrigin") Pointer refOrigin,
+                        @VMLogParam(name = "isTagged") boolean isTagged);
+        void registerState(
+                        @VMLogParam(name = "reg") CiRegister reg);
+        void parameter(
+                        @VMLogParam(name = "index") int index,
+                        @VMLogParam(name = "parameter") TypeDescriptor parameter);
+        void receiver(
+                        @VMLogParam(name = "receiver") TypeDescriptor receiver);
+        void stackSlot(
+                        @VMLogParam(name = "slotIndex") int slotIndex,
+                        @VMLogParam(name = "tla") Pointer tla,
+                        @VMLogParam(name = "framePointer") Pointer framePointer,
+                        @VMLogParam(name = "checkTagging") boolean checkTagging);
+        void clearedRefMapIndexes(
+                        @VMLogParam(name = "lowestBitIndex") int lowestBitIndex,
+                        @VMLogParam(name = "highestBitIndex") int highestBitIndex);
+        void complete(
+                        @VMLogParam(name = "vmThread") VmThread vmThread,
+                        @VMLogParam(name = "highestSlot") Pointer highestSlot,
+                        @VMLogParam(name = "highestSlotBitIndex") int highestSlotBitIndex,
+                        @VMLogParam(name = "stackPointer") Pointer stackPointer,
+                        @VMLogParam(name = "stackPointerBitIndex") int stackPointerSlotBitIndex,
+                        @VMLogParam(name = "lowestSlot") Pointer lowestSlot,
+                        @VMLogParam(name = "lowestSlotBitIndex") int lowestSlotBitIndex);
+        void emptyMap(
+                        @VMLogParam(name = "vmThread") VmThread vmThread);
+        void finalizeMaps(
+                        @VMLogParam(name = "interval") Interval interval,
+                        @VMLogParam(name = "helper") ReferenceMapEditorLogHelper helper);
+        void safepoint(
+                        @VMLogParam(name = "helper") ReferenceMapEditorLogHelper helper,
+                        @VMLogParam(name = "interpreter") ReferenceMapInterpreter interpreter,
+                        @VMLogParam(name = "bci") int bci,
+                        @VMLogParam(name = "safePointIndex") int safePointIndex);
+        void mapByteBefore(
+                        @VMLogParam(name = "byteIndex") int byteIndex,
+                        @VMLogParam(name = "referenceMapByte") byte referenceMapByte,
+                        @VMLogParam(name = "referenceMapLabel") String referenceMapLabel);
+        void setReferenceMapBits(
+                        @VMLogParam(name = "sp") Pointer sp,
+                        @VMLogParam(name = "fp") Pointer fp,
+                        @VMLogParam(name = "slotPointer") Pointer slotPointer,
+                        @VMLogParam(name = "refMapBits") int refMapBits,
+                        @VMLogParam(name = "numBits") int numBits,
+                        @VMLogParam(name = "description") String description);
+    }
+
+    /*
+     * Methods to access typed objects stored in untyped form in the log (at present).
+     */
+
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native TypeDescriptor asTypeDescriptor(Object arg);
+
+    private static TypeDescriptor toTypeDescriptor(Record r, int argNum) {
+        return asTypeDescriptor(VMLogger.toObject(r, argNum));
+    }
+
+    // This could be stored with as its "number" save that it is currently hard to convert back.
+    @INTRINSIC(UNSAFE_CAST)
+    private static native CiRegister asCiRegister(Object arg);
+
+    private static CiRegister toCiRegister(Record r, int argNum) {
+        return asCiRegister(VMLogger.toObject(r, argNum));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ReferenceMapEditorLogHelper asReferenceMapEditorLogHelper(Object arg);
+
+    private static ReferenceMapEditorLogHelper toReferenceMapEditorLogHelper(Record r, int argNum) {
+        return asReferenceMapEditorLogHelper(VMLogger.toObject(r, argNum));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ReferenceMapInterpreter asReferenceMapInterpreter(Object arg);
+
+    private static ReferenceMapInterpreter toReferenceMapInterpreter(Record r, int argNum) {
+        return asReferenceMapInterpreter(VMLogger.toObject(r, argNum));
+    }
+
+    public static final class StackRootScanLogger extends StackRootScanLoggerAuto {
+        StackRootScanLogger() {
+            super("SRS", "stack root scanning.");
+        }
+
+        @INLINE
+        void logStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot, VmThread vmThread,
+                        int highestStackSlotReferenceMapBitIndex, int stackPointerReferenceMapBitIndex, int lowestStackSlotReferenceMapBitIndex) {
+            // would exceed 8 arg limit without packing.
+            log(Operation.Start.ordinal(), intArg(count), booleanArg(prepare), stackPointer, highestStackSlot, lowestStackSlot,
+                            vmThreadArg(vmThread),
+                            intArg(highestStackSlotReferenceMapBitIndex),
+                            twoIntArgs(stackPointerReferenceMapBitIndex, lowestStackSlotReferenceMapBitIndex));
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.rootScanLogger);
+        }
+
+        @Override
+        protected void traceStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot,
+                        Pointer lowestStackSlot, VmThread vmThread, int highestStackSlotReferenceMapBitIndex,
+                        long stackAndLowestStackSlotReferenceMapBitIndex) {
+            int stackPointerReferenceMapBitIndex = toIntArg1(stackAndLowestStackSlotReferenceMapBitIndex);
+            int lowestStackSlotReferenceMapBitIndex = toIntArg2(stackAndLowestStackSlotReferenceMapBitIndex);
+            Log.print('[');
+            Log.print(count);
+            Log.print(prepare ? "] Preparing" : "] Verifying");
+            Log.print(" stack reference map for thread ");
+            Log.printThread(vmThread, false);
+            Log.println(":");
+            Log.print("  Highest slot: ");
+            Log.print(highestStackSlot);
+            Log.print(" [index=");
+            Log.print(highestStackSlotReferenceMapBitIndex);
+            Log.println("]");
+            Log.print("  Lowest active slot: ");
+            Log.print(stackPointer);
+            Log.print(" [index=");
+            Log.print(stackPointerReferenceMapBitIndex);
+            Log.println("]");
+            Log.print("  Lowest slot: ");
+            Log.print(lowestStackSlot);
+            Log.print(" [index=");
+            Log.print(lowestStackSlotReferenceMapBitIndex);
+            Log.println("]");
+            Log.print("  Current thread is ");
+            Log.printCurrentThread(true);
+        }
+
+        @Override
+        protected void traceEmptyMap(VmThread vmThread) {
+            Log.print("Empty stack reference map for thread ");
+            Log.printThread(vmThread, true);
+        }
+
+        @Override
+        protected void traceComplete(VmThread vmThread, Pointer highestSlot, int highestSlotBitIndex, Pointer stackPointer,
+                        int stackPointerBitIndex, Pointer lowestSlot, int lowestSlotBitIndex) {
+            Log.print("Completing preparation of stack reference map for thread ");
+            Log.printThread(vmThread, false);
+            Log.println(":");
+            Log.print("  Highest slot: ");
+            Log.print(highestSlot);
+            Log.print(" [index=");
+            Log.print(highestSlotBitIndex);
+            Log.println("]");
+            Log.print("  Lowest active slot: ");
+            Log.print(stackPointer);
+            Log.print(" [index=");
+            Log.print(stackPointerBitIndex);
+            Log.println("]");
+            Log.print("  Lowest slot: ");
+            Log.print(lowestSlot);
+            Log.print(" [index=");
+            Log.print(lowestSlotBitIndex);
+            Log.println("]");
+            Log.print("  Current thread is ");
+            Log.printCurrentThread(true);
+        }
+
+        @Override
+        protected void traceParameter(int index, TypeDescriptor parameter) {
+            Log.print("    parameter ");
+            Log.print(index);
+            Log.print(", type: ");
+            Log.println(parameter.string);
+        }
+
+        @Override
+        protected void traceSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex) {
+            // Tracing this is complex and compiler specific, so we call back
+            helper.traceSafepoint(interpreter, bci, safePointIndex);
+        }
+
+        @Override
+        protected void tracePrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged) {
+            printRef(refPointer, spOffset, refOrigin, isTagged, true);
+        }
+
+        @Override
+        protected void tracePrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer,
+                        String label, int refmapFramePointerBitIndex, Pointer ttla) {
+            Log.print(prepare ? "  Preparing" : "  Verifying");
+            Log.print(" reference map for ");
+            Log.print(label);
+            Log.print(" of ");
+            Log.printMethod(targetMethod, false);
+            Log.print(" +");
+            Log.println(targetMethod);
+            Log.print("    Stop index: ");
+            Log.println(safepointIndex);
+            if (!refmapFramePointer.isZero()) {
+                Log.print("    Frame pointer: ");
+                printSlot(refmapFramePointerBitIndex, ttla, Pointer.zero(), false);
+                Log.println();
+            }
+        }
+
+        @Override
+        protected void traceStartThreadLocals() {
+            Log.println("  Thread locals:");
+        }
+
+        @Override
+        protected void traceScanThread(VmThread vmThread) {
+            Log.print("Scanning thread locals and stack for thread ");
+            Log.printThread(vmThread, false);
+            Log.print(":");
+        }
+
+        @Override
+        protected void traceReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix) {
+            Log.print("    index=");
+            Log.print(index);
+            Log.print(", address=");
+            Log.print(address);
+            Log.print(", value=");
+            Log.print(value);
+            Log.print(", name=");
+            Log.print(name);
+            Log.println(categorySuffix);
+        }
+
+        @Override
+        protected void traceThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot) {
+            if (highestSlot.isZero()) {
+                Log.print("No Java stack frames");
+            } else {
+                Log.print("  Highest slot: ");
+                Log.println(highestSlot);
+                Log.print("  Lowest active slot: ");
+                Log.println(lowestActiveSlot);
+                Log.print("  Lowest slot: ");
+                Log.println(lowestSlot);
+            }
+        }
+
+        @Override
+        protected void traceRegisterState(CiRegister reg) {
+            Log.print("    register: ");
+            Log.println(reg.name);
+        }
+
+        @Override
+        protected void traceReceiver(TypeDescriptor receiver) {
+            Log.print("    receiver, type: ");
+            Log.println(receiver.string);
+        }
+
+        @Override
+        protected void traceStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
+            Log.print("    Slot: ");
+            printSlot(slotIndex, tla, framePointer, checkTagging);
+            Log.println();
+        }
+
+        @Override
+        protected void traceClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex) {
+            Log.print("Cleared refmap indexes [");
+            Log.print(lowestBitIndex);
+            Log.print(" .. ");
+            Log.print(highestBitIndex);
+            Log.println("]");
+        }
+
+        @Override
+        protected void traceFinalizeMaps(Interval interval, ReferenceMapEditorLogHelper helper) {
+            Log.printCurrentThread(false);
+            Log.print(": ");
+            Log.print(interval == Interval.BEGIN ? "Finalizing " : "Finalized ");
+            Log.print(helper.compilerName()); Log.print(" reference maps for ");
+            Log.printMethod(helper.targetMethod().classMethodActor, true);
+        }
+
+        @Override
+        protected void traceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" map byte index: ");
+            Log.println(byteIndex);
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" map byte:       ");
+            Log.println(referenceMapByte);
+        }
+
+        @Override
+        protected void traceSetReferenceMapBits(Pointer sp, Pointer fp, Pointer slotPointer, int refMapBits, int numBits, String description) {
+            Log.print("    setReferenceMapBits: sp = ");
+            Log.print(sp);
+            Log.print(" fp = ");
+            Log.print(fp);
+            Log.print(", slots @ ");
+            Log.print(slotPointer);
+            Log.print(", bits = ");
+            for (int i = 0; i < numBits; i++) {
+                Log.print((refMapBits >>> i) & 1);
+            }
+            Log.print(", description = ");
+            Log.println(description);
+        }
+
+        private static void printRef(Pointer refStackPointer, int spOffset, Pointer refOrigin, boolean tagged, boolean valid) {
+            Log.print("    ref @ ");
+            Log.print(refStackPointer);
+            Log.print(" [sp + ");
+            Log.print(spOffset);
+            Log.print("] = ");
+            Log.print(refOrigin);
+            if (tagged) {
+                Log.print(" tagged");
+            }
+            Log.print(valid ? " ok\n" : " (invalid)\n");
+        }
+
+
+        private static void printSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
+            Pointer slotAddress = slotAddress(slotIndex, tla);
+            Pointer referenceMap = STACK_REFERENCE_MAP.load(tla);
+            Log.print("index=");
+            Log.print(slotIndex);
+            if (!framePointer.isZero()) {
+                final int offset = slotAddress.minus(framePointer).toInt();
+                if (offset >= 0) {
+                    Log.print(", fp+");
+                } else {
+                    Log.print(", fp");
+                }
+                Log.print(offset);
+            }
+            Log.print(", address=");
+            Log.print(slotAddress);
+            Log.print(", value=");
+            final Word value = slotAddress.readWord(0);
+            Log.print(value);
+            if (checkTagging && Reference.fromOrigin(value.asPointer()).isTagged()) {
+                Log.print(" (tagged)");
+            }
+            if (slotAddress.lessThan(referenceMap)) {
+                Pointer etla = ETLA.load(tla);
+                Pointer dtla = DTLA.load(tla);
+                Pointer ttla = TTLA.load(tla);
+                if (slotAddress.greaterEqual(dtla)) {
+                    Log.print(", name=");
+                    int vmThreadLocalIndex = slotAddress.minus(dtla).dividedBy(Word.size()).toInt();
+                    Log.print(values().get(vmThreadLocalIndex).name);
+                } else if (slotAddress.greaterEqual(etla)) {
+                    Log.print(", name=");
+                    int vmThreadLocalIndex = slotAddress.minus(etla).dividedBy(Word.size()).toInt();
+                    Log.print(values().get(vmThreadLocalIndex).name);
+                } else if (slotAddress.greaterEqual(ttla)) {
+                    Log.print(", name=");
+                    int vmThreadLocalIndex = slotAddress.minus(ttla).dividedBy(Word.size()).toInt();
+                    Log.print(values().get(vmThreadLocalIndex).name);
+                }
+            }
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class StackRootScanLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Receiver, Start, EmptyMap,
+            Complete, Parameter, Safepoint, PrintRef,
+            Prepare, StartThreadLocals, ScanThread, ReferenceThreadLocal,
+            ThreadSlotRange, RegisterState, StackSlot, ClearedRefMapIndexes,
+            FinalizeMaps, MapByteBefore, SetReferenceMapBits;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected StackRootScanLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logReceiver(TypeDescriptor receiver) {
+            log(Operation.Receiver.ordinal(), objectArg(receiver));
+        }
+        protected abstract void traceReceiver(TypeDescriptor receiver);
+
+        @INLINE
+        public final void logStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
+                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex) {
+            log(Operation.Start.ordinal(), intArg(count), booleanArg(prepare), stackPointer, highestStackSlot, lowestStackSlot,
+                vmThreadArg(vmThread), intArg(highestStackSlotReferenceMapBitIndex), longArg(stackAndLowestStackSlotReferenceMapBitIndex));
+        }
+        protected abstract void traceStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
+                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex);
+
+        @INLINE
+        public final void logEmptyMap(VmThread vmThread) {
+            log(Operation.EmptyMap.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceEmptyMap(VmThread vmThread);
+
+        @INLINE
+        public final void logComplete(VmThread vmThread, Pointer highestSlot, int highestSlotBitIndex, Pointer stackPointer, int stackPointerBitIndex,
+                Pointer lowestSlot, int lowestSlotBitIndex) {
+            log(Operation.Complete.ordinal(), vmThreadArg(vmThread), highestSlot, intArg(highestSlotBitIndex), stackPointer, intArg(stackPointerBitIndex),
+                lowestSlot, intArg(lowestSlotBitIndex));
+        }
+        protected abstract void traceComplete(VmThread vmThread, Pointer highestSlot, int highestSlotBitIndex, Pointer stackPointer, int stackPointerBitIndex,
+                Pointer lowestSlot, int lowestSlotBitIndex);
+
+        @INLINE
+        public final void logParameter(int index, TypeDescriptor parameter) {
+            log(Operation.Parameter.ordinal(), intArg(index), objectArg(parameter));
+        }
+        protected abstract void traceParameter(int index, TypeDescriptor parameter);
+
+        @INLINE
+        public final void logSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex) {
+            log(Operation.Safepoint.ordinal(), objectArg(helper), objectArg(interpreter), intArg(bci), intArg(safePointIndex));
+        }
+        protected abstract void traceSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex);
+
+        @INLINE
+        public final void logPrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged) {
+            log(Operation.PrintRef.ordinal(), refPointer, intArg(spOffset), refOrigin, booleanArg(isTagged));
+        }
+        protected abstract void tracePrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged);
+
+        @INLINE
+        public final void logPrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
+                int refmapFramePointerBitIndex, Pointer ttla) {
+            log(Operation.Prepare.ordinal(), booleanArg(prepare), objectArg(targetMethod), intArg(safepointIndex), refmapFramePointer, objectArg(label),
+                intArg(refmapFramePointerBitIndex), ttla);
+        }
+        protected abstract void tracePrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
+                int refmapFramePointerBitIndex, Pointer ttla);
+
+        @INLINE
+        public final void logStartThreadLocals() {
+            log(Operation.StartThreadLocals.ordinal());
+        }
+        protected abstract void traceStartThreadLocals();
+
+        @INLINE
+        public final void logScanThread(VmThread vmThread) {
+            log(Operation.ScanThread.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanThread(VmThread vmThread);
+
+        @INLINE
+        public final void logReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix) {
+            log(Operation.ReferenceThreadLocal.ordinal(), intArg(index), address, value, objectArg(name), objectArg(categorySuffix));
+        }
+        protected abstract void traceReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix);
+
+        @INLINE
+        public final void logThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot) {
+            log(Operation.ThreadSlotRange.ordinal(), highestSlot, lowestActiveSlot, lowestSlot);
+        }
+        protected abstract void traceThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot);
+
+        @INLINE
+        public final void logRegisterState(CiRegister reg) {
+            log(Operation.RegisterState.ordinal(), objectArg(reg));
+        }
+        protected abstract void traceRegisterState(CiRegister reg);
+
+        @INLINE
+        public final void logStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
+            log(Operation.StackSlot.ordinal(), intArg(slotIndex), tla, framePointer, booleanArg(checkTagging));
+        }
+        protected abstract void traceStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging);
+
+        @INLINE
+        public final void logClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex) {
+            log(Operation.ClearedRefMapIndexes.ordinal(), intArg(lowestBitIndex), intArg(highestBitIndex));
+        }
+        protected abstract void traceClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex);
+
+        @INLINE
+        public final void logFinalizeMaps(Interval interval, ReferenceMapEditorLogHelper helper) {
+            log(Operation.FinalizeMaps.ordinal(), intervalArg(interval), objectArg(helper));
+        }
+        protected abstract void traceFinalizeMaps(Interval interval, ReferenceMapEditorLogHelper helper);
+
+        @INLINE
+        public final void logMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
+            log(Operation.MapByteBefore.ordinal(), intArg(byteIndex), objectArg(referenceMapByte), objectArg(referenceMapLabel));
+        }
+        protected abstract void traceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel);
+
+        @INLINE
+        public final void logSetReferenceMapBits(Pointer sp, Pointer fp, Pointer slotPointer, int refMapBits, int numBits,
+                String description) {
+            log(Operation.SetReferenceMapBits.ordinal(), sp, fp, slotPointer, intArg(refMapBits), intArg(numBits),
+                objectArg(description));
+        }
+        protected abstract void traceSetReferenceMapBits(Pointer sp, Pointer fp, Pointer slotPointer, int refMapBits, int numBits,
+                String description);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Receiver
+                    traceReceiver(toTypeDescriptor(r, 1));
+                    break;
+                }
+                case 1: { //Start
+                    traceStart(toInt(r, 1), toBoolean(r, 2), toPointer(r, 3), toPointer(r, 4), toPointer(r, 5), toVmThread(r, 6), toInt(r, 7), toLong(r, 8));
+                    break;
+                }
+                case 2: { //EmptyMap
+                    traceEmptyMap(toVmThread(r, 1));
+                    break;
+                }
+                case 3: { //Complete
+                    traceComplete(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3), toPointer(r, 4), toInt(r, 5), toPointer(r, 6), toInt(r, 7));
+                    break;
+                }
+                case 4: { //Parameter
+                    traceParameter(toInt(r, 1), toTypeDescriptor(r, 2));
+                    break;
+                }
+                case 5: { //Safepoint
+                    traceSafepoint(toReferenceMapEditorLogHelper(r, 1), toReferenceMapInterpreter(r, 2), toInt(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 6: { //PrintRef
+                    tracePrintRef(toPointer(r, 1), toInt(r, 2), toPointer(r, 3), toBoolean(r, 4));
+                    break;
+                }
+                case 7: { //Prepare
+                    tracePrepare(toBoolean(r, 1), toTargetMethod(r, 2), toInt(r, 3), toPointer(r, 4), toString(r, 5), toInt(r, 6), toPointer(r, 7));
+                    break;
+                }
+                case 8: { //StartThreadLocals
+                    traceStartThreadLocals();
+                    break;
+                }
+                case 9: { //ScanThread
+                    traceScanThread(toVmThread(r, 1));
+                    break;
+                }
+                case 10: { //ReferenceThreadLocal
+                    traceReferenceThreadLocal(toInt(r, 1), toPointer(r, 2), toWord(r, 3), toString(r, 4), toString(r, 5));
+                    break;
+                }
+                case 11: { //ThreadSlotRange
+                    traceThreadSlotRange(toPointer(r, 1), toPointer(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 12: { //RegisterState
+                    traceRegisterState(toCiRegister(r, 1));
+                    break;
+                }
+                case 13: { //StackSlot
+                    traceStackSlot(toInt(r, 1), toPointer(r, 2), toPointer(r, 3), toBoolean(r, 4));
+                    break;
+                }
+                case 14: { //ClearedRefMapIndexes
+                    traceClearedRefMapIndexes(toInt(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 15: { //FinalizeMaps
+                    traceFinalizeMaps(toInterval(r, 1), toReferenceMapEditorLogHelper(r, 2));
+                    break;
+                }
+                case 16: { //MapByteBefore
+                    traceMapByteBefore(toInt(r, 1), toByte(r, 2), toString(r, 3));
+                    break;
+                }
+                case 17: { //SetReferenceMapBits
+                    traceSetReferenceMapBits(toPointer(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4), toInt(r, 5), toString(r, 6));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

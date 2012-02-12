@@ -103,7 +103,7 @@ public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
         return teleClassMethodActor;
     }
 
-    private WordValueLabel getReferenceValueLabel(Reference reference) {
+    protected WordValueLabel getReferenceValueLabel(Reference reference) {
         return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
     }
 

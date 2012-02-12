@@ -28,12 +28,14 @@ import java.lang.reflect.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Attempts to divine the types of the arguments based on the convention that
@@ -50,21 +52,33 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
         super(vmLogView);
     }
 
+    private static class OperationLogger {
+        Class<?> operationClass;
+        Class<?> loggerClass;
+        OperationLogger(Class<?> operationClass, Class<?> loggerClass) {
+            this.operationClass = operationClass;
+            this.loggerClass = loggerClass;
+        }
+    }
+
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
         int op = Record.getOperation(header);
         VMLogger vmLogger = vmLogView.getLogger(Record.getLoggerId(header));
-        String inspectedArg = vmLogger.inspectedArg(op, argNum, Address.fromLong(argValue));
+        String inspectedArg = vmLogger.inspectedArgValue(op, argNum, Address.fromLong(argValue));
         if (inspectedArg != null) {
             return new PlainLabel(vmLogView.inspection(), inspectedArg);
         }
-        Class<?> operationClass = getOperationClass(vmLogger);
-        if (operationClass != null) {
-            Enum[] enums = (Enum[]) operationClass.getEnumConstants();
+        OperationLogger operationDefiningClass = getOperationDefiningClass(vmLogger);
+        if (operationDefiningClass != null) {
+            Enum[] enums = (Enum[]) operationDefiningClass.operationClass.getEnumConstants();
             if (enums != null) {
                 if (op < enums.length) {
                     Enum e = enums[op];
-                    Class<?>[] types = getParameterTypes(vmLogger, e.name());
+                    Class<?>[] types = getParameterTypes(operationDefiningClass.loggerClass, e.name());
+                    if (types == null) {
+                        TeleError.unexpected("failed to get parameter types for log" + e.name());
+                    }
                     if (argNum <= types.length) {
                         return getRenderer(types[argNum - 1], argValue);
                     }
@@ -87,11 +101,30 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             return VMLogView.ThreadCellRenderer.getThreadRenderer((int) argValue);
         } else if (klass == Object.class) {
             // currently origin address
-            return new WordValueLabel(vmLogView.inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
         } else if (klass == VMLogger.Interval.class) {
             return argValue == 0 ? BEGIN_LABEL : END_LABEL;
         } else if (klass == int.class || klass == long.class) {
             return new PlainLabel(vmLogView.inspection(), String.valueOf(argValue));
+        } else {
+            Method inspectedValueMethod = getInspectedValueMethod(klass);
+            if (inspectedValueMethod != null) {
+                try {
+                    return new PlainLabel(vmLogView.inspection(), (String) inspectedValueMethod.invoke(null, Address.fromLong(argValue)));
+                } catch (Exception ex) {
+                }
+            }
+            if (klass == Pointer.class || klass == Address.class) {
+                return new WordValueLabel(vmLogView.inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
+            } else if (klass == int.class || klass == long.class) {
+                return defaultRenderer(argValue);
+            }
+
+            // check if some other object type
+            if (Object.class.isAssignableFrom(klass)) {
+                // argValue is an index into the tempObjects table
+                Value value = vmLogView.teleTempObjectsArray.readElementValue((int) argValue);
+                return getReferenceValueLabel(value.asReference());
+            }
         }
         return defaultRenderer(argValue);
     }
@@ -100,18 +133,22 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
         return new PlainLabel(inspection(), Long.toHexString(argValue));
     }
 
-    private Class<?> getOperationClass(VMLogger vmLogger) {
-        String name = vmLogger.getClass().getName();
-        try {
-            Class< ? > result = Class.forName(name + "$Operation");
-            return result;
-        } catch (Exception ex) {
-            return null;
+    private OperationLogger getOperationDefiningClass(VMLogger vmLogger) {
+        Class< ? > klass = vmLogger.getClass();
+        while (klass != null) {
+            Class< ? >[] declaredClasses = klass.getDeclaredClasses();
+            for (Class declaredClass : declaredClasses) {
+                if (declaredClass.isEnum() && declaredClass.getSimpleName().equals("Operation")) {
+                    return new OperationLogger(declaredClass, klass);
+                }
+            }
+            klass = klass.getSuperclass();
         }
+        return null;
     }
 
-    private Class<?>[] getParameterTypes(VMLogger vmLogger, String name) {
-        Method[] methods = vmLogger.getClass().getDeclaredMethods();
+    private Class<?>[] getParameterTypes(Class<?> vmLoggerClass, String name) {
+        Method[] methods = vmLoggerClass.getDeclaredMethods();
         String logName = "log" + name;
         for (Method method : methods) {
             if (method.getName().equals(logName)) {
@@ -119,6 +156,20 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             }
         }
         return null;
+    }
+
+    private Method getInspectedValueMethod(Class<?> klass) {
+        Method[] methods = klass.getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.getName().equals("inspectedValue")) {
+                Class<?>[] params = method.getParameterTypes();
+                if (params.length == 1 && params[0].getSimpleName().equals("Word")) {
+                    return method;
+                }
+            }
+        }
+        return null;
+
     }
 
 }

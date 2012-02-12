@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -709,11 +709,8 @@ public class T1XTargetMethod extends TargetMethod {
                 TypeDescriptor parameter = sig.parameterDescriptorAt(i);
                 Kind parameterKind = parameter.toKind();
                 if (parameterKind.isReference) {
-                    if (traceStackRootScanning()) {
-                        Log.print("    parameter ");
-                        Log.print(i);
-                        Log.print(", type: ");
-                        Log.println(parameter.string);
+                    if (logStackRootScanning()) {
+                        StackReferenceMapPreparer.stackRootScanLogger.logParameter(i, parameter);
                     }
                     preparer.visitReferenceMapBits(caller, slotPointer, 1, 1);
                 }
@@ -724,9 +721,8 @@ public class T1XTargetMethod extends TargetMethod {
             // Finally deal with the receiver (if any)
             if (!isInvokestatic) {
                 // Mark the slot for the receiver as it is not covered by the method signature:
-                if (traceStackRootScanning()) {
-                    Log.print("    receiver, type: ");
-                    Log.println(methodRef.holder(constantPool).string);
+                if (logStackRootScanning()) {
+                    StackReferenceMapPreparer.stackRootScanLogger.logReceiver(methodRef.holder(constantPool));
                 }
                 preparer.visitReferenceMapBits(caller, slotPointer, 1, 1);
             }
@@ -775,7 +771,7 @@ public class T1XTargetMethod extends TargetMethod {
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = csa;
             int byteIndex = (safepointIndex * refMapSize) + frameRefMapSize;
-            preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
+            preparer.logPrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
                 int b = refMaps[byteIndex] & 0xff;
@@ -783,9 +779,8 @@ public class T1XTargetMethod extends TargetMethod {
                 while (b != 0) {
                     if ((b & 1) != 0) {
                         int offset = csl.offsetOf(reg);
-                        if (traceStackRootScanning()) {
-                            Log.print("    register: ");
-                            Log.println(csl.registers[reg].name);
+                        if (logStackRootScanning()) {
+                            StackReferenceMapPreparer.stackRootScanLogger.logRegisterState(csl.registers[reg]);
                         }
                         preparer.visitReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
@@ -798,7 +793,7 @@ public class T1XTargetMethod extends TargetMethod {
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameRefMapOffset);
-        preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
+        preparer.logPrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
         int byteIndex = safepointIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.visitReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);

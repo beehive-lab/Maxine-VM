@@ -188,6 +188,10 @@ public abstract class VMLog {
             return getArg(n).asAddress().toLong();
         }
 
+        public boolean getBooleanArg(int n) {
+            return getArg(n).isNotZero();
+        }
+
         public void setArgs(Word arg1) {
             argError();
         }

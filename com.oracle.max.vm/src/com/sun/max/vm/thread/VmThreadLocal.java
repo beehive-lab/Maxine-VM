@@ -473,8 +473,8 @@ public class VmThreadLocal implements FormatWithToString {
         Pointer dtla = DTLA.load(tla);
         Pointer ttla = TTLA.load(tla);
 
-        if (traceStackRootScanning()) {
-            Log.println("  Thread locals:");
+        if (logStackRootScanning()) {
+            StackReferenceMapPreparer.stackRootScanLogger.logStartThreadLocals();
         }
         int index = 0;
         long map = REFERENCE_MAP;
@@ -483,7 +483,7 @@ public class VmThreadLocal implements FormatWithToString {
                 wordPointerIndexVisitor.visit(etla, index);
                 wordPointerIndexVisitor.visit(dtla, index);
                 wordPointerIndexVisitor.visit(ttla, index);
-                if (traceStackRootScanning()) {
+                if (logStackRootScanning()) {
                     traceReferenceThreadLocal(etla, index, " (enabled)");
                     traceReferenceThreadLocal(dtla, index, " (disabled)");
                     traceReferenceThreadLocal(ttla, index, " (triggered)");
@@ -495,16 +495,9 @@ public class VmThreadLocal implements FormatWithToString {
     }
 
     private static void traceReferenceThreadLocal(Pointer tla, int index, String categorySuffix) {
-        Log.print("    index=");
-        Log.print(index);
-        Log.print(", address=");
         Pointer address = tla.plus(index * Word.size());
-        Log.print(address);
-        Log.print(", value=");
-        Log.print(address.readWord(0));
-        Log.print(", name=");
-        Log.print(values().get(index).name);
-        Log.println(categorySuffix);
+        StackReferenceMapPreparer.stackRootScanLogger.logReferenceThreadLocal(index,
+                        address, address.readWord(0), VALUES.get(index).name, categorySuffix);
     }
 
     /**
@@ -518,13 +511,11 @@ public class VmThreadLocal implements FormatWithToString {
         boolean isVmOperationThread = thread.isVmOperationThread();
 
         // Note: as a side effect, this lock serializes stack reference map scanning
-        boolean tracing = traceStackRootScanning();
-        boolean lockDisabledSafepoints = tracing && Log.lock();
+        boolean tracing = logStackRootScanning();
+        boolean lockDisabledSafepoints = tracing && stackRootScanLogger.lock();
 
         if (tracing) {
-            Log.print("Scanning thread locals and stack for thread ");
-            Log.printThread(thread, false);
-            Log.println(":");
+            StackReferenceMapPreparer.stackRootScanLogger.logScanThread(thread);
         }
 
         // After this call, the thread object may have been forwarded which means
@@ -548,17 +539,12 @@ public class VmThreadLocal implements FormatWithToString {
                 FatalError.unexpected("Stack reference map does not cover all active slots");
             }
             if (tracing) {
-                Log.print("  Highest slot: ");
-                Log.println(highestSlot);
-                Log.print("  Lowest active slot: ");
-                Log.println(lowestActiveSlot);
-                Log.print("  Lowest slot: ");
-                Log.println(lowestSlot);
+                StackReferenceMapPreparer.stackRootScanLogger.logThreadSlotRange(highestSlot, lowestActiveSlot, lowestSlot);
             }
             StackReferenceMapPreparer.scanReferenceMapRange(tla, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
         } else {
             if (tracing) {
-                Log.println("No Java stack frames");
+                StackReferenceMapPreparer.stackRootScanLogger.logThreadSlotRange(Pointer.zero(), Pointer.zero(), Pointer.zero());
             }
         }
 
