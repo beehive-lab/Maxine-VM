@@ -543,7 +543,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             if (!result.isZero()) {
                 return result;
             }
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 gcCount++;
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Allocation failure: ");

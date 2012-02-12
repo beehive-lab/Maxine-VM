@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -627,6 +628,8 @@ public class VmThread {
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
 
         final VmThread thread = VmThread.current();
+
+        VMLog.vmLog().threadStart();
 
         thread.initializationComplete();
 

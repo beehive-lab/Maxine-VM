@@ -38,7 +38,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;

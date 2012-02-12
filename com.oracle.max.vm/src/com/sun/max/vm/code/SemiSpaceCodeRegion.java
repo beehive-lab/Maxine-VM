@@ -29,7 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.runtime.*;
 
 /**
