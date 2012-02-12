@@ -541,7 +541,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)
-    private static interface TLabLoggerInterface  {
+    private interface TLabLoggerInterface  {
         void reset(
             @VMLogParam(name = "vmThread") VmThread vmThread,
             @VMLogParam(name = "tlabTop") Pointer tlabTop,

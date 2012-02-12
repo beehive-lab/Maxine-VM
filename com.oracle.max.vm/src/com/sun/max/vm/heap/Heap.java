@@ -688,7 +688,7 @@ public final class Heap {
      */
     @HOSTED_ONLY
     @VMLoggerInterface
-    private static interface RootScanLoggerInterface {
+    private interface RootScanLoggerInterface {
         void scanningBootHeap(
             @VMLogParam(name = "start") Address start,
             @VMLogParam(name = "end") Address end,
@@ -742,7 +742,7 @@ public final class Heap {
      */
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)
-    private static interface AllocationLoggerInterface {
+    private interface AllocationLoggerInterface {
         void clone(
             @VMLogParam(name = "classActor") ClassActor classActor,
             @VMLogParam(name = "cell") Pointer cell,

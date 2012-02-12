@@ -179,7 +179,7 @@ public final class ImmortalHeap {
 
     @HOSTED_ONLY
     @VMLoggerInterface
-    private static interface ImmortalHeapLoggerInterface {
+    private interface ImmortalHeapLoggerInterface {
         void disable();
         void enable();
         void allocate(
