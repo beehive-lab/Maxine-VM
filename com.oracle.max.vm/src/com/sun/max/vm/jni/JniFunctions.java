@@ -214,7 +214,7 @@ public final class JniFunctions {
             int mode = r.getArg(1).asAddress().toInt();
             boolean entry = (mode & ENTRY_BIT) != 0;
             Log.print("[Thread \"");
-            Log.print(threadName(r.getThreadId()));
+            Log.print(toVmThreadName(r.getThreadId()));
             Log.print("\" ");
             Log.print(entry ? "-->" : "<--");
             Log.print(" JNI ");

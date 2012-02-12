@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -991,7 +991,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             // Due to how grey mark are being scanned, we may end up with black objects on the marking stack.
             // We filter them out here. See comments in ForwardScan.visitGreyObjects
             if (heapMarker.isBlackWhenNotWhite(bitIndex)) {
-                if (MaxineVM.isDebug() && Heap.traceGC()) {
+                if (MaxineVM.isDebug() && Heap.logAllGC()) {
                     printVisitedCell(cell, "Skip black flushed cell ");
                 }
                 return;
@@ -1002,7 +1002,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             // a large object of backward references is visited.
             // Note: references on the marking stack were already
             // marked grey to avoid storing multiple times the same reference.
-            if (Heap.traceGC()) {
+            if (Heap.logAllGC()) {
                 printVisitedCell(cell, "Visiting flushed cell ");
             }
 
@@ -1049,7 +1049,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             leftmostFlushed = finger;
             heapMarker.markingStack.flush();
             scanState.rightmost = rightmost;
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 Log.print(" leftmost flushed: ");
                 Log.println(leftmostFlushed);
                 Log.print(" rightmost after flush: ");
@@ -1161,7 +1161,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
 
         @INLINE
         private Pointer visitGreyCell(Pointer cell) {
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 printVisitedCell(cell, "Visiting grey cell ");
             }
             final Pointer origin = Layout.cellToOrigin(cell);
@@ -1211,7 +1211,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             if (heapMarker.isBlackWhenNotWhite(bitIndex)) {
                 return;
             }
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 printVisitedCell(cell, "Visiting popped cell ");
             }
             visitGreyCell(cell);
@@ -1332,7 +1332,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * is drained whenever reaching a drain threshold.
      */
     public void markRoots() {
-        final boolean traceGCPhases = Heap.traceGCPhases();
+        final boolean traceGCPhases = Heap.logGCPhases();
         rootCellVisitor.reset();
 
         // Mark all out of heap roots first (i.e., thread).
@@ -1860,8 +1860,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     }
 
     public void markAll() {
-        final boolean traceGCPhases = Heap.traceGCPhases();
-        traceGCTimes = Heap.traceGCTime();
+        final boolean traceGCPhases = Heap.logGCPhases();
+        traceGCTimes = Heap.logGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
@@ -1906,7 +1906,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param regionsRanges
      */
     private void mark(HeapRegionRangeIterable regionsRanges) {
-        final boolean traceGCPhases = Heap.traceGCPhases();
+        final boolean traceGCPhases = Heap.logGCPhases();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
@@ -1939,8 +1939,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param regionsRanges enumerate ranges of heap regions holding objects to trace
      */
     public void markAll(HeapRegionRangeIterable regionsRanges) {
-        final boolean traceGCPhases = Heap.traceGCPhases();
-        traceGCTimes = Heap.traceGCTime();
+        final boolean traceGCPhases = Heap.logGCPhases();
+        traceGCTimes = Heap.logGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }

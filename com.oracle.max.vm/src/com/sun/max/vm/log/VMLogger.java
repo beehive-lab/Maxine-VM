@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.log;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.log.VMLog.*;
 
 import java.util.*;
@@ -32,145 +33,202 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A {@link VMLogger} defines a set of operations, cardinality {@code N} each identified
- * by an {@code int} code in the range {@code [0 .. N-1]}.
- * A series of "log" methods are provided, that take the operation code
- * and a varying number of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}).
- * Currently these must not be {@link Reference} types as no GC support is provided
- * for values in the log buffer. N.B. This likely may change in the future.
+ * A {@link VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
+ * range {@code [0 .. N-1]}. A series of "log" methods are provided, that take the operation code and a varying number
+ * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}). Currently these must not be {@link Reference} types
+ * as no GC support is provided for values in the log buffer. N.B. This likely may change in the future, and a
+ * workaround for classes that don't have a scalar unique id available, the {@link #objectArg(Object)} method can be
+ * used.
+ * <p>
  * The thread (id) generating the log record is automatically recorded.
  * <p>
- * A logger typically will implement the {@link VMLogger#operationName(int)}
- * method that returns a descriptive name for the operation.
+ * A logger typically will implement the {@link VMLogger#operationName(int)} method that returns a descriptive name for
+ * the operation.
+ * <h2>Enabling Logging</h2>
  * <p>
- * Logging is enabled on a per logger basis through the use of
- * a standard {@code -XX:+LogXXX} option derived from the logger name.
- * Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX},
- * and a default implementation is provided, although this can be overridden.
- * Enabling tracing also enables logging, as the trace is driven from the log.
- * <b>N.B.</b>It is not possible to check the options until the VM startup has reached
- * a certain point. In order not to lose logging in the early phases, logging, but not
- * tracing, is always enabled initially.
- *<p>
- * Fine control over which operations are logged (and therefore traced) is provided
- * by the {@code -XX:LogXXXInclude=pattern} and {@code -XX:LogXXXExclude=pattern} options.
- * The {@code pattern} is a regular expression in the syntax expected by {@link java.util.regex.Pattern}
- * and refers to the operation names returned by {@link VMLogger#operationName(int)}.
- * By default all operations are logged. However, if the include option is set only
- * those operations that match the pattern are logged. In either case, if the exclude
- * option is provided, the set is reduced by those operations that match the exclude pattern.
+ * Logging is enabled on a per logger basis through the use of a standard {@code -XX:+LogXXX} option derived from the
+ * logger name. Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX}, and a default
+ * implementation is provided, although this can be overridden. Enabling tracing also enables logging, as the trace is
+ * driven from the log. <b>N.B.</b>It is not possible to check the options until the VM startup has reached a certain
+ * point. In order not to lose logging in the early phases, logging, but not tracing, is always enabled on VM startup.
  * <p>
- * The management of log records is handled in a separate class; a subclass of {@log VMLog}.
- * {@link VMLogger instance} requests a {@link VMLog.Record record} that can store a given
- * number of arguments from the singleton {@link #vmLog} instance and then records the values.
- * The format of the log record is opaque to allow a variety of implementations.
+ * Fine control over which operations are logged (and therefore traced) is provided by the
+ * {@code -XX:LogXXXInclude=pattern} and {@code -XX:LogXXXExclude=pattern} options. The {@code pattern} is a regular
+ * expression in the syntax expected by {@link java.util.regex.Pattern} and refers to the operation names returned by
+ * {@link VMLogger#operationName(int)}. By default all operations are logged. However, if the include option is set,
+ * only those operations that match the pattern are logged. In either case, if the exclude option is provided, the set
+ * is reduced by those operations that match the exclude pattern.
+ * <p>
+ * The management of log records is handled in a separate class; a subclass of {@log VMLog}. A {@link VMLogger instance}
+ * requests a {@link VMLog.Record record} that can store a given number of arguments from the singleton {@link #vmLog}
+ * instance and then records the values. The format of the log record is opaque to allow a variety of implementations.
  * <p>
  * <h2>Performance</h2>
- * In simple use logging affects performance even when disabled because the disabled
- * check happens inside the {@link VMLogger} log methods, so the cost of the argument marshalling
- * and method call is always paid when used in the straightforward manner, e.g.:
+ * In simple use logging affects performance even when disabled because the disabled check happens inside the
+ * {@link VMLogger} log methods, so the cost of the argument marshalling and method call is always paid when used in the
+ * straightforward manner, e.g.:
  *
  * {@code  logger.log(op, arg1, arg2);}
  *
  * If performance is an issue, replace the above with a guarded call, vis:
  *
- * {@code if (logger.enabled()) { logger.log(op, arg1, arg2);}}
+ * <pre>
+ * if (logger.enabled()) {
+ *     logger.log(op, arg1, arg2);
+ * }
+ * </pre>
  *
- * The {@code enabled} method is always inlined.
+ * The {@code enabled} method is always {@link INLINE inlined}..
  *
- * N.B. The guard can be a more complex condition. However, it is important not
- * to use disjunctive conditions that could result in a value of {@code true} for
- * the guard when {@code logger.enabled()} would return false when one of the conditions
- * returned {@code true}. E.g.,
- *<pre>
+ * N.B. The guard can be a more complex condition. However, it is important not to use disjunctive conditions that could
+ * result in a value of {@code true} for the guard when {@code logger.enabled()} would return false, E.g.,
+ *
+ * <pre>
  * if {a || b} {
  *     logger.log(op, arg1, arg2);
  * }
  * </pre>
- * Conjunctive conditions can be useful. For example, say we wanted to suppress
- * logging until a counter reaches a certain value:
+ *
+ * Conjunctive conditions can be useful. For example, say we wanted to suppress logging until a counter reaches a
+ * certain value:
+ *
  * <pre>
- * if (logger.enabled() && count >= value) {
+ * if (logger.enabled() &amp;&amp; count &gt;= value) {
  *     logger.log(op, arg1, arg2);
  * }
  * </pre>
  * <p>
- * It is possible to have one logger override the default settings for other loggers.
- * E.g., say we have loggers A and B, but we want a way to turn both loggers on with
- * a single overriding option. The way to do this is to create a logger, say ALL, typically with
- * no operations, that forces A and B into the enabled state if, and only if, it is itself
- * enabled. This can be achieved by overriding {@link #checkOptions()} for the ALL logger.
- * See {@link Heap#gcLogger} for an example of this.
+ * <h2>Dependent Loggers</h2>
+ * It is possible to have one logger override the default settings for other loggers. E.g., say we have loggers A and B,
+ * but we want a way to turn both loggers on with a single overriding option. The way to do this is to create a logger,
+ * say ALL, typically with no operations, that forces A and B into the enabled state if, and only if, it is itself
+ * enabled. This can be achieved by overriding {@link #checkOptions()} for the ALL logger, and calling the
+ * {@link #forceDependentLoggerState} method. See {@link Heap#gcAllLogger} for an example of this.
  * <p>
- * It is also possible for a logger, say C, to inherit the settings of another logger, say ALL,
- * again by forcing ALL to check its options from within C's {@code checkOptions} and then use ALL's
- * values to set C's settings. This is appropriate when ALL cannot know about C for abstraction
- * reasons.
+ * It is also possible for a logger, say C, to inherit the settings of another logger, say ALL, again by forcing ALL to
+ * check its options from within C's {@code checkOptions} and then use ALL's values to set C's settings. This is
+ * appropriate when ALL cannot know about C for abstraction reasons. See {@link #checkDominantLogger}.
  * <p>
- * N.B. The order in which loggers have their options checked by the normal VM startup is unspecified.
- * Hence, a logger must always force the checking of a dependent logger's options before accessing its state.
+ * N.B. The order in which loggers have their options checked by the normal VM startup is unspecified. Hence, a logger
+ * must always force the checking of a dependent logger's options before accessing its state.
  * <p>
- * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid nasty circularities,
- * see {@link VMLog#setThreadState(boolean)}.
- * <h2>Useful Conventions</h2>
- * To simplify the display of arguments by the Inspector, given that {@link Reference} values
- * cannot be logged, and to mitigate the code changes necessary should that change (likely),
- * it is recommended to follow the conventions below:
+ * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid meta-circularities
+ * in low-level code, see {@link VMLog#setThreadState(boolean)}.
  *
- * Create a public {@code enum} named {@code Operation} inside the logger class, with mnemomic
- * names for the operations, e.g.:
+ * <h2>Type Safety</h2>
+ * The standard type-safe way to log a collection of heteregenously typed values would be to first define a class
+ * containing fields that correspond to the values, then acquire an instance of such a class, store the values in the
+ * fields and then save the instance in the log. Note that this generally involves allocation; at best it involves
+ * acquiring a pre-allocated instance in some way. It also necessarily involves a level of indirection in the log buffer
+ * itself, as the buffer is constrained to be a container of reference values.
+ *
+ * Since {{VMLog}} is a low level mechanism that must function in parts of the VM where allocation is impossible, for
+ * example, during garbage collection, the standard approach is not appropriate. It is also important to minimize the
+ * storage overhead for log records and the performance overhead of logging the data. Therefore, a less type safe
+ * approach is adopted, that is partly mitigated by automatic generation of logger code at VM image build time.
+ * <p>
+ * The automatic generation, see {@link VMLoggerGenerator}, is driven from an interface defining the logger operations
+ * that is tagged with the {@link VMLoggerInterface} annotation. Since this is only used during image generator the
+ * interface should also be tagged with {@link HOSTED_ONLY}. The logging operations are defined as methods
+ * in the interface.In order to preserve the parameter names in the generated code, eacjh param should also be annotated
+ * with {@link VMLogParam}, e.g.:
+ *
  * <pre>
- * public static class AllocationLogger extends VMLogger {
- *     public enum Operation {
- *         Clone, ...
+ * @HOSTED_ONLY
+ * @VMLoggerInterface
+ * private static interface ExampleLoggerInterface {
+ *   void foo(
+ *       @VMLogParam(name = "classActor") ClassActor classActor,
+ *       @VMLogParam(name = "base") Pointer base);
+ *
+ *   void bar(
+ *       @VMLogParam(name = "count") SomeClass someClass, int count);
+ * }
+ * </pre>
+ * The logger class should contain the comment pair:
+ * <pre>
+ * // START GENERATED CODE
+ * // END GENERATED CODE
+ * </pre>
+ * somewhere in the source, typically at the end of the class.
+ * When {@link VMLoggerGenerator} is executed it scans all VM classes for interfaces annotated with {@link VMLoggerInterface}
+ * and then generates an abstract class containing the log methods, abstract method definitions for the associated {@code trace}
+ * methods, and an implementation of the {@link #trace(Record r)} method that decodes the operation and invokes the
+ * appropriate {@code trace} method.
+ * <p>
+ * The developer then defines the concrete implementation class that inherits from the automatically generated class
+ * and, if required implements the trace methods, e.g, from the {@link ExampleLoggerOwner} class:
+ * <pre>
+ * public static final class ExampleLogger extends ExampleLoggerAuto {
+ *      ExampleLogger() {
+ *         super("Example", "an example logger.");
+ *      }
+ *
+ *     @Override
+ *     protected void traceFoo(ClassActor classActor, Pointer base) {
+ *         Log.print("Class "); Log.print(classActor.name.string);
+ *         Log.print(", base:"); Log.println(base);
  *     }
- *     ...
- * }
- * </pre>
- * Note that the enum constants are not all upper case, as is conventional, because they are used
- * to match the log method names.
- * <p>
- * Override the {@link #operationName(int)}method as follows:
- * <pre>
- * public String operationName(int op) {
- *     return Operation.values()[op].name();
- * }
- * </pre>
- * <p>
- * Create log methods with arguments that reflect the values you want to log (even if they are reference types}, e.g.:
  *
- * <pre>
- * void logClone(Hub hub, Object clone) {
- *     log(Operation.Copy.ordinal(), hub.classActor.id, Layout.originToCell(ObjectAccess.toOrigin(clone)));
+ *     @Override
+ *     protected void traceBar(SomeClass someClass, int count) {
+ *       // SomeClass specific tracing
+ *     }
  * }
  * </pre>
- * Then invoke {@code logClone} at the appropriate place in the code, typically guarded by a check that
- * the logger is enabled.
- * <p>
- * The Inspector will be able to display the arguments appropriately, by using reflection to discover the
- * types of the arguments. If reference value logging becomes possible, only the implementation of
- * the {@code logXXX} methods will need to be changed.
- * <p>
- * These methods will typically not exist in the boot image as they will be inlined at the use site.
+ * {@link VMLogger} has built-in support for several standard reference types, that have alternate representations
+ * as scalar values, such as {@link ClassActor}. As a general principle, reference types without an alternate, unique, scalar
+ * representation should be avoided as log method arguments. However, this is sometimes difficult or inconvenient.
+ * Therefore, with the current limitation of logging arbitrary reference types,
+ * {@link VMLogger} provides a mechanism to convert/retrieve any reference type via a scalar id with the methods
+ * {@link VMLogger#objectArg(Object)} and {@link VMLogger#toObject(int)} methods. <b>N.B.</b> this mechanism makes
+ * the object permanently reachable, and is limited in the number of objects that can be handled.
  *
  * <h3>Tracing</h3>
- * When the tracing option is enabled, {@link #doTrace(Record)} is invoked immediately after
- * the log record is created. After checking that calls to the {@link Log} class are possible,
- * {@link Log#lock} is called, then {@link #trace(Record)} is called, followed by {@link Log#unlock}.
+ * When the tracing option for a logger is enabled, {@link #doTrace(Record)} is invoked immediately after the log record is created.
+ * After checking that calls to the {@link Log} class are possible, {@link Log#lock} is called, then
+ * {@link #trace(Record)} is called, followed by {@link Log#unlock}.
  * <p>
- * A default implementation of {@link #trace} is provided that calls methods in the
- * {@link Log} class to print the logger name, thread name and arguments. There are two ways to
- * customize the output. The first is to override the {@link #logArg(int, Word)} method
- * to customize the output of a particular argument - the default action is to print the value
- * as a hex number. The second is to override {@link #trace}  and do full customization.
+ * A default implementation of {@link #trace} is provided that calls methods in the {@link Log} class to print the
+ * logger name, thread name and arguments. There are two ways to customize the output. The first is to override the
+ * {@link #logArg(int, Word)} method to customize the output of a particular argument - the default action is to print
+ * the value as a hex number. The second is to override {@link #trace} and do full customization.
+ * <h2>Inspector Integration</h2>
+ * <p>
+ * The Inspector is generally able to display the log arguments appropriately, by using reflection to discover the types of the
+ * arguments.
+ * <p>
+ * Two additional mechanisms are available for Inspector customization. The first is an override to generate a custom
+ * {@link String} representation of a log argument:
+ *
+ * <pre>
+ * @HOSTED_ONLY
+ * public String inspectedArgValue(int op, int argNum, Word argValue);
+ * </pre>
+ *
+ * If this method is defined for a given logger then the Inspector will call it for the given operation and argument
+ * and, if it returns a non-null value, use the result.
+ * <p>
+ * The second is an override for a logger-defined argument value class:
+ *
+ * <pre>
+ * @HOSTED_ONLY
+ * public static String inspectedValue(Word argValue);
+ * </pre>
+ *
+ * If this method is defined for the class and no standard customization is available, it will be called and, if the
+ * result is non-null it will be used.
  *
  */
 public class VMLogger {
+
     /**
      * Convenience enum for BEGIN/END intervals.
      */
@@ -207,6 +265,45 @@ public class VMLogger {
     private boolean optionsChecked;
 
     private VMLog vmLog;
+
+    /*
+     * Temporary support for VMLogger.getObjectId.
+     */
+    @INSPECTED
+    private static int tempObjectIdIndex = 1;
+    @INSPECTED
+    private static final Object[] tempObjectIds = new Object[8192];
+    private static int tempObjectIdIndexOffset;
+    private static ClassActor vmLoggerClassActor;
+
+
+    @HOSTED_ONLY
+    private static void setupObjectIds() {
+        vmLoggerClassActor = ClassActor.fromJava(VMLogger.class);
+        tempObjectIdIndexOffset = vmLoggerClassActor.findLocalStaticFieldActor("tempObjectIdIndex").offset();
+    }
+
+    /**
+     * Temporary hack to convert arbitrary object into an id for logging.
+     * @param object
+     * @return
+     */
+    public static Word objectArg(Object object) {
+        if (object == null) {
+            return Word.zero();
+        }
+        for (int i = 0; i < tempObjectIds.length; i++) {
+            if (tempObjectIds[i] == object) {
+                return intArg(i);
+            }
+        }
+        int myId = tempObjectIdIndex;
+        while (Reference.fromJava(vmLoggerClassActor.staticTuple()).compareAndSwapInt(tempObjectIdIndexOffset, myId, myId + 1) != myId) {
+            myId = tempObjectIdIndexOffset;
+        }
+        tempObjectIds[myId] = object;
+        return intArg(myId);
+    }
 
     @HOSTED_ONLY
     private static VMLog hostedVMLog;
@@ -245,7 +342,7 @@ public class VMLogger {
     protected VMLogger() {
         this.name = "NULL";
         this.numOps = 0;
-        loggerId = 0;
+        loggerId = -1;
         logOption = traceOption = null;
         logIncludeOption = logExcludeOption = null;
         logOp = null;
@@ -255,16 +352,8 @@ public class VMLogger {
     public void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
         this.vmLog = vmLog;
         VMLogger.hostedVMLog = hostedVMLog;
+        setupObjectIds();
         checkOptions();
-    }
-
-    public static String threadName(int id) {
-        if (MaxineVM.isHosted()) {
-            return "Thread[id=" + id + "]";
-        } else {
-            VmThread vmThread = VmThreadMap.ACTIVE.getVmThreadForID(id);
-            return vmThread == null ? "DEAD" : vmThread.getName();
-        }
     }
 
     /**
@@ -283,7 +372,7 @@ public class VMLogger {
      * @return a custom string or null if no custom decoding for this arg
      */
     @HOSTED_ONLY
-    public String inspectedArg(int op, int argNum, Word arg) {
+    public String inspectedArgValue(int op, int argNum, Word arg) {
         return null;
     }
 
@@ -318,6 +407,24 @@ public class VMLogger {
     }
 
     /**
+     * Lock the log for the current thread.
+     * Use this if you must to have a sequence on non-interleaved log records.
+     * Implemented using {@link Log#lock}.
+     * @return {@code true} if safepoints were disabled by the lock method.
+     */
+    public boolean lock() {
+        return Log.lock();
+    }
+
+    /**
+     * Unlock a locked log.
+     * @param lockDisabledSafepoints value return from matching {@ink #lock} call.
+     */
+    public void unlock(boolean lockDisabledSafepoints) {
+        Log.unlock(lockDisabledSafepoints);
+    }
+
+    /**
      * Implements the default trace option {@code -XX:+TraceXXX}.
      * {@link Log#lock()} and {@link Log#unlock(boolean)} are
      * already handled by the caller.
@@ -325,7 +432,7 @@ public class VMLogger {
      */
     protected void trace(Record r) {
         Log.print("Thread \"");
-        Log.print(threadName(r.getThreadId()));
+        Log.print(toVmThreadName(r.getThreadId()));
         Log.print("\" ");
         Log.print(name);
         Log.print('.');
@@ -389,6 +496,41 @@ public class VMLogger {
             }
         }
         optionsChecked = true;
+    }
+
+    /**
+     * Set the enabled options of this logger based on those of a dominant logger.
+     * @param dominantLogger
+     */
+    protected void checkDominantLoggerOptions(VMLogger dominantLogger) {
+        dominantLogger.checkOptions();
+        // Turn on if dominant options are set.
+        if (dominantLogger.enabled()) {
+            enable(true);
+        }
+        if (dominantLogger.traceEnabled()) {
+            enableTrace(true);
+        }
+    }
+
+    /**
+     * Force the state of the given dependent loggers to have the same enabled state as this logger.
+     * @param loggers
+     */
+    protected void forceDependentLoggerState(VMLogger... loggers) {
+        // force the checking of the dependent loggers now
+        for (VMLogger logger : loggers) {
+            logger.checkOptions();
+        }
+        // Now enforce our state on them.
+        for (VMLogger logger : loggers) {
+            if (enabled()) {
+                logger.enable(true);
+            }
+            if (traceEnabled()) {
+                logger.enableTrace(true);
+            }
+        }
     }
 
     private Record logSetup(int op, int argCount) {
@@ -503,7 +645,12 @@ public class VMLogger {
         }
     }
 
-    // Convenience methods for handling logging/tracing arguments.
+    // Convenience methods for logging typed arguments as {@link Word values}.
+
+    @INLINE
+    public static Word booleanArg(boolean value) {
+        return value ? Word.allOnes() : Word.zero();
+    }
 
     @INLINE
     public static Word intArg(int i) {
@@ -516,8 +663,90 @@ public class VMLogger {
     }
 
     @INLINE
-    public static Word threadArg(VmThread vmThread) {
+    public static Word vmThreadArg(VmThread vmThread) {
         return Address.fromInt(vmThread.id());
+    }
+
+    @INLINE
+    public static Word intervalArg(Interval interval) {
+        return Address.fromInt(interval.ordinal());
+    }
+
+    @INLINE
+    public static Word classActorArg(ClassActor classActor) {
+        return intArg(classActor.id);
+    }
+
+    @INLINE
+    public static Word twoIntArgs(int a, int b) {
+        return Address.fromLong(((long) a) << 32 | b);
+    }
+
+    /* Convenience methods for retrieving logged values for {@link #trace) overrides.
+     * Supports the auto-generation of the logger boiler plate code.
+     */
+
+    @INLINE
+    public static Word toWord(Record r, int argNum) {
+        return r.getArg(argNum);
+    }
+
+    @INLINE
+    public static Pointer toPointer(Record r, int argNum) {
+        return r.getArg(argNum).asPointer();
+    }
+
+    @INLINE
+    public static Address toAddress(Record r, int argNum) {
+        return r.getArg(argNum).asAddress();
+    }
+
+    @INLINE
+    public static Size toSize(Record r, int argNum) {
+        return r.getArg(argNum).asSize();
+    }
+
+    @INLINE
+    public static byte toByte(Record r, int argNum) {
+        return (byte) r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static int toInt(Record r, int argNum) {
+        return r.getIntArg(argNum);
+    }
+
+    @INLINE
+    public static long toLong(Record r, int argNum) {
+        return r.getLongArg(argNum);
+    }
+
+    @INLINE
+    public static boolean toBoolean(Record r, int argNum) {
+        return r.getBooleanArg(argNum);
+    }
+
+    @INLINE public static int toIntArg1(long arg) {
+        return (int) (arg >> 32 & 0xFFFFFFFF);
+    }
+
+    @INLINE public static int toIntArg2(long arg) {
+        return (int) (arg & 0xFFFFFFFF);
+    }
+
+    @INLINE
+    public static VmThread toVmThread(Record r, int argNum) {
+        return toVmThread(r.getArg(argNum));
+    }
+
+    @INLINE
+    public static MethodActor toMethodActor(Record r, int argNum) {
+        return toMethodActor(r.getArg(argNum));
+    }
+
+    @INLINE
+    public static ClassActor toClassActor(Record r, int argNum) {
+        return toClassActor(r.getArg(argNum));
     }
 
     @INLINE
@@ -528,6 +757,48 @@ public class VMLogger {
     @INLINE
     public static ClassActor toClassActor(Word arg) {
         return ClassID.toClassActor(arg.asAddress().toInt());
+    }
+
+    public static String toVmThreadName(int id) {
+        if (MaxineVM.isHosted()) {
+            return "Thread[id=" + id + "]";
+        } else {
+            VmThread vmThread = VmThreadMap.ACTIVE.getVmThreadForID(id);
+            return vmThread == null ? "DEAD" : vmThread.getName();
+        }
+    }
+
+    public static VmThread toVmThread(Word arg) {
+        return  VmThreadMap.ACTIVE.getVmThreadForID(arg.asAddress().toInt());
+    }
+
+    @INLINE
+    public static Interval toInterval(Record r, int argNum) {
+        return Interval.VALUES[r.getIntArg(argNum)];
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native String asString(Object arg);
+
+    @INLINE
+    public static String toString(Record r, int argNum) {
+        return asString(toObject(r, argNum));
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native TargetMethod asTargetMethod(Object arg);
+
+    @INLINE
+    public static TargetMethod toTargetMethod(Record r, int argNum) {
+        return asTargetMethod(toObject(r, argNum));
+    }
+
+    public static Object toObject(int id) {
+        return tempObjectIds[id];
+    }
+
+    public static Object toObject(Record r, int argNum) {
+        return tempObjectIds[r.getIntArg(argNum)];
     }
 
 }

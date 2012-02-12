@@ -1259,7 +1259,7 @@ public final class Log {
             lockOwner = null;
         }
         Log.log_unlock();
-        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
+        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Log.lock() and Log.unlock()");
         if (lockDisabledSafepoints) {
             SafepointPoll.enable();
         }

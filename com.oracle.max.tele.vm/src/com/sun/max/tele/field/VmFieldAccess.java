@@ -189,6 +189,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess VMLogArray$Record5_arg5 = new TeleInstanceWordFieldAccess(VMLogArray.Record5.class, "arg5");
     public final TeleInstanceWordFieldAccess VMLogArray$Record6_arg6 = new TeleInstanceWordFieldAccess(VMLogArray.Record6.class, "arg6");
     public final TeleInstanceWordFieldAccess VMLogArray$Record7_arg7 = new TeleInstanceWordFieldAccess(VMLogArray.Record7.class, "arg7");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record8_arg8 = new TeleInstanceWordFieldAccess(VMLogArray.Record8.class, "arg8");
     public final TeleStaticIntFieldAccess RegionTable_TableOffset = new TeleStaticIntFieldAccess(RegionTable.class, "TableOffset");
     public final TeleInstanceIntFieldAccess RegionTable_length = new TeleInstanceIntFieldAccess(RegionTable.class, "length");
     public final TeleInstanceIntFieldAccess RegionTable_regionInfoSize = new TeleInstanceIntFieldAccess(RegionTable.class, "regionInfoSize");
@@ -230,6 +231,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess VMLogNative_logSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "logSize");
     public final TeleInstanceIntFieldAccess VMLogNative_maxNativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "maxNativeRecordSize");
     public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordArgsOffset = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordArgsOffset");
+    public final TeleStaticIntFieldAccess VMLogger_tempObjectIdIndex = new TeleStaticIntFieldAccess(VMLogger.class, "tempObjectIdIndex");
+    public final TeleStaticReferenceFieldAccess VMLogger_tempObjectIds = new TeleStaticReferenceFieldAccess(VMLogger.class, "tempObjectIds", Object[].class);
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "name", String.class);
     public final TeleStaticReferenceFieldAccess VmThreadLocal_VALUES = new TeleStaticReferenceFieldAccess(VmThreadLocal.class, "VALUES", List.class);
     // END GENERATED CONTENT

@@ -392,14 +392,40 @@ public interface HeapScheme extends VMScheme {
      */
     void walkHeap(CallbackCellVisitor visitor);
 
-    VMLogger phaseLogger();
+    /*
+     * Logging support.
+     */
+
+    public static abstract class PhaseLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
+        protected PhaseLogger(String name, int numOps, String description) {
+            super("GCPhases", numOps, "garbage collection phases.");
+        }
+
+        /**
+         * All heap schemes scan the {@link VMThreadLocal} references and thread stack roots.
+         * @param vmThread
+         */
+        public abstract void logScanningThreadRoots(VmThread vmThread);
+    }
+
+    /**
+     * Get the concrete implementation of {@link PhaseLogger}.
+     * @return
+     */
+    PhaseLogger phaseLogger();
 
     /**
      * A logger for GC timings - implementation provided by the heap scheme.
      */
     public static abstract class TimeLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
         protected TimeLogger(String name, int numOps, String description) {
-            super(name, numOps, description);
+            super("GCTime", numOps, "time of garbage collection phases.");
         }
 
         /**
@@ -407,9 +433,13 @@ public interface HeapScheme extends VMScheme {
          *
          * @param stackReferenceMapPreparationTime
          */
-        public abstract void logStackRefMapTime(long stackReferenceMapPreparationTime);
+        public abstract void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
     }
 
+    /**
+     * Get the concrete implementation of {@link TimeLogger}.
+     * @return
+     */
     TimeLogger timeLogger();
 
     /**

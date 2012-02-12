@@ -213,7 +213,7 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
 
-            if (DependenciesManager.logger.traceEnabled()) {
+            if (DependenciesManager.dependenciesLogger.traceEnabled()) {
                 DependenciesManager.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
             }
 

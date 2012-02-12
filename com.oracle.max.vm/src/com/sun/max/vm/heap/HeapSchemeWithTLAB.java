@@ -32,11 +32,11 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -539,19 +539,90 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     public static final TLABLogger logger = /*MaxineVM.isDebug()*/ true  ? new TLABLogger(true) : new TLABLogger();
 
-    public static class TLABLogger extends VMLogger {
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private static interface TLabLoggerInterface  {
+        void reset(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlabTop") Pointer tlabTop,
+            @VMLogParam(name = "tlabMark") Pointer tlabMark);
+
+        void refill(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlab") Pointer tlab,
+            @VMLogParam(name = "tlabTop") Pointer tlabTop,
+            @VMLogParam(name = "tlabEnd") Pointer tlabEnd,
+            @VMLogParam(name = "initialTlabSize") int initialTlabSize);
+
+        void pad(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlabMark") Pointer tlabMark,
+            @VMLogParam(name = "padWords") int padWords);
+    }
+
+    public static final class TLABLogger extends TLabLoggerAuto {
+        TLABLogger(boolean active) {
+            super("TLAB", null);
+        }
+
+        TLABLogger() {
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.gcAllLogger);
+        }
+
+        @Override
+        protected void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            Log.printThread(vmThread, false);
+            Log.print(": Resetting TLAB [TOP=");
+            Log.print(tlabTop);
+            Log.print(", MARK=");
+            Log.print(tlabMark);
+            Log.println("]");
+        }
+
+        @Override
+        protected void tracePad(VmThread vmThread, Pointer tlabMark, int padWords) {
+            Log.printThread(vmThread, false);
+            Log.print(": Placed TLAB padding at ");
+            Log.print(tlabMark);
+            Log.print(" [words=");
+            Log.print(padWords);
+            Log.println("]");
+        }
+
+        @Override
+        protected void traceRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
+            Log.printThread(vmThread, false);
+            Log.print(": Refill TLAB with [MARK = ");
+            Log.print(tlab);
+            Log.print(", TOP=");
+            Log.print(tlabTop);
+            Log.print(", end=");
+            Log.print(tlabEnd);
+            Log.print(", size=");
+            Log.print(initialTlabSize);
+            Log.println("]");
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class TLabLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Reset, Refill, Pad;
+            Reset, Pad, Refill;
 
             public static final Operation[] VALUES = values();
         }
 
-        TLABLogger(boolean active) {
-            super("TLAB", Operation.VALUES.length, null);
+        protected TLabLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
         }
 
-        TLABLogger() {
-            super();
+        protected TLabLoggerAuto() {
         }
 
         @Override
@@ -559,57 +630,45 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             return Operation.VALUES[opCode].name();
         }
 
-        @Override
-        public void checkOptions() {
-            super.checkOptions();
-            Heap.gcLogger.checkOptions();
-            // Turn on if dominant options are set.
-            if (Heap.gcLogger.enabled()) {
-                enable(true);
-            }
-            if (Heap.gcLogger.traceEnabled()) {
-                enableTrace(true);
-            }
+        @INLINE
+        public final void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            log(Operation.Reset.ordinal(), vmThreadArg(vmThread), tlabTop, tlabMark);
         }
+        protected abstract void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark);
 
-        void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
-            log(Operation.Reset.ordinal(), VMLogger.threadArg(vmThread), tlabTop, tlabMark);
+        @INLINE
+        public final void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
+            log(Operation.Pad.ordinal(), vmThreadArg(vmThread), tlabMark, intArg(padWords));
         }
+        protected abstract void tracePad(VmThread vmThread, Pointer tlabMark, int padWords);
 
-        void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
-            log(Operation.Refill.ordinal(), VMLogger.threadArg(vmThread), tlab, tlabTop, tlabEnd, VMLogger.intArg(initialTlabSize));
+        @INLINE
+        public final void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
+            log(Operation.Refill.ordinal(), vmThreadArg(vmThread), tlab, tlabTop, tlabEnd, intArg(initialTlabSize));
         }
-
-        public void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
-            log(Operation.Pad.ordinal(), VMLogger.threadArg(vmThread), tlabMark, VMLogger.intArg(padWords));
-        }
+        protected abstract void traceRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize);
 
         @Override
         protected void trace(Record r) {
-            Operation op = Operation.VALUES[r.getOperation()];
-            Log.printThread(VmThreadMap.ACTIVE.getVmThreadForID(r.getIntArg(1)), false);
-            if (op == Operation.Reset) {
-                Log.print(": Resetting TLAB [TOP=");
-                Log.print(r.getArg(2));
-                Log.print(", MARK=");
-                Log.print(r.getArg(3));
-            } else if (op == Operation.Refill) {
-                Log.print(": Refill TLAB with [MARK = ");
-                Log.print(r.getArg(2));
-                Log.print(", TOP=");
-                Log.print(r.getArg(3));
-                Log.print(", end=");
-                Log.print(r.getArg(4));
-                Log.print(", size=");
-                Log.print(r.getIntArg(5));
-            } else if (op == Operation.Pad) {
-                Log.print(": Placed TLAB padding at ");
-                Log.print(r.getArg(1));
-                Log.print(" [words=");
-                Log.print(r.getIntArg(2));
+            switch (r.getOperation()) {
+                case 0: { //Reset
+                    traceReset(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 1: { //Pad
+                    tracePad(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 2: { //Refill
+                    traceRefill(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
+                    break;
+                }
             }
-            Log.println("]");
         }
     }
+
+// END GENERATED CODE
+
+
 }
 
