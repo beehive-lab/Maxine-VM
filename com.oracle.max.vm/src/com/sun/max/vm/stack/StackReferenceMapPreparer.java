@@ -670,7 +670,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
      */
     @HOSTED_ONLY
     @VMLoggerInterface
-    private static interface StackRootScanLoggerInterface {
+    private interface StackRootScanLoggerInterface {
         // pack 8/9th args to stay in 8 arg limit
         void start(
                         @VMLogParam(name = "count") int count,
