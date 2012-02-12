@@ -456,8 +456,9 @@ public class SpecialReferenceManager {
 
     public static final SpecialReferenceLogger specialReferenceLogger = new SpecialReferenceLogger();
 
-    @HOSTED_ONLY
-    @VMLoggerInterface
+    // Yet more javac weirdness. Will not compile unless qualified.
+    @com.sun.max.annotate.HOSTED_ONLY
+    @com.sun.max.vm.log.hosted.VMLoggerInterface
     private static interface SpecialReferenceLoggerInterface {
         void enqueue(
                         @VMLogParam(name = "classActor") ClassActor classActor,
