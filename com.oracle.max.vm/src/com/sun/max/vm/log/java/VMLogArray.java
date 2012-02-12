@@ -284,7 +284,6 @@ public abstract class VMLogArray extends VMLog {
     }
 
     @Override
-    @INLINE(override = true)
     public boolean threadIsEnabled() {
         return VMLOG_THREADSTATE.load(VmThread.currentTLA()).isZero();
     }
