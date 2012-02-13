@@ -264,5 +264,30 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      */
     protected abstract HostedLogRecord getRecordFromVM(int id);
 
+    public void refreshColumnRenderers(int argNum, boolean force) {
+//        final int rowCount = getRowCount();
+//        for (int row = 0; row < rowCount; row++) {
+//            final Component[] renderers = getColumnRenderers(row).renderers;
+//            if (row <= renderers.length) {
+//                final Component component = renderers[argNum];
+//                if (component instanceof Prober) {
+//                    final Prober prober = (Prober) component;
+//                    prober.refresh(force);
+//                }
+//            }
+//        }
+    }
+
+    public void redisplayColumnRenderers(int argNum) {
+//        final int rowCount = getRowCount();
+//        for (int row = 0; row < rowCount; row++) {
+//            final Component component = getColumnRenderers(row).renderers[row];
+//            if (component instanceof Prober) {
+//                final Prober prober = (Prober) component;
+//                prober.redisplay();
+//            }
+//        }
+    }
+
 }
 

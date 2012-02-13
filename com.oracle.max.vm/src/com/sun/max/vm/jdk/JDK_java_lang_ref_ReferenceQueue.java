@@ -33,7 +33,6 @@ import com.sun.max.vm.heap.SpecialReferenceManager.JLRRAlias;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**

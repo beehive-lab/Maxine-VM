@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.log.*;
 
 /**
  * Factory for custom renderers for {@link VMLog.Logger} arguments.
