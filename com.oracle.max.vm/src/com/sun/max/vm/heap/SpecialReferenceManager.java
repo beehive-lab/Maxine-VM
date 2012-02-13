@@ -36,6 +36,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -51,11 +53,6 @@ import com.sun.max.vm.thread.*;
  * references, and after live objects have been processed.
  */
 public class SpecialReferenceManager {
-
-    public static boolean TraceReferenceGC;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceReferenceGC", "Trace Handling of soft/weak/final/phantom references.");
-    }
 
     private static final boolean FINALIZERS_SUPPORTED = true;
 
@@ -235,17 +232,8 @@ public class SpecialReferenceManager {
             // resulting in implicit modification to a remember set during GC.
             refAlias.discovered = discoveredList;
             discoveredList = ref;
-            if (TraceReferenceGC || Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Added ");
-                Log.print(cell);
-                Log.print(' ');
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-                Log.print(hub.classActor.name.string);
-                Log.print(" {referent=");
-                Log.print(referent.toOrigin());
-                Log.println("} to list of discovered references");
-                Log.unlock(lockDisabledSafepoints);
+            if (specialReferenceLogger.enabled()) {
+                specialReferenceLogger.logDiscover(cell, UnsafeCast.asHub(Layout.readHubReference(origin).toJava()).classActor, referent.toOrigin());
             }
         }
     }
@@ -267,11 +255,10 @@ public class SpecialReferenceManager {
         java.lang.ref.Reference end = sentinel;
         final boolean updateReachableReferent = gc.mayRelocateLiveObjects();
 
-        if (TraceReferenceGC || Heap.traceGC()) {
-            Log.print("ReferenceQueue.NULL = ");
-            Log.println(Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.NULL).toOrigin());
-            Log.print("ReferenceQueue.ENQUEUED = ");
-            Log.println(Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.ENQUEUED).toOrigin());
+        if (specialReferenceLogger.enabled()) {
+            specialReferenceLogger.logProcessDiscoveredInit(
+                            Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.NULL).toOrigin(),
+                            Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.ENQUEUED).toOrigin());
         }
 
         // Process the discovered list until it is empty (new elements may be
@@ -326,40 +313,18 @@ public class SpecialReferenceManager {
                 ref = refAlias.discovered;
                 r.discovered = null;
 
-                if (TraceReferenceGC || Heap.traceGC()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Processed ");
-                    Log.print(ObjectAccess.readClassActor(r).name.string);
-                    Log.print(" at ");
-                    Log.print(ObjectAccess.toOrigin(r));
-                    if (MaxineVM.isDebug()) {
-                        Log.print(" [next discovered = ");
-                        Log.print(ObjectAccess.toOrigin(ref));
-                        Log.print("]");
-                    }
-                    Log.print(" whose referent ");
-                    Log.print(referent.toOrigin());
+                if (specialReferenceLogger.enabled()) {
                     final Object newReferent = r.referent;
-                    if (newReferent == null) {
-                        Log.print(" was unreachable");
-                        Log.print(" [queue: ");
-                        Log.print(Reference.fromJava(r.queue).toOrigin());
-                        Log.print("]");
-                    } else if (preserved) {
-                        Log.print(" was unreachable but preserved to ");
-                        Log.print(ObjectAccess.toOrigin(newReferent));
-                        Log.print(" [queue: ");
-                        Log.print(Reference.fromJava(r.queue).toOrigin());
-                        Log.print("]");
-                    } else if (updateReachableReferent) {
-                        Log.print(" moved to ");
-                        Log.print(ObjectAccess.toOrigin(newReferent));
-                    }
-                    if (!addedToPending) {
-                        Log.print(" {not added to Reference.pending list}");
-                    }
-                    Log.println();
-                    Log.unlock(lockDisabledSafepoints);
+                    specialReferenceLogger.logProcessDiscovered(
+                        ObjectAccess.readClassActor(r),
+                        ObjectAccess.toOrigin(r),
+                        referent.toOrigin(),
+                        newReferent == null ? Pointer.zero() : ObjectAccess.toOrigin(newReferent),
+                        Reference.fromJava(r.queue).toOrigin(),
+                        preserved,
+                        updateReachableReferent,
+                        addedToPending,
+                        MaxineVM.isDebug() ? ObjectAccess.toOrigin(ref) : Pointer.zero());
                 }
             }
             JLRRAlias.pending = pending;
@@ -399,15 +364,8 @@ public class SpecialReferenceManager {
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());
                 }
-                if (TraceReferenceGC || Heap.traceGC()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Processed root table entry ");
-                    Log.print(i);
-                    Log.print(": set ");
-                    Log.print(rootPointer);
-                    Log.print(" to ");
-                    Log.println(rootsPointer.getWord(i));
-                    Log.unlock(lockDisabledSafepoints);
+                if (specialReferenceLogger.enabled()) {
+                    specialReferenceLogger.logProcessInspectable(i, rootPointer, rootsPointer.getWord(i));
                 }
             }
         }
@@ -426,13 +384,8 @@ public class SpecialReferenceManager {
         if (FINALIZERS_SUPPORTED) {
             FatalError.check(ObjectAccess.readClassActor(object).hasFinalizer(), "cannot register object that has no finalizer");
             register(object);
-            if (TraceReferenceGC || Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Registered finalizer for ");
-                Log.print(Reference.fromJava(object).toOrigin());
-                Log.print(" of type ");
-                Log.println(object.getClass().getName());
-                Log.unlock(lockDisabledSafepoints);
+            if (specialReferenceLogger.enabled()) {
+                specialReferenceLogger.logRegisterFinalizee(Reference.fromJava(object).toOrigin(), ObjectAccess.readClassActor(object));
             }
         }
     }
@@ -498,4 +451,274 @@ public class SpecialReferenceManager {
             VmThread.finalizerThread.startVmSystemThread();
         }
     }
+
+    // Logging
+
+    public static final SpecialReferenceLogger specialReferenceLogger = new SpecialReferenceLogger();
+
+    // Yet more javac weirdness. Will not compile unless qualified.
+    @com.sun.max.annotate.HOSTED_ONLY
+    @com.sun.max.vm.log.hosted.VMLoggerInterface
+    private interface SpecialReferenceLoggerInterface {
+        void enqueue(
+                        @VMLogParam(name = "classActor") ClassActor classActor,
+                        @VMLogParam(name = "atOrigin") Pointer atOrigin,
+                        @VMLogParam(name = "queueOrigin") Pointer queueOrigin);
+
+        void discover(
+                        @VMLogParam(name = "cell") Pointer cell,
+                        @VMLogParam(name = "classActor") ClassActor classActor,
+                        @VMLogParam(name = "referentOrigin") Pointer referentOrigin);
+
+        void registerFinalizee(
+                        @VMLogParam(name = "origin") Pointer origin,
+                        @VMLogParam(name = "classActor") ClassActor classActor);
+
+        void processDiscoveredInit(
+                        @VMLogParam(name = "nullReferenceQueue") Pointer nullReferenceQueue,
+                        @VMLogParam(name = "enqueReferenceQueue") Pointer enqueReferenceQueue);
+
+        void processDiscovered(
+                        @VMLogParam(name = "classActor") ClassActor classActor,
+                        @VMLogParam(name = "rOrigin") Pointer rOrigin,
+                        @VMLogParam(name = "referentOrigin") Pointer referentOrigin,
+                        @VMLogParam(name = "newReferentOrigin") Pointer newReferentOrigin,
+                        @VMLogParam(name = "queueOrigin") Pointer queueOrigin,
+                        @VMLogParam(name = "stateBools") int stateBools,
+                        @VMLogParam(name = "refOrigin") Pointer refOrigin);
+
+        void remove(
+                        @VMLogParam(name = "classActor") ClassActor classActor,
+                        @VMLogParam(name = "origin") Pointer origin,
+                        @VMLogParam(name = "queueOrigin") Pointer queueOrigin);
+
+        void processInspectable(
+                        @VMLogParam(name = "i") int i,
+                        @VMLogParam(name = "rootPointer") Pointer rootPointer,
+                        @VMLogParam(name = "value") Word value);
+    }
+
+    public static final class SpecialReferenceLogger extends SpecialReferenceLoggerAuto {
+
+        private static final int PRESERVED_BIT = 1;
+        private static final int UPDATE_REACHABLE_REFERENT_BIT = 2;
+        private static final int ADDED_TO_PENDING_BIT = 4;
+
+        SpecialReferenceLogger() {
+            super("ReferenceGC", "handling of soft/weak/final/phantom references.");
+        }
+
+        void logProcessDiscovered(ClassActor classActor, Pointer rOrigin, Pointer referentOrigin,
+                        Pointer newReferentOrigin, Pointer queueOrigin, boolean preserved,
+                        boolean updateReachableReferent, boolean addedToPending, Pointer refOrigin) {
+            // pack booleans to keep arg count <= 8
+            int stateBools = (preserved ? PRESERVED_BIT : 0) | (updateReachableReferent ? UPDATE_REACHABLE_REFERENT_BIT : 0) |
+                         (addedToPending ? ADDED_TO_PENDING_BIT : 0);
+            logProcessDiscovered(classActor, rOrigin, referentOrigin, newReferentOrigin, queueOrigin, stateBools, refOrigin);
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.gcAllLogger);
+        }
+
+        @Override
+        protected void traceRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin) {
+            Log.printCurrentThread(false);
+            Log.print(": Removed ");
+            Log.print(classActor.name.string);
+            Log.print(" at ");
+            Log.print(origin);
+            Log.print(" from queue ");
+            Log.println(queueOrigin);
+        }
+
+        @Override
+        protected void traceEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin) {
+            Log.printCurrentThread(false);
+            Log.print(": Enqueued ");
+            Log.print(classActor.name.string);
+            Log.print(" at ");
+            Log.print(atOrigin);
+            Log.print(" to queue ");
+            Log.println(queueOrigin);
+        }
+
+        @Override
+        protected void traceRegisterFinalizee(Pointer origin, ClassActor classActor) {
+            Log.print("Registered finalizer for ");
+            Log.print(origin);
+            Log.print(" of type ");
+            Log.println(classActor.name.string);
+        }
+
+        @Override
+        protected void traceDiscover(Pointer cell, ClassActor classActor, Pointer referentOrigin) {
+            Log.print("Added ");
+            Log.print(cell);
+            Log.print(' ');
+            Log.print(classActor.name.string);
+            Log.print(" {referent=");
+            Log.print(referentOrigin);
+            Log.println("} to list of discovered references");
+        }
+
+        @Override
+        protected void traceProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue) {
+            Log.print("ReferenceQueue.NULL = ");
+            Log.println(nullReferenceQueue);
+            Log.print("ReferenceQueue.ENQUEUED = ");
+            Log.println(enqueReferenceQueue);
+        }
+
+        @Override
+        protected void traceProcessDiscovered(ClassActor classActor, Pointer rOrigin, Pointer referentOrigin, Pointer newReferentOrigin, Pointer queueOrigin, int stateBools, Pointer refOrigin) {
+            boolean preserved = (stateBools & PRESERVED_BIT) != 0;
+            boolean updateReachableReferent = (stateBools & UPDATE_REACHABLE_REFERENT_BIT) != 0;
+            boolean addedToPending = (stateBools & ADDED_TO_PENDING_BIT) != 0;
+
+            Log.print("Processed ");
+            Log.print(classActor.name.string);
+            Log.print(" at ");
+            Log.print(rOrigin);
+            if (MaxineVM.isDebug()) {
+                Log.print(" [next discovered = ");
+                Log.print(refOrigin);
+                Log.print("]");
+            }
+            Log.print(" whose referent ");
+            Log.print(referentOrigin);
+            if (referentOrigin.isZero()) {
+                Log.print(" was unreachable");
+                Log.print(" [queue: ");
+                Log.print(queueOrigin);
+                Log.print("]");
+            } else if (preserved) {
+                Log.print(" was unreachable but preserved to ");
+                Log.print(newReferentOrigin);
+                Log.print(" [queue: ");
+                Log.print(queueOrigin);
+                Log.print("]");
+            } else if (updateReachableReferent) {
+                Log.print(" moved to ");
+                Log.print(newReferentOrigin);
+            }
+            if (!addedToPending) {
+                Log.print(" {not added to Reference.pending list}");
+            }
+        }
+
+        @Override
+        protected void traceProcessInspectable(int i, Pointer rootPointer, Word value) {
+            Log.print("Processed root table entry ");
+            Log.print(i);
+            Log.print(": set ");
+            Log.print(rootPointer);
+            Log.print(" to ");
+            Log.println(value);
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class SpecialReferenceLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Remove, Enqueue, RegisterFinalizee,
+            Discover, ProcessDiscoveredInit, ProcessDiscovered, ProcessInspectable;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected SpecialReferenceLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin) {
+            log(Operation.Remove.ordinal(), classActorArg(classActor), origin, queueOrigin);
+        }
+        protected abstract void traceRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin);
+
+        @INLINE
+        public final void logEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin) {
+            log(Operation.Enqueue.ordinal(), classActorArg(classActor), atOrigin, queueOrigin);
+        }
+        protected abstract void traceEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin);
+
+        @INLINE
+        public final void logRegisterFinalizee(Pointer origin, ClassActor classActor) {
+            log(Operation.RegisterFinalizee.ordinal(), origin, classActorArg(classActor));
+        }
+        protected abstract void traceRegisterFinalizee(Pointer origin, ClassActor classActor);
+
+        @INLINE
+        public final void logDiscover(Pointer cell, ClassActor classActor, Pointer referentOrigin) {
+            log(Operation.Discover.ordinal(), cell, classActorArg(classActor), referentOrigin);
+        }
+        protected abstract void traceDiscover(Pointer cell, ClassActor classActor, Pointer referentOrigin);
+
+        @INLINE
+        public final void logProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue) {
+            log(Operation.ProcessDiscoveredInit.ordinal(), nullReferenceQueue, enqueReferenceQueue);
+        }
+        protected abstract void traceProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue);
+
+        @INLINE
+        public final void logProcessDiscovered(ClassActor classActor, Pointer rOrigin, Pointer referentOrigin, Pointer newReferentOrigin, Pointer queueOrigin,
+                int stateBools, Pointer refOrigin) {
+            log(Operation.ProcessDiscovered.ordinal(), classActorArg(classActor), rOrigin, referentOrigin, newReferentOrigin, queueOrigin,
+                intArg(stateBools), refOrigin);
+        }
+        protected abstract void traceProcessDiscovered(ClassActor classActor, Pointer rOrigin, Pointer referentOrigin, Pointer newReferentOrigin, Pointer queueOrigin,
+                int stateBools, Pointer refOrigin);
+
+        @INLINE
+        public final void logProcessInspectable(int i, Pointer rootPointer, Word value) {
+            log(Operation.ProcessInspectable.ordinal(), intArg(i), rootPointer, value);
+        }
+        protected abstract void traceProcessInspectable(int i, Pointer rootPointer, Word value);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Remove
+                    traceRemove(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 1: { //Enqueue
+                    traceEnqueue(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 2: { //RegisterFinalizee
+                    traceRegisterFinalizee(toPointer(r, 1), toClassActor(r, 2));
+                    break;
+                }
+                case 3: { //Discover
+                    traceDiscover(toPointer(r, 1), toClassActor(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 4: { //ProcessDiscoveredInit
+                    traceProcessDiscoveredInit(toPointer(r, 1), toPointer(r, 2));
+                    break;
+                }
+                case 5: { //ProcessDiscovered
+                    traceProcessDiscovered(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toPointer(r, 5), toInt(r, 6), toPointer(r, 7));
+                    break;
+                }
+                case 6: { //ProcessInspectable
+                    traceProcessInspectable(toInt(r, 1), toPointer(r, 2), toWord(r, 3));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

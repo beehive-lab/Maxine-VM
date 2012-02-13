@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
 
@@ -46,9 +45,8 @@ public class SequentialHeapRootsScanner {
     final class VmThreadLocalsScanner implements Pointer.Procedure {
 
         public void run(Pointer tla) {
-            if (Heap.traceGCPhases()) {
-                Log.print("Scanning thread local and stack roots for thread ");
-                Log.printThread(VmThread.fromTLA(tla), true);
+            if (Heap.logGCPhases()) {
+                Heap.phaseLogger.logScanningThreadRoots(VmThread.fromTLA(tla));
             }
             VmThreadLocal.scanReferences(tla, pointerIndexVisitor);
         }

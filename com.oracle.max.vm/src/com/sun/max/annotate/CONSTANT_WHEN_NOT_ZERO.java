@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
+package com.sun.max.annotate;
+import java.lang.annotation.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 
 /**
+ * Marker indicating that a field is quasi 'final' for all practical purposes,
+ * AFTER it has been set to a value that is not null, 0, etc.
+ * because it is only initialized once and only inspected after proper initialization.
+ * It is up to the programmer to maintain this invariant!
+ * 
+ * Note that reading the field's value can only occur AFTER bootstrapping.
+ * Therefore, there is no constant folding during bootstrapping.
  */
-@HOSTED_ONLY
-public final class BoxedBiasedLockword64 extends BiasedLockword64 implements Boxed {
-
-    protected long nativeWord;
-
-    public BoxedBiasedLockword64(Word word) {
-        final Boxed unsafeBox = (Boxed) word;
-        nativeWord = unsafeBox.value();
-    }
-
-    public long value() {
-        return nativeWord;
-    }
-
+public @interface CONSTANT_WHEN_NOT_ZERO {
 }

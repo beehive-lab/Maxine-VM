@@ -1005,10 +1005,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return safepoints.indexOf(pos);
     }
 
-    public Word toLog() {
-        return classMethodActor == null ? Word.zero() : MethodID.fromMethodActor(classMethodActor);
-    }
-
     @Override
     public final String toString() {
         return (classMethodActor == null) ? regionName() : classMethodActor.format("%H.%n(%p)");

@@ -36,7 +36,8 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 /**
  * A region-based, mark-sweep heap space, with bump pointer allocation only.
- * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
+ * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refills.
+ * An overflow allocator avoids refilling too frequently.
  */
 public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends HeapRegionSweeper implements HeapSpace, RegionProvider {
     /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the HeapRegionManager's allocator).
@@ -80,11 +81,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      * allocated to this space. During sweeping, the GC redistribute the regions from this to the above three lists depending on their available free space.
      */
     private HeapRegionList sweepList;
-
-    /**
-     * Region currently used for overflow allocation.
-     */
-  //  private int currentOverflowAllocatingRegion;
 
     /**
      * Total number of regions currently allocated to this heap space.
@@ -138,7 +134,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      * @param size size in words
      * @return true if the size is considered large.
      */
-    private boolean isLarge(Size size) {
+    protected boolean isLarge(Size size) {
         return size.greaterEqual(minLargeObjectSize);
     }
 
@@ -151,9 +147,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             Log.print("allocateLarge region #");
             Log.println(regionID);
         }
+        deadSpaceListener.notifyCoaslescing(allocated, requestedSize);
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             if (!spaceLeft.isZero()) {
                 HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
+                deadSpaceListener.notifyCoaslescing(leftover, spaceLeft);
             }
             FULL_REGION.setState(rinfo);
             unavailableRegions.append(regionID);
@@ -166,6 +164,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 Log.println(" bytes");
             }
             HeapFreeChunk.format(leftover, spaceLeft);
+            deadSpaceListener.notifyCoaslescing(leftover, spaceLeft);
             rinfo.setFreeChunks(leftover,  spaceLeft, 1);
             FREE_CHUNKS_REGION.setState(rinfo);
             tlabAllocationRegions.append(regionID);
@@ -253,9 +252,14 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     HeapRegionInfo lastRegionInfo =  HeapRegionInfo.fromRegionID(lastRegion);
                                     Pointer tailEnd = lastRegionInfo.regionStart().plus(regionSizeInBytes).asPointer();
                                     Pointer tail = tailEnd.minus(tailSize);
+                                    // Another ugly trick to share this code between generational and flat heap code. We use the deadSpaceUpdater to set up
+                                    // the FOT if the space is paired with a card table.
+                                    Address largeObjectCell = firstRegionInfo.regionStart();
+                                    deadSpaceListener.notifyCoaslescing(largeObjectCell, size);
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         if (!tailSize.isZero()) {
                                             HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
+                                            deadSpaceListener.notifyCoaslescing(tail, tailSize);
                                         }
                                         allocationRegions.remove(lastRegion);
                                         LARGE_FULL_TAIL.setState(lastRegionInfo);
@@ -264,6 +268,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     } else {
                                         // Format the tail as a free chunk.
                                         HeapFreeChunk.format(tail, tailSize);
+                                        deadSpaceListener.notifyCoaslescing(tail, tailSize);
                                         LARGE_TAIL.setState(lastRegionInfo);
                                         lastRegionInfo.setFreeChunks(tail, tailSize, 1);
                                         if (tailSize.lessThan(minOverflowRefillSize)) {
@@ -272,7 +277,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                         }
                                         allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(size);
                                     }
-                                    return firstRegionInfo.regionStart().asPointer();
+                                    return largeObjectCell.asPointer();
                                 }
                             } else {
                                 n = 0;
@@ -316,17 +321,22 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount) {
-        this(heapAccount, false, null, 0);
+        this(heapAccount, new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller()) {
+            @Override
+            protected void postAllocationDo(Pointer cell, Size size) {
+            }
+        }, false, null, 0);
     }
 
-    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount, boolean zapDeadReferences, DeadSpaceRSetUpdater deadSpaceRSetUpdater, int regionTag) {
+    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount, BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator, boolean zapDeadReferences, DeadSpaceListener deadSpaceRSetUpdater, int regionTag) {
         super(zapDeadReferences, deadSpaceRSetUpdater);
         this.heapAccount = heapAccount;
         this.regionTag = regionTag;
-        overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(this));
+        this.overflowAllocator = overflowAllocator;
         tlabAllocator = new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(this));
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
+        overflowAllocator.refillManager.setRegionProvider(this);
     }
 
     public HeapAccount<T> heapAccount() {
@@ -356,12 +366,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
 
         numRegionsInSpace = initialNumberOfRegions;
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
-        // The following two are connected: if you deny refill after overflow, the only solution left is allocating large.
-        minLargeObjectSize = regionSize;
-        minOverflowRefillSize = regionSize.dividedBy(4);
-        RegionChunkListRefillManager refillManager = tlabAllocator.refillManager();
-        refillManager.setRefillPolicy(minReclaimableSpace);
-        refillManager.setMinChunkSize(minReclaimableSpace);
         overflowAllocator.refillManager().setMinRefillSize(minOverflowRefillSize);
         // Set the iterable to the list of committed regions. This is the default. Any exception to this should
         // reset to the committed region list when done.
@@ -371,6 +375,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         regionsRangeIterable.reset();
         allocationRegionsFreeSpace = regionSize.times(allocationRegions.size());
 
+        // The following two are connected: if you deny refill after overflow, the only solution left is allocating large.
+        minLargeObjectSize = regionSize;
+        minOverflowRefillSize = regionSize.dividedBy(4);
+        RegionChunkListRefillManager refillManager = tlabAllocator.refillManager();
+        refillManager.setRefillPolicy(minReclaimableSpace);
+        refillManager.setMinChunkSize(minReclaimableSpace);
         // Initialize the tlab allocator with a first region.
         tlabAllocator.initialize(regionSize, regionSize);
         overflowAllocator.initialize(Address.zero(), Size.zero());

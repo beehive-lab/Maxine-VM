@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.debug;
+package com.sun.max.vm.heap.debug;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -32,7 +32,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.SpecialReferenceManager.JLRRAlias;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
@@ -43,79 +42,29 @@ import com.sun.max.vm.runtime.*;
  * A collection of routines useful for placing and operating on special
  * tags in an object heap in aid of debugging a garbage collector in
  * a {@linkplain MaxineVM#isDebug() debug} build of the VM.
+ *
+ * These methods are common to all schemes.
+ * TODO: check above assumption.
  */
-public final class DebugHeap {
-
-    private DebugHeap() {
-    }
-
-    private static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
-    private static final long LONG_OBJECT_PAD = 0xeeeeddddddddccccL;
-
-    private static final int INT_OBJECT_TAG = 0xcccceeee;
-    private static final int INT_OBJECT_PAD = 0xeeeecccc;
-
+public class DebugHeap {
     @FOLD
     public static boolean isTagging() {
         return MaxineVM.isDebug() && vmConfig().heapScheme().supportsTagging();
     }
 
-    public static byte[] tagBytes(DataModel dataModel) {
-        return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
-    }
-
+    /**
+     * Increments a given allocation mark to reserve space for a {@linkplain writeCellTag debug tag} if
+     * this is a {@linkplain MaxineVM#isDebug() debug} VM.
+     *
+     * @param mark an address at which a cell will be allocated
+     * @return the given allocation address increment by 1 word if necessary
+     */
     @INLINE
-    private static Word tagWord() {
-        if (Word.width() == 64) {
-            return Address.fromLong(LONG_OBJECT_TAG);
-        }
-        return Address.fromInt(INT_OBJECT_TAG);
-    }
-
-    @INLINE
-    private static Word padWord() {
-        if (Word.width() == 64) {
-            return Address.fromLong(LONG_OBJECT_PAD);
-        }
-        return Address.fromInt(INT_OBJECT_PAD);
-    }
-
-    public static boolean isValidCellTag(Word word) {
-        return word.equals(tagWord());
-    }
-
-    public static void writeCellPadding(Pointer start, int words) {
-        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
-        Memory.setWords(start, words, padWord());
-    }
-
-    public static int writeCellPadding(Pointer start, Address end) {
-        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
-        final int words = end.minus(start).dividedBy(Word.size()).toInt();
-        Memory.setWords(start, words, padWord());
-        return words;
-    }
-
-    @INLINE
-    public static void writeCellTag(Pointer cell) {
+    public static Pointer adjustForDebugTag(Pointer mark) {
         if (isTagging()) {
-            cell.setWord(-1, tagWord());
+            return mark.plusWords(1);
         }
-    }
-
-    public static Pointer skipCellPadding(Pointer cell) {
-        if (MaxineVM.isDebug()) {
-            Pointer cellStart = cell;
-            while (cell.getWord().equals(padWord())) {
-                cell = cell.plusWords(1);
-            }
-            if (!cell.equals(cellStart) && Heap.traceGC()) {
-                Log.print("Skipped ");
-                Log.print(cell.minus(cellStart).toInt());
-                Log.println(" cell padding bytes");
-            }
-        }
-        return cell;
+        return mark;
     }
 
     /**
@@ -143,6 +92,56 @@ public final class DebugHeap {
             return cell.plusWords(1);
         }
         return cell;
+    }
+
+    public static boolean isValidCellTag(Word word) {
+        return word.equals(tagWord());
+    }
+
+    private static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
+    private static final long LONG_OBJECT_PAD = 0xeeeeddddddddccccL;
+
+    private static final int INT_OBJECT_TAG = 0xcccceeee;
+    private static final int INT_OBJECT_PAD = 0xeeeecccc;
+
+    public static byte[] tagBytes(DataModel dataModel) {
+        return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(LONG_OBJECT_TAG) : dataModel.toBytes(INT_OBJECT_TAG);
+    }
+
+    @INLINE
+    private static Word tagWord() {
+        if (Word.width() == 64) {
+            return Address.fromLong(LONG_OBJECT_TAG);
+        }
+        return Address.fromInt(INT_OBJECT_TAG);
+    }
+
+    @INLINE
+    protected
+    static Word padWord() {
+        if (Word.width() == 64) {
+            return Address.fromLong(LONG_OBJECT_PAD);
+        }
+        return Address.fromInt(INT_OBJECT_PAD);
+    }
+
+    public static void writeCellPadding(Pointer start, int words) {
+        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        Memory.setWords(start, words, padWord());
+    }
+
+    public static int writeCellPadding(Pointer start, Address end) {
+        FatalError.check(MaxineVM.isDebug(), "Can only be called in debug VM");
+        final int words = end.minus(start).dividedBy(Word.size()).toInt();
+        Memory.setWords(start, words, padWord());
+        return words;
+    }
+
+    @INLINE
+    public static void writeCellTag(Pointer cell) {
+        if (isTagging()) {
+            cell.setWord(-1, tagWord());
+        }
     }
 
     private static void checkCellTag(Pointer cell, Word tag) {
@@ -220,7 +219,7 @@ public final class DebugHeap {
         FatalError.unexpected("invalid ref");
     }
 
-    private static Hub checkHub(Pointer origin, MemoryRegion space) {
+    public static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Reference hubRef = Layout.readHubReference(origin);
         FatalError.check(!hubRef.isZero(), "null hub");
         final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
@@ -241,107 +240,6 @@ public final class DebugHeap {
         return hub;
     }
 
-    /**
-     * Verifies that a given memory region consists of a contiguous objects is well formed.
-     * The memory region is well formed if:
-     *
-     * a. It starts with an object preceded by a debug tag word.
-     * b. Each object in the region is immediately succeeded by another object with the preceding debug tag.
-     * c. Each reference embedded in an object points to an address in the given memory region, the boot
-     *    {@linkplain Heap#bootHeapRegion heap} or {@linkplain Code#bootCodeRegion code} region.
-     *
-     * This method can only be called in a {@linkplain MaxineVM#isDebug() debug} VM.
-     *
-     * @param description a description of the region being verified
-     * @param start the start of the memory region to verify
-     * @param end the end of memory region
-     * @param space the address space in which valid objects can be found apart from the boot
-     *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
-     * @param verifier a {@link PointerOffsetVisitor} instance that will call
-     *            {@link #verifyRefAtIndex(Address, int, Reference, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
-     *            pointer and offset
-     */
-    public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerIndexVisitor verifier) {
-
-        if (Heap.traceGCPhases()) {
-            Log.print("Verifying region ");
-            Log.print(description);
-            Log.print(" [");
-            Log.print(start);
-            Log.print(" .. ");
-            Log.print(end);
-            Log.println(")");
-        }
-
-        Pointer cell = start.asPointer();
-        while (cell.lessThan(end)) {
-            cell = skipCellPadding(cell);
-            if (cell.greaterEqual(end)) {
-                break;
-            }
-            cell = checkDebugCellTag(start, cell);
-
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = checkHub(origin, space);
-
-            if (hub.isJLRReference) {
-                JLRRAlias refAlias = SpecialReferenceManager.asJLRRAlias(Reference.fromOrigin(origin).toJava());
-                if (refAlias.discovered != null) {
-                    Log.print("Special reference of type ");
-                    Log.print(hub.classActor.name.string);
-                    Log.print(" at ");
-                    Log.print(cell);
-                    Log.print(" has non-null value for 'discovered' field: ");
-                    Log.println(Reference.fromJava(refAlias.discovered).toOrigin());
-                    FatalError.unexpected("invalid special ref");
-                }
-            }
-
-            if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Verifying ");
-                Log.print(hub.classActor.name.string);
-                Log.print(" at ");
-                Log.print(cell);
-                Log.print(" [");
-                Log.print(Layout.size(origin).toInt());
-                Log.println(" bytes]");
-                Log.unlock(lockDisabledSafepoints);
-            }
-
-            final SpecificLayout specificLayout = hub.specificLayout;
-            if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitReferences(hub, origin, verifier);
-                cell = cell.plus(hub.tupleSize);
-            } else {
-                if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitReferences(hub, origin, verifier);
-                } else if (specificLayout.isReferenceArrayLayout()) {
-                    final int length = Layout.readArrayLength(origin);
-                    for (int index = 0; index < length; index++) {
-                        verifyRefAtIndex(origin, index, Layout.getReference(origin, index), space, null);
-                    }
-                }
-                cell = cell.plus(Layout.size(origin));
-            }
-        }
-    }
-
-    /**
-     * Increments a given allocation mark to reserve space for a {@linkplain writeCellTag debug tag} if
-     * this is a {@linkplain MaxineVM#isDebug() debug} VM.
-     *
-     * @param mark an address at which a cell will be allocated
-     * @return the given allocation address increment by 1 word if necessary
-     */
-    @INLINE
-    public static Pointer adjustForDebugTag(Pointer mark) {
-        if (isTagging()) {
-            return mark.plusWords(1);
-        }
-        return mark;
-    }
-
     public static boolean isValidNonnullRef(Reference ref) {
         if (isTagging()) {
             final Pointer origin = ref.toOrigin();
@@ -350,4 +248,5 @@ public final class DebugHeap {
         }
         return true;
     }
+
 }

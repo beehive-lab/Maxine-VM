@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.gcx.rset.ctbl;
 
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.CiAddress.Scale;
@@ -39,6 +41,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -46,7 +49,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Card-table based remembered set.
  */
-public class CardTableRSet implements HeapManagementMemoryRequirement {
+public class CardTableRSet extends DeadSpaceListener implements HeapManagementMemoryRequirement {
 
     /**
      * Log2 of a card size in bytes.
@@ -146,6 +149,11 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         cardTableMemory = new MemoryRegion("Card and FOT tables");
     }
 
+    /**
+     * Initialization of the card-table remembered set according to VM initialization phase.
+     *
+     * @param phase the initializing phase the VM is initializing for
+     */
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
             if (phase == Phase.BOOTSTRAPPING) {
@@ -160,13 +168,35 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
                 literalRecorder.fillLiteralLocations();
             }
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            // We need to initialize the card table to cover the boot region before hitting any write barriers.
+            // If heap size is specified by the end user, it can only be known at PRISTINE time. We need to initialize the card table to a valid memory address
+            // before that as some write barrier may be exercised before the heap is even allocated (e.g., to initialize a  VMOption in the boot region for instance).
+            // To this end, we initialize at PRIMORDIAL time the card table with enough memory to cover the boot region.
+            // This card table is temporary and will be replaced with the table covering the heap once this one is allocated (typically in PRISTINE initialization).
+
+            // FIXME: this for now assume that the heap scheme using the card table has (i) reserved enough virtual space to hold the boot region and the
+            // temporary card table, and (ii), has mapped the boot region at the start of this reserved space.
+            // The following relies on these assumption to use the end of the reserved virtual space for the temporary card table.
             final Size reservedSpace = Size.K.times(VMConfiguration.vmConfig().heapScheme().reservedVirtualSpaceKB());
             final Size bootCardTableSize = memoryRequirement(Heap.bootHeapRegion.size()).roundedUpBy(Platform.platform().pageSize);
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
+            FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
+                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
+                            "card table initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }
 
+    /**
+     * Initialize a card table covering a contiguous range of virtual address. The memory for the card table's data must be provided by the caller as the
+     * caller may want to enforcement some specific order between card table address and heap addresses.
+     * The amount of memory needed by the card table for a specific area to cover is computed using  {@link #memoryRequirement(Size)}.
+     * The amount of space needed
+     * @param coveredAreaStart
+     * @param coveredAreaSize
+     * @param cardTableDataStart
+     * @param cardTableDataSize
+     */
     public void initialize(Address coveredAreaStart, Size coveredAreaSize, Address cardTableDataStart, Size cardTableDataSize) {
         cardTableMemory.setStart(cardTableDataStart);
         cardTableMemory.setSize(cardTableDataSize);
@@ -189,6 +219,11 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         }
     }
 
+    /**
+     * Set the constant values representing the biased address of the card table in XIR snippets.
+     * Must be done once, after the final card table is initialized and before the compiler generates code using these XIR snippets.
+     * Typically, this is called at the end of the PRISTINE initialization of the heap scheme.
+     */
     public void initializeXirStartupConstants() {
         final CiConstant biasedCardTableCiConstant = CiConstant.forLong(cardTable.biasedTableAddress.toLong());
         for (XirBiasedCardTableConstant c : biasedCardTableAddressXirConstants) {
@@ -344,6 +379,11 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
         }
     }
 
+    /**
+     * Returns the amount of memory needed by the card table to cover a contiguous range of memory of the specified size.
+     * @param maxCoveredAreaSize the size of the contiguous range of memory that the card table should cover
+     * @return the number of bytes needed by the card table remembered set
+     */
     @Override
     public Size memoryRequirement(Size maxCoveredAreaSize) {
         return cardTable.tableSize(maxCoveredAreaSize).plus(cfoTable.tableSize(maxCoveredAreaSize));
@@ -376,5 +416,69 @@ public class CardTableRSet implements HeapManagementMemoryRequirement {
 
     public static Address alignDownToCard(Address coveredAddress) {
         return coveredAddress.and(CARD_ADDRESS_MASK);
+    }
+
+    @Override
+    public void notifyCoaslescing(Address deadSpace, Size numDeadBytes) {
+        // Allocation may occur while iterating over dirty cards to evacuate young objects. Such allocations may temporarily invalidate
+        // the FOT for cards overlapping with the allocator, and may break the ability to walk over these cards.
+        // One solution is keep the FOT up to date at every allocation, which may be expensive.
+        // Another solution is to make the last card of free chunk used by allocator independent of most allocation activity.
+        // The last card is the only one that may be dirtied, and therefore the only one that can be walked over during evacuation.
+        //
+        // Let s and e be the start and end of a free chunk.
+        // Let c be the top-most card address such that c >= e, and C be the card starting at c, with FOT(C) denoting the entry
+        // of the FOT for card C.
+        // If e == c,  whatever objects are allocated between s and e, FOT(C) == 0, i.e., allocations never invalidate FOT(C).
+        // Thus C is iterable at all time by a dirty card walker.
+        //
+        // If e > c, then FOT(C) might be invalidated by allocation.
+        // We may avoid this by formatting the space delimited by [c,e] as a dead object embedded in the heap free chunk.
+        // This will allow FOT(C) to be zero, and not be invalidated by any allocation of space before C.
+        // Formatting [c,e] has however several corner cases:
+        // 1. [c,e] may be smaller than the minimum object size, so we can't format it.
+        // Instead, we can format [x,e], such x < e and [x,e] is the min object size. In this case, FOT(C) = x - e.
+        // [x,e] can only be overwritten by the last allocation from the buffer,
+        // so FOT(C) doesn't need to be updated until that last allocation,
+        // which is always special cased (see why below).
+        // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C
+        // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
+        // always set the FOT table for the newly allocated cells. Since this one always
+        if (numDeadBytes.greaterEqual(CARD_SIZE)) {
+            final Pointer end = deadSpace.plus(numDeadBytes).asPointer();
+            final Address lastCardStart = alignDownToCard(end);
+            if (lastCardStart.minus(deadSpace).greaterThan(HeapFreeChunk.heapFreeChunkHeaderSize())) {
+                // Format the end of the heap free chunk as a dead object.
+                Pointer deadObjectAddress = lastCardStart.asPointer();
+                Size deadObjectSize = end.minus(deadObjectAddress).asSize();
+
+                if (deadObjectSize.lessThan(MIN_OBJECT_SIZE)) {
+                    deadObjectSize = MIN_OBJECT_SIZE;
+                    deadObjectAddress = end.minus(deadObjectSize);
+                }
+                if (MaxineVM.isDebug() && CardFirstObjectTable.TraceFOT) {
+                    Log.print("Update Card Table for reclaimed range [");
+                    Log.print(deadSpace); Log.print(", ");
+                    Log.print(end);
+                    Log.print("] / tail dead object at ");
+                    Log.print(deadObjectAddress);
+                    Log.print(" card # ");
+                    Log.println(cardTable.tableEntryIndex(deadObjectAddress));
+                }
+                HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
+                updateForFreeSpace(deadSpace, deadObjectAddress.minus(deadSpace).asSize());
+                updateForFreeSpace(deadObjectAddress, deadObjectSize);
+                return;
+            }
+        }
+        // Otherwise, the free chunk is either smaller than a card, or it is smaller than two cards and its header spawn the two cards.
+        updateForFreeSpace(deadSpace, numDeadBytes);
+    }
+
+    @Override
+    public void notifySplit(Address start, Address end, Size leftSize) {
+        // splitting dead space. No need to update card table: the original coalescing should have cleared all cards
+        // that overlap completely with the dead space. Others should be touched.
+        cfoTable.split(start, start.plus(leftSize), end);
     }
 }

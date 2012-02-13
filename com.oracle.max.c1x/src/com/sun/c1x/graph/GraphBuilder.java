@@ -1005,12 +1005,6 @@ public final class GraphBuilder {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType klass = resolvedTarget.holder();
 
-            if (compilation.runtime.mustInline(resolvedTarget)) {
-                boolean result = tryInline(resolvedTarget, args);
-                assert result : "Inlining must succeed";
-                return;
-            }
-
             // 0. check for trivial cases
             if (resolvedTarget.canBeStaticallyBound() && !isAbstract(resolvedTarget.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
@@ -1048,7 +1042,14 @@ public final class GraphBuilder {
             } else if (C1XOptions.PrintAssumptions) {
                 TTY.println("Could not make leaf type assumption for type " + klass);
             }
+
+            if (compilation.runtime.mustInline(resolvedTarget)) {
+                boolean result = tryInline(resolvedTarget, args);
+                assert result : "Inlining must succeed";
+                return;
+            }
         }
+
         // devirtualization failed, produce an actual invokevirtual
         appendInvoke(opcode, target, args, false, cpi, constantPool);
     }

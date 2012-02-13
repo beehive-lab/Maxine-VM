@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.sun.max.vm.*;
  * This base class defines only the mode fields; the minimum
  * necessary to allow eventual decoding of the lock word.
  */
-public abstract class ModalLockword64 extends Word {
+public class ModalLockword64 extends Word {
 
     /*
      * Field layout:
@@ -54,7 +54,8 @@ public abstract class ModalLockword64 extends Word {
     protected static final int MISC_BIT_INDEX = 1;
 
     @HOSTED_ONLY
-    protected ModalLockword64() {
+    public ModalLockword64(long value) {
+        super(value);
     }
 
     /**
@@ -77,7 +78,7 @@ public abstract class ModalLockword64 extends Word {
      */
     @INTRINSIC(UNSAFE_CAST)
     public static ModalLockword64 from(Word word) {
-        return new BoxedModalLockword64(word);
+        return new ModalLockword64(word.value);
     }
 
     /**

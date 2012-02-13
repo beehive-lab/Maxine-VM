@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,21 @@
 package com.sun.max.annotate;
 import java.lang.annotation.*;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-
 /**
- * Marker indicating that a field is quasi 'final' for all practical purposes,
- * AFTER it has been set to a value that is not null, 0, etc.
- * because it is only initialized once and only inspected after proper initialization.
- * It is up to the programmer to maintain this invariant!
- * 
- * Note that reading the field's value can only occur AFTER bootstrapping.
- * Therefore, there is no constant folding during bootstrapping.
+ * Every thus annotated method is to be inlined unconditionally by the VM's optimizing compiler
+ * and the receiver is never null-checked.
+ *
+ * This annotation exists primarily for annotating methods that <b>must</b> be inlined
+ * for semantic reasons as opposed to those that could be inlined for performance reasons.
+ * Using this annotation for the latter should be done very rarely and only when
+ * profiling highlights a performance bottleneck or such a bottleneck is known <i>a priori</i>.
+ *
+ * Before checking for this annotation at a call site, the compiler should apply
+ * devirtualization first (if applicable). The result of this step is then checked
+ * for the annotation. As such, one should always check to the compiler output to
+ * ensure applying this annotation to a virtual method does what you expect(ed).
  */
-public @interface CONSTANT_WHEN_NOT_ZERO {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface INLINE {
 }

@@ -111,6 +111,11 @@ public class VMLogHosted extends VMLog {
         }
 
         @Override
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+            setVarArgs(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        }
+
+        @Override
         public String toString() {
             if (VMLog.Record.isFree(header)) {
                 return "free";
@@ -140,4 +145,14 @@ public class VMLogHosted extends VMLog {
         return r;
     }
 
+
+    @Override
+    public boolean setThreadState(boolean value) {
+        return true;
+    }
+
+    @Override
+    public boolean threadIsEnabled() {
+        return true;
+    }
 }

@@ -140,10 +140,10 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
     public void set(Address cell, Address cellEnd) {
         // ADD CHECK TO VERIFY LIMIT ON SIZE.
         int firstCard = tableEntryIndex(cell);
-        int lastCard = tableEntryIndex(cellEnd);
         if (atBoundary(cell)) {
             set(firstCard, (byte) 0);
         }
+        int lastCard = tableEntryIndex(cellEnd.minus(Word.size()));
         // This is the number of cards, excluding the cards where the cell start.
         final int numCards = lastCard  - firstCard;
         if (numCards == 0) {
@@ -196,7 +196,8 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
     public boolean isFirstCellOfCard(Address cell) {
         int card = tableEntryIndex(cell);
         if (alignDownToCard(cell) == cell) {
-            return get(card) == 0;
+            FatalError.check(get(card) == 0, "FOT entry must be null when first cell of card starts at card boundary");
+            return true;
         }
         byte offsetToCell = (byte) -alignUpToCard(cell).minus(cell).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         return get(card + 1) == offsetToCell;
@@ -211,6 +212,10 @@ public final class CardFirstObjectTable extends Log2RegionToByteMapTable {
      * @param end end of the original cell
      */
     public void split(Address leftCell, Address rightCell, Address end) {
+        if (leftCell.greaterThan(alignDownToCard(end))) {
+            // No update needed. Both side of the split are on the same card.
+            return;
+        }
         if (MaxineVM.isDebug()) {
             FatalError.check(isFirstCellOfCard(leftCell), "Cell isn't current first cell of card");
         }

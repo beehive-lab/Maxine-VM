@@ -25,6 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 import static com.sun.max.vm.heap.gcx.gen.mse.GenMSEHeapScheme.GenMSEHeapRegionTag.*;
+
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
@@ -98,8 +99,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      * Card-table based remembered set for the nursery.
      */
     private final CardTableRSet cardTableRSet;
-
-
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
@@ -128,10 +127,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         cardTableRSet = new CardTableRSet();
         youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
 
-        // TODO: replace this with the dead space updater of the Evacuator, who knows how to format dead space to enable dirty card walking while
-        // enabling allocation of over reclaimed dead space.
-        final DeadSpaceCardTableUpdater deadSpaceRSetUpdater = new DeadSpaceCardTableUpdater(cardTableRSet);
-        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, true, deadSpaceRSetUpdater, OLD.tag());
+        final BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller()) {
+            final CardFirstObjectTable cfoTable = cardTableRSet.cfoTable;
+            @Override
+            protected void postAllocationDo(Pointer cell, Size size) {
+                cfoTable.split(cell, cell.plus(size), hardLimit());
+            }
+        };
+        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, overflowAllocator, true, cardTableRSet, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -288,7 +291,10 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             oldSpace.visit(noYoungReferencesVerifier);
         }
 
-        private void doFullCollection() {
+        /**
+         * Perform old generation collection. This is done after the young generation has been fully evacuated.
+         */
+        private void doOldGenCollection() {
             youngSpaceEvacuator.doBeforeGC();
             youngSpace.doBeforeGC();
             oldSpace.doBeforeGC();
@@ -317,14 +323,27 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // The full GC is thereafter just a old gen GC with an empty young gen.
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
             vmConfig().monitorScheme().beforeGarbageCollection();
+            if (Heap.verbose()) {
+                Log.println("--Begin nursery evacuation");
+            }
             youngSpaceEvacuator.evacuate();
+            if (Heap.verbose()) {
+                Log.println("--End nursery evacuation");
+            }
             if (VerifyAfterGC) {
                 verifyAfterEvacuation();
             }
             Size worstCaseEvac = youngSpace.totalSpace();
             Size freeSpace = oldSpace.freeSpace();
             if (worstCaseEvac.greaterThan(freeSpace)) {
-                doFullCollection();
+                if (Heap.verbose()) {
+                    Log.println("--Begin old geneneration collection");
+                }
+                doOldGenCollection();
+                if (Heap.verbose()) {
+                    Log.println("--End   old geneneration collection");
+                }
+
                 if (VerifyAfterGC) {
                     verifyAfterEvacuation();
                 }
@@ -358,20 +377,20 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         return oldSpace.usedSpace().plus(youngSpace.usedSpace());
     }
 
-    @INLINE(override = true)
+    @INLINE
     @FOLD
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public void postWriteBarrier(Reference ref, Offset offset, Reference value) {
         cardTableRSet.record(ref, offset);
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
         cardTableRSet.record(ref, displacement, index);
@@ -457,7 +476,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     }
 
     @HOSTED_ONLY
-    @Override
     public XirWriteBarrierGenerator barrierGenerator(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         if (writeBarrierSpec.equals(TUPLE_POST_BARRIER)) {
             return new XirWriteBarrierGenerator() {

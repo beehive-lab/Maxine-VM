@@ -57,6 +57,16 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
     }
 
     @Override
+    @NEVER_INLINE
+    public void threadStart() {
+        // we want to allocate the NativeRecord early;
+        // crucial for the VMOperation thread, otherwise GC logging will fail
+        if (!MaxineVM.isPrimordialOrPristine()) {
+            getNativeRecord();
+        }
+    }
+
+    @Override
     @NO_SAFEPOINT_POLLS("atomic")
     protected Record getRecord(int argCount) {
         Pointer holeAddress = Pointer.zero();
@@ -123,6 +133,5 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
         // assume average arg size is midpoint
         return super.getLogSize() / 2;
     }
-
 
 }

@@ -99,11 +99,11 @@ public abstract class HeapRegionSweeper extends Sweeper {
     /**
      * Action to performed on a remembered set when dead space is identified.
      */
-    final DeadSpaceRSetUpdater deadSpaceRSetUpdater;
+    final DeadSpaceListener deadSpaceListener;
 
-    protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceRSetUpdater deadSpaceRSetUpdater) {
+    protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceListener deadSpaceRSetUpdater) {
         this.zapDeadReferences = zapDeadReferences;
-        this.deadSpaceRSetUpdater = deadSpaceRSetUpdater == null ? DeadSpaceRSetUpdater.nullDeadSpaceRSetUpdater() : deadSpaceRSetUpdater;
+        this.deadSpaceListener = deadSpaceRSetUpdater == null ? DeadSpaceListener.nullDeadSpaceRSetUpdater() : deadSpaceRSetUpdater;
     }
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
@@ -284,7 +284,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
             } else if (zapDeadReferences) {
                 HeapSchemeAdaptor.fillWithDeadObject(deadSpace, liveObject);
             }
-            deadSpaceRSetUpdater.updateRSet(deadSpace, numDeadBytes);
+            deadSpaceListener.notifyCoaslescing(deadSpace, numDeadBytes);
         }
         final Size numLiveBytes = Layout.size(Layout.cellToOrigin(liveObject));
         csrLastLiveAddress = liveObject.plus(numLiveBytes);

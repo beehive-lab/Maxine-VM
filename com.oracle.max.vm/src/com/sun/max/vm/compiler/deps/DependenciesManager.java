@@ -31,16 +31,14 @@ import java.util.concurrent.locks.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -67,148 +65,6 @@ public final class DependenciesManager {
 
     private static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
-
-    /**
-     * Logging and tracing of Dependency operations.
-     */
-    public static class Logger extends VMLogger {
-        public static final Word NULL_TM = Address.fromInt(0xFFFFFFFF);
-        public static enum Operation {
-            Add,
-            Remove,
-            Register,
-            InvalidateDeps,
-            Invalidated,
-            InvalidateUCT,
-            InvalidateUCM
-        }
-
-        Logger() {
-            super("Deps", Operation.values().length, "dependencies");
-        }
-
-        /*
-         * Type-friendly logging methods.
-         * Since we are currently limited to logging Word values, we use ClassIDs for ClassActors,
-         * MethodIDs for MethodActors and the ClassID associated with a TargetMethod (or NULL_TM) if none.
-         * These allow the Inspector and "trace" to recover the values.
-         * If logging reference types becomes available, all changes will be localized to here.
-         */
-
-        void logAddRemove(Operation operation, TargetMethod targetMethod, int id, ClassActor type) {
-            log(operation.ordinal(), targetMethod == null ? NULL_TM : targetMethod.toLog(), VMLogger.intArg(id), VMLogger.intArg(type.id));
-        }
-
-        void logRegister(TargetMethod targetMethod, int id) {
-            log(Operation.Register.ordinal(), targetMethod == null ? NULL_TM : targetMethod.toLog(), Address.fromInt(id));
-            // Currently do not log "packed" as logging arrays is problematic. "packed" is not needed for tracing,
-            // as it can be accessed via "id".
-        }
-
-        void logInvalidateDeps(ClassActor type) {
-            log(Operation.InvalidateDeps.ordinal(), NULL_TM, VMLogger.intArg(type.id));
-        }
-
-        void logInvalidated(TargetMethod targetMethod, int id) {
-            log(Operation.Invalidated.ordinal(), targetMethod.toLog(), VMLogger.intArg(id));
-        }
-
-        void logInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
-            log(Operation.InvalidateUCT.ordinal(), targetMethod.toLog(),
-                            VMLogger.intArg(context.id), VMLogger.intArg(subtype.id));
-        }
-
-        void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
-            log(Operation.InvalidateUCM.ordinal(), targetMethod.toLog(),
-                            VMLogger.intArg(context.id), MethodID.fromMethodActor(method), MethodID.fromMethodActor(impl));
-        }
-
-        @Override
-        public String operationName(int op) {
-            return Operation.values()[op].name();
-        }
-
-        @Override
-        public void trace(Record r) {
-            int opCode = r.getOperation();
-            Word tmArg = r.getArg(1);
-            Log.print("DEPS: ");
-            switch (Operation.values()[opCode]) {
-                case Add:
-                case Remove: {
-                    int id = r.getArg(2).asAddress().toInt();
-                    Dependencies deps = Dependencies.fromId(id);
-                    Word typeArg = r.getArg(3);
-                    String verb = opCode == Operation.Add.ordinal() ? "Added" : "Removed";
-                    Log.println(verb + " dependency from " + deps + " to " + toClassActor(typeArg));
-                    break;
-                }
-
-                case Register: {
-                    int id = r.getArg(2).asAddress().toInt();
-                    Dependencies deps = Dependencies.fromId(id);
-                    Log.println("Register " + deps.toString(true));
-                    break;
-                }
-
-                case InvalidateDeps: {
-                    Log.println("adding " + toClassActor(r.getArg(2)) + " to the hierarchy invalidates:");
-                    break;
-                }
-
-                case Invalidated: {
-                    int id = r.getArg(2).asAddress().toInt();
-                    Dependencies deps = Dependencies.fromId(id);
-                    Log.println("   " + deps);
-                    break;
-                }
-
-                case InvalidateUCT: {
-                    Word contextArg = r.getArg(2);
-                    Word subTypeArg = r.getArg(3);
-                    StringBuilder sb = invalidateSB(tmArg, "UCT[").append(toClassActor(contextArg));
-                    if (!contextArg.equals(subTypeArg)) {
-                        sb.append(",").append(toClassActor(subTypeArg));
-                    }
-                    sb.append(']');
-                    Log.println(sb.toString());
-                    break;
-                }
-
-                case InvalidateUCM: {
-                    Word methodArg = r.getArg(3);
-                    Word implArg = r.getArg(4);
-                    StringBuilder sb = invalidateSB(tmArg, "UCM[").append(toMethodActor(methodArg));
-                    if (!methodArg.equals(implArg)) {
-                        sb.append(",").append(toMethodActor(methodArg));
-                    }
-                    sb.append("]");
-                    Log.println(sb.toString());
-                    break;
-                }
-
-            }
-        }
-
-        private static StringBuilder invalidateSB(Word tm, String iKind) {
-            StringBuilder sb = new StringBuilder("invalidated ");
-            sb.append(tmString(tm));
-            sb.append(", invalid dep: ");
-            sb.append(iKind);
-            return sb;
-        }
-
-        private static String tmString(Word tm) {
-            return tm.equals(NULL_TM) ? "null" : toMethodActor(tm).format("%H.%n(%p)");
-        }
-
-        private static String tmString(Word tm, int id) {
-            return tm.equals(NULL_TM) ? String.valueOf(id) : id + "#" + toMethodActor(tm).format("%H.%n(%p)");
-        }
-
-    }
-
-    public static final Logger logger = new Logger();
 
     /**
      * Read-write lock used to synchronize modifications to the class hierarchy with validation of dependencies.
@@ -296,8 +152,8 @@ public final class DependenciesManager {
             // Adding a new concrete sub-type in this case always invalidate this assumption no matter what.
             assert this.context == context && subtype != concreteSubtype : "can never happen";
             valid = false;
-            if (logger.enabled()) {
-                logger.logInvalidateUCT(targetMethod, context, subtype);
+            if (dependenciesLogger.enabled()) {
+                dependenciesLogger.logInvalidateUCT(targetMethod, context, subtype);
             }
 
             return false;
@@ -308,8 +164,8 @@ public final class DependenciesManager {
             RiMethod newImpl = concreteSubtype.resolveMethodImpl(method);
             if (newImpl != impl) {
                 valid = false;
-                if (logger.enabled()) {
-                    logger.logInvalidateUCM(targetMethod, context, method, impl);
+                if (dependenciesLogger.enabled()) {
+                    dependenciesLogger.logInvalidateUCM(targetMethod, context, method, impl);
                 }
             }
             return valid;
@@ -338,7 +194,7 @@ public final class DependenciesManager {
         } finally {
             classHierarchyLock.readLock().unlock();
         }
-        if (logger.enabled()) {
+        if (dependenciesLogger.enabled()) {
             deps.logRegister();
         }
     }
@@ -410,6 +266,9 @@ public final class DependenciesManager {
             // This isn't true anymore, so update the mark.
             ancestor.uniqueConcreteType = HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
             ancestor = ancestor.superClassActor;
+            if (ancestor == null) {
+                break;
+            }
             assert ancestor.uniqueConcreteType != NO_CONCRETE_SUBTYPE_MARK : "must have at least one concrete sub-type";
         }
         // We reached an ancestor with multiple concrete sub types. From here on, all ancestors can only have
@@ -636,8 +495,8 @@ public final class DependenciesManager {
         if (invalidated == null) {
             return;
         }
-        if (logger.enabled()) {
-            logger.logInvalidateDeps(classActor);
+        if (dependenciesLogger.enabled()) {
+            dependenciesLogger.logInvalidateDeps(classActor);
             for (Dependencies deps : invalidated) {
                 deps.logInvalidated();
             }
@@ -741,4 +600,214 @@ public final class DependenciesManager {
             classHierarchyLock.readLock().unlock();
         }
     }
+
+    // Logging
+
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private interface DependenciesLoggerInterface {
+        void add(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "id") int id,
+                        @VMLogParam(name = "type") ClassActor type);
+
+        void remove(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "id") int id,
+                        @VMLogParam(name = "type") ClassActor type);
+
+        void register(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "id") int id);
+
+        void invalidateDeps(
+                        @VMLogParam(name = "type") ClassActor type);
+
+        void invalidated(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "id") int id);
+
+        void invalidateUCT(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "context") ClassActor context,
+                        @VMLogParam(name = "subtype") ClassActor subtype);
+
+        void invalidateUCM(
+                        @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                        @VMLogParam(name = "context") ClassActor context,
+                        @VMLogParam(name = "method") MethodActor method,
+                        @VMLogParam(name = "impl") MethodActor impl);
+    }
+
+
+    public static final DependenciesLogger dependenciesLogger = new DependenciesLogger();
+
+
+    public static final class DependenciesLogger extends DependenciesLoggerAuto {
+        DependenciesLogger() {
+            super("Deps", "compilation dependencies.");
+        }
+
+        @Override
+        protected void traceAdd(TargetMethod targetMethod, int id, ClassActor type) {
+            traceAddRemove(id, type, "Added");
+        }
+
+        @Override
+        protected void traceRegister(TargetMethod targetMethod, int id) {
+            Dependencies deps = Dependencies.fromId(id);
+            printPrefix();
+            Log.println("Register " + deps.toString(true));
+        }
+
+        @Override
+        protected void traceRemove(TargetMethod targetMethod, int id, ClassActor type) {
+            traceAddRemove(id, type, "Removed");
+        }
+
+        @Override
+        protected void traceInvalidated(TargetMethod targetMethod, int id) {
+            printPrefix();
+            Dependencies deps = Dependencies.fromId(id);
+            Log.println("   " + deps);
+        }
+
+        @Override
+        protected void traceInvalidateDeps(ClassActor type) {
+            printPrefix();
+            Log.println("adding " + type + " to the hierarchy invalidates:");
+        }
+
+        @Override
+        protected void traceInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
+            StringBuilder sb = invalidateSB(targetMethod, "UCT[").append(context);
+            if (context != subtype) {
+                sb.append(",").append(subtype);
+            }
+            sb.append(']');
+            Log.println(sb.toString());
+        }
+
+        @Override
+        protected void traceInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
+            StringBuilder sb = invalidateSB(targetMethod, "UCM[").append(method);
+            if (method != impl) {
+                sb.append(",").append(impl);
+            }
+            sb.append("]");
+            Log.println(sb.toString());
+        }
+
+        private static void traceAddRemove(int id, ClassActor type, String kind) {
+            printPrefix();
+            Dependencies deps = Dependencies.fromId(id);
+            Log.println(kind + " dependency from " + deps + " to " + type);
+        }
+
+        private static StringBuilder invalidateSB(TargetMethod targetMethod, String iKind) {
+            return new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: ").append(iKind);
+        }
+
+        private static void printPrefix() {
+            Log.print("DEPS: ");
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class DependenciesLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Add, Register, Remove,
+            Invalidated, InvalidateDeps, InvalidateUCT, InvalidateUCM;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        protected DependenciesLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logAdd(TargetMethod targetMethod, int id, ClassActor type) {
+            log(Operation.Add.ordinal(), objectArg(targetMethod), intArg(id), classActorArg(type));
+        }
+        protected abstract void traceAdd(TargetMethod targetMethod, int id, ClassActor type);
+
+        @INLINE
+        public final void logRegister(TargetMethod targetMethod, int id) {
+            log(Operation.Register.ordinal(), objectArg(targetMethod), intArg(id));
+        }
+        protected abstract void traceRegister(TargetMethod targetMethod, int id);
+
+        @INLINE
+        public final void logRemove(TargetMethod targetMethod, int id, ClassActor type) {
+            log(Operation.Remove.ordinal(), objectArg(targetMethod), intArg(id), classActorArg(type));
+        }
+        protected abstract void traceRemove(TargetMethod targetMethod, int id, ClassActor type);
+
+        @INLINE
+        public final void logInvalidated(TargetMethod targetMethod, int id) {
+            log(Operation.Invalidated.ordinal(), objectArg(targetMethod), intArg(id));
+        }
+        protected abstract void traceInvalidated(TargetMethod targetMethod, int id);
+
+        @INLINE
+        public final void logInvalidateDeps(ClassActor type) {
+            log(Operation.InvalidateDeps.ordinal(), classActorArg(type));
+        }
+        protected abstract void traceInvalidateDeps(ClassActor type);
+
+        @INLINE
+        public final void logInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
+            log(Operation.InvalidateUCT.ordinal(), objectArg(targetMethod), classActorArg(context), classActorArg(subtype));
+        }
+        protected abstract void traceInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype);
+
+        @INLINE
+        public final void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
+            log(Operation.InvalidateUCM.ordinal(), objectArg(targetMethod), classActorArg(context), objectArg(method), objectArg(impl));
+        }
+        protected abstract void traceInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Add
+                    traceAdd(toTargetMethod(r, 1), toInt(r, 2), toClassActor(r, 3));
+                    break;
+                }
+                case 1: { //Register
+                    traceRegister(toTargetMethod(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 2: { //Remove
+                    traceRemove(toTargetMethod(r, 1), toInt(r, 2), toClassActor(r, 3));
+                    break;
+                }
+                case 3: { //Invalidated
+                    traceInvalidated(toTargetMethod(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 4: { //InvalidateDeps
+                    traceInvalidateDeps(toClassActor(r, 1));
+                    break;
+                }
+                case 5: { //InvalidateUCT
+                    traceInvalidateUCT(toTargetMethod(r, 1), toClassActor(r, 2), toClassActor(r, 3));
+                    break;
+                }
+                case 6: { //InvalidateUCM
+                    traceInvalidateUCM(toTargetMethod(r, 1), toClassActor(r, 2), toMethodActor(r, 3), toMethodActor(r, 4));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
 }

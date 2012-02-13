@@ -82,7 +82,7 @@ public class JVMTIFunctions  {
     }
 
     private static class JVMTIFunctionsLogger extends VMLogger {
-        private static LogOperations[] logOperations = LogOperations.values();
+        private static final LogOperations[] logOperations = LogOperations.values();
 
         private JVMTIFunctionsLogger() {
             super("JVMTICalls", logOperations.length, null);

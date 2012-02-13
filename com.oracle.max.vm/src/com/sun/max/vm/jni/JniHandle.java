@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
  *
  * @see JniHandles
  */
-public abstract class JniHandle extends Word {
+public final class JniHandle extends Word {
 
     @INLINE
     public static JniHandle zero() {
@@ -47,7 +47,8 @@ public abstract class JniHandle extends Word {
     }
 
     @HOSTED_ONLY
-    protected JniHandle() {
+    public JniHandle(long value) {
+        super(value);
     }
 
     /**
@@ -55,17 +56,17 @@ public abstract class JniHandle extends Word {
      * if this handle {@link #isZero() is zero}.
      */
     @INLINE
-    public final Object unhand() {
+    public Object unhand() {
         return JniHandles.get(this);
     }
 
     @INLINE
-    public final <T> T unhand(Class<T> type) {
+    public <T> T unhand(Class<T> type) {
         return type.cast(JniHandles.get(this));
     }
 
     @INLINE
-    public final Address getAddress() {
+    public Address getAddress() {
         return JniHandles.getAddress(this);
     }
 }

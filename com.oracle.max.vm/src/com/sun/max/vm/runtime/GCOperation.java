@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
@@ -140,12 +139,8 @@ public abstract class GCOperation extends VmOperation {
 
     @Override
     protected void doItEpilogue(boolean nested) {
-        if (Heap.traceGCTime()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Stack reference map preparation time: ");
-            Log.print(stackReferenceMapPreparationTime);
-            Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-            Log.unlock(lockDisabledSafepoints);
+        if (Heap.logGCTime()) {
+            Heap.timeLogger.logStackReferenceMapPreparationTime(stackReferenceMapPreparationTime);
             stackReferenceMapPreparationTime = 0;
         }
 
@@ -210,8 +205,8 @@ public abstract class GCOperation extends VmOperation {
             Log.unlock(lockDisabledSafepoints);
         }
         invocationCount++;
-        if (Heap.TraceGCSuppressionCount > 0) {
-            Heap.TraceGCSuppressionCount--;
+        if (Heap.LogGCSuppressionCount > 0) {
+            Heap.LogGCSuppressionCount--;
         }
     }
 

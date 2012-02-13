@@ -22,14 +22,10 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
-import java.awt.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.*;
 
 /**
@@ -44,18 +40,6 @@ public abstract class VMLogArgRendererFactory {
     private static Map<String, VMLogArgRenderer> renderers = new HashMap<String, VMLogArgRenderer>();
 
     static DefaultVMLogArgRenderer defaultVMLogArgRenderer;
-
-    static class DefaultVMLogArgRenderer extends VMLogArgRenderer {
-
-        public DefaultVMLogArgRenderer(VMLogView vmLogView) {
-            super(vmLogView);
-        }
-
-        @Override
-        protected Component getRenderer(int op, int argNum, long argValue) {
-            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
-        }
-    }
 
     static VMLogArgRenderer getArgRenderer(String loggerName, VMLogView vmLogView) {
         setDefaultVMLogArgRenderer(vmLogView);

@@ -35,7 +35,7 @@ import com.sun.max.vm.jni.JniFunctions.LogOperations;
  * A native function represents a {@linkplain #makeSymbol() symbol} associated with a {@linkplain #classMethodActor()
  * method} that can be {@linkplain #link() linked} at runtime to produce a native machine code pointer.
  */
-public class NativeFunction {
+public final class NativeFunction {
     private final ClassMethodActor classMethodActor;
     private String symbol;
 

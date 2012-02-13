@@ -225,7 +225,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         return markSweepSpace.usedSpace();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void writeBarrier(Reference from, Reference to) {
     }
 
@@ -278,8 +278,8 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
         @Override
         protected void collect(int invocationCount) {
-            final boolean traceGCPhases = Heap.traceGCPhases();
-            traceGCTimes = Heap.traceGCTime();
+            final boolean traceGCPhases = Heap.logGCPhases();
+            traceGCTimes = Heap.logGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
@@ -483,5 +483,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     public HeapAccount<MSEHeapScheme> heapAccount() {
         return markSweepSpace.heapAccount();
     }
+
 }
 

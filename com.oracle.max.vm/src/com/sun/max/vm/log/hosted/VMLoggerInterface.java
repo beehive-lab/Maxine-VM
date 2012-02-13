@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.monitor.modal.modehandlers.inflated;
+package com.sun.max.vm.log.hosted;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import java.lang.annotation.*;
+
+import com.sun.max.vm.log.*;
+
 
 /**
+ * Identifies an interface as a {@link VMLogger} for auto-generation.
  */
-@HOSTED_ONLY
-public final class BoxedInflatedMonitorLockword64 extends InflatedMonitorLockword64 implements Boxed {
-
-    protected long nativeWord;
-
-    public BoxedInflatedMonitorLockword64(Word word) {
-        final Boxed unsafeBox = (Boxed) word;
-        nativeWord = unsafeBox.value();
-    }
-
-    public long value() {
-        return nativeWord;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface VMLoggerInterface {
+    /**
+     * Identifies the parent class for the auto-generated implementation.
+     * @return
+     */
+    Class parent() default VMLogger.class;
+    boolean defaultConstructor() default false;
 
 }

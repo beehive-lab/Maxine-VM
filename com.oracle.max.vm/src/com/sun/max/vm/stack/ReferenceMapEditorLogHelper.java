@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.stack;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.bytecode.refmaps.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
+ * Exists to decouple the tracing of compiler specific stack root scanning from{@link StackReferenceMapPreparer}.
  */
-@HOSTED_ONLY
-public final class BoxedFieldID extends FieldID implements Boxed {
+public interface ReferenceMapEditorLogHelper {
+    /**
+     * {@link TargetMethod}.
+     * @return
+     */
+    TargetMethod targetMethod();
 
-    protected long nativeWord;
+    String compilerName();
 
-    public BoxedFieldID(Word word) {
-        final Boxed unsafeBox = (Boxed) word;
-        nativeWord = unsafeBox.value();
-    }
-
-    public long value() {
-        return nativeWord;
-    }
+    /**
+     * Trace the data associated with the bytecoide at {@code bci} and {@code safepointIndex}.
+     * @param interpreter
+     * @param bci
+     * @param safepointIndex
+     */
+    void traceSafepoint(ReferenceMapInterpreter interpreter, int bci, int safepointIndex);
 
 }

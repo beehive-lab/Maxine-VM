@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.max.annotate;
+import java.lang.annotation.*;
+
 /**
+ * Marker indicating that a field is immutable with respect to all reads of its value.
+ * That is, it is never updated after the first time it is read.
+ *
+ * <b>It is up to the programmer to maintain this invariant!</b>
+ *
+ * The value may be the dewfault value of the field's type (e.g. {@code null}, 0, etc).
  */
-package com.sun.max.vm.debug;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface CONSTANT {
+}

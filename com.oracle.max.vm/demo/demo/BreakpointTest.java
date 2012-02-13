@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,38 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package demo;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 
 /**
- * Boxed version of RegionRange.
+ * Small program used to debug Maxine's breakpoint implementation.
  */
-@HOSTED_ONLY
-public final class BoxedRegionRange extends RegionRange implements Boxed {
-    private long nativeWord;
+public class BreakpointTest {
 
-    private BoxedRegionRange(long value) {
-        nativeWord = value;
+    static {
+        ClassMethodActor cma = ClassMethodActor.fromJava(Classes.findDeclaredMethod(BreakpointTest.class, "incTotal"));
+        MaxineVM.vm().compilationBroker.compile(cma, Nature.OPT);
     }
 
-    @Override
-    public long value() {
-        return nativeWord;
+    public static void main(String[] args) {
+
+        spinUntilDone();
+
+        System.out.println(total);
     }
 
-    public static BoxedRegionRange from(int regionID, int numRegions) {
-        long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
-        return new BoxedRegionRange(encodedRange);
+    static boolean done;
+    static int total;
+
+    public static void spinUntilDone() {
+        while (!done) {
+            incTotal();
+        }
     }
 
-    protected static BoxedRegionRange fromLong(long value) {
-        return new BoxedRegionRange(value);
+    public static void incTotal() {
+        total++;
     }
 
-    protected static BoxedRegionRange fromInt(int value) {
-        return new BoxedRegionRange(value);
-    }
 }

@@ -80,8 +80,11 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
         return MaxineVM.isDebug() && traceRefill;
     }
 
-    RegionOverflowAllocatorRefiller(RegionProvider regionProvider) {
+    public RegionOverflowAllocatorRefiller() {
         this.allocatingRegion = INVALID_REGION_ID;
+    }
+
+    public void setRegionProvider(RegionProvider regionProvider) {
         this.regionProvider = regionProvider;
     }
 

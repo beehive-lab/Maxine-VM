@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
+package com.sun.max.tele.object;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.tele.*;
+import com.sun.max.vm.reference.*;
 
 /**
+ * Exists solely to truncate the deep copy.
  */
-@HOSTED_ONLY
-public final class BoxedLightweightLockword64 extends LightweightLockword64 implements Boxed {
-
-    protected long nativeWord;
-
-    public BoxedLightweightLockword64(Word word) {
-        final Boxed unsafeBox = (Boxed) word;
-        nativeWord = unsafeBox.value();
+public class TeleVMLog extends TeleTupleObject {
+    protected TeleVMLog(TeleVM vm, Reference vmLogReference) {
+        super(vm, vmLogReference);
     }
 
-    public long value() {
-        return nativeWord;
+    @Override
+    public Object createDeepCopy(DeepCopier context) {
+        return null;
     }
-
 }

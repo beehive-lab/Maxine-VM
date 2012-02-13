@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+package com.sun.max.annotate;
+import java.lang.annotation.*;
 
 /**
+ * Every thus annotated method must must have no arguments (apart from a receiver for a non-static method).
+ * It must also be purely functional (without side-effects)
+ * and idempotent (not influenced by any changing state).
+ *
+ * If the method is static, it is to be meta-evaluated unconditionally by the compiler.
+ * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
  */
-@HOSTED_ONLY
-public final class BoxedMethodID extends MethodID implements Boxed {
-
-    protected long nativeWord;
-
-    public BoxedMethodID(Word word) {
-        final Boxed unsafeBox = (Boxed) word;
-        nativeWord = unsafeBox.value();
-    }
-
-    public long value() {
-        return nativeWord;
-    }
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface FOLD {
 }

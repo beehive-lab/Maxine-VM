@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.vm.*;
  *
  * @see ModalLockword64
  */
-public abstract class HashableLockword64 extends ModalLockword64 {
+public class HashableLockword64 extends ModalLockword64 {
 
     /*
      * Field layout:
@@ -49,7 +49,8 @@ public abstract class HashableLockword64 extends ModalLockword64 {
     protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
     @HOSTED_ONLY
-    protected HashableLockword64() {
+    public HashableLockword64(long value) {
+        super(value);
     }
 
     /**
@@ -74,7 +75,7 @@ public abstract class HashableLockword64 extends ModalLockword64 {
      */
     @INTRINSIC(UNSAFE_CAST)
     public static HashableLockword64 from(Word word) {
-        return new BoxedHashableLockword64(word);
+        return new HashableLockword64(word.value);
     }
 
     /**

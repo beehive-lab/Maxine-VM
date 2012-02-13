@@ -283,7 +283,7 @@ public abstract class TeleVM implements MaxVM {
          * options based on mode.
          */
         public Options() {
-            heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
+            heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
         }
     }

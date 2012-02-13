@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,7 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 
@@ -60,13 +59,8 @@ public class BootHeapRegion extends LinearAllocatorRegion {
 
         final Pointer refMap = referenceMap;
         final int referenceMapWords = UnsignedMath.divide(referenceMapBytes.length, Word.size());
-        if (Heap.traceRootScanning()) {
-            Log.print("Scanning boot heap: start=");
-            Log.print(start());
-            Log.print(", end=");
-            Log.print(end());
-            Log.print(", mutable references end=");
-            Log.println(start().plus(referenceMapWords * Word.size()));
+        if (Heap.logRootScanning()) {
+            Heap.rootScanLogger.logScanningBootHeap(this, start().plus(referenceMapWords * Word.size()));
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
         } else {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);

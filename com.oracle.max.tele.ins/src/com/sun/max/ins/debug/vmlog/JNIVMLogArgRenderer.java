@@ -27,6 +27,8 @@ import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
 import java.awt.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -66,13 +68,13 @@ public class JNIVMLogArgRenderer extends VMLogArgRenderer {
                 op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
                 op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
                 op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
-                return getReferenceValueLabel(getTeleClassMethodActor(argValue).getReference());
+                return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
             }
         }
         if (text != null) {
             return new PlainLabel(inspection(), text);
         } else {
-            return super.getRenderer(header, argNum, argValue);
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable(), true);
         }
     }
 

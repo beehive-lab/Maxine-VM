@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.monitor;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -78,7 +77,6 @@ public interface MonitorScheme extends VMScheme {
     /**
      *  Notification that we are at a global safe-point (i.e. the object graph is well-formed and non-mutating), pre-collection.
      */
-    @INLINE(override = true)
     void beforeGarbageCollection();
 
     /**

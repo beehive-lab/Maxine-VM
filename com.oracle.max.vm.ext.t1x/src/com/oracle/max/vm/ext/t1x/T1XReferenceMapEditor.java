@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,9 +40,10 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.stack.*;
 
-public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
+public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor, ReferenceMapEditorLogHelper {
     private final T1XTargetMethod t1xMethod;
     private final JVMSFrameLayout frame;
     private final Object blockFrames;
@@ -141,123 +142,131 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public void fillInMaps() {
-        if (traceStackRootScanning()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.printCurrentThread(false);
-            Log.print(": Finalizing T1X reference maps for ");
-            Log.printMethod(classMethodActor(), true);
-            Log.unlock(lockDisabledSafepoints);
+        if (logStackRootScanning()) {
+            stackRootScanLogger.logFinalizeMaps(Interval.BEGIN, this);
         }
 
         final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(blockFrames);
         interpreter.finalizeFrames(this);
         interpreter.interpretReferenceSlots(this, this, bytecodeSafepointsIterator);
 
-        if (traceStackRootScanning()) {
-            final boolean lockDisabledSafepoints = Log.lock();
+        if (logStackRootScanning()) {
+            final boolean lockDisabledSafepoints = stackRootScanLogger.lock();
             bytecodeSafepointsIterator.reset();
-            final CodeAttribute codeAttribute = codeAttribute();
             for (int bci = bytecodeSafepointsIterator.bci(); bci != -1; bci = bytecodeSafepointsIterator.next()) {
                 for (int safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(true); safepointIndex != -1; safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(false)) {
-                    final int offset = safepointIndex * t1xMethod.refMapSize();
-                    Log.print(bci);
-                    Log.print(":");
-                    int opc = codeAttribute.code()[bci] & 0xff;
-                    final String opcode = Bytecodes.baseNameOf(opc);
-                    Log.print(opcode);
-                    int chars = Ints.sizeOfBase10String(bci) + 1 + opcode.length();
-                    while (chars++ < 20) {
-                        Log.print(' ');
-                    }
-                    Log.print(" safepoint[");
-                    Log.print(safepointIndex);
-                    Log.print("]@");
-                    Log.print(t1xMethod.safepoints().posAt(safepointIndex));
-
-                    boolean templateCall = t1xMethod.safepoints().isSetAt(Safepoints.TEMPLATE_CALL, safepointIndex);
-                    if (templateCall) {
-                        Log.print('*');
-                    }
-                    if (interpreter.isFrameInitialized(blockIndexFor(bci))) {
-                        Log.print(", locals={");
-                        byte[] refMaps = t1xMethod.referenceMaps();
-                        for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
-                            final int refMapIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
-                            CiRegister fp = frame.framePointerReg();
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
-                                int fpOffset = frame.localVariableOffset(localVariableIndex);
-                                Log.print(' ');
-                                Log.print(localVariableIndex);
-                                Log.print('[');
-                                Log.print(fp.name);
-                                if (fpOffset >= 0) {
-                                    Log.print('+');
-                                }
-                                Log.print(fpOffset);
-                                Log.print("]");
-                            }
-                        }
-                        Log.print(" }");
-                        Log.print(", stack={");
-                        for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
-                            final int refMapIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
-                            CiRegister fp = frame.framePointerReg();
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
-                                int fpOffset = frame.operandStackOffset(operandStackIndex);
-                                Log.print(' ');
-                                Log.print(operandStackIndex);
-                                Log.print('[');
-                                Log.print(fp.name);
-                                if (fpOffset >= 0) {
-                                    Log.print('+');
-                                }
-                                Log.print(fpOffset);
-                                Log.print("]");
-                            }
-                        }
-                        Log.print(" }");
-                        Log.print(", template={");
-                        for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
-                            int refMapIndex = UnsignedMath.divide(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
-                            CiRegister fp = frame.framePointerReg();
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
-                                Log.print(' ');
-                                Log.print(i);
-                                Log.print('[');
-                                Log.print(fp.name);
-                                if (i >= 0) {
-                                    Log.print('+');
-                                }
-                                Log.print(i * STACK_SLOT_SIZE);
-                                Log.print("]");
-                            }
-                        }
-                        Log.print(" }");
-                        Log.print(", registers={");
-                        CiCalleeSaveLayout csl = vm().registerConfigs.trapStub.getCalleeSaveLayout();
-                        for (int i = 0; i < regRefMapSize(); i++) {
-                            int b = refMaps[offset + t1xMethod.frameRefMapSize + i] & 0xff;
-                            int bit = i * 8;
-                            while (b != 0) {
-                                if ((b & 1) != 0) {
-                                    CiRegister reg = csl.registerAt(bit);
-                                    Log.print(' ');
-                                    Log.print(reg.name);
-                                }
-                                bit++;
-                                b = b >>> 1;
-                            }
-                        }
-                        Log.println(" }");
-                    } else {
-                        Log.println(", *unreachable*");
-                    }
+                    stackRootScanLogger.logSafepoint(this, interpreter, bci, safepointIndex);
                 }
             }
 
-            Log.print("Finalized T1X reference maps for ");
-            Log.printMethod(classMethodActor(), true);
-            Log.unlock(lockDisabledSafepoints);
+            stackRootScanLogger.logFinalizeMaps(Interval.END, this);
+            stackRootScanLogger.unlock(lockDisabledSafepoints);
+        }
+
+    }
+
+    public TargetMethod targetMethod() {
+        return t1xMethod;
+    }
+
+    public String compilerName() {
+        return "T1X";
+    }
+
+    public void traceSafepoint(ReferenceMapInterpreter interpreter, int bci, int safepointIndex) {
+        final int offset = safepointIndex * t1xMethod.refMapSize();
+        final CodeAttribute codeAttribute = codeAttribute();
+        Log.print(bci);
+        Log.print(":");
+        int opc = codeAttribute.code()[bci] & 0xff;
+        final String opcode = Bytecodes.baseNameOf(opc);
+        Log.print(opcode);
+        int chars = Ints.sizeOfBase10String(bci) + 1 + opcode.length();
+        while (chars++ < 20) {
+            Log.print(' ');
+        }
+        Log.print(" safepoint[");
+        Log.print(safepointIndex);
+        Log.print("]@");
+        Log.print(t1xMethod.safepoints().posAt(safepointIndex));
+
+        boolean templateCall = t1xMethod.safepoints().isSetAt(Safepoints.TEMPLATE_CALL, safepointIndex);
+        if (templateCall) {
+            Log.print('*');
+        }
+        if (interpreter.isFrameInitialized(blockIndexFor(bci))) {
+            Log.print(", locals={");
+            byte[] refMaps = t1xMethod.referenceMaps();
+            for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
+                final int refMapIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
+                CiRegister fp = frame.framePointerReg();
+                if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
+                    int fpOffset = frame.localVariableOffset(localVariableIndex);
+                    Log.print(' ');
+                    Log.print(localVariableIndex);
+                    Log.print('[');
+                    Log.print(fp.name);
+                    if (fpOffset >= 0) {
+                        Log.print('+');
+                    }
+                    Log.print(fpOffset);
+                    Log.print("]");
+                }
+            }
+            Log.print(" }");
+            Log.print(", stack={");
+            for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
+                final int refMapIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
+                CiRegister fp = frame.framePointerReg();
+                if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
+                    int fpOffset = frame.operandStackOffset(operandStackIndex);
+                    Log.print(' ');
+                    Log.print(operandStackIndex);
+                    Log.print('[');
+                    Log.print(fp.name);
+                    if (fpOffset >= 0) {
+                        Log.print('+');
+                    }
+                    Log.print(fpOffset);
+                    Log.print("]");
+                }
+            }
+            Log.print(" }");
+            Log.print(", template={");
+            for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
+                int refMapIndex = UnsignedMath.divide(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
+                CiRegister fp = frame.framePointerReg();
+                if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
+                    Log.print(' ');
+                    Log.print(i);
+                    Log.print('[');
+                    Log.print(fp.name);
+                    if (i >= 0) {
+                        Log.print('+');
+                    }
+                    Log.print(i * STACK_SLOT_SIZE);
+                    Log.print("]");
+                }
+            }
+            Log.print(" }");
+            Log.print(", registers={");
+            CiCalleeSaveLayout csl = vm().registerConfigs.trapStub.getCalleeSaveLayout();
+            for (int i = 0; i < regRefMapSize(); i++) {
+                int b = refMaps[offset + t1xMethod.frameRefMapSize + i] & 0xff;
+                int bit = i * 8;
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        CiRegister reg = csl.registerAt(bit);
+                        Log.print(' ');
+                        Log.print(reg.name);
+                    }
+                    bit++;
+                    b = b >>> 1;
+                }
+            }
+            Log.print(" }");
+        } else {
+            Log.print(", *unreachable*");
         }
 
     }
