@@ -346,6 +346,7 @@ public class VMLogger {
         logOption = traceOption = null;
         logIncludeOption = logExcludeOption = null;
         logOp = null;
+        optionsChecked = true;
     }
 
     @HOSTED_ONLY
@@ -451,6 +452,9 @@ public class VMLogger {
     public void setDefaultState() {
         // At VM startup we log everything; this gets refined once the VM is up in checkLogOptions.
         // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
+        if (loggerId < 0) {
+            return;
+        }
         logEnabled = true;
         traceEnabled = false;
         optionsChecked = false;
