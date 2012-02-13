@@ -459,7 +459,7 @@ public class SpecialReferenceManager {
     // Yet more javac weirdness. Will not compile unless qualified.
     @com.sun.max.annotate.HOSTED_ONLY
     @com.sun.max.vm.log.hosted.VMLoggerInterface
-    private static interface SpecialReferenceLoggerInterface {
+    private interface SpecialReferenceLoggerInterface {
         void enqueue(
                         @VMLogParam(name = "classActor") ClassActor classActor,
                         @VMLogParam(name = "atOrigin") Pointer atOrigin,

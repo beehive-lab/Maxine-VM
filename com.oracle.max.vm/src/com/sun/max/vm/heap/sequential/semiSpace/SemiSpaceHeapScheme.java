@@ -1271,7 +1271,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @HOSTED_ONLY
     @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
-    private static interface PhaseLoggerInterface {
+    private interface PhaseLoggerInterface {
         void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
         void scanningRoots(@VMLogParam(name = "interval") Interval interval);
         void scanningBootHeap(@VMLogParam(name = "interval") Interval interval);
@@ -1390,7 +1390,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @HOSTED_ONLY
     @VMLoggerInterface(parent = HeapScheme.TimeLogger.class)
-    private static interface TimeLoggerInterface {
+    private interface TimeLoggerInterface {
         void stackReferenceMapPreparationTime(
             @VMLogParam(name = "stackReferenceMapPreparationTime") long stackReferenceMapPreparationTime);
 
@@ -1479,7 +1479,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @HOSTED_ONLY
     @VMLoggerInterface
-    private static interface DetailLoggerInterface {
+    private interface DetailLoggerInterface {
         void visitCell(
             @VMLogParam(name = "cell") Pointer cell);
 

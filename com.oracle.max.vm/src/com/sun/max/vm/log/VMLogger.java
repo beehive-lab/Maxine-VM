@@ -143,7 +143,7 @@ import com.sun.max.vm.thread.*;
  * <pre>
  * @HOSTED_ONLY
  * @VMLoggerInterface
- * private static interface ExampleLoggerInterface {
+ * private interface ExampleLoggerInterface {
  *   void foo(
  *       @VMLogParam(name = "classActor") ClassActor classActor,
  *       @VMLogParam(name = "base") Pointer base);
