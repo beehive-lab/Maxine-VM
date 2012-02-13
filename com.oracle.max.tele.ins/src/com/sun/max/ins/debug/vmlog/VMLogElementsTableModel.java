@@ -187,12 +187,20 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
                 break;
             default:
                 // arguments
-                int argNum = col - VMLogColumnKind.ARG1.ordinal() + 1;
+                final int argNum = col2argNum(col);
                 if (argNum <= argCount) {
                     result = record.getArg(argNum);
                 }
         }
         return result;
+    }
+
+    private int col2argNum(int col) {
+        return col - VMLogColumnKind.ARG1.ordinal() + 1;
+    }
+
+    private int argNum2col(int argNum) {
+        return argNum + VMLogColumnKind.ARG1.ordinal() - 1;
     }
 
     @Override
@@ -264,29 +272,41 @@ abstract class VMLogElementsTableModel extends InspectorTableModel {
      */
     protected abstract HostedLogRecord getRecordFromVM(int id);
 
+    /**
+     * Refreshes the display of every renderer in a column displaying a specified
+     * log argument number.
+     *
+     * @param argNum the log argument number whose column is to be refreshed
+     * @param force whether the refresh should override any caching.
+     */
     public void refreshColumnRenderers(int argNum, boolean force) {
-//        final int rowCount = getRowCount();
-//        for (int row = 0; row < rowCount; row++) {
-//            final Component[] renderers = getColumnRenderers(row).renderers;
-//            if (row <= renderers.length) {
-//                final Component component = renderers[argNum];
-//                if (component instanceof Prober) {
-//                    final Prober prober = (Prober) component;
-//                    prober.refresh(force);
-//                }
-//            }
-//        }
+        final int rowCount = getRowCount();
+        for (int row = 0; row < rowCount; row++) {
+            final ColumnRenderers columnRenderers = getColumnRenderers(row);
+            final Component component = columnRenderers.renderers[argNum2col(argNum)];
+            if (component instanceof Prober) {
+                final Prober prober = (Prober) component;
+                prober.refresh(force);
+            }
+        }
     }
 
+    /**
+     * Forces a redisplay of every render in a column displaying a specified
+     * log argument number.
+     *
+     * @param argNum the log argument number whose column is to be redisplayed.
+     */
     public void redisplayColumnRenderers(int argNum) {
-//        final int rowCount = getRowCount();
-//        for (int row = 0; row < rowCount; row++) {
-//            final Component component = getColumnRenderers(row).renderers[row];
-//            if (component instanceof Prober) {
-//                final Prober prober = (Prober) component;
-//                prober.redisplay();
-//            }
-//        }
+        final int rowCount = getRowCount();
+        for (int row = 0; row < rowCount; row++) {
+            final ColumnRenderers columnRenderers = getColumnRenderers(row);
+            final Component component = columnRenderers.renderers[argNum2col(argNum)];
+            if (component instanceof Prober) {
+                final Prober prober = (Prober) component;
+                prober.redisplay();
+            }
+        }
     }
 
 }
