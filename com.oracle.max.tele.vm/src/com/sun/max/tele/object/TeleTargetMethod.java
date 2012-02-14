@@ -398,7 +398,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * permanently unused by the VM.
      */
     public boolean isCodeEvicted() {
-        return !isLive() || isCodeEvicted;
+        return status().isDead() || isCodeEvicted;
     }
 
     /**

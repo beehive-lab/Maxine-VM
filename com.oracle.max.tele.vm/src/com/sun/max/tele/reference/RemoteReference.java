@@ -73,10 +73,22 @@ public abstract class RemoteReference extends Reference {
         return false;
     }
 
-    public boolean isLive() {
-        return memoryStatus() == ObjectMemoryStatus.LIVE;
+    /**
+     * @return the status of the memory to which this instance refers
+     */
+    public abstract ObjectStatus status();
+
+
+    /**
+     * Gets the reference to the location of the new copy of this object, <em>only</em> when the heap is in the
+     * {@linkplain HeapPhase#ANALYZING ANALYZING} phase, and <em>only</em> when the object is forwarded. {@code null}
+     * otherwise.
+     */
+    public RemoteReference getForwardReference() {
+        return null;
     }
 
+    // TODO (mlvdv) Old Heap
     /**
      * Records that this instance refers to an object that has been copied elsewhere, and all
      * references should subsequently be forwarded.
@@ -88,20 +100,17 @@ public abstract class RemoteReference extends Reference {
         this.forwardedTeleRef = forwardedMutableTeleRef;
     }
 
+    // TODO (mlvdv) Old Heap
     /**
      * @return reference to the VM object to which this instance refers, possibly following
      * a forwarding reference if set.
      */
+    @Deprecated
     public final RemoteReference getForwardedTeleRef() {
         if (forwardedTeleRef != null) {
             return forwardedTeleRef.getForwardedTeleRef();
         }
         return this;
     }
-
-    /**
-     * @return the status of the memory to which this instance refers
-     */
-    public abstract ObjectMemoryStatus memoryStatus();
 
 }

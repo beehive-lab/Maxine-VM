@@ -178,7 +178,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public final String getTextForTitle() {
         final StringBuilder titleText = new StringBuilder();
-        final ObjectMemoryStatus status = teleObject.memoryStatus();
+        final ObjectStatus status = teleObject.status();
         if (!status.isLive()) {
             // Omit the prefix for live objects: the usual case.
             titleText.append("(").append(status.label()).append(") ");
@@ -255,9 +255,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectMemoryStatus memoryStatus = teleObject.memoryStatus();
+        final ObjectStatus memoryStatus = teleObject.status();
         if (memoryStatus.isForwarded() && followingTeleObject) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
+            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;

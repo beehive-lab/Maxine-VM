@@ -188,7 +188,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     @Override
     public Color cellBackgroundColor() {
         // Gets called during superclass initialization
-        if (teleObject != null && teleObject.memoryStatus().isDead()) {
+        if (teleObject != null && teleObject.status().isDead()) {
             return preference().style().deadObjectBackgroundColor();
         }
         return null;

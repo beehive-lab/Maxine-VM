@@ -35,10 +35,10 @@ public class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
     /**
      * @return surrogate for the semispace collector's "from" region
      */
-    public TeleRuntimeMemoryRegion teleFromRegion() {
+    public TeleLinearAllocationMemoryRegion teleFromRegion() {
         final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(getReference());
         if (fromReference != null) {
-            return (TeleRuntimeMemoryRegion) objects().makeTeleObject(fromReference);
+            return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
         }
         return null;
     }
@@ -46,13 +46,12 @@ public class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
     /**
      * @return surrogate for the semispace collector's "to" region
      */
-    public TeleRuntimeMemoryRegion teleToRegion() {
+    public TeleLinearAllocationMemoryRegion teleToRegion() {
         final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(getReference());
         if (toReference != null) {
-            return (TeleRuntimeMemoryRegion) objects().makeTeleObject(toReference);
+            return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
         }
         return null;
     }
-
 
 }

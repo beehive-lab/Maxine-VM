@@ -62,6 +62,9 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
         return null;
     }
 
+    public void initialize(long epoch) {
+    }
+
     public List<VmHeapRegion> heapRegions() {
         return heapRegions;
     }
@@ -72,6 +75,7 @@ public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
      * Use safe, object-based methods to read the array of references from {@link InspectableHeapInfo} in the VM
      * that point to descriptions of allocated heap regions.
      */
+    @Override
     public void updateMemoryStatus(long epoch) {
         final Reference runtimeHeapRegionsArrayReference = fields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
         if (!runtimeHeapRegionsArrayReference.isZero()) {

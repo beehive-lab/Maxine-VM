@@ -178,7 +178,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     /**
      * Becomes permanently {@code false} when GC has determined that the object is no longer reachable.
      */
-    private boolean isLive = true;
+    private ObjectStatus status = ObjectStatus.LIVE;
 
     /**
      * Creates a "surrogate" object that encapsulates information about an object in the VM.
@@ -269,32 +269,27 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @returns whether the object's cache was successfully updated.
      */
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        if (isLive()) {
-            return true;
+        if (status.isNotDead()) {
+            if (reference().readWord(0).asAddress().equals(Memory.zappedMarker())) {
+                status = ObjectStatus.DEAD;
+            } else {
+                status = reference().status();
+            }
         }
-        return false;
+        return status.isNotDead();
     }
 
-    /**
-     * @return {@code true} if assumed by the memory manager to be reachable, {@code false} if the object has been collected...
-     */
-    public final boolean isLive() {
-        if (isLive) {
-            isLive = !reference().readWord(0).asAddress().equals(Memory.zappedMarker()) && reference.isLive();
-        }
-        return isLive;
+    public final ObjectStatus status() {
+        return status;
     }
 
-    public final ObjectMemoryStatus memoryStatus() {
-        return reference.memoryStatus();
-    }
-
+    // TODO (mlvdv)  REVIEW!
     public final TeleObject getForwardedTeleObject() {
-        if (memoryStatus().isForwarded()) {
-            RemoteReference forwardedTeleRef = reference.getForwardedTeleRef();
-            TeleObject teleObject = objects().findObjectByOID(forwardedTeleRef.makeOID());
+        if (status().isForwarded()) {
+            RemoteReference forwardedRemoteRef = reference.getForwardReference();
+            TeleObject teleObject = objects().findObjectByOID(forwardedRemoteRef.makeOID());
             if (teleObject == null) {
-                reference = forwardedTeleRef;
+                reference = forwardedRemoteRef;
                 return this;
             }
             return teleObject;
@@ -382,7 +377,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      *
      */
     public Pointer origin() {
-        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
+        if (status().isForwarded() || status().isDead()) {
             return lastValidPointer;
         }
         Pointer pointer = reference.toOrigin();
@@ -403,7 +398,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * subject to relocation by GC.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (memoryStatus().isForwarded() || memoryStatus().isDead()) {
+        if (status().isForwarded() || status().isDead()) {
             // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
         }
@@ -411,8 +406,8 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     public final MaxMemoryRegion getForwardedMemoryRegion() {
-        if (memoryStatus().isForwarded()) {
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardedTeleRef().toOrigin()), objectSize());
+        if (status().isForwarded()) {
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardReference().toOrigin()), objectSize());
         }
         return null;
     }

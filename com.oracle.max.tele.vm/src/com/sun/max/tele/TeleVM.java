@@ -249,6 +249,20 @@ public abstract class TeleVM implements MaxVM {
     public static boolean promptForNativeCodeView;
 
     /**
+     * Interface for notification that all of the initialization for a remote inspection session
+     * are substantially complete; some services have needs for setup that can only happen very
+     * late, most notably anything that requires setting a breakpoint.
+     */
+    public interface InitializationListener {
+
+        /**
+         * Notifies listener that all of the remote inspection services are substantially complete,
+         * and that it is safe to use them, for example setting breakpoints.
+         */
+        void initialiationComplete(long epoch);
+    }
+
+    /**
      * The options controlling how a VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
@@ -467,9 +481,6 @@ public abstract class TeleVM implements MaxVM {
         }
 
 
-        teleMaxineVM = (TeleMaxineVM) vm.objects().makeTeleObject(vm.fields().MaxineVM_vm.readReference(vm));
-        teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
-
         final File commandFile = options.commandFileOption.getValue();
         if (commandFile != null && !commandFile.equals("")) {
             vm.executeCommandsFromFile(commandFile.getPath());
@@ -629,6 +640,8 @@ public abstract class TeleVM implements MaxVM {
      * for access by client methods on any thread.
      */
     private volatile TeleVMState teleVMState;
+
+    private List<InitializationListener> initializationListeners = new ArrayList<InitializationListener>();
 
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
@@ -857,10 +870,20 @@ public abstract class TeleVM implements MaxVM {
 
                 nativeCodeAccess = new NativeCodeAccess(this);
 
+
+                teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
+                teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
+
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     classAccess.processAttachFixupList();
+                }
+
+                // At this point everything should be read to go; handle any requests
+                // for late initialization.
+                for (InitializationListener listener : initializationListeners) {
+                    listener.initialiationComplete(epoch);
                 }
             }
 
@@ -1013,6 +1036,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Register an action that will take place once, all of the initialization for a remote inspection session
+     * are substantially complete; some services have needs for setup that can only happen very
+     * late, most notably anything that requires setting a breakpoint.
+     */
+    public final void addInitializationListener(InitializationListener initializationListener) {
+        initializationListeners.add(initializationListener);
+    }
+
+    /**
      * Returns the most recently notified VM state.  Note that this
      * isn't updated until the very end of a refresh cycle after VM
      * halt, so it should be considered out of date until the refresh
@@ -1036,6 +1068,12 @@ public abstract class TeleVM implements MaxVM {
         vmStateListeners.remove(listener);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Registering this listener will cause one or more breakpoints to be created, if they don't exist,
+     * so this must be called after all the other inspection services are in place.
+     */
     public final void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
         if (phase == null) {
             gcAnalyzingListeners.add(listener, teleProcess);
@@ -1056,6 +1094,12 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Registering this listener will cause one or more breakpoints to be created, if they don't exist,
+     * so this must be called after all the other inspection services are in place.
+     */
     public final void removeGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
         if (phase == null) {
             gcAnalyzingListeners.remove(listener);
@@ -1416,20 +1460,6 @@ public abstract class TeleVM implements MaxVM {
             TeleError.unexpected("Unable to set breakpoint at Java entry point " + exception.getAddressString() + ": " + exception.getMessage());
         } catch (Exception exception) {
             throw new IOException(exception);
-        }
-        try {
-            addGCPhaseListener(new MaxGCPhaseListener() {
-                // The purpose of this listener, which doesn't do anything explicitly,
-                // is to force a VM stop at the end of each GC cycle, even if there are
-                // no other listeners.  This presents an opportunity for the Reference/Object
-                // code to update heap-related information that may have been changed as
-                // a result of the GC.
-                public void gcPhaseChange(HeapPhase phase) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
-                }
-            }, HeapPhase.ALLOCATING);
-        } catch (MaxVMBusyException maxVMBusyException) {
-            TeleError.unexpected("Unable to set initial GC completed listener");
         }
     }
 

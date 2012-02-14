@@ -164,8 +164,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticLongFieldAccess InspectableHeapInfo_recentHeapSizeRequest = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "recentHeapSizeRequest");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
-    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootTableMemoryRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootTableMemoryRegion", RootTableMemoryRegion.class);
-    public final TeleStaticWordFieldAccess InspectableHeapInfo_rootsPointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "rootsPointer");
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_handle = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "handle");
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_pathAsCString = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "pathAsCString");
@@ -199,7 +197,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess ClassConstant$Resolved_classActor = new TeleInstanceReferenceFieldAccess(ClassConstant.Resolved.class, "classActor", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);
     public final TeleInstanceReferenceFieldAccess ResolvedMethodRefConstant_methodActor = new TeleInstanceReferenceFieldAccess(ResolvedMethodRefConstant.class, "methodActor", MethodActor.class);
-    public final TeleInstanceLongFieldAccess RootTableMemoryRegion_wordsUsed = new TeleInstanceLongFieldAccess(RootTableMemoryRegion.class, "wordsUsed");
     public final TeleInstanceIntFieldAccess SemiSpaceCodeRegion_fromLength = new TeleInstanceIntFieldAccess(SemiSpaceCodeRegion.class, "fromLength");
     public final TeleInstanceWordFieldAccess SemiSpaceCodeRegion_fromSpace = new TeleInstanceWordFieldAccess(SemiSpaceCodeRegion.class, "fromSpace");
     public final TeleInstanceReferenceFieldAccess SemiSpaceCodeRegion_fromTargetMethods = new TeleInstanceReferenceFieldAccess(SemiSpaceCodeRegion.class, "fromTargetMethods", TargetMethod[].class);

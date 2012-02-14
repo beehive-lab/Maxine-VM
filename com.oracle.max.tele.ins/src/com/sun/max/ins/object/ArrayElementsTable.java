@@ -184,7 +184,7 @@ public final class ArrayElementsTable extends InspectorTable {
     @Override
     public Color cellBackgroundColor() {
         // Gets called during superclass initialization
-        if (teleObject != null && teleObject.memoryStatus().isDead()) {
+        if (teleObject != null && teleObject.status().isDead()) {
             return preference().style().deadObjectBackgroundColor();
         }
         return null;
@@ -310,7 +310,7 @@ public final class ArrayElementsTable extends InspectorTable {
         public void refresh() {
             setOrigin(teleObject.origin());
             // Update the mapping between array elements and displayed rows.
-            if (teleObject.memoryStatus().isNotDeadYet()) {
+            if (teleObject.status().isNotDeadYet()) {
                 if (instanceViewPreferences.hideNullArrayElements()) {
                     visibleElementCount = 0;
                     for (int index = 0; index < arrayLength; index++) {
