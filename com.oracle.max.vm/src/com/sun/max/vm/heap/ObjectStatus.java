@@ -45,7 +45,7 @@ import java.util.*;
  * it becomes certain that an object is unreachable;</li>
  * </ul>
  */
-public enum ObjectMemoryStatus {
+public enum ObjectStatus {
 
     /**
      * The region of memory is in a live allocation area and represents an object
@@ -73,7 +73,7 @@ public enum ObjectMemoryStatus {
     private final String label;
     private final String description;
 
-    private ObjectMemoryStatus(String label, String description) {
+    private ObjectStatus(String label, String description) {
         this.label = label;
         this.description = description;
     }
@@ -92,6 +92,14 @@ public enum ObjectMemoryStatus {
      */
     public boolean isLive() {
         return this == LIVE;
+    }
+
+    /**
+     * Does the memory represent an object that we treat provisionally
+     * as {@link #LIVE}: either {@link #LIVE}, {@link #UNKNOWN}, or {@link #FORWARDED}.
+     */
+    public boolean isNotDead() {
+        return this != DEAD;
     }
 
     /**
@@ -127,6 +135,6 @@ public enum ObjectMemoryStatus {
         return this == DEAD;
     }
 
-    public static final List<ObjectMemoryStatus> VALUES = Arrays.asList(values());
+    public static final List<ObjectStatus> VALUES = Arrays.asList(values());
 
 }

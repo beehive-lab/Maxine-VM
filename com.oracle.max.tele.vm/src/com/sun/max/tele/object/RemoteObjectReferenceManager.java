@@ -39,15 +39,30 @@ public interface RemoteObjectReferenceManager {
     /**
      * Describes the management phase of a heap.
      */
-    HeapPhase heapPhase();
+    HeapPhase phase();
 
     /**
-     * Determines whether there is an object in the VM memory regions
-     * with specified origin.
+     * Determines whether there is a legitimate object in the VM memory
+     * at a specified origin, using only low-level mechanisms:  no
+     * {@link Reference}s.
      *
+     * @return whether the address is the origin of a possibly live VM object
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     boolean isObjectOrigin(Address origin) throws TeleError;
+
+    /**
+     * Attempts to locate the origin of the copy of an object if it has been forwarded,
+     * using low-level mechanisms only, {@code null} if not forwarded.
+     * <p>
+     * <strong>Unsafe</strong>Does not confirm that the argument is the origin
+     * of an object, nor that the returned address is the origin of an object.
+     *
+     * @param origin the presumed location of an object in the memory being managed
+     * @return the origin of the object's new copy, if forwarded, else {@code null}
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    Address getForwardingAddressUnsafe(Address origin) throws TeleError;
 
     /**
      * Creates a canonical remote reference to an object whose origin
@@ -62,24 +77,12 @@ public interface RemoteObjectReferenceManager {
     RemoteReference makeReference(Address origin) throws TeleError;
 
     /**
-     * Returns the total number of remote object references being held by
-     * the manager.
-     */
-    int activeReferenceCount();
-
-    /**
-     * Returns the number of remote object references being held that are no
-     * longer inactive use.
-     */
-    int totalReferenceCount();
-
-    /**
      * Writes current statistics concerning references to objects in VM memory.
      *
      * @param printStream stream to which to write
      * @param indent number of spaces to indent each line
      * @param verbose possibly write extended information when true
      */
-    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+    void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }

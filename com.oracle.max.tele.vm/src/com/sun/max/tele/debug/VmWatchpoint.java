@@ -533,7 +533,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         private TeleObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
             super(kind, watchpointManager, description, teleObject.origin().plus(offset), nBytes, settings);
-            TeleError.check(teleObject.memoryStatus().isNotDeadYet(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
+            TeleError.check(teleObject.status().isNotDeadYet(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
             setRelocationWatchpoint(teleObject.origin());
@@ -627,7 +627,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         protected void updateAfterGC() {
             assert isAlive();
             super.updateAfterGC();
-            switch(teleObject.memoryStatus()) {
+            switch(teleObject.status()) {
                 case LIVE:
                 case UNKNOWN:
                     // A relocatable watchpoint on a live object should have been relocated
@@ -845,7 +845,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.memoryStatus().isNotDeadYet()) {
+                if (teleObject.status().isNotDeadYet()) {
                     watchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -882,7 +882,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.memoryStatus().isNotDeadYet()) {
+                if (teleObject.status().isNotDeadYet()) {
                     watchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -918,7 +918,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.memoryStatus().isNotDeadYet()) {
+                if (teleObject.status().isNotDeadYet()) {
                     watchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -956,7 +956,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.memoryStatus().isNotDeadYet()) {
+                if (teleObject.status().isNotDeadYet()) {
                     watchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;

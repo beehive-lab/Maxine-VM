@@ -150,7 +150,7 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
         }
 
         public Address getAddress() {
-            if (teleTargetMethod.isLive()) {
+            if (teleTargetMethod.status().isLive()) {
                 final Address codeByteArrayOrigin = teleTargetMethod.codeCacheObjectOrigin(CodeCacheReferenceKind.CODE);
                 return objects().unsafeArrayIndexToAddress(Kind.BYTE, codeByteArrayOrigin, codeOffset);
             }

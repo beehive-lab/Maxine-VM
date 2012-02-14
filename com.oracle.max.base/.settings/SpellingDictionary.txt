@@ -95,11 +95,14 @@ emitting
 entrypoint
 enum
 epilogue
+evacuator
+evacuators
 finalizer
 finalizers
 fixup
 floatable
 foo
+formedness
 generational
 growable
 hashcode
@@ -181,6 +184,7 @@ regexp
 registry
 reified
 reifies
+reifying
 relocatable
 renderers
 safepoint
@@ -197,6 +201,9 @@ stderr
 stdout
 struct
 subtype
+superclass
+superclasses
+supertype
 tabbed
 tele
 temp
@@ -212,6 +219,7 @@ transferables
 unboxed
 unboxing
 uncomment
+uncommit
 uncompiled
 undock
 undockable

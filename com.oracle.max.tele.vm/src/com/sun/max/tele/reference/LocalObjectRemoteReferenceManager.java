@@ -42,7 +42,7 @@ import com.sun.max.vm.reference.Reference;
  * These are used typically by the remote interpreter.
  * <p>
  * These references are canonical, and their
- * memory status of these references is permanently {@link ObjectMemoryStatus#LIVE}.
+ * memory status of these references is permanently {@link ObjectStatus#LIVE}.
  *
  * @see Reference
  * @see RemoteReferenceScheme
@@ -84,7 +84,7 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
      * to stand in for an object in the VM, for example by the
      * remote interpreter.
      * <p>
-     * The memory status is permanently {@link ObjectMemoryStatus#LIVE}.
+     * The memory status is permanently {@link ObjectStatus#LIVE}.
      *
      * @see {@link TeleInterpreter}
      */
@@ -107,8 +107,8 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public ObjectMemoryStatus memoryStatus() {
-            return ObjectMemoryStatus.LIVE;
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
         }
 
         @Override

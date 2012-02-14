@@ -27,6 +27,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * A factory class that creates scrollable pane components, each of which displays a string representation of some value in the VM.
@@ -39,7 +40,7 @@ public final class StringPane extends InspectorScrollPane {
 
     public interface StringSource {
         String fetchString();
-        boolean isLive();
+        ObjectStatus status();
     }
 
     private final StringSource stringSource;
@@ -67,7 +68,7 @@ public final class StringPane extends InspectorScrollPane {
     public void refresh(boolean force) {
         if (vm().state().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = vm().state();
-            if (stringSource.isLive()) {
+            if (stringSource.status().isNotDead()) {
                 final String newString = stringSource.fetchString();
                 if (newString != stringValue) {
                     stringValue = newString;

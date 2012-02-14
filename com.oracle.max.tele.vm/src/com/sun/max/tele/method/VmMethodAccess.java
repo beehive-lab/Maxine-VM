@@ -181,7 +181,7 @@ public final class VmMethodAccess extends AbstractVmHolder {
      * reclaiming, i.e. when it enters the {@link HeapPhase#RECLAIMING} phase.
      */
     public CodeLocation gcReclaimingMethodLocation() {
-        return gcAnalyzing;
+        return gcReclaiming;
     }
 
      /**

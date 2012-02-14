@@ -34,7 +34,7 @@ import com.sun.max.vm.heap.*;
  * This instance is not canonicalized, not GC-safe, and
  * is intended <strong>only for temporary use</strong>.
  * <p>
- * Its memory status is permanently {@link ObjectMemoryStatus#DEAD}.
+ * Its memory status is permanently {@link ObjectStatus#DEAD}.
  */
 public final class UnsafeRemoteReference extends ConstantTeleReference {
 
@@ -43,7 +43,7 @@ public final class UnsafeRemoteReference extends ConstantTeleReference {
     }
 
     @Override
-    public ObjectMemoryStatus memoryStatus() {
-        return ObjectMemoryStatus.DEAD;
+    public ObjectStatus status() {
+        return ObjectStatus.DEAD;
     }
 }

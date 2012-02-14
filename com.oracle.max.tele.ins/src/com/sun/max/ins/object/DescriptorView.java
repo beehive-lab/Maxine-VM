@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -69,8 +70,8 @@ public class DescriptorView extends ObjectView<DescriptorView> {
             public String fetchString() {
                 return teleDescriptor.descriptor().string;
             }
-            public boolean isLive() {
-                return teleObject().memoryStatus().isNotDeadYet();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);

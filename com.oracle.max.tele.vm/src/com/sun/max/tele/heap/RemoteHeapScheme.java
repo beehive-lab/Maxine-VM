@@ -41,12 +41,23 @@ public interface RemoteHeapScheme extends RemoteScheme {
     Class heapSchemeClass();
 
     /**
+     * Causes this scheme to perform any additional initializations that cannot be
+     * done until most of the Inspector services are up and running.
+     */
+    void initialize(long epoch);
+
+    /**
      * Causes this scheme support to refresh state related to memory allocations and
      * memory management status.
      *
      * @param epoch the number of times the VM process has run so far.
      */
     void updateMemoryStatus(long epoch);
+
+    /**
+     * Gets the current GC phase for the heap.
+     */
+    HeapPhase phase();
 
     /**.
      * Reports on the currently known dynamic heap regions.

@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link String}.
@@ -67,8 +68,8 @@ public final class StringView extends ObjectView<StringView> {
             public String fetchString() {
                 return teleString.getString();
             }
-            public boolean isLive() {
-                return teleObject().isLive();
+            public ObjectStatus status() {
+                return teleObject().status();
             }
         });
         tabbedPane.add("string value", stringPane);
@@ -89,7 +90,7 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().memoryStatus().isNotDeadYet()) {
+        if (teleObject().status().isNotDeadYet()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

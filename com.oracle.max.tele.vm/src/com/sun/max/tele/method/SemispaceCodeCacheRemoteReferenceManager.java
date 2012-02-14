@@ -22,9 +22,12 @@
  */
 package com.sun.max.tele.method;
 
+import java.io.*;
 import java.lang.ref.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleTargetMethod.CodeCacheReferenceKind;
@@ -51,7 +54,7 @@ import com.sun.max.vm.heap.*;
  * @see VmCodeCacheRegion
  * @see TeleTargetMethod
  */
-final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteReferenceManager {
+final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder implements RemoteObjectReferenceManager {
 
     /**
      * The code cache region whose objects are being managed.
@@ -87,7 +90,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
     }
 
     // TODO (mlvdv) Interpret this status for the special case of objects in the code cache.
-    public HeapPhase heapPhase() {
+    public HeapPhase phase() {
         return heapPhase;
     }
 
@@ -111,12 +114,17 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
                     if (objectOrigin != null && objectOrigin.equals(origin)) {
                         // The specified location matches one of the target method's pointers.
                         // There should be an object there, but check just in case.
-                        return objects().isObjectOriginHeuristic(objectOrigin);
+                        return objects().isPlausibleOriginUnsafe(objectOrigin);
                     }
                 }
             }
         }
         return false;
+    }
+
+    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
+        // Objects are not forwarded in this region.
+        return null;
     }
 
     @Override
@@ -141,7 +149,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         return null;
     }
 
-    public int activeReferenceCount() {
+    private int activeReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
             final Map<TeleTargetMethod, WeakReference<SemispaceCodeCacheRemoteReference> > kindRefMap = refMaps.get(kind);
@@ -157,13 +165,27 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         return count;
     }
 
-    public int totalReferenceCount() {
+    private int totalReferenceCount() {
         int count = 0;
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
             count += refMaps.get(kind).size();
         }
         return count;
     }
+
+    public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        printStream.println(indentation + "Object holding region: " + codeCacheRegion.entityName());
+        final NumberFormat formatter = NumberFormat.getInstance();
+        final StringBuilder sb2 = new StringBuilder();
+        final int activeReferenceCount = activeReferenceCount();
+        final int totalReferenceCount = totalReferenceCount();
+        sb2.append("object refs:  active=" + formatter.format(activeReferenceCount));
+        sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
+        sb2.append(", mgr=" + getClass().getSimpleName());
+        printStream.println(indentation + sb2.toString());
+    }
+
 
     /**
      * @return a canonical reference of the specified kind for the specified target method
@@ -177,7 +199,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
         }
         if (remoteRef == null) {
             // By construction, there should be an object at the location; let's just check.
-            assert objects().isObjectOriginHeuristic(teleTargetMethod.codeCacheObjectOrigin(kind));
+            assert objects().isPlausibleOriginUnsafe(teleTargetMethod.codeCacheObjectOrigin(kind));
             remoteRef = new SemispaceCodeCacheRemoteReference(vm(), teleTargetMethod, kind);
             kindMap.put(teleTargetMethod, new WeakReference<SemispaceCodeCacheRemoteReference>(remoteRef));
         }
@@ -213,18 +235,18 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractRemoteRefer
          */
         @Override
         public Address raw() {
-            if (memoryStatus() == ObjectMemoryStatus.LIVE) {
+            if (status().isLive()) {
                 lastValidOrigin = super.raw();
             }
             return lastValidOrigin;
         }
 
         @Override
-        public ObjectMemoryStatus memoryStatus() {
+        public ObjectStatus status() {
             // Don't look at the memory status of the teleTargetMethod; that refers to the
             // TargetMethod object, not to the objects stored in the code cache, which is
             // what we're dealing with here.
-            return teleTargetMethod().isCodeEvicted() ? ObjectMemoryStatus.DEAD : ObjectMemoryStatus.LIVE;
+            return teleTargetMethod().isCodeEvicted() ? ObjectStatus.DEAD : ObjectStatus.LIVE;
         }
 
     }

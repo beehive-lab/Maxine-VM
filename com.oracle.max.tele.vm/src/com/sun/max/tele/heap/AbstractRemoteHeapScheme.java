@@ -37,6 +37,10 @@ import com.sun.max.vm.tele.*;
 
 public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implements RemoteHeapScheme {
 
+    protected HeapPhase phase = HeapPhase.ALLOCATING;
+    protected long gcStartedCount = -1;
+    protected long gcCompletedCount = -1;
+
     protected AbstractRemoteHeapScheme(TeleVM vm) {
         super(vm);
     }
@@ -53,9 +57,45 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return null;
     }
 
+    /**
+     * @return surrogate for the VM object that implements the {@link HeapScheme} interface
+     */
     public TeleHeapScheme teleHeapScheme() {
         final TeleVMConfiguration vmConfiguration = vm().teleVMConfiguration();
         return vmConfiguration == null ? null : vmConfiguration.teleHeapScheme();
+    }
+
+    public void updateMemoryStatus(long epoch) {
+        // Check what phase the heap is in with respect to GC.
+        phase = HeapPhase.values()[fields().InspectableHeapInfo_heapPhaseOrdinal.readInt(vm())];
+
+        // Check GC status and update references if a GC has completed since last time we checked
+        final long oldGcStartedCount = gcStartedCount;
+        gcStartedCount = fields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
+        gcCompletedCount = fields().InspectableHeapInfo_gcCompletedCounter.readLong(vm());
+        // Invariant:  oldGcStartedCount <= gcCompletedCount <= gcStartedCount
+        if (gcStartedCount != gcCompletedCount) {
+            // A GC is in progress, local cache is out of date by definition but can't update yet
+            // Sanity check; collection count increases monotonically
+            assert  gcCompletedCount < gcStartedCount;
+        } else if (oldGcStartedCount != gcStartedCount) {
+            // GC is not in progress, but a GC has completed since the last time
+            // we checked, so cached reference data is out of date
+            // Sanity check; collection count increases monotonically
+            assert oldGcStartedCount < gcStartedCount;
+            // vm().referenceManager().updateCache(epoch);
+        } else {
+            // oldGcStartedCount == gcStartedCount == gcCompletedCount
+            // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
+        }
+    }
+
+    public HeapPhase phase() {
+        return phase;
+    }
+
+    protected long gcStartedCount() {
+        return gcStartedCount;
     }
 
     /**

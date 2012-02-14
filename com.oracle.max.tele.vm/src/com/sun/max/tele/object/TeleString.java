@@ -35,7 +35,7 @@ public class TeleString extends TeleTupleObject implements StringProvider {
     private String string;
 
     public String getString() {
-        if (memoryStatus().isNotDeadYet()) {
+        if (status().isNotDeadYet()) {
             String s = vm().getString(reference());
             if (s != null) {
                 string = SymbolTable.intern(s);
