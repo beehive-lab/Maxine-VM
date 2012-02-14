@@ -84,6 +84,7 @@ public class TeleThreadVMLog extends AbstractVmHolder implements MaxThreadVMLog 
                         if (addr.isNotZero()) {
                             int size = vm().fields().VMLogNative_logSize.readInt(vm().fields().VMLog_vmLog.readReference(vm()));
                             vmLogMemoryRegion = new VMLogMemoryRegion(vm(), this, entityName + " VMLog", addr, size);
+                            vm().addressSpace().add(vmLogMemoryRegion);
                         }
                     } else if (vmtl.name.equals(VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME)) {
                         bufOffsets = tla.getThreadLocalVariable(vmtl.index);
