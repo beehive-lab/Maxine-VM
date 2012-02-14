@@ -71,20 +71,6 @@ public final class InspectableHeapInfo {
     public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
 
     /**
-     * Inspectable description the memory allocated for the Inspector's root table.
-     */
-    @INSPECTED
-    private static RootTableMemoryRegion rootTableMemoryRegion;
-
-    /**
-     * Inspectable location of the memory allocated for the Inspector's root table.
-     * Equivalent to {@link MemoryRegion#start()}, but it must be
-     * readable by the Inspector using only low level operations during startup.
-     */
-    @INSPECTED
-    private static Pointer rootsPointer = Pointer.zero();
-
-    /**
      * The ordinal value of the enum describing the current heap phase.
      * This permits inspection of the phase at any time and, if needed,
      * detection of phase change by watchpoint.
@@ -131,29 +117,11 @@ public final class InspectableHeapInfo {
      * Sets up root table and other information needed for heap inspection.
      * <p>
      * No-op when VM is not being inspected.
-     * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
+     * @param useImmortalMemory should allocations should be made in immortal memory.
      */
     public static void init(boolean useImmortalMemory) {
         if (Inspectable.isVmInspected()) {
             InspectableHeapInfo.useImmortalMemory = useImmortalMemory;
-            // Create the roots region, but allocate the descriptor object
-            // in non-collected memory so that we don't lose track of it
-            // during GC.
-            if (useImmortalMemory) {
-                try {
-                    Heap.enableImmortalMemoryAllocation();
-                    rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
-                } finally {
-                    Heap.disableImmortalMemoryAllocation();
-                }
-            } else {
-                rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
-            }
-
-            final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
-            rootsPointer = Memory.allocate(size);
-            rootTableMemoryRegion.setStart(rootsPointer);
-            rootTableMemoryRegion.setSize(size);
         }
     }
 
@@ -167,7 +135,7 @@ public final class InspectableHeapInfo {
      * in the dynamic heap.
      * <p>
      * No-op when VM is not being inspected.
-     * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
+     * @param useImmortalMemory should allocations should be made in immortal memory.
      * @param memoryRegions regions allocated by the heap implementation
      */
     public static void setMemoryRegions(MemoryRegion[] memoryRegions) {
@@ -186,13 +154,6 @@ public final class InspectableHeapInfo {
                 dynamicHeapMemoryRegions = memoryRegions;
             }
         }
-    }
-
-    /**
-     * @return the specially allocated memory region containing inspectable root pointers
-     */
-    public static RootTableMemoryRegion rootsMemoryRegion() {
-        return rootTableMemoryRegion;
     }
 
     /**

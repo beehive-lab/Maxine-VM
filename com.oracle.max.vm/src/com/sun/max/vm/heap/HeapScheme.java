@@ -403,8 +403,7 @@ public interface HeapScheme extends VMScheme {
          * Sets up machinery for inspection of heap activity.
          * <p>
          * No-op when VM is not being inspected.
-         * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion}
-         * must be allocated in immortal memory
+         * @param useImmortalMemory should allocations should be made in immortal memory.
          */
         public static void init(boolean useImmortalMemory) {
             InspectableHeapInfo.init(useImmortalMemory);
