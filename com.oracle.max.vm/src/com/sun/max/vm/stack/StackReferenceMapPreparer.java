@@ -1084,8 +1084,10 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = new int[] {0x4, 0x0, 0x18, 0x0, 0x0, 0x0, 0x3, 0x12, 0x0, 0x0, 0x3, 0x20, 0x1, 0x0, 0x1, 0x2, 0x0, 0x0};
+
         protected StackRootScanLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override

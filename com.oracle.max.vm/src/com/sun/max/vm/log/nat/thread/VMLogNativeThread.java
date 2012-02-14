@@ -34,9 +34,20 @@ import com.sun.max.vm.thread.*;
  * Common superclass for per-thread log buffers.
  *
  * Information on the state of the buffer is stored in a {@link VmThreadLocal},
- * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises the offset (in bytes)
- * of the first valid record, the offset where the next record should be written
- * and a sticky bit to indicate that the buffer has wrapped.
+ * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises following:
+ *
+ * <ul>
+ * <li>the offset of the first valid record, {@link #firstOffset}</li>
+ * <li>the offset where the next record should be written, {@link #nextOffset}</li>
+ * <li>a (sticky) bit to indicate that the buffer has wrapped {@link #WRAPPED}.
+ * </ul>
+ * Offsets are in bytes.
+ * <p>
+ * Note that unless the buffer is empty, {@link #firstOffset} is never equal
+ * to {@link #nextOffset}.
+ *
+ * The exact layout of the native buffer, e.g., whether records are fixed size or
+ * variable size is left to the concrete subclass.
  *
  * Note that in order for the Inspector to be able to recreate a globally ordered
  * set of records (by id), we must store the id in the record itself.
@@ -73,13 +84,16 @@ public abstract class VMLogNativeThread extends VMLogNative {
     }
 
     @Override
-    protected int getArgsOffset() {
+    /**
+     * Space for header and the id.
+     */
+    protected final int getArgsOffset() {
         return ARGS_OFFSET;
     }
 
     @Override
     protected int getLogSize() {
-        return logEntries * maxNativeRecordSize;
+        return logEntries * defaultNativeRecordSize;
     }
 
     @NEVER_INLINE
@@ -116,6 +130,23 @@ public abstract class VMLogNativeThread extends VMLogNative {
     @Override
     public boolean threadIsEnabled() {
         return (VMLOG_BUFFER_OFFSETS.load(VmThread.currentTLA()).toLong() & DISABLED) == 0;
+    }
+
+    // Convenience methods for accessing the data in VMLOG_BUFFER_OFFSETS
+
+    @INLINE
+    protected final boolean isWrapped(long offsets) {
+        return (offsets & WRAPPED) != 0;
+    }
+
+    @INLINE
+    protected final int nextOffset(long offsets) {
+        return (int) (offsets & NEXT_OFFSET_MASK);
+    }
+
+    @INLINE
+    protected final int firstOffset(long offsets) {
+        return (int) ((offsets >> FIRST_OFFSET_SHIFT) & SHIFTED_FIRST_OFFSET_MASK);
     }
 
 }

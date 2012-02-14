@@ -35,7 +35,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Attempts to divine the types of the arguments based on the convention that
@@ -99,12 +98,12 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
         } else if (klass == VmThread.class) {
             return VMLogView.ThreadCellRenderer.getThreadRenderer((int) argValue);
-        } else if (klass == Object.class) {
-            // currently origin address
         } else if (klass == VMLogger.Interval.class) {
             return argValue == 0 ? BEGIN_LABEL : END_LABEL;
-        } else if (klass == int.class || klass == long.class) {
+        } else if (klass == int.class || klass == byte.class || klass == short.class || klass == long.class) {
             return new PlainLabel(vmLogView.inspection(), String.valueOf(argValue));
+        } else if (klass == boolean.class) {
+            return new PlainLabel(vmLogView.inspection(), argValue == 0 ? "false" : "true");
         } else {
             Method inspectedValueMethod = getInspectedValueMethod(klass);
             if (inspectedValueMethod != null) {
@@ -115,15 +114,8 @@ public class DefaultVMLogArgRenderer extends VMLogArgRenderer {
             }
             if (klass == Pointer.class || klass == Address.class) {
                 return new WordValueLabel(vmLogView.inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable());
-            } else if (klass == int.class || klass == long.class) {
-                return defaultRenderer(argValue);
-            }
-
-            // check if some other object type
-            if (Object.class.isAssignableFrom(klass)) {
-                // argValue is an index into the tempObjects table
-                Value value = vmLogView.teleTempObjectsArray.readElementValue((int) argValue);
-                return getReferenceValueLabel(value.asReference());
+            } else if (Object.class.isAssignableFrom(klass)) {
+                return new WordValueLabel(vmLogView.inspection(), ValueMode.REFERENCE, Address.fromLong(argValue), vmLogView.getTable());
             }
         }
         return defaultRenderer(argValue);

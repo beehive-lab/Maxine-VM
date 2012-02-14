@@ -618,8 +618,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected TLabLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         protected TLabLoggerAuto() {

@@ -27,6 +27,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.Heap.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -49,7 +51,7 @@ import com.sun.max.vm.thread.*;
  * logging/tracing during boot image generation. The {@link VMLogHosted} implementation
  * is used during hosted mode.
  */
-public abstract class VMLog {
+public abstract class VMLog implements Heap.GCCallback {
 
     /**
      * Factory class to choose implementation at image build time via property.
@@ -232,7 +234,7 @@ public abstract class VMLog {
      * Array of registered {@link VMLogger} instances.
      */
     @INSPECTED
-    private static VMLogger[] loggers = new VMLogger[8];
+    private static VMLogger[] loggers = new VMLogger[16];
     private static int nextLoggerIndex;
 
     /**
@@ -254,6 +256,8 @@ public abstract class VMLog {
     @INSPECTED
     protected volatile int nextId;
 
+    protected static int[][] operationRefMaps;
+
     /**
      * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
      */
@@ -262,11 +266,14 @@ public abstract class VMLog {
         nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
         vmLog = Factory.create();
         vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+        operationRefMaps = new int[loggers.length][];
         for (VMLogger logger : loggers) {
             if (logger != null) {
                 logger.setVMLog(vmLog, new VMLogHosted());
+                operationRefMaps[logger.loggerId] = logger.operationRefMaps;
             }
         }
+        Heap.registerGCCallback(vmLog);
     }
 
     /**
@@ -377,5 +384,63 @@ public abstract class VMLog {
      */
     public abstract boolean threadIsEnabled();
 
+    /**
+     * Scan the log for reference types for GC.
+     * @param tla tla for thread
+     * @param visitor
+     */
+    public abstract void scanLog(Pointer tla, PointerIndexVisitor visitor);
+
+    /**
+     * Records the identify of the last visitor passed to {@link #scanLog} to avoid repeat scans
+     * of global log buffers.
+     * N.B. this assumes no parallel calls on multiple threads.
+     */
+    private PointerIndexVisitor lastVisitor;
+
+    @Override
+    public void gcCallback(GCCallbackPhase gcCallbackPhase) {
+        if (gcCallbackPhase == GCCallbackPhase.AFTER) {
+            lastVisitor = null;
+        }
+    }
+
+    /**
+     * Returns {@code true} is {@code visitor} is the same as the last call.
+     * @param visitor
+     * @return
+     */
+    protected boolean isRepeatScanLogVisitor(PointerIndexVisitor visitor) {
+        // if it's the same visitor (and not null) it's a repeat call for a different thread.
+        if (lastVisitor == visitor) {
+            return true;
+        } else {
+            lastVisitor = visitor;
+            return false;
+        }
+    }
+
+    /**
+     * Encapsulates the logic of visiting reference valued arguments.
+     * @param r the log record
+     * @param argBase the address of the base of the arguments
+     * @param visitor the visitor originally passed to {@link #scanLog}.
+     */
+    protected void scanArgs(Record r, Pointer argBase, PointerIndexVisitor visitor) {
+        int loggerId = r.getLoggerId();
+        int[] loggerOperationRefMaps = operationRefMaps[loggerId];
+        if (loggerOperationRefMaps != null) {
+            int op = r.getOperation();
+            int operationRefMap = loggerOperationRefMaps[op];
+            int argIndex = 0;
+            while (operationRefMap != 0) {
+                if ((operationRefMap & 1) != 0) {
+                    visitor.visit(argBase, argIndex);
+                }
+                argIndex++;
+                operationRefMap = operationRefMap >>> 1;
+            }
+        }
+    }
 
 }

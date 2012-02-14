@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -44,7 +43,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -214,7 +212,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             top = toSpace.end().minus(safetyZoneSize);
 
             if (MaxineVM.isDebug()) {
-                zapRegion(toSpace, When.INIT);
+                zapRegion(toSpace, GCCallbackPhase.INIT);
             }
             if (MaxineVM.isDebug()) {
                 VerifyReferences = true;
@@ -224,6 +222,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             // From now on we can allocate
 
+            Heap.invokeGCCallbacks(GCCallbackPhase.INIT);
             InspectableHeapInfo.init(true, toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
@@ -353,13 +352,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             try {
                 VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
 
+                Heap.invokeGCCallbacks(GCCallbackPhase.BEFORE);
                 // Pre-verification of the heap.
-                verifyObjectSpaces(When.BEFORE);
-
-                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
-
-                vmConfig().monitorScheme().beforeGarbageCollection();
+                verifyObjectSpaces(GCCallbackPhase.BEFORE);
 
                 final long startGCTime = System.currentTimeMillis();
                 collectionCount++;
@@ -441,14 +436,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
-                vmConfig().monitorScheme().afterGarbageCollection();
+                Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
-                verifyObjectSpaces(When.AFTER);
-
-                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
-
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+                verifyObjectSpaces(GCCallbackPhase.AFTER);
 
                 if (Heap.logGCTime()) {
                     timeLogger.logPhaseTimes(invocationCount,
@@ -966,7 +957,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      *
      * @param when a description of the current GC phase
      */
-    private void verifyObjectSpaces(When when) {
+    private void verifyObjectSpaces(GCCallbackPhase when) {
         if (!MaxineVM.isDebug() && !VerifyReferences) {
             return;
         }
@@ -1016,7 +1007,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
     }
 
-    private void zapRegion(MemoryRegion region, When when) {
+    private void zapRegion(MemoryRegion region, GCCallbackPhase when) {
         if (Heap.logGCPhases()) {
             phaseLogger.logZappingRegion(region, when);
         }
@@ -1225,32 +1216,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     static final PhaseLogger phaseLogger = new PhaseLogger();
 
-    /**
-     * A way to avoid logging strings for before/after GC identification.
-     * Not really needed when we support objects in the log.
-     */
-    private static enum When {
-        INIT("GC initialization"), BEFORE("before GC"), AFTER("after GC");
-
-        private String traceString;
-        private static final When[] VALUES = values();
-
-        @HOSTED_ONLY
-        public static String inspectedValue(Word argValue) {
-            return values()[argValue.asAddress().toInt()].traceString;
-        }
-
-        When(String traceString) {
-            this.traceString = traceString;
-        }
-
+    private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
+        return GCCallbackPhase.VALUES[r.getIntArg(argNum)];
     }
 
-    private static When toWhen(Record r, int argNum) {
-        return When.VALUES[r.getIntArg(argNum)];
-    }
-
-    private static Word whenArg(When when) {
+    private static Word gcCallbackPhaseArg(GCCallbackPhase when) {
         return Address.fromInt(when.ordinal());
     }
 
@@ -1279,12 +1249,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         void scanningCode(@VMLogParam(name = "interval") Interval interval);
         void movingReachable(@VMLogParam(name = "interval") Interval interval);
         void processingSpecialReferences(@VMLogParam(name = "interval") Interval interval);
-        void verifyingObjectSpaces(@VMLogParam(name = "interval") Interval interval, @VMLogParam(name = "when") When when);
+        void verifyingObjectSpaces(@VMLogParam(name = "interval") Interval interval, @VMLogParam(name = "when") GCCallbackPhase when);
         void verifyingStackReferences(@VMLogParam(name = "interval") Interval interval);
         void verifyingHeapObjects(@VMLogParam(name = "interval") Interval interval);
         void verifyingCodeObjects(@VMLogParam(name = "interval") Interval interval);
         void verifyingRegion(@VMLogParam(name = "region") MemoryRegion region, @VMLogParam(name = "start") Address start, @VMLogParam(name = "end") Address end);
-        void zappingRegion(@VMLogParam(name = "region") MemoryRegion region, @VMLogParam(name = "when") When when);
+        void zappingRegion(@VMLogParam(name = "region") MemoryRegion region, @VMLogParam(name = "when") GCCallbackPhase when);
     }
 
     public static final class PhaseLogger extends PhaseLoggerAuto {
@@ -1330,11 +1300,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
 
         @Override
-        protected void traceVerifyingObjectSpaces(Interval interval, When when) {
+        protected void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
             Log.print(interval.name());
             Log.print(": ");
             Log.print("Verifying object spaces ");
-            Log.print(when.traceString);
+            Log.print(when.description);
         }
 
         @Override
@@ -1370,12 +1340,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
 
         @Override
-        protected void traceZappingRegion(MemoryRegion region, When when) {
+        protected void traceZappingRegion(MemoryRegion region, GCCallbackPhase when) {
             Log.print("Zapping region ");
             Log.print(' ');
             Log.print(region.regionName());
             Log.print(' ');
-            Log.println(when.traceString);
+            Log.println(when.description);
 
         }
 
@@ -1559,8 +1529,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected DetailLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override
@@ -1625,8 +1597,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = new int[] {0x1, 0x3, 0x1, 0x1, 0x1, 0x1, 0x1, 0x0, 0x1, 0x3, 0x1, 0x1, 0x1};
+
         protected PhaseLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override
@@ -1678,10 +1652,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         protected abstract void traceProcessingSpecialReferences(Interval interval);
 
         @INLINE
-        public final void logVerifyingObjectSpaces(Interval interval, When when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), whenArg(when));
+        public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gcCallbackPhaseArg(when));
         }
-        protected abstract void traceVerifyingObjectSpaces(Interval interval, When when);
+        protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
 
         @INLINE
         public final void logVerifyingStackReferences(Interval interval) {
@@ -1708,10 +1682,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         protected abstract void traceVerifyingRegion(MemoryRegion region, Address start, Address end);
 
         @INLINE
-        public final void logZappingRegion(MemoryRegion region, When when) {
-            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), whenArg(when));
+        public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
+            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), gcCallbackPhaseArg(when));
         }
-        protected abstract void traceZappingRegion(MemoryRegion region, When when);
+        protected abstract void traceZappingRegion(MemoryRegion region, GCCallbackPhase when);
 
         @Override
         protected void trace(Record r) {
@@ -1745,7 +1719,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     break;
                 }
                 case 7: { //VerifyingObjectSpaces
-                    traceVerifyingObjectSpaces(toInterval(r, 1), toWhen(r, 2));
+                    traceVerifyingObjectSpaces(toInterval(r, 1), toGCCallbackPhase(r, 2));
                     break;
                 }
                 case 8: { //VerifyingStackReferences
@@ -1765,7 +1739,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     break;
                 }
                 case 12: { //ZappingRegion
-                    traceZappingRegion(toMemoryRegion(r, 1), toWhen(r, 2));
+                    traceZappingRegion(toMemoryRegion(r, 1), toGCCallbackPhase(r, 2));
                     break;
                 }
             }
@@ -1779,8 +1753,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected TimeLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override

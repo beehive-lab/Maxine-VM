@@ -27,6 +27,7 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
 
@@ -66,6 +67,17 @@ public class JVMTIEvent {
 
         MutableLong(long value) {
             this.value = value;
+        }
+    }
+
+    private static class GCCallback implements Heap.GCCallback{
+
+        public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
+            if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
+                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
+            } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
+                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
+            }
         }
     }
 
@@ -226,6 +238,8 @@ public class JVMTIEvent {
     private static int[] phases = new int[EVENT_COUNT];
 
     static {
+        Heap.registerGCCallback(new GCCallback());
+
         for (int i = JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL; i <= JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL; i++) {
             int eventPhase = JVMTIConstants.JVMTI_PHASE_LIVE;
             /* N.B. The START phase is considered to have been entered when the VM sends the VM_START event,
