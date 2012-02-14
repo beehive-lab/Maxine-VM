@@ -27,7 +27,6 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
@@ -40,7 +39,6 @@ import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -373,45 +371,6 @@ public class SpecialReferenceManager {
             end = head;
             head = discoveredList;
         } while (true);
-
-        // Special reference map of Inspector
-        if (Inspectable.isVmInspected()) {
-            processInspectableWeakReferencesMemory(gc);
-        }
-    }
-
-    private static void processInspectableWeakReferencesMemory(GC gc) {
-        final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
-        final boolean updateReachableReferent = gc.mayRelocateLiveObjects();
-        assert rootsMemoryRegion != null;
-        final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
-        long wordsUsedCounter = 0;
-        assert !rootsPointer.isZero();
-        for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-            final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
-            if (!rootPointer.isZero()) {
-                final Reference referent = Reference.fromOrigin(rootPointer);
-                if (gc.isReachable(referent)) {
-                    if (updateReachableReferent) {
-                        rootsPointer.setWord(i, gc.preserve(referent).toOrigin());
-                    }
-                    wordsUsedCounter++;
-                } else {
-                    rootsPointer.setWord(i, Pointer.zero());
-                }
-                if (TraceReferenceGC || Heap.traceGC()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Processed root table entry ");
-                    Log.print(i);
-                    Log.print(": set ");
-                    Log.print(rootPointer);
-                    Log.print(" to ");
-                    Log.println(rootsPointer.getWord(i));
-                    Log.unlock(lockDisabledSafepoints);
-                }
-            }
-        }
-        rootsMemoryRegion.setWordsUsed(wordsUsedCounter);
     }
 
     @ALIAS(declaringClassName = "java.lang.ref.Finalizer")
