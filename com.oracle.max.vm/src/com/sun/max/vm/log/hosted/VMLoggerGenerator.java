@@ -33,8 +33,10 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Checks/Generates the boilerplate of a {@link VMLogger} implementation from
@@ -61,12 +63,14 @@ public class VMLoggerGenerator {
             VMLoggerInterface vmLoggerInterface = getVMLoggerInterface(loggerInterface);
             String autoName = getRootName(loggerInterface) + "Auto";
             Method[] methods = loggerInterface.getDeclaredMethods();
+            Map<String, Integer> refMap = computeRefMaps(methods);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
             Map<String, Integer> enumMap = outOperationEnum(out, methods);
-            Set<String> casts = new HashSet<String>();
+            Set<String> refTypes = new HashSet<String>();
 
+            out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(refMap));
             out.printf("%sprotected %s(String name, String optionDescription) {%n", INDENT8, autoName);
-            out.printf("%ssuper(name, Operation.VALUES.length, optionDescription);%n", INDENT12);
+            out.printf("%ssuper(name, Operation.VALUES.length, optionDescription, REFMAPS);%n", INDENT12);
             out.printf("%s}%n%n", INDENT8);
             if (vmLoggerInterface.defaultConstructor()) {
                 out.printf("%sprotected %s() {%n", INDENT8, autoName);
@@ -81,7 +85,7 @@ public class VMLoggerGenerator {
             ArrayList<String> traceCaseBodies = new ArrayList<String>(methods.length);
 
             for (Method method : methods) {
-                String uName = toFirstUpper(method.getName());
+                String uName = operationName(method);
                 if (isOverride(method, vmLoggerInterface)) {
                     out.printf("%s@Override%n", INDENT8);
                 }
@@ -144,7 +148,7 @@ public class VMLoggerGenerator {
                     if (argIndex > 1) {
                         caseBody.append(", ");
                     }
-                    caseBody.append(wrapTraceArg(casts, source, parameter, argIndex));
+                    caseBody.append(wrapTraceArg(refTypes, source, parameter, argIndex));
                     argIndex++;
                 }
                 caseBody.append(");\n");
@@ -174,7 +178,7 @@ public class VMLoggerGenerator {
             outTraceMethod(out, traceCaseBodies);
 
             // casts
-            for (String type : casts) {
+            for (String type : refTypes) {
                 out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
                 out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, type);
                 out.printf("%s}%n", INDENT8);
@@ -196,6 +200,27 @@ public class VMLoggerGenerator {
         return wouldUpdate;
     }
 
+    private static Map<String, Integer> computeRefMaps(Method[] methods) {
+        Map<String, Integer> refMap = new HashMap<String, Integer>();
+        for (Method method : methods) {
+            int argIndex = 0;
+            int refMapBits = 0;
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            for (Class<?> type : parameterTypes) {
+                if (Word.class.isAssignableFrom(type)) {
+                    // not a reference type
+                } else if (Actor.class.isAssignableFrom(type) || VmThread.class.isAssignableFrom(type)) {
+                    // scalar id alternative
+                } else if (Object.class.isAssignableFrom(type)) {
+                    refMapBits |= 1 << argIndex;
+                }
+                argIndex++;
+            }
+            refMap.put(operationName(method), refMapBits);
+        }
+        return refMap;
+    }
+
     private static String sanitizedName(String name) {
         int ix = name.indexOf('$');
         if (ix < 0) {
@@ -210,7 +235,7 @@ public class VMLoggerGenerator {
             return false;
         }
         // look in parent for method that matches method name
-        String logName = "log" + toFirstUpper(method.getName());
+        String logName = "log" + operationName(method);
         for (Method parentMethod : parent.getDeclaredMethods()) {
             if (parentMethod.getName().equals(logName)) {
                 return true;
@@ -239,6 +264,35 @@ public class VMLoggerGenerator {
         return false;
     }
 
+    private static String operationName(Method method) {
+        return toFirstUpper(method.getName());
+    }
+
+    private static String refMapArray(Map<String, Integer> refMap) {
+        boolean zero = true;
+        for (int x : refMap.values()) {
+            if (x != 0) {
+                zero = false;
+                break;
+            }
+        }
+        if (zero) {
+            return "null";
+        }
+        StringBuilder sb = new StringBuilder("new int[] {");
+        boolean first = true;
+        for (int bits : refMap.values()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append("0x").append(Integer.toHexString(bits));
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
     private static Map<String, Integer> outOperationEnum(PrintWriter out, Method[] methods) {
         Map<String, Integer> enumMap = new HashMap<String, Integer>();
         out.format("%spublic enum Operation {%n", INDENT8);
@@ -256,7 +310,7 @@ public class VMLoggerGenerator {
             } else {
                 first = false;
             }
-            String enumName = toFirstUpper(method.getName());
+            String enumName = operationName(method);
             out.print(enumName);
             enumMap.put(enumName, count);
             count++;
@@ -314,13 +368,13 @@ public class VMLoggerGenerator {
         return methodName + "(" + name + ")";
     }
 
-    private static String wrapTraceArg(Set<String> casts, Class sourceClass, Class klass, int argNum) {
+    private static String wrapTraceArg(Set<String> refTypes, Class sourceClass, Class klass, int argNum) {
         String type = toFirstUpper(klass.getSimpleName());
         String methodName = traceArgMethodName(type);
         if (isStandardArgMethod(methodName, sourceClass)) {
             return wrapTraceArg(methodName, argNum);
         } else {
-            casts.add(type);
+            refTypes.add(type);
             return wrapTraceArg(methodName, argNum);
         }
     }

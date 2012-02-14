@@ -586,6 +586,54 @@ public final class Heap {
     }
 
     /*
+     * Support for callbacks on GC start and end
+     */
+
+    /**
+     * Identifies the callback phase, and can also be used within
+     * heap implementations for logging purposes.
+     */
+    public static enum GCCallbackPhase {
+        INIT("GC initialization"), BEFORE("before GC"), AFTER("after GC");
+
+        public final String description;
+        public static final GCCallbackPhase[] VALUES = values();
+
+        @HOSTED_ONLY
+        public static String inspectedValue(Word argValue) {
+            return values()[argValue.asAddress().toInt()].description;
+        }
+
+        GCCallbackPhase(String traceString) {
+            this.description = traceString;
+        }
+    }
+
+    /**
+     * A class that wants to register for callbacks must implement this interface
+     * register itself with {@link #registerCallback}.
+     */
+    public interface GCCallback {
+        void gcCallback(GCCallbackPhase gcCallbackPhase);
+    }
+
+    private static final GCCallback[] gcCallbacks = new GCCallback[4];
+    private static int gcCallbacksIndex = 0;
+
+    @HOSTED_ONLY
+    public static void registerGCCallback(GCCallback callback) {
+        gcCallbacks[gcCallbacksIndex++] = callback;
+    }
+
+    public static void invokeGCCallbacks(GCCallbackPhase callbackPhase) {
+        for (int i = 0; i < gcCallbacks.length; i++) {
+            if (gcCallbacks[i] != null) {
+                gcCallbacks[i].gcCallback(callbackPhase);
+            }
+        }
+    }
+
+    /*
      * Everything related to logging/tracing the heap behavior is defined below.
      */
 
@@ -616,7 +664,7 @@ public final class Heap {
     public static final VMLogger gcAllLogger = new VMLogger("GC", 0,
                     "all garbage collection activity. Enabling this option also enables the " +
                     rootScanLogger.logOption + ", " +
-                    phaseLogger.traceOption +  " and " + timeLogger.traceOption + " options.") {
+                    phaseLogger.traceOption +  " and " + timeLogger.traceOption + " options.", null) {
         @Override
         public void checkOptions() {
             super.checkOptions();
@@ -862,8 +910,10 @@ public final class Heap {
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected AllocationLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         protected AllocationLoggerAuto() {
@@ -938,8 +988,10 @@ public final class Heap {
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected RootScanLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override

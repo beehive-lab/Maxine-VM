@@ -32,16 +32,13 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * This implementation uses a native buffer and the "records" are stored
- * as a flattened array. As per {@link VMLogArray} the records are all fixed
- * size and capable of storing the maximum number of arguments. They are, however,
- * not real objects, which requires some subterfuge in the case where a client,
- * e.g, {@VMLogger} wants to see a real object. We handle this with a
- * {@link VmThreadLocal} that holds a {@link NativeRecord subclass} of {@link VMLog.Record}
- * containing the native record address which overrides all the methods
- * that access the state of the record. Evidently this record must be "used"
- * promptly and not cached as the value of the underlying state will change
- * every time {@link VMLog#getRecord} is called.
+ * Subclasses of this implementation uses native buffers and the "records" are stored as a flattened array. The records
+ * are, however, not real objects, which requires some subterfuge in the case where a client, e.g, {@VMLogger} wants
+ * to see a real object. We handle this with a {@link VmThreadLocal} that holds a {@link NativeRecord
+ * subclass} of {@link VMLog.Record} which records the native record address, and overrides all the methods that access
+ * the state of the record. Evidently this record must be "used" promptly and not cached, as the value of the underlying
+ * state will change every time the {@link NativeRecord#address} is set, which will happen at least every time
+ * {@link VMLog#getRecord} is called.
  */
 public abstract class VMLogNative extends VMLog {
 
@@ -54,10 +51,7 @@ public abstract class VMLogNative extends VMLog {
 
     public static class NativeRecord extends VMLog.Record {
         public Pointer address;
-        public int argsOffset;
-
-        protected NativeRecord() {
-        }
+        public final int argsOffset;
 
         protected NativeRecord(int argsOffset) {
             this.argsOffset = argsOffset;
@@ -139,16 +133,11 @@ public abstract class VMLogNative extends VMLog {
             address.setWord(argsOffset, 7, arg8);
         }
 
-        protected void setArgsOffset(int argsOffset) {
-            this.argsOffset = argsOffset;
-        }
-
         /**
-         * Size of a log record in the native buffer.
-         * Default implementation assumes maximum args, fixed size.
+         * Default size of a log record in the native buffer, assuming fixed length, max args.
          * @return
          */
-        public int size() {
+        public final int defaultSize() {
             return argsOffset + VMLog.Record.MAX_ARGS * Word.size();
         }
 
@@ -161,11 +150,11 @@ public abstract class VMLogNative extends VMLog {
     protected static NativeRecord primordialNativeRecord;
 
     /**
-     * Size of a native log record in bytes (sans arguments).
+     * Default size of a native log record in bytes.
      */
     @CONSTANT_WHEN_NOT_ZERO
     @INSPECTED
-    protected int maxNativeRecordSize;
+    protected int defaultNativeRecordSize;
 
     /**
      * Offset to start of arguments area.
@@ -203,8 +192,7 @@ public abstract class VMLogNative extends VMLog {
             byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
             nativeRecordArgsOffset = getArgsOffset();
             primordialNativeRecord = new NativeRecord(nativeRecordArgsOffset);
-            primordialNativeRecord.setArgsOffset(nativeRecordArgsOffset);
-            maxNativeRecordSize = primordialNativeRecord.size();
+            defaultNativeRecordSize = primordialNativeRecord.defaultSize();
             logSize = getLogSize();
             primordialLogBufferArray = new byte[logSize];
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
@@ -234,8 +222,16 @@ public abstract class VMLogNative extends VMLog {
         return record;
     }
 
+    /**
+     * The offset (in bytes) to the start of the arguments in the native record.
+     * @return
+     */
     protected abstract int getArgsOffset();
 
+    /**
+     * The total size in bytes of a log buffer.
+     * @return
+     */
     protected abstract int getLogSize();
 
 

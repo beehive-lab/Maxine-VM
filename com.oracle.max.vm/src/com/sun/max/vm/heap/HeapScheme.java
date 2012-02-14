@@ -393,8 +393,8 @@ public interface HeapScheme extends VMScheme {
         /**
          * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
          */
-        protected PhaseLogger(String name, int numOps, String description) {
-            super("GCPhases", numOps, "garbage collection phases.");
+        protected PhaseLogger(String name, int numOps, String description, int[] refMaps) {
+            super("GCPhases", numOps, "garbage collection phases.", refMaps);
         }
 
         /**
@@ -417,8 +417,8 @@ public interface HeapScheme extends VMScheme {
         /**
          * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
          */
-        protected TimeLogger(String name, int numOps, String description) {
-            super("GCTime", numOps, "time of garbage collection phases.");
+        protected TimeLogger(String name, int numOps, String description, int[] refMaps) {
+            super("GCTime", numOps, "time of garbage collection phases.", refMaps);
         }
 
         /**
@@ -441,6 +441,21 @@ public interface HeapScheme extends VMScheme {
      * the specified events occur.
      */
     public static final class Inspect {
+
+        private static class GCCallback implements Heap.GCCallback{
+
+            public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
+                if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
+                    notifyHeapPhaseChange(HeapPhase.ANALYZING);
+                } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
+                    notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+                }
+            }
+        }
+
+        static {
+            Heap.registerGCCallback(new GCCallback());
+        }
 
         /**
          * Announces that the heap's GC has just changed to a new phase.  It does almost nothing,

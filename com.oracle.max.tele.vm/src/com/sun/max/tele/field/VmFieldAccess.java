@@ -227,12 +227,10 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
     public final TeleInstanceReferenceFieldAccess VMLogArray_buffer = new TeleInstanceReferenceFieldAccess(VMLogArray.class, "buffer", Record[].class);
+    public final TeleInstanceIntFieldAccess VMLogNative_defaultNativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "defaultNativeRecordSize");
     public final TeleInstanceWordFieldAccess VMLogNative_logBuffer = new TeleInstanceWordFieldAccess(VMLogNative.class, "logBuffer");
     public final TeleInstanceIntFieldAccess VMLogNative_logSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "logSize");
-    public final TeleInstanceIntFieldAccess VMLogNative_maxNativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "maxNativeRecordSize");
     public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordArgsOffset = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordArgsOffset");
-    public final TeleStaticIntFieldAccess VMLogger_tempObjectIdIndex = new TeleStaticIntFieldAccess(VMLogger.class, "tempObjectIdIndex");
-    public final TeleStaticReferenceFieldAccess VMLogger_tempObjectIds = new TeleStaticReferenceFieldAccess(VMLogger.class, "tempObjectIds", Object[].class);
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "name", String.class);
     public final TeleStaticReferenceFieldAccess VmThreadLocal_VALUES = new TeleStaticReferenceFieldAccess(VmThreadLocal.class, "VALUES", List.class);
     // END GENERATED CONTENT

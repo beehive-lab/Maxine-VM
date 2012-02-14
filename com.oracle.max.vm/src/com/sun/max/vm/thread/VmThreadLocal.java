@@ -39,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.Log.LogPrintStream;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -521,6 +522,8 @@ public class VmThreadLocal implements FormatWithToString {
         // After this call, the thread object may have been forwarded which means
         // that vtable dispatch will no longer work for the object
         scanThreadLocals(tla, wordPointerIndexVisitor);
+
+        VMLog.vmLog().scanLog(tla, wordPointerIndexVisitor);
 
         Pointer anchor = JavaFrameAnchor.from(tla);
         if (!anchor.isZero()) {

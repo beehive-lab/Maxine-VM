@@ -630,8 +630,10 @@ public class SpecialReferenceManager {
             public static final Operation[] VALUES = values();
         }
 
+        private static final int[] REFMAPS = null;
+
         protected SpecialReferenceLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription);
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
         }
 
         @Override

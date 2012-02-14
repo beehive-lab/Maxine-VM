@@ -24,8 +24,11 @@ package com.sun.max.vm.log.java;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -33,10 +36,19 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class VMLogArray extends VMLog {
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private int arg1Offset;
+
     @INSPECTED
     public final Record[] buffer;
+
     protected VMLogArray() {
         buffer = new Record[logEntries];
+        try {
+            arg1Offset = FieldActor.fromJava(Record1.class.getDeclaredField("arg1")).offset();
+        } catch (NoSuchFieldException ex) {
+            // cannot happen
+        }
     }
 
     /*
@@ -288,5 +300,25 @@ public abstract class VMLogArray extends VMLog {
         return VMLOG_THREADSTATE.load(VmThread.currentTLA()).isZero();
     }
 
+    /**
+     * Called to scan/update {@link VMLog} buffer, once per-thread.
+     * Since we have a global log, we only need to scan once.
+     */
+    @Override
+    public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
+        if (isRepeatScanLogVisitor(visitor)) {
+            return;
+        }
+        // order doesn't matter, just how many entries are in use
+        int hwm = nextId > logEntries ? logEntries : nextId;
+        for (int i = 0; i < hwm; i++) {
+            Record r = buffer[i];
+            scanArgs(r, Reference.fromJava(r).toOrigin().plus(arg1Offset), visitor);
+        }
+    }
 
+    @NEVER_INLINE
+    private void doVisit(int index, PointerIndexVisitor visitor, Pointer argBase, int argIndex) {
+        visitor.visit(argBase, argIndex);
+    }
 }

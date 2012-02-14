@@ -25,6 +25,7 @@ package com.sun.max.vm.log.hosted;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
 
 /**
@@ -154,5 +155,15 @@ public class VMLogHosted extends VMLog {
     @Override
     public boolean threadIsEnabled() {
         return true;
+    }
+
+    @Override
+    public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
+        // no hosted GC
+    }
+
+    @Override
+    public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
+        // no hosted GC
     }
 }

@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.log;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.log.VMLog.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.util.*;
 import java.util.regex.*;
@@ -129,15 +129,15 @@ import com.sun.max.vm.thread.*;
  * acquiring a pre-allocated instance in some way. It also necessarily involves a level of indirection in the log buffer
  * itself, as the buffer is constrained to be a container of reference values.
  *
- * Since {{VMLog}} is a low level mechanism that must function in parts of the VM where allocation is impossible, for
+ * Since {@link VMLog} is a low level mechanism that must function in parts of the VM where allocation is impossible, for
  * example, during garbage collection, the standard approach is not appropriate. It is also important to minimize the
  * storage overhead for log records and the performance overhead of logging the data. Therefore, a less type safe
  * approach is adopted, that is partly mitigated by automatic generation of logger code at VM image build time.
  * <p>
  * The automatic generation, see {@link VMLoggerGenerator}, is driven from an interface defining the logger operations
- * that is tagged with the {@link VMLoggerInterface} annotation. Since this is only used during image generator the
+ * that is tagged with the {@link VMLoggerInterface} annotation. Since this is only used during image generation the
  * interface should also be tagged with {@link HOSTED_ONLY}. The logging operations are defined as methods
- * in the interface.In order to preserve the parameter names in the generated code, eacjh param should also be annotated
+ * in the interface. In order to preserve the parameter names in the generated code, each parameter should also be annotated
  * with {@link VMLogParam}, e.g.:
  *
  * <pre>
@@ -264,46 +264,13 @@ public class VMLogger {
     private boolean traceEnabled;
     private boolean optionsChecked;
 
-    private VMLog vmLog;
-
-    /*
-     * Temporary support for VMLogger.getObjectId.
-     */
-    @INSPECTED
-    private static int tempObjectIdIndex = 1;
-    @INSPECTED
-    private static final Object[] tempObjectIds = new Object[8192];
-    private static int tempObjectIdIndexOffset;
-    private static ClassActor vmLoggerClassActor;
-
-
-    @HOSTED_ONLY
-    private static void setupObjectIds() {
-        vmLoggerClassActor = ClassActor.fromJava(VMLogger.class);
-        tempObjectIdIndexOffset = vmLoggerClassActor.findLocalStaticFieldActor("tempObjectIdIndex").offset();
-    }
-
     /**
-     * Temporary hack to convert arbitrary object into an id for logging.
-     * @param object
-     * @return
+     *  GC support, array of bitmaps identifying reference-valued arguments for each operation.
+     *  {@code null} if no operations have reference valued arguments.
      */
-    public static Word objectArg(Object object) {
-        if (object == null) {
-            return Word.zero();
-        }
-        for (int i = 0; i < tempObjectIds.length; i++) {
-            if (tempObjectIds[i] == object) {
-                return intArg(i);
-            }
-        }
-        int myId = tempObjectIdIndex;
-        while (Reference.fromJava(vmLoggerClassActor.staticTuple()).compareAndSwapInt(tempObjectIdIndexOffset, myId, myId + 1) != myId) {
-            myId = tempObjectIdIndexOffset;
-        }
-        tempObjectIds[myId] = object;
-        return intArg(myId);
-    }
+    final int[] operationRefMaps;
+
+    private VMLog vmLog;
 
     @HOSTED_ONLY
     private static VMLog hostedVMLog;
@@ -313,11 +280,13 @@ public class VMLogger {
      * @param name name used in option name, i.e., -XX:+Logname
      * @param numOps number of logger operations
      * @param optionDescription if not {@code null}, string used in option description.
+     * @param operationRefMaps reference maps for operation parameters.
      */
     @HOSTED_ONLY
-    public VMLogger(String name, int numOps, String optionDescription) {
+    public VMLogger(String name, int numOps, String optionDescription, int[] operationRefMaps) {
         this.name = name;
         this.numOps = numOps;
+        this.operationRefMaps = operationRefMaps;
         loggerId = nextLoggerId++;
         logOp = new BitSet(numOps);
         String logName = "Log" + name;
@@ -334,6 +303,17 @@ public class VMLogger {
     }
 
     /**
+     * Convenience variant for null operationRefMaps.
+     * @param name
+     * @param numOps
+     * @param optionDescription
+     */
+    @HOSTED_ONLY
+    public VMLogger(String name, int numOps, String optionDescription) {
+        this(name, numOps, optionDescription, null);
+    }
+
+    /**
      * If you want to have the external existence of a logger be conditional on some value,
      * e.g., the image build mode, this constructor can be used in the case where value
      * is false. It effectively produces a null logger that is invisible.
@@ -342,6 +322,7 @@ public class VMLogger {
     protected VMLogger() {
         this.name = "NULL";
         this.numOps = 0;
+        this.operationRefMaps = null;
         loggerId = -1;
         logOption = traceOption = null;
         logIncludeOption = logExcludeOption = null;
@@ -353,7 +334,6 @@ public class VMLogger {
     public void setVMLog(VMLog vmLog, VMLog hostedVMLog) {
         this.vmLog = vmLog;
         VMLogger.hostedVMLog = hostedVMLog;
-        setupObjectIds();
         checkOptions();
     }
 
@@ -682,6 +662,11 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word objectArg(Object object) {
+        return Reference.fromJava(object).toOrigin();
+    }
+
+    @INLINE
     public static Word twoIntArgs(int a, int b) {
         return Address.fromLong(((long) a) << 32 | b);
     }
@@ -781,6 +766,11 @@ public class VMLogger {
         return Interval.VALUES[r.getIntArg(argNum)];
     }
 
+    @INLINE
+    public static Object toObject(Record r, int argNum) {
+        return Reference.fromOrigin(r.getArg(argNum).asPointer()).toJava();
+    }
+
     @INTRINSIC(UNSAFE_CAST)
     private static native String asString(Object arg);
 
@@ -797,12 +787,5 @@ public class VMLogger {
         return asTargetMethod(toObject(r, argNum));
     }
 
-    public static Object toObject(int id) {
-        return tempObjectIds[id];
-    }
-
-    public static Object toObject(Record r, int argNum) {
-        return tempObjectIds[r.getIntArg(argNum)];
-    }
 
 }
