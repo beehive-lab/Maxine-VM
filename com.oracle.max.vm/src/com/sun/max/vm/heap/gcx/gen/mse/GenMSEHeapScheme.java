@@ -127,14 +127,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         cardTableRSet = new CardTableRSet();
         youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
 
-        final BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller()) {
-            final CardFirstObjectTable cfoTable = cardTableRSet.cfoTable;
-            @Override
-            protected void postAllocationDo(Pointer cell, Size size) {
-                cfoTable.split(cell, cell.plus(size), hardLimit());
-            }
-        };
-        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, overflowAllocator, true, cardTableRSet, OLD.tag());
+
+        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount,  true, cardTableRSet, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();

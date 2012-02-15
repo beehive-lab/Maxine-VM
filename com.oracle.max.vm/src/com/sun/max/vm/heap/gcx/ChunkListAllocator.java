@@ -50,7 +50,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
         super.initialize(Address.zero(), Size.zero());
         Address chunk = refillManager.allocateChunkListOrRefill(this, initialRefillSize, Pointer.zero(), Size.zero());
         // A zero chunk means the allocator is refilled -- see allocateChunkListOrRefill for details.
-        FatalError.check(chunk.isZero() && start.isNotZero() && top.equals(start) && end.greaterThan(top), "allocator must be refilled");
+        FatalError.check(chunk.isZero() && start().isNotZero() && top.equals(start()) && end().greaterThan(top), "allocator must be refilled");
     }
 
     /**
@@ -78,10 +78,10 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
         do {
             cell = top.asPointer();
             newTop = cell.plus(tlabSize);
-            if (newTop.greaterThan(end)) {
+            if (newTop.greaterThan(end())) {
                 synchronized (refillLock()) {
                     cell = top.asPointer();
-                    if (cell.plus(tlabSize).greaterThan(end)) {
+                    if (cell.plus(tlabSize).greaterThan(end())) {
                         // Bring allocation hand to the limit of the chunk of memory backing the allocator.
                         // We hold the refill lock so we're guaranteed that the chunk will not be replaced while we're doing this.
                         Pointer startOfLeftover = atomicSetTopToLimit();
@@ -107,6 +107,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
         }
         // Format as a chunk.
         HeapFreeChunk.format(cell, tlabSize);
+        deadSpaceListener.notifySplitLive(cell, tlabSize, hardLimit());
         return cell;
     }
 }

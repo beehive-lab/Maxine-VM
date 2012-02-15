@@ -29,11 +29,12 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
+public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     @CONSTANT_WHEN_NOT_ZERO
     protected static int TOP_OFFSET;
@@ -45,11 +46,11 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * Soft-end of the contiguous region of memory the allocator allocate from.
      * The {@link #headroom} controls how far from the actual end of the region
      */
-    protected Address end;
+    private Address end;
     /**
      * Start of the contiguous region of memory the allocator allocate from.
      */
-    protected Address start;
+    private Address start; // keep it private, so the only way to update it is via refill / reset / clear methods.
     /**
      * Size to reserve at the end of the allocator to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
@@ -59,6 +60,8 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     protected Size headroom;
 
     protected final T refillManager;
+
+    protected final DeadSpaceListener deadSpaceListener;
 
     @HOSTED_ONLY
     public static void hostInitialize() {
@@ -72,6 +75,21 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     final T refillManager() {
         return refillManager;
+    }
+
+    @INLINE
+    public final Address start() {
+        return start;
+    }
+
+    @INLINE
+    public final Address end() {
+        return end;
+    }
+
+    @INLINE
+    public boolean inCurrentContiguousChunk(Address address) {
+        return address.greaterEqual(start) && address.lessThan(end);
     }
 
     protected final void clear() {
@@ -115,6 +133,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         // Make sure we can cause any attempt to allocate to fail, regardless of the
         // value of top
         end = Address.zero();
+        deadSpaceListener.notifyRefill(chunk, chunkSize);
         // Now refill.
         start = chunk;
         top = start;
@@ -127,6 +146,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     public BaseAtomicBumpPointerAllocator(T refiller) {
         refillManager = refiller;
+        deadSpaceListener = DeadSpaceListener.nullDeadSpaceListener();
+    }
+
+    public BaseAtomicBumpPointerAllocator(T refiller, DeadSpaceListener deadSpaceListener) {
+        refillManager = refiller;
+        this.deadSpaceListener = deadSpaceListener;
     }
 
     /**
@@ -170,6 +195,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 return cell.asPointer();
             }
         } while(thisAddress.compareAndSwapWord(TOP_OFFSET, cell, hardLimit) != cell);
+        deadSpaceListener.notifySplitLive(cell, hardLimit.minus(cell).asSize(), hardLimit);
         return cell.asPointer();
     }
 
@@ -241,14 +267,9 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 }
                 // Fall-off to return to the non-blocking allocation loop.
             }
-            // There was a race for refilling the allocator. Just return to
-            // the non-blocking allocation loop.
+            // There was a race for refilling the allocator. Just return to the non-blocking allocation loop.
             return Pointer.zero();
         }
-    }
-
-    protected void postAllocationDo(Pointer cell, Size size) {
-        // Default: does nothing
     }
 
     /**
@@ -260,7 +281,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     public final Pointer allocateCleared(Size size) {
         Pointer cell = allocate(size);
         Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-        postAllocationDo(cell, size);
+        deadSpaceListener.notifySplitLive(cell, size, hardLimit());
         return cell;
     }
 
@@ -276,8 +297,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");
         }
         // Try first a non-blocking allocation out of the current chunk.
-        // This may fail for a variety of reasons, all captured by the test
-        // against the current chunk limit.
+        // This may fail for a variety of reasons, all captured by the test against the current chunk limit.
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
         Pointer cell;
         Pointer newTop;
