@@ -130,7 +130,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         @Override
         public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             // FIXME (ld) this never refill the allocator!
-            Address firstChunk = chunkOrZero(leftover, leftoverSize);
+            Address firstChunk = retireDeadSpace(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
                 if (tlabSize.lessThan(minChunkSize)) {

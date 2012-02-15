@@ -147,11 +147,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             Log.print("allocateLarge region #");
             Log.println(regionID);
         }
-        deadSpaceListener.notifyCoaslescing(allocated, requestedSize);
+        deadSpaceListener.notifySplitLive(allocated, requestedSize, allocated.plus(totalChunkSize));
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             if (!spaceLeft.isZero()) {
                 HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
-                deadSpaceListener.notifyCoaslescing(leftover, spaceLeft);
+                deadSpaceListener.notifyRetireDeadSpace(leftover, spaceLeft);
             }
             FULL_REGION.setState(rinfo);
             unavailableRegions.append(regionID);
@@ -164,7 +164,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 Log.println(" bytes");
             }
             HeapFreeChunk.format(leftover, spaceLeft);
-            deadSpaceListener.notifyCoaslescing(leftover, spaceLeft);
+            deadSpaceListener.notifyRetireFreeSpace(leftover, spaceLeft);
             rinfo.setFreeChunks(leftover,  spaceLeft, 1);
             FREE_CHUNKS_REGION.setState(rinfo);
             tlabAllocationRegions.append(regionID);
@@ -252,14 +252,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     HeapRegionInfo lastRegionInfo =  HeapRegionInfo.fromRegionID(lastRegion);
                                     Pointer tailEnd = lastRegionInfo.regionStart().plus(regionSizeInBytes).asPointer();
                                     Pointer tail = tailEnd.minus(tailSize);
-                                    // Another ugly trick to share this code between generational and flat heap code. We use the deadSpaceUpdater to set up
-                                    // the FOT if the space is paired with a card table.
                                     Address largeObjectCell = firstRegionInfo.regionStart();
-                                    deadSpaceListener.notifyCoaslescing(largeObjectCell, size);
+                                    deadSpaceListener.notifySplitLive(largeObjectCell, size, tailEnd);
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         if (!tailSize.isZero()) {
                                             HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
-                                            deadSpaceListener.notifyCoaslescing(tail, tailSize);
+                                            deadSpaceListener.notifyRetireDeadSpace(tail, tailSize);
                                         }
                                         allocationRegions.remove(lastRegion);
                                         LARGE_FULL_TAIL.setState(lastRegionInfo);
@@ -268,7 +266,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     } else {
                                         // Format the tail as a free chunk.
                                         HeapFreeChunk.format(tail, tailSize);
-                                        deadSpaceListener.notifyCoaslescing(tail, tailSize);
+                                        deadSpaceListener.notifyRetireFreeSpace(tail, tailSize);
                                         LARGE_TAIL.setState(lastRegionInfo);
                                         lastRegionInfo.setFreeChunks(tail, tailSize, 1);
                                         if (tailSize.lessThan(minOverflowRefillSize)) {
@@ -321,19 +319,15 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     }
 
     public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount) {
-        this(heapAccount, new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller()) {
-            @Override
-            protected void postAllocationDo(Pointer cell, Size size) {
-            }
-        }, false, null, 0);
+        this(heapAccount, false, DeadSpaceListener.nullDeadSpaceListener(), 0);
     }
 
-    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount, BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator, boolean zapDeadReferences, DeadSpaceListener deadSpaceRSetUpdater, int regionTag) {
-        super(zapDeadReferences, deadSpaceRSetUpdater);
+    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount,  boolean zapDeadReferences, DeadSpaceListener deadSpaceListener, int regionTag) {
+        super(zapDeadReferences, deadSpaceListener);
         this.heapAccount = heapAccount;
         this.regionTag = regionTag;
-        this.overflowAllocator = overflowAllocator;
-        tlabAllocator = new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(this));
+        overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(), deadSpaceListener);
+        tlabAllocator = new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(this, deadSpaceListener));
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
         overflowAllocator.refillManager.setRegionProvider(this);

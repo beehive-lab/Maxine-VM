@@ -285,7 +285,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(numTotalRegions);
 
-            FatalError.check(managerAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(bootHeapSize)), "");
+            FatalError.check(managerAllocator.end().roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(bootHeapSize)), "");
 
             // Ready to open bootstrap heap accounts now.
             // Start with opening the boot heap account to set the records straight after bootstrap.

@@ -23,14 +23,15 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -80,7 +81,8 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
         return allocatingRegion;
     }
 
-    RegionChunkListRefillManager(RegionProvider regionProvider) {
+    RegionChunkListRefillManager(RegionProvider regionProvider, DeadSpaceListener deadSpaceListener) {
+        super(deadSpaceListener);
         this.regionProvider = regionProvider;
         nextFreeChunkInRegion = Address.zero();
         allocatingRegion = INVALID_REGION_ID;
@@ -162,7 +164,7 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
     @Override
     @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
     public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
-        Address firstChunk = chunkOrZero(leftover, leftoverSize);
+        Address firstChunk = retireDeadSpace(leftover, leftoverSize);
         if (!firstChunk.isZero()) {
             tlabSize = tlabSize.minus(leftoverSize);
             if (tlabSize.lessThan(minChunkSize)) {
@@ -210,12 +212,13 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 // Refill the allocator with the whole region.
                 freeSpace = Size.zero();
                 nextFreeChunkInRegion = Address.zero();
+                Size refillSize = Size.fromInt(regionSizeInBytes);
                 toAllocatingState(regionInfo);
-                allocator.refill(firstFreeBytes, Size.fromInt(regionSizeInBytes));
+                allocator.refill(firstFreeBytes, refillSize);
                 return Address.zero(); // indicates that allocator was refilled.
             }
         }
-        // FIXME: revisit this. We want to refill the allocator if the next chunk much larger than the requested space.
+        // FIXME: revisit this. We want to refill the allocator if the next chunk is much larger than the requested space.
         Address result = Address.zero();
         if (freeSpace.lessEqual(tlabSize)) {
             result = nextFreeChunkInRegion;
@@ -240,6 +243,7 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
                     Size chunkLeftover = chunkSize.minus(spaceNeeded);
                     if (chunkLeftover.greaterEqual(minChunkSize)) {
                         lastChunk = HeapFreeChunk.splitRight(chunk, spaceNeeded, next);
+                        deadSpaceListener.notifySplitDead(chunk, spaceNeeded, chunk.plus(chunkSize));
                     } else {
                         lastChunk = next;
                         // Adjust allocated size, to keep accounting correct.

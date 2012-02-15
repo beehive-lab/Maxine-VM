@@ -72,7 +72,7 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
             // refilled the allocator.
             Pointer cell = top.asPointer();
 
-            if (cell.plus(size).greaterThan(end)) {
+            if (cell.plus(size).greaterThan(end())) {
                 // end isn't the hard limit of the space.
                 // Check if allocation request can fit up to the limit.
                 Address hardLimit = hardLimit();
