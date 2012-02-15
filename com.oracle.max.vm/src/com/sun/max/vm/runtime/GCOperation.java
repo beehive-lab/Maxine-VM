@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
@@ -140,12 +139,8 @@ public abstract class GCOperation extends VmOperation {
 
     @Override
     protected void doItEpilogue(boolean nested) {
-        if (Heap.traceGCTime()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Stack reference map preparation time: ");
-            Log.print(stackReferenceMapPreparationTime);
-            Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-            Log.unlock(lockDisabledSafepoints);
+        if (Heap.logGCTime()) {
+            Heap.timeLogger.logStackReferenceMapPreparationTime(stackReferenceMapPreparationTime);
             stackReferenceMapPreparationTime = 0;
         }
 
@@ -172,20 +167,46 @@ public abstract class GCOperation extends VmOperation {
 
     @NEVER_INLINE
     private void collect() {
+        final long k = Size.K.toLong();
+        long beforeFree = 0L;
+        long beforeUsed = 0L;
         if (Heap.verbose()) {
             Log.print("--Start GC ");
             Log.print(invocationCount);
             Log.println("--");
+            beforeUsed = Heap.reportUsedSpace();
+            beforeFree = Heap.reportFreeSpace();
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--Before GC   used: ");
+            Log.print(beforeUsed / k);
+            Log.print(" Kb, free: ");
+            Log.print(beforeFree / k);
+            Log.println(" Kb --");
+            Log.unlock(lockDisabledSafepoints);
         }
+
         collect(invocationCount);
+
         if (Heap.verbose()) {
+            final long afterUsed = Heap.reportUsedSpace();
+            final long afterFree = Heap.reportFreeSpace();
+            final long reclaimed = beforeUsed - afterUsed;
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--After GC    used: ");
+            Log.print(afterUsed / k);
+            Log.print(" Kb, free: ");
+            Log.print(afterFree / k);
+            Log.print(" Kb, reclaimed: ");
+            Log.print(reclaimed / k);
+            Log.println(" Kb --");
             Log.print("--End GC ");
             Log.print(invocationCount);
             Log.println("--");
+            Log.unlock(lockDisabledSafepoints);
         }
         invocationCount++;
-        if (Heap.TraceGCSuppressionCount > 0) {
-            Heap.TraceGCSuppressionCount--;
+        if (Heap.LogGCSuppressionCount > 0) {
+            Heap.LogGCSuppressionCount--;
         }
     }
 

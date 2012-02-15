@@ -110,7 +110,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
-            if (Heap.traceGCTime()) {
+            if (Heap.logGCTime()) {
                 reportTotalGCTimes();
                 VirtualMemory.reportMetrics();
             }
@@ -144,13 +144,13 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         return thread instanceof VmOperationThread;
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public boolean supportsTagging() {
         return false;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean pin(Object object) {
         // Objects never relocate. So this is always safe.
         if (MaxineVM.isDebug()) {
@@ -159,10 +159,28 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         return true;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void unpin(Object object) {
         if (MaxineVM.isDebug()) {
             pinnedCounter.decrement();
         }
     }
+
+    // Logging support TODO
+    // Located here for inheritance by sub schemes.
+
+    @Override
+    public TimeLogger timeLogger() {
+        FatalError.unexpected("Non implemented");
+        return null;
+    }
+
+    @Override
+    public PhaseLogger phaseLogger() {
+        FatalError.unexpected("Non implemented");
+        return null;
+    }
+
+
+
 }

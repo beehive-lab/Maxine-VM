@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,20 +33,20 @@ import com.sun.max.vm.runtime.*;
  * A word encoding a fixed size region range. The low-order bits hold the number of regions in the range. The high-order bits
  * hold the identifier of the first region in the range.
  */
-public abstract class RegionRange extends Word {
+public final class RegionRange extends Word {
     protected static final int REGION_ID_SHIFT = Word.width() == 64 ? 32 : 16;
     protected static final Word REGION_ID_MASK = Word.allOnes().asAddress().unsignedShiftedRight(REGION_ID_SHIFT);
 
     public static final RegionRange INVALID_RANGE = asRegionRange(-1L << REGION_ID_SHIFT);
     @HOSTED_ONLY
-    protected RegionRange() {
-        super();
+    public RegionRange(long value) {
+        super(value);
     }
 
     @INLINE
     protected static RegionRange fromLong(long encodedRange) {
         if (isHosted()) {
-            return BoxedRegionRange.fromLong(encodedRange);
+            return new RegionRange(encodedRange);
         }
         return asRegionRange(encodedRange);
     }
@@ -54,7 +54,7 @@ public abstract class RegionRange extends Word {
     @INLINE
     protected static RegionRange fromInt(int encodedRange) {
         if (isHosted()) {
-            return BoxedRegionRange.fromInt(encodedRange);
+            return new RegionRange(encodedRange);
         }
         FatalError.check(Word.width() == 32, "");
         return asRegionRange(encodedRange);
@@ -64,7 +64,9 @@ public abstract class RegionRange extends Word {
     @INLINE
     public static RegionRange from(int regionID, int numRegions) {
         if (isHosted()) {
-            return BoxedRegionRange.from(regionID, numRegions);
+            long encodedRange = regionID;
+            encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
+            return new RegionRange(encodedRange);
         }
         long range = regionID;
         range = (range << REGION_ID_SHIFT) | numRegions;
@@ -75,12 +77,12 @@ public abstract class RegionRange extends Word {
     }
 
     @INLINE
-    public final int firstRegion() {
+    public int firstRegion() {
         return asAddress().unsignedShiftedRight(REGION_ID_SHIFT).toInt();
     }
 
     @INLINE
-    public final int numRegions() {
+    public int numRegions() {
         return asAddress().and(REGION_ID_MASK.asAddress()).toInt();
     }
 

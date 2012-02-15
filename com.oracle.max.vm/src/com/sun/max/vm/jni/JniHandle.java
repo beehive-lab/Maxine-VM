@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
  *
  * @see JniHandles
  */
-public abstract class JniHandle extends Word {
+public final class JniHandle extends Word {
 
     @INLINE
     public static JniHandle zero() {
@@ -47,7 +47,8 @@ public abstract class JniHandle extends Word {
     }
 
     @HOSTED_ONLY
-    protected JniHandle() {
+    public JniHandle(long value) {
+        super(value);
     }
 
     /**
@@ -55,12 +56,17 @@ public abstract class JniHandle extends Word {
      * if this handle {@link #isZero() is zero}.
      */
     @INLINE
-    public final Object unhand() {
+    public Object unhand() {
         return JniHandles.get(this);
     }
 
     @INLINE
-    public final Address getAddress() {
+    public <T> T unhand(Class<T> type) {
+        return type.cast(JniHandles.get(this));
+    }
+
+    @INLINE
+    public Address getAddress() {
         return JniHandles.getAddress(this);
     }
 }

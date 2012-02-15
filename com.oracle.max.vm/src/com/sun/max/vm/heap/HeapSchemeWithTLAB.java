@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,11 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -57,8 +59,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
     public static boolean GenInlinedTLABAlloc = true;
 
-    private static boolean TraceTLAB;
-
     /**
      * Determines if TLABs should be traced.
      *
@@ -66,19 +66,16 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     @INLINE
     public static boolean traceTLAB() {
-        return TraceTLAB;
+        return logger.enabled();
     }
 
     public static void setTraceTLAB(boolean b) {
-        TraceTLAB = b;
+        logger.enableTrace(b);
     }
 
     private static boolean PrintTLABStats;
 
     static {
-        if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
-        }
         VMOptions.addFieldOption("-XX:", "PrintTLABStats", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "PrintTLABStats"),
                         "Print TLAB statistics at end of program.", MaxineVM.Phase.PRISTINE);
 
@@ -149,15 +146,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer tlabMark = TLAB_MARK.load(etla);
             Pointer tlabTop = TLAB_TOP.load(etla);
             if (traceTLAB()) {
-                final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printThread(vmThread, false);
-                Log.print(": Resetting TLAB [TOP=");
-                Log.print(tlabTop);
-                Log.print(", MARK=");
-                Log.print(tlabMark);
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
+                logger.logReset(UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava()), tlabTop, tlabMark);
             }
             if (tlabTop.equals(Address.zero())) {
                 // TLAB's top can be null in only two cases:
@@ -319,7 +308,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return !ALLOCATION_DISABLED.load(currentTLA()).isZero();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public final boolean usesTLAB() {
         return useTLAB;
@@ -359,20 +348,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         TLAB_TOP.store(etla, tlabTop);
         TLAB_MARK.store(etla, tlab);
-        if (traceTLAB() || Heap.traceAllocation() || Heap.traceGC()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
-            Log.printThread(vmThread, false);
-            Log.print(": Refill TLAB with [MARK = ");
-            Log.print(tlab);
-            Log.print(", TOP=");
-            Log.print(tlabTop);
-            Log.print(", end=");
-            Log.print(tlab.plus(initialTlabSize));
-            Log.print(", size=");
-            Log.print(initialTlabSize.toInt());
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
+        if (traceTLAB()) {
+            VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
+            logger.logRefill(vmThread, tlabTop, tlabTop, tlab.plus(initialTlabSize), initialTlabSize.toInt());
         }
     }
 
@@ -558,5 +536,141 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void notifyCurrentThreadDetach() {
         tlabReset(currentTLA());
     }
+
+    public static final TLABLogger logger = /*MaxineVM.isDebug()*/ true  ? new TLABLogger(true) : new TLABLogger();
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface TLabLoggerInterface  {
+        void reset(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlabTop") Pointer tlabTop,
+            @VMLogParam(name = "tlabMark") Pointer tlabMark);
+
+        void refill(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlab") Pointer tlab,
+            @VMLogParam(name = "tlabTop") Pointer tlabTop,
+            @VMLogParam(name = "tlabEnd") Pointer tlabEnd,
+            @VMLogParam(name = "initialTlabSize") int initialTlabSize);
+
+        void pad(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "tlabMark") Pointer tlabMark,
+            @VMLogParam(name = "padWords") int padWords);
+    }
+
+    public static final class TLABLogger extends TLabLoggerAuto {
+        TLABLogger(boolean active) {
+            super("TLAB", null);
+        }
+
+        TLABLogger() {
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.gcAllLogger);
+        }
+
+        @Override
+        protected void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            Log.printThread(vmThread, false);
+            Log.print(": Resetting TLAB [TOP=");
+            Log.print(tlabTop);
+            Log.print(", MARK=");
+            Log.print(tlabMark);
+            Log.println("]");
+        }
+
+        @Override
+        protected void tracePad(VmThread vmThread, Pointer tlabMark, int padWords) {
+            Log.printThread(vmThread, false);
+            Log.print(": Placed TLAB padding at ");
+            Log.print(tlabMark);
+            Log.print(" [words=");
+            Log.print(padWords);
+            Log.println("]");
+        }
+
+        @Override
+        protected void traceRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
+            Log.printThread(vmThread, false);
+            Log.print(": Refill TLAB with [MARK = ");
+            Log.print(tlab);
+            Log.print(", TOP=");
+            Log.print(tlabTop);
+            Log.print(", end=");
+            Log.print(tlabEnd);
+            Log.print(", size=");
+            Log.print(initialTlabSize);
+            Log.println("]");
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class TLabLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Reset, Pad, Refill;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected TLabLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected TLabLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            log(Operation.Reset.ordinal(), vmThreadArg(vmThread), tlabTop, tlabMark);
+        }
+        protected abstract void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark);
+
+        @INLINE
+        public final void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
+            log(Operation.Pad.ordinal(), vmThreadArg(vmThread), tlabMark, intArg(padWords));
+        }
+        protected abstract void tracePad(VmThread vmThread, Pointer tlabMark, int padWords);
+
+        @INLINE
+        public final void logRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize) {
+            log(Operation.Refill.ordinal(), vmThreadArg(vmThread), tlab, tlabTop, tlabEnd, intArg(initialTlabSize));
+        }
+        protected abstract void traceRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Reset
+                    traceReset(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3));
+                    break;
+                }
+                case 1: { //Pad
+                    tracePad(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 2: { //Refill
+                    traceRefill(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
+
+
 }
 

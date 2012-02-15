@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
+public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     @CONSTANT_WHEN_NOT_ZERO
     protected static int TOP_OFFSET;
@@ -146,7 +146,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     @INLINE
-    protected final Address hardLimit() {
+    public final Address hardLimit() {
         return end.plus(headroom);
     }
 
@@ -236,16 +236,19 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 Pointer startOfSpaceLeft = atomicSetTopToLimit();
 
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
-                if (MaxineVM.isDebug()) {
-                    FatalError.check(!chunk.isZero(), "refill must not be null");
+                if (chunk.isNotZero()) {
+                    refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
                 }
-                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
                 // Fall-off to return to the non-blocking allocation loop.
             }
             // There was a race for refilling the allocator. Just return to
             // the non-blocking allocation loop.
             return Pointer.zero();
         }
+    }
+
+    protected void postAllocationDo(Pointer cell, Size size) {
+        // Default: does nothing
     }
 
     /**
@@ -257,6 +260,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     public final Pointer allocateCleared(Size size) {
         Pointer cell = allocate(size);
         Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+        postAllocationDo(cell, size);
         return cell;
     }
 
@@ -267,7 +271,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @return pointer to uncleared allocated cell
      */
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
-    public final Pointer allocate(Size size) {
+    protected final Pointer allocate(Size size) {
         if (MaxineVM.isDebug()) {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");
         }
@@ -283,7 +287,6 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             while (newTop.greaterThan(end)) {
                 cell = refillOrAllocate(size);
                 if (!cell.isZero()) {
-                    Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
                     return cell;
                 }
                 // loop back to retry.

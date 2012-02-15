@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,17 +95,17 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     }
 
     @Override
-    @INLINE(override = true)
+    @INLINE
     public long readId(Object obj) {
         return obj == null ? 0 : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
     }
 
-    @INLINE(override = true)
+    @INLINE
     void writeId(Reference objRef, long id) {
         XOhmGeneralLayout.Static.writeXtra(objRef, Address.fromLong(id));
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public void incrementLifetime(Pointer cell) {
         long id = XOhmGeneralLayout.Static.readXtra(cell).asAddress().toLong();

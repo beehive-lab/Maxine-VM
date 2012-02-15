@@ -24,18 +24,31 @@ package com.sun.max.vm.log.java;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Common superclass for implementations using an indexed array of {@link Record} instances.
  */
 public abstract class VMLogArray extends VMLog {
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private int arg1Offset;
+
     @INSPECTED
     public final Record[] buffer;
+
     protected VMLogArray() {
         buffer = new Record[logEntries];
+        try {
+            arg1Offset = FieldActor.fromJava(Record1.class.getDeclaredField("arg1")).offset();
+        } catch (NoSuchFieldException ex) {
+            // cannot happen
+        }
     }
 
     /*
@@ -239,5 +252,73 @@ public abstract class VMLogArray extends VMLog {
         }
     }
 
+    public static class Record8 extends Record7 {
+        @INSPECTED
+        public Word arg8;
 
+        @Override
+        public Word getArg(int n) {
+            // Checkstyle: stop
+            switch (n) {
+                case 1: return arg1;
+                case 2: return arg2;
+                case 3: return arg3;
+                case 4: return arg4;
+                case 5: return arg5;
+                case 6: return arg6;
+                case 7: return arg7;
+                case 8: return arg8;
+                default: return argError();
+            }
+            // Checkstyle: resume
+        }
+
+        @Override
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+            this.arg1 = arg1;
+            this.arg2 = arg2;
+            this.arg3 = arg3;
+            this.arg4 = arg4;
+            this.arg5 = arg5;
+            this.arg6 = arg6;
+            this.arg7 = arg7;
+            this.arg7 = arg8;
+        }
+    }
+
+    static final VmThreadLocal VMLOG_THREADSTATE = new VmThreadLocal("VMLOG_THREADSTATE", false, "VMLog state");
+
+    @Override
+    public boolean setThreadState(boolean state) {
+        Word old = VMLOG_THREADSTATE.load(VmThread.currentTLA());
+        VMLOG_THREADSTATE.store3(state ? Word.zero() : Word.allOnes());
+        return old.isZero();
+    }
+
+    @Override
+    public boolean threadIsEnabled() {
+        return VMLOG_THREADSTATE.load(VmThread.currentTLA()).isZero();
+    }
+
+    /**
+     * Called to scan/update {@link VMLog} buffer, once per-thread.
+     * Since we have a global log, we only need to scan once.
+     */
+    @Override
+    public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
+        if (isRepeatScanLogVisitor(visitor)) {
+            return;
+        }
+        // order doesn't matter, just how many entries are in use
+        int hwm = nextId > logEntries ? logEntries : nextId;
+        for (int i = 0; i < hwm; i++) {
+            Record r = buffer[i];
+            scanArgs(r, Reference.fromJava(r).toOrigin().plus(arg1Offset), visitor);
+        }
+    }
+
+    @NEVER_INLINE
+    private void doVisit(int index, PointerIndexVisitor visitor, Pointer argBase, int argIndex) {
+        visitor.visit(argBase, argIndex);
+    }
 }

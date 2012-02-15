@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ public enum KindEnum {
 
     static {
         // Sanity check to ensure that the values in Native/substrate/kind.h match those of this enum
-        final File file = new File(new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm.native/substrate/kind.h").getAbsolutePath());
+        final File file = new File(new File(JavaProject.findHgRoot(), "com.oracle.max.vm.native/substrate/kind.h").getAbsolutePath());
         try {
             String content = new String(Files.toChars(file));
             for (KindEnum kind : VALUES) {

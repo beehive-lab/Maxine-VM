@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-//import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -64,9 +62,20 @@ public class JVMTIBreakpoints {
     private static final long SINGLE_STEP = 1L << 63;
     public static final long SINGLE_STEP_AND_BREAK = 1L << 62;
 
+    /**
+     * Table of all breakpoints, encoded by {@link #createBreakpointID(MethodID, long)}.
+     */
     private static long[] table;
     private static EventArgThreadLocal eventArg = new EventArgThreadLocal();
     private static boolean singleStep;
+
+    private static final long[] SENTINEL = new long[0];
+    /**
+     * Lazily computed map of breakpoints for a specific {@link ClassMethodActor}.
+     * Setting a breakpoint in the method causes a zero length array to be installed,
+     * which allows a fast check on any breakpoints being set in {@link #hasBreakpoints(ClassMethodActor)}.
+     * When {@link #getBreakpoints(ClassMethodActor)} is called, the actual array is filled in.
+     */
     private static Map<ClassMethodActor, long[]> methodBreakpointsMap = new HashMap<ClassMethodActor, long[]>();
 
     /**
@@ -110,12 +119,8 @@ public class JVMTIBreakpoints {
         if (index < 0) {
             return JVMTI_ERROR_DUPLICATE;
         }
-        methodBreakpointsMap.put(classMethodActor, null);
-        TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        if (targetMethod != null) {
-            // compiled already, need to recompile
-            JVMTICode.deOptForNewBreakpoint(classMethodActor);
-        }
+        methodBreakpointsMap.put(classMethodActor, SENTINEL);
+        JVMTICode.deOptForNewBreakpoint(classMethodActor);
         return JVMTI_ERROR_NONE;
     }
 
@@ -123,22 +128,8 @@ public class JVMTIBreakpoints {
         return JVMTI_ERROR_NONE;
     }
 
-    /**
-     * Used during deoptimzation to check whether a given location in a given method has a breakpoint set.
-     * @param classMethodActor
-     * @param bci
-     * @return
-     */
-    public static boolean isBreakpoint(ClassMethodActor classMethodActor, int bci) {
-        long methodID = MethodID.fromMethodActor(classMethodActor).asAddress().toLong();
-        for (int i = 0; i < table().length; i++) {
-            if (getMethodID(table[i]) == methodID) {
-                if (getLocation(table[i]) == bci) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    public static boolean hasBreakpoints(ClassMethodActor classMethodActor) {
+        return methodBreakpointsMap.get(classMethodActor) != null;
     }
 
     /**
@@ -150,7 +141,7 @@ public class JVMTIBreakpoints {
      */
     public static long[] getBreakpoints(ClassMethodActor classMethodActor) {
         long[] result = methodBreakpointsMap.get(classMethodActor);
-        if (result == null) {
+        if (result == SENTINEL) {
             int count = 0;
             long methodID = MethodID.fromMethodActor(classMethodActor).asAddress().toLong();
             for (int i = 0; i < table().length; i++) {

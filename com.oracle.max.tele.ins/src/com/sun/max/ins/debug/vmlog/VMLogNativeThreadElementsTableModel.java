@@ -25,45 +25,29 @@ package com.sun.max.ins.debug.vmlog;
 import java.util.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.vmlog.VMLogView.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.nat.thread.*;
 
 
+/**
+ * Model corresponds to subclasses of {@link VMLogNativeThread}.
+ * Fixed/Variable length records stored in a per thread native circular buffer.
+ * The main task in this code is to recreate the illusion of a shared, global,
+ * log buffer, with monotonically increasing ids.
+ */
 class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel {
 
-    private static class NativeThreadRecordAccess implements Comparable<NativeThreadRecordAccess> {
-        MaxThreadVMLog vmLog;
-        Pointer recordAddress = Pointer.zero();
-        int id;
-
-        NativeThreadRecordAccess(MaxThreadVMLog vmLog, Pointer recordAddress, int id) {
-            this.vmLog = vmLog;
-            this.recordAddress = recordAddress;
-            this.id = id;
-        }
-
-        public int compareTo(NativeThreadRecordAccess other) {
-            if (id < other.id) {
-                return -1;
-            } else if (id > other.id) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        @Override
-        public String toString() {
-            return vmLog.thread().entityName() + ":" + id + ":" + Long.toHexString(recordAddress.toLong());
-        }
-    }
-
-
-    protected NativeThreadRecordAccess[] sharedModel;
     protected int vmLogBufferNextIdIndex;
+    /**
+     * This records the log records for all threads, including those that have died.
+     */
+    protected final HashMap<MaxThreadVMLog, ArrayList<HostedLogRecord>> threadVMLogs = new HashMap<MaxThreadVMLog, ArrayList<HostedLogRecord>>();
+
+    private HostedLogRecord[] sortedCache;
+
+    private Pointer recordAddress;
 
     protected VMLogNativeThreadElementsTableModel(Inspection inspection, VMLogView vmLogView) {
         super(inspection, vmLogView);
@@ -71,19 +55,20 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
 
     @Override
     protected void modelSpecificRefresh() {
-        // we count the actual number of available records, which
-        // could considerably exceed logEntries, depending on the
-        // number of active threads.
-        // N.B. At the end there is no guarantee that the gathered ids are contiguous.
-        // TODO reimplement to avoid such prodigious storage allocation by sharing between refreshes
-        ArrayList<NativeThreadRecordAccess> sharedModelList = new ArrayList<NativeThreadRecordAccess>();
-
-        // look at every thread's buffer
+        // look at every active thread's buffer for new records
         for (MaxThread thread : vm.state().threads()) {
             MaxThreadVMLog vmLog = thread.vmLog();
             if (vmLog.memoryRegion() == null) {
                 continue;
             }
+            ArrayList<HostedLogRecord> threadLogRecordCache = threadVMLogs.get(vmLog);
+            if (threadLogRecordCache ==  null) {
+                threadLogRecordCache = new ArrayList<HostedLogRecord>(vmLogView.logBufferEntries);
+                threadVMLogs.put(vmLog, threadLogRecordCache);
+            }
+
+            int threadLastId = threadLogRecordCache.size() == 0 ? -1 : threadLogRecordCache.get(threadLogRecordCache.size() - 1).getId();
+
             Pointer logBuffer = vmLog.start().asPointer();
             int size = vmLog.size();
             Pointer logBufferEnd = logBuffer.plus(size);
@@ -91,53 +76,39 @@ class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel 
             int offset = vmLog.firstOffset();
             int nextOffset = vmLog.nextOffset();
             do {
-                Pointer recordAddress = logBuffer.plus(offset);
+                recordAddress = logBuffer.plus(offset);
                 assert recordAddress.lessThan(logBufferEnd);
                 int header = vmIO.readInt(recordAddress);
                 // variable length records can cause holes
                 if (!Record.isFree(header)) {
                     int sharedId = vmIO.readInt(recordAddress, VMLogNativeThread.ID_OFFSET);
-                    NativeThreadRecordAccess nativeThreadRecordAccess = new NativeThreadRecordAccess(vmLog, recordAddress, sharedId);
-                    sharedModelList.add(nativeThreadRecordAccess);
+                    if (sharedId > threadLastId) {
+                        threadLogRecordCache.add(getRecordFromVM(sharedId));
+                    }
                 }
                 offset = (offset + nativeRecordSize(recordAddress)) % size;
             } while (offset != nextOffset);
         }
 
-        sharedModel = new NativeThreadRecordAccess[sharedModelList.size()];
-        sharedModelList.toArray(sharedModel);
-        Arrays.sort(sharedModel);
-        if (sharedModel.length > logRecordCache.length) {
-            logRecordCache = new HostedLogRecord[sharedModel.length];
+        int sortedCacheSize = 0;
+        for (ArrayList<HostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
+            sortedCacheSize += threadLogRecordCache.size();
         }
-        actualLogBufferEntries = sharedModel.length;
-    }
-
-    /**
-     * Poor man's iterator; depends on the implementation of {@link #refresh}.
-     */
-    private int stepIndex = 0;
-
-    @Override
-    protected int firstId() {
-        stepIndex = 0;
-        return sharedModel[0].id;
-    }
-
-    @Override
-    protected int stepId(int id) {
-        assert sharedModel[stepIndex].id == id;
-        // if we ever had unused slots at the end of sharedModel this would need to be altered.
-        if (++stepIndex >= sharedModel.length) {
-            return nextId;
+        sortedCache = new HostedLogRecord[sortedCacheSize];
+        sortedCacheSize = 0;
+        for (ArrayList<HostedLogRecord> threadLogRecordCache : threadVMLogs.values()) {
+            for (HostedLogRecord r : threadLogRecordCache) {
+                sortedCache[sortedCacheSize++] = r;
+            }
         }
-        return sharedModel[stepIndex].id;
+        Arrays.sort(sortedCache);
+        recordAddress = Pointer.zero();
+        logRecordCache = Arrays.asList(sortedCache);
     }
 
     @Override
     protected Pointer getRecordAddress(long id) {
-        assert sharedModel[stepIndex].id == id;
-        return sharedModel[stepIndex].recordAddress;
+        return recordAddress;
     }
 
 }

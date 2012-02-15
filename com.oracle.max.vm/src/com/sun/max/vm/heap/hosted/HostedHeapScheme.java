@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,4 +135,17 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
     public void enableCustomAllocation(Address customAllocator) {
         FatalError.unexpected("Non implemented");
     }
+
+    @Override
+    public TimeLogger timeLogger() {
+        FatalError.unexpected("Non implemented");
+        return null;
+    }
+
+    @Override
+    public PhaseLogger phaseLogger() {
+        FatalError.unexpected("Non implemented");
+        return null;
+    }
+
 }

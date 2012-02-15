@@ -26,10 +26,18 @@ import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.log.*;
 
-
 public class Package extends BootImagePackage {
+    public Package() {
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogArray.class, VMLogArray.VMLOG_THREADSTATE.name);
+        }
+    }
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return isPartOfMaxineVM();
+    }
+
+    private static boolean isPartOfMaxineVM() {
         return VMLog.Factory.is("java.fix.VMLogArrayFixed") || VMLog.Factory.is("java.var.VMLogArrayVariable");
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,7 +187,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
 
         // Replace template parameters with constants
         local0.replaceAtUsages(oconst(nativeMethod.nativeFunction));
-        local1.replaceAtUsages(JniFunctions.TraceJNI ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
+        local1.replaceAtUsages(JniFunctions.logger.traceEnabled() ? oconst(nativeMethod.format("%H.%n(%P)")) : oconst(null));
         local0.safeDelete();
         local1.safeDelete();
 
@@ -297,7 +297,7 @@ public class NativeStubGraphBuilder extends AbstractGraphBuilder {
             observer.compilationStarted(NativeStubGraphBuilder.class.getSimpleName() + ":" + name);
         }
 
-        GraphBuilderConfiguration config = GraphBuilderConfiguration.getDeoptFreeDefault();
+        GraphBuilderConfiguration config = new GraphBuilderConfiguration(false, false, null);
         apply(new GraphBuilderPhase(runtime, method, null, config), graph);
         apply(new FoldPhase(runtime), graph);
         apply(new MaxineIntrinsicsPhase(), graph);

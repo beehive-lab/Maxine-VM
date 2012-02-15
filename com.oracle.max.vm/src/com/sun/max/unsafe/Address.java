@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,20 +35,16 @@ import com.sun.max.program.*;
  * A machine word interpreted as a linear address.
  * An Address is unsigned and arithmetic is supported.
  */
-public abstract class Address extends Word {
-
-    @HOSTED_ONLY
-    protected Address() {
-    }
+public class Address extends Word {
 
     @INLINE
     public static Address zero() {
-        return isHosted() ? BoxedAddress.ZERO : fromInt(0);
+        return isHosted() ? ZERO : fromInt(0);
     }
 
     @INLINE
     public static Address max() {
-        return isHosted() ? BoxedAddress.MAX : fromLong(-1L);
+        return isHosted() ? MAX : fromLong(-1L);
     }
 
     /**
@@ -63,7 +59,7 @@ public abstract class Address extends Word {
         if (isHosted()) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
-            return BoxedAddress.from(n);
+            return fromLong(n);
         }
         if (Word.width() == 64) {
             final long longValue = value;
@@ -83,8 +79,7 @@ public abstract class Address extends Word {
     @INLINE
     public static Address fromInt(int value) {
         if (isHosted()) {
-            final long n = value;
-            return BoxedAddress.from(n);
+            return Address.fromLong(value & INT_MASK);
         }
         if (Word.width() == 64) {
             final long n = value;
@@ -96,7 +91,16 @@ public abstract class Address extends Word {
     @INLINE
     public static Address fromLong(long value) {
         if (isHosted()) {
-            return BoxedAddress.from(value);
+            if (value == 0) {
+                return ZERO;
+            }
+            if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
+                return Cache.cache[(int) value];
+            }
+            if (value == -1L) {
+                return MAX;
+            }
+            return new Address(value);
         }
         if (Word.width() == 64) {
             return UnsafeCast.asAddress(value);
@@ -162,8 +166,7 @@ public abstract class Address extends Word {
     @INLINE
     public final int toInt() {
         if (isHosted()) {
-            final Boxed box = (Boxed) this;
-            return (int) box.value();
+            return (int) value;
         }
         if (Word.width() == 64) {
             final long n = UnsafeCast.asLong(this);
@@ -175,8 +178,7 @@ public abstract class Address extends Word {
     @INLINE
     public final long toLong() {
         if (isHosted()) {
-            final Boxed box = (Boxed) this;
-            return box.value();
+            return value;
         }
         if (Word.width() == 64) {
             return UnsafeCast.asLong(this);
@@ -255,67 +257,67 @@ public abstract class Address extends Word {
         return lessEqual(fromInt(other));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address plus(Address addend) {
         return asOffset().plus(addend.asOffset()).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address plus(Offset offset) {
         return asOffset().plus(offset).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address plus(int addend) {
         return asOffset().plus(addend).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address plus(long addend) {
         return asOffset().plus(addend).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address minus(Address subtrahend) {
         return asOffset().minus(subtrahend.asOffset()).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address minus(Offset offset) {
         return asOffset().minus(offset).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address  plusWords(int nWords) {
         return plus(nWords * Word.size());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address minus(int subtrahend) {
         return asOffset().minus(subtrahend).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address minusWords(int nWords) {
         return minus(nWords * Word.size());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address minus(long subtrahend) {
         return asOffset().minus(subtrahend).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address times(Address factor) {
         return asOffset().times(factor.asOffset()).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address times(int factor) {
         return asOffset().times(factor).asAddress();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address dividedBy(Address divisor) {
         if (Word.width() == 64) {
             return fromLong(UnsignedMath.divide(toLong(), divisor.toLong()));
@@ -323,12 +325,12 @@ public abstract class Address extends Word {
         return fromInt(UnsignedMath.divide(toInt(), divisor.toInt()));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address dividedBy(int divisor) {
         return dividedBy(fromInt(divisor));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address remainder(Address divisor) {
         if (Word.width() == 64) {
             return fromLong(UnsignedMath.remainder(toLong(), divisor.toLong()));
@@ -336,22 +338,22 @@ public abstract class Address extends Word {
         return fromInt(UnsignedMath.remainder(toInt(), divisor.toInt()));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final int remainder(int divisor) {
         return remainder(fromInt(divisor)).toInt();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean isRoundedBy(Address nBytes) {
         return remainder(nBytes).isZero();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean isRoundedBy(int nBytes) {
         return remainder(nBytes) == 0;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address roundedUpBy(Address nBytes) {
         if (isRoundedBy(nBytes)) {
             return this;
@@ -359,7 +361,7 @@ public abstract class Address extends Word {
         return plus(nBytes.minus(remainder(nBytes)));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address roundedUpBy(int nBytes) {
         if (isRoundedBy(nBytes)) {
             return this;
@@ -367,53 +369,53 @@ public abstract class Address extends Word {
         return plus(nBytes - remainder(nBytes));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address roundedDownBy(int nBytes) {
         return minus(remainder(nBytes));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address wordAligned() {
         return alignUp(Word.size());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address alignUp(int alignment) {
         return plus(alignment - 1).alignDown(alignment);
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address alignDown(int alignment) {
         return and(Address.fromInt(alignment - 1).not());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean isWordAligned() {
         final int n = Word.size();
         return and(n - 1).equals(Address.zero());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean isAligned(int alignment) {
         return and(alignment - 1).equals(Address.zero());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean isBitSet(int index) {
         return (toLong() & (1L << index)) != 0;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address bitSet(int index) {
         return fromLong(toLong() | (1L << index));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address bitClear(int index) {
         return fromLong(toLong() & ~(1L << index));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address and(Address operand) {
         if (Word.width() == 64) {
             return fromLong(toLong() & operand.toLong());
@@ -421,17 +423,17 @@ public abstract class Address extends Word {
         return fromInt(toInt() & operand.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address and(int operand) {
         return and(fromInt(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address and(long operand) {
         return and(fromLong(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address or(Address operand) {
         if (Word.width() == 64) {
             return fromLong(toLong() | operand.toLong());
@@ -439,17 +441,17 @@ public abstract class Address extends Word {
         return fromInt(toInt() | operand.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address or(int operand) {
         return or(fromInt(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address or(long operand) {
         return or(fromLong(operand));
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address not() {
         if (Word.width() == 64) {
             return fromLong(~toLong());
@@ -457,7 +459,7 @@ public abstract class Address extends Word {
         return fromInt(~toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address shiftedLeft(int nBits) {
         if (Word.width() == 64) {
             return fromLong(toLong() << nBits);
@@ -465,7 +467,7 @@ public abstract class Address extends Word {
         return fromInt(toInt() << nBits);
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Address unsignedShiftedRight(int nBits) {
         if (Word.width() == 64) {
             return fromLong(toLong() >>> nBits);
@@ -473,7 +475,7 @@ public abstract class Address extends Word {
         return fromInt(toInt() >>> nBits);
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final int numberOfEffectiveBits() {
         if (Word.width() == 64) {
             return 64 - Long.numberOfLeadingZeros(toLong());
@@ -490,5 +492,32 @@ public abstract class Address extends Word {
             }
         }
         throw ProgramError.unexpected();
+    }
+
+    @HOSTED_ONLY
+    private static final Address ZERO = new Address(0);
+
+    @HOSTED_ONLY
+    private static final Address MAX = new Address(-1L);
+
+    @HOSTED_ONLY
+    private static final class Cache {
+        private Cache() {
+        }
+
+        static final int HIGHEST_VALUE = 1000;
+
+        static final Address[] cache = new Address[HIGHEST_VALUE + 1];
+
+        static {
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new Address(i);
+            }
+        }
+    }
+
+    @HOSTED_ONLY
+    public Address(long value) {
+        super(value);
     }
 }

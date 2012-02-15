@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ public abstract class CodeViewer extends InspectorPanel {
         if (searchToolBar == null) {
             searchToolBar = new RowTextSearchToolBar(inspection(), rowMatchListener, getRowTextSearcher());
             toolBarPanel.add(searchToolBar);
-            parent().pack();
+            parent().validate();
             searchToolBar.getFocus();
         }
     }
@@ -172,7 +172,7 @@ public abstract class CodeViewer extends InspectorPanel {
     private void closeSearch() {
         Trace.line(TRACE_VALUE, "search:  closing");
         toolBarPanel.remove(searchToolBar);
-        parent().pack();
+        parent().validate();
         searchToolBar = null;
         searchMatchingRows = null;
     }

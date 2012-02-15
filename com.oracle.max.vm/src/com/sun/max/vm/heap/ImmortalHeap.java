@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
 
@@ -44,15 +46,6 @@ public final class ImmortalHeap {
 
     @INSPECTED
     private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion("Heap-Immortal");
-
-    /**
-     * VM option to trace immortal heap allocations.
-     */
-    public static boolean TraceImmortal;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceImmortal", ImmortalHeap.class,
-            "Trace allocation from the immortal heap.", MaxineVM.Phase.PRISTINE);
-    }
 
     // FIXME: immortal heap is initialized at PRIMORDIAL time, so the value specified on the command line will always be ignored!
     // Beside, PermSize shouldn't really be used as it clash with what it really means in the HotSpot VM
@@ -116,11 +109,11 @@ public final class ImmortalHeap {
         Pointer oldAllocationMark;
         Pointer cell;
         Address end;
-        size = size.wordAligned();
+        final Size sizeWordAligned = size.wordAligned();
         do {
             oldAllocationMark = immortalHeap.mark().asPointer();
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
-            end = cell.plus(size);
+            end = cell.plus(sizeWordAligned);
 
             if (end.greaterThan(immortalHeap.end())) {
                 FatalError.unexpected("Out of memory error in immortal memory region");
@@ -128,28 +121,13 @@ public final class ImmortalHeap {
         } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
 
         // Zero the allocated chunk
-        Memory.clearWords(cell, size.dividedBy(Word.size()).toInt());
+        Memory.clearWords(cell, sizeWordAligned.dividedBy(Word.size()).toInt());
 
-        if (TraceImmortal) {
-            traceAllocation(size, cell);
+        if (immortalHeapLogger.enabled()) {
+            immortalHeapLogger.logAllocate(cell, sizeWordAligned);
         }
 
         return cell;
-    }
-
-    private static void traceAllocation(Size size, Pointer cell) {
-        if (!cell.isZero()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.printCurrentThread(false);
-            Log.print(": Allocated chunk in immortal memory at ");
-            Log.print(cell);
-            Log.print(" [size ");
-            Log.print(size.wordAligned().toInt());
-            Log.print(", end=");
-            Log.print(cell.plus(size.wordAligned()));
-            Log.println(']');
-            Log.unlock(lockDisabledSafepoints);
-        }
     }
 
     /**
@@ -194,4 +172,113 @@ public final class ImmortalHeap {
             super(MemoryType.HEAP, region, manager);
         }
     }
+
+    // Logging
+
+    public static final ImmortalHeapLogger immortalHeapLogger = new ImmortalHeapLogger();
+
+    @HOSTED_ONLY
+    @VMLoggerInterface
+    private interface ImmortalHeapLoggerInterface {
+        void disable();
+        void enable();
+        void allocate(
+            @VMLogParam(name = "cell") Pointer cell,
+            @VMLogParam(name = "sizeWordAligned") Size sizeWordAligned);
+    }
+
+    public static class ImmortalHeapLogger extends ImmortalHeapLoggerAuto {
+        ImmortalHeapLogger() {
+            super("Immortal", "allocation from the immortal heap.");
+        }
+
+        @Override
+        public void checkOptions() {
+            super.checkOptions();
+            checkDominantLoggerOptions(Heap.allocationLogger);
+        }
+
+        @Override
+        protected void traceDisable() {
+            Log.printCurrentThread(false);
+            Log.println(": immortal heap allocation disabled");
+        }
+
+        @Override
+        protected void traceEnable() {
+            Log.printCurrentThread(false);
+            Log.println(": immortal heap allocation enabled");
+        }
+
+        @Override
+        protected void traceAllocate(Pointer cell, Size sizeWordAligned) {
+            Log.printCurrentThread(false);
+            Log.print(": Allocated chunk in immortal memory at ");
+            Log.print(cell);
+            Log.print(" [size ");
+            Log.print(sizeWordAligned.toInt());
+            Log.print(", end=");
+            Log.print(cell.plus(sizeWordAligned));
+            Log.println(']');
+        }
+
+    }
+
+// START GENERATED CODE
+    private static abstract class ImmortalHeapLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            Allocate, Enable, Disable;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected ImmortalHeapLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logAllocate(Pointer cell, Size sizeWordAligned) {
+            log(Operation.Allocate.ordinal(), cell, sizeWordAligned);
+        }
+        protected abstract void traceAllocate(Pointer cell, Size sizeWordAligned);
+
+        @INLINE
+        public final void logEnable() {
+            log(Operation.Enable.ordinal());
+        }
+        protected abstract void traceEnable();
+
+        @INLINE
+        public final void logDisable() {
+            log(Operation.Disable.ordinal());
+        }
+        protected abstract void traceDisable();
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //Allocate
+                    traceAllocate(toPointer(r, 1), toSize(r, 2));
+                    break;
+                }
+                case 1: { //Enable
+                    traceEnable();
+                    break;
+                }
+                case 2: { //Disable
+                    traceDisable();
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 }

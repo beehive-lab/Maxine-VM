@@ -100,7 +100,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
      * Holds a dummy if no thread local information is available:  i.e. either this is a non-Java thread, or
      * the thread is very early in its creation sequence.
      */
-    private final TeleThreadLocalsBlock threadLocalsBlock;
+    private /*final*/ TeleThreadLocalsBlock threadLocalsBlock;
 
     /**
      * Access to associated {@link TeleThreadVMLog}, if assigned.
@@ -120,6 +120,13 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     private final long handle;
     private final String entityName;
     private final String entityDescription;
+
+    /**
+     * It seems impossible, experimentally, to identify the primordial thread by it's id or handle.
+     * However, the primordial thread is always the first thread gathered on startup.
+     */
+    private static boolean seenPrimordial;
+    private final boolean isPrimordial;
 
     /**
      * The parameters accepted by {@link TeleNativeThread#TeleNativeThread(TeleProcess, Params)}.
@@ -142,6 +149,8 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating id=" + params.id);
         tracer.begin();
 
+        this.isPrimordial = !seenPrimordial;
+        seenPrimordial = true;
         this.teleProcess = teleProcess;
         this.id = params.id;
         this.localHandle = params.localHandle;
@@ -244,7 +253,7 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     }
 
     public final boolean isPrimordial() {
-        return id() == 0;
+        return isPrimordial;
     }
 
     /**
@@ -409,6 +418,15 @@ public abstract class TeleNativeThread extends AbstractVmHolder
     final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, TeleFixedMemoryRegion threadLocalsRegion, int tlaSize) {
         this.state = state;
         teleRegisterSet.setInstructionPointer(instructionPointer);
+        if (isPrimordial && threadLocalsBlock.memoryRegion() == null) {
+            // primordial thread does have a thread locals block but not accessed in the usual way
+            Address tlBlock = vm().fields().MaxineVM_primordialTLBlock.readWord(vm()).asAddress();
+            if (tlBlock.isNotZero()) {
+                final String name = this.entityName + " Locals";
+                this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, tlBlock, vm().fields().MaxineVM_primordialTLBlockSize.readInt(vm()));
+                threadLocalsRegion = (TeleFixedMemoryRegion) threadLocalsBlock.memoryRegion();
+            }
+        }
         threadLocalsBlock.updateAfterGather(threadLocalsRegion, tlaSize);
     }
 

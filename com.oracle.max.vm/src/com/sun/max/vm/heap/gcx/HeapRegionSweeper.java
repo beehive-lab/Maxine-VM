@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
@@ -89,6 +90,21 @@ public abstract class HeapRegionSweeper extends Sweeper {
      */
     Address csrLastLiveAddress;
 
+    /**
+     * True if all dead spaces require their references to be erased. This is required if an imprecise remembered set (e.g., card table) is used for
+     * root tracing. Erasing dead references is equivalent to turning dead space into reference-less heap cell.
+     */
+    final boolean zapDeadReferences;
+
+    /**
+     * Action to performed on a remembered set when dead space is identified.
+     */
+    final DeadSpaceListener deadSpaceListener;
+
+    protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceListener deadSpaceRSetUpdater) {
+        this.zapDeadReferences = zapDeadReferences;
+        this.deadSpaceListener = deadSpaceRSetUpdater == null ? DeadSpaceListener.nullDeadSpaceRSetUpdater() : deadSpaceRSetUpdater;
+    }
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
         final boolean lockDisabledSafepoints = Log.lock();
@@ -167,7 +183,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrInfo.resetOccupancy();
     }
 
-    void recordFreeSpace(Address chunk, Size chunkSize) {
+    final void recordFreeSpace(Address chunk, Size chunkSize) {
         HeapFreeChunk c = HeapFreeChunk.format(chunk, chunkSize);
         if (csrTail == null) {
             csrHead = c;
@@ -256,5 +272,23 @@ public abstract class HeapRegionSweeper extends Sweeper {
             printNotifiedDeadSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);
+    }
+
+    @Override
+    public Pointer processLiveObject(Pointer liveObject) {
+        final Size numDeadBytes = liveObject.minus(csrLastLiveAddress).asSize();
+        if (!numDeadBytes.isZero()) {
+            final Pointer deadSpace = csrLastLiveAddress.asPointer();
+            if (numDeadBytes.greaterThan(minReclaimableSpace)) {
+                recordFreeSpace(deadSpace, numDeadBytes);
+            } else if (zapDeadReferences) {
+                HeapSchemeAdaptor.fillWithDeadObject(deadSpace, liveObject);
+            }
+            deadSpaceListener.notifyCoaslescing(deadSpace, numDeadBytes);
+        }
+        final Size numLiveBytes = Layout.size(Layout.cellToOrigin(liveObject));
+        csrLastLiveAddress = liveObject.plus(numLiveBytes);
+        csrLiveBytes += numLiveBytes.toInt();
+        return csrLastLiveAddress.asPointer();
     }
 }

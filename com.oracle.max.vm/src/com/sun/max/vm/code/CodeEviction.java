@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -334,7 +334,7 @@ public final class CodeEviction extends VmOperation {
         }
 
         @Override
-        public void tracePrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
+        public void logPrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
             // unimplemented
         }
 
@@ -350,12 +350,12 @@ public final class CodeEviction extends VmOperation {
         }
 
         @Override
-        public void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
+        public void logReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
             // unimplemented
         }
 
         @Override
-        public void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, byte referenceMapByte) {
+        public void logReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, byte referenceMapByte) {
             // unimplemented
         }
 

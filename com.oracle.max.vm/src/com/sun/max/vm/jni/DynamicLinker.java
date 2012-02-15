@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,7 +198,7 @@ public final class DynamicLinker {
                 addr = dlsym(h, symbolAsCString);
             }
         }
-        if (addr.isNotZero() && criticalDone && isVmInspected()) {
+        if (addr.isNotZero() && criticalLinked && isVmInspected()) {
             LibInfo.setSentinel(h, symbolAsCString, addr.asAddress());
         }
         return addr;
@@ -296,15 +296,19 @@ public final class DynamicLinker {
      * This is only important for Inspector support as it prevents runaway recursion
      * in library sentinel function handling.
      */
-    private static boolean criticalDone;
+    private static boolean criticalLinked;
 
     /**
      * Critical native methods linked, so safe to call {@link Memory.allocate}.
      */
-    public static void criticalLinked() {
-        criticalDone = true;
+    public static void markCriticalLinked() {
+        criticalLinked = true;
         // This will force the sentinel to be set for mainHandle
         lookupSymbol(mainHandle, "log_lock");
+    }
+
+    public static boolean isCriticalLinked() {
+        return criticalLinked;
     }
 
     public static class LibInfo {

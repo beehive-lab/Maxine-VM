@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
-public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
+public class InflatedMonitorLockword64 extends HashableLockword64 {
 
     /*
      * Field layout:
@@ -49,7 +49,8 @@ public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
     private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
 
     @HOSTED_ONLY
-    protected InflatedMonitorLockword64() {
+    public InflatedMonitorLockword64(long value) {
+        super(value);
     }
 
     /**
@@ -60,7 +61,7 @@ public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
      */
     @INTRINSIC(UNSAFE_CAST)
     public static final InflatedMonitorLockword64 from(Word word) {
-        return new BoxedInflatedMonitorLockword64(word);
+        return new InflatedMonitorLockword64(word.value);
     }
 
     /**

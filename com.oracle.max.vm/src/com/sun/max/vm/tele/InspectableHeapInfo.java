@@ -140,9 +140,6 @@ public final class InspectableHeapInfo {
      */
     public static void setMemoryRegions(MemoryRegion[] memoryRegions) {
         if (Inspectable.isVmInspected()) {
-            // Create the roots region, but allocate the descriptor object
-            // in non-collected memory so that we don't lose track of it
-            // during GC.
             if (useImmortalMemory) {
                 try {
                     Heap.enableImmortalMemoryAllocation();

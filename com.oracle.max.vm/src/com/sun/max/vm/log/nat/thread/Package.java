@@ -29,14 +29,19 @@ import com.sun.max.vm.log.*;
 
 public class Package extends BootImagePackage {
     public Package() {
-        registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
-        registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
+        if (isPartOfMaxineVM()) {
+            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_NAME);
+            registerThreadLocal(VMLogNativeThread.class, VMLogNativeThread.VMLOG_BUFFER_OFFSETS_NAME);
+        }
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
-               VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
+        return isPartOfMaxineVM();
     }
 
+    private static boolean isPartOfMaxineVM() {
+        return VMLog.Factory.is("nat.thread.fix.VMLogNativeThreadFixed") ||
+        VMLog.Factory.is("nat.thread.var.VMLogNativeThreadVariable");
+    }
 }

@@ -195,7 +195,7 @@ public final class VmMethodAccess extends AbstractVmHolder {
     /**
      * Gets a representation of a method in the VM matching a particular key, null if not loaded.
      */
-    public TeleClassMethodActor findClassMathodActor(MethodKey methodKey) {
+    public TeleClassMethodActor findClassMethodActor(MethodKey methodKey) {
         if (vm().tryLock()) {
             try {
                 final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());

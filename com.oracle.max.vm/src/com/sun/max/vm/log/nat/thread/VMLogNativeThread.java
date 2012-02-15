@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.log.nat.*;
 import com.sun.max.vm.thread.*;
 
@@ -33,9 +34,20 @@ import com.sun.max.vm.thread.*;
  * Common superclass for per-thread log buffers.
  *
  * Information on the state of the buffer is stored in a {@link VmThreadLocal},
- * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises the offset (in bytes)
- * of the first valid record, the offset where the next record should be written
- * and a sticky bit to indicate that the buffer has wrapped.
+ * {@link VMLogNativeThread#VMLOG_BUFFER_OFFSETS}. This comprises following:
+ *
+ * <ul>
+ * <li>the offset of the first valid record, {@link #firstOffset}</li>
+ * <li>the offset where the next record should be written, {@link #nextOffset}</li>
+ * <li>a (sticky) bit to indicate that the buffer has wrapped {@link #WRAPPED}.
+ * </ul>
+ * Offsets are in bytes.
+ * <p>
+ * Note that unless the buffer is empty, {@link #firstOffset} is never equal
+ * to {@link #nextOffset}.
+ *
+ * The exact layout of the native buffer, e.g., whether records are fixed size or
+ * variable size is left to the concrete subclass.
  *
  * Note that in order for the Inspector to be able to recreate a globally ordered
  * set of records (by id), we must store the id in the record itself.
@@ -46,44 +58,47 @@ public abstract class VMLogNativeThread extends VMLogNative {
     public static final String VMLOG_BUFFER_NAME = "VMLOG_BUFFER";
     public static final String VMLOG_BUFFER_OFFSETS_NAME = "VMLOG_BUFFER_OFFSETS";
     public static final VmThreadLocal VMLOG_BUFFER = new VmThreadLocal(VMLOG_BUFFER_NAME, false, "VMLog buffer");
-    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsetsd");
+    public static final VmThreadLocal VMLOG_BUFFER_OFFSETS = new VmThreadLocal(VMLOG_BUFFER_OFFSETS_NAME, false, "VMLog buffer first/next offsets");
 
     public static final int ID_OFFSET = Ints.SIZE;
     public static final int ARGS_OFFSET = 2 * Ints.SIZE;
-    public static final int NEXT_OFFSET_MASK = 0x7FFFFFFF;
+    public static final int NEXT_OFFSET_MASK = 0x7FFFFFFE;
     public static final int FIRST_OFFSET_SHIFT = 32;
     public static final int SHIFTED_FIRST_OFFSET_MASK = 0x7FFFFFE;
     public static final long WRAPPED = 0x100000000L; // set in FIRST_OFFSET to indicate buffer has wrapped (sticky)
     public static final long FIRST_OFFSET_WRAP_MASK = 0x7FFFFFF00000000L;
-
     /**
-     * Size in bytes of the per-thread log buffer.
+     * We use bit 0 set to 1 to denote that logging is disabled for this thread.
+     * Since this will suppress all calls to {@link #getRecord(int)} we
+     * do not need to worry about masking it out in {@link #getRecord(int)}.
      */
-    @INSPECTED
-    protected int threadLogSize;
+    public static final int DISABLED = 0x1;
+    public static final long DISABLED_MASK = 0x7FFFFFFFFFFFFFFEL;
 
     @Override
-    public void initialize() {
-        super.initialize();
-        // Perhaps we should reduce the log size per thread.
-        // Problem is we don't know how many threads there will be.
-        // In case of a single threaded application we want
-        // similar behavior to the shared buffer, which means
-        // it has to be the same size.
-        // N.B. The total number of records is inherently variable
-        // but the Inspector view currently only shows the number
-        // defined by VMLog.logEntries.
-        threadLogSize = logEntries * nativeRecordSize;
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            VMLOG_BUFFER.store3(logBuffer);
+        }
     }
 
     @Override
-    protected int getArgsOffset() {
+    /**
+     * Space for header and the id.
+     */
+    protected final int getArgsOffset() {
         return ARGS_OFFSET;
+    }
+
+    @Override
+    protected int getLogSize() {
+        return logEntries * defaultNativeRecordSize;
     }
 
     @NEVER_INLINE
     private Pointer allocateBuffer() {
-        Pointer buffer = Memory.allocate(Size.fromInt(threadLogSize));
+        Pointer buffer = Memory.allocate(Size.fromInt(logSize));
         VMLOG_BUFFER.store3(buffer);
         return buffer;
     }
@@ -99,7 +114,39 @@ public abstract class VMLogNativeThread extends VMLogNative {
 
     @INLINE
     protected final int modLogSize(int offset) {
-        // offset is either < threadLogSize or < 2 * threadLogSize
-        return offset < threadLogSize ? offset : offset - threadLogSize;
+        // offset is either < logSize or < 2 * logSize
+        return offset < logSize ? offset : offset - logSize;
     }
+
+    @Override
+    public boolean setThreadState(boolean value) {
+        int bit = value ? 0 : DISABLED;
+        Pointer tla = VmThread.currentTLA();
+        Address offsets = VMLOG_BUFFER_OFFSETS.load(tla);
+        VMLOG_BUFFER_OFFSETS.store3(Address.fromLong((offsets.toLong() & DISABLED_MASK) | bit));
+        return (offsets.toLong() & DISABLED) == 0;
+    }
+
+    @Override
+    public boolean threadIsEnabled() {
+        return (VMLOG_BUFFER_OFFSETS.load(VmThread.currentTLA()).toLong() & DISABLED) == 0;
+    }
+
+    // Convenience methods for accessing the data in VMLOG_BUFFER_OFFSETS
+
+    @INLINE
+    protected final boolean isWrapped(long offsets) {
+        return (offsets & WRAPPED) != 0;
+    }
+
+    @INLINE
+    protected final int nextOffset(long offsets) {
+        return (int) (offsets & NEXT_OFFSET_MASK);
+    }
+
+    @INLINE
+    protected final int firstOffset(long offsets) {
+        return (int) ((offsets >> FIRST_OFFSET_SHIFT) & SHIFTED_FIRST_OFFSET_MASK);
+    }
+
 }

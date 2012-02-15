@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,20 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jni.JniFunctions.LogOperations;
 
 /**
  * A native function represents a {@linkplain #makeSymbol() symbol} associated with a {@linkplain #classMethodActor()
  * method} that can be {@linkplain #link() linked} at runtime to produce a native machine code pointer.
  */
-public class NativeFunction {
+public final class NativeFunction {
     private final ClassMethodActor classMethodActor;
     private String symbol;
 
@@ -111,6 +114,10 @@ public class NativeFunction {
     @NEVER_INLINE
     public Address link0() throws UnsatisfiedLinkError {
         address = DynamicLinker.lookup(classMethodActor, makeSymbol()).asAddress();
+        if (JniFunctions.logger.enabled()) {
+            JniFunctions.logger.log(LogOperations.DynamicLink.ordinal(), LINK_ENTRY, MethodID.fromMethodActor(classMethodActor), address);
+        }
+        // this tracing is in response to -verbose:jni
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (NativeInterfaces.verbose()) {
                 Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
@@ -131,6 +138,10 @@ public class NativeFunction {
      */
     public void setAddress(Address address) {
         this.address = address;
+        if (JniFunctions.logger.enabled()) {
+            JniFunctions.logger.log(LogOperations.RegisterNativeMethod.ordinal(), REGISTER_ENTRY, MethodID.fromMethodActor(classMethodActor), address);
+        }
+        // this tracing is in response to -verbose:jni
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (NativeInterfaces.verbose()) {
                 Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + classMethodActor.holder().name + "." + classMethodActor.name + "]");

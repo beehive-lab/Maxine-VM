@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1005,12 +1005,6 @@ public final class GraphBuilder {
             RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
             RiResolvedType klass = resolvedTarget.holder();
 
-            if (compilation.runtime.mustInline(resolvedTarget)) {
-                boolean result = tryInline(resolvedTarget, args);
-                assert result : "Inlining must succeed";
-                return;
-            }
-
             // 0. check for trivial cases
             if (resolvedTarget.canBeStaticallyBound() && !isAbstract(resolvedTarget.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
@@ -1048,7 +1042,14 @@ public final class GraphBuilder {
             } else if (C1XOptions.PrintAssumptions) {
                 TTY.println("Could not make leaf type assumption for type " + klass);
             }
+
+            if (compilation.runtime.mustInline(resolvedTarget)) {
+                boolean result = tryInline(resolvedTarget, args);
+                assert result : "Inlining must succeed";
+                return;
+            }
         }
+
         // devirtualization failed, produce an actual invokevirtual
         appendInvoke(opcode, target, args, false, cpi, constantPool);
     }
@@ -1844,6 +1845,9 @@ public final class GraphBuilder {
     }
 
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
+        if (!forcedInline && C1XOptions.UseAssumptions) {
+            compilation.assumptions.recordInlinedMethod(compilation.method, target);
+        }
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods

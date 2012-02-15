@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
      *
      * @param cell a pointer read from an external root (may be zero).
      */
-    @INLINE(override = true)
+    @INLINE
     @Override
     boolean isNonNullCovered(Pointer cell) {
         // Note: the first test also acts as a null pointer filter.

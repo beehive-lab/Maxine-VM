@@ -157,21 +157,20 @@ public class TeleTupleObject extends TeleObject {
         return null;
     }
 
-    @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        final ClassActor classActor = classActorForObjectType();
+    protected static Object createDeepCopy(TeleTupleObject teleTupleObject, DeepCopier context) {
+        final ClassActor classActor = teleTupleObject.classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         final String classMessage = "Copying instance fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
             final Object newTuple = ObjectUtils.allocateInstance(javaClass);
-            context.register(this, newTuple, true);
+            context.register(teleTupleObject, newTuple, true);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
                     final String fieldMessage = fieldActor.format("Copying instance field '%n' of type '%t' from VM");
                     Trace.begin(COPY_TRACE_VALUE, fieldMessage);
-                    context.copyField(this, newTuple, fieldActor);
+                    context.copyField(teleTupleObject, newTuple, fieldActor);
                     Trace.end(COPY_TRACE_VALUE, fieldMessage);
                 }
                 holderClassActor = holderClassActor.superClassActor;
@@ -183,6 +182,12 @@ public class TeleTupleObject extends TeleObject {
         } finally {
             Trace.end(COPY_TRACE_VALUE, classMessage);
         }
+
+    }
+
+    @Override
+    protected Object createDeepCopy(DeepCopier context) {
+        return createDeepCopy(this, context);
     }
 
 }

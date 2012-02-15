@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.value.*;
@@ -137,7 +138,33 @@ final class HeapRegionInfoTable extends InspectorTable {
         }
     }
 
-    static final String [] infoNames = {"start", "end", "firstFreeChunk", "state"};
+    final class TagRenderer extends PlainLabel {
+        TeleRegionBasedHeapScheme teleHeapScheme;
+
+        private void updateText() {
+            int tag = teleHeapRegionInfo.tag();
+            //setValue(teleHeapScheme.tagName(tag), Integer.toString(tag));
+            setValue(Integer.toString(tag), Integer.toString(tag));
+        }
+
+        public TagRenderer(Inspection inspection) {
+            super(inspection, "");
+            updateText();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            updateText();
+        }
+
+
+        @Override
+        public void redisplay() {
+            updateText();
+        }
+    }
+
+    static final String [] infoNames = {"start", "end", "firstFreeChunk", "state", "tag"};
 
     final class HeapRegionInfoTableModel extends InspectorTableModel  implements TableCellRenderer, Prober {
         TextLabel [] nameLabels = new TextLabel[infoNames.length];
@@ -154,6 +181,7 @@ final class HeapRegionInfoTable extends InspectorTable {
                 }
             };
             valueLabels[3] = new FlagsRenderer(inspection);
+            valueLabels[4] = new TagRenderer(inspection);
 
             for (int i = 0; i < infoNames.length; i++) {
                 nameLabels[i] = new TextLabel(inspection, infoNames[i]);

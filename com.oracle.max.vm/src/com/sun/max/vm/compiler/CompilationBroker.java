@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@ import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -421,7 +422,12 @@ public class CompilationBroker {
                         // at prototyping time, default to the opt compiler
                         compiler = optimizingCompiler;
                     } else {
-                        compiler = defaultCompiler;
+                        if (JVMTIBreakpoints.hasBreakpoints(cma)) {
+                            reason = "jvmti";
+                            compiler = baselineCompiler;
+                        } else {
+                            compiler = defaultCompiler;
+                        }
                     }
                 }
             }

@@ -92,11 +92,13 @@ deprecated
 disassembly
 editable
 emitting
+enqueuing
 entrypoint
 enum
 epilogue
 evacuator
 evacuators
+finalizable
 finalizer
 finalizers
 fixup
@@ -136,6 +138,7 @@ invokevirtual
 itable
 itables
 iterable
+javac
 javadoc
 jit
 lexer
@@ -175,6 +178,7 @@ probers
 programmatic
 proxy
 quibble
+reachability
 recompilation
 redock
 refactor

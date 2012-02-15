@@ -22,17 +22,59 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
-import com.sun.max.tele.*;
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
+
+import java.awt.*;
+
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.VMLog.Record;
 
 
 public class JNIVMLogArgRenderer extends VMLogArgRenderer {
 
+    public JNIVMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView);
+    }
+
     @Override
-    String getText(TeleVM vm, int header, int argNum, long argValue) {
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        String text = null;
         if (argNum == 1) {
-            return argValue == 0 ? "EXIT" : "ENTRY";
+            Word mode = Address.fromLong(argValue);
+            if (mode.equals(UPCALL_ENTRY)) {
+                text = "UPCALL_ENTRY";
+            } else if (mode.equals(UPCALL_EXIT)) {
+                text = "UPCALL_EXIT";
+            } else if (mode.equals(DOWNCALL_ENTRY)) {
+                text = "DOWNCALL_ENTRY";
+            } else if (mode.equals(DOWNCALL_EXIT)) {
+                text = "DOWNCALL_EXIT";
+            } else if (mode.equals(INVOKE_ENTRY)) {
+                text = "INVOKE_ENTRY";
+            } else if (mode.equals(LINK_ENTRY)) {
+                text = "DYNAMIC_LINK";
+            } else if (mode.equals(REGISTER_ENTRY)) {
+                text = "REGISTER NATIVE";
+            } else {
+                text = "UNKNOWN MODE: " + argValue;
+            }
+        } else if (argNum == 2) {
+            int op = Record.getOperation(header);
+            if (op == JniFunctions.LogOperations.ReflectiveInvocation.ordinal() ||
+                op == JniFunctions.LogOperations.NativeMethodCall.ordinal() ||
+                op == JniFunctions.LogOperations.DynamicLink.ordinal() ||
+                op == JniFunctions.LogOperations.RegisterNativeMethod.ordinal()) {
+                return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+            }
+        }
+        if (text != null) {
+            return new PlainLabel(inspection(), text);
         } else {
-            return VMLogArgRendererFactory.defaultVMLogArgRenderer.getText(vm, header, argNum, argValue);
+            return new WordValueLabel(inspection(), ValueMode.WORD, Address.fromLong(argValue), vmLogView.getTable(), true);
         }
     }
 

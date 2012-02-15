@@ -209,18 +209,18 @@ public class WordValueLabel extends ValueLabel {
 
     private DisplayMode displayMode;
 
-    private boolean forceTxt = true;
+    private final boolean forceTxt;
 
     private Font wordDataFont;
 
     /**
      * Creates a display label for a word of machine data, initially set to null.
-     * <br>
+     * <p>
      * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
      * Display state can be cycled among alternate presentations in some situations.
-     * <br>
+     * <p>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
      * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
@@ -235,12 +235,12 @@ public class WordValueLabel extends ValueLabel {
 
     /**
      * Creates a display label for a word of machine data, initially set to null.
-     * <br>
+     * <p>
      * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
-     * <br>
+     * <p>
      * Display state can be cycled among alternate presentations in some situations.
-     * <br>
+     * <p>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
      * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
@@ -251,11 +251,34 @@ public class WordValueLabel extends ValueLabel {
      * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
+        this(inspection, valueMode, word, parent, inspection.preference().forceTextualWordValueDisplay());
+    }
+
+    /**
+     * Creates a display label for a word of machine data, initially set to null.
+     * <p>
+     * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <p>
+     * Display state can be cycled among alternate presentations in some situations, and the {@code forceTxt} can specify
+     * which to use initially.
+     * <p>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is cycled; this will be done automatically if the table is passed in
+     * as the parent component.
+     *
+     * @param inspection
+     * @param valueMode presumed type of value for the word, influences display modes
+     * @param word initial value for content.
+     * @param parent a component that should be repainted when the display state is cycled;
+     * @param forceText if {@code true} causes any possible alternate (textual) display to be used initially.
+     */
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent, boolean forceText) {
         super(inspection, null);
         this.parent = parent;
         this.valueMode = valueMode;
         this.wordDataFont = inspection.preference().style().defaultWordDataFont();
-        this.forceTxt = inspection.preference().forceTextualWordValueDisplay();
+        this.forceTxt = forceText;
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -334,8 +357,14 @@ public class WordValueLabel extends ValueLabel {
     /** Non-null if a pointer into a native function. */
     TeleNativeFunction nativeFunction;
 
-    /** Non-null if a stack reference. */
+    /** Non-null if a pointer into thread memory. */
     private MaxThread thread;
+
+    /** Non-null if a pointer into a stack. */
+    private MaxStack stack;
+
+    /** Non-null if pointer at a thread local variable. */
+    private MaxThreadLocalsBlock threadLocalsBlock;
 
     @Override
     public final void setValue(Value newValue) {
@@ -344,6 +373,8 @@ public class WordValueLabel extends ValueLabel {
         compilation = null;
         taggedCodePointer = null;
         thread = null;
+        stack = null;
+        threadLocalsBlock = null;
 
         if (newValue == VoidValue.VOID) {
             displayMode = DisplayMode.INVALID;
@@ -385,8 +416,10 @@ public class WordValueLabel extends ValueLabel {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         }
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
+                        stack = thread.stack();
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
+                        threadLocalsBlock = thread.localsBlock();
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
@@ -444,7 +477,6 @@ public class WordValueLabel extends ValueLabel {
 
     public void redisplay() {
         this.wordDataFont = inspection().preference().style().defaultWordDataFont();
-        this.forceTxt = inspection().preference().forceTextualWordValueDisplay();
         setValue(value());
     }
 
@@ -479,7 +511,15 @@ public class WordValueLabel extends ValueLabel {
                     setWrappedToolTipHtmlText("zero");
                 } else {
                     setForeground(null);
-                    setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Decimal= " + Long.toString(value.toLong()));
+                    final StringBuilder ttText = new StringBuilder();
+                    ttText.append(hexString);
+                    ttText.append("<br>Decimal= ").append(Long.toString(value.toLong()));
+                    final Address address = value.toWord().asAddress();
+                    final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(address);
+                    if (memoryRegion != null) {
+                        ttText.append("<br>Points into region ").append(memoryRegion.regionName());
+                    }
+                    setWrappedToolTipHtmlText(ttText.toString());
                 }
                 break;
             }
@@ -577,20 +617,67 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordStackLocationDataColor());
                 setWrappedText(hexString);
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.stack().memoryRegion().start()).toLong();
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into stack for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(stack.memoryRegion().start()).toLong();
+                final StringBuilder ttBuilder = new StringBuilder();
+                ttBuilder.append(value.toWord().to0xHexString());
+                final MaxStackFrame stackFrame = stack.findStackFrame(address);
+                String methodName = null;
+                if (stackFrame instanceof MaxStackFrame.Compiled) {
+                    methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
+                }
+                if (stackFrame == null) {
+                    ttBuilder.append("<br>Points into stack for thread ").append(threadName);
+                    ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    ttBuilder.append("<br>Points at stack frame for thread ").append(threadName);
+                    final String positionString = Integer.toString(stackFrame.position());
+                    if (methodName == null) {
+                        ttBuilder.append("<br>  position=").append(positionString);
+                    } else {
+                        ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
+                    }
+                }
+                setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
             }
             case STACK_LOCATION_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordStackLocationDataColor());
+
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.stack().memoryRegion().start()).toLong();
-                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
-                setWrappedText(threadName + " " + decimalOffsetString);
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into stack for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(stack.memoryRegion().start()).toLong();
+                final String offsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
+                final MaxStackFrame stackFrame = stack.findStackFrame(address);
+                String methodName = null;
+                if (stackFrame instanceof MaxStackFrame.Compiled) {
+                    methodName = inspection().nameDisplay().veryShortName(stackFrame.compilation());
+                }
+
+                final StringBuilder textBuilder = new StringBuilder();
+                textBuilder.append(threadName).append(" ");
+
+                final StringBuilder ttBuilder = new StringBuilder();
+                ttBuilder.append(value.toWord().to0xHexString());
+
+                if (stackFrame == null) {
+                    textBuilder.append(offsetString);
+                    ttBuilder.append("<br>Points into stack for thread ").append(threadName);
+                    ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    ttBuilder.append("<br>Points into stack frame for thread ").append(threadName);
+                    final String positionString = Integer.toString(stackFrame.position());
+                    if (methodName == null) {
+                        textBuilder.append(offsetString);
+                        ttBuilder.append("<br>  position=").append(positionString);
+                    } else {
+                        textBuilder.append(positionString).append(": ").append(methodName);
+                        ttBuilder.append("<br>  ").append(positionString).append(": ").append(methodName);
+                    }
+                }
+                setWrappedText(textBuilder.toString());
+                setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION: {
@@ -598,19 +685,61 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style.wordThreadLocalsBlockLocationDataColor());
                 setWrappedText(hexString);
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(thread.localsBlock().memoryRegion().start()).toLong();
+                MaxThreadLocalVariable tlVariable = null;
+                MaxThreadLocalsArea tlArea = threadLocalsBlock.findTLA(address);
+                if (tlArea != null) {
+                    tlVariable = tlArea.findThreadLocalVariable(address);
+                }
+                final StringBuilder ttBuilder = new StringBuilder();
+                ttBuilder.append(value.toWord().to0xHexString());
+                if (tlVariable == null) {
+                    ttBuilder.append("<br>Points into thread locals area for thread ").append(threadName);
+                    ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    ttBuilder.append("<br>Points at thread local variable ").append(tlVariable.variableName()).append(" for:");
+                    ttBuilder.append("<br>  thread=").append(threadName);
+                    ttBuilder.append("<br>  state=").append(tlVariable.safepointState().name());
+                    ttBuilder.append("<br>  desc.=").append(tlVariable.entityDescription());
+                    ttBuilder.append("<br>  value=").append(tlVariable.value().toString());
+                }
+                setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
                 setFont(style.wordAlternateTextFont());
                 setForeground(style.wordThreadLocalsBlockLocationDataColor());
                 final String threadName = nameDisplay.longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
-                setWrappedText(threadName + " " + longToPlusMinusDecimal(offset));
-                setWrappedToolTipHtmlText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
-                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
+                final Address address = value().asWord().asAddress();
+                final long offset = address.minus(thread.localsBlock().memoryRegion().start()).toLong();
+                MaxThreadLocalVariable tlVariable = null;
+                MaxThreadLocalsArea tlArea = threadLocalsBlock.findTLA(address);
+                if (tlArea != null) {
+                    tlVariable = tlArea.findThreadLocalVariable(address);
+                }
+
+                final StringBuilder textBuilder = new StringBuilder();
+                textBuilder.append(threadName).append(" ");
+
+                final StringBuilder ttBuilder = new StringBuilder();
+                ttBuilder.append(value.toWord().to0xHexString());
+
+
+                if (tlVariable == null) {
+                    textBuilder.append(longToPlusMinusDecimal(offset));
+                    ttBuilder.append("<br>Points into thread locals area for thread ").append(threadName);
+                    ttBuilder.append("<br>").append(longToDecimalAndHex(offset)).append(" bytes from beginning");
+                } else {
+                    textBuilder.append(tlVariable.variableName());
+                    ttBuilder.append("<br>Points at thread local variable ").append(tlVariable.variableName()).append(" for:");
+                    ttBuilder.append("<br>  thread=").append(threadName);
+                    ttBuilder.append("<br>  state=").append(tlVariable.safepointState().name());
+                    ttBuilder.append("<br>  desc.=").append(tlVariable.entityDescription());
+                    ttBuilder.append("<br>  value=").append(tlVariable.value().toString());
+                }
+                setWrappedText(textBuilder.toString());
+                setWrappedToolTipHtmlText(ttBuilder.toString());
                 break;
             }
             case UNCHECKED_REFERENCE: {

@@ -79,7 +79,7 @@ public interface HeapSpace extends ResizableSpace {
      * Visit all the ranges of contiguous virtual memory of the heap space that may comprise allocated objects.
      * The ranges must be iterable, i.e., formatted as a sequence of cells whose size can be queried by visitors and such that
      * the address of the cell plus its size gives the address of the next cell.
-     * This must be invoked while in mutual exclusion with mutators.
+     * Allocation to the heap space is prohibited during visiting.
      *
      * @param visitor a visitor that can iterate over iterable ranges of contiguous heap space.
      */

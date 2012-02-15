@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
  * <b>DO NOT EDIT CODE BETWEEN "START GENERATED CODE" AND "END GENERATED CODE" IN THIS FILE.</b>
  * <p>
  * Instead, modify the corresponding source in JmmFunctionsSource.java denoted by the "// Source: ..." comments.
- * Once finished with editing, execute {@link JniFunctionsGenerator} as a Java application to refresh this file.
+ * Once finished with editing, execute 'mx jnigen' to refresh this file.
  *
  * @see NativeInterfaces
  * @see JmmFunctionsSource
@@ -131,15 +131,15 @@ public final class JmmFunctions {
      * Logging/Tracing of JMM entry/exit.
      */
      private static class JmmFunctionsLogger extends JniFunctions.JxxFunctionsLogger {
-        private static EntryPoints[] entryPoints = EntryPoints.values();
+        private static LogOperations[] logOperations = LogOperations.values();
 
         private JmmFunctionsLogger() {
-            super("JMM", entryPoints.length);
+            super("JMM", logOperations.length);
         }
 
         @Override
         public String operationName(int op) {
-            return entryPoints[op].name();
+            return logOperations[op].name();
         }
 
     }
@@ -171,7 +171,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:65
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetInputArguments.ordinal(), ENTRY, anchor, env);
+            logger.log(LogOperations.GetInputArguments.ordinal(), UPCALL_ENTRY, anchor, env);
         }
 
         try {
@@ -182,7 +182,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetInputArguments.ordinal(), EXIT);
+                logger.log(LogOperations.GetInputArguments.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -193,7 +193,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:70
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetThreadInfo.ordinal(), ENTRY, anchor, env, ids, Address.fromInt(maxDepth), infoArray);
+            logger.log(LogOperations.GetThreadInfo.ordinal(), UPCALL_ENTRY, anchor, env, ids, Address.fromInt(maxDepth), infoArray);
         }
 
         try {
@@ -207,7 +207,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetThreadInfo.ordinal(), EXIT);
+                logger.log(LogOperations.GetThreadInfo.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -218,7 +218,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:78
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetInputArgumentArray.ordinal(), ENTRY, anchor, env);
+            logger.log(LogOperations.GetInputArgumentArray.ordinal(), UPCALL_ENTRY, anchor, env);
         }
 
         try {
@@ -229,7 +229,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetInputArgumentArray.ordinal(), EXIT);
+                logger.log(LogOperations.GetInputArgumentArray.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -240,7 +240,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:83
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetMemoryPools.ordinal(), ENTRY, anchor, env, mgr);
+            logger.log(LogOperations.GetMemoryPools.ordinal(), UPCALL_ENTRY, anchor, env, mgr);
         }
 
         try {
@@ -253,7 +253,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetMemoryPools.ordinal(), EXIT);
+                logger.log(LogOperations.GetMemoryPools.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -264,7 +264,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:90
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetMemoryManagers.ordinal(), ENTRY, anchor, env, pool);
+            logger.log(LogOperations.GetMemoryManagers.ordinal(), UPCALL_ENTRY, anchor, env, pool);
         }
 
         try {
@@ -277,7 +277,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetMemoryManagers.ordinal(), EXIT);
+                logger.log(LogOperations.GetMemoryManagers.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -288,7 +288,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:97
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetMemoryPoolUsage.ordinal(), ENTRY, anchor, env, pool);
+            logger.log(LogOperations.GetMemoryPoolUsage.ordinal(), UPCALL_ENTRY, anchor, env, pool);
         }
 
         try {
@@ -299,7 +299,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetMemoryPoolUsage.ordinal(), EXIT);
+                logger.log(LogOperations.GetMemoryPoolUsage.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -310,7 +310,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:102
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetPeakMemoryPoolUsage.ordinal(), ENTRY, anchor, env, pool);
+            logger.log(LogOperations.GetPeakMemoryPoolUsage.ordinal(), UPCALL_ENTRY, anchor, env, pool);
         }
 
         try {
@@ -321,7 +321,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetPeakMemoryPoolUsage.ordinal(), EXIT);
+                logger.log(LogOperations.GetPeakMemoryPoolUsage.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -336,7 +336,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:110
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetMemoryUsage.ordinal(), ENTRY, anchor, env, Address.fromInt(heap ? 1 : 0));
+            logger.log(LogOperations.GetMemoryUsage.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(heap ? 1 : 0));
         }
 
         try {
@@ -347,7 +347,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetMemoryUsage.ordinal(), EXIT);
+                logger.log(LogOperations.GetMemoryUsage.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -358,7 +358,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:115
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetLongAttribute.ordinal(), ENTRY, anchor, env, obj, Address.fromInt(att));
+            logger.log(LogOperations.GetLongAttribute.ordinal(), UPCALL_ENTRY, anchor, env, obj, Address.fromInt(att));
         }
 
         try {
@@ -369,7 +369,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetLongAttribute.ordinal(), EXIT);
+                logger.log(LogOperations.GetLongAttribute.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -380,7 +380,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:120
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetBoolAttribute.ordinal(), ENTRY, anchor, env, Address.fromInt(att));
+            logger.log(LogOperations.GetBoolAttribute.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(att));
         }
 
         try {
@@ -391,7 +391,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetBoolAttribute.ordinal(), EXIT);
+                logger.log(LogOperations.GetBoolAttribute.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -402,7 +402,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:125
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.SetBoolAttribute.ordinal(), ENTRY, anchor, env, Address.fromInt(att), Address.fromInt(flag ? 1 : 0));
+            logger.log(LogOperations.SetBoolAttribute.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(att), Address.fromInt(flag ? 1 : 0));
         }
 
         try {
@@ -425,7 +425,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.SetBoolAttribute.ordinal(), EXIT);
+                logger.log(LogOperations.SetBoolAttribute.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -436,7 +436,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:142
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetLongAttributes.ordinal(), ENTRY, anchor, env, obj, atts, Address.fromInt(count), result);
+            logger.log(LogOperations.GetLongAttributes.ordinal(), UPCALL_ENTRY, anchor, env, obj, atts, Address.fromInt(count), result);
         }
 
         try {
@@ -447,7 +447,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetLongAttributes.ordinal(), EXIT);
+                logger.log(LogOperations.GetLongAttributes.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -458,7 +458,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:147
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.FindCircularBlockedThreads.ordinal(), ENTRY, anchor, env);
+            logger.log(LogOperations.FindCircularBlockedThreads.ordinal(), UPCALL_ENTRY, anchor, env);
         }
 
         try {
@@ -469,7 +469,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.FindCircularBlockedThreads.ordinal(), EXIT);
+                logger.log(LogOperations.FindCircularBlockedThreads.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -480,7 +480,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:152
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetThreadCpuTime.ordinal(), ENTRY, anchor, env, Address.fromLong(thread_id));
+            logger.log(LogOperations.GetThreadCpuTime.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromLong(thread_id));
         }
 
         try {
@@ -491,7 +491,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetThreadCpuTime.ordinal(), EXIT);
+                logger.log(LogOperations.GetThreadCpuTime.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -502,7 +502,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:157
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetVMGlobalNames.ordinal(), ENTRY, anchor, env);
+            logger.log(LogOperations.GetVMGlobalNames.ordinal(), UPCALL_ENTRY, anchor, env);
         }
 
         try {
@@ -513,7 +513,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetVMGlobalNames.ordinal(), EXIT);
+                logger.log(LogOperations.GetVMGlobalNames.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -524,7 +524,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:162
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetVMGlobals.ordinal(), ENTRY, anchor, env, names, globals, Address.fromInt(count));
+            logger.log(LogOperations.GetVMGlobals.ordinal(), UPCALL_ENTRY, anchor, env, names, globals, Address.fromInt(count));
         }
 
         try {
@@ -535,7 +535,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetVMGlobals.ordinal(), EXIT);
+                logger.log(LogOperations.GetVMGlobals.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -546,7 +546,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:167
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetInternalThreadTimes.ordinal(), ENTRY, anchor, env, names, times);
+            logger.log(LogOperations.GetInternalThreadTimes.ordinal(), UPCALL_ENTRY, anchor, env, names, times);
         }
 
         try {
@@ -557,7 +557,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetInternalThreadTimes.ordinal(), EXIT);
+                logger.log(LogOperations.GetInternalThreadTimes.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -568,7 +568,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:172
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.ResetStatistic.ordinal(), ENTRY, anchor, env, obj, Address.fromInt(type));
+            logger.log(LogOperations.ResetStatistic.ordinal(), UPCALL_ENTRY, anchor, env, obj, Address.fromInt(type));
         }
 
         try {
@@ -579,7 +579,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.ResetStatistic.ordinal(), EXIT);
+                logger.log(LogOperations.ResetStatistic.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -590,7 +590,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:177
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.SetPoolSensor.ordinal(), ENTRY, anchor, env, pool, Address.fromInt(type), sensor);
+            logger.log(LogOperations.SetPoolSensor.ordinal(), UPCALL_ENTRY, anchor, env, pool, Address.fromInt(type), sensor);
         }
 
         try {
@@ -599,7 +599,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.SetPoolSensor.ordinal(), EXIT);
+                logger.log(LogOperations.SetPoolSensor.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -610,7 +610,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:181
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.SetPoolThreshold.ordinal(), ENTRY, anchor, env, pool, Address.fromInt(type), Address.fromLong(threshold));
+            logger.log(LogOperations.SetPoolThreshold.ordinal(), UPCALL_ENTRY, anchor, env, pool, Address.fromInt(type), Address.fromLong(threshold));
         }
 
         try {
@@ -621,7 +621,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.SetPoolThreshold.ordinal(), EXIT);
+                logger.log(LogOperations.SetPoolThreshold.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -632,7 +632,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:186
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetPoolCollectionUsage.ordinal(), ENTRY, anchor, env, pool);
+            logger.log(LogOperations.GetPoolCollectionUsage.ordinal(), UPCALL_ENTRY, anchor, env, pool);
         }
 
         try {
@@ -643,7 +643,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetPoolCollectionUsage.ordinal(), EXIT);
+                logger.log(LogOperations.GetPoolCollectionUsage.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -654,7 +654,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:191
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetGCExtAttributeInfo.ordinal(), ENTRY, anchor, env, mgr, ext_info, Address.fromInt(count));
+            logger.log(LogOperations.GetGCExtAttributeInfo.ordinal(), UPCALL_ENTRY, anchor, env, mgr, ext_info, Address.fromInt(count));
         }
 
         try {
@@ -665,7 +665,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetGCExtAttributeInfo.ordinal(), EXIT);
+                logger.log(LogOperations.GetGCExtAttributeInfo.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -676,7 +676,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:196
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetLastGCStat.ordinal(), ENTRY, anchor, env, mgr, gc_stat);
+            logger.log(LogOperations.GetLastGCStat.ordinal(), UPCALL_ENTRY, anchor, env, mgr, gc_stat);
         }
 
         try {
@@ -685,7 +685,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetLastGCStat.ordinal(), EXIT);
+                logger.log(LogOperations.GetLastGCStat.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -696,7 +696,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:200
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.GetThreadCpuTimeWithKind.ordinal(), ENTRY, anchor, env, Address.fromLong(thread_id), Address.fromInt(user_sys_cpu_time ? 1 : 0));
+            logger.log(LogOperations.GetThreadCpuTimeWithKind.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromLong(thread_id), Address.fromInt(user_sys_cpu_time ? 1 : 0));
         }
 
         try {
@@ -707,7 +707,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.GetThreadCpuTimeWithKind.ordinal(), EXIT);
+                logger.log(LogOperations.GetThreadCpuTimeWithKind.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -722,7 +722,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:208
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.DumpHeap0.ordinal(), ENTRY, anchor, env, outputfile, Address.fromInt(live ? 1 : 0));
+            logger.log(LogOperations.DumpHeap0.ordinal(), UPCALL_ENTRY, anchor, env, outputfile, Address.fromInt(live ? 1 : 0));
         }
 
         try {
@@ -733,7 +733,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.DumpHeap0.ordinal(), EXIT);
+                logger.log(LogOperations.DumpHeap0.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -744,7 +744,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:213
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.FindDeadlocks.ordinal(), ENTRY, anchor, env, Address.fromInt(object_monitors_only ? 1 : 0));
+            logger.log(LogOperations.FindDeadlocks.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(object_monitors_only ? 1 : 0));
         }
 
         try {
@@ -755,7 +755,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.FindDeadlocks.ordinal(), EXIT);
+                logger.log(LogOperations.FindDeadlocks.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -766,7 +766,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:218
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.SetVMGlobal.ordinal(), ENTRY, anchor, env, flag_name, new_value);
+            logger.log(LogOperations.SetVMGlobal.ordinal(), UPCALL_ENTRY, anchor, env, flag_name, new_value);
         }
 
         try {
@@ -775,7 +775,7 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.SetVMGlobal.ordinal(), EXIT);
+                logger.log(LogOperations.SetVMGlobal.ordinal(), UPCALL_EXIT);
             }
 
         }
@@ -790,7 +790,7 @@ public final class JmmFunctions {
         // Source: JmmFunctionsSource.java:225
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
-            logger.log(EntryPoints.DumpThreads.ordinal(), ENTRY, anchor, env, ids, Address.fromInt(lockedMonitors ? 1 : 0), Address.fromInt(lockedSynchronizers ? 1 : 0));
+            logger.log(LogOperations.DumpThreads.ordinal(), UPCALL_ENTRY, anchor, env, ids, Address.fromInt(lockedMonitors ? 1 : 0), Address.fromInt(lockedSynchronizers ? 1 : 0));
         }
 
         try {
@@ -801,12 +801,12 @@ public final class JmmFunctions {
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
-                logger.log(EntryPoints.DumpThreads.ordinal(), EXIT);
+                logger.log(LogOperations.DumpThreads.ordinal(), UPCALL_EXIT);
             }
 
         }
     }
-    public static enum EntryPoints {
+    public static enum LogOperations {
         /* 0 */ GetInputArguments,
         /* 1 */ GetThreadInfo,
         /* 2 */ GetInputArgumentArray,
@@ -834,7 +834,15 @@ public final class JmmFunctions {
         /* 24 */ DumpHeap0,
         /* 25 */ FindDeadlocks,
         /* 26 */ SetVMGlobal,
-        /* 27 */ DumpThreads;
+        /* 27 */ DumpThreads,
+        // operation for logging native method down call
+        /* 28 */ NativeMethodCall,
+        // operation for logging reflective invocation
+        /* 29 */ ReflectiveInvocation,
+        // operation for logging dynamic linking
+        /* 30 */ DynamicLink,
+        // operation for logging native method registration
+        /* 31 */ RegisterNativeMethod;
 
     }
 // END GENERATED CODE

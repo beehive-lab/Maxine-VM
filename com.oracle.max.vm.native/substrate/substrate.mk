@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ PROJECT = ../../..
 
 LIB = jvm
 
-SOURCES = c.c condition.c log.c image.c $(ISA).c jni.c jvm.c maxine.c memory.c mutex.c \
+SOURCES = c.c condition.c log.c image.c $(ISA).c jni.c vm.c maxine.c memory.c mutex.c \
           relocation.c dataio.c runtime.c  snippet.c threads.c threadLocals.c time.c trap.c \
           virtualMemory.c jnitests.c sync.c signal.c jmm.c jvmti.c
 

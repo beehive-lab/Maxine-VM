@@ -236,7 +236,7 @@ public abstract class CodeLocation extends AbstractVmHolder implements MaxCodeLo
 
         public TeleClassMethodActor teleClassMethodActor() {
             if (teleClassMethodActor == null) {
-                teleClassMethodActor = vm().methods().findClassMathodActor(methodKey);
+                teleClassMethodActor = vm().methods().findClassMethodActor(methodKey);
             }
             return teleClassMethodActor;
         }

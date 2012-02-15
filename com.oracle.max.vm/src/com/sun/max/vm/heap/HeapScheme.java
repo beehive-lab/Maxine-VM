@@ -32,6 +32,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -209,17 +210,14 @@ public interface HeapScheme extends VMScheme {
      */
     boolean isAllocationDisabledForCurrentThread();
 
-    @INLINE
-    @FOLD
     boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec);
 
-    @INLINE
     void preWriteBarrier(Reference ref, Offset offset, Reference value);
-    @INLINE
+
     void postWriteBarrier(Reference ref, Offset offset, Reference value);
-    @INLINE
+
     void preWriteBarrier(Reference ref,  int displacement, int index, Reference value);
-    @INLINE
+
     void postWriteBarrier(Reference ref,  int displacement, int index, Reference value);
 
     enum PIN_SUPPORT_FLAG {
@@ -290,7 +288,7 @@ public interface HeapScheme extends VMScheme {
      * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
      * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
      *
-     * If pinning is not supported, make pin() and isPinned() always return false and declare @INLINE for both.
+     * If pinning is not supported, make pin() and isPinned() always return false.
      * Then all pinning client code will automatically be eliminated.
      *
      * @return whether pinning succeeded - callers are supposed to have an alternative plan when it fails
@@ -316,14 +314,12 @@ public interface HeapScheme extends VMScheme {
      * Is TLAB used in this heap scheme or not.
      * @return true if TLAB is used
      */
-    @INLINE
     boolean usesTLAB();
 
     /**
      * Object alignment required by the heap manager (in number of bytes).
      * @return number of bytes.
      */
-    @INLINE
     int objectAlignment();
 
     /**
@@ -372,7 +368,6 @@ public interface HeapScheme extends VMScheme {
      * Indicates whether this heap scheme supports tagging of heap object for debugging purposes.
      * @return true if tagging of heap object is supported
      */
-    @INLINE
     boolean supportsTagging();
 
     /**
@@ -381,7 +376,6 @@ public interface HeapScheme extends VMScheme {
      *
      * @param cell
      */
-    @INLINE
     void trackLifetime(Pointer cell);
 
     /**
@@ -392,12 +386,77 @@ public interface HeapScheme extends VMScheme {
      */
     void walkHeap(CallbackCellVisitor visitor);
 
+    /*
+     * Logging support.
+     */
+
+    public static abstract class PhaseLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
+        protected PhaseLogger(String name, int numOps, String description, int[] refMaps) {
+            super("GCPhases", numOps, "garbage collection phases.", refMaps);
+        }
+
+        /**
+         * All heap schemes scan the {@link VMThreadLocal} references and thread stack roots.
+         * @param vmThread
+         */
+        public abstract void logScanningThreadRoots(VmThread vmThread);
+    }
+
+    /**
+     * Get the concrete implementation of {@link PhaseLogger}.
+     * @return
+     */
+    PhaseLogger phaseLogger();
+
+    /**
+     * A logger for GC timings - implementation provided by the heap scheme.
+     */
+    public static abstract class TimeLogger extends VMLogger {
+        /**
+         * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
+         */
+        protected TimeLogger(String name, int numOps, String description, int[] refMaps) {
+            super("GCTime", numOps, "time of garbage collection phases.", refMaps);
+        }
+
+        /**
+         * Every scheme has this phase.
+         *
+         * @param stackReferenceMapPreparationTime
+         */
+        public abstract void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+    }
+
+    /**
+     * Get the concrete implementation of {@link TimeLogger}.
+     * @return
+     */
+    TimeLogger timeLogger();
+
     /**
      * A collection of methods that support certain inspection services.
      * The public methods are to be called by all scheme implementations when
      * the specified events occur.
      */
     public static final class Inspect {
+
+        private static class GCCallback implements Heap.GCCallback{
+
+            public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
+                if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
+                    notifyHeapPhaseChange(HeapPhase.ANALYZING);
+                } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
+                    notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+                }
+            }
+        }
+
+        static {
+            Heap.registerGCCallback(new GCCallback());
+        }
 
         /**
          * Sets up machinery for inspection of heap activity.
