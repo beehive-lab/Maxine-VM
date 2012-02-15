@@ -251,9 +251,11 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         final CharacterIterator i = new StringCharacterIterator(rstr);
         while (i.getIndex() < i.getEndIndex()) {
             runs.add(parseRun(i));
-            if (!skipPeekAndEat(i, ';')) {
+            skipWhitespace(i);
+            if (i.getIndex() == i.getEndIndex()) {
                 break;
             }
+            expectChar(i, ';');
         }
         return runs;
     }
@@ -313,7 +315,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             expectChar(iterator, ')');
             return new MethodCall(parseCodeLiteral(iterator));
         }
-        throw ProgramError.unexpected("invalid value at " + iterator.getIndex());
+        throw raiseParseErrorAt("invalid value", iterator);
     }
 
     private ProgramError raiseParseErrorAt(String message, CharacterIterator iterator) {
@@ -458,10 +460,10 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
 
     private void expectChar(CharacterIterator i, char c) {
         final char r = i.current();
-        i.next();
         if (r != c) {
-            throw ProgramError.unexpected("parse error at " + i.getIndex() + ", expected character '" + c + "'");
+            throw raiseParseErrorAt("expected character '" + c + "'", i);
         }
+        i.next();
     }
 
     private char parseCharLiteral(CharacterIterator i) throws Exception {
