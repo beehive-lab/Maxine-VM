@@ -24,7 +24,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (311.0f, 10f) = 3110.0f, (11.2f, 2.0f) = 22.4f
+ * @Runs: (311.0f, 10f) = 3110.0f; (11.2f, 2.0f) = 22.4f
  */
 public class BC_fmul {
     public static float test(float a, float b) {

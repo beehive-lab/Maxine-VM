@@ -24,7 +24,7 @@ package jtt.jni;
 
 /*
  * @Harness: java
- * @Runs: 0 = true, 1 = true
+ * @Runs: 0 = true; 1 = true
  */
 public class JNI_OverflowArguments {
 

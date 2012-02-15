@@ -22,7 +22,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (311.0D, 10D) = 1.0D, (11.2D, 2.0D) = 1.2D
+ * @Runs: (311.0D, 10D) = 1.0D; (11.2D, 2.0D) = 1.1999999999999993D
  */
 package jtt.bytecode;
 

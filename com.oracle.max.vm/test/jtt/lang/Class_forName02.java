@@ -23,7 +23,7 @@
 /*
  * @Harness: java
  * @Runs: 0 = "class java.lang.Object"; 1 = "class java.lang.String";
- * @Runs: 2 = "class jtt.lang.Class_forName02"; 3 = !java.lang.ClassNotFoundException
+ * @Runs: 2 = "class jtt.lang.Class_forName02"; 3 = !java.lang.ClassNotFoundException;
  * @Runs: 4 = null
  */
 package jtt.lang;

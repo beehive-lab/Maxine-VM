@@ -27,7 +27,7 @@ package jtt.except;
 
 /*
  * @Harness: java
- * @Runs: -1 = 100; -34=100 1 = 1; 20=20
+ * @Runs: -1 = 100; -34=100; 1 = 1; 20=20
  */
 public class Catch_NASE_2 {
     public static int test(int a) {
