@@ -24,7 +24,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (311.0D, 10D) = 3110.0D, (11.2D, 2.0D) = 22.4D
+ * @Runs: (311.0D, 10D) = 3110.0D; (11.2D, 2.0D) = 22.4D
  */
 public class BC_dmul {
     public static double test(double a, double b) {

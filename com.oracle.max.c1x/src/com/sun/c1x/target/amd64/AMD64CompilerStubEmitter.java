@@ -298,10 +298,17 @@ public class AMD64CompilerStubEmitter {
         asm.jccb(ConditionFlag.parity, nan);
         asm.jccb(ConditionFlag.below, ret);
 
-        // input is > 0 -> return maxInt
-        // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
-        asm.decrementl(convertResult, 1);
-        asm.jmpb(ret);
+        if (isInt) {
+            // input is > 0 -> return maxInt
+            // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
+            asm.decrementl(convertResult, 1);
+            asm.jmpb(ret);
+        } else {
+            // input is > 0 -> return maxLong
+            // result register already contains 0x8000000000000000, so subtracting 1 gives 0x7fffffffffffffff
+            asm.decrementq(convertResult, 1);
+            asm.jmpb(ret);
+        }
 
         // input is NaN -> return 0
         asm.bind(nan);
