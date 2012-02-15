@@ -66,6 +66,7 @@ public class GraphPrototype extends Prototype {
     public GraphPrototype(CompiledPrototype compiledPrototype) {
         this.compiledPrototype = compiledPrototype;
         debuggingPaths = true;
+        // add VM_CLASS_REGISTRY
         add(null, ClassRegistry.BOOT_CLASS_REGISTRY, "[root]");
         gatherObjects();
     }

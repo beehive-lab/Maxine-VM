@@ -239,6 +239,7 @@ public abstract class TypeDescriptor extends Descriptor {
             while (JavaTypeDescriptor.isArray(typeDescriptor)) {
                 typeDescriptor = typeDescriptor.componentTypeDescriptor();
             }
+            // TODO change to include VM_CLASS_REGISTRY
             if (ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor) != null) {
                 return true;
             }
@@ -264,7 +265,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (HostedBootClassLoader.isOmittedType(className)) {
+            if (HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.isOmittedType(className)) {
                 return false;
             }
 

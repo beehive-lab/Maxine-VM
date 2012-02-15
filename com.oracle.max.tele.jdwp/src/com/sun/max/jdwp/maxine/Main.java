@@ -92,7 +92,8 @@ public class Main {
         checkClasspath(classpathPrefix);
 
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        HostedBootClassLoader.setClasspath(classpath);
+        // TODO check for BOOT/VM split
+        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.setClasspath(classpath);
 
         Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
 

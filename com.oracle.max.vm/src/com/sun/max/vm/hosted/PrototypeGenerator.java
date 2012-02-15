@@ -115,6 +115,7 @@ public final class PrototypeGenerator {
     }
 
     private int currentNumberOfClasses() {
+        // TODO Change to include VM_CLASS_REGISTRY
         return ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors();
     }
 }

@@ -127,6 +127,7 @@ public class VerifierTest extends VmTestCase {
     }
 
     public void test() throws Exception {
+        // TODO change to include VM_CLASS_REGISTRY
 
         verify(SomeTest.class.getName(), true);
         verify(JdtBadStackMapTable.class.getName(), true);
@@ -161,7 +162,7 @@ public class VerifierTest extends VmTestCase {
 
         int classActorIndex = 0;
         if (numberOfClassesVerified == 0 || VMCLASSES.getValue()) {
-            ClassActor[] classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
+            ClassActor[] classActors = ClassRegistry.allBootImageClasses();
             while (true) {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
@@ -176,7 +177,7 @@ public class VerifierTest extends VmTestCase {
                 if (classActorIndex == ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors()) {
                     break;
                 }
-                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
+                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.allBootImageClasses();
             }
         }
     }

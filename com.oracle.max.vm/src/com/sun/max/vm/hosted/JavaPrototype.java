@@ -387,6 +387,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
+        // TODO Change to include VM_CLASS_REGISTRY
         ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor);
         if (classActor != null) {
             return classActor;
@@ -529,6 +530,7 @@ public final class JavaPrototype extends Prototype {
 
         objectMap.put(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BootClassLoader.BOOT_CLASS_LOADER);
         objectMap.put(BootClassLoader.BOOT_CLASS_LOADER.getParent(), NULL);
+        objectMap.put(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, VMClassLoader.VM_CLASS_LOADER);
 
         objectMap.put(VmThread.hostSystemThreadGroup, VmThread.systemThreadGroup);
         objectMap.put(VmThread.hostMainThreadGroup, VmThread.mainThreadGroup);

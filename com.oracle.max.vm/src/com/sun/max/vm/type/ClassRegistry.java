@@ -24,6 +24,7 @@ package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
 import static com.sun.max.vm.jdk.JDK.*;
 
 import java.io.*;
@@ -60,12 +61,14 @@ import com.sun.max.vm.value.*;
  *
  * The {@linkplain BootClassLoader#BOOT_CLASS_LOADER boot class loader} is associated the
  * {@linkplain #BOOT_CLASS_REGISTRY boot class registry}.
+ * The {@linkplain VMClassLoader#VM_CLASS_LOADER M class loader} is associated the
+ * {@linkplain #VM_CLASS_REGISTRY VM class registry}
  *
  * This class also contains a number static variables for the actors of well known classes,
  * methods and fields.
  *
  * Note that this design (a separate dictionary of classes per class loader) differs from
- * the global system dictionary (implementedin systemDictionary.[hpp|cpp]) used by HotSpot.
+ * the global system dictionary (implemented in systemDictionary.[hpp|cpp]) used by HotSpot.
  */
 public final class ClassRegistry {
 
@@ -73,6 +76,10 @@ public final class ClassRegistry {
      * The class registry associated with the boot class loader.
      */
     public static final ClassRegistry BOOT_CLASS_REGISTRY = new ClassRegistry(HOSTED_BOOT_CLASS_LOADER);
+    /**
+     * The class registry associated with the VM class loader.
+     */
+    public static final ClassRegistry VM_CLASS_REGISTRY = new ClassRegistry(HOSTED_VM_CLASS_LOADER);
 
     public static final TupleClassActor OBJECT = createClass(Object.class);
     public static final TupleClassActor CLASS = createClass(Class.class);
@@ -171,7 +178,7 @@ public final class ClassRegistry {
         }
         this.classLoader = classLoader;
         if (MaxineVM.isHosted()) {
-            bootImageClasses = new ClassActor[0];
+            bootImageClasses = new ConcurrentLinkedQueue<ClassActor>();
         }
     }
 
@@ -189,7 +196,7 @@ public final class ClassRegistry {
                 }
                 return testClassRegistry;
             }
-            return BOOT_CLASS_REGISTRY;
+            return classLoader == HOSTED_BOOT_CLASS_LOADER ? BOOT_CLASS_REGISTRY : VM_CLASS_REGISTRY;
         }
         if (classLoader == null) {
             return BOOT_CLASS_REGISTRY;
@@ -253,10 +260,7 @@ public final class ClassRegistry {
         DependenciesManager.addToHierarchy(classActor);
 
         if (MaxineVM.isHosted()) {
-            synchronized (this) {
-                bootImageClasses = Arrays.copyOf(bootImageClasses, bootImageClasses.length + 1);
-                bootImageClasses[bootImageClasses.length - 1] = classActor;
-            }
+            bootImageClasses.add(classActor);
         }
 
         InspectableClassInfo.notifyClassLoaded(classActor);
@@ -446,17 +450,55 @@ public final class ClassRegistry {
     }
 
     /**
-     * Classes in the boot image.
+     * Classes in the boot image from this registry.
      */
     @HOSTED_ONLY
-    private ClassActor[] bootImageClasses;
+    private ConcurrentLinkedQueue<ClassActor> bootImageClasses;
+
+    @HOSTED_ONLY
+    private static class BootImageClassesIterator implements Iterable<ClassActor>, Iterator<ClassActor> {
+        Iterator<ClassActor> bootListIter;
+        Iterator<ClassActor> vmListIter;
+
+        private BootImageClassesIterator() {
+            bootListIter = BOOT_CLASS_REGISTRY.bootImageClasses.iterator();
+            vmListIter = VM_CLASS_REGISTRY.bootImageClasses.iterator();
+        }
+
+        public Iterator<ClassActor> iterator() {
+            return this;
+        }
+
+        public ClassActor next() {
+            if (bootListIter.hasNext()) {
+                return bootListIter.next();
+            } else if (vmListIter.hasNext()) {
+                return vmListIter.next();
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        public boolean hasNext() {
+            return bootListIter.hasNext() || vmListIter.hasNext();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    @HOSTED_ONLY
+    public Iterable<ClassActor> bootImageClasses() {
+        return bootImageClasses;
+    }
 
     /**
-     * Gets a snapshot of the classes currently in this registry.
+     * Gets a snapshot of the boot image classes currently in the {@link #BOOT_CLASS_REGISTRY} and {@link #VM_CLASS_REGISTRY}.
      */
     @HOSTED_ONLY
-    public ClassActor[] bootImageClasses() {
-        return bootImageClasses;
+    public static Iterable<ClassActor> allBootImageClasses() {
+        return new BootImageClassesIterator();
     }
 
     /**
@@ -476,7 +518,7 @@ public final class ClassRegistry {
     }
 
     /**
-     * Creates a ClassActor for a tuple or interface type.
+     * Creates a ClassActor for a tuple or interface type in the {@link #BOOT_CLASS_REGISTRY}.
      */
     @HOSTED_ONLY
     private static <T extends ClassActor> T createClass(Class javaClass) {
