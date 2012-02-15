@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
  * A simple nursery implementation that allocates objects in a single contiguous space and evacuate all survivors to the next generation on minor collections.
  * The next generation is responsible for keeping a reserve large enough to accommodate the worst-case evacuation.
  */
-public class NoAgingNursery implements HeapSpace {
+public final class NoAgingNursery implements HeapSpace {
 
     final class NurseryRefiller extends Refiller {
         @Override
@@ -42,14 +42,13 @@ public class NoAgingNursery implements HeapSpace {
                 // TODO: condition for OOM
             }
             // We're out of safepoint. The current thread hold the refill lock and will do the refill of the allocator.
-            return allocator.start;
+            return Address.zero();
         }
 
         @Override
         protected void doBeforeGC() {
             // Nothing to do.
         }
-
     }
 
     /**
@@ -57,6 +56,7 @@ public class NoAgingNursery implements HeapSpace {
      */
     private final HeapAccount<? extends HeapAccountOwner> heapAccount;
 
+    private final int regionTag;
     /**
      * List of region allocated to the nursery.
      */
@@ -69,16 +69,22 @@ public class NoAgingNursery implements HeapSpace {
     /**
      * Atomic bump pointer allocator over the nursery space. The current bounds and size of the nursery are obtained from the allocator's start and end addresses.
      */
-    private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
+    private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller()) {
+    };
+
+    public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
+        this.heapAccount = heapAccount;
+        this.regionTag = regionTag;
+    }
 
     public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount) {
-        this.heapAccount = heapAccount;
+        this(heapAccount, 0);
     }
 
     public void initialize(GenHeapSizingPolicy genSizingPolicy) {
         nurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         uncommitedNurseryRegionsList = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false)) {
+        if (!heapAccount.allocateContiguous(HeapRegionConstants.numberOfRegions(genSizingPolicy.maxYoungGenSize()), nurseryRegionsList, false, false, regionTag)) {
             FatalError.unexpected("Couldn't allocate contiguous range to the nursery");
         }
         int regionID = nurseryRegionsList.head();
@@ -142,13 +148,7 @@ public class NoAgingNursery implements HeapSpace {
         if (MaxineVM.isDebug()) {
             allocator.zap();
         }
-        // Format the allocator's space as a heap free chunk to comply with the allocateRefill interface.
-        // This is pure overhead induced by the BaseAtomicBumpPointerAllocator interface.
-        HeapFreeChunk.format(allocator.start, allocator.size());
-        // We leave the allocator in the "full state" (i.e., top == hardLimit) to avoid the mutator doing the refill racing with
-        // other mutators allocating as soon as we're out of the safepoint. That is, allocating requeste will be forced to
-        // queue on the refill lock until the thread that caused the GC has perform the refill.
-        // Doing otherwise requires changing the BaseAtomicBumpPointerAllocator.refillOrAllocate logic.
+        allocator.reset();
     }
 
     @Override

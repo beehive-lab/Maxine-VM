@@ -186,7 +186,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         return objectSpace.usedSpace();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void writeBarrier(Reference from, Reference to) {
     }
 
@@ -247,7 +247,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         private Size reclaim() {
             startTimer(reclaimTimer);
             objectSpace.beginSweep();
-            heapMarker.sweep(objectSpace);
+            heapMarker.impreciseSweep(objectSpace);
             objectSpace.endSweep();
             stopTimer(reclaimTimer);
             return objectSpace.freeSpaceAfterSweep();
@@ -257,7 +257,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
         @Override
         public void collect(int invocationCount) {
-            traceGCTimes = Heap.traceGCTime();
+            traceGCTimes = Heap.logGCTime();
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
@@ -267,7 +267,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             objectSpace.doBeforeGC();
 
             collectionCount++;
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+            if (MaxineVM.isDebug() && Heap.logGCPhases()) {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
@@ -285,7 +285,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
                 ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
                 heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
             }
-            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+            if (MaxineVM.isDebug() && Heap.logGCPhases()) {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
@@ -354,7 +354,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         Pointer tlab = objectSpace.allocateTLAB(tlabSize);
         Size effectiveSize = setNextTLABChunk(tlab);
 
-        if (Heap.traceAllocation()) {
+        if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
             Log.printCurrentThread(false);
@@ -437,5 +437,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
+
 }
 

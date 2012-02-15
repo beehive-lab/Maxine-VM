@@ -28,7 +28,7 @@ import java.io.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jni.JniFunctionsGenerator.JniFunctionDeclaration;
+import com.sun.max.vm.jni.JniFunctionsGenerator.VmEntryFunctionDeclaration;
 
 @HOSTED_ONLY
 public class JVMTIFunctionsGenerator {
@@ -282,25 +282,29 @@ public class JVMTIFunctionsGenerator {
         }
 
         @Override
-        public void startFunction(JniFunctionDeclaration decl) {
+        public void startFunction(VmEntryFunctionDeclaration decl) {
             super.startFunction(decl);
             currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
             logArgs = null;
         }
 
         @Override
-        public String customizeTracePrologue(JniFunctionDeclaration decl) {
+        public String customizeTracePrologue(VmEntryFunctionDeclaration decl) {
             return logging();
         }
 
         @Override
-        public String customizeTraceEpilogue(JniFunctionDeclaration decl) {
+        public String customizeTraceEpilogue(VmEntryFunctionDeclaration decl) {
             return INDENT12 + "// currrently no return logging";
         }
 
         @Override
-        public void close(PrintWriter writer) {
+        public void close(PrintWriter writer) throws Exception {
             super.close(writer);
+        }
+
+        @Override
+        public void customizeOperations(PrintWriter writer) {
         }
 
         private static String toFirstLower(String s) {
@@ -329,7 +333,7 @@ public class JVMTIFunctionsGenerator {
             sb.append(INDENT8);
             sb.append("if (logger.enabled()) {\n");
             sb.append(INDENT12);
-            sb.append("logger.log(EntryPoints.");
+            sb.append("logger.log(LogOperations.");
             sb.append(JniFunctionsGenerator.currentMethod.name);
             sb.append('.');
             sb.append("ordinal()");

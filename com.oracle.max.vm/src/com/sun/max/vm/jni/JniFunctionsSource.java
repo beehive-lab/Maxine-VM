@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,19 +83,6 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static native int GetVersion(Pointer env);
-
-    private static String dottify(String slashifiedName) {
-        return slashifiedName.replace('/', '.');
-    }
-
-    private static void traceReflectiveInvocation(MethodActor methodActor) {
-        if (TraceJNI) {
-            Log.print("[Thread \"");
-            Log.print(VmThread.current().getName());
-            Log.print("\" --> JNI invoke: ");
-            Log.println(methodActor.format("%H.%n(%p)"));
-        }
-    }
 
     private static final Class[] defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
 
@@ -298,7 +285,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -324,7 +311,7 @@ public final class JniFunctionsSource {
         final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(virtualMethodActor);
+        logReflectiveInvocation(virtualMethodActor);
         return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
@@ -363,7 +350,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native JniHandle CallObjectMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
@@ -468,7 +455,7 @@ public final class JniFunctionsSource {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(selectedMethod);
+        logReflectiveInvocation(selectedMethod);
         return checkResult(expectedReturnKind, methodActor, selectedMethod.invoke(argumentValues));
 
     }
@@ -479,7 +466,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native boolean CallBooleanMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
@@ -490,7 +477,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native byte CallByteMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -501,7 +488,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native char CallCharMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native char CallCharMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native char CallCharMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -512,7 +499,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native short CallShortMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native short CallShortMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native short CallShortMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -523,7 +510,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native int CallIntMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native int CallIntMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native int CallIntMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -534,7 +521,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native long CallLongMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native long CallLongMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native long CallLongMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -545,7 +532,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native float CallFloatMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -556,7 +543,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native double CallDoubleMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -582,12 +569,12 @@ public final class JniFunctionsSource {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(virtualMethodActor);
+        logReflectiveInvocation(virtualMethodActor);
         return checkResult(expectedReturnKind, methodActor, virtualMethodActor.invoke(argumentValues));
     }
 
     @VM_ENTRY_POINT
-    private static native void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+    private static native void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native void CallVoidMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
@@ -598,7 +585,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -609,7 +596,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -620,7 +607,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -631,7 +618,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -642,7 +629,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -653,7 +640,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -664,7 +651,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -675,7 +662,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -686,7 +673,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -697,7 +684,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+    private static native void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
@@ -864,12 +851,12 @@ public final class JniFunctionsSource {
         final SignatureDescriptor signature = methodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(methodActor);
+        logReflectiveInvocation(methodActor);
         return checkResult(expectedReturnKind, methodActor, methodActor.invoke(argumentValues));
     }
 
     @VM_ENTRY_POINT
-    private static native JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native JniHandle CallStaticObjectMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -880,7 +867,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native boolean CallStaticBooleanMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -891,7 +878,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native byte CallStaticByteMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -902,7 +889,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native char CallStaticCharMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -913,7 +900,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native short CallStaticShortMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -924,7 +911,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native int CallStaticIntMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -935,7 +922,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native long CallStaticLongMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -946,7 +933,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native float CallStaticFloatMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -957,7 +944,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native double CallStaticDoubleMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -968,7 +955,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static native void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+    private static native void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID);
 
     @VM_ENTRY_POINT
     private static native void CallStaticVoidMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
@@ -1732,7 +1719,7 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
+    private static void ReleaseStringCritical(Pointer env, JniHandle string, Pointer chars) {
         Memory.deallocate(chars);
     }
 
@@ -1785,32 +1772,6 @@ public final class JniFunctionsSource {
             return JniHandles.Tag.LOCAL;
         }
         return tag;
-    }
-
-    /*
-     * Extended JNI native interface, see Native/jni/jni.c:
-     */
-
-    @VM_ENTRY_POINT
-    private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
-        final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null) {
-            throw new NoSuchMethodException();
-        }
-        return methodActor.descriptor().numberOfParameters();
-    }
-
-    @VM_ENTRY_POINT
-    private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null) {
-            throw new NoSuchMethodException();
-        }
-        final SignatureDescriptor signature = methodActor.descriptor();
-        for (int i = 0; i < signature.numberOfParameters(); ++i) {
-            final Kind kind = signature.parameterDescriptorAt(i).toKind();
-            kinds.setByte(i, (byte) kind.asEnum.ordinal());
-        }
     }
 
     // Checkstyle: resume method name check

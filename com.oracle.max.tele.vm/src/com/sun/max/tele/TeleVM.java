@@ -307,7 +307,7 @@ public abstract class TeleVM implements MaxVM {
          * options based on mode.
          */
         public Options() {
-            heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
+            heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
         }
     }
@@ -879,6 +879,9 @@ public abstract class TeleVM implements MaxVM {
                     TeleError.check((fields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     classAccess.processAttachFixupList();
                 }
+
+                // read the list of actual VmThreadLocal values from the target
+                TeleThreadLocalsArea.Static.values(this);
 
                 // At this point everything should be read to go; handle any requests
                 // for late initialization.

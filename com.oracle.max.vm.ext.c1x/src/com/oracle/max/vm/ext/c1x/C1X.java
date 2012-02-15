@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -232,9 +232,6 @@ public class C1X implements RuntimeCompiler {
                 }
                 if (deps != null) {
                     DependenciesManager.registerValidatedTarget(deps, maxTargetMethod);
-                    if (DependenciesManager.TraceDeps) {
-                        Log.println("DEPS: " + deps.toString(true));
-                    }
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {

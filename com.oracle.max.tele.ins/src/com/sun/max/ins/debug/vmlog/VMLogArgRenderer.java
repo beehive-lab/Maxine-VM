@@ -22,21 +22,48 @@
  */
 package com.sun.max.ins.debug.vmlog;
 
+import java.awt.*;
+
+import javax.swing.table.*;
+
+import com.sun.max.ins.*;
+import com.sun.max.ins.value.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Base class for custom {@link VMlog.Logger} argument renderers.
  */
-public abstract class VMLogArgRenderer {
+public abstract class VMLogArgRenderer extends AbstractInspectionHolder {
+    protected VMLogView vmLogView;
+
+    // TODO (mlvdv) extend MaxVM interfaces so that the implementation class is not needed.
+    protected TeleVM vm;
+
+    public VMLogArgRenderer(VMLogView vmLogView) {
+        super(vmLogView.inspection());
+        this.vmLogView = vmLogView;
+        this.vm = (TeleVM) vmLogView.vm();
+    }
+
     /**
+     * Returns an appropriate {@link TableCellRenderer} for this argument.
      *
      * @param header value from log buffer
      * @param argNum argument index {@code [1 .. N-1]}
-     * @param argValue argument value (can't be a reference)
+     * @param argValue argument value
      * @return
      */
-    abstract String getText(TeleVM vm, int header, int argNum, long argValue);
+    protected Component getRenderer(int header, int argNum, long argValue) {
+        return VMLogArgRendererFactory.defaultVMLogArgRenderer.getRenderer(header, argNum, argValue);
+    }
 
     /**
      * Convenience method for converting a C string to a {@link String}.
@@ -56,6 +83,62 @@ public abstract class VMLogArgRenderer {
             bytes[index++] = b;
         }
         return new String(bytes, 0, index);
+    }
+
+    MethodActor getMethodActor(long arg) {
+        final MethodID methodID = MethodID.fromWord(Address.fromLong(arg));
+        MethodActor methodActor = VmClassAccess.usingTeleClassIDs(new Function<MethodActor>() {
+            @Override
+            public MethodActor call() throws Exception {
+                return MethodID.toMethodActor(methodID);
+            }
+        });
+        return methodActor;
+    }
+
+    TeleClassMethodActor getTeleClassMethodActor(long arg) {
+        final MethodActor methodActor = getMethodActor(arg);
+        final MethodKey methodKey = new MethodKey.MethodActorKey(methodActor);
+        final TeleClassMethodActor teleClassMethodActor =  vm.methods().findClassMethodActor(methodKey);
+        return teleClassMethodActor;
+    }
+
+    protected WordValueLabel getReferenceValueLabel(Reference reference) {
+        return new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, reference.toOrigin(), vmLogView.getTable());
+    }
+
+    protected Component safeGetReferenceValueLabel(TeleObject teleObject) {
+        if (teleObject == null) {
+            return gui().getUnavailableDataTableCellRenderer();
+        } else {
+            return getReferenceValueLabel(teleObject.getReference());
+        }
 
     }
+
+    protected ClassActor getClassActor(final long arg) {
+        ClassActor classActor = VmClassAccess.usingTeleClassIDs(new Function<ClassActor>() {
+            @Override
+            public ClassActor call() throws Exception {
+                return ClassID.toClassActor((int) arg);
+            }
+        });
+        return classActor;
+    }
+
+    protected TeleClassActor getTeleClassActor(long arg) {
+        ClassActor classActor = getClassActor(arg);
+        TeleClassActor teleClassActor = vm.classes().findTeleClassActor((int) arg);
+        assert teleClassActor.classActor() == classActor;
+        return teleClassActor;
+    }
+
+    protected String formatMethodActor(long arg) {
+        return getMethodActor(arg).format("%H.%n(%p)");
+    }
+
+    protected String classActorName(final long arg) {
+        return getClassActor(arg).toString();
+    }
+
 }

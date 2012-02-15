@@ -38,12 +38,10 @@ import com.sun.max.vm.MaxineVM.Phase;
  */
 public abstract class Sweeper {
 
-    public static boolean DoImpreciseSweep = true;
     static boolean TraceSweep;
     static boolean TraceGap = false;
 
     static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", Sweeper.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceSweep", Sweeper.class, "Trace heap sweep operations", Phase.PRISTINE);
         }

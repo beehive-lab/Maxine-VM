@@ -58,7 +58,6 @@ import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.java.*;
 import com.sun.max.vm.log.nat.*;
-import com.sun.max.vm.log.nat.thread.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -144,6 +143,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceIntFieldAccess HeapRegionInfo_firstFreeChunkOffset = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "firstFreeChunkOffset");
     public final TeleInstanceIntFieldAccess HeapRegionInfo_flags = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "flags");
     public final TeleInstanceIntFieldAccess HeapRegionInfo_numFreeChunks = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "numFreeChunks");
+    public final TeleInstanceIntFieldAccess HeapRegionInfo_tag = new TeleInstanceIntFieldAccess(HeapRegionInfo.class, "tag");
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "classActor", ClassActor.class);
     public final TeleInstanceIntFieldAccess Hub_mTableLength = new TeleInstanceIntFieldAccess(Hub.class, "mTableLength");
     public final TeleInstanceIntFieldAccess Hub_mTableStartIndex = new TeleInstanceIntFieldAccess(Hub.class, "mTableStartIndex");
@@ -172,6 +172,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess LinearAllocationMemoryRegion_mark = new TeleInstanceReferenceFieldAccess(LinearAllocationMemoryRegion.class, "mark", AtomicWord.class);
     public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
     public final TeleStaticReferenceFieldAccess MaxineVM_vm = new TeleStaticReferenceFieldAccess(MaxineVM.class, "vm", MaxineVM.class);
+    public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
+    public final TeleStaticIntFieldAccess MaxineVM_primordialTLBlockSize = new TeleStaticIntFieldAccess(MaxineVM.class, "primordialTLBlockSize");
     public final TeleInstanceReferenceFieldAccess MemberActor_descriptor = new TeleInstanceReferenceFieldAccess(MemberActor.class, "descriptor", Descriptor.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess MemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);
@@ -188,6 +190,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess VMLogArray$Record5_arg5 = new TeleInstanceWordFieldAccess(VMLogArray.Record5.class, "arg5");
     public final TeleInstanceWordFieldAccess VMLogArray$Record6_arg6 = new TeleInstanceWordFieldAccess(VMLogArray.Record6.class, "arg6");
     public final TeleInstanceWordFieldAccess VMLogArray$Record7_arg7 = new TeleInstanceWordFieldAccess(VMLogArray.Record7.class, "arg7");
+    public final TeleInstanceWordFieldAccess VMLogArray$Record8_arg8 = new TeleInstanceWordFieldAccess(VMLogArray.Record8.class, "arg8");
     public final TeleStaticIntFieldAccess RegionTable_TableOffset = new TeleStaticIntFieldAccess(RegionTable.class, "TableOffset");
     public final TeleInstanceIntFieldAccess RegionTable_length = new TeleInstanceIntFieldAccess(RegionTable.class, "length");
     public final TeleInstanceIntFieldAccess RegionTable_regionInfoSize = new TeleInstanceIntFieldAccess(RegionTable.class, "regionInfoSize");
@@ -223,13 +226,14 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
     public final TeleInstanceReferenceFieldAccess VMConfiguration_heapScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "heapScheme", HeapScheme.class);
     public final TeleInstanceIntFieldAccess VMLog_logEntries = new TeleInstanceIntFieldAccess(VMLog.class, "logEntries");
-    public final TeleInstanceReferenceFieldAccess VMLog_loggers = new TeleInstanceReferenceFieldAccess(VMLog.class, "loggers", Map.class);
+    public final TeleStaticReferenceFieldAccess VMLog_loggers = new TeleStaticReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
     public final TeleStaticReferenceFieldAccess VMLog_vmLog = new TeleStaticReferenceFieldAccess(VMLog.class, "vmLog", VMLog.class);
     public final TeleInstanceReferenceFieldAccess VMLogArray_buffer = new TeleInstanceReferenceFieldAccess(VMLogArray.class, "buffer", Record[].class);
+    public final TeleInstanceIntFieldAccess VMLogNative_defaultNativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "defaultNativeRecordSize");
+    public final TeleInstanceWordFieldAccess VMLogNative_logBuffer = new TeleInstanceWordFieldAccess(VMLogNative.class, "logBuffer");
+    public final TeleInstanceIntFieldAccess VMLogNative_logSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "logSize");
     public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordArgsOffset = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordArgsOffset");
-    public final TeleInstanceIntFieldAccess VMLogNative_nativeRecordSize = new TeleInstanceIntFieldAccess(VMLogNative.class, "nativeRecordSize");
-    public final TeleInstanceIntFieldAccess VMLogNativeThread_threadLogSize = new TeleInstanceIntFieldAccess(VMLogNativeThread.class, "threadLogSize");
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "name", String.class);
     public final TeleStaticReferenceFieldAccess VmThreadLocal_VALUES = new TeleStaticReferenceFieldAccess(VmThreadLocal.class, "VALUES", List.class);
     // END GENERATED CONTENT

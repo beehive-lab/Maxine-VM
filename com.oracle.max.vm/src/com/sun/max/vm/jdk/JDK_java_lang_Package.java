@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,9 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.type.BootClassLoader.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.vm.jni.*;
 
 /**
  * Method implementations for java.lang.Package.
@@ -33,11 +34,11 @@ public class JDK_java_lang_Package {
 
     @SUBSTITUTE
     public static String getSystemPackage0(String name) {
-        return JVMFunctions.GetSystemPackage(name);
+        return BOOT_CLASS_LOADER.packageSource(name);
     }
 
     @SUBSTITUTE
     public static String[] getSystemPackages0() {
-        return JVMFunctions.GetSystemPackages();
+        return BOOT_CLASS_LOADER.packageNames();
     }
 }

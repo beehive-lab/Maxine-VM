@@ -128,7 +128,7 @@ public class JVMTI {
      * allowing it to be recorded once here to support the handling of callbacks to the agent.
      * @param env the jvmtienv C struct
      */
-    static void setJVMTIEnv(Pointer env) {
+    public static void setJVMTIEnv(Pointer env) {
         if (jvmtiEnvsIndex >= jvmtiEnvs.length) {
             Log.println("too many JVMTI agents");
             MaxineVM.native_exit(-1);

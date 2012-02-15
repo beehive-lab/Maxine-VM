@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ final public class HeapAccounRootCellVisitor extends RootCellVisitor {
      * @param cell a pointer read from an external root (may be zero).
      * @return true if the pointer is in the area covered by root marking.
      */
-    @INLINE(override = true)
+    @INLINE
     @Override
     boolean isNonNullCovered(Pointer cell) {
         return HeapRegionInfo.fromInRegionAddress(cell).owner == owner;

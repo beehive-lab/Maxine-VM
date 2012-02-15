@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1002,7 +1002,7 @@ public class JVMTIFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static int GetlongFormat(Pointer env, Pointer format_ptr) {
+    private static int GetJLocationFormat(Pointer env, Pointer format_ptr) {
         return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
@@ -1177,15 +1177,10 @@ public class JVMTIFunctionsSource {
         return JVMTIClassFunctions.getObjectSize(object.unhand(), size_ptr);
     }
 
-    /**
-     * This function is an extension and appears in the extended JVMTI interface table,
-     * as that is a convenient way to invoke it from native code. It's purpose is
-     * simply to record the value of the C struct that denotes the JVMTI environment.
-     */
     @VM_ENTRY_POINT
-    private static int SetJVMTIEnv(Pointer env) {
-        JVMTI.setJVMTIEnv(env);
-        return 0;
+    private static int GetLocalInstance(Pointer env, JniHandle thread, int depth, Pointer value_ptr) {
+        // PHASES: START,LIVE
+        // NULLCHECK: value_ptr
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
-
 }

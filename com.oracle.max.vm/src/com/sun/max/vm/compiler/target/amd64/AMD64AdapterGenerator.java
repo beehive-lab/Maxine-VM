@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -219,15 +219,15 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
-                preparer.tracePrepareReferenceMap(this, 0, current.sp(), "frame");
+                preparer.logPrepareReferenceMap(this, 0, current.sp(), "frame");
                 int frameSlotIndex = preparer.referenceMapBitIndex(current.sp());
                 int byteIndex = 0;
                 long refMap = this.refMap;
                 for (int i = 0; i < 8; i++) {
                     final byte refMapByte = (byte) (refMap & 0xff);
-                    preparer.traceReferenceMapByteBefore(byteIndex, refMapByte, "Frame");
+                    preparer.logReferenceMapByteBefore(byteIndex, refMapByte, "Frame");
                     preparer.setBits(frameSlotIndex, refMapByte);
-                    preparer.traceReferenceMapByteAfter(current.sp(), frameSlotIndex, refMapByte);
+                    preparer.logReferenceMapByteAfter(current.sp(), frameSlotIndex, refMapByte);
                     refMap >>>= Bytes.WIDTH;
                     frameSlotIndex += Bytes.WIDTH;
                     byteIndex++;
@@ -249,14 +249,14 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer) {
-                preparer.tracePrepareReferenceMap(this, 0, current.sp(), "frame");
+                preparer.logPrepareReferenceMap(this, 0, current.sp(), "frame");
                 int frameSlotIndex = preparer.referenceMapBitIndex(current.sp());
                 int byteIndex = 0;
                 for (int i = 0; i < refMap.length; i++) {
                     final byte frameReferenceMapByte = refMap[byteIndex];
-                    preparer.traceReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
+                    preparer.logReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
                     preparer.setBits(frameSlotIndex, frameReferenceMapByte);
-                    preparer.traceReferenceMapByteAfter(current.sp(), frameSlotIndex, frameReferenceMapByte);
+                    preparer.logReferenceMapByteAfter(current.sp(), frameSlotIndex, frameReferenceMapByte);
                     frameSlotIndex += Bytes.WIDTH;
                     byteIndex++;
                 }

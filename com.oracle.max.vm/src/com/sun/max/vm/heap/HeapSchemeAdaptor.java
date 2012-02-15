@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
@@ -239,22 +239,22 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         // nothing by default
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean usesTLAB() {
         return false;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public int objectAlignment() {
         return Word.size();
     }
 
-    @INLINE(override = true)
+    @INLINE
     public boolean supportsTagging() {
         return true;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void trackLifetime(Pointer cell) {
     }
 
@@ -266,25 +266,25 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return flag.isSet(pinningSupportFlags);
     }
 
-    @INLINE(override = true)
+    @INLINE
     @FOLD
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return false;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public void preWriteBarrier(Reference ref, Offset offset, Reference value) {
         // do nothing
     }
-    @INLINE(override = true)
+    @INLINE
     public void postWriteBarrier(Reference ref, Offset offset, Reference value) {
         // do nothing
     }
-    @INLINE(override = true)
+    @INLINE
     public void preWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
         // do nothing
     }
-    @INLINE(override = true)
+    @INLINE
     public void postWriteBarrier(Reference ref,  int displacement, int index, Reference value) {
         // do nothing
     }

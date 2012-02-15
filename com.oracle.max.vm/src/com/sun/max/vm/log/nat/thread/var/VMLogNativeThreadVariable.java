@@ -24,37 +24,43 @@ package com.sun.max.vm.log.nat.thread.var;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.log.nat.thread.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Per-thread log buffer with variable sized records.
- * Most space efficient but most complicated!
- * Once the circular buffer has cycled, new records can
- * partially overlap old ones, so we have to record the
- * logical "first" record id and keep it updated (for the Inspector).
- * Traversing records also requires using the arg count
- * to correctly locate the next record. An additional complication
- * is that a record might not fit in the slot at the end of the
- * buffer. We do not split records in this case but leave
- * a "hole". We mark this as "FREE" so that the Inspector
- * will skip it, and maintain the invariant that a full
- * buffer is always completely populated. (For simplicity
- * we actually leave a sequence of zero-arg holes.)
+ * Per-thread log buffer with variable sized records. Most space efficient but most complicated! Once the circular
+ * buffer has cycled, new records can partially overlap old ones, so we have to record the logical "first" record offset
+ * and keep it updated (for the Inspector). Traversing records also requires using the arg count to correctly locate the
+ * next record. An additional complication is that a record might not fit in the slot at the end of the buffer. We do
+ * not split records in this case but leave a "hole". We mark this as "FREE" so that the Inspector will skip it, and
+ * maintain the invariant that a full buffer is always completely populated. (For simplicity we actually leave a
+ * sequence of zero-arg holes.)
  *
- * On entry/exit, the values of firstOffset/nextOffset
- * are always {@code >= 0} and {@code < threadLogSize}.
- * However, during the method they may exceed it, which
- * simplifies calculating the new value of firstOffset.
+ * On entry/exit to/from {@link #getRecord}, the values of firstOffset/nextOffset are always {@code >= 0} and
+ * {@code < logSize}. However, during the method they may exceed it, which simplifies calculating the new value of
+ * firstOffset.
+ *
+ * Note, as a consequence of the potential overlap of old records, a GC scan cannot just start at the
+ * beginning of the buffer; it must start at firstOffset to avoid encountering a partiallly overwritten record.
  *
  */
 public class VMLogNativeThreadVariable extends VMLogNativeThread {
 
     @Override
-    public void initialize() {
-        super.initialize();
-        // assume average record size is half maximum
-        threadLogSize = threadLogSize / 2;
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+    }
+
+    @Override
+    @NEVER_INLINE
+    public void threadStart() {
+        // we want to allocate the NativeRecord early;
+        // crucial for the VMOperation thread, otherwise GC logging will fail
+        if (!MaxineVM.isPrimordialOrPristine()) {
+            getNativeRecord();
+        }
     }
 
     @Override
@@ -72,12 +78,12 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
         int recordSize = ARGS_OFFSET + argCount * Word.size();
         int newNextOffset = nextOffset + recordSize;
 
-        if (newNextOffset >= threadLogSize) {
-            if (newNextOffset > threadLogSize) {
+        if (newNextOffset >= logSize) {
+            if (newNextOffset > logSize) {
                 // record would straddle buffer end; remember hole address
                 holeAddress = recordAddress;
                 recordAddress = buffer;
-                newNextOffset = threadLogSize + recordSize;
+                newNextOffset = logSize + recordSize;
             } // else exact fit, but next wraps
             wrap = WRAPPED;
         } // else fits with no wrap
@@ -91,7 +97,7 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
             // firstOffset may need to wrap now
             firstOffsetAndWrap = ((long) modLogSize(firstOffset)) << FIRST_OFFSET_SHIFT | WRAPPED;
             if (holeAddress.isNotZero()) {
-                Pointer bufferEnd = buffer.plus(threadLogSize);
+                Pointer bufferEnd = buffer.plus(logSize);
                 while (holeAddress.lessThan(bufferEnd)) {
                     holeAddress.setInt(Record.FREE);
                     holeAddress = holeAddress.plus(Word.size());
@@ -118,5 +124,36 @@ public class VMLogNativeThreadVariable extends VMLogNativeThread {
         int argCount = Record.getArgCount(buffer.plus(modLogSize(offset)).getInt());
         return offset + ARGS_OFFSET + argCount * Word.size();
     }
+
+    @Override
+    protected final int getLogSize() {
+        // assume average arg size is midpoint
+        return super.getLogSize() / 2;
+    }
+
+    @Override
+    public void scanLog(Pointer tla, PointerIndexVisitor visitor) {
+        long offsets = VMLOG_BUFFER_OFFSETS.load(tla).toLong();
+        int nextOffset = nextOffset(offsets);
+        if (nextOffset == 0 && !isWrapped(offsets)) {
+            // nothing to scan (and therefore no buffer or NativeRecord yet)
+            return;
+        }
+
+        Pointer buffer = getBuffer(tla);
+        NativeRecord r = getNativeRecord();
+        int offset = firstOffset(offsets);
+
+        while (offset != nextOffset) {
+            r.address = buffer.plus(offset);
+            int header = r.getHeader();
+            // variable length records can cause holes
+            if (!Record.isFree(header)) {
+                scanArgs(r, r.address.plus(ARGS_OFFSET), visitor);
+            }
+            offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
+        }
+    }
+
 
 }

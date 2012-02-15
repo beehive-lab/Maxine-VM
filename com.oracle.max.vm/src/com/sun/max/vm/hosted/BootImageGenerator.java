@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findWorkspaceDirectory(), DEFAULT_VM_DIRECTORY);
+        return new File(JavaProject.findHgRoot(), DEFAULT_VM_DIRECTORY);
     }
 
     /**
@@ -213,7 +213,7 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
 
-            if (DependenciesManager.TraceDeps) {
+            if (DependenciesManager.dependenciesLogger.traceEnabled()) {
                 DependenciesManager.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
             }
 

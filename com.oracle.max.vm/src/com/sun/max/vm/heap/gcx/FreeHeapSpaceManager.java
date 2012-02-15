@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,19 +104,19 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
 
         @Override
-        @INLINE(override = true)
+        @INLINE
         public Address allocateOverflow(Size size) {
             return binAllocate(size);
         }
 
         @Override
-        @INLINE(override = true)
+        @INLINE
         public boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             return spaceLeft.lessThan(refillThreshold);
         }
 
         @Override
-        @INLINE(override = true)
+        @INLINE
         public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
@@ -543,7 +543,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             if (!result.isZero()) {
                 return result;
             }
-            if (MaxineVM.isDebug() && Heap.traceGC()) {
+            if (MaxineVM.isDebug() && Heap.logAllGC()) {
                 gcCount++;
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Allocation failure: ");

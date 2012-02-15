@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import java.util.concurrent.*;
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.profile.ValueMetrics.IntegerDistribution;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
@@ -181,8 +180,8 @@ final class ContextDependents {
                 dset = map.putIfAbsent(type, new DSet(deps.id));
                 if (dset == null) {
                     // won the race to add the first dependency
-                    if (TraceDeps) {
-                        Log.println("DEPS: Added dependency from " + deps + " to " + type);
+                    if (dependenciesLogger.enabled()) {
+                        deps.logAdd(type);
                     }
                     continue;
                 }
@@ -192,8 +191,8 @@ final class ContextDependents {
             synchronized (dset) {
                 dset.addUnique(deps.id);
             }
-            if (TraceDeps) {
-                Log.println("DEPS: Added dependency from " + deps + " to " + type);
+            if (dependenciesLogger.enabled()) {
+                deps.logRemove(type);
             }
         }
     }
@@ -209,14 +208,14 @@ final class ContextDependents {
         final int[] removed = {0};
         deps.iterate(new DependencyClosure() {
             @Override
-            public boolean nextClass(ClassActor type, ClassActor prev) {
+            public boolean nextContextClass(ClassActor type, ClassActor prev) {
                 if (type != null) {
                     DSet dset = map.get(type);
                     if (dset != null) {
                         if (dset.remove(deps.id)) {
                             removed[0]++;
-                            if (DependenciesManager.TraceDeps) {
-                                Log.println("DEPS: Removed dependency from " + deps.toString() + " to " + type);
+                            if (dependenciesLogger.enabled()) {
+                                deps.logRemove(type);
                             }
                         }
                         if (dset.size == 0) {
@@ -241,7 +240,7 @@ final class ContextDependents {
      * @return the invalidated dependencies
      */
     ArrayList<Dependencies> flushInvalidDependencies(ClassActor ancestor, ClassActor concreteType, ArrayList<Dependencies> invalidated) {
-        assert classHierarchyLock.isWriteLockedByCurrentThread() : "must hold the class hierarchy lock in read mode";
+        assert classHierarchyLock.isWriteLockedByCurrentThread() : "must hold the class hierarchy lock in write mode";
         // We hold the classHierarchyLock in write mode.
         // This means there cannot be any concurrent modifications to the dependencies.
         DSet dset = map.get(ancestor);
@@ -270,6 +269,38 @@ final class ContextDependents {
 
         return invalidated;
     }
+
+    /**
+     * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
+     *
+     * @param inlineeToCheck
+     * @return
+     */
+    public ArrayList<TargetMethod> getInliners(final ClassMethodActor inlineeToCheck) {
+        // TODO Worry about a concurrent compilation adding a new class with a method that inlines inlineeToCheck?
+        //      Only solution now is to hold the classHierarchyLock in write mode
+        final ArrayList<TargetMethod> result = new ArrayList<TargetMethod>();
+        for (DSet dset : contextDependents.map.values()) {
+            synchronized (dset) {
+                int i = 0;
+                while (i < dset.size) {
+                    Dependencies deps = dset.getDeps(i);
+                    deps.iterate(new DependencyClosure() {
+                        @Override
+                        public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
+                            if (inlinee == inlineeToCheck) {
+                                result.add(targetMethod);
+                            }
+                            return true;
+                        }
+                    });
+                    i++;
+                }
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Dump statistics.

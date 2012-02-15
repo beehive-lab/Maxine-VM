@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -519,7 +519,7 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.VmThread_detach, null, entryPoint);
         add(ClassRegistry.findMethod("run", runScheme.getClass()), null, entryPoint);
 
-        addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), entryPoint);
+        addMethods(null, ClassActor.fromJava(VMFunctions.class).localStaticMethodActors(), entryPoint);
         addMethods(null, extraVMEntryPoints, entryPoint);
         addMethods(extraVMEntryPointNames);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -669,9 +669,9 @@ public final class ClassfileReader {
         // Verify that there are no REFERENCE parameters
         for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
             final Kind kind = descriptor.parameterDescriptorAt(i).toKind();
-            ProgramError.check(kind != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference parameters: " + this);
+            ProgramError.check(kind != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference parameters: " + descriptor);
         }
-        ProgramError.check(descriptor.resultKind() != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference return type: " + this);
+        ProgramError.check(descriptor.resultKind() != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference return type: " + descriptor);
     }
 
     /**
@@ -909,6 +909,7 @@ public final class ClassfileReader {
                             flags |= TEMPLATE | UNSAFE | INLINE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
+                            ProgramError.check(!isAbstract(flags), "Cannot apply " + INLINE.class.getName() + " to an abstract method: " + memberString(name, descriptor));
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
                         } else if (annotation.annotationType() == INTRINSIC.class) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,15 +36,19 @@ import com.sun.max.lang.*;
  * We only need this for running on the host VM,
  * because there the actual types are BoxedSize and BoxedAddress.
  */
-public abstract class Size extends Address {
+public final class Size extends Address {
 
     @HOSTED_ONLY
-    protected Size() {
+    public Size(long value) {
+        super(value);
     }
+
+    @HOSTED_ONLY
+    public static final Size ZERO = new Size(0);
 
     @INLINE
     public static Size zero() {
-        return isHosted() ? BoxedSize.ZERO : fromInt(0);
+        return isHosted() ? ZERO : fromInt(0);
     }
 
     public static final Size K = Size.fromInt(Ints.K);
@@ -58,11 +62,20 @@ public abstract class Size extends Address {
 
     @INLINE
     public static Size fromInt(int value) {
+        if (isHosted()) {
+            return fromLong(value & INT_MASK);
+        }
         return Address.fromInt(value).asSize();
     }
 
     @INLINE
     public static Size fromLong(long value) {
+        if (isHosted()) {
+            if (value == 0) {
+                return ZERO;
+            }
+            return new Size(value);
+        }
         return Address.fromLong(value).asSize();
     }
 
@@ -74,182 +87,182 @@ public abstract class Size extends Address {
 
     @INLINE
     @Override
-    public final Size plus(int addend) {
-        return asAddress().plus(addend).asSize();
+    public Size plus(int addend) {
+        return super.plus(addend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size plus(long addend) {
-        return asAddress().plus(addend).asSize();
+    public Size plus(long addend) {
+        return super.plus(addend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size plus(Address addend) {
-        return asAddress().plus(addend).asSize();
+    public Size plus(Address addend) {
+        return super.plus(addend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size plus(Offset addend) {
-        return asAddress().plus(addend).asSize();
+    public Size plus(Offset addend) {
+        return super.plus(addend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size minus(Address subtrahend) {
-        return asAddress().minus(subtrahend).asSize();
+    public Size minus(Address subtrahend) {
+        return super.minus(subtrahend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size minus(int subtrahend) {
-        return asAddress().minus(subtrahend).asSize();
+    public Size minus(int subtrahend) {
+        return super.minus(subtrahend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size minus(long subtrahend) {
-        return asAddress().minus(subtrahend).asSize();
+    public Size minus(long subtrahend) {
+        return super.minus(subtrahend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size minus(Offset subtrahend) {
-        return asAddress().minus(subtrahend).asSize();
+    public Size minus(Offset subtrahend) {
+        return super.minus(subtrahend).asSize();
     }
 
     @INLINE
     @Override
-    public final Size times(Address factor) {
-        return asAddress().times(factor).asSize();
+    public Size times(Address factor) {
+        return super.times(factor).asSize();
     }
 
     @INLINE
     @Override
-    public final Size times(int factor) {
-        return asAddress().times(factor).asSize();
+    public Size times(int factor) {
+        return super.times(factor).asSize();
     }
 
     @INLINE
     @Override
-    public final Size dividedBy(Address divisor) {
-        return asAddress().dividedBy(divisor).asSize();
+    public Size dividedBy(Address divisor) {
+        return super.dividedBy(divisor).asSize();
     }
 
     @INLINE
     @Override
-    public final Size dividedBy(int divisor) {
-        return asAddress().dividedBy(divisor).asSize();
+    public Size dividedBy(int divisor) {
+        return super.dividedBy(divisor).asSize();
     }
 
     @INLINE
     @Override
-    public final Size remainder(Address divisor) {
-        return asAddress().remainder(divisor).asSize();
+    public Size remainder(Address divisor) {
+        return super.remainder(divisor).asSize();
     }
 
     @INLINE
     @Override
-    public final Size roundedUpBy(int nBytes) {
-        return asAddress().roundedUpBy(nBytes).asSize();
+    public Size roundedUpBy(int nBytes) {
+        return super.roundedUpBy(nBytes).asSize();
     }
 
     @INLINE
     @Override
-    public final Size roundedDownBy(int nBytes) {
-        return asAddress().roundedDownBy(nBytes).asSize();
+    public Size roundedDownBy(int nBytes) {
+        return super.roundedDownBy(nBytes).asSize();
     }
 
     @INLINE
     @Override
-    public final Size wordAligned() {
-        return asAddress().wordAligned().asSize();
+    public Size wordAligned() {
+        return super.wordAligned().asSize();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public Size alignUp(int alignment) {
-        return asAddress().alignUp(alignment).asSize();
+        return super.alignUp(alignment).asSize();
     }
 
-    @INLINE(override = true)
+    @INLINE
     @Override
     public Size alignDown(int alignment) {
-        return asAddress().alignDown(alignment).asSize();
-    }
-
-    @INLINE(override = true)
-    @Override
-    public final boolean isWordAligned() {
-        return asAddress().isWordAligned();
+        return super.alignDown(alignment).asSize();
     }
 
     @INLINE
     @Override
-    public final Size bitSet(int index) {
-        return asAddress().bitSet(index).asSize();
+    public boolean isWordAligned() {
+        return super.isWordAligned();
     }
 
     @INLINE
     @Override
-    public final Size bitClear(int index) {
-        return asAddress().bitClear(index).asSize();
+    public Size bitSet(int index) {
+        return super.bitSet(index).asSize();
     }
 
     @INLINE
     @Override
-    public final Size and(Address operand) {
-        return asAddress().and(operand).asSize();
+    public Size bitClear(int index) {
+        return super.bitClear(index).asSize();
     }
 
     @INLINE
     @Override
-    public final Size and(int operand) {
-        return asAddress().and(operand).asSize();
+    public Size and(Address operand) {
+        return super.and(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size and(long operand) {
-        return asAddress().and(operand).asSize();
+    public Size and(int operand) {
+        return super.and(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size or(Address operand) {
-        return asAddress().or(operand).asSize();
+    public Size and(long operand) {
+        return super.and(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size or(int operand) {
-        return asAddress().or(operand).asSize();
+    public Size or(Address operand) {
+        return super.or(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size or(long operand) {
-        return asAddress().or(operand).asSize();
+    public Size or(int operand) {
+        return super.or(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size not() {
-        return asAddress().not().asSize();
+    public Size or(long operand) {
+        return super.or(operand).asSize();
     }
 
     @INLINE
     @Override
-    public final Size shiftedLeft(int nBits) {
-        return asAddress().shiftedLeft(nBits).asSize();
+    public Size not() {
+        return super.not().asSize();
     }
 
     @INLINE
     @Override
-    public final Size unsignedShiftedRight(int nBits) {
-        return asAddress().unsignedShiftedRight(nBits).asSize();
+    public Size shiftedLeft(int nBits) {
+        return super.shiftedLeft(nBits).asSize();
+    }
+
+    @INLINE
+    @Override
+    public Size unsignedShiftedRight(int nBits) {
+        return super.unsignedShiftedRight(nBits).asSize();
     }
 
     @INLINE
@@ -259,5 +272,4 @@ public abstract class Size extends Address {
         }
         return b;
     }
-
 }

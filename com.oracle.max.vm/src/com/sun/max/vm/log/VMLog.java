@@ -22,12 +22,14 @@
  */
 package com.sun.max.vm.log;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.Heap.*;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -40,20 +42,23 @@ import com.sun.max.vm.thread.*;
  * A variety of implementations of the log buffer are possible,
  * varying in performance, space overhead and complexity.
  * To allow experimentation, a specific logger is chosen by a factory class
- * at image build time, based on a system property. The default implementation is very
- * simple but space inefficient.
+ * at image build time, based on a system property.
  *
  * Since logging has to execute before monitors are available, any synchronization
  * must be handled with compare and swap operations.
+ *
+ * This code can also execute in {@link MaxineVM#isHosted() hosted} mode, to support
+ * logging/tracing during boot image generation. The {@link VMLogHosted} implementation
+ * is used during hosted mode.
  */
-public abstract class VMLog {
+public abstract class VMLog implements Heap.GCCallback {
 
     /**
      * Factory class to choose implementation at image build time via property.
      */
     public static class Factory {
         private static final String VMLOG_FACTORY_CLASS = "max.vmlog.class";
-        public static final String DEFAULT_VMLOG_CLASS = "java.fix.VMLogArrayFixed";
+        public static final String DEFAULT_VMLOG_CLASS = "nat.thread.var.VMLogNativeThreadVariable";
 
         private static VMLog create() {
             String prop = System.getProperty(VMLOG_FACTORY_CLASS);
@@ -96,15 +101,15 @@ public abstract class VMLog {
      *
      */
     public abstract static class Record {
-        public static final int ARGCOUNT_MASK = 0x7;
-        public static final int LOGGER_ID_SHIFT = 3;
-        public static final int LOGGER_ID_MASK = 0xF;
-        public static final int OPERATION_SHIFT = 7;
-        public static final int OPERATION_MASK = 0x1FF;
-        public static final int THREAD_SHIFT = 16;
-        public static final int THREAD_MASK = 0x7FFF;
+        public static final int ARGCOUNT_MASK = 0xF;
+        public static final int LOGGER_ID_SHIFT = 4;
+        public static final int LOGGER_ID_MASK = 0x1F;
+        public static final int OPERATION_SHIFT = 9;
+        public static final int OPERATION_MASK = 0xFF;
+        public static final int THREAD_SHIFT = 17;
+        public static final int THREAD_MASK = 0x3FFF;
         public static final int FREE = 0x80000000;
-        public static final int MAX_ARGS = 7;
+        public static final int MAX_ARGS = 8;
 
         public static int getOperation(int header) {
             return (header >> Record.OPERATION_SHIFT) & OPERATION_MASK;
@@ -128,18 +133,27 @@ public abstract class VMLog {
 
         /**
          * Encodes the loggerId, the operation and the argument count.
-         * Bits 0-2: argument count (max 7)
-         * Bits 3-6: logger id (max 16)
-         * Bits 7-15: operation id (max 512)
-         * Bits 16-30: threadId (max 32768)
+         * Bits 0-3: argument count (max 15)
+         * Bits 4-8: logger id (max 32)
+         * Bits 9-16: operation id (max 256)
+         * Bits 17-30: threadId (max 16384)
          * Bit 31: FREE (1) for implementations that have free lists
          */
         public abstract void setHeader(int header);
         public abstract int getHeader();
 
         public void setHeader(int op, int argCount, int loggerId) {
-            setHeader((VmThread.current().id() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
+            setHeader((safeGetThreadId() << THREAD_SHIFT) | (op << Record.OPERATION_SHIFT) |
                       (loggerId << Record.LOGGER_ID_SHIFT) | argCount);
+        }
+
+        private static int safeGetThreadId() {
+            if (MaxineVM.isHosted()) {
+                return (int) Thread.currentThread().getId();
+            } else {
+                VmThread vmThread = VmThread.current();
+                return vmThread == null ? 0 : vmThread.id();
+            }
         }
 
         public void setFree() {
@@ -168,6 +182,18 @@ public abstract class VMLog {
             return argError();
         }
 
+        public int getIntArg(int n) {
+            return getArg(n).asAddress().toInt();
+        }
+
+        public long getLongArg(int n) {
+            return getArg(n).asAddress().toLong();
+        }
+
+        public boolean getBooleanArg(int n) {
+            return getArg(n).isNotZero();
+        }
+
         public void setArgs(Word arg1) {
             argError();
         }
@@ -189,6 +215,9 @@ public abstract class VMLog {
         public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7) {
             argError();
         }
+        public void setArgs(Word arg1, Word arg2, Word arg3, Word arg4, Word arg5, Word arg6, Word arg7, Word arg8) {
+            argError();
+        }
     }
 
     public static Word argError() {
@@ -197,7 +226,16 @@ public abstract class VMLog {
     }
 
     private static final String LOG_ENTRIES_PROPERTY = "max.vmlog.entries";
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int nextIdOffset;
     private final static int DEFAULT_LOG_ENTRIES = 8192;
+
+    /**
+     * Array of registered {@link VMLogger} instances.
+     */
+    @INSPECTED
+    private static VMLogger[] loggers = new VMLogger[16];
+    private static int nextLoggerIndex;
 
     /**
      * Number of log records maintained in the circular buffer.
@@ -206,16 +244,10 @@ public abstract class VMLog {
     protected int logEntries;
 
     /**
-     * Map of registered {@link VMLogger} instances.
-     */
-    @INSPECTED
-    protected Map<Integer, VMLogger> loggers;
-
-    /**
      * The actual {@link VMLog} instance in this VM image.
      */
     @INSPECTED
-    private static VMLog vmLog = Factory.create();
+    private static VMLog vmLog;
 
     /**
      * Monotonically increasing global unique id for a log record.
@@ -224,22 +256,62 @@ public abstract class VMLog {
     @INSPECTED
     protected volatile int nextId;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    protected int nextIdOffset;
+    protected static int[][] operationRefMaps;
 
     /**
-     * Invoked on early VM startup.
+     * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
      */
-    public void initialize() {
+    @HOSTED_ONLY
+    public static void bootImageInitialize() {
         nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
+        vmLog = Factory.create();
+        vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+        operationRefMaps = new int[loggers.length][];
+        for (VMLogger logger : loggers) {
+            if (logger != null) {
+                logger.setVMLog(vmLog, new VMLogHosted());
+                operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+            }
+        }
+        Heap.registerGCCallback(vmLog);
+    }
+
+    /**
+     * Phase specific initialization.
+     * Only called for BOOTSTRAPPING, PRIMORDIAL, TERMINATING.
+     * @param phase the phase
+     */
+    public void initialize(MaxineVM.Phase phase) {
+        // logging options will have been checked and set during BOOTSTRAPPING,
+        // they need to be reset now for the actual VM run.
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            for (int i = 0; i < loggers.length; i++) {
+                VMLogger logger = loggers[i];
+                if (logger != null) {
+                    logger.setDefaultState();
+                }
+            }
+        }
+    }
+
+    /**
+     * Called when a new thread is started so any thread-specific log state can be setup.
+     */
+    public void threadStart() {
     }
 
     public static VMLog vmLog() {
         return vmLog;
     }
 
-    void registerLogger(VMLogger logger) {
-        vmLog.loggers.put(logger.loggerId, logger);
+    @HOSTED_ONLY
+    public static void registerLogger(VMLogger logger) {
+        if (nextLoggerIndex >= loggers.length) {
+            VMLogger[] newLoggers = new VMLogger[2 * loggers.length];
+            System.arraycopy(loggers, 0, newLoggers, 0, loggers.length);
+            loggers = newLoggers;
+        }
+        loggers[nextLoggerIndex++] = logger;
     }
 
     private void checkLogEntriesProperty() {
@@ -253,7 +325,6 @@ public abstract class VMLog {
 
     protected VMLog() {
         checkLogEntriesProperty();
-        loggers = new HashMap<Integer, VMLogger>();
     }
 
 
@@ -262,22 +333,32 @@ public abstract class VMLog {
      *
      */
     public static void checkLogOptions() {
-        for (VMLogger logger : vmLog.loggers.values()) {
-            logger.checkLogOptions();
+        for (int i = 0; i < loggers.length; i++) {
+            if (loggers[i] != null) {
+                loggers[i].checkOptions();
+            }
         }
     }
 
     /**
      * Allocate a monotonically increasing unique id for a log record.
+     *
      * @return
      */
     @INLINE
+    @NO_SAFEPOINT_POLLS("atomic")
     protected final int getUniqueId() {
-        int myId = nextId;
-        while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
-            myId = nextId;
+        if (MaxineVM.isHosted()) {
+            synchronized (this) {
+                return nextId++;
+            }
+        } else {
+            int myId = nextId;
+            while (Reference.fromJava(this).compareAndSwapInt(nextIdOffset, myId, myId + 1) != myId) {
+                myId = nextId;
+            }
+            return myId;
         }
-        return myId;
     }
 
     /**
@@ -287,5 +368,79 @@ public abstract class VMLog {
      * @return
      */
     protected abstract Record getRecord(int argCount);
+
+    /**
+     * Controls logging (for all loggers) for the current thread.
+     * Initially logging is enabled.
+     *
+     * @param state {@code true} to enable, {@code false} to disable.
+     * @return state on entry
+     */
+    public abstract boolean setThreadState(boolean state);
+
+    /**
+     *
+     * @return {@code true} if logging is enabled for the current thread.
+     */
+    public abstract boolean threadIsEnabled();
+
+    /**
+     * Scan the log for reference types for GC.
+     * @param tla tla for thread
+     * @param visitor
+     */
+    public abstract void scanLog(Pointer tla, PointerIndexVisitor visitor);
+
+    /**
+     * Records the identify of the last visitor passed to {@link #scanLog} to avoid repeat scans
+     * of global log buffers.
+     * N.B. this assumes no parallel calls on multiple threads.
+     */
+    private PointerIndexVisitor lastVisitor;
+
+    @Override
+    public void gcCallback(GCCallbackPhase gcCallbackPhase) {
+        if (gcCallbackPhase == GCCallbackPhase.AFTER) {
+            lastVisitor = null;
+        }
+    }
+
+    /**
+     * Returns {@code true} is {@code visitor} is the same as the last call.
+     * @param visitor
+     * @return
+     */
+    protected boolean isRepeatScanLogVisitor(PointerIndexVisitor visitor) {
+        // if it's the same visitor (and not null) it's a repeat call for a different thread.
+        if (lastVisitor == visitor) {
+            return true;
+        } else {
+            lastVisitor = visitor;
+            return false;
+        }
+    }
+
+    /**
+     * Encapsulates the logic of visiting reference valued arguments.
+     * @param r the log record
+     * @param argBase the address of the base of the arguments
+     * @param visitor the visitor originally passed to {@link #scanLog}.
+     */
+    protected void scanArgs(Record r, Pointer argBase, PointerIndexVisitor visitor) {
+        int loggerId = r.getLoggerId();
+        int[] loggerOperationRefMaps = operationRefMaps[loggerId];
+        if (loggerOperationRefMaps != null) {
+            int op = r.getOperation();
+            int operationRefMap = loggerOperationRefMaps[op];
+            int argIndex = 0;
+            while (operationRefMap != 0) {
+                if ((operationRefMap & 1) != 0) {
+                    visitor.visit(argBase, argIndex);
+                }
+                argIndex++;
+                operationRefMap = operationRefMap >>> 1;
+            }
+        }
+    }
 
 }

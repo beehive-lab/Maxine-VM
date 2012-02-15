@@ -136,22 +136,6 @@ public class HeapAccount<T extends HeapAccountOwner>{
     public T owner() { return owner; }
 
     /**
-     * Allocate region, commit their backing storage.
-     * @return
-     */
-    public synchronized int allocate() {
-        if (committed.size() < reserve) {
-            int regionID = theHeapRegionManager.regionAllocator().allocate();
-            if (regionID != INVALID_REGION_ID) {
-                RegionTable.theRegionTable().regionInfo(regionID).setOwner(owner);
-                committed.prepend(regionID);
-            }
-        }
-        return INVALID_REGION_ID;
-    }
-
-
-    /**
      * Record a new contiguous range of regions into an accounting list. Region in the ranges may not be linked in the accounting list's shared storage.
      * @param regionID
      * @param numRegions
@@ -222,13 +206,15 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @param recipient a {@link RegionListUse#OWNERSHIP} region list where to record the allocated region if non-null
      * @param prepend prepend the range to the recipient list if true, append otherwise
      */
-    private void recordAllocated(int regionID, int numRegions, HeapRegionList accountingList, HeapRegionList recipient, boolean prepend) {
+    private void recordAllocated(int regionID, int numRegions, HeapRegionList accountingList, int tag, HeapRegionList recipient, boolean prepend) {
         final int lastRegionID = regionID + numRegions - 1;
         int r = regionID;
         RegionTable regionTable = RegionTable.theRegionTable();
         // Record the allocated regions for accounting, initialize their region information,
         while (r <= lastRegionID) {
-            regionTable.regionInfo(r++).setOwner(owner);
+            HeapRegionInfo rinfo = regionTable.regionInfo(r++);
+            rinfo.setOwner(owner);
+            rinfo.setTag(tag);
         }
         recordRange(regionID, numRegions, accountingList);
         if (recipient != null) {
@@ -257,7 +243,11 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @return The number of regions allocated, or, if orLess is false, the number of regions left if the
      * account doesn't have enough regions to satisfy the request.
      */
-    public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend, boolean orLess, boolean commit) {
+    public int allocate(int numRegions, HeapRegionList recipient, boolean prepend, boolean orLess, boolean commit) {
+        return allocate(numRegions, recipient, prepend, orLess, commit, 0);
+    }
+
+    public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend, boolean orLess, boolean commit, int tag) {
         int numRegionsLeft = reserve - (committed.size() + uncommitted.size());
         if (numRegionsLeft < numRegions) {
             if (!orLess) {
@@ -276,7 +266,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
             if (commit) {
                 regionAllocator.commit(firstAllocatedRegion, numAllocatedRegions);
             }
-            recordAllocated(firstAllocatedRegion, numAllocatedRegions, accountingList, recipient, prepend);
+            recordAllocated(firstAllocatedRegion, numAllocatedRegions, accountingList, tag, recipient, prepend);
             numRegionsNeeded -= numAllocatedRegions;
         }
         return numRegions;
@@ -354,7 +344,12 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @param prepend if true, insert the regions at the head of the list, otherwise at the tail.
      * @return true if the requested number of contiguous regions is allocated, false otherwise.
      */
-    public synchronized boolean allocateContiguous(int numRegions, HeapRegionList recipient, boolean prepend, boolean commit) {
+    public boolean allocateContiguous(int numRegions, HeapRegionList recipient, boolean prepend, boolean commit) {
+        return allocateContiguous(numRegions, recipient, prepend, commit, 0);
+    }
+
+    public synchronized boolean allocateContiguous(int numRegions, HeapRegionList recipient, boolean prepend, boolean commit, int tag) {
+
         if (committed.size() + uncommitted.size() + numRegions > reserve) {
             return false;
         }
@@ -367,16 +362,16 @@ public class HeapAccount<T extends HeapAccountOwner>{
             accountingList = committed;
             theHeapRegionManager.regionAllocator().commit(regionID, numRegions);
         }
-        recordAllocated(regionID, numRegions, accountingList, recipient, prepend);
+        recordAllocated(regionID, numRegions, accountingList, tag, recipient, prepend);
         return true;
     }
 
     static private boolean bootstrapCompleted = false;
 
-    static void completeBootHeapAccountBootstrap(int numRegions) {
+    static void completeBootHeapAccountBootstrap(int numRegions, int bootTag) {
         FatalError.check(!bootstrapCompleted, "Bootstrap already completed!");
         HeapAccount<HeapRegionManager> bootAccount = HeapRegionManager.theHeapRegionManager().heapAccount();
-        bootAccount.recordAllocated(0, numRegions, bootAccount.committed, null, false);
+        bootAccount.recordAllocated(0, numRegions, bootAccount.committed, bootTag, null, false);
         bootstrapCompleted = true;
     }
 

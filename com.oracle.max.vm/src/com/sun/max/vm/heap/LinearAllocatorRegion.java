@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -96,7 +96,7 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
     }
 
     @INLINE
-    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean tracing) {
+    protected final void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean logging) {
         for (int i = 0; i < refMapWords; ++i) {
             Address refmapWord = refMap.getWord(i).asAddress();
             if (!refmapWord.isZero()) {
@@ -104,12 +104,11 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
                 while (!refmapWord.isZero()) {
                     if (!refmapWord.and(1).isZero()) {
                         final int regionWordIndex = (i * Word.width()) + bitIndex;
-                        if (tracing) {
+                        if (logging) {
                             final Pointer address = start().asPointer().plus(regionWordIndex * Word.size());
                             final Address value = address.readWord(0).asAddress();
                             if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
-                                Log.print("    Slot: ");
-                                logSlot(regionWordIndex, address);
+                                Heap.rootScanLogger.logVisitReferenceMapSlot(regionWordIndex, address, value);
                             }
                         }
                         pointerIndexVisitor.visit(start().asPointer(), regionWordIndex);
@@ -121,18 +120,4 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
         }
     }
 
-    /**
-     * Prints the region-start relative index, absolute address and value of a word within a memory region.
-     *
-     * @param regionWordIndex the index of the word in a region relative to the start of the region
-     * @param address the absolute address of a word within a region
-     */
-    protected static void logSlot(final int regionWordIndex, final Pointer address) {
-        Log.print("index=");
-        Log.print(regionWordIndex);
-        Log.print(", address=");
-        Log.print(address);
-        Log.print(", value=");
-        Log.println(address.readWord(0));
-    }
 }

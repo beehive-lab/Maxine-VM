@@ -68,7 +68,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
      * Name of system property that specifies the address where the heap is located, or where it should be relocated, depending
      * on the user of the class.
      */
-    public static final String HEAP_ADDRESS_PROPERTY = "max.heap";
+    public static final String HEAP_ADDRESS_PROPERTY = VmObjectAccess.HEAP_ADDRESS_PROPERTY;
 
     private static final int TRACE_VALUE = 1;
 
@@ -95,6 +95,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
                 System.err.println("Error parsing value of " + HEAP_ADDRESS_PROPERTY + " system property: " + heapValue + ": " +  e);
             }
         }
+        TeleError.check(heap != 0L, "Heap cannot start at 0");
         return heap;
     }
 
