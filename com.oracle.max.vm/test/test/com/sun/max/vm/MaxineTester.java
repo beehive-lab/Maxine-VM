@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 
 /**
  * This class combines all the testing modes of the Maxine virtual machine into a central
@@ -681,7 +682,7 @@ public class MaxineTester {
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
-            if (OS.current() == OS.DARWIN) {
+            if (OS.current() == OS.DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
                 copyBinary(imageDir, mapLibraryName("jvmlinkage"));
             } else {
                 copyBinary(imageDir, mapLibraryName("jvm"));
