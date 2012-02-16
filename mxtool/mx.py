@@ -678,6 +678,9 @@ class JavaConfig:
         assert output[1] == 'version'
         self.version = output[2].strip('"')
         
+        # extract short version string (e.g., 1.6) to be passed to javac
+        self.jdk_version = self.version[0:self.version.index('.', self.version.index('.') + 1)]
+        
         if self.debug_port is not None:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(self.debug_port)]
 
@@ -857,10 +860,12 @@ def build(args, parser=None):
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')
     
+    jdk = java().jdk_version
+    
     parser = parser if parser is not None else ArgumentParser(prog='mx build')
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
-    parser.add_argument('--source', dest='compliance', help='Java compliance level', default='1.6')
+    parser.add_argument('--source', dest='compliance', help='Java compliance level', default=jdk)
     parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
