@@ -38,8 +38,8 @@ import com.sun.max.vm.tele.*;
 public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implements RemoteHeapScheme {
 
     protected HeapPhase phase = HeapPhase.ALLOCATING;
-    protected long gcStartedCount = -1;
-    protected long gcCompletedCount = -1;
+    protected long gcStartedCount = 0;
+    protected long gcCompletedCount = 0;
 
     protected AbstractRemoteHeapScheme(TeleVM vm) {
         super(vm);

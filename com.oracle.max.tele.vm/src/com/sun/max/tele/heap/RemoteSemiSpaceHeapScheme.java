@@ -537,8 +537,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
             // Line 1
             final StringBuilder sb1 = new StringBuilder();
             sb1.append("phase=").append(phase().label());
-            sb1.append(", collections completed=");
-            sb1.append(formatter.format(Math.min(0, gcCompletedCount)));
+            sb1.append(", collections completed=").append(formatter.format(gcCompletedCount));
             printStream.println(indentation + sb1.toString());
 
             // Line 2
