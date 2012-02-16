@@ -325,27 +325,22 @@ public final class AllocationsTable extends InspectorTable {
 
     private final class EndAddressCellRenderer implements TableCellRenderer, Prober {
 
-        // ValueLabels have important user interaction state, so create one per memory region and keep them around,
+        // Labels have important user interaction state, so create one per memory region and keep them around,
         // even though they may not always appear in the same row.
-        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
+        private final Map<MaxMemoryRegion, DataLabel.AddressAsHex> regionToLabel = new HashMap<MaxMemoryRegion, DataLabel.AddressAsHex>();
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            InspectorLabel label = regionToLabel.get(memoryRegion);
+            DataLabel.AddressAsHex label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new WordValueLabel(inspection(), ValueMode.WORD, AllocationsTable.this) {
-
-                    @Override
-                    public Value fetchValue() {
-                        return WordValue.from(memoryRegion.end());
-                    }
-                };
+                label = new DataLabel.AddressAsHex(inspection(), Address.zero());
                 label.setOpaque(true);
                 regionToLabel.put(memoryRegion, label);
             }
+            label.setValue(memoryRegion.end());
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Ends @");
             label.setBackground(cellBackgroundColor());
             return label;
@@ -370,7 +365,7 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             InspectorLabel label = regionToLabel.get(memoryRegion);
@@ -405,7 +400,7 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             InspectorLabel label = regionToLabel.get(memoryRegion);
