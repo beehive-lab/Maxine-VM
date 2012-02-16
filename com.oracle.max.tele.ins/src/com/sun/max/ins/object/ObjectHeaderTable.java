@@ -160,6 +160,11 @@ public final class ObjectHeaderTable extends InspectorTable {
         return null;
     }
 
+    @Override
+    public Color headerBackgroundColor() {
+        return cellBackgroundColor();
+    }
+
     /**
      * A column model for object headers, to be used in an {@link ObjectView}. Column selection is driven by
      * choices in the parent {@link ObjectView}. This implementation cannot update column choices dynamically.

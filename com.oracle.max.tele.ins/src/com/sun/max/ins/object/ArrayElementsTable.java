@@ -190,6 +190,11 @@ public final class ArrayElementsTable extends InspectorTable {
         return null;
     }
 
+    @Override
+    public Color headerBackgroundColor() {
+        return cellBackgroundColor();
+    }
+
     /**
      * A column model for array elements, to be used in an {@link ObjectView}.
      * Column selection is driven by choices in the parent {@link ObjectView}.
