@@ -56,6 +56,12 @@ public class Page extends AbstractVmHolder {
 
     private final long index;
 
+
+    /**
+     * The VM epoch the last time we reported a page refresh failure, used to avoid duplicate messages.
+     */
+    private long lastFailureEpoch = -1;
+
     /**
      * The buffer for this page.
      */
@@ -149,8 +155,11 @@ public class Page extends AbstractVmHolder {
                 epoch = teleIO.epoch();
             } catch (DataIOError e) {
                 if (!(e instanceof ConcurrentDataIOError)) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + "PAGE REFRESH FAILURE @ " + e.faultAddress.to0xHexString());
-                    //TeleWarning.message(e);
+                    if (lastFailureEpoch != teleIO.epoch()) {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "PAGE REFRESH FAILURE @ " + e.faultAddress.to0xHexString());
+                        lastFailureEpoch = teleIO.epoch();
+                        //TeleWarning.message(e);
+                    }
                 }
                 throw e;
             } catch (TerminatedProcessIOException e) {
