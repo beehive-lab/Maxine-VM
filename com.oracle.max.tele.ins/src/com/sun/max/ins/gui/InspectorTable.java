@@ -234,6 +234,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             getInspectorTableModel().refresh();
             getInspectorTableColumnModel().refresh(force);
             lastRefreshedState = maxVMState;
+            getTableHeader().setBackground(headerBackgroundColor());
             invalidate();
             repaint();
         }
@@ -411,6 +412,16 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * @return a color to be used for foreground
      */
     public Color cellForegroundColor(int row, int column) {
+        return null;
+    }
+
+
+    /**
+     * Gets an alternate background color for rendering the table's header, null for the default.
+     * <p>
+     * Note that this can get called very early in table initialization by superclasses.
+     */
+    public Color headerBackgroundColor() {
         return null;
     }
 
