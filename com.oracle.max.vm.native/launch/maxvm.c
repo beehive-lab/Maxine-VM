@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,11 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 #if os_DARWIN
 #include <unistd.h>
 #include <libgen.h>
+#ifdef JDK7
+#define LIBRARY_NAME "libjvm.dylib"
+#else
 #define LIBRARY_NAME "libjvmlinkage.dylib"
+#endif
 
 /*
  * On Darwin, there is a fourth argument passed to main whose first element contains the path where the executing
@@ -83,13 +87,13 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
 
 #if os_DARWIN
     /*
-     * The JDK libraries on Mac OS X either have hard-coded (<= JDK 6_17) or file-system relative (>= JDK 6_20) paths to the HotSpot VM library.
+     * The JDK6 libraries on Mac OS X either have hard-coded (<= JDK 6_17) or file-system relative (>= JDK 6_20) paths to the HotSpot VM library.
      * The work-around for the former is to make copies of the JDK libraries and patch them to link to the correct Maxine VM library.
      * This is done with the bin/mod-maxosx-javalib.sh script. For the latter, the workaround is to set
-     * the DYLD_LIBRARY_PATH environment variable to the directory containing the Maxine version of libjvmlinkage.dylib
+     * the DYLD_LIBRARY_PATH environment variable to the directory containing the Maxine version of libjvmlinkage.dylib / libjvm.dylib
      * and re-exec the VM. The re-exec is necessary as the DYLD_LIBRARY_PATH is only read at exec.
      * Note that a similiar work-around is necessary for Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild()
-     * in Native/tele/darwin/darwinTeleProcess.c.
+     * in com.oracle.max.vm.native/tele/darwin/darwinTeleProcess.c.
      */
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;
