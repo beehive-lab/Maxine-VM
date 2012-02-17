@@ -53,6 +53,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -435,6 +436,10 @@ public final class ClassfileReader {
                             continue nextField;
                         } else if (annotation.annotationType() == PLATFORM.class) {
                             if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
+                                continue nextField;
+                            }
+                        } else if (annotation.annotationType() == JDK_VERSION.class) {
+                            if (!JDK.thisVersionOrNewer((JDK_VERSION) annotation)) {
                                 continue nextField;
                             }
                         } else if (annotation.annotationType() == RESET.class) {
@@ -903,6 +908,10 @@ public final class ClassfileReader {
                             flags |= UNSAFE;
                         } else if (annotation.annotationType() == PLATFORM.class) {
                             if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
+                                continue nextMethod;
+                            }
+                        } else if (annotation.annotationType() == JDK_VERSION.class) {
+                            if (!JDK.thisVersionOrNewer((JDK_VERSION) annotation)) {
                                 continue nextMethod;
                             }
                         } else if (isBytecodeTemplate(annotation.annotationType())) {
