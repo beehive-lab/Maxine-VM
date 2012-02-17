@@ -22,7 +22,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 3) = true, (2, 3) = !java.lang.IllegalArgumentException, (3, 4) = !java.lang.NullPointerException;
+ * @Runs: (1, 3) = true; (2, 3) = !java.lang.IllegalArgumentException; (3, 4) = !java.lang.NullPointerException;
  * @Runs: (1, -1) = !java.lang.NegativeArraySizeException
  */
 package jtt.reflect;

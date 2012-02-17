@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -477,7 +477,7 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
         }
 
-        protected void setValue(Address address) {
+        public void setValue(Address address) {
             this.address = address;
             updateText();
         }
@@ -494,7 +494,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         private void updateText() {
-            setText(address.toHexString());
+            setText(address.toPaddedHexString('0'));
             setToolTipText(toolTipText());
         }
     }

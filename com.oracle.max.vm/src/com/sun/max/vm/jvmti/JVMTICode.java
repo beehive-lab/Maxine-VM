@@ -77,8 +77,14 @@ public class JVMTICode {
      */
     static void deOptForNewBreakpoint(ClassMethodActor classMethodActor) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+        ArrayList<TargetMethod> inliners = DependenciesManager.getInliners(classMethodActor);
+        // There are three possibilities to consider:
+        // 1. It was inlined everywhere so never compiled in isolation (targetMethod == null) && inliners.size() > 0
+        // 2. It was inlined somewhere but also compiled in isolation (targetMethod != null) && inliners.size() > 0
+        // 3. It has never been compiled or inlined. (targetMethod == null) && inliners.size() == 0
+        // Of these case 2 is the least likely.
         if (targetMethod != null) {
-            // It was compiled already, need to recompile
+            // It was compiled already, need to recompile, and may have been inlined
             // Potentially need to deopt the code in all threads, but note that it
             // may not be active on any thread stack, in which case we just need to recompile
             // and patch call sites. If it is not active, Deoptimization.go does
@@ -87,26 +93,24 @@ public class JVMTICode {
             checkDeOptForMethod(classMethodActor, codeEventSettings);
             // recheck
             targetMethod = classMethodActor.currentTargetMethod();
-            if (!targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
+            if (targetMethod == null || !targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
                 // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
                 vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
             }
         } else {
-            // There are three possibilities in this case
-            // 1. It was inlined everywhere so never compiled in isolation.
-            // 2. It was inlined somewhere but also compiled in isolation
-            // 3. It has never been compiled or inlined.
-            // Have to check the inline dependencies to distinguish these cases.
-            ArrayList<TargetMethod> inliners = DependenciesManager.getInliners(classMethodActor);
+            // Never compiled, but may have been inlined
             if (inliners.size() == 0) {
                 // Case 3 requires nothing to be done as the breakpoint will be
                 // added when the method is compiled.
                 return;
-            } else {
-                // all the inliners need to be deopted and the inlinee needs to be (re)compiled
-                new Deoptimization(inliners).go();
-                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
             }
+        }
+        // Reach here if never compiled but inlined, or compiled and inlined
+        // Now handle deopt of any inliners.
+        if (inliners.size() > 0) {
+            // all the inliners need to be deopted and the inlinee needs to be (re)compiled
+            new Deoptimization(inliners).go();
+            // If never compiled, then similar to case 3, else was recompiled already
         }
     }
 

@@ -201,6 +201,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorPopupMenu desktopMenu;
+    private final InspectorLabel emptyDataTableCellRenderer;
     private final InspectorLabel unavailableDataTableCellRenderer;
 
     /**
@@ -338,6 +339,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 }
             }
         });
+        emptyDataTableCellRenderer = new EmptyDataTableCellRenderer(inspection);
         unavailableDataTableCellRenderer = new UnavailableDataTableCellRenderer(inspection);
 
         pack();
@@ -542,6 +544,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
+    public InspectorLabel getEmptyDataTableCellRenderer() {
+        return emptyDataTableCellRenderer;
+    }
+
     public InspectorLabel getUnavailableDataTableCellRenderer() {
         return unavailableDataTableCellRenderer;
     }
@@ -629,6 +635,32 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
         repaint();
     }
+
+    private final class EmptyDataTableCellRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        EmptyDataTableCellRenderer(Inspection inspection) {
+            super(inspection);
+            setText("");
+            setToolTipText("");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            return this;
+        }
+
+        @Override
+        public String getSearchableText() {
+            return null;
+        }
+
+        public void redisplay() {
+        }
+
+        public void refresh(boolean force) {
+        }
+
+    }
+
 
     private final class UnavailableDataTableCellRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
 

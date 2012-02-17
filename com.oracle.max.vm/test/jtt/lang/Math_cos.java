@@ -25,7 +25,7 @@ package jtt.lang;
 /*
  * @Harness: java
  * @Runs: `java.lang.Double.NaN = !jtt.lang.Math_cos$NaN;
- * @Runs: `java.lang.Double.NEGATIVE_INFINITY = !jtt.lang.Math_cos$NaN
+ * @Runs: `java.lang.Double.NEGATIVE_INFINITY = !jtt.lang.Math_cos$NaN;
  * @Runs: `java.lang.Double.POSITIVE_INFINITY = !jtt.lang.Math_cos$NaN
  */
 public class Math_cos {

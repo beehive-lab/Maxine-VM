@@ -26,13 +26,13 @@ package jtt.optimize;
  * Tests calls to the array copy method.
  * @Harness: java
  * @Runs: (0,0,0)=0;
- * @Runs: (0,0,-1)=!java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (-1,0,0)=!java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (0,-1,0)=!java.lang.ArrayIndexOutOfBoundsException;
+ * @Runs: (0,0,-1)=!java.lang.IndexOutOfBoundsException;
+ * @Runs: (-1,0,0)=!java.lang.IndexOutOfBoundsException;
+ * @Runs: (0,-1,0)=!java.lang.IndexOutOfBoundsException;
  * @Runs: (0,0,2)=0;
- * @Runs: (0,1,2)=!java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (1,0,2)=!java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (1,1,-1)=!java.lang.ArrayIndexOutOfBoundsException;
+ * @Runs: (0,1,2)=!java.lang.IndexOutOfBoundsException;
+ * @Runs: (1,0,2)=!java.lang.IndexOutOfBoundsException;
+ * @Runs: (1,1,-1)=!java.lang.IndexOutOfBoundsException;
  */
 public class ArrayCopy01 {
     public static Object[] src = new Object[]{null, null};

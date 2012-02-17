@@ -22,7 +22,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 0) = true, (2, 2) = true, (3, 2) = true, (0, -1) = !java.lang.NegativeArraySizeException
+ * @Runs: (1, 0) = true; (2, 2) = true; (3, 2) = true; (0, -1) = !java.lang.NegativeArraySizeException
  */
 package jtt.reflect;
 

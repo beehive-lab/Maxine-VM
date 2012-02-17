@@ -107,7 +107,7 @@ public final class StackView extends AbstractView<StackView> {
                 final MaxCompilation compilation = stackFrame.compilation();
                 methodName += inspection().nameDisplay().veryShortName(compilation);
                 CiDebugInfo debugInfo = stackFrame.codeLocation().debugInfo();
-                if (debugInfo == null || debugInfo.frame().caller() == null) {
+                if (debugInfo == null || debugInfo.frame() == null || debugInfo.frame().caller() == null) {
                     toolTip = htmlify(inspection().nameDisplay().longName(compilation, stackFrame.ip()));
                     if (compilation != null) {
                         try {

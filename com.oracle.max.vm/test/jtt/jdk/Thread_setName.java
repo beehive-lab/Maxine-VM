@@ -24,7 +24,7 @@ package jtt.jdk;
 
 /*
  * @Harness: java
- * @Runs: "abc" = "abc
+ * @Runs: "abc" = "abc"
  */
 public class Thread_setName {
 

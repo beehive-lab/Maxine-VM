@@ -26,7 +26,7 @@ import java.util.*;
 
 /*
  * @Harness: java
- * @Runs: 0 = "A", 1 = "B", 2 = "C"
+ * @Runs: 0 = "A"; 1 = "B"; 2 = "C"
  */
 public class EnumMap01 {
     private static final EnumMap<Enum, String> map = new EnumMap<Enum, String>(Enum.class);

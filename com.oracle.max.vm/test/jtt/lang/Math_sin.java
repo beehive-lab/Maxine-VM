@@ -25,8 +25,8 @@ package jtt.lang;
 /*
  * @Harness: java
  * @Runs: `java.lang.Double.NaN = !jtt.lang.Math_sin$NaN;
- * @Runs: `java.lang.Double.NEGATIVE_INFINITY = !jtt.lang.Math_sin$NaN
- * @Runs: `java.lang.Double.POSITIVE_INFINITY = !jtt.lang.Math_sin$NaN
+ * @Runs: `java.lang.Double.NEGATIVE_INFINITY = !jtt.lang.Math_sin$NaN;
+ * @Runs: `java.lang.Double.POSITIVE_INFINITY = !jtt.lang.Math_sin$NaN;
  * @Runs: -0.0d = -0.0d;
  * @Runs: 0.0d = 0.0d;
  */

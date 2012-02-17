@@ -61,4 +61,8 @@ public class TeleFixedMemoryRegion extends VmMemoryRegion {
         return nBytes > 0;
     }
 
+    public Address mark() {
+        return null;
+    }
+
 }
