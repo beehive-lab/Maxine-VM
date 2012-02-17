@@ -38,6 +38,7 @@ public enum AllocationsColumnKind implements ColumnKind {
         }
     },
     START("Start", "Starting address", true, -1),
+    MARK("Mark", "Next allocation address", false, -1),
     END("End", "Ending address", true, -1),
     SIZE("Size", "Region size allocated from OS", true, -1),
     ALLOC("Alloc", "Memory allocated by VM within region", true, -1);
