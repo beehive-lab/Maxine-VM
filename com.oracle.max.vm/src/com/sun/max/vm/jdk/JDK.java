@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -242,6 +242,11 @@ public class JDK {
     }
 
     /**
+     * JDK version string.
+     */
+    public static final String JDK_VERSION_STRING = System.getProperty("java.specification.version");
+
+    /**
      * Version number of the JDK.
      */
     public static final int JDK_VERSION;
@@ -257,15 +262,33 @@ public class JDK {
     public static final int JDK_7 = 7;
 
     static {
-        String version = System.getProperty("java.specification.version");
-
-        if ("1.6".equals(version)) {
+        assert isJDKVersionString(JDK_VERSION_STRING);
+        if ("1.6".equals(JDK_VERSION_STRING)) {
             JDK_VERSION = JDK_6;
-        } else if ("1.7".equals(version)) {
+        } else if ("1.7".equals(JDK_VERSION_STRING)) {
             JDK_VERSION = JDK_7;
         } else {
             JDK_VERSION = -1;
-            throw ProgramError.unexpected("Unknown java version number: " + version);
+            throw ProgramError.unexpected("Unknown java version number: " + JDK_VERSION_STRING);
         }
+    }
+
+    /**
+     * Check version string format. It must conform to "x.y", where both x and y are digits.
+     */
+    private static boolean isJDKVersionString(String v) {
+        return v.matches("\\d\\.\\d");
+    }
+
+    /**
+     * Version check for use with the {@link JDK_VERSION} annotation.
+     */
+    public static boolean thisVersionOrNewer(JDK_VERSION version) {
+        if (version == null) {
+            return true;
+        }
+        final String v = version.version();
+        assert isJDKVersionString(v);
+        return v.compareTo(JDK_VERSION_STRING) >= 0;
     }
 }
