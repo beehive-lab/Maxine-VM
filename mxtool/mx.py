@@ -79,6 +79,9 @@
 #    *sourceDirs: a comma separated list of source directoriy names (relative to the project directory)
 #     dependencies: a comma separated list of the libraries and project the project depends upon (transitive dependencies may be omitted)
 #     checkstyle: the project whose Checkstyle configuration (i.e. <project>/.checkstyle_checks.xml) is used
+#     javaCompliance: a JDK version (format: x.y) to which this project's sources comply (optional; 1.6 is assumed if not given).
+#                     This can be used to exclude a project depending on JDK 7 from building when JDK 6 is used to build,
+#                     and also to set project-specific compliance/target properties for generated IDE project files.
 #
 # Other properties can be specified for projects and libraries for use by extension commands.
 #
@@ -124,14 +127,18 @@ class Dependency:
         return isinstance(self, Library)
     
 class Project(Dependency):
-    def __init__(self, suite, name, srcDirs, deps, dir):
+    def __init__(self, suite, name, srcDirs, deps, jdk, dir):
         Dependency.__init__(self, suite, name)
         self.srcDirs = srcDirs
         self.deps = deps
         self.checkstyleProj = name
+        if jdk == None:
+            self.javaCompliance = '1.6'
+        else:
+            self.javaCompliance = jdk
         self.native = False
         self.dir = dir
-        
+            
     def all_deps(self, deps, includeLibs, includeSelf=True):
         """
         Add the transitive set of dependencies for this project, including
@@ -277,12 +284,13 @@ class Suite:
         for name, attrs in projsMap.iteritems():
             srcDirs = pop_list(attrs, 'sourceDirs')
             deps = pop_list(attrs, 'dependencies')
+            jdk = attrs.pop('javaCompliance', None)
             subDir = attrs.pop('subDir', None);
             if subDir is None:
                 dir = join(self.dir, name)
             else:
                 dir = join(self.dir, subDir, name)
-            p = Project(self, name, srcDirs, deps, dir)
+            p = Project(self, name, srcDirs, deps, jdk, dir)
             p.checkstyleProj = attrs.pop('checkstyle', name)
             p.native = attrs.pop('native', '') == 'true'
             p.__dict__.update(attrs)
@@ -902,6 +910,11 @@ def build(args, parser=None):
         else:
             if not args.java:
                 continue
+            
+        # skip building this Java project if its Java compliance level is "higher" than the configured JDK
+        if java().jdk_version == '1.6' and p.javaCompliance == '1.7':
+            log('Excluding {0} from build (Java compliance level {1} required)'.format(p.name, p.javaCompliance))
+            continue
 
         
         outputDir = p.output_dir()
@@ -1338,6 +1351,7 @@ def eclipseinit(args, suite=None):
                 if isfile(path):
                     with open(join(eclipseSettingsDir, name)) as f:
                         content = f.read()
+                    content = content.replace('${javaCompliance}', p.javaCompliance)
                     update_file(join(settingsDir, name), content)
 
 def netbeansinit(args, suite=None):
