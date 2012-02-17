@@ -24,7 +24,7 @@
  * @Harness: java
  * @Runs: 0 = "class java.lang.Object";
  * @Runs: 1 = "class java.lang.String";
- * @Runs: 2 = "class jtt.lang.Object_getClass01"
+ * @Runs: 2 = "class jtt.lang.Object_getClass01";
  * @Runs: 3 = "class java.lang.Class";
  * @Runs: 4 = null
  */

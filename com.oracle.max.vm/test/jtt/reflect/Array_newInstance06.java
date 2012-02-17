@@ -22,7 +22,7 @@
  */
 /*
  * @Harness: java
- * @Runs: 1 = true, 2 = true; 3 = true
+ * @Runs: 1 = true; 2 = true; 3 = true
  */
 package jtt.reflect;
 

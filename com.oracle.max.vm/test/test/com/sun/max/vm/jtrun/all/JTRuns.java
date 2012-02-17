@@ -1408,6 +1408,30 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (1) == -2147483648
+                runString = "(1)";
+                if (-2147483648 != jtt.bytecode.BC_d2i02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 0
+                runString = "(2)";
+                if (0 != jtt.bytecode.BC_d2i02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == 2147483647
+                runString = "(3)";
+                if (2147483647 != jtt.bytecode.BC_d2i02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == 2147483647
+                runString = "(4)";
+                if (2147483647 != jtt.bytecode.BC_d2i02.test(4)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -1455,6 +1479,30 @@ public class JTRuns {
             // (0) == -9223372036854775808
                 runString = "(0)";
                 if (-9223372036854775808L != jtt.bytecode.BC_d2l02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == -9223372036854775808
+                runString = "(1)";
+                if (-9223372036854775808L != jtt.bytecode.BC_d2l02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 0
+                runString = "(2)";
+                if (0L != jtt.bytecode.BC_d2l02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == 9223372036854775807
+                runString = "(3)";
+                if (9223372036854775807L != jtt.bytecode.BC_d2l02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == 9223372036854775807
+                runString = "(4)";
+                if (9223372036854775807L != jtt.bytecode.BC_d2l02.test(4)) {
                     fail(runString);
                     return;
                 }
@@ -1914,6 +1962,12 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (11.2,2.0) == 22.4
+                runString = "(11.2,2.0)";
+                if (22.4 != jtt.bytecode.BC_dmul.test(11.2, 2.0)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -1995,6 +2049,12 @@ public class JTRuns {
             // (311.0,10.0) == 1.0
                 runString = "(311.0,10.0)";
                 if (1.0 != jtt.bytecode.BC_drem.test(311.0, 10.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (11.2,2.0) == 1.1999999999999993
+                runString = "(11.2,2.0)";
+                if (1.1999999999999993 != jtt.bytecode.BC_drem.test(11.2, 2.0)) {
                     fail(runString);
                     return;
                 }
@@ -2160,6 +2220,30 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (1) == -2147483648
+                runString = "(1)";
+                if (-2147483648 != jtt.bytecode.BC_f2i02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 0
+                runString = "(2)";
+                if (0 != jtt.bytecode.BC_f2i02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == 2147483647
+                runString = "(3)";
+                if (2147483647 != jtt.bytecode.BC_f2i02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == 2147483647
+                runString = "(4)";
+                if (2147483647 != jtt.bytecode.BC_f2i02.test(4)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -2207,6 +2291,30 @@ public class JTRuns {
             // (0) == -9223372036854775808
                 runString = "(0)";
                 if (-9223372036854775808L != jtt.bytecode.BC_f2l02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == -9223372036854775808
+                runString = "(1)";
+                if (-9223372036854775808L != jtt.bytecode.BC_f2l02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 0
+                runString = "(2)";
+                if (0L != jtt.bytecode.BC_f2l02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == 9223372036854775807
+                runString = "(3)";
+                if (9223372036854775807L != jtt.bytecode.BC_f2l02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == 9223372036854775807
+                runString = "(4)";
+                if (9223372036854775807L != jtt.bytecode.BC_f2l02.test(4)) {
                     fail(runString);
                     return;
                 }
@@ -2689,6 +2797,12 @@ public class JTRuns {
             // (311.0,10.0) == 3110.0
                 runString = "(311.0,10.0)";
                 if (3110.0f != jtt.bytecode.BC_fmul.test(311.0f, 10.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (11.2,2.0) == 22.4
+                runString = "(11.2,2.0)";
+                if (22.4f != jtt.bytecode.BC_fmul.test(11.2f, 2.0f)) {
                     fail(runString);
                     return;
                 }
@@ -3690,6 +3804,12 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (-1) == -2
+                runString = "(-1)";
+                if (-2 != jtt.bytecode.BC_ifge.test(-1)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -3801,6 +3921,12 @@ public class JTRuns {
             // (1) == 2
                 runString = "(1)";
                 if (2 != jtt.bytecode.BC_ifgt.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == -2
+                runString = "(-1)";
+                if (-2 != jtt.bytecode.BC_ifgt.test(-1)) {
                     fail(runString);
                     return;
                 }
@@ -3935,6 +4061,12 @@ public class JTRuns {
             // (1) == -2
                 runString = "(1)";
                 if (-2 != jtt.bytecode.BC_ifle.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == 2
+                runString = "(-1)";
+                if (2 != jtt.bytecode.BC_ifle.test(-1)) {
                     fail(runString);
                     return;
                 }
@@ -5378,6 +5510,12 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (-2147483647,-2) == -2147483649
+                runString = "(-2147483647,-2)";
+                if (-2147483649L != jtt.bytecode.BC_ladd.test(-2147483647L, -2L)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -5421,6 +5559,12 @@ public class JTRuns {
             // (2147483647,1) == 2147483648
                 runString = "(2147483647,1)";
                 if (2147483648L != jtt.bytecode.BC_ladd2.test(2147483647, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2147483647,-2) == -2147483649
+                runString = "(-2147483647,-2)";
+                if (-2147483649L != jtt.bytecode.BC_ladd2.test(-2147483647, -2)) {
                     fail(runString);
                     return;
                 }
@@ -6721,6 +6865,12 @@ public class JTRuns {
             // (2147483647,-1) == 2147483648
                 runString = "(2147483647,-1)";
                 if (2147483648L != jtt.bytecode.BC_lsub.test(2147483647L, -1L)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2147483647,2) == -2147483649
+                runString = "(-2147483647,2)";
+                if (-2147483649L != jtt.bytecode.BC_lsub.test(-2147483647L, 2L)) {
                     fail(runString);
                     return;
                 }
@@ -10252,6 +10402,18 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (1) == 1
+                runString = "(1)";
+                if (1 != jtt.except.Catch_NASE_1.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (20) == 20
+                runString = "(20)";
+                if (20 != jtt.except.Catch_NASE_1.test(20)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -10271,6 +10433,18 @@ public class JTRuns {
             // (-34) == 100
                 runString = "(-34)";
                 if (100 != jtt.except.Catch_NASE_2.test(-34)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 1
+                runString = "(1)";
+                if (1 != jtt.except.Catch_NASE_2.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (20) == 20
+                runString = "(20)";
+                if (20 != jtt.except.Catch_NASE_2.test(20)) {
                     fail(runString);
                     return;
                 }
@@ -12838,6 +13012,18 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (1) == "B"
+                runString = "(1)";
+                if (!"B".equals(jtt.jdk.EnumMap01.test(1))) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == "C"
+                runString = "(2)";
+                if (!"C".equals(jtt.jdk.EnumMap01.test(2))) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -12851,6 +13037,18 @@ public class JTRuns {
             // (0) == "A"
                 runString = "(0)";
                 if (!"A".equals(jtt.jdk.EnumMap02.test(0))) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == "B"
+                runString = "(1)";
+                if (!"B".equals(jtt.jdk.EnumMap02.test(1))) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == "C"
+                runString = "(2)";
+                if (!"C".equals(jtt.jdk.EnumMap02.test(2))) {
                     fail(runString);
                     return;
                 }
@@ -13310,6 +13508,12 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.jni.JNI_Nop.test(1)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -13323,6 +13527,12 @@ public class JTRuns {
             // (0) == true
                 runString = "(0)";
                 if (true != jtt.jni.JNI_OverflowArguments.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.jni.JNI_OverflowArguments.test(1)) {
                     fail(runString);
                     return;
                 }
@@ -13570,6 +13780,12 @@ public class JTRuns {
                         return;
                     }
                 }
+            // (5) == null
+                runString = "(5)";
+                if (null != jtt.lang.ClassLoader_loadClass01.test(5)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -13794,6 +14010,12 @@ public class JTRuns {
                         return;
                     }
                 }
+            // (4) == null
+                runString = "(4)";
+                if (null != jtt.lang.Class_forName01.test(4)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -13833,6 +14055,12 @@ public class JTRuns {
                         fail(runString, e);
                         return;
                     }
+                }
+            // (4) == null
+                runString = "(4)";
+                if (null != jtt.lang.Class_forName02.test(4)) {
+                    fail(runString);
+                    return;
                 }
             } catch (Throwable t) {
                 fail(runString, t);
@@ -16600,6 +16828,18 @@ public class JTRuns {
                         return;
                     }
                 }
+            // (java.lang.Double.POSITIVE_INFINITY) == !jtt.lang.Math_cos$NaN
+                try {
+                    runString = "(java.lang.Double.POSITIVE_INFINITY)";
+                    jtt.lang.Math_cos.test(java.lang.Double.POSITIVE_INFINITY);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != jtt.lang.Math_cos.NaN.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -16808,6 +17048,30 @@ public class JTRuns {
                         return;
                     }
                 }
+            // (java.lang.Double.POSITIVE_INFINITY) == !jtt.lang.Math_sin$NaN
+                try {
+                    runString = "(java.lang.Double.POSITIVE_INFINITY)";
+                    jtt.lang.Math_sin.test(java.lang.Double.POSITIVE_INFINITY);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != jtt.lang.Math_sin.NaN.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (-0.0) == -0.0
+                runString = "(-0.0)";
+                if (-0.0 != jtt.lang.Math_sin.test(-0.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (0.0) == 0.0
+                runString = "(0.0)";
+                if (0.0 != jtt.lang.Math_sin.test(0.0)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -16911,6 +17175,30 @@ public class JTRuns {
                         fail(runString, e);
                         return;
                     }
+                }
+            // (java.lang.Double.POSITIVE_INFINITY) == !jtt.lang.Math_tan$NaN
+                try {
+                    runString = "(java.lang.Double.POSITIVE_INFINITY)";
+                    jtt.lang.Math_tan.test(java.lang.Double.POSITIVE_INFINITY);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != jtt.lang.Math_tan.NaN.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (-0.0) == -0.0
+                runString = "(-0.0)";
+                if (-0.0 != jtt.lang.Math_tan.test(-0.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (0.0) == 0.0
+                runString = "(0.0)";
+                if (0.0 != jtt.lang.Math_tan.test(0.0)) {
+                    fail(runString);
+                    return;
                 }
             } catch (Throwable t) {
                 fail(runString, t);
@@ -17039,6 +17327,18 @@ public class JTRuns {
             // (2) == "class jtt.lang.Object_getClass01"
                 runString = "(2)";
                 if (!"class jtt.lang.Object_getClass01".equals(jtt.lang.Object_getClass01.test(2))) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == "class java.lang.Class"
+                runString = "(3)";
+                if (!"class java.lang.Class".equals(jtt.lang.Object_getClass01.test(3))) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == null
+                runString = "(4)";
+                if (null != jtt.lang.Object_getClass01.test(4)) {
                     fail(runString);
                     return;
                 }
@@ -20194,38 +20494,38 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
-            // (0,0,-1) == !java.lang.ArrayIndexOutOfBoundsException
+            // (0,0,-1) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(0,0,-1)";
                     jtt.optimize.ArrayCopy01.test(0, 0, -1);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
                 }
-            // (-1,0,0) == !java.lang.ArrayIndexOutOfBoundsException
+            // (-1,0,0) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(-1,0,0)";
                     jtt.optimize.ArrayCopy01.test(-1, 0, 0);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
                 }
-            // (0,-1,0) == !java.lang.ArrayIndexOutOfBoundsException
+            // (0,-1,0) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(0,-1,0)";
                     jtt.optimize.ArrayCopy01.test(0, -1, 0);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
@@ -20236,38 +20536,38 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
-            // (0,1,2) == !java.lang.ArrayIndexOutOfBoundsException
+            // (0,1,2) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(0,1,2)";
                     jtt.optimize.ArrayCopy01.test(0, 1, 2);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
                 }
-            // (1,0,2) == !java.lang.ArrayIndexOutOfBoundsException
+            // (1,0,2) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(1,0,2)";
                     jtt.optimize.ArrayCopy01.test(1, 0, 2);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
                 }
-            // (1,1,-1) == !java.lang.ArrayIndexOutOfBoundsException
+            // (1,1,-1) == !java.lang.IndexOutOfBoundsException
                 try {
                     runString = "(1,1,-1)";
                     jtt.optimize.ArrayCopy01.test(1, 1, -1);
                     fail(runString);
                     return;
                 } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    if (e.getClass() != java.lang.IndexOutOfBoundsException.class) {
                         fail(runString, e);
                         return;
                     }
@@ -24414,6 +24714,30 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.reflect.Array_newInstance01.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == true
+                runString = "(3)";
+                if (true != jtt.reflect.Array_newInstance01.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == !java.lang.NegativeArraySizeException
+                try {
+                    runString = "(-1)";
+                    jtt.reflect.Array_newInstance01.test(-1);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -24430,6 +24754,30 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (2) == !java.lang.IllegalArgumentException
+                try {
+                    runString = "(2)";
+                    jtt.reflect.Array_newInstance02.test(2);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (3) == !java.lang.NullPointerException
+                try {
+                    runString = "(3)";
+                    jtt.reflect.Array_newInstance02.test(3);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.NullPointerException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -24443,6 +24791,18 @@ public class JTRuns {
             // (1) == true
                 runString = "(1)";
                 if (true != jtt.reflect.Array_newInstance03.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.reflect.Array_newInstance03.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == true
+                runString = "(3)";
+                if (true != jtt.reflect.Array_newInstance03.test(3)) {
                     fail(runString);
                     return;
                 }
@@ -24462,6 +24822,30 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (2,2) == true
+                runString = "(2,2)";
+                if (true != jtt.reflect.Array_newInstance04.test(2, 2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3,2) == true
+                runString = "(3,2)";
+                if (true != jtt.reflect.Array_newInstance04.test(3, 2)) {
+                    fail(runString);
+                    return;
+                }
+            // (0,-1) == !java.lang.NegativeArraySizeException
+                try {
+                    runString = "(0,-1)";
+                    jtt.reflect.Array_newInstance04.test(0, -1);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -24478,6 +24862,42 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (2,3) == !java.lang.IllegalArgumentException
+                try {
+                    runString = "(2,3)";
+                    jtt.reflect.Array_newInstance05.test(2, 3);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (3,4) == !java.lang.NullPointerException
+                try {
+                    runString = "(3,4)";
+                    jtt.reflect.Array_newInstance05.test(3, 4);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.NullPointerException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (1,-1) == !java.lang.NegativeArraySizeException
+                try {
+                    runString = "(1,-1)";
+                    jtt.reflect.Array_newInstance05.test(1, -1);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
@@ -24491,6 +24911,18 @@ public class JTRuns {
             // (1) == true
                 runString = "(1)";
                 if (true != jtt.reflect.Array_newInstance06.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.reflect.Array_newInstance06.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == true
+                runString = "(3)";
+                if (true != jtt.reflect.Array_newInstance06.test(3)) {
                     fail(runString);
                     return;
                 }

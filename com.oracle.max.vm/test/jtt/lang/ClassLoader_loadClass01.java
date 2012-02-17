@@ -28,7 +28,7 @@ import java.net.*;
  * @Harness: java
  * @Runs: 0 = "class java.lang.String";
  * @Runs: 1 = !java.lang.ClassNotFoundException;
- * @Runs: 2 = !java.lang.ClassNotFoundException";
+ * @Runs: 2 = !java.lang.ClassNotFoundException;
  * @Runs: 5 = null
  */
 public final class ClassLoader_loadClass01 {

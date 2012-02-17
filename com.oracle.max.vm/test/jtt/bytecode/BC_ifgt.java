@@ -24,7 +24,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0=-2; 1=2, -1=-2
+ * @Runs: 0=-2; 1=2; -1=-2
  */
 public class BC_ifgt {
     public static int test(int a) {

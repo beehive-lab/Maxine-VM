@@ -127,6 +127,14 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
         return usageCache;
     }
 
+    /**
+     * Gets most recently read value from the mark field of the {@link LinearAllocationMemoryRegion} in the VM.
+     */
+    @Override
+    public Address mark() {
+        return markCache;
+    }
+
     /** {@inheritDoc}
      * <p>
      * In a {@link LinearAllocationMemoryRegion}, the allocated region is assumed to be between
@@ -135,13 +143,6 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
     @Override
     public boolean containsInAllocated(Address address) {
         return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(markCache) : false;
-    }
-
-    /**
-     * Gets most recently read value from the mark field of the {@link LinearAllocationMemoryRegion} in the VM.
-     */
-    public Address mark() {
-        return markCache;
     }
 
 }
