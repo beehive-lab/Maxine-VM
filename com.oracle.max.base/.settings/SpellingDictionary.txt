@@ -63,6 +63,7 @@ builtins
 bytecode
 bytecodes
 callback
+callbacks
 callee
 callees
 cannonical
@@ -201,6 +202,7 @@ semispaces
 settable
 shootout
 snippet
+stateful
 stderr
 stdout
 struct
@@ -234,6 +236,7 @@ unpark
 unparks
 unpinned
 unsetting
+unstarted
 upcall
 upcalls
 viewport
