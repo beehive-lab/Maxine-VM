@@ -46,5 +46,5 @@ public @interface JDK_VERSION {
      * i.e., it must conform to the pattern checked by
      * {@link com.sun.max.vm.jdk.JDK#isJDKVersionString(String)}.
      */
-    String version() default "";
+    String value() default "";
 }
