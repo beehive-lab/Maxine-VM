@@ -40,6 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
@@ -189,6 +190,7 @@ public final class JavaPrototype extends Prototype {
 
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
+     * Substitutor classes are only treated if the JDK version is appropriate.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
         for (BootImagePackage bootImagePackage : vmConfiguration.bootImagePackages) {
@@ -197,10 +199,12 @@ public final class JavaPrototype extends Prototype {
                 for (String cn : classes) {
                     try {
                         Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
-                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
-                        if (annotation != null) {
-                            loadClass(c);
-                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                        if (JDK.thisVersionOrNewer(c.getAnnotation(JDK_VERSION.class))) {
+                            METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                            if (annotation != null) {
+                                loadClass(c);
+                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                            }
                         }
                     } catch (Exception e) {
                         throw ProgramError.unexpected(e);

@@ -289,6 +289,6 @@ public class JDK {
         }
         final String v = version.value();
         assert isJDKVersionString(v);
-        return v.compareTo(JDK_VERSION_STRING) >= 0;
+        return v.compareTo(JDK_VERSION_STRING) <= 0;
     }
 }
