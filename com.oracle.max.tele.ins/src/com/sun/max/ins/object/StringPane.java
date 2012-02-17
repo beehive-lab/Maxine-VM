@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.object;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -68,18 +70,23 @@ public final class StringPane extends InspectorScrollPane {
     public void refresh(boolean force) {
         if (vm().state().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = vm().state();
-            if (stringSource.status().isNotDead()) {
-                final String newString = stringSource.fetchString();
-                if (newString != stringValue) {
-                    stringValue = newString;
-                    textArea.selectAll();
-                    textArea.replaceSelection(stringValue);
-                }
-            } else {
-                textArea.selectAll();
-                textArea.replaceSelection("");
-                textArea.setBackground(preference().style().deadObjectBackgroundColor());
+            String stringValue = "";
+            Color background = null;
+            switch(stringSource.status()) {
+                case LIVE:
+                case UNKNOWN:
+                    stringValue = stringSource.fetchString();
+                    break;
+                case DEAD:
+                    background = preference().style().deadObjectBackgroundColor();
+                    break;
+                case FORWARDED:
+                    background = preference().style().forwardedObjectBackgroundColor();
+                    break;
             }
+            textArea.selectAll();
+            textArea.replaceSelection(stringValue);
+            textArea.setBackground(background);
         }
     }
 
