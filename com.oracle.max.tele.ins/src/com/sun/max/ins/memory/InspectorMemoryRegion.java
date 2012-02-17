@@ -88,6 +88,11 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
         return MaxMemoryRegion.Util.contains(this, address);
     }
 
+    public Address mark() {
+        // By default, assume that the region is not linearly allocated.
+        return null;
+    }
+
     public boolean containsInAllocated(Address address) {
         // By default, assume that the whole region is allocated.
         // Override this for specific region that have internal
