@@ -80,10 +80,37 @@ public enum HeapPhase {
     }
 
     /**
-     * Returns {@code true} if the heap is in one of the GC phase,
+     * Returns {@code true} if the heap is in one of the GC phases,
      * {@code false} if allocating normally.
      */
     public boolean isCollecting() {
         return this != ALLOCATING;
+    }
+
+    /**
+     * @return whether the heap is in the normal, non-GC phase
+     * during which objects are being allocated.
+     * @see #ALLOCATING
+     */
+    public boolean isAllocating() {
+        return this == ALLOCATING;
+    }
+
+    /**
+     * @return whether the heap is in the first phase of GC,
+     * during which the reachability of objects is being determined.
+     * @see #ANALYZING
+     */
+    public boolean isAnalyzing() {
+        return this == ANALYZING;
+    }
+
+    /**
+     * @return whether the heap is in the second phase of GC,
+     * during which information no longer necessary is being cleaned up.
+     * @see #RECLAIMING
+     */
+    public boolean isReclaiming() {
+        return this == RECLAIMING;
     }
 }
