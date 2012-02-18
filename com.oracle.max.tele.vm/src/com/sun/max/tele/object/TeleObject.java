@@ -651,7 +651,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
                 copiesPerType.get(object.getClass()).value++;
                 totalCopies++;
                 if ((numberOfCopies % 100) == 0) {
-                    Trace.line(1, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
+                     Trace.line(COPY_TRACE_VALUE, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
                 }
             }
         }
