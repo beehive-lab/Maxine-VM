@@ -26,9 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.jdk.*;
@@ -43,9 +41,13 @@ public abstract class HostedClassLoader extends ClassLoader {
      */
     protected Classpath classpath;
 
-    protected final Set<String> loadedPackages = new HashSet<String>();
+    /**
+     * A cache of loaded classes for fast lookup.
+     */
+    protected Map<String, Class> definedClasses = new HashMap<String, Class>();
 
     protected HostedClassLoader() {
+        super(null);
     }
 
     protected HostedClassLoader(ClassLoader parent) {
@@ -53,12 +55,10 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Sets the classpath to be used for any subsequent loading of classes through the hosted boot class loader. This should
-     * ideally only be called once per execution before any class loading is performed through
-     * {@link #HOSTED_BOOT_CLASS_LOADER}.
+     * Sets the classpath to be used for any subsequent loading of classes through this loader. This should
+     * ideally only be called once per execution before any class loading is performed through this loader.
      *
-     * @param classpath
-     *                the classpath to use
+     * @param classpath the classpath to use for this loader.
      */
     public void setClasspath(Classpath classpath) {
         ProgramWarning.check(this.classpath == null, "overriding hosted boot class loader's classpath: old value=\"" + this.classpath + "\", new value=\"" + classpath + "\"");
@@ -103,41 +103,6 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Make a class actor for the specified type descriptor. This method will attempt to load
-     * the class specified if it has not already been loaded and construct the class actor.
-     *
-     * @param typeDescriptor a well-formed descriptor of a class name.
-     * @return the class actor for the specified type descriptor
-     * @throws ClassNotFoundException if the class specified by the type descriptor could not be found
-     */
-    public ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
-        try {
-            final ClassActor classActor = ClassRegistry.get(HostedClassLoader.this, typeDescriptor, false);
-            if (classActor != null) {
-                return classActor;
-            }
-            if (JavaTypeDescriptor.isArray(typeDescriptor)) {
-                final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
-                return ClassActorFactory.createArrayClassActor(componentClassActor);
-            }
-            final String name = typeDescriptor.toJavaString();
-
-            if (isOmittedType(name)) {
-                throw new OmittedClassError(name);
-            }
-
-            synchronized (this) {
-                loadedPackages.add(Classes.getPackageName(name));
-            }
-
-            final ClasspathFile classpathFile = readClassFile(classpath(), name);
-            return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
-        } catch (Exception exception) {
-            throw Utils.cast(ClassNotFoundException.class, exception);
-        }
-    }
-
-    /**
      * Make a class actor for the specified type descriptor and fail with a program error
      * if it cannot be done.
      *
@@ -146,14 +111,37 @@ public abstract class HostedClassLoader extends ClassLoader {
      */
     public ClassActor mustMakeClassActor(TypeDescriptor typeDescriptor) {
         try {
-            return makeClassActor(typeDescriptor);
+            // this gets it into the correct registry
+            loadClass(typeDescriptor.toJavaString());
+            // now we are guaranteed to find it
+            return ClassRegistry.getInBootOrVM(typeDescriptor);
         } catch (ClassNotFoundException throwable) {
             throw ProgramError.unexpected("could not make class Actor: " + typeDescriptor, throwable);
         }
     }
 
     /**
+     * Fast track version of {@link #makeClassActor} that assumes class explicitly loaded by {@link loadClass}.
+     * So it is not an array and we don't need to run {@link #extraLoadClassChecks(Class, String)}.
+     * @param typeDescriptor
+     * @return
+     * @throws ClassNotFoundException
+     */
+    protected ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
+        final TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
+        final ClassActor classActor = ClassRegistry.get(this, typeDescriptor, false);
+        if (classActor != null) {
+            return classActor;
+        }
+        final String name = typeDescriptor.toJavaString();
+        final ClasspathFile classpathFile = readClassFile(classpath(), name);
+        definedClasses.put(name, javaClass);
+        return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
+    }
+
+    /**
      * Create a class actor with the specified name from the specified byte array.
+     * Inspector use.
      *
      * @param name the name of the class
      * @param classfileBytes a byte array containing the encoded version of the class
@@ -161,6 +149,29 @@ public abstract class HostedClassLoader extends ClassLoader {
     public ClassActor makeClassActor(final String name, byte[] classfileBytes) {
         defineClass(name, classfileBytes, 0, classfileBytes.length);
         return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
+    }
+
+    /**
+     * Array classes require special treatment and are handled here for all subclasses.
+     * Since the classloader for the array depends on the component type, our subclass will actually
+     * handle the loading of that.
+     */
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
+        // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
+        // as required by the Java runtime. The class loader for an array class, as returned by Class.getClassLoader() is the same as
+        // the class loader for its element type; if the element type is a primitive type, then the array class has no class loader."
+        // So the following is not exactly legal.
+        if (name.endsWith("[]")) {
+            return findArrayClass(JavaTypeDescriptor.getDescriptorForJavaString(name).componentTypeDescriptor());
+        } else if (name.charAt(0) == '[') {
+            // make sure the name is slashified first
+            final String componentTypeName = name.substring(1).replace('.', '/');
+            return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
+        } else {
+            return super.findClass(name);
+        }
     }
 
     /**
@@ -172,92 +183,49 @@ public abstract class HostedClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if the element type could not be found
      */
     private Class<?> findArrayClass(final TypeDescriptor elementTypeDescriptor) throws ClassNotFoundException {
-        ClassActor elementClassActor = ClassRegistry.get(HostedClassLoader.this, elementTypeDescriptor, false);
+        ClassActor elementClassActor = ClassRegistry.get(this, elementTypeDescriptor, false);
         if (elementClassActor == null) {
-            // findClass expects a Java class "Binary name".
-            final Class elementType = findClass(elementTypeDescriptor.toJavaString());
+            final Class elementType = loadClass(elementTypeDescriptor.toJavaString());
             elementClassActor = ClassActor.fromJava(elementType);
         }
         final ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(elementClassActor);
         return arrayClassActor.toJava();
     }
 
+
     /**
-     * Finds a class with the specified name given the specified class path.
+     * Loads the class with the specified name. Also creates the {@link ClassActor} and records proxy classes, unless
+     * prevent by subclass checks.
      *
-     * @param classpath the path which to search for the specified class
-     * @param name the name of the class as a string
-     * @return a class with the specified name
-     * @throws ClassNotFoundException if the class could not be found
-     */
-    protected Class findClass(Classpath classpath, String name) throws ClassNotFoundException {
-        final ClasspathFile classpathFile = readClassFile(classpath, name);
-        return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
-    }
-
-    /**
-     * Overrides the default implementation of {@link ClassLoader#findClass(String) ClassLoader.findClass()},
-     * using the internal actor machinery to find and build the classes as necessary.
-     *
-     * @param name the name of the class as a string
-     */
-    @Override
-    public Class<?> findClass(final String name) throws ClassNotFoundException {
-        try {
-            // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
-            // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
-            // as required by the Java runtime. The class loader for an array class, as returned by Class.getClassLoader() is the same as
-            // the class loader for its element type; if the element type is a primitive type, then the array class has no class loader."
-            // So the following is not exactly legal.
-            if (name.endsWith("[]")) {
-                return findArrayClass(JavaTypeDescriptor.getDescriptorForJavaString(name).elementTypeDescriptor());
-            } else if (name.charAt(0) == '[') {
-                // make sure the name is slashified first
-                final String elementTypeName = name.substring(1).replace('.', '/');
-                return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(elementTypeName));
-            }
-            final Class<?> javaType = findClass(classpath(), name);
-            makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
-            return javaType;
-        } catch (ClassNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw ProgramError.unexpected(e);
-        }
-    }
-
-    /**
-     * Support for checking when loading a class if it is supposed to be omitted from the image.
-     * @param name
-     * @return
-     */
-    protected boolean isOmittedType(String name) {
-        return false;
-    }
-
-    /**
-     * Loads the class with the specified name.
      * @see ClassLoader#loadClass(String, resolve)
      */
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+        Class javaType = definedClasses.get(name);
+        if (javaType != null) {
+            return javaType;
+        }
         try {
-            final Class<?> javaType = super.loadClass(name, resolve);
-            if (MaxineVM.isHostedOnly(javaType)) {
-                throw new HostOnlyClassError(javaType.getName());
-            }
-            if (isOmittedType(name)) {
-                throw new OmittedClassError(javaType.getName());
-            }
-            makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
+            javaType = super.loadClass(name, resolve);
+            if (extraLoadClassChecks(javaType, name)) {
+                defineLoadedClassActor(javaType);
 
-            if (Proxy.isProxyClass(javaType)) {
-                JDK_java_lang_reflect_Proxy.bootProxyClasses.add(javaType);
+                if (Proxy.isProxyClass(javaType)) {
+                    JDK_java_lang_reflect_Proxy.bootProxyClasses.add(javaType);
+                }
             }
             return javaType;
         } catch (Exception exception) {
             throw Utils.cast(ClassNotFoundException.class, exception);
         }
     }
+
+    /**
+     * Hook for a subclass to add additional checks before/after loading.
+     * @param javaType {@code null} if the class is yet to be loaded, otherwise result of {@link #loadClass}
+     * @param name class name, equal to {@code javaType.getName()} if {@code javaType != null}
+     * @return {@code true} iff the class should be added to the associated {@link ClassRegistry}
+     */
+    protected abstract boolean extraLoadClassChecks(Class<?> javaType, String name);
 
 }

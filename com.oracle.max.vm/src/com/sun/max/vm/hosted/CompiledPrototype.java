@@ -274,7 +274,7 @@ public class CompiledPrototype extends Prototype {
             final String className = classNameAndMethod.substring(0, ix);
             final String methodName = classNameAndMethod.substring(ix + 1);
             try {
-                final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
+                final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, className));
                 forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
 
                     public void run(ClassMethodActor classMethodActor) {
@@ -690,8 +690,7 @@ public class CompiledPrototype extends Prototype {
 
     public void compileFoldableMethods() {
         Trace.begin(1, "compiling foldable methods");
-        // TODO Change to VM_CLASS_REGISTRY
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.isDeclaredFoldable()) {
@@ -706,8 +705,7 @@ public class CompiledPrototype extends Prototype {
 
     public void resolveAlias() {
         Trace.begin(1, "resolving alias annotations");
-        // TODO Change to VM_CLASS_REGISTRY
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : VM_CLASS_REGISTRY.bootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     ALIAS.Static.aliasedMethod(classMethodActor);
