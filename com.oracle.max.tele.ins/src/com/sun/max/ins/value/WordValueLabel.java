@@ -764,6 +764,14 @@ public class WordValueLabel extends ValueLabel {
                 toolTipSB.append(value.toWord().toPadded0xHexString('0'));
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
                     toolTipSB.append("<br>").append(htmlify("<invalid>"));
+                } else {
+                    toolTipSB.append("<br> invalid object reference");
+                    final MaxEntityMemoryRegion<?> memoryRegion = vm().state().findMemoryRegion(value().asWord().asAddress());
+                    if (memoryRegion == null) {
+                        toolTipSB.append("<br> points into no known memory region");
+                    } else {
+                        toolTipSB.append("<br> points into region " + memoryRegion.regionName());
+                    }
                 }
                 setWrappedToolTipHtmlText(toolTipSB.toString());
                 break;
