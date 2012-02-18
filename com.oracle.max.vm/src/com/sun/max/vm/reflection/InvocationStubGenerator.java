@@ -55,7 +55,7 @@ public class InvocationStubGenerator<T> {
 
     private static volatile int nextSerial;
 
-    static final String STUB_PACKAGE_PREFIX = "$INVOKE_STUB$.";
+    public static final String STUB_PACKAGE_PREFIX = "$INVOKE_STUB$.";
 
     private static final String SAVE_JAVA_SOURCE_PROPERTY = "max.reflection.InvocationStubGenerator.saveSource";
     private static boolean saveJavaSource = System.getProperty(SAVE_JAVA_SOURCE_PROPERTY) != null;
@@ -206,7 +206,7 @@ public class InvocationStubGenerator<T> {
             final ClassActor stubClassActor =
                 ClassRegistry.define(ClassActorFactory.createTupleOrHybridClassActor(
                     constantPool,
-                    declaringClassActor.classLoader,
+                    VMClassLoader.VM_CLASS_LOADER,
                     stubClassName,
                     ClassfileReader.JAVA_1_5_VERSION,
                     (char) 0,

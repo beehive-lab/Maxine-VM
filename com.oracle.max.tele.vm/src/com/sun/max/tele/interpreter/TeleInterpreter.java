@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,7 +97,7 @@ public final class TeleInterpreter {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
-        classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.getDescriptorForJavaString(declaringClassName));
+        classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.getDescriptorForJavaString(declaringClassName));
         classMethodActor = classActor.findClassMethodActor(SymbolTable.makeSymbol(name), signature);
 
         if (classMethodActor == null) {
@@ -122,7 +122,7 @@ public final class TeleInterpreter {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
-        classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(declaringClass));
+        classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(declaringClass));
         classMethodActor = classActor.findClassMethodActor(SymbolTable.makeSymbol(name), signature);
 
         if (classMethodActor == null) {

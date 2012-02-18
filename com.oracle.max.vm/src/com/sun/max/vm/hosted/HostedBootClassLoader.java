@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -34,8 +35,14 @@ import com.sun.max.vm.type.*;
  * singleton {@link BootClassLoader#BOOT_CLASS_LOADER} instance of the {@link BootClassLoader}
  * at runtime thanks to {@link JavaPrototype#hostToTarget(Object)}.
  *
+ * N.B. This will <i>only</i> find classes on the bootclasspath.
  */
 public final class HostedBootClassLoader extends HostedClassLoader {
+
+    /*
+     * These sets provide support for the explicit omission of certain JDK classes and packages.
+     */
+    private static final Set<String> loadedPackages = new HashSet<String>();
     private static final Set<String> omittedClasses = new HashSet<String>();
     private static final Set<String> omittedPackages = new HashSet<String>();
 
@@ -51,12 +58,12 @@ public final class HostedBootClassLoader extends HostedClassLoader {
 
     @Override
     protected Classpath getDefaultClassPath() {
-        // TODO change to system boot
-        return Classpath.fromSystem();
+        return Classpath.bootClassPath();
     }
 
     /**
-     * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
+     * Adds a class that must not be loaded into the VM class registry.
+     * Calling {@link #loadClass(String, boolean)} for
      * this class will return null.
      *
      * @param javaClass the class to be omitted
@@ -66,7 +73,8 @@ public final class HostedBootClassLoader extends HostedClassLoader {
     }
 
     /**
-     * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
+     * Adds a class that must not be loaded into the {@link ClassRegistry#BOOT_CLASS_REGISTRY}.
+     * Calling {@link #loadClass(String, boolean)} for
      * this class will return null.
      *
      * @param className the name of the class to be omitted
@@ -88,8 +96,8 @@ public final class HostedBootClassLoader extends HostedClassLoader {
      */
     public static void omitPackage(String packageName, boolean retrospective) {
         if (retrospective) {
-            synchronized (HOSTED_BOOT_CLASS_LOADER) {
-                ProgramError.check(!HOSTED_BOOT_CLASS_LOADER.loadedPackages.contains(packageName), "Cannot omit a package already in VM class registry: " + packageName);
+            synchronized (HostedClassLoader.class) {
+                ProgramError.check(!loadedPackages.contains(packageName), "Cannot omit a package already in VM class registry: " + packageName);
             }
         }
         omittedPackages.add(packageName);
@@ -103,7 +111,6 @@ public final class HostedBootClassLoader extends HostedClassLoader {
      * @param className the name of a type to test
      * @return {@code true} if {@code typeDescriptor} denotes a class that must not be loaded in VM class registry
      */
-    @Override
     public boolean isOmittedType(String className) {
         if (omittedClasses.contains(className)) {
             return true;
@@ -118,4 +125,33 @@ public final class HostedBootClassLoader extends HostedClassLoader {
         return false;
     }
 
+    @Override
+    protected boolean extraLoadClassChecks(Class<?> javaType, String name) {
+        if (isOmittedType(name)) {
+            throw new OmittedClassError(name);
+        }
+        synchronized (this) {
+            loadedPackages.add(Classes.getPackageName(name));
+        }
+        return true;
+    }
+
+    @Override
+    protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+        try {
+            return super.loadClass(name, resolve);
+        } catch (ClassNotFoundException exception) {
+            // This may be a class reference in a substituted/native method to a VM class
+            // that is being resolved during verification. The class will have been loaded into the
+            // HostedVMClassLoader so we should be able to locate it in the map of defined classes.
+            // N.B. we can't just invoke HostedVMClassLoader.loadClass as we are its parent
+            // so it will recurse back to here.
+            Class<?> result = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.definedClasses.get(name);
+            if (result == null) {
+                throw new ClassNotFoundException();
+            } else {
+                return result;
+            }
+        }
+    }
 }

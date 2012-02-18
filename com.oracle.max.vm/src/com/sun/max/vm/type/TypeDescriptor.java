@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,8 +239,7 @@ public abstract class TypeDescriptor extends Descriptor {
             while (JavaTypeDescriptor.isArray(typeDescriptor)) {
                 typeDescriptor = typeDescriptor.componentTypeDescriptor();
             }
-            // TODO change to include VM_CLASS_REGISTRY
-            if (ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor) != null) {
+            if (ClassRegistry.getInBootOrVM(typeDescriptor) != null) {
                 return true;
             }
             if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
@@ -287,6 +286,6 @@ public abstract class TypeDescriptor extends Descriptor {
 
     @HOSTED_ONLY
     public ClassActor resolveHosted(final ClassLoader classLoader) {
-        return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(this);
+        return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(this);
     }
 }

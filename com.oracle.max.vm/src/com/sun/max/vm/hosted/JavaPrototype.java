@@ -24,7 +24,7 @@ package com.sun.max.vm.hosted;
 
 import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -100,7 +100,7 @@ public final class JavaPrototype extends Prototype {
      * @param name the name of the java class as a string
      */
     public void loadClass(String name) {
-        Class clazz = Classes.load(HOSTED_BOOT_CLASS_LOADER, name);
+        Class clazz = Classes.load(HOSTED_VM_CLASS_LOADER, name);
         Classes.initialize(clazz);
     }
 
@@ -269,7 +269,7 @@ public final class JavaPrototype extends Prototype {
      */
     private JavaPrototype(final boolean complete, int threadCount) {
         VMConfiguration config = vmConfig();
-        packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
+        packageLoader = new PrototypePackageLoader(HOSTED_VM_CLASS_LOADER, HOSTED_VM_CLASS_LOADER.classpath());
         theJavaPrototype = this;
 
         if (Trace.hasLevel(1)) {
@@ -387,8 +387,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
-        // TODO Change to include VM_CLASS_REGISTRY
-        ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        ClassActor classActor = ClassRegistry.getInBootOrVM(typeDescriptor);
         if (classActor != null) {
             return classActor;
         }
