@@ -64,7 +64,7 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 
-    private static final int TRACE_VALUE = 1;
+    private static final int TRACE_VALUE = 2;
 
     private static List<TeleTargetMethod> EMPTY = Collections.emptyList();
 
