@@ -64,40 +64,10 @@ public final class VmReferenceManager extends AbstractVmHolder {
 
     private final RemoteReferenceScheme referenceScheme;
 
-    private final RemoteReference zeroReference;
-
     private VmReferenceManager(TeleVM vm, RemoteReferenceScheme referenceScheme) {
         super(vm);
         this.referenceScheme = referenceScheme;
         referenceScheme.setContext(vm);
-
-        this.zeroReference = new RemoteReference(vm) {
-
-            @Override
-            public ObjectStatus status() {
-                return ObjectStatus.DEAD;
-            }
-
-            @Override
-            public String toString() {
-                return "null";
-            }
-
-            @Override
-            public boolean equals(Reference other) {
-                return this == other;
-            }
-
-            @Override
-            public int hashCode() {
-                return 0;
-            }
-
-            @Override
-            public Address raw() {
-                return Address.zero();
-            }
-        };
     }
 
     /**
@@ -152,10 +122,12 @@ public final class VmReferenceManager extends AbstractVmHolder {
     }
 
     /**
-     * @return the canonical null/zero reference, can be compared with {@code ==}
+     * Gets a non-canonical instance of {@link Reference} that represents the {@code null} remote object reference.
+     *
+     * @return the default instance of a zero reference
      */
     public RemoteReference zeroReference() {
-        return zeroReference;
+        return (RemoteReference) referenceScheme.zero();
     }
 
 //    /**
