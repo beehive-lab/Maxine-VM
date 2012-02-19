@@ -180,7 +180,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final StringBuilder titleText = new StringBuilder();
         final ObjectStatus status = teleObject.status();
         if (!status.isLive()) {
-            // Omit the prefix for live objects: the usual case.
+            // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
         }
         if (status.isNotDeadYet()) {
@@ -255,8 +255,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     @Override
     protected void refreshState(boolean force) {
-        final ObjectStatus memoryStatus = teleObject.status();
-        if (memoryStatus.isForwarded() && followingTeleObject) {
+        final ObjectStatus status = teleObject.status();
+        if (status.isForwarded() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
@@ -285,7 +285,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             }
         }
         setTitle();
-        switch(memoryStatus) {
+        switch(status) {
             case DEAD:
                 setStateColor(preference().style().deadObjectBackgroundColor());
                 break;
