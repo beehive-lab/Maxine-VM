@@ -66,7 +66,7 @@ public interface RemoteObjectReferenceManager {
 
     /**
      * Creates a canonical remote reference to an object whose origin
-     * in VM memory is at a specified address, null if there is no
+     * in VM memory is at a specified address, {@link Reference#zero()} if there is no
      * object with that origin.
      * <p>
      * The origin of the object may change over time, for example if

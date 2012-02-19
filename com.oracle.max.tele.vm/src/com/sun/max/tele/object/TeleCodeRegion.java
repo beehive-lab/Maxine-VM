@@ -44,7 +44,7 @@ public class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     /**
      * Reference to the array of references to {@link TargetMethod}s allocated in the code cache region.
      */
-    private Reference targetMethodsReference = null;
+    private Reference targetMethodsReference = vm().referenceManager().zeroReference();
 
     // These two counters tell us when an eviction has taken place since the last time
     // we checked, and whether we are currently in an eviction.

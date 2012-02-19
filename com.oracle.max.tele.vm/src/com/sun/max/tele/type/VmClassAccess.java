@@ -132,7 +132,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
 
     /**
      * The singleton registry that contains summary information about all classes known to have been
-     * loaded into the VM, initialized at registry creation with classes pre-loaded
+     * loaded into the VM, initialized at registry creation with classes preloaded
      * into the boot image and supplemented with dynamically loaded classes with each
      * call to {@link #updateCache(long)}.
      * <p>
@@ -174,9 +174,9 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                                     // fully initialized yet so we add it to a fix-up list and handle it later
                                     attachFixupList.add(entryRef);
                                 } else {
-                                    Reference classActor = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
-                                    if (!classActor.isZero()) {
-                                        addToRegistry(classActor);
+                                    final Reference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
+                                    if (!classActorRef.isZero()) {
+                                        addToRegistry(classActorRef);
                                         count++;
                                     }
                                 }
@@ -294,7 +294,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     public TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
         final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
         if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
+            // Class hasn't been loaded yet by the VM.
             return null;
         }
         return (TeleClassActor) objects().makeTeleObject(classActorReference);
@@ -303,7 +303,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
     public TeleClassActor findTeleClassActor(Class javaClass) {
         final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
         if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
+            // Class hasn't been loaded yet by the VM.
             return null;
         }
         return (TeleClassActor) objects().makeTeleObject(classActorReference);

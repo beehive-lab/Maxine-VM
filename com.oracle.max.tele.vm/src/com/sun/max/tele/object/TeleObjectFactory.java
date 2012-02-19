@@ -301,7 +301,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
-     * Returns null for the distinguished zero {@link Reference}.
+     * Returns {@code null} for the distinguished zero {@link Reference}.
      * <p>
      * Must be called with current thread holding the VM lock.
      * <p>
@@ -315,10 +315,10 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      */
     public TeleObject make(Reference reference) throws TeleError {
         assert reference != null;
-        final RemoteReference remoteRef = (RemoteReference) reference;
-        if (remoteRef.isZero()) {
+        if (reference.isZero()) {
             return null;
         }
+        final RemoteReference remoteRef = (RemoteReference) reference;
         if (remoteRef instanceof UnsafeRemoteReference) {
             TeleWarning.message("Creating a TeleObject with an unsafe Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
         }
@@ -347,10 +347,10 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         // investigation must be done using the lowest level memory reading primitives.
 
         // Location of the {@link Hub} in the VM that describes the layout of the presumed object.
-        Reference hubReference = null;
+        Reference hubReference = vm().referenceManager().zeroReference();
 
         // Location of the {@link ClassActor} in the VM that describes the type of the presumed object.
-        Reference classActorReference = null;
+        Reference classActorReference = vm().referenceManager().zeroReference();
 
         // Local copy of the {@link ClassActor} in the VM that describes the type of the presumed object.
         // We presume to have loaded exactly the same classes as in the VM, so we can use this local
@@ -361,6 +361,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             Address hubAddress;
 
             if (remoteRef.status().isForwarded()) {
+                  TeleError.unexpected("Trying to create a TeleObject for a forwarded object");
                   hubAddress = null;
             } else {
                 // If the location in fact points to a well-formed object in the VM, we will be able to determine the

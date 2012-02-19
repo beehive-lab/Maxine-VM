@@ -296,7 +296,8 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Creates a remote object reference that can be used for access to a VM object.
+     * Creates a remote object reference that can be used for access to a VM object;
+     * returns {@link Reference#zero()} if there is no valid object at the location.
      *
      * @param origin current location (origin) of a heap object's memory in the VM,
      * subject to relocation by GC.

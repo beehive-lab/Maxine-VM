@@ -297,7 +297,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             // Check for the {@link ImmortalHeap} description
             if (teleImmortalHeapRegion == null) {
                 final Reference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
-                if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
+                if (!immortalHeapReference.isZero()) {
                     teleImmortalHeapRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(immortalHeapReference);
                     immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
                     vm().addressSpace().add(immortalHeapRegion.memoryRegion());

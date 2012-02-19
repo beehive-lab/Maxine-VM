@@ -26,6 +26,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 
+// TODO (mlvdv) Old Heap
 /**
  * Supertype for all implementations of the VM interface
  * {@link HeapScheme}.
