@@ -34,6 +34,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
@@ -43,12 +44,41 @@ import com.sun.max.vm.reference.*;
  */
 public final class RemoteReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
+    /**
+     * The default implementation of {@link Reference#zero()}.
+     */
+    private static class ZeroReference extends RemoteReference {
+
+        private final Address raw = Address.zero();
+
+        ZeroReference(TeleVM vm) {
+            super(vm);
+        }
+
+        @Override
+        public ObjectStatus status() {
+            return ObjectStatus.DEAD;
+        }
+
+        @Override
+        public String toString() {
+            return "zero Reference";
+        }
+
+        @Override
+        public Address raw() {
+            return raw;
+        }
+    }
+
     // TODO (mlvdv) Consider replacing all uses of "instanceof" here with a cast to {@link TeleReference},
     // followed by a call to {@link TeleReference#isLocal}.  Although cleaner, there may be some performance
     // issues; I'm not sure.
 
     private TeleVM vm;
     private DataAccess dataAccess;
+    private RemoteReference zero;
+
     protected LocalObjectRemoteReferenceManager localTeleReferenceManager;
 
     // TODO (mlvdv) (pass in data access specifically)
@@ -56,11 +86,12 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         this.vm = vm;
         this.localTeleReferenceManager = new LocalObjectRemoteReferenceManager(vm);
         this.dataAccess = vm.memoryIO().access();
+        this.zero = new ZeroReference(vm);
         assert dataAccess != null;
     }
 
     public Pointer toOrigin(Reference ref) {
-        if (ref.isZero()) {
+        if (isZero(ref)) {
             return Pointer.zero();
         }
         if (ref instanceof LocalObjectRemoteReference) {
@@ -86,12 +117,29 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <strong>Note:</strong> Unlike the VM implementation of {@link Reference}, there is no
+     * <em>canonical</em> {@code null} reference. This is done to permit subclasses of the
+     * null reference to be created for debugging.
+     */
     public Reference zero() {
-        return vm.referenceManager().zeroReference();
+        return zero;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * We admit to multiple implementations of the zero reference
+     * for debugging purposes (some may be annotated).  The
+     * test for a null/zero reference is defined in terms of the
+     * actually address being stored.  No legitimate reference may
+     * have this location.
+     */
     public boolean isZero(Reference ref) {
-        return ref == vm.referenceManager().zeroReference();
+        final RemoteReference remoteRef = (RemoteReference) ref;
+        return remoteRef.raw().isZero();
     }
 
     @INLINE
