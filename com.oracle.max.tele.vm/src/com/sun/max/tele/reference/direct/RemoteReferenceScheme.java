@@ -28,7 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.*;
+import com.sun.max.tele.reference.LocalObjectRemoteReferenceManager.LocalObjectRemoteReference;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -47,12 +47,10 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     /**
      * The default implementation of {@link Reference#zero()}.
      */
-    private static class ZeroReference extends RemoteReference {
+    private static class NullReference extends ConstantRemoteReference {
 
-        private final Address raw = Address.zero();
-
-        ZeroReference(TeleVM vm) {
-            super(vm);
+        NullReference(TeleVM vm) {
+            super(vm, Address.zero());
         }
 
         @Override
@@ -62,12 +60,31 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
 
         @Override
         public String toString() {
-            return "zero Reference";
+            return "null Remote Reference";
+        }
+    }
+
+    /**
+     * An implementation of {@link Reference#zero()} that carries with it the history
+     * of why it was created:  a textual explanation, along with the location in
+     * memory where the creation of a remote reference was attempted but failed,
+     * resulting in this null reference.
+     */
+    private static class AnnotatedNullReference extends NullReference {
+
+        private final String description;
+        private final Address failedAddress;
+
+        AnnotatedNullReference(TeleVM vm, String description, Address failedAddress) {
+            super(vm);
+            this.description = description;
+            this.failedAddress = failedAddress;
         }
 
+
         @Override
-        public Address raw() {
-            return raw;
+        public String toString() {
+            return "ZeroRef: " + description + failedAddress.to0xHexString();
         }
     }
 
@@ -86,8 +103,21 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         this.vm = vm;
         this.localTeleReferenceManager = new LocalObjectRemoteReferenceManager(vm);
         this.dataAccess = vm.memoryIO().access();
-        this.zero = new ZeroReference(vm);
+        this.zero = new NullReference(vm);
         assert dataAccess != null;
+    }
+
+    /**
+     * Creates a null reference (implementation of {@link Reference#zero()} that carries with it the history
+     * of a failed attempt to create a reference.  An override of {@link Object#toString()} prints out a message
+     * containing this information.
+     *
+     * @param description a description of what part of the system attempted the reference creation, and why it failed
+     * @param failedAddress the location in VM memory at which the reference creation was attempted
+     * @return a null reference annotated with historical information
+     */
+    public RemoteReference makeZeroReference(String description, Address failedAddress) {
+        return new AnnotatedNullReference(vm, description, failedAddress);
     }
 
     public Pointer toOrigin(Reference ref) {

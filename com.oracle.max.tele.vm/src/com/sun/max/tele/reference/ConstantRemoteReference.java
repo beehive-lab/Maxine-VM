@@ -34,11 +34,11 @@ import com.sun.max.unsafe.*;
  * @see Reference
  * @see VmReferenceManager
  */
-public abstract class ConstantTeleReference extends RemoteReference {
+public abstract class ConstantRemoteReference extends RemoteReference {
 
     private final Address raw;
 
-    protected ConstantTeleReference(TeleVM vm, Address rawRef) {
+    protected ConstantRemoteReference(TeleVM vm, Address rawRef) {
         super(vm);
         raw = rawRef;
     }
@@ -55,8 +55,8 @@ public abstract class ConstantTeleReference extends RemoteReference {
 
     @Override
     public final boolean equals(Object other) {
-        if (other instanceof ConstantTeleReference) {
-            final ConstantTeleReference constantTeleRef = (ConstantTeleReference) other;
+        if (other instanceof ConstantRemoteReference) {
+            final ConstantRemoteReference constantTeleRef = (ConstantRemoteReference) other;
             return raw.equals(constantTeleRef.raw);
         }
         return false;
