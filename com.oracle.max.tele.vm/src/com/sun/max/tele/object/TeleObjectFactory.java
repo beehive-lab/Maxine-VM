@@ -311,7 +311,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      *
      * @param remoteRef non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
-     * @throws TeleError if the reference is not live or is an instance of {@link UnsafeRemoteReference}
+     * @throws TeleError if the reference is not live or is an instance of {@link TemporaryUnsafeRemoteReference}
      */
     public TeleObject make(Reference reference) throws TeleError {
         assert reference != null;
@@ -319,8 +319,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             return null;
         }
         final RemoteReference remoteRef = (RemoteReference) reference;
-        if (remoteRef instanceof UnsafeRemoteReference) {
-            TeleWarning.message("Creating a TeleObject with an unsafe Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
+        if (remoteRef.isTemporary()) {
+            // TODO (mlvdv) this should become an error
+            TeleWarning.message("Creating a TeleObject with a temporary Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
         }
         if (remoteRef.status().isDead()) {
             // TODO (mlvdv) This should probably be an error when it all shakes out

@@ -148,7 +148,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
     private static  final int MAX_VM_LOCK_TRIALS = 100;
 
     /**
-     * Determines whether a location in VM memory is the origin of a VM object.
+     * Determines whether a location in VM memory is the origin of a VM object
+     * in a region known to hold objects.
      *
      * @param address an absolute memory location in the VM.
      * @return whether there is an object whose origin is at the address, false if unable
@@ -158,16 +159,27 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         if (address.isZero() || address.equals(zappedMarker)) {
             return false;
         }
-        final VmHeapRegion heapRegion = vm().heap().findHeapRegion(address);
-        if (heapRegion != null) {
-            return heapRegion.objectReferenceManager().isObjectOrigin(address);
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(address);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            return objectHoldingRegion.objectReferenceManager().isObjectOrigin(address);
         }
-        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
-        if (compiledCodeRegion != null) {
-            return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
-        }
-        return false;
+           return false;
     }
+
+
+
+//
+//        final VmHeapRegion heapRegion = vm().heap().findHeapRegion(address);
+//        if (heapRegion != null) {
+//            return heapRegion.objectReferenceManager().isObjectOrigin(address);
+//        }
+//        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
+//        if (compiledCodeRegion != null) {
+//            return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
+//        }
+//        return false;
+
 
     /**
      * Checks if a location in VM memory could be the origin of an object representation,
@@ -196,12 +208,12 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         //
         //  Typical pattern:    tuple --> dynamicHub of the tuple's class --> dynamicHub of the DynamicHub class
         try {
-            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeUnsafeRemoteReference(possibleOrigin));
+            Word hubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(possibleOrigin));
             for (int i = 0; i < 3; i++) {
                 if (hubWord.isZero() || hubWord.asAddress().equals(zappedMarker)) {
                     return false;
                 }
-                final RemoteReference hubRef = referenceManager().makeUnsafeRemoteReference(hubWord.asAddress());
+                final RemoteReference hubRef = referenceManager().makeTemporaryRemoteReference(hubWord.asAddress());
                 Address hubOrigin = hubRef.toOrigin();
                 // Check if the presumed hub is in the heap; it couldn't be elsewhere, for example in the code cache.
                 if (!heap().contains(hubOrigin)) {
@@ -461,8 +473,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      */
     private boolean isStaticTuple(Address origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeUnsafeRemoteReference(origin));
-        final RemoteReference staticHubRef = referenceManager().makeUnsafeRemoteReference(staticHubWord.asAddress());
+        Word staticHubWord = Layout.readHubReferenceAsWord(referenceManager().makeTemporaryRemoteReference(origin));
+        final RemoteReference staticHubRef = referenceManager().makeTemporaryRemoteReference(staticHubWord.asAddress());
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
             return false;
@@ -470,7 +482,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
         final int hubClassActorOffset = fields().Hub_classActor.fieldActor().offset();
         final Word classActorWord = memory().readWord(staticHubOrigin, hubClassActorOffset);
-        final RemoteReference classActorRef = referenceManager().makeUnsafeRemoteReference(classActorWord.asAddress());
+        final RemoteReference classActorRef = referenceManager().makeTemporaryRemoteReference(classActorWord.asAddress());
         final Pointer classActorOrigin = classActorRef.toOrigin();
         if (!heap().contains(classActorOrigin) && !codeCache().contains(classActorOrigin)) {
             return false;
@@ -478,7 +490,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
         final int classActorStaticTupleOffset = fields().ClassActor_staticTuple.fieldActor().offset();
         final Word staticTupleWord = memory().readWord(classActorOrigin, classActorStaticTupleOffset);
-        final RemoteReference staticTupleRef = referenceManager().makeUnsafeRemoteReference(staticTupleWord.asAddress());
+        final RemoteReference staticTupleRef = referenceManager().makeTemporaryRemoteReference(staticTupleWord.asAddress());
         final Pointer staticTupleOrigin = staticTupleRef.toOrigin();
         // If we really started with a {@link StaticTuple}, then this field will point at it
         return staticTupleOrigin.equals(origin);

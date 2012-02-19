@@ -157,7 +157,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
      * A canonical remote object reference pointing into a region of VM memory that is unmanaged:
      * objects, once allocated, never move and are never collected/evicted.
      */
-    private class UnmanagedCanonicalTeleReference extends ConstantTeleReference {
+    private class UnmanagedCanonicalTeleReference extends ConstantRemoteReference {
 
         UnmanagedCanonicalTeleReference(TeleVM vm, Address origin) {
             super(vm, origin);

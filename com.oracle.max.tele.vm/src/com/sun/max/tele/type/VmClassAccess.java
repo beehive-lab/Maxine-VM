@@ -167,9 +167,9 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                     if (!entryArrayRef.isZero()) {
                         int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
                         for (int j = 0; j != entryArrayLength; j++) {
-                            Reference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
+                            RemoteReference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
                             while (!entryRef.isZero()) {
-                                if (entryRef instanceof UnsafeRemoteReference && vm.isAttaching()) {
+                                if (entryRef.isProvisional() && vm.isAttaching()) {
                                     // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
                                     // fully initialized yet so we add it to a fix-up list and handle it later
                                     attachFixupList.add(entryRef);
@@ -180,7 +180,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                                         count++;
                                     }
                                 }
-                                entryRef = f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
+                                entryRef = (RemoteReference) f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
                             }
                         }
                     }
@@ -360,6 +360,9 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @throws TeleError if a classfile copied from the VM is cannot be loaded
      */
     public ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
+        if (classActorReference.toOrigin().toLong() == 0x1025ca360L) {
+               System.out.println("here");
+        }
         referenceManager().checkReference(classActorReference);
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         referenceManager().checkReference(utf8ConstantReference);

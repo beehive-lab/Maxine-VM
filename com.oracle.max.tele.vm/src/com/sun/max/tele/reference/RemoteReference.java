@@ -67,7 +67,23 @@ public abstract class RemoteReference extends Reference {
     public abstract Address raw();
 
     /**
-     * @return whether this instance is actually a local value dressed up to look like a remote reference
+     * @return is the reference a special temporary {@link ObjectStatus#DEAD} reference that should not be allowed to persist
+     * past any VM execution?
+     */
+    public boolean isTemporary() {
+        return false;
+    }
+
+    /**
+     * @return is the reference a special temporary {@link ObjectStatus#LIVE} reference that appears to refer to an
+     * object that is not in any known VM memory region?
+     */
+    public boolean isProvisional() {
+        return false;
+    }
+
+    /**
+     * @return is the reference a local value dressed up to look like a remote reference
      */
     public boolean isLocal() {
         return false;

@@ -96,32 +96,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
         return referenceScheme.toOrigin(reference);
     }
 
-    /**
-     * Create a remote instance of {@link Reference} whose origin is at a given address,
-     * but without any checking that a valid object is at that address and without any
-     * support for possible relocation.
-     * <p>
-     * <strong>Unsafe:</strong> These are not canonical and should only be used
-     * for temporary, low level access to object state.  They should not be retained across
-     * VM execution.
-     *
-     * @param address a location in VM memory
-     * @return the address wrapped as a remote object reference
-     */
-    public UnsafeRemoteReference makeUnsafeRemoteReference(Address address) {
-        return new UnsafeRemoteReference(vm(), address);
-    }
-
-    public ReferenceValue createReferenceValue(Reference reference) {
-        if (reference instanceof RemoteReference) {
-            return TeleReferenceValue.from(vm(), reference);
-        } else if (reference instanceof HostedReference) {
-            return TeleReferenceValue.from(vm(), Reference.fromJava(reference.toJava()));
-        }
-        throw TeleError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
-    }
-
-    /**
+   /**
      * Gets a non-canonical instance of {@link Reference} that represents the {@code null} remote object reference.
      *
      * @return the default instance of a zero reference
@@ -171,19 +146,111 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
         vm().lock();
         try {
-            VmObjectHoldingRegion<?> objectHoldingRegion = null;
-            objectHoldingRegion = vm().heap().findHeapRegion(address);
-            if (objectHoldingRegion == null) {
-                objectHoldingRegion = vm().codeCache().findCodeCacheRegion(address);
+            final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(address);
+            if (maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+                // In an object-holding region
+                final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+                final RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(address);
+                if (remoteReference != null) {
+                    // A valid origin
+                    return remoteReference;
+                } else {
+                    // In an object holding region, but not an origin
+                    return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), address);
+                }
+            } else if (maxMemoryRegion != null) {
+                // In a region that isn't supposed to hold objects
+                return referenceScheme.makeZeroReference("Null ref: in non-object holding region " + maxMemoryRegion.owner().entityName(), address);
             }
-            if (objectHoldingRegion != null) {
-                RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(address);
-                return remoteReference == null ? zeroReference() : remoteReference;
+            // Not in any memory region we know about
+            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(address)) {
+                return new ProvisionalRemoteReference(vm(), address);
             }
-            return makeUnsafeRemoteReference(address);
+            return referenceScheme.makeZeroReference("Null ref: in no known memory region", address);
         } finally {
             vm().unlock();
         }
     }
+
+    /**
+     * Create a remote instance of {@link Reference} whose origin is at a given address,
+     * but without any checking that a valid object is at that address and without any
+     * support for possible relocation.
+     * <p>
+     * <strong>Unsafe:</strong> These are not canonical and should only be used
+     * for temporary, low level access to object state.  They should not be retained across
+     * VM execution.
+     * <p>
+     * The object status is permanently {@link ObjectStatus#DEAD}.
+     *
+     * @param address a location in VM memory about which almost nothing is guaranteed
+     * @return the address wrapped as a remote object reference
+     */
+    public RemoteReference makeTemporaryRemoteReference(Address address) {
+        return new TemporaryRemoteReference(vm(), address);
+    }
+
+    /**
+     * An unsafe {@link Reference} intended to wrap a fixed address that
+     * appears be the origin of a VM object, but which is not in any known
+     * memory region.  This is intended to be used only in transient situations,
+     * where (for example during an attach) objects may be discovered before
+     * meta-information about the region that contains them has been discovered.
+     * <p>
+     * Memory status is permanently {@link ObjectStatus#LIVE}.
+     *
+     * @param address a location in an unknown region of VM memory where an object appears to be stored
+     * @return the address wrapped as a reference for temporary use.
+     */
+    public RemoteReference makeUnknownRemoteReference(Address address) {
+        return new ProvisionalRemoteReference(vm(), address);
+    }
+
+    public ReferenceValue createReferenceValue(Reference reference) {
+        if (reference instanceof RemoteReference) {
+            return TeleReferenceValue.from(vm(), reference);
+        } else if (reference instanceof HostedReference) {
+            return TeleReferenceValue.from(vm(), Reference.fromJava(reference.toJava()));
+        }
+        throw TeleError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
+    }
+
+
+    private final class TemporaryRemoteReference extends ConstantRemoteReference {
+
+        TemporaryRemoteReference(TeleVM vm, Address raw) {
+            super(vm, raw);
+        }
+
+        @Override
+        public boolean isTemporary() {
+            return true;
+        }
+
+        @Override
+        public ObjectStatus status() {
+            return ObjectStatus.DEAD;
+        }
+    }
+
+    private final class ProvisionalRemoteReference extends ConstantRemoteReference {
+
+        ProvisionalRemoteReference(TeleVM vm, Address raw) {
+            super(vm, raw);
+        }
+
+        @Override
+        public boolean isProvisional() {
+            return true;
+        }
+
+        @Override
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
+        }
+    }
+
+
+
 
 }

@@ -23,6 +23,7 @@
 package com.sun.max.tele.reference;
 
 import java.lang.ref.*;
+import java.rmi.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
