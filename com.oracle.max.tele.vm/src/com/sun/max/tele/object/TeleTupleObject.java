@@ -103,9 +103,7 @@ public class TeleTupleObject extends TeleObject {
         final Class<?> javaClass = classActorForObjectType().toJava();
         if (TargetMethod.class.isAssignableFrom(javaClass)) {
             final Reference classMethodActorReference = fields().TargetMethod_classMethodActor.readReference(reference());
-            if (classMethodActorReference != null && !classMethodActorReference.isZero()) {
-                return (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
-            }
+            return (TeleClassMethodActor) objects().makeTeleObject(classMethodActorReference);
         }
         return null;
     }

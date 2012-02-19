@@ -37,9 +37,7 @@ public final class TeleVMConfiguration extends TeleTupleObject {
     public TeleHeapScheme teleHeapScheme() {
         if (teleHeapScheme == null) {
             final Reference heapSchemeReference = fields().VMConfiguration_heapScheme.readReference(getReference());
-            if (heapSchemeReference != null) {
-                teleHeapScheme = (TeleHeapScheme) objects().makeTeleObject(heapSchemeReference);
-            }
+            teleHeapScheme = (TeleHeapScheme) objects().makeTeleObject(heapSchemeReference);
         }
         return teleHeapScheme;
     }

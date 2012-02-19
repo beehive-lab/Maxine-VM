@@ -26,6 +26,8 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 
+//TODO (mlvdv) Old Heap
+
 public class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
 
     public TeleSemiSpaceHeapScheme(TeleVM vm, Reference reference) {
@@ -37,10 +39,7 @@ public class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
      */
     public TeleLinearAllocationMemoryRegion teleFromRegion() {
         final Reference fromReference = fields().SemiSpaceHeapScheme_fromSpace.readReference(getReference());
-        if (fromReference != null) {
-            return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
-        }
-        return null;
+        return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(fromReference);
     }
 
     /**
@@ -48,10 +47,7 @@ public class TeleSemiSpaceHeapScheme extends TeleHeapScheme {
      */
     public TeleLinearAllocationMemoryRegion teleToRegion() {
         final Reference toReference = fields().SemiSpaceHeapScheme_toSpace.readReference(getReference());
-        if (toReference != null) {
-            return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
-        }
-        return null;
+        return (TeleLinearAllocationMemoryRegion) objects().makeTeleObject(toReference);
     }
 
 }

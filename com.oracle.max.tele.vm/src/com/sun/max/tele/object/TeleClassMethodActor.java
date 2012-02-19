@@ -165,13 +165,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     @Override
     public TeleCodeAttribute getTeleCodeAttribute() {
-        Reference codeAttributeReference = null;
         if (vm().tryLock()) {
             try {
-                codeAttributeReference = fields().ClassMethodActor_codeAttribute.readReference(reference());
-                if (codeAttributeReference != null) {
-                    return (TeleCodeAttribute) objects().makeTeleObject(codeAttributeReference);
-                }
+                final Reference codeAttributeReference = fields().ClassMethodActor_codeAttribute.readReference(reference());
+                return (TeleCodeAttribute) objects().makeTeleObject(codeAttributeReference);
             } finally {
                 vm().unlock();
             }

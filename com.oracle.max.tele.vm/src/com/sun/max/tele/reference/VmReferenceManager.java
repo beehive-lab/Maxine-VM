@@ -158,41 +158,60 @@ public final class VmReferenceManager extends AbstractVmHolder {
         return zeroReference;
     }
 
+//    /**
+//     * Returns some kind of reference associated with the given raw reference in the VM, depending
+//     * on what is known about the address.
+//     * <ol>
+//     * <li>If a canonical reference pointing at that location already exists, then returns it.</li>
+//     * <li>If the address is the valid origin of an object in a <strong>non-collected</strong> heap region, for
+//     * example the boot heap or an immortal heap, then return a new reference that is canonical,
+//     * but which is not tracked for possible GC relocation.</li>
+//     * <li>If the address is the valid origin of a live object in a dynamic heap region, then return
+//     * a new reference that is canonical and which is tracked for possible GC relocation.</li>
+//     * <li>If the address is the valid origin of an object in a dynamic heap region, but the object
+//     * is known <strong>not</strong> to be live, then return an unsafe, temporary reference that
+//     * wraps the address.</li>
+//     * <li>If the address does not point an an object origin,  then return an unsafe, temporary reference that
+//     * wraps the address.</li>
+//     * </ol>
+//     *
+//     * @param address a memory location in VM memory
+//     * @return a special kind of {@link Reference} implementation that encapsulates a remote
+//     * location in VM memory, allowing the reuse of much VM code that deals with references.
+//     */
+
+
     /**
-     * Returns some kind of reference associated with the given raw reference in the VM, depending
-     * on what is known about the address.
+     * Creates an specialized instance of the VM's {@link Reference} class that can refer to objects
+     * remotely in the VM.  Each instance is specialized for the kind of object management that takes
+     * place in the memory region that contains the specified location, and in the case of managed
+     * regions, the {@link Reference} tracks the object, just as in the VM itself.
      * <ol>
-     * <li>If a canonical reference pointing at that location already exists, then returns it.</li>
-     * <li>If the address is the valid origin of an object in a <strong>non-collected</strong> heap region, for
-     * example the boot heap or an immortal heap, then return a new reference that is canonical,
-     * but which is not tracked for possible GC relocation.</li>
-     * <li>If the address is the valid origin of a live object in a dynamic heap region, then return
-     * a new reference that is canonical and which is tracked for possible GC relocation.</li>
-     * <li>If the address is the valid origin of an object in a dynamic heap region, but the object
-     * is known <strong>not</strong> to be live, then return an unsafe, temporary reference that
-     * wraps the address.</li>
-     * <li>If the address does not point an an object origin,  then return an unsafe, temporary reference that
-     * wraps the address.</li>
+     * <li>Returns {@link Reference#zero()} if the specified location is {@link Address#zero()}.</li>
      * </ol>
      *
-     * @param address a memory location in VM memory
-     * @return a special kind of {@link Reference} implementation that encapsulates a remote
-     * location in VM memory, allowing the reuse of much VM code that deals with references.
+     * @param address a location in VM Memory
+     * @return a reference
      */
     public RemoteReference makeReference(Address address) {
         if (address.isZero()) {
             return zeroReference();
         }
-        VmObjectHoldingRegion<?> objectHoldingRegion = null;
-        objectHoldingRegion = vm().heap().findHeapRegion(address);
-        if (objectHoldingRegion == null) {
-            objectHoldingRegion = vm().codeCache().findCodeCacheRegion(address);
+        vm().lock();
+        try {
+            VmObjectHoldingRegion<?> objectHoldingRegion = null;
+            objectHoldingRegion = vm().heap().findHeapRegion(address);
+            if (objectHoldingRegion == null) {
+                objectHoldingRegion = vm().codeCache().findCodeCacheRegion(address);
+            }
+            if (objectHoldingRegion != null) {
+                RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(address);
+                return remoteReference == null ? zeroReference() : remoteReference;
+            }
+            return makeUnsafeRemoteReference(address);
+        } finally {
+            vm().unlock();
         }
-        if (objectHoldingRegion != null) {
-            RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(address);
-            return remoteReference == null ? zeroReference() : remoteReference;
-        }
-        return makeUnsafeRemoteReference(address);
     }
 
 }

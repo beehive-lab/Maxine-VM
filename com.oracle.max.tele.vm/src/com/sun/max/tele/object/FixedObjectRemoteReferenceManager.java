@@ -84,17 +84,18 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
     }
 
     public RemoteReference makeReference(Address origin) {
+        assert vm().lockHeldByCurrentThread();
         TeleError.check(objectRegion.memoryRegion().contains(origin), "Attempt to make reference at location outside region");
-        RemoteReference teleReference = null;
-        final WeakReference<RemoteReference> existingRef = originToReference.get(origin.toLong());
-        if (existingRef != null) {
-            teleReference = existingRef.get();
+        RemoteReference remoteReference = null;
+        final WeakReference<RemoteReference> weakRef = originToReference.get(origin.toLong());
+        if (weakRef != null) {
+            remoteReference = weakRef.get();
         }
-        if (teleReference == null && objects().isPlausibleOriginUnsafe(origin)) {
-            teleReference = new UnmanagedCanonicalTeleReference(vm(), origin);
-            originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(teleReference));
+        if (remoteReference == null && objects().isPlausibleOriginUnsafe(origin)) {
+            remoteReference = new UnmanagedCanonicalTeleReference(vm(), origin);
+            originToReference.put(origin.toLong(), new WeakReference<RemoteReference>(remoteReference));
         }
-        return teleReference;
+        return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
     }
 
     private int activeReferenceCount() {

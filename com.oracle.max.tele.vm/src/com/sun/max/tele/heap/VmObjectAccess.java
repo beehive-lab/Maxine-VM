@@ -305,7 +305,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      * <p>
-     * Returns null for the distinguished zero {@link Reference}.
+     * Returns {@code null} for the distinguished zero {@link Reference}.
      * <p>
      * Must be called with current thread holding the VM lock.
      * <p>

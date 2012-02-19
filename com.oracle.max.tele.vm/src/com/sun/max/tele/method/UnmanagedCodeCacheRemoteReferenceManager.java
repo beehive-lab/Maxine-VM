@@ -136,6 +136,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      * that indirects through the {@link TargetMethod} that points at the object.
      */
     public RemoteReference makeReference(Address origin) throws TeleError {
+        assert vm().lockHeldByCurrentThread();
         TeleError.check(codeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
         final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
@@ -153,7 +154,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
                 }
             }
         }
-        return null;
+        return vm().referenceManager().zeroReference();
     }
 
     private int activeReferenceCount() {
