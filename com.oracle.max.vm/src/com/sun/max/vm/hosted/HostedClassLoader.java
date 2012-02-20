@@ -30,6 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -69,7 +70,7 @@ public abstract class HostedClassLoader extends ClassLoader {
      * Set the default classpath for the concrete subclass.
      * @param classpath
      */
-    protected abstract Classpath getDefaultClassPath();
+    protected abstract Classpath getDefaultClasspath();
 
     /**
      * Gets the classpath of the hosted boot classloader.
@@ -78,7 +79,7 @@ public abstract class HostedClassLoader extends ClassLoader {
      */
     public Classpath classpath() {
         if (classpath == null) {
-            setClasspath(getDefaultClassPath());
+            setClasspath(getDefaultClasspath());
         }
         return classpath;
     }
@@ -112,7 +113,8 @@ public abstract class HostedClassLoader extends ClassLoader {
     public ClassActor mustMakeClassActor(TypeDescriptor typeDescriptor) {
         try {
             // this gets it into the correct registry
-            loadClass(typeDescriptor.toJavaString());
+            String javaName = typeDescriptor.toJavaString();
+            loadClass(javaName);
             // now we are guaranteed to find it
             return ClassRegistry.getInBootOrVM(typeDescriptor);
         } catch (ClassNotFoundException throwable) {
@@ -121,19 +123,19 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Fast track version of {@link #makeClassActor} that assumes class explicitly loaded by {@link loadClass}.
-     * So it is not an array and we don't need to run {@link #extraLoadClassChecks(Class, String)}.
+     *
      * @param typeDescriptor
      * @return
      * @throws ClassNotFoundException
      */
-    protected ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
+    private final ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
         final ClassActor classActor = ClassRegistry.get(this, typeDescriptor, false);
+        final String name = typeDescriptor.toJavaString();
         if (classActor != null) {
+//            assert definedClasses.get(name) != null;
             return classActor;
         }
-        final String name = typeDescriptor.toJavaString();
         final ClasspathFile classpathFile = readClassFile(classpath(), name);
         definedClasses.put(name, javaClass);
         return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
@@ -169,9 +171,16 @@ public abstract class HostedClassLoader extends ClassLoader {
             // make sure the name is slashified first
             final String componentTypeName = name.substring(1).replace('.', '/');
             return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
+        } else if (name.startsWith(InvocationStubGenerator.STUB_PACKAGE_PREFIX)) {
+            return loadStubClass(name);
         } else {
             return super.findClass(name);
         }
+    }
+
+    protected Class<?> loadStubClass(String name) {
+        ClasspathFile classpathFile = ClassfileReader.findGeneratedClassfile(name);
+        return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
     }
 
     /**
@@ -187,6 +196,13 @@ public abstract class HostedClassLoader extends ClassLoader {
         if (elementClassActor == null) {
             final Class elementType = loadClass(elementTypeDescriptor.toJavaString());
             elementClassActor = ClassActor.fromJava(elementType);
+        }
+        // Special case: Owing to HostBootClassLoader being able to access VM classes
+        // it is possible that we arrive here with elementClassActor being a VM class.
+        // We have to abort, otherwise the array will incorrectly end up in the boot class registry.
+        // HostVMClassLoader will define the array after HostBootClassLoader fails.
+        if (this == HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER && elementClassActor.classLoader == HostedVMClassLoader.HOSTED_VM_CLASS_LOADER) {
+            throw new ClassNotFoundException();
         }
         final ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(elementClassActor);
         return arrayClassActor.toJava();

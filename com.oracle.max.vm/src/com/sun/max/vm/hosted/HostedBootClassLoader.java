@@ -57,7 +57,7 @@ public final class HostedBootClassLoader extends HostedClassLoader {
     public static final HostedBootClassLoader HOSTED_BOOT_CLASS_LOADER = new HostedBootClassLoader();
 
     @Override
-    protected Classpath getDefaultClassPath() {
+    protected Classpath getDefaultClasspath() {
         return Classpath.bootClassPath();
     }
 
@@ -153,5 +153,10 @@ public final class HostedBootClassLoader extends HostedClassLoader {
                 return result;
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Boot";
     }
 }
