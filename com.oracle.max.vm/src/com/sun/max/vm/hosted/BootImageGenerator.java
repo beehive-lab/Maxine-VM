@@ -240,36 +240,46 @@ public final class BootImageGenerator {
         }
     }
 
+    /**
+     * This is an array of directory names relative to the current working directory (system property "user.dir")
+     * to which proxies will be dumped. These directories are created before boot image construction, and deleted
+     * afterwards, if they had not existed beforehand. Note that all directories of a path have to be given.
+     */
+    private static String[] proxyDirs = new String[] {
+        "java",
+        "java/lang",
+        "java/lang/invoke",
+    };
+
+    /**
+     * Add the current working directory to the class path that will be created when HostedBootClassLoader.classpath() is
+     * first called. This is the directory where ProxyGenerator dumps out the class files it generates.
+     */
     private static void enableProxyClassFileDumping() {
-        // Add the current working directory to the class path that
-        // will be created when HostedBootClassLoader.classpath() is
-        // first called. This is the directory where ProxyGenerator
-        // dumps out the class files it generates.
         final String cwd = System.getProperty("user.dir");
         String javaClassPath = System.getProperty("java.class.path");
         System.setProperty("java.class.path", cwd + File.pathSeparatorChar + javaClassPath);
+        final File cwdFile = new File(cwd);
 
         // See sun.misc.ProxyGenerator.saveGeneratedFiles field
         System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
-        final File[] existingProxyClassFiles = new File(cwd).listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
-            }
-        });
+        final Set<File> existingProxyClassFilesAndDirectories = collectProxyClassFilesAndDirectories(cwdFile);
 
-        Runtime.getRuntime().addShutdownHook(new Thread("RemovingProxyClassFiles") {
+        // create proxy directories
+        for (String d : proxyDirs) {
+            File proxyDir = new File(cwdFile, d);
+            if (!proxyDir.exists()) {
+                proxyDir.mkdirs();
+                proxyDir.deleteOnExit();
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread("RemovingProxyClassFilesAndDirectories") {
             @Override
             public void run() {
                 System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
-                File cwdFile = new File(cwd);
-                File[] proxyClassFiles = cwdFile.listFiles(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
-                    }
-                });
-                HashSet<File> set = new HashSet<File>(Arrays.asList(existingProxyClassFiles));
-                for (File f : proxyClassFiles) {
-                    if (!set.contains(f)) {
+                for (File f : collectProxyClassFilesAndDirectories(cwdFile)) {
+                    if (!existingProxyClassFilesAndDirectories.contains(f)) {
                         f.delete();
                     }
                 }
@@ -277,19 +287,26 @@ public final class BootImageGenerator {
         });
     }
 
-    private static void disableProxyClassFileDumping(Set<File> preexistingProxyClassFiles) {
-        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
-        File cwd = new File(System.getProperty("user.dir"));
-        File[] proxyClassFiles = cwd.listFiles(new FilenameFilter() {
+    private static Set<File> collectProxyClassFilesAndDirectories(File cwd) {
+        final FilenameFilter proxyFilter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
             }
-        });
-        for (File f : proxyClassFiles) {
-            if (!preexistingProxyClassFiles.contains(f)) {
-                f.delete();
+        };
+
+        // proxy files without package name
+        Set<File> filesAndDirs = new HashSet<File>(Arrays.asList(cwd.listFiles(proxyFilter)));
+
+        // recurse into given directories and identify proxy files there
+        for (String d : proxyDirs) {
+            File proxyDir = new File(cwd, d);
+            if (proxyDir.exists()) {
+                filesAndDirs.add(proxyDir);
+                filesAndDirs.addAll(Arrays.asList(proxyDir.listFiles(proxyFilter)));
             }
         }
+
+        return filesAndDirs;
     }
 
     /**
