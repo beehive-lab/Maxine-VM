@@ -23,6 +23,8 @@
 
 package com.sun.max.tele;
 
+import com.sun.max.vm.jdk.*;
+
 
 /**
  * Descriptors for various platforms on which the VM may be running.
@@ -92,7 +94,7 @@ public interface MaxPlatform {
 
         public String libjvmName() {
             String base = "libjvm";
-            if (this == DARWIN) {
+            if (this == DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
                 return base + "linkage";
             } else  {
                 return base;
