@@ -105,7 +105,10 @@
  * <h4>Invocation Stub Classes</h4>
  * These classes are generated dynamically by Maxine and are not available in the host file system. The class file bytes are
  * stored in the Java heap and accessed as needed through {@link ClassfileReader#findGeneratedClassfile}. Stub classes
- * are also handled in {@HostedClassLoader#findClass}.
+ * are also handled in {@HostedClassLoader#findClass}. Stub classes are not accessed via the file system so they cannot
+ * be loaded by either the boot loader or the system class loader; they are created by invoking {@link ClassLoader#defineClass}
+ * on the bytes from {@link ClassfileReader.#findGeneratedClassfile}. Stub classes are , therefore, the only classes
+ * whose defining loader is {@link HostedBootClassLoader} or {@link HostedVMClassLoader}.
  * <p>
  * Note that both array classes and stub classes can be associated with either {@link HostedBootClassLoader} or {@link HostedVMClassLoader},
  * depending on the array component type, and target of the stub.
@@ -113,9 +116,9 @@
  * It was noted that the {@code loadClass} method of the {@link HostedVMClassLoader} instance starts the loading process for
  * a named class. This might be a VM class or it might be a JDK class. {@link HostedVMClassLoader} does not override {@code loadClass}
  * so it is {@link HostedClassLoader#loadClass} that is actually invoked. After checking whether this class has been defined (loaded)
- * already, it invokes {@code super.loadClass}, which resolves to {@link ClassLoader#loadClass}. As noted this will first delegate
+ * already, it invokes {@code super.loadClass}, which resolves to {@link ClassLoader#loadClass}. As noted, this will first delegate
  * to the parent, which is {@link HostedBootClassLoader}. This does {@link HostedBootClassLoader#loadClass override} {@code loadClass},
- * to handle a n case we will come back to. Initially, however, it again simply invokes {@code super.loadClass}, which will delegate to
+ * to handle a special case we will come back to. Initially, however, it again simply invokes {@code super.loadClass}, which will delegate to
  * the host VM's boot class loader. If the boot class loader fails to load the class, {@link HostedClassLoader#findClass} will
  * be run, but since, this only handles array classes and stubs, the lookup will fall back to {@link HostedVMClassLoader}, where
  * its {@code findClass} method will be run. This also invokes {@code super.findClass} to handle arrays and stubs associated with the
@@ -135,7 +138,7 @@
  * {@link HostedClassLoader#defineLoadedClassActor}. This method reads the bytes of the class, and the causes the
  * {@link ClassActor} to be created and placed in the appropriate registry.
  * <p>
- * <h3>Boot Class Referencees to VM classes, aka "The Special Case"</h3>
+ * <h2>Boot Class References to VM classes, aka "The Special Case"</h2>
  * All the above discussion has assumed that relationships between VM classes and JDK (boot) classes are one-way, i.e. originating from the VM
  * classes. Hence the fact that {@link HostedBootClassLoader} is the parent of {@link HostedVMClassLoader}. Unfortunately, this is not
  * completely true. Evidently, this must be true at the source code level, as the JDK classes are VM independent. However,
@@ -147,6 +150,7 @@
  * <li>{@link com.sun.max.annotate.SUBSTITUTE Substituted methods}. The Java definitions of substituted methods refer to VM classes.</li>
  * <li>Injected fields. Maxine injects additional fields into certain JDK classes to support the VM implementation. The types of these
  * fields are VM classes.
+ * <li>{@link Invocation} stubs to methods in JDK classes contain references to VM classes (see below).
  * </ul>
  * <p>
  * To resolve the class references that result from these special cases requires that the Maxine boot class loader be able to access the
@@ -156,13 +160,31 @@
  * being its parent. In {@link HostedBootClassLoader}, locating VM classes is handled by last chance code in the catch clause for
  * {@link java.lang.ClassNotFoundException} that searches the {@link HostedVMClassLoader#definedClasses} map.
  * <p>
- * This ability to resolve VM classes requires special handling when dealing with arrays. It would now be possible for {@link HostedBootClassLoader}
+ *
+ *<h3>Consequences</h3>
+ * This ability to resolve VM classes requires special handling in certain situations.
+ *<h4>Array classes</h4>
+ * It is now possible for {@link HostedBootClassLoader}
  * to resolve a VM class that is a component type of an array, and then go on to define the array itself, which would
  * violate the rules for arrays. A special check is made in {@link HostedClassLoader#findArrayClass} to
  * catch this situation and throw {@link java.lang.ClassNotFoundException}. The array will then be correctly resolved by
  * {@link HostedVMClassLoader}.
- *
- *
+ *<h4>Invocation Stub Classes</h4>
+ * Invocation stubs created by {@link InvocationStubGenerator} are assigned
+ * a class loader based on the classloader of the class declaring the method that the stub is targeting. As noted above,
+ * some of the stubs in the boot image target methods in JDK classes, so those stub classes are associated with
+ * {@link HostedBootClassLoader}. The stub class contains references to VM classes, e.g. {@link Value}. It turns out that
+ * during the stub class creation, the JDK reflection machinery invokes {@link ClassLoader#loadClass} on the {@link Value} class.
+ * This call succeeds but has the side effect of marking the boot class loader as an "initiating" loader of {@link Value}.
+ * This is a Catch-22 situation. If the load is rejected, the stub class resolution will fail. If the load succeeds the
+ * {@link HostedBootClassLoader} will be marked an "initiating" loader - it matters not that the defining loader is the system class loader.
+ * <p>
+ * It also happens that the {@code Value[]} class is resolved after this occurs. Unfortunately, when loading the
+ * {@link Value} component class, since the boot class loader is marked as an initiating loader, {@link ClassLoader#loadClass}
+ * returns the {@link Value} class (defined by the system class loader) immediately instead of throwing {@link java.lang.ClassNotFoundException}.
+ * {@link HostedBootClassLoader} then goes on to try to define the {@link Value} class in the boot class registry.
+ * The solution adopted to catch this is to check for non-JDK (and non-stub) classes
+ * in {@link com.sun.max.vm.hosted.HostedClassLoader#extraLoadClassChecks} and throw {@link java.lang.ClassNotFoundException}.
  */
 package com.sun.max.vm.hosted;
 import com.sun.max.vm.classfile.*;

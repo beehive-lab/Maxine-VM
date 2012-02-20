@@ -100,16 +100,14 @@ public class HostedVMClassLoader extends HostedClassLoader {
     }
 
     @Override
-    protected boolean extraLoadClassChecks(Class<?> javaType, String name) {
+    protected boolean extraLoadClassChecks(Class< ? > javaType) throws ClassNotFoundException {
         // The following prevents hosted only classes and platform (boot classpath) classes from being
         // placed in the VM class registry. Platform classes will already have been placed in the
         // boot class registry by HostedBootClassLoader.
-        if (javaType != null) {
-            if (MaxineVM.isHostedOnly(javaType)) {
-                throw new HostOnlyClassError(name);
-            } else if (javaType.getClassLoader() == null) {
-                return false;
-            }
+        if (MaxineVM.isHostedOnly(javaType)) {
+            throw new HostOnlyClassError(javaType.getName());
+        } else if (javaType.getClassLoader() == null) {
+            return false;
         }
         return true;
     }

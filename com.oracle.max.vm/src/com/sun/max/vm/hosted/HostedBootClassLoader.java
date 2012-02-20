@@ -126,9 +126,16 @@ public final class HostedBootClassLoader extends HostedClassLoader {
     }
 
     @Override
-    protected boolean extraLoadClassChecks(Class<?> javaType, String name) {
+    protected boolean extraLoadClassChecks(Class<?> javaType) throws ClassNotFoundException {
+        final String name = javaType.getName();
         if (isOmittedType(name)) {
             throw new OmittedClassError(name);
+        }
+        // This check prevents any VM class for which the boot loader was given "initiating" loader status
+        // from being added to the boot registry. N.B. Stub classes are actually "defined" by the Host loaders
+        // and so are a special case.
+        if (javaType.getClassLoader() != null && !isBootStubClass(javaType)) {
+            throw new ClassNotFoundException();
         }
         synchronized (this) {
             loadedPackages.add(Classes.getPackageName(name));
@@ -136,14 +143,19 @@ public final class HostedBootClassLoader extends HostedClassLoader {
         return true;
     }
 
+    private boolean isBootStubClass(Class<?> javaType) {
+        ClassLoader cl = javaType.getClassLoader();
+        return isStubClass(javaType.getName()) && cl == this;
+    }
+
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
         try {
             return super.loadClass(name, resolve);
         } catch (ClassNotFoundException exception) {
-            // This may be a class reference in a substituted/native method to a VM class
-            // that is being resolved during verification. The class will have been loaded into the
-            // HostedVMClassLoader so we should be able to locate it in the map of defined classes.
+            // This may be a class reference to a VM class from a Maxine-modified JDK (boot) class
+            // The class will have been loaded into the HostedVMClassLoader so we should be able to
+            // locate it in the map of defined classes.
             // N.B. we can't just invoke HostedVMClassLoader.loadClass as we are its parent
             // so it will recurse back to here.
             Class<?> result = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.definedClasses.get(name);
