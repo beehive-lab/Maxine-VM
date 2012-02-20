@@ -252,9 +252,6 @@ public final class ClassRegistry {
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
     private ClassActor define0(ClassActor classActor) {
-        if (classActor.typeDescriptor.toJavaString().startsWith("java")) {
-            assert this == BOOT_CLASS_REGISTRY;
-        }
 //        Trace.line(1, "defining " + classActor.typeDescriptor.toJavaString() + " in " + this);
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
 
@@ -567,10 +564,7 @@ public final class ClassRegistry {
         ClassActor classActor = classRegistry.get(typeDescriptor);
         if (classActor == null) {
             HostedClassLoader hostedClassLoader = (HostedClassLoader) classRegistry.classLoader;
-            final String name = typeDescriptor.toJavaString();
-            Classpath classpath = hostedClassLoader.classpath();
-            final ClasspathFile classpathFile = classpath.readClassFile(name);
-            classActor = ClassfileReader.defineClassActor(name, classRegistry.classLoader, classpathFile.contents, null, classpathFile.classpathEntry, false);
+            classActor = hostedClassLoader.mustMakeClassActor(typeDescriptor);
         }
         Class<T> type = null;
         return Utils.cast(type, classActor);

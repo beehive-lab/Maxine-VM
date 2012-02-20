@@ -24,8 +24,6 @@ package com.sun.max.vm.hosted;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -71,16 +69,8 @@ public class HostedVMClassLoader extends HostedClassLoader {
     public static final HostedVMClassLoader HOSTED_VM_CLASS_LOADER = new HostedVMClassLoader();
 
     @Override
-    protected Classpath getDefaultClassPath() {
+    protected Classpath getDefaultClasspath() {
         return Classpath.fromSystem();
-    }
-
-    protected Class<?> findStubClass(String name) {
-        if (name.startsWith(InvocationStubGenerator.STUB_PACKAGE_PREFIX)) {
-            ClasspathFile classpathFile = ClassfileReader.findGeneratedClassfile(name);
-            return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
-        }
-        return null;
     }
 
     @Override
@@ -103,9 +93,6 @@ public class HostedVMClassLoader extends HostedClassLoader {
             } catch (ClassNotFoundException ex) {
                 // must be an internally generated class, i.e., a stub, or something's missing
             }
-            if (result == null) {
-                result = findStubClass(name);
-            }
             return result;
         } catch (Exception e) {
             throw ProgramError.unexpected(e);
@@ -125,6 +112,11 @@ public class HostedVMClassLoader extends HostedClassLoader {
             }
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "VM";
     }
 
 }
