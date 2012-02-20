@@ -123,12 +123,12 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     *
-     * @param typeDescriptor
-     * @return
+     * Define the class actor for a successfully loaded {@link Class}.
+     * @param javaClass the {@code Class} that was loaded.
+     * @return the associated {@link ClassAtor}
      * @throws ClassNotFoundException
      */
-    private final ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
+    private ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
         final ClassActor classActor = ClassRegistry.get(this, typeDescriptor, false);
         final String name = typeDescriptor.toJavaString();
@@ -143,7 +143,7 @@ public abstract class HostedClassLoader extends ClassLoader {
 
     /**
      * Create a class actor with the specified name from the specified byte array.
-     * Inspector use.
+     * Inspector use only.
      *
      * @param name the name of the class
      * @param classfileBytes a byte array containing the encoded version of the class
@@ -171,16 +171,30 @@ public abstract class HostedClassLoader extends ClassLoader {
             // make sure the name is slashified first
             final String componentTypeName = name.substring(1).replace('.', '/');
             return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
-        } else if (name.startsWith(InvocationStubGenerator.STUB_PACKAGE_PREFIX)) {
-            return loadStubClass(name);
+        } else if (isStubClass(name)) {
+            return defineStubClass(name);
         } else {
             return super.findClass(name);
         }
     }
 
-    protected Class<?> loadStubClass(String name) {
-        ClasspathFile classpathFile = ClassfileReader.findGeneratedClassfile(name);
-        return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
+    protected final boolean isStubClass(String name) {
+        return name.startsWith(InvocationStubGenerator.STUB_PACKAGE_PREFIX);
+    }
+
+    /**
+     * Define a stub class in this loader, if it was placed into our registry by {@link InvocationStubGenerator}.
+     * @param name
+     * @return
+     */
+    protected Class<?> defineStubClass(String name) throws ClassNotFoundException {
+        TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
+        if (ClassRegistry.get(this, typeDescriptor, false) != null) {
+            ClasspathFile classpathFile = ClassfileReader.findGeneratedClassfile(name);
+            return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
+        } else {
+            throw new ClassNotFoundException();
+        }
     }
 
     /**
@@ -223,7 +237,7 @@ public abstract class HostedClassLoader extends ClassLoader {
         }
         try {
             javaType = super.loadClass(name, resolve);
-            if (extraLoadClassChecks(javaType, name)) {
+            if (extraLoadClassChecks(javaType)) {
                 defineLoadedClassActor(javaType);
 
                 if (Proxy.isProxyClass(javaType)) {
@@ -239,9 +253,9 @@ public abstract class HostedClassLoader extends ClassLoader {
     /**
      * Hook for a subclass to add additional checks before/after loading.
      * @param javaType {@code null} if the class is yet to be loaded, otherwise result of {@link #loadClass}
-     * @param name class name, equal to {@code javaType.getName()} if {@code javaType != null}
      * @return {@code true} iff the class should be added to the associated {@link ClassRegistry}
+     * @throws ClassNotFoundException if the subclass wants to reject the class
      */
-    protected abstract boolean extraLoadClassChecks(Class<?> javaType, String name);
+    protected abstract boolean extraLoadClassChecks(Class<?> javaType) throws ClassNotFoundException;
 
 }

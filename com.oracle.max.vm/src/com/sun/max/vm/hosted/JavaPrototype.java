@@ -317,7 +317,8 @@ public final class JavaPrototype extends Prototype {
             javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
             methodActorMap.put(methodActor, javaMethod);
         }
-        assert MethodActor.fromJava(javaMethod) == methodActor;
+        MethodActor jMethodActor = MethodActor.fromJava(javaMethod);
+        assert jMethodActor == methodActor;
         return javaMethod;
     }
 

@@ -206,7 +206,7 @@ public class InvocationStubGenerator<T> {
             final ClassActor stubClassActor =
                 ClassRegistry.define(ClassActorFactory.createTupleOrHybridClassActor(
                     constantPool,
-                    /*declaringClassActor.classLoader*/VMClassLoader.VM_CLASS_LOADER,
+                    declaringClassActor.classLoader,
                     stubClassName,
                     ClassfileReader.JAVA_1_5_VERSION,
                     (char) 0,
