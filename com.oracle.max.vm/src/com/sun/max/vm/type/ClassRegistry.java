@@ -331,16 +331,6 @@ public final class ClassRegistry {
             return classActor;
         }
 
-        // Handle the (rare) case when a JDK (boot) class references a VM class, e.g. an injected field.
-        /*
-        if (classLoader == null || classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
-            classActor = VM_CLASS_REGISTRY.get(typeDescriptor);
-            if (classActor != null) {
-                return classActor;
-            }
-        }
-        */
-
         if (!searchParents || classLoader == null) {
             return null;
         }
@@ -553,7 +543,9 @@ public final class ClassRegistry {
      */
     @HOSTED_ONLY
     private static <T extends ClassActor> T createClass(Class javaClass) {
-        return createClass(javaClass, BOOT_CLASS_REGISTRY);
+        ClassActor result = createClass(javaClass, BOOT_CLASS_REGISTRY);
+        Class<T> type = null;
+        return Utils.cast(type, result);
     }
 
     /**
