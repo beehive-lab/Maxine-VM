@@ -23,14 +23,15 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -39,7 +40,7 @@ import com.sun.max.vm.runtime.*;
  * refill manager. The reserved region may either be empty, or with a non-empty list of free chunks.
  * When the region's free space is exhausted, the refill manager retires the region (i.e., gives it back to the provider) and request a new one.
  */
-final class RegionChunkListRefillManager extends ChunkListRefillManager {
+public final class RegionChunkListRefillManager extends ChunkListRefillManager {
     /**
      * Region providing space for refilling allocator.
      */
@@ -48,7 +49,11 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
     /**
      * Provider of regions.
      */
-    private final RegionProvider regionProvider;
+    private RegionProvider regionProvider;
+    /**
+     * Dead space listener where to report dead space events.
+     */
+    protected final DeadSpaceListener deadSpaceListener;
 
    /**
      * Threshold below which the allocator should be refilled.
@@ -72,6 +77,10 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
+    public void setRegionProvider(RegionProvider regionProvider) {
+        this.regionProvider = regionProvider;
+    }
+
     public Object refillLock() {
         return regionProvider;
     }
@@ -80,8 +89,12 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
         return allocatingRegion;
     }
 
-    RegionChunkListRefillManager(RegionProvider regionProvider) {
-        this.regionProvider = regionProvider;
+    public RegionChunkListRefillManager() {
+        this(NullDeadSpaceListener.nullDeadSpaceListener());
+    }
+
+    public RegionChunkListRefillManager(DeadSpaceListener deadSpaceListener) {
+        this.deadSpaceListener = deadSpaceListener;
         nextFreeChunkInRegion = Address.zero();
         allocatingRegion = INVALID_REGION_ID;
     }
@@ -161,8 +174,8 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
      */
     @Override
     @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
-    public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
-        Address firstChunk = chunkOrZero(leftover, leftoverSize);
+    public Address allocateChunkListOrRefill(ChunkListAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
+        Address firstChunk = retireChunk(leftover, leftoverSize);
         if (!firstChunk.isZero()) {
             tlabSize = tlabSize.minus(leftoverSize);
             if (tlabSize.lessThan(minChunkSize)) {
@@ -210,12 +223,13 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 // Refill the allocator with the whole region.
                 freeSpace = Size.zero();
                 nextFreeChunkInRegion = Address.zero();
+                Size refillSize = Size.fromInt(regionSizeInBytes);
                 toAllocatingState(regionInfo);
-                allocator.refill(firstFreeBytes, Size.fromInt(regionSizeInBytes));
+                allocator.refill(firstFreeBytes, refillSize);
                 return Address.zero(); // indicates that allocator was refilled.
             }
         }
-        // FIXME: revisit this. We want to refill the allocator if the next chunk much larger than the requested space.
+        // FIXME: revisit this. We want to refill the allocator if the next chunk is much larger than the requested space.
         Address result = Address.zero();
         if (freeSpace.lessEqual(tlabSize)) {
             result = nextFreeChunkInRegion;
@@ -240,6 +254,7 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
                     Size chunkLeftover = chunkSize.minus(spaceNeeded);
                     if (chunkLeftover.greaterEqual(minChunkSize)) {
                         lastChunk = HeapFreeChunk.splitRight(chunk, spaceNeeded, next);
+                        deadSpaceListener.notifySplitDead(chunk, spaceNeeded, chunk.plus(chunkSize));
                     } else {
                         lastChunk = next;
                         // Adjust allocated size, to keep accounting correct.
@@ -301,5 +316,17 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     Size freeSpace() {
         return freeSpace;
+    }
+
+    @Override
+    protected void retireDeadSpace(Pointer deadSpace, Size size) {
+        HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+        deadSpaceListener.notifyRetireDeadSpace(deadSpace, size);
+    }
+
+    @Override
+    protected void retireFreeSpace(Pointer freeSpace, Size size) {
+        HeapFreeChunk.format(freeSpace, size);
+        deadSpaceListener.notifyRetireFreeSpace(freeSpace, size);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,15 @@ public class GCTest8 {
                 new HeapFiller(numStarted++).start();
             }
         }
+        try {
+            synchronized (lock) {
+                while (numCompleted < MAX_TOTAL_THREADS) {
+                    lock.wait();
+                }
+            }
+        } catch (InterruptedException e) {
+        }
+        System.out.println(GCTest8.class.getSimpleName() + " done");
     }
 
     private static void notifyFillerDone() {
@@ -84,10 +93,13 @@ public class GCTest8 {
 
         @Override
         public void run() {
-            for (int i = 0; i < 10; i++) {
-                createGarbage();
+            try {
+                for (int i = 0; i < 10; i++) {
+                    createGarbage();
+                }
+            } finally {
+                notifyFillerDone();
             }
-            notifyFillerDone();
         }
     }
 
