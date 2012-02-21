@@ -371,6 +371,7 @@ static void cleanupCurrentThreadBlockBeforeExit() {
 }
 
 void native_exit(jint code) {
+    // TODO: unmap the image
     cleanupCurrentThreadBlockBeforeExit();
     exit(code);
 }
