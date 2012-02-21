@@ -185,7 +185,7 @@ def hcfdis(args):
 
 def helloworld(args):
     """run the 'hello world' program on the Maxine VM"""
-    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.vm')] + args + ['test.output.HelloWorld'])
+    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
 
 def image(args):
     """build a boot image
