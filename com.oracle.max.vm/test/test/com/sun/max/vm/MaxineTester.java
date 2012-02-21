@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package test.com.sun.max.vm;
 import static test.com.sun.max.vm.MaxineTester.Logs.*;
 
 import java.io.*;
-import java.io.FileReader;
 import java.text.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -37,9 +36,9 @@ import org.junit.runner.notification.*;
 import test.com.sun.max.vm.ExternalCommand.OutputComparison;
 import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
-import test.output.*;
 
 import com.sun.max.*;
+import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -364,29 +363,17 @@ public class MaxineTester {
     }
 
     private static void copyInputFiles(File directory) {
-        final Set<java.lang.Package> outputTestPackages = new HashSet<java.lang.Package>();
         for (Class mainClass : MaxineTesterConfiguration.zeeOutputTests) {
-            outputTestPackages.add(mainClass.getPackage());
-        }
-        final File parent = new File(new File("com.oracle.max.vm"), "test");
-        ProgramError.check(parent.exists(), "Could not find com.oracle.max.vm/test: trying running in the root of your Maxine repository");
-        for (java.lang.Package p : outputTestPackages) {
-            File dir = parent;
-            for (String n : p.getName().split("\\.")) {
-                dir = new File(dir, n);
-            }
-            final File[] files = dir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (f.getName().endsWith(".input")) {
-                        try {
-                            Files.copy(f, new File(directory, f.getName()));
-                        } catch (FileNotFoundException e) {
-                            // do nothing.
-                        } catch (IOException e) {
-                            // do nothing.
-                        }
-                    }
+            Classpath cp = JavaProject.getSourcePath(mainClass, false);
+            File inputFile = cp.findFile(mainClass.getName().replace('.', File.separatorChar) + ".input");
+            if (inputFile != null) {
+                File dst = new File(directory, inputFile.getName());
+                try {
+                    Files.copy(inputFile, dst);
+                } catch (FileNotFoundException e) {
+                    // do nothing.
+                } catch (IOException e) {
+                    // do nothing.
                 }
             }
         }
@@ -1339,7 +1326,7 @@ public class MaxineTester {
         }
 
         void runOutputTests(final File outputDir, final File imageDir) {
-            List<Class> msc1xc1xSkippedTests = Arrays.asList(new Class[] {GCTest5.class, GCTest6.class});
+            List<Class> msc1xc1xSkippedTests = Arrays.asList(new Class[] {Classes.forName("test.output.GCTest5"), Classes.forName("test.output.GCTest6")});
 
             out().println("Output tests key:");
             out().println("      OK: test passed");
