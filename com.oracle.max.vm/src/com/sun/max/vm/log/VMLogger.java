@@ -42,10 +42,7 @@ import com.sun.max.vm.thread.*;
 /**
  * A {@link VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
  * range {@code [0 .. N-1]}. A series of "log" methods are provided, that take the operation code and a varying number
- * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}). Currently these must not be {@link Reference} types
- * as no GC support is provided for values in the log buffer. N.B. This likely may change in the future, and a
- * workaround for classes that don't have a scalar unique id available, the {@link #objectArg(Object)} method can be
- * used.
+ * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}).
  * <p>
  * The thread (id) generating the log record is automatically recorded.
  * <p>
@@ -85,7 +82,7 @@ import com.sun.max.vm.thread.*;
  * }
  * </pre>
  *
- * The {@code enabled} method is always {@link INLINE inlined}..
+ * The {@code enabled} method is always {@link INLINE inlined}.
  *
  * N.B. The guard can be a more complex condition. However, it is important not to use disjunctive conditions that could
  * result in a value of {@code true} for the guard when {@code logger.enabled()} would return false, E.g.,
@@ -183,13 +180,20 @@ import com.sun.max.vm.thread.*;
  *     }
  * }
  * </pre>
+ * Note that if an argument name is not identified {@link VMLogParam} it will be defined as {@code argN}, where
+ * {@code N} is the argument index.
+ * <p>
  * {@link VMLogger} has built-in support for several standard reference types, that have alternate representations
  * as scalar values, such as {@link ClassActor}. As a general principle, reference types without an alternate, unique, scalar
- * representation should be avoided as log method arguments. However, this is sometimes difficult or inconvenient.
- * Therefore, with the current limitation of logging arbitrary reference types,
- * {@link VMLogger} provides a mechanism to convert/retrieve any reference type via a scalar id with the methods
- * {@link VMLogger#objectArg(Object)} and {@link VMLogger#toObject(int)} methods. <b>N.B.</b> this mechanism makes
- * the object permanently reachable, and is limited in the number of objects that can be handled.
+ * representation should be avoided as log method arguments. However, this is sometimes difficult or inconvenient, so
+ * it is possible to store references types. These should be passed using {@link VMLogger#objectArg(Object)}
+ * and retrieved using {@link VMLogger#toObject(Record, int)}. This is automatically handled by the generator.
+ * <b>N.B.</b> storing reference types in the log makes them reachable until such time as they are overwritten.
+ * It is assumed that {@code Enum} types are always stored using their ordinal value. The generator creates the
+ * appropriate conversions methods. It assumes that the {@code enum} declares the following field:
+ * <pre>
+ * public static final EnumType[] VALUES = values();
+ * </pre>
  *
  * <h3>Tracing</h3>
  * When the tracing option for a logger is enabled, {@link #doTrace(Record)} is invoked immediately after the log record is created.

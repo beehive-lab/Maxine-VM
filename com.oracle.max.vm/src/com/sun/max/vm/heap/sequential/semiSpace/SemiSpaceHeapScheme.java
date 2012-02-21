@@ -1216,14 +1216,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     static final PhaseLogger phaseLogger = new PhaseLogger();
 
-    private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
-        return GCCallbackPhase.VALUES[r.getIntArg(argNum)];
-    }
-
-    private static Word gcCallbackPhaseArg(GCCallbackPhase when) {
-        return Address.fromInt(when.ordinal());
-    }
-
     /*
      * Currently we log MemoryRegion objects as objects using VMLogger.objectArg. This may change.
      */
@@ -1304,7 +1296,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             Log.print(interval.name());
             Log.print(": ");
             Log.print("Verifying object spaces ");
-            Log.print(when.description);
+            Log.println(when.description);
         }
 
         @Override
@@ -1597,7 +1589,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x3, 0x1, 0x1, 0x1, 0x1, 0x1, 0x0, 0x1, 0x3, 0x1, 0x1, 0x1};
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x1};
 
         protected PhaseLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1653,7 +1645,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gcCallbackPhaseArg(when));
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gCCallbackPhaseArg(when));
         }
         protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
 
@@ -1683,7 +1675,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
-            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), gcCallbackPhaseArg(when));
+            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), gCCallbackPhaseArg(when));
         }
         protected abstract void traceZappingRegion(MemoryRegion region, GCCallbackPhase when);
 
@@ -1743,6 +1735,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     break;
                 }
             }
+        }
+
+        private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
+            return GCCallbackPhase.VALUES[r.getIntArg(argNum)];
+        }
+
+        private static Word gCCallbackPhaseArg(GCCallbackPhase enumType) {
+            return Address.fromInt(enumType.ordinal());
         }
     }
 
