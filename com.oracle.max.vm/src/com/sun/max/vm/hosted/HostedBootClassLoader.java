@@ -35,7 +35,14 @@ import com.sun.max.vm.type.*;
  * singleton {@link BootClassLoader#BOOT_CLASS_LOADER} instance of the {@link BootClassLoader}
  * at runtime thanks to {@link JavaPrototype#hostToTarget(Object)}.
  *
- * N.B. This will <i>only</i> find classes on the bootclasspath.
+ * Most of the logic is inherited from {@link HostedClassLoader}.
+ *
+ * The customizations are:
+ * <ul>
+ * <li>VM classes that are needed to satisfy the few references between boot classes and VM classes
+ *     can be resolved by this loader</li>
+ * <li>JDK classes/packages can be explicitly prevented from being loaded into the image</li>
+ * </ul>
  */
 public final class HostedBootClassLoader extends HostedClassLoader {
 

@@ -43,7 +43,8 @@ public abstract class HostedClassLoader extends ClassLoader {
     protected Classpath classpath;
 
     /**
-     * A cache of loaded classes for fast lookup.
+     * A cache of loaded classes for fast lookup. This is equivalent to the map {@link ClassRegistry}
+     * but is in terms of {@link Class}, which is what {@link ClassLoader#loadClass} uses.
      */
     protected Map<String, Class> definedClasses = new HashMap<String, Class>();
 
@@ -123,7 +124,7 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Define the class actor for a successfully loaded {@link Class}.
+     * Define the class actor for a class successfully loaded by {@link ClassLoader#loadClass}.
      * @param javaClass the {@code Class} that was loaded.
      * @return the associated {@link ClassAtor}
      * @throws ClassNotFoundException
@@ -131,11 +132,12 @@ public abstract class HostedClassLoader extends ClassLoader {
     private ClassActor defineLoadedClassActor(Class javaClass) throws ClassNotFoundException {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
         final ClassActor classActor = ClassRegistry.get(this, typeDescriptor, false);
-        final String name = typeDescriptor.toJavaString();
+        // This check catches stub and array classes that are already defined in their unique way.
+        // It is easier catch them here this way than in {@link #loadClass}.
         if (classActor != null) {
-//            assert definedClasses.get(name) != null;
             return classActor;
         }
+        final String name = typeDescriptor.toJavaString();
         final ClasspathFile classpathFile = readClassFile(classpath(), name);
         definedClasses.put(name, javaClass);
         return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
@@ -154,23 +156,18 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Array classes require special treatment and are handled here for all subclasses.
-     * Since the classloader for the array depends on the component type, our subclass will actually
+     * Array/Invocation stub classes require special treatment and are handled here for all subclasses.
+     * Since the classloader for the array/stub depends on the component/target type, our subclass will actually
      * handle the loading of that.
      */
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
-        // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
-        // as required by the Java runtime. The class loader for an array class, as returned by Class.getClassLoader() is the same as
-        // the class loader for its element type; if the element type is a primitive type, then the array class has no class loader."
-        // So the following is not exactly legal.
         if (name.endsWith("[]")) {
-            return findArrayClass(JavaTypeDescriptor.getDescriptorForJavaString(name).componentTypeDescriptor());
+            return findArrayClass(name, JavaTypeDescriptor.getDescriptorForJavaString(name).componentTypeDescriptor());
         } else if (name.charAt(0) == '[') {
             // make sure the name is slashified first
             final String componentTypeName = name.substring(1).replace('.', '/');
-            return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
+            return findArrayClass(name, JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
         } else if (isStubClass(name)) {
             return defineStubClass(name);
         } else {
@@ -191,7 +188,9 @@ public abstract class HostedClassLoader extends ClassLoader {
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
         if (ClassRegistry.get(this, typeDescriptor, false) != null) {
             ClasspathFile classpathFile = ClassfileReader.findGeneratedClassfile(name);
-            return defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
+            Class<?> stubClass = defineClass(name, classpathFile.contents, 0, classpathFile.contents.length);
+            definedClasses.put(name, stubClass);
+            return stubClass;
         } else {
             throw new ClassNotFoundException();
         }
@@ -205,7 +204,7 @@ public abstract class HostedClassLoader extends ClassLoader {
      * @return the class for array type specified
      * @throws ClassNotFoundException if the element type could not be found
      */
-    private Class<?> findArrayClass(final TypeDescriptor elementTypeDescriptor) throws ClassNotFoundException {
+    private Class<?> findArrayClass(final String name, final TypeDescriptor elementTypeDescriptor) throws ClassNotFoundException {
         ClassActor elementClassActor = ClassRegistry.get(this, elementTypeDescriptor, false);
         if (elementClassActor == null) {
             final Class elementType = loadClass(elementTypeDescriptor.toJavaString());
@@ -219,7 +218,9 @@ public abstract class HostedClassLoader extends ClassLoader {
             throw new ClassNotFoundException();
         }
         final ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(elementClassActor);
-        return arrayClassActor.toJava();
+        Class<?> arrayClass = arrayClassActor.toJava();
+        definedClasses.put(name, arrayClass);
+        return arrayClass;
     }
 
 

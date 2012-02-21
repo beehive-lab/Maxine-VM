@@ -61,10 +61,14 @@ public class JDK_ClassLoaders02 {
      */
     private static Class<?> findMyClassLoaderClass() {
         try {
-            return Class.forName("VMClassLoader");
+            return Class.forName("com.sun.max.vm.type.VMClassLoader");
         } catch (ClassNotFoundException ex) {
             return URLClassLoader.class;
         }
+    }
+
+    public static void main(String[] args) {
+        System.out.println("test result: " + test(0));
     }
 
 }

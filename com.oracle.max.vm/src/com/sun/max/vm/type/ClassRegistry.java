@@ -332,12 +332,14 @@ public final class ClassRegistry {
         }
 
         // Handle the (rare) case when a JDK (boot) class references a VM class, e.g. an injected field.
+        /*
         if (classLoader == null || classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
             classActor = VM_CLASS_REGISTRY.get(typeDescriptor);
             if (classActor != null) {
                 return classActor;
             }
         }
+        */
 
         if (!searchParents || classLoader == null) {
             return null;
