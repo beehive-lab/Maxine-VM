@@ -69,7 +69,7 @@ public final class NoAgingNursery implements HeapSpace {
     /**
      * Atomic bump pointer allocator over the nursery space. The current bounds and size of the nursery are obtained from the allocator's start and end addresses.
      */
-    private final BaseAtomicBumpPointerAllocator<NurseryRefiller> allocator = new BaseAtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
+    private final AtomicBumpPointerAllocator<NurseryRefiller> allocator = new AtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
 
     public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {
         this.heapAccount = heapAccount;

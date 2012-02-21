@@ -148,10 +148,12 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             Log.println(regionID);
         }
         deadSpaceListener.notifySplitLive(allocated, requestedSize, allocated.plus(totalChunkSize));
+
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             if (!spaceLeft.isZero()) {
                 HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
                 deadSpaceListener.notifyRetireDeadSpace(leftover, spaceLeft);
+
             }
             FULL_REGION.setState(rinfo);
             unavailableRegions.append(regionID);
@@ -165,6 +167,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
             }
             HeapFreeChunk.format(leftover, spaceLeft);
             deadSpaceListener.notifyRetireFreeSpace(leftover, spaceLeft);
+
             rinfo.setFreeChunks(leftover,  spaceLeft, 1);
             FREE_CHUNKS_REGION.setState(rinfo);
             tlabAllocationRegions.append(regionID);
@@ -195,7 +198,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 regionInfoIterable.reset();
                 if (numContiguousRegionNeeded == 1) {
                     final int numBytesNeeded = size.toInt();
-                   // Actually, any region with a chunk large enough can do in that case.
+                    // Actually, any region with a chunk large enough can do in that case.
                     while (regionInfoIterable.hasNext()) {
                         final HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
@@ -254,6 +257,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                     Pointer tail = tailEnd.minus(tailSize);
                                     Address largeObjectCell = firstRegionInfo.regionStart();
                                     deadSpaceListener.notifySplitLive(largeObjectCell, size, tailEnd);
+
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         if (!tailSize.isZero()) {
                                             HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
@@ -267,6 +271,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                                         // Format the tail as a free chunk.
                                         HeapFreeChunk.format(tail, tailSize);
                                         deadSpaceListener.notifyRetireFreeSpace(tail, tailSize);
+
                                         LARGE_TAIL.setState(lastRegionInfo);
                                         lastRegionInfo.setFreeChunks(tail, tailSize, 1);
                                         if (tailSize.lessThan(minOverflowRefillSize)) {
@@ -318,19 +323,19 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         }
     }
 
-    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount) {
-        this(heapAccount, false, DeadSpaceListener.nullDeadSpaceListener(), 0);
-    }
-
-    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount,  boolean zapDeadReferences, DeadSpaceListener deadSpaceListener, int regionTag) {
+    public FirstFitMarkSweepSpace(HeapAccount<T> heapAccount,
+                    ChunkListAllocator<RegionChunkListRefillManager> tlabAllocator,
+                    BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator,
+                    boolean zapDeadReferences, DeadSpaceListener deadSpaceListener, int regionTag) {
         super(zapDeadReferences, deadSpaceListener);
         this.heapAccount = heapAccount;
         this.regionTag = regionTag;
-        overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(), deadSpaceListener);
-        tlabAllocator = new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(this, deadSpaceListener));
+        this.overflowAllocator = overflowAllocator;
+        this.tlabAllocator = tlabAllocator;
+        tlabAllocator.refillManager.setRegionProvider(this);
+        overflowAllocator.refillManager.setRegionProvider(this);
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
-        overflowAllocator.refillManager.setRegionProvider(this);
     }
 
     public HeapAccount<T> heapAccount() {
@@ -518,7 +523,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 // Reset the flag
                 LARGE_HEAD.setState(csrInfo);
                 unavailableRegions.append(csrInfo.toRegionID());
-               // Skip all intermediate regions. They are full.
+                // Skip all intermediate regions. They are full.
                 if (TraceSweep) {
                     traceSweptRegion();
                 }
@@ -531,7 +536,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 }
             } else {
                 Size largeObjectSize = Layout.size(Layout.cellToOrigin(csrInfo.regionStart().asPointer()));
-                 // Free all intermediate regions. The tail needs to be swept
+                // Free all intermediate regions. The tail needs to be swept
                 // in case it was used for allocating small objects, so we
                 // don't free it. It'll be set as the next sweeping region by the next call to beginSweep, so
                 // be careful not to consume it from the iterable.
@@ -643,7 +648,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
      *
      * @param allocatingRegion
      */
-    private void toIterableAllocatingRegion(BaseAtomicBumpPointerAllocator<?> allocator, int allocatingRegion) {
+    private void toIterableAllocatingRegion(BaseAtomicBumpPointerAllocator<? extends Refiller> allocator, int allocatingRegion) {
         if (allocatingRegion == INVALID_REGION_ID) {
             return;
         }

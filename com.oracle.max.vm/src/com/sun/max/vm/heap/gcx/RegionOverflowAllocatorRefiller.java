@@ -84,8 +84,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
     }
 
     public RegionOverflowAllocatorRefiller() {
-        this.allocatingRegion = INVALID_REGION_ID;
-        this.deadSpaceListener = DeadSpaceListener.nullDeadSpaceListener();
+        this(NullDeadSpaceListener.nullDeadSpaceListener());
     }
 
     public RegionOverflowAllocatorRefiller(DeadSpaceListener deadSpaceListener) {

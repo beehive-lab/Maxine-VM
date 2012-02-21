@@ -77,7 +77,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
      */
     static final int LastBin = 10;
 
-    class LinearSpaceRefillManager extends ChunkListRefillManager {
+    final class LinearSpaceRefillManager extends ChunkListRefillManager {
         /**
          * Size linear space allocator managed by this refill manager are refilled with.
          */
@@ -128,9 +128,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
          * which will trigger GC on next request.
          */
         @Override
-        public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
+        public Address allocateChunkListOrRefill(ChunkListAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             // FIXME (ld) this never refill the allocator!
-            Address firstChunk = retireDeadSpace(leftover, leftoverSize);
+            Address firstChunk = retireChunk(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
                 if (tlabSize.lessThan(minChunkSize)) {
@@ -143,6 +143,18 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         @Override
         protected void doBeforeGC() {
+        }
+
+        @INLINE
+        @Override
+        protected void retireDeadSpace(Pointer deadSpace, Size size) {
+            HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+        }
+
+        @INLINE
+        @Override
+        protected void retireFreeSpace(Pointer freeSpace, Size size) {
+            HeapFreeChunk.format(freeSpace, size);
         }
     }
 

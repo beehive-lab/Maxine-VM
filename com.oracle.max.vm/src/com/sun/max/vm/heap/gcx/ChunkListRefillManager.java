@@ -23,8 +23,6 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.rset.*;
 
 /**
  * A refill manager that can also hands out list of free chunks to an allocator.
@@ -34,22 +32,18 @@ public abstract class ChunkListRefillManager extends RefillManager {
      * Minimum size for a chunk. The refill manager will not hand out chunks with a size smaller than this.
      */
     protected Size minChunkSize;
-    /**
-     * Dead space listener where to report dead space events.
-     */
-    protected final DeadSpaceListener deadSpaceListener;
 
     ChunkListRefillManager() {
-        deadSpaceListener = DeadSpaceListener.nullDeadSpaceListener();
-    }
-
-    ChunkListRefillManager(DeadSpaceListener deadSpaceListener) {
-        this.deadSpaceListener = deadSpaceListener;
     }
 
     void setMinChunkSize(Size size) {
         minChunkSize = size;
     }
+
+    abstract protected void  retireDeadSpace(Pointer deadSpace, Size size);
+
+    abstract protected void  retireFreeSpace(Pointer freeSpace, Size size);
+
     /**
      * Retire space from allocator. If the space is larger than the minimum chunk size, format it as a heap
      * free chunk and return its address.
@@ -59,16 +53,13 @@ public abstract class ChunkListRefillManager extends RefillManager {
      * @param size size of the region
      * @return a non-null address if the specified region can be used as a free chunk.
      */
-    protected Address retireDeadSpace(Pointer address, Size size) {
+    protected Address retireChunk(Pointer address, Size size) {
         if (size.greaterThan(minChunkSize)) {
-            HeapFreeChunk.format(address, size);
-            deadSpaceListener.notifyRetireFreeSpace(address, size);
+            retireFreeSpace(address, size);
             return address;
         }
         if (!size.isZero()) {
-            // Don't bother with the left over in the allocator.
-            HeapSchemeAdaptor.fillWithDeadObject(address, address.plus(size));
-            deadSpaceListener.notifyRetireDeadSpace(address, size);
+            retireDeadSpace(address, size);
         }
         return Address.zero();
     }
@@ -83,5 +74,5 @@ public abstract class ChunkListRefillManager extends RefillManager {
      * @param leftoverSize size of the space that was left in the  bump pointer allocator
      * @return a zero address if the allocator was refilled, the head of a list of free chunk otherwise
      */
-    public abstract Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
+    public abstract Address allocateChunkListOrRefill(ChunkListAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
 }
