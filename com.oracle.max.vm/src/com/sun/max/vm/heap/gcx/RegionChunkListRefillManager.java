@@ -40,7 +40,7 @@ import com.sun.max.vm.runtime.*;
  * refill manager. The reserved region may either be empty, or with a non-empty list of free chunks.
  * When the region's free space is exhausted, the refill manager retires the region (i.e., gives it back to the provider) and request a new one.
  */
-final class RegionChunkListRefillManager extends ChunkListRefillManager {
+public final class RegionChunkListRefillManager extends ChunkListRefillManager {
     /**
      * Region providing space for refilling allocator.
      */
@@ -49,7 +49,11 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
     /**
      * Provider of regions.
      */
-    private final RegionProvider regionProvider;
+    private RegionProvider regionProvider;
+    /**
+     * Dead space listener where to report dead space events.
+     */
+    protected final DeadSpaceListener deadSpaceListener;
 
    /**
      * Threshold below which the allocator should be refilled.
@@ -73,6 +77,10 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
+    public void setRegionProvider(RegionProvider regionProvider) {
+        this.regionProvider = regionProvider;
+    }
+
     public Object refillLock() {
         return regionProvider;
     }
@@ -81,9 +89,12 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
         return allocatingRegion;
     }
 
-    RegionChunkListRefillManager(RegionProvider regionProvider, DeadSpaceListener deadSpaceListener) {
-        super(deadSpaceListener);
-        this.regionProvider = regionProvider;
+    public RegionChunkListRefillManager() {
+        this(NullDeadSpaceListener.nullDeadSpaceListener());
+    }
+
+    public RegionChunkListRefillManager(DeadSpaceListener deadSpaceListener) {
+        this.deadSpaceListener = deadSpaceListener;
         nextFreeChunkInRegion = Address.zero();
         allocatingRegion = INVALID_REGION_ID;
     }
@@ -163,8 +174,8 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
      */
     @Override
     @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
-    public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
-        Address firstChunk = retireDeadSpace(leftover, leftoverSize);
+    public Address allocateChunkListOrRefill(ChunkListAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
+        Address firstChunk = retireChunk(leftover, leftoverSize);
         if (!firstChunk.isZero()) {
             tlabSize = tlabSize.minus(leftoverSize);
             if (tlabSize.lessThan(minChunkSize)) {
@@ -305,5 +316,17 @@ final class RegionChunkListRefillManager extends ChunkListRefillManager {
 
     Size freeSpace() {
         return freeSpace;
+    }
+
+    @Override
+    protected void retireDeadSpace(Pointer deadSpace, Size size) {
+        HeapSchemeAdaptor.fillWithDeadObject(deadSpace, deadSpace.plus(size));
+        deadSpaceListener.notifyRetireDeadSpace(deadSpace, size);
+    }
+
+    @Override
+    protected void retireFreeSpace(Pointer freeSpace, Size size) {
+        HeapFreeChunk.format(freeSpace, size);
+        deadSpaceListener.notifyRetireFreeSpace(freeSpace, size);
     }
 }

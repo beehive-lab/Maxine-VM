@@ -35,8 +35,18 @@ import com.sun.max.vm.runtime.*;
  * avoiding fragmentation. Second, the space returned may not be a single contiguous chunks, but a linked list of
  * of chunks no smaller than a minimum size.
  */
-public class ChunkListAllocator<T extends ChunkListRefillManager> extends AtomicBumpPointerAllocator<T> {
-    ChunkListAllocator(T refillManager) {
+public class ChunkListAllocator<T extends ChunkListRefillManager> extends BaseAtomicBumpPointerAllocator<T> {
+    /**
+     * Maximum size one can allocate with this allocator. Request for size larger than this
+     * are delegated to @link {@link RefillManager#allocateLarge(Size)}.
+     */
+    protected Size sizeLimit;
+    /**
+     * Flags for enabling/disabling traces for this allocator.
+     */
+    boolean debugTrace = false;
+
+    public ChunkListAllocator(T refillManager) {
         super(refillManager);
     }
 
@@ -51,6 +61,12 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
         Address chunk = refillManager.allocateChunkListOrRefill(this, initialRefillSize, Pointer.zero(), Size.zero());
         // A zero chunk means the allocator is refilled -- see allocateChunkListOrRefill for details.
         FatalError.check(chunk.isZero() && start().isNotZero() && top.equals(start()) && end().greaterThan(top), "allocator must be refilled");
+    }
+
+    @INLINE
+    @Override
+    public Pointer allocateCleared(Size size) {
+        return clearAllocatedCell(allocate(size), size);
     }
 
     /**
@@ -101,13 +117,72 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
                     newTop = cell.plus(tlabSize);
                 }
             }
-        } while (thisAddress.compareAndSwapWord(TOP_OFFSET, cell, newTop) != cell);
+        } while (thisAddress.compareAndSwapWord(topOffset(), cell, newTop) != cell);
         if (MaxineVM.isDebug() && debugTrace) {
             Log.print("allocateTLAB() = "); Log.print(cell); Log.println(tlabSize);
         }
         // Format as a chunk.
         HeapFreeChunk.format(cell, tlabSize);
-        deadSpaceListener.notifySplitLive(cell, tlabSize, hardLimit());
         return cell;
+    }
+
+    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit) {
+        this.sizeLimit = sizeLimit;
+        super.initialize(initialChunk, initialChunkSize);
+    }
+
+    @INLINE
+    final boolean isLarge(Size size) {
+        return size.greaterThan(sizeLimit);
+    }
+
+    @Override
+    protected Pointer refillOrAllocate(Size size) {
+        synchronized (refillLock()) {
+            // We're the only thread that can refill the allocator now.
+            // We're still racing with other threads that might try to allocate
+            // what's left in the allocator (and succeed!).
+            if (isLarge(size)) {
+                // FIXME(ld) does this really need to be done under the refillLock() ?
+                return refillManager.allocateLarge(size).asPointer();
+            }
+            // We may have raced with another concurrent thread which may have
+            // refilled the allocator.
+            Pointer cell = top.asPointer();
+
+            if (cell.plus(size).greaterThan(end())) {
+                // end isn't the hard limit of the space.
+                // Check if allocation request can fit up to the limit.
+                Address hardLimit = hardLimit();
+                if (cell.plus(size).equals(hardLimit)) {
+                    // We need to atomically change top as we may be racing with
+                    // concurrent allocator for the left over. The refillLock above
+                    // only protect against concurrent refiller.
+                    Pointer start = atomicSetTopToLimit();
+                    if (cell.equals(start)) {
+                        return cell;
+                    }
+                    // Lost the race. Now we definitively have no space left.
+                    // Fall off to refill or allocate.
+                    cell = start;
+                }
+                if (!refillManager.shouldRefill(size, hardLimit.minus(cell).asSize())) {
+                    // Don't refill, waste would be too high. Allocate from the overflow allocator.
+                    return refillManager.allocateOverflow(size).asPointer();
+                }
+                // Refill. First, fill up the allocator to bring everyone to refill synchronization.
+                Pointer startOfSpaceLeft = atomicSetTopToLimit();
+
+                Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
+                if (!chunk.isZero()) {
+                    // Won race to get a next chunk to refill the allocator.
+                    refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
+                }
+                // Fall-off to return to the non-blocking allocation loop.
+            }
+            // There was a race for refilling the allocator. Just return to
+            // the non-blocking allocation loop.
+            return Pointer.zero();
+        }
     }
 }

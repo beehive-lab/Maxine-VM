@@ -103,7 +103,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
 
     protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceListener deadSpaceListener) {
         this.zapDeadReferences = zapDeadReferences;
-        this.deadSpaceListener = deadSpaceListener == null ? DeadSpaceListener.nullDeadSpaceListener() : deadSpaceListener;
+        this.deadSpaceListener = deadSpaceListener;
     }
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {

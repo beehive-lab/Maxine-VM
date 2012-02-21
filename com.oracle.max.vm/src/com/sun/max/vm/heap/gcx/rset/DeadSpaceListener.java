@@ -44,36 +44,6 @@ import com.sun.max.vm.heap.gcx.*;
  * Main used of dead space listener at the moment is to update the FOT of a card table to maintain the ability to walk over a card at any time.
  */
 public abstract class DeadSpaceListener {
-    /**
-     * An empty listener that doesn't do anything on any listened events.
-     */
-    public static DeadSpaceListener nullDeadSpaceListener() {
-        return new DeadSpaceListener() {
-            @Override
-            public final void notifyCoalescing(Address deadSpace, Size numDeadBytes) {
-            }
-
-            @Override
-            public final void notifySplitLive(Address leftDeadSpace, Size leftSize, Address rightDeadSpace) {
-            }
-
-            @Override
-            public final void notifySplitDead(Address leftDeadSpace, Size leftSize, Address rightDeadSpace) {
-            }
-
-            @Override
-            public final void notifyRefill(Address deadSpace, Size numDeadBytes) {
-            }
-
-            @Override
-            public final void notifyRetireDeadSpace(Address deadSpace, Size numDeadBytes) {
-            }
-
-            @Override
-            public final void notifyRetireFreeSpace(Address deadSpace, Size numDeadBytes) {
-            }
-        };
-    }
 
     protected DeadSpaceListener() {
     }
