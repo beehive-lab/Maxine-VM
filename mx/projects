@@ -179,8 +179,8 @@ project@com.oracle.max.vma.tools@dependencies=com.oracle.max.vm.ext.vma,com.orac
 project@com.oracle.max.vma.tools@checkstyle=com.oracle.max.base
 project@com.oracle.max.vma.tools@javaCompliance=1.6
 
-project@com.oracle.max.vm.ext.jsr292@sourceDirs=src,test
-project@com.oracle.max.vm.ext.jsr292@dependencies=com.oracle.max.vm
-project@com.oracle.max.vm.ext.jsr292@checkstyle=com.oracle.max.base
-project@com.oracle.max.vm.ext.jsr292@javaCompliance=1.7
+project@com.oracle.max.tests.jsr292@sourceDirs=test
+project@com.oracle.max.tests.jsr292@dependencies=com.oracle.max.vm
+project@com.oracle.max.tests.jsr292@checkstyle=com.oracle.max.base
+project@com.oracle.max.tests.jsr292@javaCompliance=1.7
 
