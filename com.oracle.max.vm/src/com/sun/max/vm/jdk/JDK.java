@@ -127,6 +127,7 @@ public class JDK {
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
     public static final ClassRef sun_misc_Unsafe                     = new ClassRef(sun.misc.Unsafe.class);
     public static final ClassRef sun_misc_PerfCounter                = new LazyClassRef("sun.misc.PerfCounter");
+    public static final ClassRef sun_misc_ProxyGenerator             = new LazyClassRef("sun.misc.ProxyGenerator");
     public static final ClassRef sun_misc_Launcher                   = new LazyClassRef(sun.misc.Launcher.class);
     public static final ClassRef sun_util_calendar_ZoneInfo              = new LazyClassRef(sun.util.calendar.ZoneInfo.class);
     public static final ClassRef sun_net_www_protocol_jar_JarFileFactory = new LazyClassRef("sun.net.www.protocol.jar.JarFileFactory");
