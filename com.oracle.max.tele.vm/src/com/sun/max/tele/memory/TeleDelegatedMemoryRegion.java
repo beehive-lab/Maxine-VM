@@ -58,6 +58,10 @@ public abstract class TeleDelegatedMemoryRegion extends VmMemoryRegion {
         return teleRuntimeMemoryRegion.getUsage();
     }
 
+    public Address mark() {
+        return teleRuntimeMemoryRegion.mark();
+    }
+
     @Override
     public boolean containsInAllocated(Address address) {
         return teleRuntimeMemoryRegion.containsInAllocated(address);

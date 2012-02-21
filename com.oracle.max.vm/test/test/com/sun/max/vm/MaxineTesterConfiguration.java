@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,17 +99,17 @@ public class MaxineTesterConfiguration {
         output(findOutputTests());
 
         // Refine expectation for certain output tests
-        output(test.output.AWTFont.class,                  FAIL_DARWIN, RAND_SPARC);
-        output(test.output.GCTest7.class,                  RAND_DARWIN);
+        output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN, RAND_SPARC);
+        output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
 //        output(test.output.GCTest8.class,                  RAND_ALL);
 //        output(test.output.MegaThreads.class,              RAND_ALL);
 //        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
-        output(test.output.WeakReferenceTest01.class,                  RAND_ALL);
-        output(test.output.WeakReferenceTest02.class,                  RAND_ALL);
-        output(test.output.WeakReferenceTest03.class,                  RAND_ALL);
-        output(test.output.WeakReferenceTest03_01.class,               RAND_ALL);
-        output(test.output.WeakReferenceTest04.class,                  RAND_ALL);
-        output(test.output.GCTest8.class,                              RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest02"),                  RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest03"),                  RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
+        output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
 
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization

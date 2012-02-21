@@ -84,6 +84,11 @@ public interface MaxMemoryRegion {
     boolean contains(Address address);
 
     /**
+     * @return the next location to be allocated in the region; {@code null} if not linearly allocated.
+     */
+    Address mark();
+
+    /**
      * Checks whether a VM memory address is within the allocated
      * area of a VM memory region.  If the VM memory region has no
      * notion of internal allocation, or if internal allocation cannot

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -224,5 +224,13 @@ public interface InspectorGUI {
      */
     Frame frame();
 
+    /**
+     * @return a standard display label that displays nothing.
+     */
+    InspectorLabel getEmptyDataTableCellRenderer();
+
+    /**
+     * @return a standard display label that represents unavailable data in all situations.
+     */
     InspectorLabel getUnavailableDataTableCellRenderer();
 }

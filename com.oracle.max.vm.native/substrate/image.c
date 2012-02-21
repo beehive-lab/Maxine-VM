@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -398,10 +398,10 @@ static void relocate(int fd) {
 #endif
 }
 
-int image_load(char *imageFileName) {
+void image_load(char *imageFileName) {
     if (theHeap != 0) {
         // loaded already (via inspector)
-        return 0;
+        return;
     }
     int fd = -1;
 #if !MEMORY_IMAGE
@@ -426,7 +426,10 @@ int image_load(char *imageFileName) {
 #if log_LOADER
     log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
-    return fd;
+    int error = close(fd);
+    if (error != 0) {
+        log_println("WARNING: could not close image file");
+    }
 }
 
 void image_printAddress(Address address) {

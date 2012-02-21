@@ -138,6 +138,7 @@ public final class AllocationsTable extends InspectorTable {
             addColumn(AllocationsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(AllocationsColumnKind.NAME, new NameCellRenderer(), null);
             addColumn(AllocationsColumnKind.START, new StartAddressCellRenderer(), null);
+            addColumn(AllocationsColumnKind.MARK, new MarkAddressCellRenderer(), null);
             addColumn(AllocationsColumnKind.END, new EndAddressCellRenderer(), null);
             addColumn(AllocationsColumnKind.SIZE, new SizeCellRenderer(), null);
             addColumn(AllocationsColumnKind.ALLOC, new AllocCellRenderer(), null);
@@ -323,29 +324,65 @@ public final class AllocationsTable extends InspectorTable {
         }
     }
 
-    private final class EndAddressCellRenderer implements TableCellRenderer, Prober {
+    private final class MarkAddressCellRenderer implements TableCellRenderer, Prober {
 
         // ValueLabels have important user interaction state, so create one per memory region and keep them around,
         // even though they may not always appear in the same row.
-        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
+        private final Map<MaxMemoryRegion, DataLabel.AddressAsHex> regionToLabel = new HashMap<MaxMemoryRegion, DataLabel.AddressAsHex>();
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            InspectorLabel label = regionToLabel.get(memoryRegion);
+            final Address mark = memoryRegion.mark();
+            if (mark == null) {
+                return gui().getEmptyDataTableCellRenderer();
+            }
+            DataLabel.AddressAsHex label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new WordValueLabel(inspection(), ValueMode.WORD, AllocationsTable.this) {
-
-                    @Override
-                    public Value fetchValue() {
-                        return WordValue.from(memoryRegion.end());
-                    }
-                };
+                label = new DataLabel.AddressAsHex(inspection(), Address.zero());
+                label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Next allocation @");
                 label.setOpaque(true);
                 regionToLabel.put(memoryRegion, label);
             }
+            label.setValue(mark);
+            label.setBackground(cellBackgroundColor());
+            return label;
+        }
+
+        public void redisplay() {
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
+            }
+        }
+
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
+        }
+    }
+
+
+    private final class EndAddressCellRenderer implements TableCellRenderer, Prober {
+
+        // Labels have important user interaction state, so create one per memory region and keep them around,
+        // even though they may not always appear in the same row.
+        private final Map<MaxMemoryRegion, DataLabel.AddressAsHex> regionToLabel = new HashMap<MaxMemoryRegion, DataLabel.AddressAsHex>();
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
+            DataLabel.AddressAsHex label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new DataLabel.AddressAsHex(inspection(), Address.zero());
+                label.setOpaque(true);
+                regionToLabel.put(memoryRegion, label);
+            }
+            label.setValue(memoryRegion.end());
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Ends @");
             label.setBackground(cellBackgroundColor());
             return label;
@@ -370,7 +407,7 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             InspectorLabel label = regionToLabel.get(memoryRegion);
@@ -405,7 +442,7 @@ public final class AllocationsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
-            if (memoryRegion == null) {
+            if (memoryRegion == null || !memoryRegion.isAllocated()) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
             InspectorLabel label = regionToLabel.get(memoryRegion);

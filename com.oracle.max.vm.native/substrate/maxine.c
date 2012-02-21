@@ -104,10 +104,10 @@ static void getImageFilePath(char *result) {
 #endif
 }
 
-static int loadImage(void) {
+static void loadImage(void) {
     char imageFilePath[MAX_PATH_LENGTH];
     getImageFilePath(imageFilePath);
-    return image_load(imageFilePath);
+    image_load(imageFilePath);
 }
 
 static void *openLibrary(char *path) {
@@ -282,7 +282,6 @@ typedef jint (*VMRunMethod)(
 int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
     int exitCode = 0;
-    int fd;
     int i;
 
     /* Extract the '-XX:LogFile' argument and pass the rest through to MaxineVM.run(). */
@@ -322,7 +321,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 #endif
 
-    fd = loadImage();
+    loadImage();
 
     tla_initialize(image_header()->tlaSize);
 
@@ -346,29 +345,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
         thread_run((void *) tlBlock);
-
-        // The thread-specific data destructor function is not called for the main thread
-        // TODO (dns) this is the behavior seen on Darwin-pthreads - confirm that it is true on other platforms
-        // TODO (dns) should we delete the thread-specific data key (e.g. pthread_key_delete(3))? Can only do so if
-        //      all other threads created by or attached the VM are guaranteed to be dead by now
-        threadLocalsBlock_setCurrent(0);
-        threadLocalsBlock_destroy(tlBlock);
-
-        exitCode = image_read_value(int, exitCodeOffset);
+    } else {
+        native_exit(exitCode);
     }
-
-    if (fd > 0) {
-        int error = close(fd);
-        if (error != 0) {
-            log_println("WARNING: could not close image file");
-        }
-    }
-
-#if log_LOADER
-    log_println("exit code: %d", exitCode);
-#endif
-
-    return exitCode;
+    // All exits should be routed through native_exit().
+    log_exit(-1, "Should not reach here\n");
 }
 
 /*
@@ -381,7 +362,17 @@ void *native_executablePath() {
     return result;
 }
 
+static void cleanupCurrentThreadBlockBeforeExit() {
+    Address tlBlock = threadLocalsBlock_current();
+    if (tlBlock != 0) {
+        threadLocalsBlock_setCurrent(0);
+        threadLocalsBlock_destroy(tlBlock);
+    }
+}
+
 void native_exit(jint code) {
+    // TODO: unmap the image
+    cleanupCurrentThreadBlockBeforeExit();
     exit(code);
 }
 
@@ -399,6 +390,7 @@ void native_trap_exit(int code, Address address) {
     log_print("In ");
     log_print_symbol(address);
     log_print_newline();
+    cleanupCurrentThreadBlockBeforeExit();
     log_exit(code, "Trap in native code at %p\n", address);
 }
 
