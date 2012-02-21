@@ -65,6 +65,9 @@ project@com.oracle.max.base@sourceDirs=src,test
 project@com.oracle.max.base@dependencies=JUNIT
 project@com.oracle.max.base@checkstyle=com.oracle.max.base
 
+project@com.oracle.max.tests@sourceDirs=src
+project@com.oracle.max.tests@checkstyle=com.oracle.max.base
+
 project@com.oracle.max.vmdi@sourceDirs=src
 project@com.oracle.max.vmdi@checkstyle=com.oracle.max.base
 

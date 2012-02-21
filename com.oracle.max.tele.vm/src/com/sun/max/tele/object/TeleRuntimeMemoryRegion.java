@@ -173,6 +173,13 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /**
+     * @return the allocation mark for the region; {@code null} if not linearly allocated.
+     */
+    public Address mark() {
+        return null;
+    }
+
+    /**
      * Determines whether an address is in the allocated portion of the {@link MemoryRegion}
      * described by a memory region object in the VM.
      * <br>
