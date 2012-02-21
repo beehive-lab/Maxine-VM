@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
      * @param signature the {@linkplain MethodActor#descriptor() signature} of the class method actor
      */
     public TestBytecodeAssembler(boolean isStatic, String className, String methodName, SignatureDescriptor signature) {
-        super(new ConstantPool(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER).edit());
+        super(new ConstantPool(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER).edit());
         this.isStatic = isStatic;
         this.methodName = makeSymbol(methodName);
         this.className = className == null ? null : makeSymbol(className);

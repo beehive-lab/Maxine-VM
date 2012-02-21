@@ -110,6 +110,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public List<? extends MethodActor> gatherNativeInitializationMethods() {
         final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
         final String maxinePackagePrefix = "com.sun.max";
+        // TODO remove check given VM_CLASS_REGISTRY
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {

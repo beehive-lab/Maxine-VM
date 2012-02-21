@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,24 @@ import java.net.*;
 public class JDK_ClassLoaders02 {
     public static boolean test(int i) {
         ClassLoader classLoader = JDK_ClassLoaders02.class.getClassLoader();
-        return classLoader == null || classLoader instanceof URLClassLoader;
+        return classLoader == null || findMyClassLoaderClass().isAssignableFrom(classLoader.getClass());
     }
+
+    /**
+     * If built into boot image, as is standard with tests, classloader is VM classloader.
+     * Can't name is statically else won't execute under standard VM.
+     * @return
+     */
+    private static Class<?> findMyClassLoaderClass() {
+        try {
+            return Class.forName("com.sun.max.vm.type.VMClassLoader");
+        } catch (ClassNotFoundException ex) {
+            return URLClassLoader.class;
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println("test result: " + test(0));
+    }
+
 }
