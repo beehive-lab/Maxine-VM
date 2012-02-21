@@ -79,7 +79,7 @@
 #    *sourceDirs: a comma separated list of source directoriy names (relative to the project directory)
 #     dependencies: a comma separated list of the libraries and project the project depends upon (transitive dependencies may be omitted)
 #     checkstyle: the project whose Checkstyle configuration (i.e. <project>/.checkstyle_checks.xml) is used
-#     javaCompliance: a JDK version (format: x.y) to which this project's sources comply (optional; 1.6 is assumed if not given).
+#     javaCompliance: a JDK version (format: x.y) to which this project's sources comply.
 #                     This can be used to exclude a project depending on JDK 7 from building when JDK 6 is used to build,
 #                     and also to set project-specific compliance/target properties for generated IDE project files.
 #
@@ -132,10 +132,7 @@ class Project(Dependency):
         self.srcDirs = srcDirs
         self.deps = deps
         self.checkstyleProj = name
-        if jdk == None:
-            self.javaCompliance = '1.6'
-        else:
-            self.javaCompliance = jdk
+        self.javaCompliance = jdk
         self.native = False
         self.dir = dir
             
