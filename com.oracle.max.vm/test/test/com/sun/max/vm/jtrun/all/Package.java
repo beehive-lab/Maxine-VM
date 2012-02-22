@@ -20,9 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
 package test.com.sun.max.vm.jtrun.all;
 
 import com.sun.max.config.*;
