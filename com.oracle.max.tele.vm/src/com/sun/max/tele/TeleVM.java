@@ -390,7 +390,7 @@ public abstract class TeleVM implements MaxVM {
         classpathPrefix = classpathPrefix.prepend(BootImageGenerator.getBootImageJarFile(vmDirectory).getAbsolutePath());
         checkClasspath(classpathPrefix);
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        HostedBootClassLoader.setClasspath(classpath);
+        HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.setClasspath(classpath);
 
         if (needTeleLibrary()) {
             Prototype.loadLibrary(TELE_LIBRARY_NAME);
@@ -1291,7 +1291,7 @@ public abstract class TeleVM implements MaxVM {
         return referenceManager.makeReference(origin);
     }
 
-    public final Reference bootClassRegistryReference() {
+    public final Reference vmClassRegistryReference() {
         return makeReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
     }
 
@@ -2017,7 +2017,7 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public String[] getClassPath() {
-            return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath().toStringArray();
+            return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath().toStringArray();
         }
 
         /**

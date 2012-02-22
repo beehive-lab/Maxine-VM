@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package test.com.sun.max.vm.output;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.run.*;
 
-public class CodePointerTest {
 
-    static final long VALUE = 23L;
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
+        registerScheme(RunScheme.class, VMOutputRunScheme.class);
+    }
 
-    public static void main(String[] args) {
-        System.out.println("Hello, world from CodePointer ...");
-        CodePointer cp = CodePointer.from(VALUE);
-        System.gc();
-        System.out.println("... value: " + cp.toLong());
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.runPackage.equals(this);
     }
 
 }

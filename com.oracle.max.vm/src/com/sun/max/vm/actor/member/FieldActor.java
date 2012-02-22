@@ -130,6 +130,10 @@ public class FieldActor extends MemberActor implements RiResolvedField {
      * Gets the actor for this field's type.
      */
     public ClassActor type() {
+        if (isInjected(flags())) {
+            // special direct search for VM class defining injected field.
+            return ClassRegistry.get(VMClassLoader.VM_CLASS_LOADER, descriptor(), false);
+        }
         return descriptor().resolve(holder().classLoader);
     }
 

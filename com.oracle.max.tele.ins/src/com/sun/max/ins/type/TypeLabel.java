@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ public class TypeLabel extends InspectorLabel {
             setText("");
             setWrappedToolTipHtmlText(htmlify("<no type available>"));
         } else {
-            final Class javaType = typeDescriptor.resolveType(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER);
+            final Class javaType = typeDescriptor.resolveType(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER);
             final String typeName = javaType.getSimpleName();
             setText(typeName);
             if (teleClassActor == null) {
