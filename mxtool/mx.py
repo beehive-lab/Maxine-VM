@@ -948,7 +948,8 @@ def build(args, parser=None):
                             if exists(dirname(classFile)) and (not exists(classFile) or os.path.getmtime(classFile) < os.path.getmtime(src)):
                                 if jasminAvailable is None:
                                     try:
-                                        subprocess.call('jasmin')
+                                        with open(os.devnull) as devnull:
+                                            subprocess.call('jasmin', stdout=devnull, stderr=subprocess.STDOUT)
                                         jasminAvailable = True
                                     except OSError as e:
                                         jasminAvailable = False
