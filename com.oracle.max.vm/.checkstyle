@@ -9,8 +9,4 @@
 	<filter name="FileTypesFilter" enabled="true">
 		<filter-data value="java"/>
 	</filter>
-	<filter name="FilesFromPackage" enabled="true">
-		<filter-data value="test/test/interactive"/>
-		<filter-data value="test/jtt"/>
-	</filter>
 </fileset-config>

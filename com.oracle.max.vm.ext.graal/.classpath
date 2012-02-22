@@ -13,8 +13,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.compiler"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.snippets"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.base"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.tests"/>
-	<classpathentry exported="true" kind="lib" path="../com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>

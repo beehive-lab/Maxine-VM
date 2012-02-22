@@ -195,6 +195,14 @@ class Project(Dependency):
             return None
         return join(self.dir, 'bin')
 
+    def jasmin_output_dir(self):
+        """
+        Get the directory in which the Jasmin assembled class files of this project are found/placed.
+        """
+        if self.native:
+            return None
+        return join(self.dir, 'jasmin_classes')
+
     def append_to_classpath(self, cp, resolve):
         if not self.native:
             cp.append(self.output_dir())
@@ -915,19 +923,51 @@ def build(args, parser=None):
             for dep in p.all_deps([], False):
                 if dep.name in built:
                     mustBuild = True
-            
+                    
+        jasminAvailable = None
         javafilelist = []
         for sourceDir in sourceDirs:
             for root, _, files in os.walk(sourceDir):
                 javafiles = [join(root, name) for name in files if name.endswith('.java') and name != 'package-info.java']
                 javafilelist += javafiles
                 
-                # Copy all non Java resources
+                # Copy all non Java resources or assemble Jasmin files
                 nonjavafilelist = [join(root, name) for name in files if not name.endswith('.java')]
                 for src in nonjavafilelist:
-                    dst = join(outputDir, src[len(sourceDir) + 1:])
-                    if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
-                        shutil.copyfile(src, dst)
+                    if src.endswith('.jasm'):
+                        className = None
+                        with open(src) as f:
+                            for line in f:
+                                if line.startswith('.class '):
+                                    className = line.split()[-1]
+                                    break
+                        
+                        if className is not None:
+                            jasminOutputDir = p.jasmin_output_dir()
+                            classFile = join(jasminOutputDir, className.replace('/', os.sep) + '.class')
+                            if exists(dirname(classFile)) and (not exists(classFile) or os.path.getmtime(classFile) < os.path.getmtime(src)):
+                                if jasminAvailable is None:
+                                    try:
+                                        with open(os.devnull) as devnull:
+                                            subprocess.call('jasmin', stdout=devnull, stderr=subprocess.STDOUT)
+                                        jasminAvailable = True
+                                    except OSError as e:
+                                        jasminAvailable = False
+                                        
+                                if jasminAvailable:
+                                    log('Assembling Jasmin file ' + src)
+                                    subprocess.check_call(['jasmin', '-d', jasminOutputDir, src])
+                                else:
+                                    log('The jasmin executable could not be found - skipping ' + src)
+                                    with file(classFile, 'a'):
+                                        os.utime(classFile, None)
+                                    
+                        else:
+                            log('could not file .class directive in Jasmin source: ' + src)
+                    else:  
+                        dst = join(outputDir, src[len(sourceDir) + 1:])
+                        if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
+                            shutil.copyfile(src, dst)
                 
                 if not mustBuild:
                     for javafile in javafiles:
