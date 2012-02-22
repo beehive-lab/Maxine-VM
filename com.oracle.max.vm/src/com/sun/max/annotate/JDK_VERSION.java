@@ -27,7 +27,7 @@ import java.lang.annotation.*;
 /**
  * This annotation is used to filter out classes, methods and fields from the boot image
  * based on the JDK used for building. For example, to specify that a method should only be
- * included in an image built using JDK 7, this annotation is used as follows:
+ * included in an image built using at least JDK 7, this annotation is used as follows:
  * <pre>
  *     @JDK_VERSION("1.7")
  *     public void method() { ... }
@@ -43,8 +43,6 @@ public @interface JDK_VERSION {
     /**
      * Specifies a JDK version. The annotated element is included if the JDK version used to
      * build is at least the specified version. The version string must be in "x.y" format,
-     * i.e., it must conform to the pattern checked by
-     * {@link com.sun.max.vm.jdk.JDK#isJDKVersionString(String)}.
      */
     String value() default "";
 }

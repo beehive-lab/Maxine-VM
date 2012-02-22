@@ -74,14 +74,13 @@
 #
 # The name of a project also denotes the directory it is in.
 #
-# Built-in project properties:
+# Built-in project properties (* = required):
 #
 #    *sourceDirs: a comma separated list of source directoriy names (relative to the project directory)
 #     dependencies: a comma separated list of the libraries and project the project depends upon (transitive dependencies may be omitted)
 #     checkstyle: the project whose Checkstyle configuration (i.e. <project>/.checkstyle_checks.xml) is used
-#     javaCompliance: a JDK version (format: x.y) to which this project's sources comply.
-#                     This can be used to exclude a project depending on JDK 7 from building when JDK 6 is used to build,
-#                     and also to set project-specific compliance/target properties for generated IDE project files.
+#     native: true if the project is native
+#     javaCompliance: the minimum JDK version (format: x.y) to which the project's sources comply (required for non-native projects)
 #
 # Other properties can be specified for projects and libraries for use by extension commands.
 #
@@ -127,12 +126,12 @@ class Dependency:
         return isinstance(self, Library)
     
 class Project(Dependency):
-    def __init__(self, suite, name, srcDirs, deps, jdk, dir):
+    def __init__(self, suite, name, srcDirs, deps, javaCompliance, dir):
         Dependency.__init__(self, suite, name)
         self.srcDirs = srcDirs
         self.deps = deps
         self.checkstyleProj = name
-        self.javaCompliance = jdk
+        self.javaCompliance = JavaCompliance(javaCompliance) if javaCompliance is not None else None
         self.native = False
         self.dir = dir
             
@@ -281,15 +280,17 @@ class Suite:
         for name, attrs in projsMap.iteritems():
             srcDirs = pop_list(attrs, 'sourceDirs')
             deps = pop_list(attrs, 'dependencies')
-            jdk = attrs.pop('javaCompliance', None)
+            javaCompliance = attrs.pop('javaCompliance', None)
             subDir = attrs.pop('subDir', None);
             if subDir is None:
                 dir = join(self.dir, name)
             else:
                 dir = join(self.dir, subDir, name)
-            p = Project(self, name, srcDirs, deps, jdk, dir)
+            p = Project(self, name, srcDirs, deps, javaCompliance, dir)
             p.checkstyleProj = attrs.pop('checkstyle', name)
             p.native = attrs.pop('native', '') == 'true'
+            if not p.native and p.javaCompliance is None:
+                abort('javaCompliance property required for non-native project ' + name)
             p.__dict__.update(attrs)
             self.projects.append(p)
 
@@ -648,6 +649,24 @@ def exe_suffix(name):
     return name
 
 """
+A JavaCompliance simplifies comparing Java compliance values extracted from a JDK version string.
+"""
+class JavaCompliance:
+    def __init__(self, ver):
+        m = re.match('1\.(\d+).*', ver)
+        assert m is not None, 'not a recognized version string: ' + vstring
+        self.value = int(m.group(1))
+
+    def __str__ (self):
+        return '1.' + str(self.value)
+    
+    def __cmp__ (self, other):
+        if isinstance(other, types.StringType):
+            other = JavaCompliance(other)
+
+        return cmp(self.value, other.value)
+    
+"""
 A JavaConfig object encapsulates info on how Java commands are run.
 """
 class JavaConfig:
@@ -682,9 +701,7 @@ class JavaConfig:
         output = output.split()
         assert output[1] == 'version'
         self.version = output[2].strip('"')
-        
-        # extract short version string (e.g., 1.6) to be passed to javac
-        self.jdk_version = self.version[0:self.version.index('.', self.version.index('.') + 1)]
+        self.javaCompliance = JavaCompliance(self.version)
         
         if self.debug_port is not None:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(self.debug_port)]
@@ -865,12 +882,12 @@ def build(args, parser=None):
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')
     
-    jdk = java().jdk_version
+    javaCompliance = java().javaCompliance
     
     parser = parser if parser is not None else ArgumentParser(prog='mx build')
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
-    parser.add_argument('--source', dest='compliance', help='Java compliance level', default=jdk)
+    parser.add_argument('--source', dest='compliance', help='Java compliance level', default=str(javaCompliance))
     parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
@@ -909,7 +926,7 @@ def build(args, parser=None):
                 continue
             
         # skip building this Java project if its Java compliance level is "higher" than the configured JDK
-        if java().jdk_version == '1.6' and p.javaCompliance == '1.7':
+        if javaCompliance < p.javaCompliance:
             log('Excluding {0} from build (Java compliance level {1} required)'.format(p.name, p.javaCompliance))
             continue
 
@@ -1348,7 +1365,7 @@ def eclipseinit(args, suite=None):
                 if isfile(path):
                     with open(join(eclipseSettingsDir, name)) as f:
                         content = f.read()
-                    content = content.replace('${javaCompliance}', p.javaCompliance)
+                    content = content.replace('${javaCompliance}', str(p.javaCompliance))
                     update_file(join(settingsDir, name), content)
 
 def netbeansinit(args, suite=None):

@@ -22,9 +22,10 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.util.regex.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -243,14 +244,19 @@ public class JDK {
     }
 
     /**
-     * JDK version string.
+     * The format supported for JDK version strings.
+     */
+    public static final Pattern JDK_VERSION_STRING_PATTERN = Pattern.compile("1.(\\d+)");
+
+    /**
+     * JDK version string extract from the "java.specification.version" system property.
      */
     public static final String JDK_VERSION_STRING = System.getProperty("java.specification.version");
 
     /**
      * Version number of the JDK.
      */
-    public static final int JDK_VERSION;
+    public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
 
     /**
      * Value for {@linkplain JDK_VERSION} for JDK 6.
@@ -262,23 +268,18 @@ public class JDK {
      */
     public static final int JDK_7 = 7;
 
-    static {
-        assert isJDKVersionString(JDK_VERSION_STRING);
-        if ("1.6".equals(JDK_VERSION_STRING)) {
-            JDK_VERSION = JDK_6;
-        } else if ("1.7".equals(JDK_VERSION_STRING)) {
-            JDK_VERSION = JDK_7;
-        } else {
-            JDK_VERSION = -1;
-            throw ProgramError.unexpected("Unknown java version number: " + JDK_VERSION_STRING);
-        }
-    }
-
     /**
-     * Check version string format. It must conform to "x.y", where both x and y are digits.
+     * Parses a JDK version string into an integer.
+     *
+     * @param version a version string that must conform to {@value #JDK_VERSION_STRING_PATTERN}
+     * @return the integer value following the decimal in {@code version}
      */
-    private static boolean isJDKVersionString(String v) {
-        return v.matches("\\d\\.\\d");
+    public static int jdkVersionValue(String version) {
+        Matcher m = JDK_VERSION_STRING_PATTERN.matcher(version);
+        if (!m.matches()) {
+            throw new IllegalArgumentException(version + " is not in a recognized version string format");
+        }
+        return Integer.parseInt(m.group(1));
     }
 
     /**
@@ -288,8 +289,6 @@ public class JDK {
         if (version == null) {
             return true;
         }
-        final String v = version.value();
-        assert isJDKVersionString(v);
-        return v.compareTo(JDK_VERSION_STRING) <= 0;
+        return JDK_VERSION >= jdkVersionValue(version.value());
     }
 }
