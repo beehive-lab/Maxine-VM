@@ -63,12 +63,13 @@ public class VMLoggerGenerator {
             VMLoggerInterface vmLoggerInterface = getVMLoggerInterface(loggerInterface);
             String autoName = getRootName(loggerInterface) + "Auto";
             Method[] methods = loggerInterface.getDeclaredMethods();
-            Map<String, Integer> refMap = computeRefMaps(methods);
+            Set<Class> enumArgMap = new HashSet<Class>();
+            int[] refMaps = computeRefMaps(methods, enumArgMap);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
             Map<String, Integer> enumMap = outOperationEnum(out, methods);
             Set<String> refTypes = new HashSet<String>();
 
-            out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(refMap));
+            out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(refMaps));
             out.printf("%sprotected %s(String name, String optionDescription) {%n", INDENT8, autoName);
             out.printf("%ssuper(name, Operation.VALUES.length, optionDescription, REFMAPS);%n", INDENT12);
             out.printf("%s}%n%n", INDENT8);
@@ -186,6 +187,17 @@ public class VMLoggerGenerator {
                 out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, type, type);
             }
 
+            // enum args
+            for (Class klass : enumArgMap) {
+                final String type = klass.getSimpleName();
+                out.printf("%n%sprivate static %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
+                out.printf("%sreturn %s.VALUES[r.getIntArg(argNum)];%n", INDENT12, type);
+                out.printf("%s}%n%n", INDENT8);
+                out.printf("%sprivate static Word %sArg(%s enumType) {%n", INDENT8, toFirstLower(type), type);
+                out.printf("%sreturn Address.fromInt(enumType.ordinal());%n", INDENT12);
+                out.printf("%s}%n", INDENT8);
+            }
+
             out.printf("%s}%n%n", INDENT4);
 
 
@@ -200,8 +212,9 @@ public class VMLoggerGenerator {
         return wouldUpdate;
     }
 
-    private static Map<String, Integer> computeRefMaps(Method[] methods) {
-        Map<String, Integer> refMap = new HashMap<String, Integer>();
+    private static int[] computeRefMaps(Method[] methods, Set<Class> enumSet) {
+        int[] refMaps = new int[methods.length];
+        int methodIndex = 0;
         for (Method method : methods) {
             int argIndex = 0;
             int refMapBits = 0;
@@ -209,16 +222,20 @@ public class VMLoggerGenerator {
             for (Class<?> type : parameterTypes) {
                 if (Word.class.isAssignableFrom(type)) {
                     // not a reference type
-                } else if (Actor.class.isAssignableFrom(type) || VmThread.class.isAssignableFrom(type)) {
+                } else if (Actor.class.isAssignableFrom(type) || VmThread.class.isAssignableFrom(type) ||
+                                VMLogger.Interval.class.isAssignableFrom(type)) {
                     // scalar id alternative
+                } else if (type.isEnum()) {
+                    // enums always passed ordinal()
+                    enumSet.add(type);
                 } else if (Object.class.isAssignableFrom(type)) {
                     refMapBits |= 1 << argIndex;
                 }
                 argIndex++;
             }
-            refMap.put(operationName(method), refMapBits);
+            refMaps[methodIndex++] = refMapBits;
         }
-        return refMap;
+        return refMaps;
     }
 
     private static String sanitizedName(String name) {
@@ -268,9 +285,9 @@ public class VMLoggerGenerator {
         return toFirstUpper(method.getName());
     }
 
-    private static String refMapArray(Map<String, Integer> refMap) {
+    private static String refMapArray(int[] refMaps) {
         boolean zero = true;
-        for (int x : refMap.values()) {
+        for (int x : refMaps) {
             if (x != 0) {
                 zero = false;
                 break;
@@ -281,7 +298,7 @@ public class VMLoggerGenerator {
         }
         StringBuilder sb = new StringBuilder("new int[] {");
         boolean first = true;
-        for (int bits : refMap.values()) {
+        for (int bits : refMaps) {
             if (first) {
                 first = false;
             } else {
@@ -374,7 +391,9 @@ public class VMLoggerGenerator {
         if (isStandardArgMethod(methodName, sourceClass)) {
             return wrapTraceArg(methodName, argNum);
         } else {
-            refTypes.add(type);
+            if (!klass.isEnum()) {
+                refTypes.add(type);
+            }
             return wrapTraceArg(methodName, argNum);
         }
     }

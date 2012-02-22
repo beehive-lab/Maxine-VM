@@ -1216,29 +1216,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     static final PhaseLogger phaseLogger = new PhaseLogger();
 
-    private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
-        return GCCallbackPhase.VALUES[r.getIntArg(argNum)];
-    }
-
-    private static Word gcCallbackPhaseArg(GCCallbackPhase when) {
-        return Address.fromInt(when.ordinal());
-    }
-
-    /*
-     * Currently we log MemoryRegion objects as objects using VMLogger.objectArg. This may change.
-     */
-
-    @INTRINSIC(UNSAFE_CAST)
-    private static native MemoryRegion asMemoryRegion(Object arg);
-
-    private static Word memoryRegionArg(MemoryRegion region) {
-        return VMLogger.objectArg(region);
-    }
-
-    private static MemoryRegion toMemoryRegion(Record r, int argNum) {
-        return asMemoryRegion(VMLogger.toObject(r, argNum));
-    }
-
     @HOSTED_ONLY
     @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
     private interface PhaseLoggerInterface {
@@ -1304,7 +1281,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             Log.print(interval.name());
             Log.print(": ");
             Log.print("Verifying object spaces ");
-            Log.print(when.description);
+            Log.println(when.description);
         }
 
         @Override
@@ -1589,7 +1566,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
         public enum Operation {
-            ScanningBootHeap, ScanningThreadRoots, ScanningRoots,
+            ScanningThreadRoots, ScanningBootHeap, ScanningRoots,
             ScanningImmortalHeap, ScanningCode, MovingReachable, ProcessingSpecialReferences,
             VerifyingObjectSpaces, VerifyingStackReferences, VerifyingHeapObjects, VerifyingCodeObjects,
             VerifyingRegion, ZappingRegion;
@@ -1597,7 +1574,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x3, 0x1, 0x1, 0x1, 0x1, 0x1, 0x0, 0x1, 0x3, 0x1, 0x1, 0x1};
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x1};
 
         protected PhaseLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1608,18 +1585,18 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return Operation.VALUES[opCode].name();
         }
 
-        @INLINE
-        public final void logScanningBootHeap(Interval interval) {
-            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningBootHeap(Interval interval);
-
         @Override
         @INLINE
         public final void logScanningThreadRoots(VmThread vmThread) {
             log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
         }
         protected abstract void traceScanningThreadRoots(VmThread vmThread);
+
+        @INLINE
+        public final void logScanningBootHeap(Interval interval) {
+            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningBootHeap(Interval interval);
 
         @INLINE
         public final void logScanningRoots(Interval interval) {
@@ -1653,7 +1630,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gcCallbackPhaseArg(when));
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), objectArg(when));
         }
         protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
 
@@ -1677,25 +1654,25 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logVerifyingRegion(MemoryRegion region, Address start, Address end) {
-            log(Operation.VerifyingRegion.ordinal(), memoryRegionArg(region), start, end);
+            log(Operation.VerifyingRegion.ordinal(), objectArg(region), start, end);
         }
         protected abstract void traceVerifyingRegion(MemoryRegion region, Address start, Address end);
 
         @INLINE
         public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
-            log(Operation.ZappingRegion.ordinal(), memoryRegionArg(region), gcCallbackPhaseArg(when));
+            log(Operation.ZappingRegion.ordinal(), objectArg(region), objectArg(when));
         }
         protected abstract void traceZappingRegion(MemoryRegion region, GCCallbackPhase when);
 
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //ScanningBootHeap
-                    traceScanningBootHeap(toInterval(r, 1));
+                case 0: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
                     break;
                 }
-                case 1: { //ScanningThreadRoots
-                    traceScanningThreadRoots(toVmThread(r, 1));
+                case 1: { //ScanningBootHeap
+                    traceScanningBootHeap(toInterval(r, 1));
                     break;
                 }
                 case 2: { //ScanningRoots
@@ -1743,6 +1720,19 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     break;
                 }
             }
+        }
+        static MemoryRegion toMemoryRegion(Record r, int argNum) {
+            return asMemoryRegion(toObject(r, argNum));
+        }
+        @INTRINSIC(UNSAFE_CAST)
+        private static native MemoryRegion asMemoryRegion(Object arg);
+
+        private static GCCallbackPhase toGCCallbackPhase(Record r, int argNum) {
+            return GCCallbackPhase.VALUES[r.getIntArg(argNum)];
+        }
+
+        private static Word gCCallbackPhaseArg(GCCallbackPhase enumType) {
+            return Address.fromInt(enumType.ordinal());
         }
     }
 
