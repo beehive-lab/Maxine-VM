@@ -112,7 +112,7 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
 
-        vmoutput(findOutputTests("test.vmoutput."));
+        vmoutput(findOutputTests("test.vm.output."));
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
 //        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
@@ -424,8 +424,10 @@ public class MaxineTesterConfiguration {
         return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x";
     }
 
-    public static String defaultOutputImageConfigs() {
-        return "vm-output";
+    public static List<String> defaultVMOutputImageConfigs() {
+        List<String> result = new ArrayList<String>();
+        result.add("vm-output");
+        return result;
     }
 
     public static boolean isSupported(String config) {

@@ -46,10 +46,13 @@ public class VMOutputRunScheme extends AbstractTestRunScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
         if (phase == MaxineVM.Phase.STARTING) {
-            runTest();
+            noTests = VMOptions.parseMain(false);
+            if (!noTests) {
+                runTest();
+            }
         } else {
-            super.initialize(phase);
             if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
                 Class<?>[] testClasses = MaxineTesterConfiguration.findOutputTests("test.vm.output.");
                 for (Class<?> klass : testClasses) {
