@@ -66,7 +66,7 @@ project@com.oracle.max.base@dependencies=JUNIT
 project@com.oracle.max.base@checkstyle=com.oracle.max.base
 
 project@com.oracle.max.tests@sourceDirs=src
-project@com.oracle.max.tests@dependencies=TESTS_JASMIN_CLASSES
+project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES
 project@com.oracle.max.tests@checkstyle=com.oracle.max.base
 
 project@com.oracle.max.vmdi@sourceDirs=src
