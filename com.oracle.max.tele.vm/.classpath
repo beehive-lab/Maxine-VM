@@ -8,7 +8,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.cri"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.criutils"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
-	<classpathentry exported="true" kind="lib" path="../com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graph"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.nodes"/>

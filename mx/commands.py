@@ -26,8 +26,8 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, StringIO
-from os.path import join, exists, dirname, isdir, pathsep, isfile, isabs
+import os, shutil, fnmatch, subprocess
+from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 
 _maxine_home = dirname(dirname(__file__))
@@ -361,10 +361,14 @@ def jttgen(args):
     files in the com.sun.max.vm.jtrun.all package."""
 
 
-    testDir = join(mx.project('com.oracle.max.vm').dir, 'test')
-    tests = [join('jtt', name) for name in os.listdir(join(testDir, 'jtt')) if name != 'hotspot' and name != 'fail']
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
-                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
+    testDirs = [join(mx.project('com.oracle.max.vm.tests').dir, 'src'), join(mx.project('com.oracle.max.tests').dir, 'src')]
+    tests = []
+    for testDir in testDirs:
+        for name in os.listdir(join(testDir, 'jtt')):
+            if name != 'hotspot' and name != 'fail':
+                tests.append(join(testDir, 'jtt', name))
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.tests'), 'test.com.sun.max.vm.compiler.JavaTester',
+                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests)
 
 def makejdk(args):
     """create a JDK directory based on the Maxine VM

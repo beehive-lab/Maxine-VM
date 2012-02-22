@@ -9,4 +9,7 @@
 	<filter name="FileTypesFilter" enabled="true">
 		<filter-data value="java"/>
 	</filter>
+	<filter name="FilesFromPackage" enabled="true">
+		<filter-data value="src/jtt"/>
+	</filter>
 </fileset-config>
