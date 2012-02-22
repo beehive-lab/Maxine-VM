@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package test.vmoutput;
 
 import com.sun.max.unsafe.*;
 

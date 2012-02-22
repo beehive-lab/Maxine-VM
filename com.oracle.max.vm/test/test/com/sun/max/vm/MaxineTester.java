@@ -202,6 +202,9 @@ public class MaxineTester {
                 } else if ("javatester".equals(test)) {
                     // run the JTImage tests
                     new JTImageHarness().run();
+                } else if ("vmoutput".equals(test)) {
+                    // run the VM output tests
+                    new OutputImageHarness(MaxineTesterConfiguration.zeeVMOutputTests).run();
                 } else if ("dacapo2006".equals(test)) {
                     // run the DaCapo 2006 tests
                     new DaCapo2006Harness(MaxineTesterConfiguration.zeeDacapo2006Tests).run();
@@ -1173,6 +1176,38 @@ public class MaxineTester {
         }
 
         return new ExternalCommand(workingDir, inputFile, logs, maxvmCommand.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp);
+    }
+
+    /**
+     * A combo of {@link JTImageHarness} and {@link OutputHarness} that runs "output" style tests
+     * that are built into an image, because they test VM facilities.
+     */
+    public static class OutputImageHarness implements Harness {
+        final Iterable<Class> testList;
+
+        public OutputImageHarness(List<Class> tests) {
+            this.testList = tests;
+        }
+
+        public void run() {
+            String config = MaxineTesterConfiguration.defaultOutputImageConfigs();
+            final File imageDir = new File(outputDirOption.getValue(), config);
+            final PrintStream out = out();
+            out.println("VM output tester: Started " + config);
+            if (skipImageGenOption.getValue() || generateImage(imageDir, config)) {
+                int executions = 0;
+                Iterator<Class> iter = testList.iterator();
+                while (iter.hasNext()) {
+                    String nextTestOption = "-XX:Test=" + iter.next().getName();
+                    Logs logs = new Logs(imageDir, "VM_OUTPUT" + (executions == 0 ? "" : "-" + executions), config);
+                    JavaCommand command = new JavaCommand((Class) null);
+                    command.addArgument(nextTestOption);
+                    int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
+                    out.print("VM output tester: Stopped " + config + " - ");
+                    executions++;
+                }
+            }
+        }
     }
 
     /**

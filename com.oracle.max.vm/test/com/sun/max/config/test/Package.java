@@ -32,6 +32,6 @@ import com.sun.max.config.*;
 
 public class Package extends BootImagePackage {
     public Package() {
-        super("test.com.sun.max.vm.jtrun.**");
+        super("test.com.sun.max.vm.jtrun.**", "test.com.sun.max.vm.output.**");
     }
 }
