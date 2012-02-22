@@ -36,6 +36,7 @@ import com.sun.max.vm.run.java.*;
 public abstract class AbstractTestRunScheme extends JavaRunScheme {
 
     private final Utf8Constant testMethod;
+    protected static boolean noTests;
 
     protected AbstractTestRunScheme(String testMethod) {
         this.testMethod = SymbolTable.makeSymbol(testMethod);
@@ -79,6 +80,11 @@ public abstract class AbstractTestRunScheme extends JavaRunScheme {
     @HOSTED_ONLY
     private void addMethodToImage(ClassMethodActor method) {
         CompiledPrototype.registerVMEntryPoint(method);
+    }
+
+    @Override
+    protected boolean parseMain() {
+        return noTests;
     }
 
 

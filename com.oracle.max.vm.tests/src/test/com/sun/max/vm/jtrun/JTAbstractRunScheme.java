@@ -43,7 +43,6 @@ public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
     }
 
     protected static boolean nativeTests;
-    protected static boolean noTests;
     protected static int testStart;
     protected static int testEnd;
     protected static int testCount;
@@ -66,20 +65,13 @@ public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
         }
     }
 
-    @Override
-    protected boolean parseMain() {
-        return noTests;
-    }
-
     protected abstract void runTests();
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        noTests = VMOptions.parseMain(false);
+        super.initialize(phase);
         if (phase == MaxineVM.Phase.STARTING) {
-            if (nativeTests || noTests) {
-                super.initialize(phase);
-            }
+            noTests = VMOptions.parseMain(false);
             if (!noTests) {
                 testStart = startOption.getValue();
                 if (testStart < 0) {
@@ -96,8 +88,6 @@ public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
                 }
                 runTests();
             }
-        } else {
-            super.initialize(phase);
         }
         JTUtil.verbose = 3;
         if (MaxineVM.isHosted()) {
