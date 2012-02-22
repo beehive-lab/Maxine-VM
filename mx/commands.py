@@ -46,7 +46,7 @@ def _configs():
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
     c = Configs()        
-    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath('com.oracle.max.vm', resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
 def configs(arg):
