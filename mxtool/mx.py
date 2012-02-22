@@ -195,6 +195,14 @@ class Project(Dependency):
             return None
         return join(self.dir, 'bin')
 
+    def jasmin_output_dir(self):
+        """
+        Get the directory in which the Jasmin assembled class files of this project are found/placed.
+        """
+        if self.native:
+            return None
+        return join(self.dir, 'jasmin_classes')
+
     def append_to_classpath(self, cp, resolve):
         if not self.native:
             cp.append(self.output_dir())
@@ -925,9 +933,30 @@ def build(args, parser=None):
                 # Copy all non Java resources
                 nonjavafilelist = [join(root, name) for name in files if not name.endswith('.java')]
                 for src in nonjavafilelist:
-                    dst = join(outputDir, src[len(sourceDir) + 1:])
-                    if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
-                        shutil.copyfile(src, dst)
+                    if src.endswith('.jasm'):
+                        className = None
+                        with open(src) as f:
+                            for line in f:
+                                if line.startswith('.class '):
+                                    className = line.split()[-1]
+                                    break
+                        
+                        if className is not None:
+                            jasminOutputDir = p.jasmin_output_dir()
+                            classFile = join(jasminOutputDir, className.replace('/', os.sep) + '.class')
+                            if exists(dirname(classFile)) and (not exists(classFile) or os.path.getmtime(classFile) < os.path.getmtime(src)):
+                                log('Assembling Jasmin file ' + src)
+                                try:
+                                    subprocess.check_call(['jasmin', '-d', jasminOutputDir, src])
+                                except OSError as e:
+                                    log('The jasmin executable could not be found - skipping ' + src)
+                                    
+                        else:
+                            log('could not file .class directive in Jasmin source: ' + src)
+                    else:  
+                        dst = join(outputDir, src[len(sourceDir) + 1:])
+                        if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
+                            shutil.copyfile(src, dst)
                 
                 if not mustBuild:
                     for javafile in javafiles:

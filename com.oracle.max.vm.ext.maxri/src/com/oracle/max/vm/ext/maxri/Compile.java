@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@ package com.oracle.max.vm.ext.maxri;
 
 import java.io.*;
 import java.util.*;
-
-import test.com.sun.max.vm.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
