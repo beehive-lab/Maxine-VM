@@ -119,7 +119,7 @@ project@com.oracle.max.elf@sourceDirs=src
 project@com.oracle.max.elf@checkstyle=com.oracle.max.base
 
 project@com.oracle.max.vm@sourceDirs=src,test,demo
-project@com.oracle.max.vm@dependencies=com.oracle.max.base,JDK_TOOLS,com.oracle.max.asm,VM_CLASSES
+project@com.oracle.max.vm@dependencies=com.oracle.max.base,JDK_TOOLS,com.oracle.max.asm,com.oracle.max.tests,VM_CLASSES
 project@com.oracle.max.vm@checkstyle=com.oracle.max.base
 
 project@com.oracle.max.vm.native@sourceDirs=
