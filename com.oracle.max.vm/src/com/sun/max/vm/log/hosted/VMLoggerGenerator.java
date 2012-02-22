@@ -391,7 +391,9 @@ public class VMLoggerGenerator {
         if (isStandardArgMethod(methodName, sourceClass)) {
             return wrapTraceArg(methodName, argNum);
         } else {
-            refTypes.add(type);
+            if (!klass.isEnum()) {
+                refTypes.add(type);
+            }
             return wrapTraceArg(methodName, argNum);
         }
     }
