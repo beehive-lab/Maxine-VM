@@ -923,14 +923,15 @@ def build(args, parser=None):
             for dep in p.all_deps([], False):
                 if dep.name in built:
                     mustBuild = True
-            
+                    
+        jasminAvailable = None
         javafilelist = []
         for sourceDir in sourceDirs:
             for root, _, files in os.walk(sourceDir):
                 javafiles = [join(root, name) for name in files if name.endswith('.java') and name != 'package-info.java']
                 javafilelist += javafiles
                 
-                # Copy all non Java resources
+                # Copy all non Java resources or assemble Jasmin files
                 nonjavafilelist = [join(root, name) for name in files if not name.endswith('.java')]
                 for src in nonjavafilelist:
                     if src.endswith('.jasm'):
@@ -945,11 +946,20 @@ def build(args, parser=None):
                             jasminOutputDir = p.jasmin_output_dir()
                             classFile = join(jasminOutputDir, className.replace('/', os.sep) + '.class')
                             if exists(dirname(classFile)) and (not exists(classFile) or os.path.getmtime(classFile) < os.path.getmtime(src)):
-                                log('Assembling Jasmin file ' + src)
-                                try:
+                                if jasminAvailable is None:
+                                    try:
+                                        subprocess.call('jasmin')
+                                        jasminAvailable = True
+                                    except OSError as e:
+                                        jasminAvailable = False
+                                        
+                                if jasminAvailable:
+                                    log('Assembling Jasmin file ' + src)
                                     subprocess.check_call(['jasmin', '-d', jasminOutputDir, src])
-                                except OSError as e:
+                                else:
                                     log('The jasmin executable could not be found - skipping ' + src)
+                                    with file(classFile, 'a'):
+                                        os.utime(classFile, None)
                                     
                         else:
                             log('could not file .class directive in Jasmin source: ' + src)
