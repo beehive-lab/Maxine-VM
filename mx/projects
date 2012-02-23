@@ -154,6 +154,7 @@ project@com.oracle.max.vm@javaCompliance=1.6
 project@com.oracle.max.vm.tests@sourceDirs=src
 project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests
 project@com.oracle.max.vm.tests@checkstyle=com.oracle.max.base
+project@com.oracle.max.vm.tests@javaCompliance=1.6
 
 project@com.oracle.max.vm.native@sourceDirs=
 project@com.oracle.max.vm.native@native=true

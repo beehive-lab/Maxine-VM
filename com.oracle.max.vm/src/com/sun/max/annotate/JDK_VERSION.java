@@ -42,7 +42,7 @@ import java.lang.annotation.*;
 public @interface JDK_VERSION {
     /**
      * Specifies a JDK version. The annotated element is included if the JDK version used to
-     * build is at least the specified version. The version string must be in "x.y" format,
+     * build is at least the specified version. The version string must be in "x.y" format.
      */
     String value() default "";
 }
