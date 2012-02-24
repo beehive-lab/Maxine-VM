@@ -383,6 +383,15 @@ def jttgen(args):
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.tests'), 'test.com.sun.max.vm.compiler.JavaTester',
                          '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests)
 
+def loggen(args):
+    """(re)generate Java source for VMLogger interfaces
+
+    Run VMLoggerGenerator.java to update the Auto implementations of @VMLoggerInterface interfaces.
+
+    The exit code is non-zero if a Java source file was modified."""
+
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
+
 def makejdk(args):
     """create a JDK directory based on the Maxine VM
 
@@ -642,6 +651,7 @@ def mx_init():
         'javadoc': [javadoc, ''],
         'jnigen': [jnigen, ''],
         'jttgen': [jttgen, ''],
+        'loggen': [loggen, ''],
         'makejdk': [makejdk, '[<destination directory>]'],
         'methodtree': [methodtree, '[options]'],
         'nm': [nm, '[options] [boot image file]', _vm_image],
