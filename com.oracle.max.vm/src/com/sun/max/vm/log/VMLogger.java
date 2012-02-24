@@ -436,14 +436,21 @@ public class VMLogger {
      * Called to reset the logger state to default values in case they were enabled during image build.
      */
     public void setDefaultState() {
-        // At VM startup we log everything; this gets refined once the VM is up in checkLogOptions.
-        // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
         if (loggerId < 0) {
             return;
         }
         logEnabled = true;
         traceEnabled = false;
         optionsChecked = false;
+        // At VM startup we log everything; this gets refined once the VM is up in checkOptions.
+        // This is because we cannot control the logging until the VM has parsed the PRISTINE options.
+        setDefaultLogOptionsState(true);
+    }
+
+    private void setDefaultLogOptionsState(boolean value) {
+        for (int i = 0; i < numOps; i++) {
+            logOp.set(i, value);
+        }
     }
 
     /**
@@ -460,9 +467,7 @@ public class VMLogger {
             String logInclude = logIncludeOption.getValue();
             String logExclude = logExcludeOption.getValue();
             // If include option given, the default is everything disabled, otherwise enabled
-            for (int i = 0; i < numOps; i++) {
-                logOp.set(i, logInclude == null ? true : false);
-            }
+            setDefaultLogOptionsState(logInclude == null ? true : false);
             if (logInclude != null) {
                 Pattern inclusionPattern = Pattern.compile(logInclude);
                 for (int i = 0; i < numOps; i++) {
