@@ -110,6 +110,12 @@ public interface RiResolvedType extends RiType {
     boolean isInstance(CiConstant obj);
 
     /**
+     * Checks if this class can be compiled with speculative assumptions.
+     * @return
+     */
+    boolean canUseAssumptions();
+
+    /**
      * Attempts to get an exact type for this type. Final classes,
      * arrays of final classes, and primitive types all have exact types.
      * @return the exact type of this type, if it exists; {@code null} otherwise

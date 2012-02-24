@@ -192,7 +192,7 @@ final class ContextDependents {
                 dset.addUnique(deps.id);
             }
             if (dependenciesLogger.enabled()) {
-                deps.logRemove(type);
+                deps.logAdd(type);
             }
         }
     }
