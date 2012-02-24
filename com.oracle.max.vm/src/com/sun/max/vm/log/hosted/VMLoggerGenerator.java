@@ -499,6 +499,9 @@ public class VMLoggerGenerator {
         if (checkOnly && updatedSource != null) {
             System.out.println("Source for " + updatedSource + " would be updated");
         }
+        if (updatedSource != null) {
+            System.exit(1);
+        }
     }
 
     private static class VMLoggerClassSearch extends ClassSearch {
