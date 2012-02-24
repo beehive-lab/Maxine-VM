@@ -665,25 +665,29 @@ public class MaxineTester {
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final Logs logs = new Logs(imageDir, "IMAGEGEN", imageConfig);
 
-        final int exitValue = exec(null, javaArgs, null, null, logs, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
-        if (exitValue == 0) {
-            // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
-            copyBinary(imageDir, "maxvm");
-            if (OS.current() == OS.DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
-                copyBinary(imageDir, mapLibraryName("jvmlinkage"));
-            } else {
-                copyBinary(imageDir, mapLibraryName("jvm"));
+        int timeouts = 0;
+        do {
+            final int exitValue = exec(null, javaArgs, null, null, logs, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
+            if (exitValue == 0) {
+                // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
+                copyBinary(imageDir, "maxvm");
+                if (OS.current() == OS.DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
+                    copyBinary(imageDir, mapLibraryName("jvmlinkage"));
+                } else {
+                    copyBinary(imageDir, mapLibraryName("jvm"));
+                }
+                copyBinary(imageDir, mapLibraryName("javatest"));
+                copyBinary(imageDir, mapLibraryName("hosted"));
+                copyBinary(imageDir, mapLibraryName("tele"));
+
+                generatedImages.put(imageConfig, imageDir);
+                return true;
+            } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
+                out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
+                ++timeouts;
             }
-            copyBinary(imageDir, mapLibraryName("javatest"));
-            copyBinary(imageDir, mapLibraryName("hosted"));
-            copyBinary(imageDir, mapLibraryName("tele"));
-
-
-            generatedImages.put(imageConfig, imageDir);
-            return true;
-        } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
-        }
+        } while (timeouts < 2); // tolerate no more than one timeouts
+        out().println("(image build timed out twice, aborting)");
         generatedImages.put(imageConfig, null);
         return false;
     }
