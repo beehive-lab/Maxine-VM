@@ -355,6 +355,9 @@ public final class JDKInterceptor {
             new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1)), true),
         JDK.sun_misc_ProxyGenerator,
             new ValueField("saveGeneratedFiles", BooleanValue.from(false), true),
+        JDK.java_lang_invoke_MethodType,
+            new FieldOffsetRecomputation("ptypesOffset", "ptypes"),
+            new FieldOffsetRecomputation("rtypeOffset", "rtype"),
     };
     // Checkstyle: resume
 
