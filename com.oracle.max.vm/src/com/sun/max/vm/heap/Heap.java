@@ -904,8 +904,8 @@ public final class Heap {
 // START GENERATED CODE
     private static abstract class AllocationLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Clone, CreateTuple, ExpandHybrid,
-            CreateArray, CreateHybrid;
+            Clone, CreateArray, CreateHybrid,
+            CreateTuple, ExpandHybrid;
 
             public static final Operation[] VALUES = values();
         }
@@ -931,18 +931,6 @@ public final class Heap {
         protected abstract void traceClone(ClassActor classActor, Pointer cell, Size size);
 
         @INLINE
-        public final void logCreateTuple(ClassActor classActor, Pointer cell, Size size) {
-            log(Operation.CreateTuple.ordinal(), classActorArg(classActor), cell, size);
-        }
-        protected abstract void traceCreateTuple(ClassActor classActor, Pointer cell, Size size);
-
-        @INLINE
-        public final void logExpandHybrid(ClassActor classActor, Pointer cell, Size size) {
-            log(Operation.ExpandHybrid.ordinal(), classActorArg(classActor), cell, size);
-        }
-        protected abstract void traceExpandHybrid(ClassActor classActor, Pointer cell, Size size);
-
-        @INLINE
         public final void logCreateArray(ClassActor classActor, int length, Pointer cell, Size size) {
             log(Operation.CreateArray.ordinal(), classActorArg(classActor), intArg(length), cell, size);
         }
@@ -954,6 +942,18 @@ public final class Heap {
         }
         protected abstract void traceCreateHybrid(ClassActor classActor, Pointer cell, Size size);
 
+        @INLINE
+        public final void logCreateTuple(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.CreateTuple.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceCreateTuple(ClassActor classActor, Pointer cell, Size size);
+
+        @INLINE
+        public final void logExpandHybrid(ClassActor classActor, Pointer cell, Size size) {
+            log(Operation.ExpandHybrid.ordinal(), classActorArg(classActor), cell, size);
+        }
+        protected abstract void traceExpandHybrid(ClassActor classActor, Pointer cell, Size size);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
@@ -961,20 +961,20 @@ public final class Heap {
                     traceClone(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
                     break;
                 }
-                case 1: { //CreateTuple
-                    traceCreateTuple(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
-                    break;
-                }
-                case 2: { //ExpandHybrid
-                    traceExpandHybrid(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
-                    break;
-                }
-                case 3: { //CreateArray
+                case 1: { //CreateArray
                     traceCreateArray(toClassActor(r, 1), toInt(r, 2), toPointer(r, 3), toSize(r, 4));
                     break;
                 }
-                case 4: { //CreateHybrid
+                case 2: { //CreateHybrid
                     traceCreateHybrid(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+                case 3: { //CreateTuple
+                    traceCreateTuple(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
+                    break;
+                }
+                case 4: { //ExpandHybrid
+                    traceExpandHybrid(toClassActor(r, 1), toPointer(r, 2), toSize(r, 3));
                     break;
                 }
             }
