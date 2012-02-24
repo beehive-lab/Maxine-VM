@@ -1500,8 +1500,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 // START GENERATED CODE
     private static abstract class DetailLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            VisitCell, Forward, Skipped,
-            VerifyObject;
+            Forward, Skipped, VerifyObject,
+            VisitCell;
 
             public static final Operation[] VALUES = values();
         }
@@ -1516,12 +1516,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public String operationName(int opCode) {
             return Operation.VALUES[opCode].name();
         }
-
-        @INLINE
-        public final void logVisitCell(Pointer cell) {
-            log(Operation.VisitCell.ordinal(), cell);
-        }
-        protected abstract void traceVisitCell(Pointer cell);
 
         @INLINE
         public final void logForward(ClassActor classActor, Pointer fromCell, Pointer toCell, int size) {
@@ -1541,23 +1535,29 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
         protected abstract void traceVerifyObject(ClassActor hubClassActor, Pointer cell, int size);
 
+        @INLINE
+        public final void logVisitCell(Pointer cell) {
+            log(Operation.VisitCell.ordinal(), cell);
+        }
+        protected abstract void traceVisitCell(Pointer cell);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //VisitCell
-                    traceVisitCell(toPointer(r, 1));
-                    break;
-                }
-                case 1: { //Forward
+                case 0: { //Forward
                     traceForward(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4));
                     break;
                 }
-                case 2: { //Skipped
+                case 1: { //Skipped
                     traceSkipped(toInt(r, 1));
                     break;
                 }
-                case 3: { //VerifyObject
+                case 2: { //VerifyObject
                     traceVerifyObject(toClassActor(r, 1), toPointer(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 3: { //VisitCell
+                    traceVisitCell(toPointer(r, 1));
                     break;
                 }
             }
@@ -1566,15 +1566,15 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
         public enum Operation {
-            ScanningThreadRoots, ScanningBootHeap, ScanningRoots,
-            ScanningImmortalHeap, ScanningCode, MovingReachable, ProcessingSpecialReferences,
-            VerifyingObjectSpaces, VerifyingStackReferences, VerifyingHeapObjects, VerifyingCodeObjects,
-            VerifyingRegion, ZappingRegion;
+            MovingReachable, ProcessingSpecialReferences, ScanningBootHeap,
+            ScanningCode, ScanningImmortalHeap, ScanningRoots, ScanningThreadRoots,
+            VerifyingCodeObjects, VerifyingHeapObjects, VerifyingObjectSpaces, VerifyingRegion,
+            VerifyingStackReferences, ZappingRegion;
 
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x1};
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x1};
 
         protected PhaseLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1584,37 +1584,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public String operationName(int opCode) {
             return Operation.VALUES[opCode].name();
         }
-
-        @Override
-        @INLINE
-        public final void logScanningThreadRoots(VmThread vmThread) {
-            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
-        }
-        protected abstract void traceScanningThreadRoots(VmThread vmThread);
-
-        @INLINE
-        public final void logScanningBootHeap(Interval interval) {
-            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningBootHeap(Interval interval);
-
-        @INLINE
-        public final void logScanningRoots(Interval interval) {
-            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningRoots(Interval interval);
-
-        @INLINE
-        public final void logScanningImmortalHeap(Interval interval) {
-            log(Operation.ScanningImmortalHeap.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningImmortalHeap(Interval interval);
-
-        @INLINE
-        public final void logScanningCode(Interval interval) {
-            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
-        }
-        protected abstract void traceScanningCode(Interval interval);
 
         @INLINE
         public final void logMovingReachable(Interval interval) {
@@ -1629,22 +1598,35 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         protected abstract void traceProcessingSpecialReferences(Interval interval);
 
         @INLINE
-        public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), objectArg(when));
+        public final void logScanningBootHeap(Interval interval) {
+            log(Operation.ScanningBootHeap.ordinal(), intervalArg(interval));
         }
-        protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
+        protected abstract void traceScanningBootHeap(Interval interval);
 
         @INLINE
-        public final void logVerifyingStackReferences(Interval interval) {
-            log(Operation.VerifyingStackReferences.ordinal(), intervalArg(interval));
+        public final void logScanningCode(Interval interval) {
+            log(Operation.ScanningCode.ordinal(), intervalArg(interval));
         }
-        protected abstract void traceVerifyingStackReferences(Interval interval);
+        protected abstract void traceScanningCode(Interval interval);
 
         @INLINE
-        public final void logVerifyingHeapObjects(Interval interval) {
-            log(Operation.VerifyingHeapObjects.ordinal(), intervalArg(interval));
+        public final void logScanningImmortalHeap(Interval interval) {
+            log(Operation.ScanningImmortalHeap.ordinal(), intervalArg(interval));
         }
-        protected abstract void traceVerifyingHeapObjects(Interval interval);
+        protected abstract void traceScanningImmortalHeap(Interval interval);
+
+        @INLINE
+        public final void logScanningRoots(Interval interval) {
+            log(Operation.ScanningRoots.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceScanningRoots(Interval interval);
+
+        @Override
+        @INLINE
+        public final void logScanningThreadRoots(VmThread vmThread) {
+            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanningThreadRoots(VmThread vmThread);
 
         @INLINE
         public final void logVerifyingCodeObjects(Interval interval) {
@@ -1653,10 +1635,28 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         protected abstract void traceVerifyingCodeObjects(Interval interval);
 
         @INLINE
+        public final void logVerifyingHeapObjects(Interval interval) {
+            log(Operation.VerifyingHeapObjects.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceVerifyingHeapObjects(Interval interval);
+
+        @INLINE
+        public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), objectArg(when));
+        }
+        protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
+
+        @INLINE
         public final void logVerifyingRegion(MemoryRegion region, Address start, Address end) {
             log(Operation.VerifyingRegion.ordinal(), objectArg(region), start, end);
         }
         protected abstract void traceVerifyingRegion(MemoryRegion region, Address start, Address end);
+
+        @INLINE
+        public final void logVerifyingStackReferences(Interval interval) {
+            log(Operation.VerifyingStackReferences.ordinal(), intervalArg(interval));
+        }
+        protected abstract void traceVerifyingStackReferences(Interval interval);
 
         @INLINE
         public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
@@ -1667,52 +1667,52 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //ScanningThreadRoots
-                    traceScanningThreadRoots(toVmThread(r, 1));
-                    break;
-                }
-                case 1: { //ScanningBootHeap
-                    traceScanningBootHeap(toInterval(r, 1));
-                    break;
-                }
-                case 2: { //ScanningRoots
-                    traceScanningRoots(toInterval(r, 1));
-                    break;
-                }
-                case 3: { //ScanningImmortalHeap
-                    traceScanningImmortalHeap(toInterval(r, 1));
-                    break;
-                }
-                case 4: { //ScanningCode
-                    traceScanningCode(toInterval(r, 1));
-                    break;
-                }
-                case 5: { //MovingReachable
+                case 0: { //MovingReachable
                     traceMovingReachable(toInterval(r, 1));
                     break;
                 }
-                case 6: { //ProcessingSpecialReferences
+                case 1: { //ProcessingSpecialReferences
                     traceProcessingSpecialReferences(toInterval(r, 1));
                     break;
                 }
-                case 7: { //VerifyingObjectSpaces
-                    traceVerifyingObjectSpaces(toInterval(r, 1), toGCCallbackPhase(r, 2));
+                case 2: { //ScanningBootHeap
+                    traceScanningBootHeap(toInterval(r, 1));
                     break;
                 }
-                case 8: { //VerifyingStackReferences
-                    traceVerifyingStackReferences(toInterval(r, 1));
+                case 3: { //ScanningCode
+                    traceScanningCode(toInterval(r, 1));
                     break;
                 }
-                case 9: { //VerifyingHeapObjects
-                    traceVerifyingHeapObjects(toInterval(r, 1));
+                case 4: { //ScanningImmortalHeap
+                    traceScanningImmortalHeap(toInterval(r, 1));
                     break;
                 }
-                case 10: { //VerifyingCodeObjects
+                case 5: { //ScanningRoots
+                    traceScanningRoots(toInterval(r, 1));
+                    break;
+                }
+                case 6: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
+                    break;
+                }
+                case 7: { //VerifyingCodeObjects
                     traceVerifyingCodeObjects(toInterval(r, 1));
                     break;
                 }
-                case 11: { //VerifyingRegion
+                case 8: { //VerifyingHeapObjects
+                    traceVerifyingHeapObjects(toInterval(r, 1));
+                    break;
+                }
+                case 9: { //VerifyingObjectSpaces
+                    traceVerifyingObjectSpaces(toInterval(r, 1), toGCCallbackPhase(r, 2));
+                    break;
+                }
+                case 10: { //VerifyingRegion
                     traceVerifyingRegion(toMemoryRegion(r, 1), toAddress(r, 2), toAddress(r, 3));
+                    break;
+                }
+                case 11: { //VerifyingStackReferences
+                    traceVerifyingStackReferences(toInterval(r, 1));
                     break;
                 }
                 case 12: { //ZappingRegion
@@ -1738,7 +1738,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
         public enum Operation {
-            StackReferenceMapPreparationTime, PhaseTimes;
+            PhaseTimes, StackReferenceMapPreparationTime;
 
             public static final Operation[] VALUES = values();
         }
@@ -1754,13 +1754,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return Operation.VALUES[opCode].name();
         }
 
-        @Override
-        @INLINE
-        public final void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
-            log(Operation.StackReferenceMapPreparationTime.ordinal(), longArg(stackReferenceMapPreparationTime));
-        }
-        protected abstract void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
-
         @INLINE
         public final void logPhaseTimes(int invocationCount, long clearTime, long rootScanTime, long bootHeapScanTime, long codeScanTime,
                 long copyTime, long weakRefTime, long gcTime) {
@@ -1771,14 +1764,21 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 long copyTime, long weakRefTime, long gcTime);
 
         @Override
+        @INLINE
+        public final void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            log(Operation.StackReferenceMapPreparationTime.ordinal(), longArg(stackReferenceMapPreparationTime));
+        }
+        protected abstract void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+
+        @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //StackReferenceMapPreparationTime
-                    traceStackReferenceMapPreparationTime(toLong(r, 1));
+                case 0: { //PhaseTimes
+                    tracePhaseTimes(toInt(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6), toLong(r, 7), toLong(r, 8));
                     break;
                 }
-                case 1: { //PhaseTimes
-                    tracePhaseTimes(toInt(r, 1), toLong(r, 2), toLong(r, 3), toLong(r, 4), toLong(r, 5), toLong(r, 6), toLong(r, 7), toLong(r, 8));
+                case 1: { //StackReferenceMapPreparationTime
+                    traceStackReferenceMapPreparationTime(toLong(r, 1));
                     break;
                 }
             }

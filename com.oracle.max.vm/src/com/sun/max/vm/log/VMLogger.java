@@ -36,11 +36,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A {@link VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
+ * A {@linkplain VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
  * range {@code [0 .. N-1]}. A series of "log" methods are provided, that take the operation code and a varying number
  * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}).
  * <p>
@@ -63,7 +65,7 @@ import com.sun.max.vm.thread.*;
  * only those operations that match the pattern are logged. In either case, if the exclude option is provided, the set
  * is reduced by those operations that match the exclude pattern.
  * <p>
- * The management of log records is handled in a separate class; a subclass of {@log VMLog}. A {@link VMLogger instance}
+ * The management of log records is handled in a separate class; a subclass of {@link VMLog}. A {@linkplain VMLogger instance}
  * requests a {@link VMLog.Record record} that can store a given number of arguments from the singleton {@link #vmLog}
  * instance and then records the values. The format of the log record is opaque to allow a variety of implementations.
  * <p>
@@ -111,7 +113,7 @@ import com.sun.max.vm.thread.*;
  * <p>
  * It is also possible for a logger, say C, to inherit the settings of another logger, say ALL, again by forcing ALL to
  * check its options from within C's {@code checkOptions} and then use ALL's values to set C's settings. This is
- * appropriate when ALL cannot know about C for abstraction reasons. See {@link #checkDominantLogger}.
+ * appropriate when ALL cannot know about C for abstraction reasons. See {@link #checkDominantLoggerOptions>}.
  * <p>
  * N.B. The order in which loggers have their options checked by the normal VM startup is unspecified. Hence, a logger
  * must always force the checking of a dependent logger's options before accessing its state.
@@ -138,15 +140,15 @@ import com.sun.max.vm.thread.*;
  * with {@link VMLogParam}, e.g.:
  *
  * <pre>
- * @HOSTED_ONLY
- * @VMLoggerInterface
+ * &#64HOSTED_ONLY
+ * &#64VMLoggerInterface
  * private interface ExampleLoggerInterface {
  *   void foo(
- *       @VMLogParam(name = "classActor") ClassActor classActor,
- *       @VMLogParam(name = "base") Pointer base);
+ *       &#64VMLogParam(name = "classActor") ClassActor classActor,
+ *       &#64VMLogParam(name = "base") Pointer base);
  *
  *   void bar(
- *       @VMLogParam(name = "count") SomeClass someClass, int count);
+ *       &#64VMLogParam(name = "count") SomeClass someClass, int count);
  * }
  * </pre>
  * The logger class should contain the comment pair:
@@ -168,13 +170,13 @@ import com.sun.max.vm.thread.*;
  *         super("Example", "an example logger.");
  *      }
  *
- *     @Override
+ *     &#64Override
  *     protected void traceFoo(ClassActor classActor, Pointer base) {
  *         Log.print("Class "); Log.print(classActor.name.string);
  *         Log.print(", base:"); Log.println(base);
  *     }
  *
- *     @Override
+ *     &#64Override
  *     protected void traceBar(SomeClass someClass, int count) {
  *       // SomeClass specific tracing
  *     }
@@ -213,7 +215,7 @@ import com.sun.max.vm.thread.*;
  * {@link String} representation of a log argument:
  *
  * <pre>
- * @HOSTED_ONLY
+ * &#64HOSTED_ONLY
  * public String inspectedArgValue(int op, int argNum, Word argValue);
  * </pre>
  *
@@ -223,7 +225,7 @@ import com.sun.max.vm.thread.*;
  * The second is an override for a logger-defined argument value class:
  *
  * <pre>
- * @HOSTED_ONLY
+ * &#64HOSTED_ONLY
  * public static String inspectedValue(Word argValue);
  * </pre>
  *
@@ -352,7 +354,7 @@ public class VMLogger {
     /**
      * Provides a custom string decoding of an argument value. Intended for simple Inspector use only.
      * @param op the operation id
-     * @param argNum the argument index in the original log call, {@code [0 .. argCount - 1])
+     * @param argNum the argument index in the original log call, {@code [0 .. argCount - 1]}
      * @param arg the argument value from the original log call
      * @return a custom string or null if no custom decoding for this arg
      */
@@ -442,15 +444,11 @@ public class VMLogger {
         logEnabled = true;
         traceEnabled = false;
         optionsChecked = false;
-        for (int i = 0; i < numOps; i++) {
-            logOp.set(i, true);
-        }
     }
 
     /**
-     * Check the command line options that control this logger.
-     * This is done once to allow linked loggers to control each other without
-     * worrying about ordering.
+     * Check the command line options that control this logger. This is done once to allow linked loggers to control
+     * each other without worrying about ordering.
      */
     public void checkOptions() {
         if (optionsChecked) {
@@ -461,24 +459,23 @@ public class VMLogger {
         if (logEnabled) {
             String logInclude = logIncludeOption.getValue();
             String logExclude = logExcludeOption.getValue();
-            if (logInclude != null || logExclude != null) {
+            // If include option given, the default is everything disabled, otherwise enabled
+            for (int i = 0; i < numOps; i++) {
+                logOp.set(i, logInclude == null ? true : false);
+            }
+            if (logInclude != null) {
+                Pattern inclusionPattern = Pattern.compile(logInclude);
                 for (int i = 0; i < numOps; i++) {
-                    logOp.set(i, logInclude == null ? true : false);
-                }
-                if (logInclude != null) {
-                    Pattern inclusionPattern = Pattern.compile(logInclude);
-                    for (int i = 0; i < numOps; i++) {
-                        if (inclusionPattern.matcher(operationName(i)).matches()) {
-                            logOp.set(i, true);
-                        }
+                    if (inclusionPattern.matcher(operationName(i)).matches()) {
+                        logOp.set(i, true);
                     }
                 }
-                if (logExclude != null) {
-                    Pattern exclusionPattern = Pattern.compile(logExclude);
-                    for (int i = 0; i < numOps; i++) {
-                        if (exclusionPattern.matcher(operationName(i)).matches()) {
-                            logOp.set(i, false);
-                        }
+            }
+            if (logExclude != null) {
+                Pattern exclusionPattern = Pattern.compile(logExclude);
+                for (int i = 0; i < numOps; i++) {
+                    if (exclusionPattern.matcher(operationName(i)).matches()) {
+                        logOp.set(i, false);
                     }
                 }
             }
@@ -523,8 +520,9 @@ public class VMLogger {
 
     private Record logSetup(int op, int argCount) {
         Record r = null;
-        if (logEnabled && logOp.get(op) && vmLog.threadIsEnabled()) {
-            r = (MaxineVM.isHosted() ? hostedVMLog : vmLog).getRecord(argCount);
+        VMLog vmLogToUse = MaxineVM.isHosted() ? hostedVMLog : vmLog;
+        if (logEnabled && logOp.get(op) && vmLogToUse.threadIsEnabled()) {
+            r = vmLogToUse.getRecord(argCount);
             r.setHeader(op, argCount, loggerId);
         }
         return r;
@@ -635,6 +633,33 @@ public class VMLogger {
 
     // Convenience methods for logging typed arguments as {@link Word values}.
 
+    @HOSTED_ONLY
+    private static class ObjectArg extends Word {
+        Object arg;
+
+        ObjectArg(Object arg) {
+            super(0);
+            this.arg = arg;
+        }
+
+        static Object getArg(Record r, int argNum) {
+            /*
+            Class<ObjectArg> type = null;
+            ObjectArg objectArg = Utils.cast(type, r.getArg(argNum));
+            */
+            return ((ObjectArg) r.getArg(argNum)).arg;
+        }
+
+        static Word toArg(Object object) {
+            /*
+            ObjectArg result = new ObjectArg(object);
+            Class<Word> type = null;
+            return Utils.cast(type, result);
+            */
+            return new ObjectArg(object);
+        }
+    }
+
     @INLINE
     public static Word booleanArg(boolean value) {
         return value ? Word.allOnes() : Word.zero();
@@ -667,7 +692,11 @@ public class VMLogger {
 
     @INLINE
     public static Word objectArg(Object object) {
-        return Reference.fromJava(object).toOrigin();
+        if (MaxineVM.isHosted()) {
+            return ObjectArg.toArg(object);
+        } else {
+            return Reference.fromJava(object).toOrigin();
+        }
     }
 
     @INLINE
@@ -772,7 +801,11 @@ public class VMLogger {
 
     @INLINE
     public static Object toObject(Record r, int argNum) {
-        return Reference.fromOrigin(r.getArg(argNum).asPointer()).toJava();
+        if (MaxineVM.isHosted()) {
+            return ObjectArg.getArg(r, argNum);
+        } else {
+            return Reference.fromOrigin(r.getArg(argNum).asPointer()).toJava();
+        }
     }
 
     @INTRINSIC(UNSAFE_CAST)
@@ -780,6 +813,9 @@ public class VMLogger {
 
     @INLINE
     public static String toString(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (String) toObject(r, argNum);
+        }
         return asString(toObject(r, argNum));
     }
 
@@ -788,8 +824,29 @@ public class VMLogger {
 
     @INLINE
     public static TargetMethod toTargetMethod(Record r, int argNum) {
+        if (MaxineVM.isHosted()) {
+            return (TargetMethod) toObject(r, argNum);
+        }
         return asTargetMethod(toObject(r, argNum));
     }
 
+    // check that loggers are up to date in VM image
+
+    static {
+        checkGenerateSourcesInSync();
+    }
+
+    @HOSTED_ONLY
+    private static void checkGenerateSourcesInSync() {
+        try {
+            Class<?> updatedSource = VMLoggerGenerator.generate(true);
+            if (updatedSource != null) {
+                FatalError.unexpected("VMLogger " + updatedSource + " is out of sync.\n" + "Run 'mx loggen', recompile " + updatedSource.getName() + " (or refresh it in your IDE)" +
+                                " and restart the bootstrapping process.\n\n");
+            }
+        } catch (Exception exception) {
+            FatalError.unexpected("Error while generating VMLogger sources", exception);
+        }
+    }
 
 }

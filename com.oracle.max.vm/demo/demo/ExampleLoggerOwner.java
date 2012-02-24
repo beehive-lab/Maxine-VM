@@ -75,12 +75,12 @@ public class ExampleLoggerOwner {
 // START GENERATED CODE
     private static abstract class ExampleLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Foo, Bar;
+            Bar, Foo;
 
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x0, 0x1};
+        private static final int[] REFMAPS = new int[] {0x1, 0x0};
 
         protected ExampleLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -92,26 +92,26 @@ public class ExampleLoggerOwner {
         }
 
         @INLINE
-        public final void logFoo(ClassActor classActor, Pointer base) {
-            log(Operation.Foo.ordinal(), classActorArg(classActor), base);
-        }
-        protected abstract void traceFoo(ClassActor classActor, Pointer base);
-
-        @INLINE
         public final void logBar(SomeClass count, int arg2) {
             log(Operation.Bar.ordinal(), objectArg(count), intArg(arg2));
         }
         protected abstract void traceBar(SomeClass count, int arg2);
 
+        @INLINE
+        public final void logFoo(ClassActor classActor, Pointer base) {
+            log(Operation.Foo.ordinal(), classActorArg(classActor), base);
+        }
+        protected abstract void traceFoo(ClassActor classActor, Pointer base);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //Foo
-                    traceFoo(toClassActor(r, 1), toPointer(r, 2));
+                case 0: { //Bar
+                    traceBar(toSomeClass(r, 1), toInt(r, 2));
                     break;
                 }
-                case 1: { //Bar
-                    traceBar(toSomeClass(r, 1), toInt(r, 2));
+                case 1: { //Foo
+                    traceFoo(toClassActor(r, 1), toPointer(r, 2));
                     break;
                 }
             }
