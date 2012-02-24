@@ -111,9 +111,10 @@ public interface RiResolvedType extends RiType {
 
     /**
      * Checks if this class can be compiled with speculative assumptions.
+     * @param method the method being compiled
      * @return
      */
-    boolean canUseAssumptions();
+    boolean canUseAssumptions(RiMethod method);
 
     /**
      * Attempts to get an exact type for this type. Final classes,

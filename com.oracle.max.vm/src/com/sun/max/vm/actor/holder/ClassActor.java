@@ -503,12 +503,23 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return false;
     }
 
-    public boolean canUseAssumptions() {
-        return !MaxineVM.isHosted() || isVM();
+    public boolean canUseAssumptions(RiMethod method) {
+        if (MaxineVM.isHosted()) {
+            if (!isVM()) {
+                // JDK is not a close world, and don't want to deopt boot image
+                return false;
+            } else {
+                // TODO possibly remove this if templates can handle the consequences
+                MethodActor methodActor = (MethodActor) method;
+                return !methodActor.isTemplate();
+            }
+        } else {
+            return true;
+        }
     }
 
     public final boolean isVM() {
-        return classLoader == VMClassLoader.VM_CLASS_LOADER;
+        return classLoader == (MaxineVM.isHosted() ? HostedVMClassLoader.HOSTED_VM_CLASS_LOADER : VMClassLoader.VM_CLASS_LOADER);
     }
 
     public boolean isPrimitiveClassActor() {
