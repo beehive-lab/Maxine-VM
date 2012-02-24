@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.test;
-
-import test.com.sun.max.vm.jtrun.all.*;
-
-import com.sun.max.config.*;
+package test.vm.output;
 
 /**
- * Redirect to include {@link JTRunScheme} classes in the boot image when testing.
+ * A tagging interface to indicate that a VM outout test should not be run on the reference VM.
  */
+public interface MaxineOnly {
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super("test.com.sun.max.vm.jtrun.**", "test.com.sun.max.vm.output.**");
-    }
 }

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.hosted;
+package demo;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import com.sun.max.annotate.*;
@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 
 /**
  * An example of a logger class with auto generation.

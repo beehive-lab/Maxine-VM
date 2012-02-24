@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ public final class VMConfiguration {
 
         bootImagePackages = new ArrayList<BootImagePackage>();
         for (BootImagePackage pkg : BootImagePackage.getTransitiveSubPackages(
-                        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath(),
+                        HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath(),
                         new com.sun.max.config.Package())) {
 
             if (pkg.isPartOfMaxineVM(this)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
         @Override
         public ReferenceValue readInjectedValue(Object object) {
             assert object instanceof ClassLoader;
-            return ReferenceValue.from(ClassRegistry.BOOT_CLASS_REGISTRY);
+            return ReferenceValue.from(object == VMClassLoader.VM_CLASS_LOADER ? ClassRegistry.VM_CLASS_REGISTRY : ClassRegistry.BOOT_CLASS_REGISTRY);
         }
     };
 
