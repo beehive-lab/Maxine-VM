@@ -503,6 +503,10 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return false;
     }
 
+    public boolean canUseAssumptions() {
+        return !MaxineVM.isHosted() || isVM();
+    }
+
     public final boolean isVM() {
         return classLoader == VMClassLoader.VM_CLASS_LOADER;
     }
