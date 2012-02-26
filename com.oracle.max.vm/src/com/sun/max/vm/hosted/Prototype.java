@@ -82,7 +82,7 @@ public abstract class Prototype {
      */
     public static synchronized void loadLibrary(String name) {
         if (!isPathHacked) {
-            final File workspacePath =  JavaProject.findHgRoot();
+            final File workspacePath =  JavaProject.findWorkspace();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String maxLibPath = name.equals(HOSTED_LIBRARY_NAME) ? HOSTED_GENERATED_ROOT : TARGET_GENERATED_ROOT;
             final String libraryPath = new File(workspacePath, maxLibPath).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);

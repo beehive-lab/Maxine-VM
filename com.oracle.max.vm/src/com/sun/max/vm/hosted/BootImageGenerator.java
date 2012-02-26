@@ -102,7 +102,7 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findHgRoot(), DEFAULT_VM_DIRECTORY);
+        return new File(JavaProject.findWorkspace(), DEFAULT_VM_DIRECTORY);
     }
 
     /**

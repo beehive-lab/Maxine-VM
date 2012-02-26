@@ -50,7 +50,7 @@ public class TestTeleVM {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         HostedBootClassLoader.setClasspath(classpath);
         Prototype.loadLibrary(TELE_LIBRARY_NAME);
-        final File workspaceDirectory = JavaProject.findHgRoot();
+        final File workspaceDirectory = JavaProject.findWorkspace();
         final String vmArguments =
             "-verbose:class " +
             "-classpath " +
