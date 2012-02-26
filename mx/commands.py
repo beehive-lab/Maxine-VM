@@ -95,15 +95,17 @@ def gate(args):
     if mx.checkstyle([]):
         mx.abort('Checkstyle warnings were found')
     
-    mx.log('Running copycheck')
-    hgNode = os.getenv('hg_node')
-    if hgNode is None:
-        copycheck(['-modified', '-reporterrors=true', '-continueonerror'])
-    else:
-        revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
-        revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
-        changesetCount = revTip - revLast + 1
-        copycheck(['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
+    if exists(join(_maxine_home, '.hg')):
+        # Copyright check depends on the sources being in a Mercurial repo
+        mx.log('Running copycheck')
+        hgNode = os.getenv('hg_node')
+        if hgNode is None:
+            copycheck(['-modified', '-reporterrors=true', '-continueonerror'])
+        else:
+            revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
+            revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
+            changesetCount = revTip - revLast + 1
+            copycheck(['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
 
     mx.log('Ensuring JavaTester harness is up to date')
     try:
