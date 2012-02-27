@@ -613,7 +613,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 // START GENERATED CODE
     private static abstract class TLabLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Reset, Pad, Refill;
+            Pad, Refill, Reset;
 
             public static final Operation[] VALUES = values();
         }
@@ -633,12 +633,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
 
         @INLINE
-        public final void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
-            log(Operation.Reset.ordinal(), vmThreadArg(vmThread), tlabTop, tlabMark);
-        }
-        protected abstract void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark);
-
-        @INLINE
         public final void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
             log(Operation.Pad.ordinal(), vmThreadArg(vmThread), tlabMark, intArg(padWords));
         }
@@ -650,19 +644,25 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
         protected abstract void traceRefill(VmThread vmThread, Pointer tlab, Pointer tlabTop, Pointer tlabEnd, int initialTlabSize);
 
+        @INLINE
+        public final void logReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
+            log(Operation.Reset.ordinal(), vmThreadArg(vmThread), tlabTop, tlabMark);
+        }
+        protected abstract void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //Reset
-                    traceReset(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3));
-                    break;
-                }
-                case 1: { //Pad
+                case 0: { //Pad
                     tracePad(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3));
                     break;
                 }
-                case 2: { //Refill
+                case 1: { //Refill
                     traceRefill(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
+                    break;
+                }
+                case 2: { //Reset
+                    traceReset(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3));
                     break;
                 }
             }

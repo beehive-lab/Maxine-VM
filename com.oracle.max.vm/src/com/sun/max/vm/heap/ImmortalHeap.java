@@ -227,7 +227,7 @@ public final class ImmortalHeap {
 // START GENERATED CODE
     private static abstract class ImmortalHeapLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Allocate, Enable, Disable;
+            Allocate, Disable, Enable;
 
             public static final Operation[] VALUES = values();
         }
@@ -250,16 +250,16 @@ public final class ImmortalHeap {
         protected abstract void traceAllocate(Pointer cell, Size sizeWordAligned);
 
         @INLINE
-        public final void logEnable() {
-            log(Operation.Enable.ordinal());
-        }
-        protected abstract void traceEnable();
-
-        @INLINE
         public final void logDisable() {
             log(Operation.Disable.ordinal());
         }
         protected abstract void traceDisable();
+
+        @INLINE
+        public final void logEnable() {
+            log(Operation.Enable.ordinal());
+        }
+        protected abstract void traceEnable();
 
         @Override
         protected void trace(Record r) {
@@ -268,12 +268,12 @@ public final class ImmortalHeap {
                     traceAllocate(toPointer(r, 1), toSize(r, 2));
                     break;
                 }
-                case 1: { //Enable
-                    traceEnable();
+                case 1: { //Disable
+                    traceDisable();
                     break;
                 }
-                case 2: { //Disable
-                    traceDisable();
+                case 2: { //Enable
+                    traceEnable();
                     break;
                 }
             }

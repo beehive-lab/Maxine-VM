@@ -716,13 +716,13 @@ public final class DependenciesManager {
 // START GENERATED CODE
     private static abstract class DependenciesLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Add, Register, Remove,
-            Invalidated, InvalidateDeps, InvalidateUCT, InvalidateUCM;
+            Add, InvalidateDeps, InvalidateUCM,
+            InvalidateUCT, Invalidated, Register, Remove;
 
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x1, 0x1, 0x1, 0x0, 0x1, 0x1};
+        private static final int[] REFMAPS = new int[] {0x1, 0x0, 0x1, 0x1, 0x1, 0x1, 0x1};
 
         protected DependenciesLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -740,6 +740,30 @@ public final class DependenciesManager {
         protected abstract void traceAdd(TargetMethod targetMethod, int id, ClassActor type);
 
         @INLINE
+        public final void logInvalidateDeps(ClassActor type) {
+            log(Operation.InvalidateDeps.ordinal(), classActorArg(type));
+        }
+        protected abstract void traceInvalidateDeps(ClassActor type);
+
+        @INLINE
+        public final void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
+            log(Operation.InvalidateUCM.ordinal(), objectArg(targetMethod), classActorArg(context), objectArg(method), objectArg(impl));
+        }
+        protected abstract void traceInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl);
+
+        @INLINE
+        public final void logInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
+            log(Operation.InvalidateUCT.ordinal(), objectArg(targetMethod), classActorArg(context), classActorArg(subtype));
+        }
+        protected abstract void traceInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype);
+
+        @INLINE
+        public final void logInvalidated(TargetMethod targetMethod, int id) {
+            log(Operation.Invalidated.ordinal(), objectArg(targetMethod), intArg(id));
+        }
+        protected abstract void traceInvalidated(TargetMethod targetMethod, int id);
+
+        @INLINE
         public final void logRegister(TargetMethod targetMethod, int id) {
             log(Operation.Register.ordinal(), objectArg(targetMethod), intArg(id));
         }
@@ -751,30 +775,6 @@ public final class DependenciesManager {
         }
         protected abstract void traceRemove(TargetMethod targetMethod, int id, ClassActor type);
 
-        @INLINE
-        public final void logInvalidated(TargetMethod targetMethod, int id) {
-            log(Operation.Invalidated.ordinal(), objectArg(targetMethod), intArg(id));
-        }
-        protected abstract void traceInvalidated(TargetMethod targetMethod, int id);
-
-        @INLINE
-        public final void logInvalidateDeps(ClassActor type) {
-            log(Operation.InvalidateDeps.ordinal(), classActorArg(type));
-        }
-        protected abstract void traceInvalidateDeps(ClassActor type);
-
-        @INLINE
-        public final void logInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
-            log(Operation.InvalidateUCT.ordinal(), objectArg(targetMethod), classActorArg(context), classActorArg(subtype));
-        }
-        protected abstract void traceInvalidateUCT(TargetMethod targetMethod, ClassActor context, ClassActor subtype);
-
-        @INLINE
-        public final void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
-            log(Operation.InvalidateUCM.ordinal(), objectArg(targetMethod), classActorArg(context), objectArg(method), objectArg(impl));
-        }
-        protected abstract void traceInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl);
-
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
@@ -782,28 +782,28 @@ public final class DependenciesManager {
                     traceAdd(toTargetMethod(r, 1), toInt(r, 2), toClassActor(r, 3));
                     break;
                 }
-                case 1: { //Register
-                    traceRegister(toTargetMethod(r, 1), toInt(r, 2));
-                    break;
-                }
-                case 2: { //Remove
-                    traceRemove(toTargetMethod(r, 1), toInt(r, 2), toClassActor(r, 3));
-                    break;
-                }
-                case 3: { //Invalidated
-                    traceInvalidated(toTargetMethod(r, 1), toInt(r, 2));
-                    break;
-                }
-                case 4: { //InvalidateDeps
+                case 1: { //InvalidateDeps
                     traceInvalidateDeps(toClassActor(r, 1));
                     break;
                 }
-                case 5: { //InvalidateUCT
+                case 2: { //InvalidateUCM
+                    traceInvalidateUCM(toTargetMethod(r, 1), toClassActor(r, 2), toMethodActor(r, 3), toMethodActor(r, 4));
+                    break;
+                }
+                case 3: { //InvalidateUCT
                     traceInvalidateUCT(toTargetMethod(r, 1), toClassActor(r, 2), toClassActor(r, 3));
                     break;
                 }
-                case 6: { //InvalidateUCM
-                    traceInvalidateUCM(toTargetMethod(r, 1), toClassActor(r, 2), toMethodActor(r, 3), toMethodActor(r, 4));
+                case 4: { //Invalidated
+                    traceInvalidated(toTargetMethod(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 5: { //Register
+                    traceRegister(toTargetMethod(r, 1), toInt(r, 2));
+                    break;
+                }
+                case 6: { //Remove
+                    traceRemove(toTargetMethod(r, 1), toInt(r, 2), toClassActor(r, 3));
                     break;
                 }
             }

@@ -20,21 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package test.output;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+public class RuntimeTest0 {
 
-
-public final class AtomicBumpPointerAllocator <T extends Refiller>extends BaseAtomicBumpPointerAllocator<T> {
-
-    public AtomicBumpPointerAllocator(T refillManager) {
-        super(refillManager);
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        System.out.println("Start");
+        int numCpus = Runtime.getRuntime().availableProcessors();
+        assert numCpus > 0 : "Cannot have less than 1 processor returned";
+        if (args.length > 0 && args[0].equals("-p")) {
+            System.out.println("Runtime.getRuntime().availableProcessors() : " + numCpus);
+        }
+        System.out.println("Done");
     }
 
-    @INLINE
-    @Override
-    public Pointer allocateCleared(Size size) {
-        return clearAllocatedCell(allocate(size), size);
-    }
 }

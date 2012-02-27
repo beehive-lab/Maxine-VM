@@ -22,19 +22,27 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 
+/**
+ * Allocator into a card space. The allocator must take care of updating the card's space FOT.
+ * @see CardFirstObjectTable
+ *
+ * @param <T> a card-table aware refiller
+ */
+public final class CardSpaceAllocator<T extends Refiller> extends BaseAtomicBumpPointerAllocator<T> {
+    private final CardFirstObjectTable cfoTable;
 
-public final class AtomicBumpPointerAllocator <T extends Refiller>extends BaseAtomicBumpPointerAllocator<T> {
-
-    public AtomicBumpPointerAllocator(T refillManager) {
+    public CardSpaceAllocator(T refillManager, CardTableRSet cardTableRSet) {
         super(refillManager);
+        cfoTable = cardTableRSet.cfoTable;
     }
 
-    @INLINE
     @Override
     public Pointer allocateCleared(Size size) {
-        return clearAllocatedCell(allocate(size), size);
+        Pointer cell = clearAllocatedCell(allocate(size), size);
+        cfoTable.set(cell, size);
+        return cell;
     }
 }

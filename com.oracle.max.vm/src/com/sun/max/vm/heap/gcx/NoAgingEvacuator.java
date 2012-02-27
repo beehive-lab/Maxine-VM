@@ -36,9 +36,8 @@ import com.sun.max.vm.runtime.*;
  * A heap space evacuator that evacuate objects from one space to another, without aging.
  * Locations of references to evacuatees from other heap spaces are provided by a card table.
  *
- * TODO: move allocation and cfotable update code into a wrapper of the FirsFitMarkSweepSpace.
- * The wrapper keeps track of survivor ranges and update the remembered set (mostly the cfo table).
- * This makes the evacuator independent of the detail of survivor ranges tracking and imprecise rset subtleties.
+ * TODO: replace direct cfotable updates with proper use of the DeadSpaceListener interface implemented by the card table.
+ * (see all fixme comments below). This would make allocation in survivor space independent of details of the card table RSet.
  */
 public final class NoAgingEvacuator extends Evacuator {
     public static boolean TraceDirtyCardWalk = false;
@@ -200,9 +199,11 @@ public final class NoAgingEvacuator extends Evacuator {
 
         if (ptop.isZero()) {
             Address chunk = toSpace.allocateTLAB(pSize);
+            Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+            rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
+            pend = chunk.plus(chunkSize.minus(LAB_HEADROOM)).asPointer();
         }
         allocatedRangeStart = ptop;
     }
@@ -217,6 +218,7 @@ public final class NoAgingEvacuator extends Evacuator {
             // Will trigger refill in doBeforeEvacution on next GC
             if (!spaceLeft.isZero()) {
                 fillWithDeadObject(ptop, limit);
+                rset.notifyRetireDeadSpace(ptop, spaceLeft);
             }
             ptop = Pointer.zero();
             pend = Pointer.zero();
@@ -224,6 +226,7 @@ public final class NoAgingEvacuator extends Evacuator {
             // Leave remaining space in an iterable format.
             // Next evacuation will start from top again.
             HeapFreeChunk.format(ptop, spaceLeft);
+            rset.notifyRetireFreeSpace(ptop, spaceLeft);
         }
     }
 
@@ -255,6 +258,8 @@ public final class NoAgingEvacuator extends Evacuator {
             if (ptop.lessThan(limit)) {
                 // format remaining storage into dead space for parsability
                 fillWithDeadObject(ptop, limit);
+                // Update FOT accordingly
+                // FIXME:  it'll be cleaner to call  rset.notifyRetireDeadSpace(ptop, limit.minus(ptop).asSize());
                 cfoTable.set(ptop, limit);
                 if (MaxineVM.isDebug()) {
                     final Address deadSpaceLastWordAddress = limit.minus(Word.size());
@@ -275,14 +280,16 @@ public final class NoAgingEvacuator extends Evacuator {
                 recordRange(allocatedRangeStart, ptop);
                 allocatedRangeStart = chunk;
             }
+            Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
+            rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(HeapFreeChunk.getFreechunkSize(chunk)).minus(LAB_HEADROOM).asPointer();
+            pend = chunk.plus(chunkSize.minus(LAB_HEADROOM)).asPointer();
             // Return zero to force loop back.
             return Pointer.zero();
         }
         // Overflow allocate
         final Pointer cell = toSpace.allocate(size);
-
+        // Allocator must have already fire a notifySplitLive event to the space's DeadSpaceListener (i.e., the CardTableRSet in this case).
         if (!cell.equals(lastOverflowAllocatedRangeEnd)) {
             if (lastOverflowAllocatedRangeEnd.greaterThan(lastOverflowAllocatedRangeStart)) {
                 recordRange(lastOverflowAllocatedRangeStart, lastOverflowAllocatedRangeEnd);
@@ -290,7 +297,6 @@ public final class NoAgingEvacuator extends Evacuator {
             lastOverflowAllocatedRangeStart = cell;
         }
         lastOverflowAllocatedRangeEnd = cell.plus(size);
-        cfoTable.set(cell, lastOverflowAllocatedRangeEnd);
         return cell;
     }
 
@@ -318,6 +324,7 @@ public final class NoAgingEvacuator extends Evacuator {
             newTop = ptop.plus(size);
         }
         ptop = newTop;
+        // FIXME ? it'll be cleaner to do a rset.notifySplitLive(cell, size, hardLimit) here.
         cfoTable.set(cell, ptop);
         return cell;
     }

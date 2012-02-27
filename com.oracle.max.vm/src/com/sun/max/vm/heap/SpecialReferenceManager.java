@@ -624,8 +624,8 @@ public class SpecialReferenceManager {
 // START GENERATED CODE
     private static abstract class SpecialReferenceLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Remove, Enqueue, RegisterFinalizee,
-            Discover, ProcessDiscoveredInit, ProcessDiscovered, ProcessInspectable;
+            Discover, Enqueue, ProcessDiscovered,
+            ProcessDiscoveredInit, ProcessInspectable, RegisterFinalizee, Remove;
 
             public static final Operation[] VALUES = values();
         }
@@ -642,34 +642,16 @@ public class SpecialReferenceManager {
         }
 
         @INLINE
-        public final void logRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin) {
-            log(Operation.Remove.ordinal(), classActorArg(classActor), origin, queueOrigin);
-        }
-        protected abstract void traceRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin);
-
-        @INLINE
-        public final void logEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin) {
-            log(Operation.Enqueue.ordinal(), classActorArg(classActor), atOrigin, queueOrigin);
-        }
-        protected abstract void traceEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin);
-
-        @INLINE
-        public final void logRegisterFinalizee(Pointer origin, ClassActor classActor) {
-            log(Operation.RegisterFinalizee.ordinal(), origin, classActorArg(classActor));
-        }
-        protected abstract void traceRegisterFinalizee(Pointer origin, ClassActor classActor);
-
-        @INLINE
         public final void logDiscover(Pointer cell, ClassActor classActor, Pointer referentOrigin) {
             log(Operation.Discover.ordinal(), cell, classActorArg(classActor), referentOrigin);
         }
         protected abstract void traceDiscover(Pointer cell, ClassActor classActor, Pointer referentOrigin);
 
         @INLINE
-        public final void logProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue) {
-            log(Operation.ProcessDiscoveredInit.ordinal(), nullReferenceQueue, enqueReferenceQueue);
+        public final void logEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin) {
+            log(Operation.Enqueue.ordinal(), classActorArg(classActor), atOrigin, queueOrigin);
         }
-        protected abstract void traceProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue);
+        protected abstract void traceEnqueue(ClassActor classActor, Pointer atOrigin, Pointer queueOrigin);
 
         @INLINE
         public final void logProcessDiscovered(ClassActor classActor, Pointer rOrigin, Pointer referentOrigin, Pointer newReferentOrigin, Pointer queueOrigin,
@@ -681,40 +663,58 @@ public class SpecialReferenceManager {
                 int stateBools, Pointer refOrigin);
 
         @INLINE
+        public final void logProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue) {
+            log(Operation.ProcessDiscoveredInit.ordinal(), nullReferenceQueue, enqueReferenceQueue);
+        }
+        protected abstract void traceProcessDiscoveredInit(Pointer nullReferenceQueue, Pointer enqueReferenceQueue);
+
+        @INLINE
         public final void logProcessInspectable(int i, Pointer rootPointer, Word value) {
             log(Operation.ProcessInspectable.ordinal(), intArg(i), rootPointer, value);
         }
         protected abstract void traceProcessInspectable(int i, Pointer rootPointer, Word value);
 
+        @INLINE
+        public final void logRegisterFinalizee(Pointer origin, ClassActor classActor) {
+            log(Operation.RegisterFinalizee.ordinal(), origin, classActorArg(classActor));
+        }
+        protected abstract void traceRegisterFinalizee(Pointer origin, ClassActor classActor);
+
+        @INLINE
+        public final void logRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin) {
+            log(Operation.Remove.ordinal(), classActorArg(classActor), origin, queueOrigin);
+        }
+        protected abstract void traceRemove(ClassActor classActor, Pointer origin, Pointer queueOrigin);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //Remove
-                    traceRemove(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3));
+                case 0: { //Discover
+                    traceDiscover(toPointer(r, 1), toClassActor(r, 2), toPointer(r, 3));
                     break;
                 }
                 case 1: { //Enqueue
                     traceEnqueue(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3));
                     break;
                 }
-                case 2: { //RegisterFinalizee
-                    traceRegisterFinalizee(toPointer(r, 1), toClassActor(r, 2));
-                    break;
-                }
-                case 3: { //Discover
-                    traceDiscover(toPointer(r, 1), toClassActor(r, 2), toPointer(r, 3));
-                    break;
-                }
-                case 4: { //ProcessDiscoveredInit
-                    traceProcessDiscoveredInit(toPointer(r, 1), toPointer(r, 2));
-                    break;
-                }
-                case 5: { //ProcessDiscovered
+                case 2: { //ProcessDiscovered
                     traceProcessDiscovered(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toPointer(r, 5), toInt(r, 6), toPointer(r, 7));
                     break;
                 }
-                case 6: { //ProcessInspectable
+                case 3: { //ProcessDiscoveredInit
+                    traceProcessDiscoveredInit(toPointer(r, 1), toPointer(r, 2));
+                    break;
+                }
+                case 4: { //ProcessInspectable
                     traceProcessInspectable(toInt(r, 1), toPointer(r, 2), toWord(r, 3));
+                    break;
+                }
+                case 5: { //RegisterFinalizee
+                    traceRegisterFinalizee(toPointer(r, 1), toClassActor(r, 2));
+                    break;
+                }
+                case 6: { //Remove
+                    traceRemove(toClassActor(r, 1), toPointer(r, 2), toPointer(r, 3));
                     break;
                 }
             }

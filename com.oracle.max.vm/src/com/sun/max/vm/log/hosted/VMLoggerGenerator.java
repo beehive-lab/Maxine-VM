@@ -53,16 +53,18 @@ public class VMLoggerGenerator {
 
     private static final String[] INDENTS = new String[] {"", INDENT4, INDENT8, INDENT12, INDENT16, INDENT20};
 
-    private static boolean generate(boolean checkOnly, Class source, ArrayList<Class<?>> loggerInterfaces) throws Exception {
+    private static boolean generate(boolean checkOnly, Class source, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
         File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm/src");
         File outputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        Class<?>[] loggerInterfaces = loggerInterfacesArg.toArray(new Class<?>[loggerInterfacesArg.size()]);
+        sort(loggerInterfaces);
 
         Writer writer = new StringWriter();
         PrintWriter out = new PrintWriter(writer);
         for (Class loggerInterface : loggerInterfaces) {
             VMLoggerInterface vmLoggerInterface = getVMLoggerInterface(loggerInterface);
             String autoName = getRootName(loggerInterface) + "Auto";
-            Method[] methods = loggerInterface.getDeclaredMethods();
+            Method[] methods = sort(loggerInterface.getDeclaredMethods());
             Set<Class> enumArgMap = new HashSet<Class>();
             int[] refMaps = computeRefMaps(methods, enumArgMap);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
@@ -205,11 +207,95 @@ public class VMLoggerGenerator {
         writer.close();
         boolean wouldUpdate = Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()),
                         "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
-        if (checkOnly && wouldUpdate) {
-            System.out.println("NEW GENERATED CODE for " + source);
-            System.out.println(writer.toString());
-        }
         return wouldUpdate;
+    }
+
+    private static Class<?>[] sort(Class<?>[] classes) {
+        CClass[] cclasses = new CClass[classes.length];
+        for (int i = 0; i < classes.length; i++) {
+            cclasses[i] = new CClass(classes[i]);
+        }
+        Arrays.sort(cclasses);
+        for (int i = 0; i < classes.length; i++) {
+            classes[i] = cclasses[i].klass;
+        }
+        return classes;
+    }
+
+    private static class CClass implements Comparable {
+        private Class<?> klass;
+
+        CClass(Class<?> klass) {
+            this.klass = klass;
+        }
+        @Override
+        public int compareTo(Object arg0) {
+            CClass other = (CClass) arg0;
+            return klass.getName().compareTo(other.klass.getName());
+        }
+
+    }
+
+    /**
+     * Sort the methods by their name (and then type if necessary) in order to ensure consistent
+     * repeat runs. {@link Class#getDeclaredMethods} does not guarantee any order and, experimentally,
+     * it can vary from run to run.
+     * @param methods
+     * @return
+     */
+    private static Method[] sort(Method[] methods) {
+        CMethod[] cmethods = new CMethod[methods.length];
+        for (int i = 0; i < methods.length; i++) {
+            cmethods[i] = new CMethod(methods[i]);
+        }
+        Arrays.sort(cmethods);
+        for (int i = 0; i < methods.length; i++) {
+            methods[i] = cmethods[i].method;
+        }
+        return methods;
+    }
+
+    private static class CMethod implements Comparable {
+        private Method method;
+        private Class<?>[] params;
+
+        CMethod(Method method) {
+            this.method = method;
+        }
+
+        @Override
+        public int compareTo(Object arg0) {
+            CMethod other = (CMethod) arg0;
+            int r = method.getName().compareTo(other.method.getName());
+            if (r < 0 || r > 0) {
+                return r;
+            }
+            // equal names, sort by param
+            Class<?>[] params = getParams();
+            Class<?>[] otherParams = other.getParams();
+            if (params.length < otherParams.length) {
+                return -1;
+            } else if (params.length > otherParams.length) {
+                return 1;
+            } else {
+                for (int i = 0; i < params.length; i++) {
+                    r = params[i].getName().compareTo(otherParams[i].getName());
+                    if (r < 0 || r > 0) {
+                        return r;
+                    }
+                }
+                assert false;
+                return 0;
+            }
+        }
+
+        private Class<?>[] getParams() {
+            if (params == null) {
+                params = method.getParameterTypes();
+            }
+            return params;
+        }
+
     }
 
     private static int[] computeRefMaps(Method[] methods, Set<Class> enumSet) {
@@ -431,46 +517,72 @@ public class VMLoggerGenerator {
      * @param args
      */
     public static void main(String[] args) throws Exception {
-        boolean checkOnlyArg = false;
+        boolean checkOnly = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-check")) {
-                checkOnlyArg = true;
+                checkOnly = true;
             }
         }
-        final boolean checkOnly = checkOnlyArg;
-        new ClassSearch() {
-            final HashSet<String> seenPackages = new HashSet<String>();
-            @Override
-            protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info")) {
-                    String pkg = Classes.getPackageName(className);
-                    if (seenPackages.add(pkg)) {
-                        Trace.line(1, pkg);
-                    }
-                    Class c = null;
+        Class<?> updatedSource = generate(checkOnly);
+        if (checkOnly && updatedSource != null) {
+            System.out.println("Source for " + updatedSource + " would be updated");
+        }
+        if (updatedSource != null) {
+            System.exit(1);
+        }
+    }
+
+    private static class VMLoggerClassSearch extends ClassSearch {
+        final HashSet<String> seenPackages = new HashSet<String>();
+        Class<?> updatedSource;
+        boolean checkOnly;
+
+        VMLoggerClassSearch(boolean checkOnly) {
+            this.checkOnly = checkOnly;
+        }
+
+        @Override
+        protected boolean visitClass(boolean isArchiveEntry, String className) {
+            if (!className.endsWith("package-info")) {
+                String pkg = Classes.getPackageName(className);
+                if (seenPackages.add(pkg) && !checkOnly) {
+                    Trace.line(1, pkg);
+                }
+                Class<?> source = null;
+                try {
+                    source = Classes.forName(className, false, getClass().getClassLoader());
+                } catch (Throwable ex) {
+                    // Ignore
+                    System.out.println("WARNING: could not load class for " + className);
+                    return true;
+                }
+                ArrayList<Class<?>> loggerInterfaces = findLoggerInterfaces(source);
+                if (loggerInterfaces.size() > 0) {
                     try {
-                        c = Classes.forName(className, false, getClass().getClassLoader());
-                    } catch (Throwable ex) {
-                        // Ignore
-                        System.out.println("WARNING: could not load class for " + className);
-                        return true;
-                    }
-                    ArrayList<Class<?>> loggerInterfaces = findLoggerInterfaces(c);
-                    if (loggerInterfaces.size() > 0) {
-                        try {
-                            boolean updated = generate(checkOnly, c, loggerInterfaces);
-                            if (updated) {
-                                System.out.println("Source for " + c + " was updated");
+                        boolean updated = generate(checkOnly, source, loggerInterfaces);
+                        if (updated) {
+                            if (checkOnly) {
+                                updatedSource = source;
+                                return false;
+                            } else {
+                                System.out.println("Source for " + source + " was updated");
                             }
-                        } catch (Exception ex) {
-                            System.err.println(ex);
-                            System.exit(1);
                         }
+                    } catch (Exception ex) {
+                        System.err.println(ex);
+                        return false;
                     }
                 }
-                return true;
             }
-        }.run(Classpath.fromSystem(), "com/sun/max");
+            return true;
+        }
+
+    }
+
+    public static Class<?> generate(final boolean checkOnly) {
+        VMLoggerClassSearch search = new VMLoggerClassSearch(checkOnly);
+        search.run(Classpath.fromSystem(), "com/sun/max");
+        return search.updatedSource;
     }
 
     private static ArrayList<Class< ? >> findLoggerInterfaces(Class< ? > klass) {
