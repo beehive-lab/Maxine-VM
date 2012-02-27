@@ -955,7 +955,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     public final StaticMethodActor findLocalStaticMethodActor(Utf8Constant name) {
         for (StaticMethodActor staticMethodActor : localStaticMethodActors) {
-            if (staticMethodActor.name.equals(name)) {
+            if (staticMethodActor.name == name) {
                 return staticMethodActor;
             }
         }
