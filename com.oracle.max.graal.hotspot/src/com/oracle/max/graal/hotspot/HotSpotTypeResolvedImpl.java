@@ -246,4 +246,10 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         return toJava().getAnnotation(annotationClass);
     }
+
+    @Override
+    public boolean canUseAssumptions(RiMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }
