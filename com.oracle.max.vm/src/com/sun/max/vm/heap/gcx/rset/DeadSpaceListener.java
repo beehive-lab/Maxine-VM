@@ -22,36 +22,28 @@
  */
 package com.sun.max.vm.heap.gcx.rset;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
 
 /**
- * A listener for events related to dead heap space.
- * Two events are reported: coalescing, and splitting, both of which produces free chunk of memory formatted as parsable heap cell (i.e., cells that a heap space scanner can
- * identify and walk over). Example of format of free chunk of memory include byte arrays, instances of {@link Object}, or {@link HeapFreeChunk}.
- * Dead space coalescing events are notified during space reclamation, when garbage has been identified and is coalesced into a single chunk of memory that can be walked over
- * by heap space scanner. They are also notified when coalescing together some large unit of dead space into a single unit to either uncommit heap memory or to serve a large
- * object allocation.
- * Dead space splitting are notified during allocation of a prefix of a free chunks, splitting the chunks into two parsable heap cells.
+ * A listener for events related to dead heap space, i.e., heap space not occupied by live objects.
+ * Dead heap space may be coalesced to form free space that can be used to refill allocators.
+ * Coalescing may happen at initialization of new heap space, or when reclaiming contiguous range of garbage.
+ * Allocators retire the left over from their refill when they cannot use it anymore.
+ * The retired space may be dead (i.e., cannot be re-used for further allocations), or free (may be re-usable for further allocation), in which case it may be refill again.
  *
- * Dead space listener may be use, for example, to update the FOT of a card table to maintain the ability to walk over a card at any time.
+ * A dead space listener takes care of any special formatting required for enabling heap space scanner to walk over dead heap space.
+ * Examples of format of dead heap space include byte arrays, instances of {@link Object}, or {@link HeapFreeChunk}.
+ * Reformatting is needed when an event changes the boundary of dead heap space: coalescing and splitting.
  *
+ *  Dead space coalescing events are notified during space reclamation, when garbage has been identified and is coalesced into a single chunk of memory
+ *  that can be walked over by heap space scanner. They are also notified when coalescing together some large unit of dead space into a single unit to
+ *  either uncommit heap memory or to serve a large object allocation.
+ *
+ * Allocators refill and retire area also notified as they may be used to perform formatting that limit dead space listening overhead.
+ * Main used of dead space listener at the moment is to update the FOT of a card table to maintain the ability to walk over a card at any time.
  */
 public abstract class DeadSpaceListener {
-    public static DeadSpaceListener nullDeadSpaceRSetUpdater() {
-        return new DeadSpaceListener() {
-            @INLINE
-            @Override
-            public final void notifyCoaslescing(Address deadSpace, Size numDeadBytes) {
-            }
-
-            @INLINE
-            @Override
-            public final void notifySplit(Address leftDeadSpace, Address rightDeadSpace, Size leftSize) {
-            }
-        };
-    }
 
     protected DeadSpaceListener() {
     }
@@ -61,13 +53,48 @@ public abstract class DeadSpaceListener {
      * @param deadSpace start of the dead area
      * @param numDeadBytes size of the dead area
      */
-    public abstract void notifyCoaslescing(Address deadSpace, Size numDeadBytes);
+    public abstract void notifyCoalescing(Address deadSpace, Size numDeadBytes);
 
     /**
-     * Notify the split of a single parsable chunk of memory in two parsable chunks of memory.
+     * Notify the split of a single parsable chunk of memory.
+     * The left-hand side of the split is allocated to a live cell.
+     *
      * @param start start of the chunk of memory being split.
-     * @param end end of the chunk of memory being split
      * @param leftSize size of the left cell being split off the chunk of memory.
+     * @param end end of the chunk of memory being split
      */
-    public abstract void notifySplit(Address start, Address end, Size leftSize);
+    public abstract void notifySplitLive(Address start, Size leftSize, Address end);
+
+
+    /**
+     * Notify the split of a single parsable chunk of memory.
+     * The left-hand side of the split is a new dead space.
+     *
+     * @param start start of the chunk of memory being split.
+     * @param leftSize size of the left cell being split off the chunk of memory.
+     * @param end end of the chunk of memory being split
+     */
+    public abstract void notifySplitDead(Address start, Size leftSize, Address end);
+
+    /**
+     * Notify the refill of an allocator with a dead space.
+     *
+     * @param deadSpace address of the first word of the dead space
+     * @param numDeadBytes size of the dead space
+     */
+    public abstract void notifyRefill(Address deadSpace, Size numDeadBytes);
+
+    /**
+     * Notify the retiring of dead space unusable for further allocation by an allocator.
+     * @param deadSpace address of the first word of the dead space
+     * @param numDeadBytes size of the dead space
+     */
+    public abstract void notifyRetireDeadSpace(Address deadSpace, Size numDeadBytes);
+
+    /**
+     * Notify the retiring of dead space usable for further allocation by an allocator.
+     * @param deadSpace address of the first word of the dead space
+     * @param numDeadBytes size of the dead space
+     */
+    public abstract void notifyRetireFreeSpace(Address deadSpace, Size numDeadBytes);
 }

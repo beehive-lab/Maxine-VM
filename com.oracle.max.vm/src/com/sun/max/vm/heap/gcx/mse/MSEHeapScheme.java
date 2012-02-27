@@ -36,6 +36,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -89,7 +90,12 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     public MSEHeapScheme() {
         super();
         final HeapAccount<MSEHeapScheme> heapAccount = new HeapAccount<MSEHeapScheme>(this);
-        markSweepSpace = new FirstFitMarkSweepSpace<MSEHeapScheme>(heapAccount);
+
+        final ChunkListAllocator<RegionChunkListRefillManager> tlabAllocator =
+            new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager());
+        final AtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator =
+            new AtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller());
+        markSweepSpace = new FirstFitMarkSweepSpace<MSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, false, NullDeadSpaceListener.nullDeadSpaceListener(), 0);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, markSweepSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, this));
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
