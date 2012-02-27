@@ -22,23 +22,23 @@
  */
 package demo;
 
-import com.sun.max.lang.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
-
 /**
- * Small program used to debug Maxine's breakpoint implementation.
+ * Program used to debug Maxine's breakpoint implementation for methods that may
+ * have been inlined by the optimizing compiler at the time the breakpoint is set.
+ * Usage:
+ * <ul>
+ * <ol>Set a breakpoint at the call to {@link #spinUntilDone}.
+ * <ol>Run the program, should hit breakpoint.
+ * <ol>Set a breakpoint at {@link incTotal}, which should have been optimized.
+ * <ol>Continue, should hit breakpoint at {@link incTotal}.
+ * <ol>Change value of {@link #done} to true and continue; program should terminate.
+ * </ul>
  */
-public class BreakpointTest {
-
-    static {
-        ClassMethodActor cma = ClassMethodActor.fromJava(Classes.findDeclaredMethod(BreakpointTest.class, "incTotal"));
-        MaxineVM.vm().compilationBroker.compile(cma, Nature.OPT);
-    }
+public class BreakpointTest_inline {
 
     public static void main(String[] args) {
 
+        forceInline();
         spinUntilDone();
 
         System.out.println(total);
@@ -49,6 +49,12 @@ public class BreakpointTest {
 
     public static void spinUntilDone() {
         while (!done) {
+            incTotal();
+        }
+    }
+
+    private static void forceInline() {
+        for (int i = 0; i < 10000; i++) {
             incTotal();
         }
     }
