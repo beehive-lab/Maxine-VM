@@ -107,7 +107,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            BaseAtomicBumpPointerAllocator.hostInitialize();
             if (MaxineVM.isDebug()) {
                 AtomicPinCounter.hostInitialize();
             }

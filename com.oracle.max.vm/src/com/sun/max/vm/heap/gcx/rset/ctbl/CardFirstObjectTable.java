@@ -36,17 +36,18 @@ import com.sun.max.vm.runtime.*;
  * can be quickly retrieved (in order to figure out the layout of the object, its size, and its references locations).
  * The CardFirstObjectTable (or FOT for short) encodes per-card information allowing to find the
  * address of the object overlapping with the first word of a card.
- * Because the table only has 1 byte per entry, objects that overlaps many card will have load multiple entries to find the amount of space
+ * Because the table only has 1 byte per entry, objects that overlaps many card will have to load multiple entries to find the amount of space
  * to remove to the start of a card to find the start of the object that overlaps with the first word of the card.
  * The value stored in an entry E of {@link CardFirstObjectTable} is either a negative number of words to add to the address of the first word of card E,
- * or an encoding of the number of card to subtract to  E's index to obtain the index to the next  entry to read to find information about the start of the object.
- * The number of card to subtract is either a positive number of card to subtract, or the power of 2 of the number of cards to subtract.
+ * or an encoding of the number of cards to subtract to  E's index to obtain the index to the next  entry to read to find information about the start of the first object
+ * overlapping E.
+ * The number of cards to subtract is encoded as either a positive number of cards to subtract, or a power of 2 of the number of cards to subtract.
  *
  * More formally, let C be a card whose first word overlaps with an object that starts at address s, such that s points into card c0.
  * Let d be the distance in number of cards between c0 and C.
  * The value stored in the entry of {@link CardFirstObjectTable} is:
  * - the negative number of words from the end of card C to the start of the object s if d = 1,
- * - a positive number of cards n such that  0 < n < 8 if   1 < d <= 8
+ * - a positive number of cards n such that  0 < n < 8 if 1 < d <= 8,
  * - a value l >= 8 such that  k = 1 << (2+l), if  2^k < d < 2^(k+1).
  *
  *  For example, let assume that s points to a 270 Kb object that starts at card with index c0 and covers 540 512-bytes cards.
@@ -57,10 +58,13 @@ import com.sun.max.vm.runtime.*;
  * O[c0 + i] / i : [9..16] = 8.   Three loads to find s.
  * O[c0 + i] / i : [17..32] = 9.   Four loads to find s.
  * etc...
- * In general, this encoding allow to find the start of an object overlapping with a card C at a distance d from the card c0 in n hops,
+ * In general, this encoding allows to find the start of an object overlapping with a card C at a distance d from the card c0 in n hops,
  * where  n = k - 1 and  2^k < d <= 2^(k+1).
  *
- * A heap implementation using a card table is responsible for updating the information tracked by the table.
+ * A heap implementation using a card table is responsible for updating the information tracked by the FOT table.
+ * If only dirty cards are required to be scanned, then only cards overlapping live objects need to be kept up to date at all time.
+ * Cards that completely overlaps dead space don't need an accurate FOT entry.
+ *
  * Update of the information simply requires calling {@link CardFirstObjectTable#set(Address, Size)} with the
  * address and size of an object crossing a card boundary.
  *
