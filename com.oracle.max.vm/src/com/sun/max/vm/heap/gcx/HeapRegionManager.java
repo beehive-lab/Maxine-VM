@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
-import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -83,7 +82,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * The allocator used by the HeapRegionManager to allocate its own objects.
      * A simple atomic bump allocator for now.
      */
-    final AtomicBumpPointerAllocator managerAllocator;
+    final AtomicBumpPointerAllocator<Refiller> managerAllocator;
 
     /**
      * Return the address of the HeapRegionManager's own allocator.
@@ -150,46 +149,18 @@ public final class HeapRegionManager implements HeapAccountOwner {
     private HeapRegionManager() {
         regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         managerHeapAccount = new HeapAccount<HeapRegionManager>(this);
-        managerAllocator = new AtomicBumpPointerAllocator<RefillManager>(new RefillManager() {
-
-            @Override
-            public boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
-                return true;
-            }
+        managerAllocator = new AtomicBumpPointerAllocator<Refiller>(new Refiller() {
 
             @Override
             public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-                FatalError.unimplemented();
+                FatalError.unexpected("Must not have to refill");
                 return Address.zero();
-            }
-
-            @Override
-            public Address allocateOverflow(Size size) {
-                FatalError.unimplemented();
-                return Address.zero();
-            }
-
-            @Override
-            public Address allocateLarge(Size size) {
-                FatalError.unimplemented();
-                return Address.zero();
-            }
-
-            @Override
-            void makeParsable(Pointer start, Pointer end) {
-                // Boot linear allocator should not span multiple regions.
-                RegionTable rt = theRegionTable();
-                if (MaxineVM.isDebug()) {
-                    final Pointer regionEnd = rt.regionInfo(start).regionStart().asPointer().plus(regionSizeInBytes);
-                    FatalError.check(regionEnd.lessThan(end), "must be at region boundary");
-                }
-                HeapSchemeAdaptor.fillWithDeadObject(start, end);
-                HeapRegionState.FULL_REGION.setState(rt.regionInfo(start));
             }
 
             @Override
             protected void doBeforeGC() {
             }
+
         });
     }
 
@@ -276,7 +247,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
         // boot heap account.
-        managerAllocator.initialize(startOfManagedSpace, bootHeapSize, bootHeapSize);
+        managerAllocator.initialize(startOfManagedSpace, bootHeapSize);
         try {
             heapScheme.enableCustomAllocation(Reference.fromJava(managerAllocator).toOrigin());
             // Record initial space usage.
@@ -285,7 +256,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(numTotalRegions);
 
-            FatalError.check(managerAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(bootHeapSize)), "");
+            FatalError.check(managerAllocator.end().roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(bootHeapSize)), "");
 
             // Ready to open bootstrap heap accounts now.
             // Start with opening the boot heap account to set the records straight after bootstrap.

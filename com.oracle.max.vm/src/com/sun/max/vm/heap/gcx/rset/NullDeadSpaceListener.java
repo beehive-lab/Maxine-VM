@@ -20,21 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.rset;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 
-public final class AtomicBumpPointerAllocator <T extends Refiller>extends BaseAtomicBumpPointerAllocator<T> {
+public final class NullDeadSpaceListener extends DeadSpaceListener {
+    private static NullDeadSpaceListener theNullDeadSpaceListener = new NullDeadSpaceListener();
 
-    public AtomicBumpPointerAllocator(T refillManager) {
-        super(refillManager);
+    public static NullDeadSpaceListener nullDeadSpaceListener() {
+        return theNullDeadSpaceListener;
     }
 
-    @INLINE
+    private NullDeadSpaceListener() {
+    }
     @Override
-    public Pointer allocateCleared(Size size) {
-        return clearAllocatedCell(allocate(size), size);
+    public void notifyCoalescing(Address deadSpace, Size numDeadBytes) {
+    }
+
+    @Override
+    public void notifySplitLive(Address leftDeadSpace, Size leftSize, Address rightDeadSpace) {
+    }
+
+    @Override
+    public void notifySplitDead(Address leftDeadSpace, Size leftSize, Address rightDeadSpace) {
+    }
+
+    @Override
+    public void notifyRefill(Address deadSpace, Size numDeadBytes) {
+    }
+
+    @Override
+    public void notifyRetireDeadSpace(Address deadSpace, Size numDeadBytes) {
+    }
+
+    @Override
+    public void notifyRetireFreeSpace(Address deadSpace, Size numDeadBytes) {
     }
 }

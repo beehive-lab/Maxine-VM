@@ -45,6 +45,7 @@ public interface HeapSpace extends ResizableSpace {
      * @return a pointer to a cell formatted as a {@link HeapFreeChunk}
      */
     Pointer allocateTLAB(Size size);
+
     /**
      * Indicate whether an address points to this heap space.
      * @param address

@@ -120,6 +120,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     private final NoYoungReferenceVerifier noYoungReferencesVerifier;
     private final FOTVerifier fotVerifier;
 
+
     @HOSTED_ONLY
     public GenMSEHeapScheme() {
         heapAccount = new HeapAccount<GenMSEHeapScheme>(this);
@@ -127,14 +128,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         cardTableRSet = new CardTableRSet();
         youngSpace = new NoAgingNursery(heapAccount, YOUNG.tag());
 
-        final BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller> overflowAllocator = new BaseAtomicBumpPointerAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller()) {
-            final CardFirstObjectTable cfoTable = cardTableRSet.cfoTable;
-            @Override
-            protected void postAllocationDo(Pointer cell, Size size) {
-                cfoTable.split(cell, cell.plus(size), hardLimit());
-            }
-        };
-        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, overflowAllocator, true, cardTableRSet, OLD.tag());
+        final ChunkListAllocator<RegionChunkListRefillManager> tlabAllocator =
+            new ChunkListAllocator<RegionChunkListRefillManager>(new RegionChunkListRefillManager(cardTableRSet));
+        final CardSpaceAllocator<RegionOverflowAllocatorRefiller> overflowAllocator =
+            new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
+
+        oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();

@@ -65,6 +65,15 @@ public class GCTest8 {
                 new HeapFiller(numStarted++).start();
             }
         }
+        try {
+            synchronized (lock) {
+                while (numCompleted < MAX_TOTAL_THREADS) {
+                    lock.wait();
+                }
+            }
+        } catch (InterruptedException e) {
+        }
+        System.out.println(GCTest8.class.getSimpleName() + " done");
     }
 
     private static void notifyFillerDone() {
@@ -84,10 +93,13 @@ public class GCTest8 {
 
         @Override
         public void run() {
-            for (int i = 0; i < 10; i++) {
-                createGarbage();
+            try {
+                for (int i = 0; i < 10; i++) {
+                    createGarbage();
+                }
+            } finally {
+                notifyFillerDone();
             }
-            notifyFillerDone();
         }
     }
 
