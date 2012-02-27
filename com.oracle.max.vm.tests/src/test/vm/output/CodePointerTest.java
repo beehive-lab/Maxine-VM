@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.test;
+package test.vm.output;
 
-import test.com.sun.max.vm.jtrun.all.*;
+import com.sun.max.unsafe.*;
 
-import com.sun.max.config.*;
+public class CodePointerTest {
 
-/**
- * Redirect to include {@link JTRunScheme} classes in the boot image when testing.
- */
+    static final long VALUE = 23L;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super("test.com.sun.max.vm.jtrun.**", "test.com.sun.max.vm.output.**");
+    public static void main(String[] args) {
+        System.out.println("Hello, world from CodePointer ...");
+        CodePointer cp = CodePointer.from(VALUE);
+        System.gc();
+        System.out.println("... value: " + cp.toLong());
     }
+
 }

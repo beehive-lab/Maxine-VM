@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.test;
+package com.sun.max.vm.type;
 
-import test.com.sun.max.vm.jtrun.all.*;
-
-import com.sun.max.config.*;
 
 /**
- * Redirect to include {@link JTRunScheme} classes in the boot image when testing.
+ * A classloader that exists solely to isolate the VM classes from the JDK classes
+ * and application classes. It has no runtime use (until such time as the VM might
+ * dynamically load extra classes at runtime).
  */
+public class VMClassLoader extends ClassLoader {
+    /**
+     * The singleton instance of this class.
+     */
+    public static final VMClassLoader VM_CLASS_LOADER = new VMClassLoader();
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super("test.com.sun.max.vm.jtrun.**", "test.com.sun.max.vm.output.**");
+    private VMClassLoader() {
+        super(BootClassLoader.BOOT_CLASS_LOADER);
     }
+
 }

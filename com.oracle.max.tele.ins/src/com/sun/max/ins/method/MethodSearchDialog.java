@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
         methodKeys = new ArrayList<MethodKey>();
         final String className = holderTypeDescriptor.toJavaString();
         try {
-            final Class javaClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
+            final Class javaClass = Classes.load(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, className);
             for (Constructor constructor : javaClass.getDeclaredConstructors()) {
                 methodKeys.add(createMethodKey(SignatureDescriptor.create(Void.TYPE, constructor.getParameterTypes()), holderTypeDescriptor, SymbolTable.INIT));
             }

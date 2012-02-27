@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -501,6 +501,25 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             }
         }
         return false;
+    }
+
+    public boolean canUseAssumptions(RiMethod method) {
+        if (MaxineVM.isHosted()) {
+            if (!isVM()) {
+                // JDK is not a close world, and don't want to deopt boot image
+                return false;
+            } else {
+                // TODO possibly remove this if templates can handle the consequences
+                MethodActor methodActor = (MethodActor) method;
+                return !methodActor.isTemplate();
+            }
+        } else {
+            return true;
+        }
+    }
+
+    public final boolean isVM() {
+        return classLoader == (MaxineVM.isHosted() ? HostedVMClassLoader.HOSTED_VM_CLASS_LOADER : VMClassLoader.VM_CLASS_LOADER);
     }
 
     public boolean isPrimitiveClassActor() {
