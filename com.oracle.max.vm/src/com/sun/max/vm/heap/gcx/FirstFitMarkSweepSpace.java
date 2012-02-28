@@ -643,33 +643,6 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
         return Size.zero();
     }
 
-    /**
-     * Change state of an allocating region to iterable allocating region.
-     *
-     * @param allocatingRegion
-     */
-    private void toIterableAllocatingRegion(BaseAtomicBumpPointerAllocator<? extends Refiller> allocator, int allocatingRegion) {
-        if (allocatingRegion == INVALID_REGION_ID) {
-            return;
-        }
-        final HeapRegionInfo rinfo = HeapRegionInfo.fromRegionID(allocatingRegion);
-        // Makes the region iterable first.
-        allocator.unsafeMakeParsable();
-        // Change its state, so that the regionsRangeIterable will include this region in the iterable set.
-        HeapRegionState.toIterableAllocatingState(rinfo);
-    }
-
-    /**
-     * Change state of an allocating region from iterable to non-iterable allocating region.
-     * @param allocatingRegion
-     */
-    private void toAllocatingRegion(int allocatingRegion) {
-        if (allocatingRegion != INVALID_REGION_ID) {
-            final HeapRegionInfo rinfo = HeapRegionInfo.fromRegionID(allocatingRegion);
-            HeapRegionState.toAllocatingState(rinfo);
-        }
-    }
-
     private void iterateRegions(HeapSpaceRangeVisitor visitor) {
         final RegionTable regionTable = RegionTable.theRegionTable();
         regionsRangeIterable.initialize(heapAccount.committedRegions());
@@ -690,14 +663,11 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     @Override
     public void visit(HeapSpaceRangeVisitor visitor) {
         // Make allocating regions iterable first.
-        final int currentTLABAllocatingRegion = tlabAllocator.refillManager().allocatingRegion();
-        final int currentOverflowAllocatingRegion = overflowAllocator.refillManager().allocatingRegion();
-        toIterableAllocatingRegion(tlabAllocator, currentTLABAllocatingRegion);
-        toIterableAllocatingRegion(overflowAllocator, currentOverflowAllocatingRegion);
+        tlabAllocator.unsafeMakeParsable();
+        overflowAllocator.unsafeMakeParsable();
+        regionsRangeIterable.addMatchingFlags(Flag.IS_ALLOCATING);
         iterateRegions(visitor);
-        // set allocating region back to allocating state.
-        toAllocatingRegion(currentTLABAllocatingRegion);
-        toAllocatingRegion(currentOverflowAllocatingRegion);
+        regionsRangeIterable.resetMatchingFlags();
     }
 
 
