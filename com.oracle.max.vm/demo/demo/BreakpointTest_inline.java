@@ -26,13 +26,13 @@ package demo;
  * Program used to debug Maxine's breakpoint implementation for methods that may
  * have been inlined by the optimizing compiler at the time the breakpoint is set.
  * Usage:
- * <ul>
- * <ol>Set a breakpoint at the call to {@link #spinUntilDone}.
- * <ol>Run the program, should hit breakpoint.
- * <ol>Set a breakpoint at {@link incTotal}, which should have been optimized.
- * <ol>Continue, should hit breakpoint at {@link incTotal}.
- * <ol>Change value of {@link #done} to true and continue; program should terminate.
- * </ul>
+ * <ol>
+ * <li>Set a breakpoint at the call to {@link #spinUntilDone}.</li>
+ * <li>Run the program, should hit breakpoint.</li>
+ * <li>Set a breakpoint at {@link incTotal}, which should have been optimized.</li>
+ * <li>Continue, should hit breakpoint at {@link incTotal}.</li>
+ * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
+ * </ol>
  */
 public class BreakpointTest_inline {
 
