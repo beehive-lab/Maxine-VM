@@ -1131,7 +1131,8 @@ If no projects are given, then all Java projects are checked."""
                 def match(name):
                     for p in patterns:
                         if p in name:
-                            log('excluding: ' + name)
+                            if _opts.verbose:
+                                log('excluding: ' + name)
                             return True
                     return False
                     
