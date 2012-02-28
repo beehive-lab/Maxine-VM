@@ -23,7 +23,7 @@
 package test.com.sun.max.vm.verifier;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 
 import java.io.*;
 import java.util.*;
@@ -127,6 +127,7 @@ public class VerifierTest extends VmTestCase {
     }
 
     public void test() throws Exception {
+        // TODO change to include VM_CLASS_REGISTRY
 
         verify(SomeTest.class.getName(), true);
         verify(JdtBadStackMapTable.class.getName(), true);
@@ -159,12 +160,10 @@ public class VerifierTest extends VmTestCase {
             ++numberOfClassesVerified;
         }
 
-        int classActorIndex = 0;
+        int classActorCount = 0;
         if (numberOfClassesVerified == 0 || VMCLASSES.getValue()) {
-            ClassActor[] classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
             while (true) {
-                while (classActorIndex != classActors.length) {
-                    final ClassActor classActor = classActors[classActorIndex++];
+                for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
                     if (classActor.isTupleClass()) {
                         final String name = classActor.name.toString();
                         if (!verifiedClasses.contains(name) && name.startsWith("com.") || name.startsWith("java.")) {
@@ -172,11 +171,12 @@ public class VerifierTest extends VmTestCase {
                             ++numberOfClassesVerified;
                         }
                     }
+                    classActorCount++;
                 }
-                if (classActorIndex == ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors()) {
+                // check for additions
+                if (classActorCount == ClassRegistry.numberOfBootImageClassActors()) {
                     break;
                 }
-                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
             }
         }
     }
@@ -249,7 +249,7 @@ public class VerifierTest extends VmTestCase {
         verifiedClasses.add(name);
 
         ClassVerifier classVerifier = null;
-        final ClassfileVersion classfileVersion = new ClassfileVersion(name, HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
+        final ClassfileVersion classfileVersion = new ClassfileVersion(name, HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath());
         try {
             Trace.line(1, "verifying " + name);
 
@@ -327,15 +327,15 @@ public class VerifierTest extends VmTestCase {
 
     private ClassActor loadClassActor(String name) {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
-        final HostedBootClassLoader bootClassLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
-        final Classpath classpath = bootClassLoader.classpath();
-        ClassActor classActor = ClassRegistry.get(bootClassLoader, typeDescriptor, false);
+        final HostedVMClassLoader vmClassLoader = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
+        final Classpath classpath = vmClassLoader.classpath();
+        ClassActor classActor = ClassRegistry.get(vmClassLoader, typeDescriptor, false);
         if (classActor == null) {
             final ClasspathFile classpathFile = classpath.readClassFile(name);
             if (classpathFile == null) {
                 fail("Could not find class " + name + " on class path: " + classpath);
             }
-            classActor = ClassfileReader.defineClassActor(name, bootClassLoader, classpathFile.contents, null, classpathFile.classpathEntry, true);
+            classActor = ClassfileReader.defineClassActor(name, vmClassLoader, classpathFile.contents, null, classpathFile.classpathEntry, true);
         }
         return classActor;
     }
@@ -433,7 +433,7 @@ public class VerifierTest extends VmTestCase {
             protected boolean visitClass(String className) {
                 if ((className.startsWith("com.sun.max.vm") || className.startsWith("com.sun.c1x")) && !className.endsWith("package-info") && isBootImageClass(className)) {
                     try {
-                        Class< ? > c = Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER);
+                        Class< ? > c = Class.forName(className, false, HOSTED_VM_CLASS_LOADER);
                         if (!isHostedOnly(c)) {
                             verify(className, true);
                         }

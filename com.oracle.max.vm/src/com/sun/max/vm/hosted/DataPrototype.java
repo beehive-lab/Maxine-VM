@@ -25,7 +25,6 @@ package com.sun.max.vm.hosted;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.lang.ref.Reference;
@@ -881,7 +880,7 @@ public final class DataPrototype extends Prototype {
             objectToCell.put(object, objectToCell.get(object).plus(delta));
         }
 
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 DynamicHub dynamicHub = classActor.dynamicHub();
                 StaticHub staticHub = classActor.staticHub();
@@ -1063,7 +1062,7 @@ public final class DataPrototype extends Prototype {
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
         final ArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
                 final StaticHub staticHub = classActor.staticHub();

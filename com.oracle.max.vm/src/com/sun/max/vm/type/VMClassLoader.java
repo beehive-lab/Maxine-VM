@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package com.sun.max.vm.type;
 
-import com.sun.max.unsafe.*;
 
-public class CodePointerTest {
+/**
+ * A classloader that exists solely to isolate the VM classes from the JDK classes
+ * and application classes. It has no runtime use (until such time as the VM might
+ * dynamically load extra classes at runtime).
+ */
+public class VMClassLoader extends ClassLoader {
+    /**
+     * The singleton instance of this class.
+     */
+    public static final VMClassLoader VM_CLASS_LOADER = new VMClassLoader();
 
-    static final long VALUE = 23L;
-
-    public static void main(String[] args) {
-        System.out.println("Hello, world from CodePointer ...");
-        CodePointer cp = CodePointer.from(VALUE);
-        System.gc();
-        System.out.println("... value: " + cp.toLong());
+    private VMClassLoader() {
+        super(BootClassLoader.BOOT_CLASS_LOADER);
     }
 
 }

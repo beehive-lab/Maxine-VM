@@ -114,6 +114,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_codeAttribute = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "codeAttribute", CodeAttribute.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_compiledState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "compiledState", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_compilee = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "compilee", ClassMethodActor.class);
+    public final TeleInstanceReferenceFieldAccess ClassRegistry_bootClassRegistry = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "bootClassRegistry", ClassRegistry.class);
     public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", ConcurrentHashMap.class);
     public final TeleStaticReferenceFieldAccess Code_CODE_BOOT_NAME = new TeleStaticReferenceFieldAccess(Code.class, "CODE_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "bootCodeRegion", CodeRegion.class);

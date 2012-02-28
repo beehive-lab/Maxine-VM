@@ -164,10 +164,8 @@ public class C1X implements RuntimeCompiler {
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
 
-            // Boot image code may not be safely deoptimizable due to metacircular issues
-            // so only enable speculative optimizations at runtime
-            C1XOptions.UseAssumptions = false;
-
+            // Speculative opts (UseAssumptions) are the default in the boot image as they are limited
+            // to VM classes, which form a closed world.
             optionsRegistered = true;
         }
 
@@ -181,7 +179,7 @@ public class C1X implements RuntimeCompiler {
         }
 
         if (phase == Phase.STARTING) {
-            // Now it is safe to use speculative opts
+            // Speculative opts are ok provided the compilation broker can handle deopt
             C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
