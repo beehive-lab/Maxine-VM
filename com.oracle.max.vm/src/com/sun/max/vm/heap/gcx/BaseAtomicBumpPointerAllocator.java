@@ -197,14 +197,16 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
-     * Make the allocator parseable without filling up the allocator.
+     * Make the allocator parsable without filling up the allocator.
      * This is unsafe and should only be used when non concurrent allocation can take place.
      */
     final void unsafeMakeParsable() {
         Pointer cell = top.asPointer();
-        Pointer hardLimit = hardLimit().asPointer();
-        if (cell.lessThan(hardLimit)) {
-            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+        if (cell.isNotZero()) {
+            Pointer hardLimit = hardLimit().asPointer();
+            if (cell.lessThan(hardLimit)) {
+                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+            }
         }
     }
 
