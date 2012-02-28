@@ -26,9 +26,27 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 /**
  * An iterator over a {@link HeapRegionList}.
  * The iterator return ranges of contiguous regions in the order of the list.
+ * By default, ranges only comprise {@link HeapRegionInfo.Flag#IS_ITERABLE} regions.
+ * The default can be changed to return ranges of regions whose state matches any {@link HeapRegionInfo.Flag} from a set
+ * specified using the {@link #clearMatchingFlags()} and {@link #addMatchingFlags(com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag)}.
  */
 public final class HeapRegionRangeIterable extends HeapRegionListIterable {
+    int matchingFlags;
+
     public HeapRegionRangeIterable() {
+        resetMatchingFlags();
+    }
+
+    public void resetMatchingFlags() {
+        matchingFlags = HeapRegionInfo.Flag.IS_ITERABLE.or(0);
+    }
+
+    public void clearMatchingFlags() {
+        matchingFlags = 0;
+    }
+
+    public void addMatchingFlags(HeapRegionInfo.Flag flag) {
+        this.matchingFlags = flag.or(matchingFlags);
     }
 
     public RegionRange next() {
@@ -56,7 +74,7 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
     private void nextIterable() {
         final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (cursor != INVALID_REGION_ID) {
-            if (theRegionTable.regionInfo(cursor).isIterable()) {
+            if ((theRegionTable.regionInfo(cursor).flags & matchingFlags) != 0) {
                 return;
             }
             cursor = regionList.next(cursor);
