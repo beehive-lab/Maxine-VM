@@ -33,7 +33,7 @@ public class MethodHandles01 {
         MethodHandles01 self = new MethodHandles01();
         mh.invokeExact(self);
         MethodHandle mh2 = lookup.findStatic(MethodHandles01.class, "world", mt);
-        mh2.invokeExact(null); // should not be required!! just to make this work (temporarily)
+        mh2.invokeExact();
         MethodType mtx = MethodType.methodType(void.class, int.class);
         MethodHandle mhx = lookup.findVirtual(MethodHandles01.class, "ga", mtx);
         mhx.invokeExact(self, 23);
