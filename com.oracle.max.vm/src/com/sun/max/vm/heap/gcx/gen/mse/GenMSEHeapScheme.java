@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
 
 
 /**
- * Generational Heap Scheme. WORK IN PROGRESS.
+ * Generational Heap Scheme with a mark-sweep old generation and a simple copying collector nursery.
  */
 final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
     /**
@@ -84,10 +84,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Young generation.
      */
+    @INSPECTED
     private final NoAgingNursery youngSpace;
     /**
      * Tenured generation.
      */
+    @INSPECTED
     private final FirstFitMarkSweepSpace<GenMSEHeapScheme> oldSpace;
 
     /**
