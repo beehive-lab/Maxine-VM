@@ -26,8 +26,8 @@ import com.sun.max.unsafe.*;
 
 /**
  * A more elaborated refill manager for linear space allocator.
- * It implements a refill policy that decide whether refill is warranted. If denied, the allocator
- * must issue an overflow allocation request, otherwise it issue a refill request.
+ * It implements a refill policy that decides whether refill is warranted. If denied, the allocator
+ * must issue an overflow allocation request, otherwise it issues a refill request.
  * Additionally, a method for handling large allocation requests that should never be handled
  * by the linear space allocator is provided.
  */

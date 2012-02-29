@@ -84,7 +84,7 @@ public abstract class VMLog implements Heap.GCCallback {
     /**
      * The bare essentials of a log record. A log record contains:
      * <ul>
-     * <li>The {@link VMlogger} id that created the record.
+     * <li>The {@link VMLogger} id that created the record.
      * <li>The operation code.
      * <li>The thread that created the record.
      * <li>Up to {@value MAX_ARGS} {@link Word} valued arguments.
@@ -176,7 +176,7 @@ public abstract class VMLog implements Heap.GCCallback {
         /**
          * Return value of argument {@code n: 1 <= N}.
          * @param n
-         * @return
+         * @return the argument at index {@code n}
          */
         public Word getArg(int n) {
             return argError();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,15 +28,12 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
 public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
-
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static int TOP_OFFSET;
     /**
      * The allocation hand of the allocator.
      */
@@ -45,24 +42,22 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * Soft-end of the contiguous region of memory the allocator allocate from.
      * The {@link #headroom} controls how far from the actual end of the region
      */
-    protected Address end;
+    private Address end;
     /**
      * Start of the contiguous region of memory the allocator allocate from.
      */
-    protected Address start;
-    /**
-     * Size to reserve at the end of the allocator to guarantee that a dead object can always be
-     * appended to a TLAB to fill unused space before a TLAB refill.
-     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected Size headroom;
+    private Address start; // keep it private, so the only way to update it is via refill / reset / clear methods.
 
     protected final T refillManager;
 
-    @HOSTED_ONLY
-    public static void hostInitialize() {
-        TOP_OFFSET = ClassRegistry.findField(BaseAtomicBumpPointerAllocator.class, "top").offset();
+    @FOLD
+    public static int topOffset() {
+        return ClassActor.fromJava(BaseAtomicBumpPointerAllocator.class).findLocalInstanceFieldActor("top").offset();
+    }
+
+    @FOLD
+    public static Size headroom() {
+        return ClassActor.fromJava(Object.class).dynamicHub().tupleSize;
     }
 
     @INLINE
@@ -70,8 +65,24 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return this;
     }
 
+    @INLINE
     final T refillManager() {
         return refillManager;
+    }
+
+    @INLINE
+    public final Address start() {
+        return start;
+    }
+
+    @INLINE
+    public final Address end() {
+        return end;
+    }
+
+    @INLINE
+    public boolean inCurrentContiguousChunk(Address address) {
+        return address.greaterEqual(start) && address.lessThan(end);
     }
 
     protected final void clear() {
@@ -103,7 +114,6 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     void initialize(Address initialChunk, Size initialChunkSize) {
-        headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         if (initialChunk.isZero()) {
             clear();
         } else {
@@ -111,22 +121,12 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         }
     }
 
-    protected final void refill(Address chunk, Size chunkSize) {
-        // Make sure we can cause any attempt to allocate to fail, regardless of the
-        // value of top
-        end = Address.zero();
-        // Now refill.
-        start = chunk;
-        top = start;
-        end = chunk.plus(chunkSize).minus(headroom);
-    }
-
     protected final void reset() {
         top = start;
     }
 
-    public BaseAtomicBumpPointerAllocator(T refiller) {
-        refillManager = refiller;
+    public BaseAtomicBumpPointerAllocator(T refillManager) {
+        this.refillManager = refillManager;
     }
 
     /**
@@ -147,17 +147,25 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
 
     @INLINE
     public final Address hardLimit() {
-        return end.plus(headroom);
+        return end.plus(headroom());
+    }
+
+    protected final void refill(Address chunk, Size chunkSize) {
+        // Make sure we can cause any attempt to allocate to fail, regardless of the
+        // value of top
+        end = Address.zero();
+        // Now refill.
+        start = chunk;
+        top = start;
+        end = chunk.plus(chunkSize).minus(headroom());
     }
 
     /**
-     * Bring the allocation hand to the top of the space allocator to force failure of any subsequent
-     * allocation.
-     * Should only be used while holding the allocator's lock to prevent
-     * concurrent threads from refilling the allocator and changing the hard limit.
-     * @return
+     * Bring the allocation hand to the top of the space allocator to force failure of any subsequent allocation.
+     * Should only be used while holding the allocator's lock to prevent concurrent threads from refilling the
+     * allocator and changing the hard limit.
+     * @return previous value of top.
      */
-    @INLINE
     @NO_SAFEPOINT_POLLS("filling linear space allocator must not be subjected to safepoints")
     protected final Pointer atomicSetTopToLimit() {
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
@@ -169,14 +177,8 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 // Already at end
                 return cell.asPointer();
             }
-        } while(thisAddress.compareAndSwapWord(TOP_OFFSET, cell, hardLimit) != cell);
+        } while(thisAddress.compareAndSwapWord(topOffset(), cell, hardLimit) != cell);
         return cell.asPointer();
-    }
-
-    protected final Pointer setTopToLimit() {
-        Pointer cell = top.asPointer();
-        top =  hardLimit().asPointer();
-        return cell;
     }
 
     /**
@@ -195,14 +197,16 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
-     * Make the allocator parseable without filling up the allocator.
+     * Make the allocator parsable without filling up the allocator.
      * This is unsafe and should only be used when non concurrent allocation can take place.
      */
-    protected final void unsafeMakeParsable() {
+    final void unsafeMakeParsable() {
         Pointer cell = top.asPointer();
-        Pointer hardLimit = hardLimit().asPointer();
-        if (cell.lessThan(hardLimit)) {
-            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+        if (cell.isNotZero()) {
+            Pointer hardLimit = hardLimit().asPointer();
+            if (cell.lessThan(hardLimit)) {
+                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+            }
         }
     }
 
@@ -218,22 +222,19 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             Pointer cell = top.asPointer();
             if (cell.plus(size).greaterThan(end)) {
                 // end isn't the hard limit of the space.
-                // Check if allocation request can fit up to the limit.
+                // Here we atomically fill up the linear space.
+                // Atomically set top to the limit as we may be racing with
+                // non-blocking concurrent allocator for the left over. The refillLock above
+                // only protect against concurrent refiller.
+               // This brings every one to the refill lock if needed. Further, if the
+                // space that was left is enough to satisfy the allocation, we can just return.
                 Address hardLimit = hardLimit();
-                if (cell.plus(size).equals(hardLimit)) {
-                    // We need to atomically change top as we may be racing with
-                    // concurrent allocator for the left over. The refillLock above
-                    // only protect against concurrent refiller.
-                    Pointer start = atomicSetTopToLimit();
-                    if (cell.equals(start)) {
-                        return cell;
-                    }
-                    // Lost the race. Now we definitively have no space left.
-                    // Fall off to refill or allocate.
-                    cell = start;
-                }
-                // Refill. First, fill up the allocator to bring everyone to refill synchronization.
                 Pointer startOfSpaceLeft = atomicSetTopToLimit();
+
+                // Check if we can use the space that was left over.
+                if (cell.equals(startOfSpaceLeft) && cell.plus(size).equals(hardLimit)) {
+                    return cell;
+                }
 
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (chunk.isNotZero()) {
@@ -241,14 +242,15 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 }
                 // Fall-off to return to the non-blocking allocation loop.
             }
-            // There was a race for refilling the allocator. Just return to
-            // the non-blocking allocation loop.
+            // There was a race for refilling the allocator. Just return to the non-blocking allocation loop.
             return Pointer.zero();
         }
     }
 
-    protected void postAllocationDo(Pointer cell, Size size) {
-        // Default: does nothing
+    @INLINE
+    final protected Pointer clearAllocatedCell(Pointer cell, Size size) {
+        Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+        return cell;
     }
 
     /**
@@ -257,12 +259,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @param size size requested in bytes.
      * @return pointer to zero-filled  allocated cell
      */
-    public final Pointer allocateCleared(Size size) {
-        Pointer cell = allocate(size);
-        Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-        postAllocationDo(cell, size);
-        return cell;
-    }
+    public abstract Pointer allocateCleared(Size size);
 
     /**
      * Allocate a space of the specified size.
@@ -270,14 +267,14 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @param size size requested in bytes.
      * @return pointer to uncleared allocated cell
      */
+    @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     protected final Pointer allocate(Size size) {
         if (MaxineVM.isDebug()) {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");
         }
         // Try first a non-blocking allocation out of the current chunk.
-        // This may fail for a variety of reasons, all captured by the test
-        // against the current chunk limit.
+        // This may fail for a variety of reasons, all captured by the test against the current chunk limit.
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
         Pointer cell;
         Pointer newTop;
@@ -293,7 +290,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 cell = top.asPointer();
                 newTop = cell.plus(size);
             }
-        } while (thisAddress.compareAndSwapWord(TOP_OFFSET, cell, newTop) != cell);
+        } while (thisAddress.compareAndSwapWord(topOffset(), cell, newTop) != cell);
         return cell;
     }
 

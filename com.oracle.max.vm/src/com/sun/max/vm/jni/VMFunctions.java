@@ -809,8 +809,8 @@ public class VMFunctions {
         }
 
         try {
-            // Additionally ignore this method
-            return createLocalHandle(Reflection.getCallerClass(depth + 1));
+            // Additionally ignore this method, as well as the Reflection method we call.
+            return createLocalHandle(Reflection.getCallerClass(depth + 2));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
