@@ -429,7 +429,7 @@ def classpath(names=None, resolve=True, includeSelf=True):
     path (e.g. downloading a missing library) if 'resolve' is true.
     """
     if names is None:
-        return _as_classpath(sorted_deps(True), resolve)
+        return _as_classpath(sorted_deps(includeLibs=True), resolve)
     deps = []
     if isinstance(names, types.StringTypes):
         project(names).all_deps(deps, True, includeSelf)
@@ -438,14 +438,19 @@ def classpath(names=None, resolve=True, includeSelf=True):
             project(n).all_deps(deps, True, includeSelf)
     return _as_classpath(deps, resolve)
     
-def sorted_deps(includeLibs=False):
+def sorted_deps(projectNames=None, includeLibs=False):
     """
-    Gets the loaded projects and libraries sorted such that dependencies
+    Gets projects and libraries sorted such that dependencies
     are before the projects that depend on them. Unless 'includeLibs' is
     true, libraries are omitted from the result.
     """
     deps = []
-    for p in _projects.itervalues():
+    if projectNames is None:
+        projects = _projects.values()
+    else:
+        projects = [project(name) for name in projectNames]
+        
+    for p in projects:
         p.all_deps(deps, includeLibs)
     return deps
 
@@ -870,6 +875,7 @@ def build(args, parser=None):
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
     parser.add_argument('--source', dest='compliance', help='Java compliance level', default='1.6')
     parser.add_argument('--Wapi', action='store_true', dest='warnAPI', help='show warnings about using internal APIs')
+    parser.add_argument('--projects', action='store', help='comma separated projects to build (omit to build all projects)')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
@@ -890,8 +896,12 @@ def build(args, parser=None):
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
     built = set()
-    for p in sorted_deps():
+    
+    projects = None
+    if args.projects is not None:
+        projects = args.projects.split(',')
         
+    for p in sorted_deps(projects):
         if p.native:
             if args.native:
                 log('Calling GNU make {0}...'.format(p.dir))

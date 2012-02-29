@@ -60,6 +60,7 @@ def configs(arg):
     
 def copycheck(args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
+    mx.build(['--projects', 'com.oracle.max.base'])
     mx.run_java(['-cp', mx.classpath('com.oracle.max.base', resolve=False), 'com.sun.max.tools.CheckCopyright'] + args)
 
 def eclipse(args):
