@@ -211,8 +211,8 @@ public class VMFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle GetCallerClass(Pointer env, int depth) {
-        // Additionally ignore this method
-        return createLocalHandle(Reflection.getCallerClass(depth + 1));
+        // Additionally ignore this method, as well as the Reflection method we call.
+        return createLocalHandle(Reflection.getCallerClass(depth + 2));
     }
 
     @VM_ENTRY_POINT
