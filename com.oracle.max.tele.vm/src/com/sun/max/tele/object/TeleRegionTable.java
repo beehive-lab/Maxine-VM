@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,20 +130,5 @@ public class TeleRegionTable extends AbstractVmHolder {
             }
         }
         return regionTable.regionID(address);
-    }
-
-    /**
-     * Return the offset from the first byte of the region pool, or Offset.allOnes() if the address is not in the region pool.
-     * @param address an address in virtual memory
-     * @return an offset in the region pool, or Offset.allOnes() if the address is not in the region pool.
-     */
-    public Offset toOffset(Address address) {
-        if (!isInitialized()) {
-            initialize();
-            if (!isInitialized()) {
-                return Offset.allOnes().asOffset();
-            }
-        }
-        return regionTable.offsetInRegionPool(address);
     }
 }
