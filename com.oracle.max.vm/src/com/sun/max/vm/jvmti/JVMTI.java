@@ -120,6 +120,7 @@ public class JVMTI {
             for (int j = 0; j < jvmtiEnv.bootClassPathAdd.length; j++) {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
+            VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
         }
     }
 
@@ -328,7 +329,7 @@ public class JVMTI {
             return;
         }
 
-        JVMTIEvent.log(eventId);
+        JVMTIEvent.logger.logEvent(eventId, arg1);
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
@@ -603,5 +604,11 @@ public class JVMTI {
         }
 
     }
+
+    /**
+     * In it's default setting, VM classes are invisible to JVMTI.
+     * They don't show up in stack traces, heap traces or the set of loaded classes.
+     */
+    static boolean JVMTI_VM;
 
 }

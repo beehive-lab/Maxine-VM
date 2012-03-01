@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1768,6 +1768,10 @@ public abstract class T1XCompilation {
             }
             throw new CiBailout("Unsupported intrinsic " + intrinsic + ": " + errorSuffix());
         } else if ((method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
+            if (!MaxineVM.isHosted() && method.isVM()) {
+                // This must be a VM deopt, so we just compile the call
+                return false;
+            }
             T1XMetrics.Bailouts++;
             if (T1XOptions.PrintBailouts) {
                 Log.println("T1X bailout: unsupported INLINE or FOLD method method " + method + "  called from " + this.method);

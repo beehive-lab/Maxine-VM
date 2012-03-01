@@ -24,6 +24,10 @@ package com.sun.max.ins.debug.vmlog;
 
 import java.awt.*;
 
+import com.sun.max.ins.gui.*;
+import com.sun.max.vm.jvmti.*;
+import com.sun.max.vm.log.VMLog.*;
+
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
     public JVMTIEventsVMLogArgRenderer(VMLogView vmLogView) {
@@ -32,7 +36,20 @@ public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
-        // no decode yet
+        int op = Record.getOperation(header);
+        switch (JVMTIEvent.JVMTIEventLogger.toEventId(op)) {
+            case JVMTIEvent.CLASS_PREPARE:
+                return safeGetReferenceValueLabel(getTeleClassActor(argValue));
+            case JVMTIEvent.BREAKPOINT:
+                if (argNum == 1) {
+                    // methodId
+                    return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
+                } else if (argNum == 2) {
+                    //location
+                    return new PlainLabel(inspection(), Long.toString(argValue));
+                }
+            default:
+        }
         return super.getRenderer(header, argNum, argValue);
     }
 

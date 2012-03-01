@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,14 +51,23 @@ import com.sun.max.vm.type.*;
  */
 class JVMTIClassFunctions {
 
-    static {
-        VMOptions.addFieldOption("-XX:", "JVMTIIncludeVMClasses", "Include VM classes in JVMTI results.");
+    /**
+     * Strict check on whether a class is a VM class.
+     * @param classActor
+     * @return
+     */
+    static boolean isVMClass(ClassActor classActor) {
+        return classActor.classLoader == VMClassLoader.VM_CLASS_LOADER;
     }
 
-    static boolean JVMTIIncludeVMClasses;
-
-    static boolean isVmClass(ClassActor classActor) {
-        return classActor.classLoader == VMClassLoader.VM_CLASS_LOADER;
+    /**
+     * Non-strict check whether a class is a VM class.
+     *
+     * @param classActor
+     * @return If {@link JVMTI#JVMTI_VM} is {@code false} equivalent to {@code !isVMClass(classActor), otherwise {@link true}.
+     */
+    static boolean isVisibleClass(ClassActor classActor) {
+        return JVMTI.JVMTI_VM || !isVMClass(classActor);
     }
 
     static int getObjectSize(Object object, Pointer sizePtr) {
@@ -250,36 +259,24 @@ class JVMTIClassFunctions {
         // TODO handle all class loaders, requires changes to Maxine
         Collection<ClassActor> bootClassActors = ClassRegistry.makeRegistry(BootClassLoader.BOOT_CLASS_LOADER).getClassActors();
         Collection<ClassActor> systemClassActors = ClassRegistry.makeRegistry(ClassLoader.getSystemClassLoader()).getClassActors();
+        @SuppressWarnings("unchecked")
+        Collection<ClassActor> vmClassActors = JVMTI.JVMTI_VM ? ClassRegistry.makeRegistry(VMClassLoader.VM_CLASS_LOADER).getClassActors() : Collections.EMPTY_SET;
         // N.B. This is inherently a snapshot as we don't prevent class loading/unloading happening while this executes.
         // These variables define the snapshot, and copyClassActors honors these values for recording purposes.
         // Another complication is that spec sates that primitive class actors are not returned
         // and Maxine's boot class registry does include those.
-        int bootClassActorsSize = bootClassActorsSize(bootClassActors) - NUMBER_OF_PRIMITIVE_CLASS_ACTORS;
+        int bootClassActorsSize = bootClassActors.size() - NUMBER_OF_PRIMITIVE_CLASS_ACTORS;
         int systemClassActorsSize = systemClassActors.size();
-        int totalSize = bootClassActorsSize + systemClassActorsSize;
+        int totalSize = bootClassActorsSize + systemClassActorsSize + vmClassActors.size();
         Pointer classesPtr = allocateClassesArray(totalSize, classCountPtr, classesPtrPtr);
         if (classesPtr.isZero()) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
         int bootClassActorsCopied = copyClassActors(classesPtr, bootClassActors, 0, bootClassActorsSize);
         int systemClassActorsCopied = copyClassActors(classesPtr, systemClassActors, bootClassActorsCopied, systemClassActorsSize);
-        classCountPtr.setInt(bootClassActorsCopied + systemClassActorsCopied);
+        int vmClassActorsCopied = JVMTI.JVMTI_VM ? copyClassActors(classesPtr, vmClassActors, systemClassActorsCopied + bootClassActorsCopied, vmClassActors.size()) : 0;
+        classCountPtr.setInt(bootClassActorsCopied + systemClassActorsCopied + vmClassActorsCopied);
         return JVMTI_ERROR_NONE;
-    }
-
-    private static int bootClassActorsSize(Collection<ClassActor> bootClassActors) {
-        if (JVMTIIncludeVMClasses) {
-            return bootClassActors.size();
-        } else {
-            int count = 0;
-            for (ClassActor classActor : bootClassActors) {
-                if (isVmClass(classActor)) {
-                    continue;
-                }
-                count++;
-            }
-            return count;
-        }
     }
 
     private static Pointer allocateClassesArray(int classCount, Pointer classCountPtr, Pointer classesPtrPtr) {
@@ -300,9 +297,6 @@ class JVMTIClassFunctions {
         int index = 0;
         for (ClassActor classActor : classActors) {
             if (classActor.isPrimitiveClassActor()) {
-                continue;
-            }
-            if (!JVMTIIncludeVMClasses && isVmClass(classActor)) {
                 continue;
             }
             if (index < count) {
