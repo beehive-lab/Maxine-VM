@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -47,6 +48,8 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
      * Provider of regions.
      */
     private RegionProvider regionProvider;
+
+    private final DeadSpaceListener deadSpaceListener;
 
     /**
      * Minimum amount of space to refill an overflow allocator with.
@@ -81,7 +84,12 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
     }
 
     public RegionOverflowAllocatorRefiller() {
+        this(NullDeadSpaceListener.nullDeadSpaceListener());
+    }
+
+    public RegionOverflowAllocatorRefiller(DeadSpaceListener deadSpaceListener) {
         this.allocatingRegion = INVALID_REGION_ID;
+        this.deadSpaceListener = deadSpaceListener;
     }
 
     public void setRegionProvider(RegionProvider regionProvider) {
@@ -94,7 +102,25 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
 
     @Override
     public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-        return overflowRefill(startOfSpaceLeft, spaceLeft);
+        // Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
+        synchronized (refillLock()) {
+            retireAllocatingRegion(startOfSpaceLeft, spaceLeft);
+            final HeapRegionInfo regionInfo = getAllocatingRegion();
+            Size refillSize;
+            Address refill = Address.zero();
+            if (regionInfo.isEmpty()) {
+                refillSize = Size.fromInt(regionSizeInBytes);
+                refill =  regionInfo.regionStart();
+                HeapFreeChunk.format(refill, refillSize);
+            } else {
+                refill = regionInfo.firstFreeBytes();
+                refillSize =  Size.fromInt(regionInfo.freeBytesInChunks());
+                regionInfo.clearFreeChunks();
+            }
+            deadSpaceListener.notifyRefill(refill,  refillSize);
+            toAllocatingState(regionInfo);
+            return refill;
+        }
     }
 
     @Override
@@ -104,7 +130,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
             allocatingRegion = INVALID_REGION_ID;
             // we're going to GC the owner of the allocating region.
             // The allocator this refiller manages will take care of making it parsable.
-            // Free space doesn't matter, GC will re-organize it any, so just put it in the full state.
+            // Free space doesn't matter, GC will re-organize it anyway, so just put it in the full state.
             toFullState(fromRegionID(regionID));
             regionProvider.retireAllocatingRegion(regionID);
         }
@@ -145,6 +171,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
                 retiredFreeSpace = retiredFreeSpace.plus(spaceLeft);
                 HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
                 regionInfo.setFreeChunks(startOfSpaceLeft, spaceLeft, 1);
+                deadSpaceListener.notifyRetireFreeSpace(startOfSpaceLeft, spaceLeft);
                 toFreeChunkState(regionInfo);
             } else {
                 if (traceRefill()) {
@@ -157,6 +184,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
                 if (!spaceLeft.isZero()) {
                     retiredWaste = retiredWaste.plus(spaceLeft);
                     HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
+                    deadSpaceListener.notifyRetireDeadSpace(startOfSpaceLeft, spaceLeft);
                 }
                 toFullState(regionInfo);
             }
@@ -189,27 +217,4 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
         // Not enough freed memory.
         throw outOfMemoryError;
     }
-    /**
-     * Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
-     * @param minRefillSize minimum amount of space to refill the allocator with
-     * @return address to a chunk of the requested size, or zero if none requested.
-     */
-    private Address overflowRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
-        synchronized (refillLock()) {
-            retireAllocatingRegion(startOfSpaceLeft, spaceLeft);
-            final HeapRegionInfo regionInfo = getAllocatingRegion();
-
-            Address refill = Address.zero();
-            if (regionInfo.isEmpty()) {
-                refill =  regionInfo.regionStart();
-                HeapFreeChunk.format(refill, Size.fromInt(regionSizeInBytes));
-            } else {
-                refill = regionInfo.firstFreeBytes();
-                regionInfo.clearFreeChunks();
-            }
-            toAllocatingState(regionInfo);
-            return refill;
-        }
-    }
-
 }

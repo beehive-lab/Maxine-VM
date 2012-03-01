@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * A refill manager that can also hands out list of free chunks to an allocator.
@@ -34,31 +33,40 @@ public abstract class ChunkListRefillManager extends RefillManager {
      */
     protected Size minChunkSize;
 
+    ChunkListRefillManager() {
+    }
+
     void setMinChunkSize(Size size) {
         minChunkSize = size;
     }
+
+    abstract protected void  retireDeadSpace(Pointer deadSpace, Size size);
+
+    abstract protected void  retireFreeSpace(Pointer freeSpace, Size size);
+
     /**
-     * Format specified region as a free chunk and returns it if not smaller than the minimum chunk size.
+     * Retire space from allocator. If the space is larger than the minimum chunk size, format it as a heap
+     * free chunk and return its address.
      * Otherwise, plant a dead object and return zero.
+     *
      * @param address address to the first word of the region
      * @param size size of the region
      * @return a non-null address if the specified region can be used as a free chunk.
      */
-    protected Address chunkOrZero(Pointer address, Size size) {
+    protected Address retireChunk(Pointer address, Size size) {
         if (size.greaterThan(minChunkSize)) {
-            HeapFreeChunk.format(address, size);
+            retireFreeSpace(address, size);
             return address;
         }
         if (!size.isZero()) {
-            // Don't bother with the left over in the allocator.
-            HeapSchemeAdaptor.fillWithDeadObject(address, address.plus(size));
+            retireDeadSpace(address, size);
         }
         return Address.zero();
     }
 
     /**
      * Try to refill the allocator with a single contiguous range of free space large enough to accommodate the allocator, or return a list of chunk
-     * large enough to satisfy the requested size. The allocator's has been toped off and its refill lock is being held.
+     * large enough to satisfy the requested size. The allocator's has been filled up (with dead space for the left-over) and its refill lock is being held.
      *
      * @param allocator the allocator issuing the request
      * @param listSize
@@ -66,5 +74,5 @@ public abstract class ChunkListRefillManager extends RefillManager {
      * @param leftoverSize size of the space that was left in the  bump pointer allocator
      * @return a zero address if the allocator was refilled, the head of a list of free chunk otherwise
      */
-    public abstract Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
+    public abstract Address allocateChunkListOrRefill(ChunkListAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
 }

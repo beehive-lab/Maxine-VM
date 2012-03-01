@@ -26,8 +26,8 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, StringIO
-from os.path import join, exists, dirname, isdir, pathsep, isfile, isabs
+import os, shutil, fnmatch, subprocess
+from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 
 _maxine_home = dirname(dirname(__file__))
@@ -46,7 +46,7 @@ def _configs():
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
     c = Configs()        
-    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath('com.oracle.max.vm', resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
 def configs(arg):
@@ -185,7 +185,7 @@ def hcfdis(args):
 
 def helloworld(args):
     """run the 'hello world' program on the Maxine VM"""
-    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.vm')] + args + ['test.output.HelloWorld'])
+    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
 
 def image(args):
     """build a boot image
@@ -361,10 +361,23 @@ def jttgen(args):
     files in the com.sun.max.vm.jtrun.all package."""
 
 
-    testDir = join(mx.project('com.oracle.max.vm').dir, 'test')
-    tests = [join('jtt', name) for name in os.listdir(join(testDir, 'jtt')) if name != 'hotspot' and name != 'fail']
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
-                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
+    testDirs = [join(mx.project('com.oracle.max.vm.tests').dir, 'src'), join(mx.project('com.oracle.max.tests').dir, 'src')]
+    tests = []
+    for testDir in testDirs:
+        for name in os.listdir(join(testDir, 'jtt')):
+            if name != 'hotspot' and name != 'fail':
+                tests.append(join(testDir, 'jtt', name))
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.tests'), 'test.com.sun.max.vm.compiler.JavaTester',
+                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests)
+
+def loggen(args):
+    """(re)generate Java source for VMLogger interfaces
+
+    Run VMLoggerGenerator.java to update the Auto implementations of @VMLoggerInterface interfaces.
+
+    The exit code is non-zero if a Java source file was modified."""
+
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
 
 def makejdk(args):
     """create a JDK directory based on the Maxine VM
@@ -624,6 +637,7 @@ def mx_init():
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
         'jnigen': [jnigen, ''],
         'jttgen': [jttgen, ''],
+        'loggen': [loggen, ''],
         'makejdk': [makejdk, '[<destination directory>]'],
         'methodtree': [methodtree, '[options]'],
         'nm': [nm, '[options] [boot image file]', _vm_image],
