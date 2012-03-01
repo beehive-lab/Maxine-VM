@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -288,22 +288,26 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 
     int id = tla_load(int, tla, ID);
     if (id >= 0) {
-        VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
+        if (id != PRIMORDIAL_THREAD_ID) {
+            VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
 #if log_THREADS
-        log_print("threadLocalsBlock_destroy: id=%d, t=%p, calling VmThread.detach(): ", id, nativeThread);
-        void image_printAddress(Address address);
-        image_printAddress((Address) method);
-        log_println("");
+            log_print("threadLocalsBlock_destroy: id=%d, t=%p, calling VmThread.detach(): ", id, nativeThread);
+            void image_printAddress(Address address);
+            image_printAddress((Address) method);
+            log_println("");
 #endif
-        (*method)(tla);
+            (*method)(tla);
+        }
     } else {
 #if log_THREADS
         log_print("threadLocalsBlock_destroy: id=%d, t=%p, never successfully attached: ", id, nativeThread);
 #endif
     }
 
-    c_ASSERT(tla_load(Address, tla, FORWARD_LINK) == 0);
-    c_ASSERT(tla_load(Address, tla, BACKWARD_LINK) == 0);
+    if (id != PRIMORDIAL_THREAD_ID) {
+        c_ASSERT(tla_load(Address, tla, FORWARD_LINK) == 0);
+        c_ASSERT(tla_load(Address, tla, BACKWARD_LINK) == 0);
+    }
 
     const jboolean attached = ntl->redZone == ntl->stackBase;
     Address startGuardZone;

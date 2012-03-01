@@ -12,7 +12,7 @@ library@JLF_ICONS@path=com.oracle.max.tele.ins/jlfgr-1_0.jar
 
 library@NB3_BUTTONS@path=com.oracle.max.tele.ins/NB3B.jar
 
-library@VM_CLASSES@path=com.oracle.max.vm/classes
+library@TESTS_JASMIN_CLASSES@path=com.oracle.max.tests/jasmin_classes
 
 project@com.oracle.max.graal.hotspot@sourceDirs=src
 project@com.oracle.max.graal.hotspot@dependencies=com.oracle.max.asmdis,com.oracle.max.graal.snippets
@@ -65,6 +65,10 @@ project@com.oracle.max.base@sourceDirs=src,test
 project@com.oracle.max.base@dependencies=JUNIT
 project@com.oracle.max.base@checkstyle=com.oracle.max.base
 
+project@com.oracle.max.tests@sourceDirs=src
+project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES
+project@com.oracle.max.tests@checkstyle=com.oracle.max.base
+
 project@com.oracle.max.vmdi@sourceDirs=src
 project@com.oracle.max.vmdi@checkstyle=com.oracle.max.base
 
@@ -115,9 +119,13 @@ project@com.oracle.max.vm.ext.t1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.elf@sourceDirs=src
 project@com.oracle.max.elf@checkstyle=com.oracle.max.base
 
-project@com.oracle.max.vm@sourceDirs=src,test,demo
-project@com.oracle.max.vm@dependencies=com.oracle.max.base,JDK_TOOLS,com.oracle.max.asm,VM_CLASSES
+project@com.oracle.max.vm@sourceDirs=src,demo
+project@com.oracle.max.vm@dependencies=com.oracle.max.base,JDK_TOOLS,com.oracle.max.asm
 project@com.oracle.max.vm@checkstyle=com.oracle.max.base
+
+project@com.oracle.max.vm.tests@sourceDirs=src
+project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests
+project@com.oracle.max.vm.tests@checkstyle=com.oracle.max.base
 
 project@com.oracle.max.vm.native@sourceDirs=
 project@com.oracle.max.vm.native@native=true

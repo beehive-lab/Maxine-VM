@@ -40,6 +40,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.BootRegionMappingConstraint;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.hosted.*;
@@ -49,7 +50,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Card-table based remembered set.
  */
-public class CardTableRSet extends DeadSpaceListener implements HeapManagementMemoryRequirement {
+public final class CardTableRSet extends DeadSpaceListener implements HeapManagementMemoryRequirement {
 
     /**
      * Log2 of a card size in bytes.
@@ -182,7 +183,7 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
             FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
                             VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
-                            "card table initialization invariant violated");
+                "card table initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }
@@ -397,17 +398,20 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
         return cardTableMemory;
     }
 
+    private void updateForFreeSpace(Address start, Address end) {
+        // Note: this doesn't invalid subsequent entries of the FOT table.
+        cfoTable.set(start, end);
+        // Clean cards that are completely overlapped by the free space only.
+        cardTable.setCardsInRange(start, end, CardState.CLEAN_CARD);
+    }
+
     /**
      * Update the remembered set to take into account the newly freed space.
      * @param start address to the first word of the freed chunk
      * @param size size of the freed chunk
      */
     public void updateForFreeSpace(Address start, Size size) {
-        final Address end = start.plus(size);
-        // Note: this doesn't invalid subsequent entries of the FOT table.
-        cfoTable.set(start, end);
-        // Clean cards that are completely overlapped by the free space only.
-        cardTable.setCardsInRange(start, end, CardState.CLEAN_CARD);
+        updateForFreeSpace(start,  start.plus(size));
     }
 
     public static Address alignUpToCard(Address coveredAddress) {
@@ -418,32 +422,40 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
         return coveredAddress.and(CARD_ADDRESS_MASK);
     }
 
-    @Override
-    public void notifyCoaslescing(Address deadSpace, Size numDeadBytes) {
-        // Allocation may occur while iterating over dirty cards to evacuate young objects. Such allocations may temporarily invalidate
-        // the FOT for cards overlapping with the allocator, and may break the ability to walk over these cards.
-        // One solution is keep the FOT up to date at every allocation, which may be expensive.
-        // Another solution is to make the last card of free chunk used by allocator independent of most allocation activity.
-        // The last card is the only one that may be dirtied, and therefore the only one that can be walked over during evacuation.
-        //
-        // Let s and e be the start and end of a free chunk.
-        // Let c be the top-most card address such that c >= e, and C be the card starting at c, with FOT(C) denoting the entry
-        // of the FOT for card C.
-        // If e == c,  whatever objects are allocated between s and e, FOT(C) == 0, i.e., allocations never invalidate FOT(C).
-        // Thus C is iterable at all time by a dirty card walker.
-        //
-        // If e > c, then FOT(C) might be invalidated by allocation.
-        // We may avoid this by formatting the space delimited by [c,e] as a dead object embedded in the heap free chunk.
-        // This will allow FOT(C) to be zero, and not be invalidated by any allocation of space before C.
-        // Formatting [c,e] has however several corner cases:
-        // 1. [c,e] may be smaller than the minimum object size, so we can't format it.
-        // Instead, we can format [x,e], such x < e and [x,e] is the min object size. In this case, FOT(C) = x - e.
-        // [x,e] can only be overwritten by the last allocation from the buffer,
-        // so FOT(C) doesn't need to be updated until that last allocation,
-        // which is always special cased (see why below).
-        // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C
-        // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
-        // always set the FOT table for the newly allocated cells. Since this one always
+    // Allocation may occur while iterating over dirty cards to evacuate young objects. Such allocations may temporarily invalidate
+    // the FOT for cards overlapping with the allocator, and may break the ability to walk over these cards.
+    // One solution is keep all the FOT entries covering the allocation space up to date at every allocation.
+    // Every time an allocation occurs it splits the allocation space in two. Each side forms a new cell for which FOT entries need to be
+    // updated.
+    //
+    // Another solution is to make the last card of the free chunk used by the allocator independent of FOT updates required by the split.
+    // The last card is the only one that may be dirtied, and therefore the only one that can be walked over during evacuation.
+    //
+    // Let s and e be the start and end of a free chunk.
+    // Let c be the top-most card address such that c >= e, and C be the card starting at c, with FOT(C) denoting the entry
+    // of the FOT for card C.
+    // If e == c,  whatever objects are allocated between s and e, FOT(C) == 0, i.e., allocations never invalidate FOT(C).
+    // Thus C is iterable at all time by a dirty card walker.
+    //
+    // If e > c, then FOT(C) might be invalidated by allocation.
+    // We may avoid this by formatting the space delimited by [c,e] as a dead object embedded in the heap free chunk.
+    // This will allow FOT(C) to be zero, and not be invalidated by any allocation of space before C.
+    // Formatting [c,e] has however several corner cases:
+    // 1. [c,e] may be smaller than the minimum object size, so we can't format it.
+    // Instead, we can format [x,e], such x < e and [x,e] is the min object size. In this case, FOT(C) = x - e.
+    // [x,e] can only be overwritten by the last allocation from the buffer,
+    // so FOT(C) doesn't need to be updated until that last allocation,
+    // which is always special cased (see why below).
+    // 2. s + sizeof(free chunk header) > c, i.e., the head of the free space chunk overlap C.
+    // Don't reformat the heap chunk. FOT(C) will be updated correctly since the allocator
+    // always set the FOT table for the newly allocated cells.
+    //
+    // This function decide whether the last card of the dead space need to be split and formatted as a
+    // dead objects at card boundary to avoid updating the FOT entries covering the right-hand side of an allocation split.
+    // If it return Address.zero() then the chunks remains as a single object, otherwise, it's tail was reformated as a dead object
+    // and the FOT must be updated accordingly.
+    // In both case, subsequent split event on this dead space only need to update the left-hand side of the allocation split (using the set() method).
+    private Address splitLastCard(Address deadSpace, Size numDeadBytes) {
         if (numDeadBytes.greaterEqual(CARD_SIZE)) {
             final Pointer end = deadSpace.plus(numDeadBytes).asPointer();
             final Address lastCardStart = alignDownToCard(end);
@@ -457,28 +469,91 @@ public class CardTableRSet extends DeadSpaceListener implements HeapManagementMe
                     deadObjectAddress = end.minus(deadObjectSize);
                 }
                 if (MaxineVM.isDebug() && CardFirstObjectTable.TraceFOT) {
-                    Log.print("Update Card Table for reclaimed range [");
+                    Log.print("Split last card of Dead Space [");
                     Log.print(deadSpace); Log.print(", ");
                     Log.print(end);
-                    Log.print("] / tail dead object at ");
+                    Log.print("] @ ");
                     Log.print(deadObjectAddress);
                     Log.print(" card # ");
                     Log.println(cardTable.tableEntryIndex(deadObjectAddress));
                 }
                 HeapSchemeAdaptor.fillWithDeadObject(deadObjectAddress, end);
-                updateForFreeSpace(deadSpace, deadObjectAddress.minus(deadSpace).asSize());
-                updateForFreeSpace(deadObjectAddress, deadObjectSize);
-                return;
+                return deadObjectAddress;
             }
         }
-        // Otherwise, the free chunk is either smaller than a card, or it is smaller than two cards and its header spawn the two cards.
-        updateForFreeSpace(deadSpace, numDeadBytes);
+        return Address.zero();
     }
 
+    /**
+     * Prepare an contiguous range of heap space to be used for allocation (i.e., split live operations).
+     * See comments for {@link #splitLastCard(Address, Size)}.
+     *
+     * @param deadSpace address to the first byte of the dead space
+     * @param numDeadBytes number of bytes
+     */
+    private void prepareForSplitLive(Address deadSpace, Size numDeadBytes) {
+        // Same as above, except that the dead space may need reformatted similar to coalescing.
+        final Address deadObjectAddress = splitLastCard(deadSpace, numDeadBytes);
+        if (deadObjectAddress.isNotZero()) {
+            cfoTable.set(deadSpace, deadObjectAddress);
+            cfoTable.set(deadObjectAddress, deadSpace.plus(numDeadBytes));
+        } else {
+            // Otherwise, the free chunk is either smaller than a card, or it is smaller than two cards and its header spawn the two cards.
+            cfoTable.set(deadSpace, numDeadBytes);
+        }
+    }
+
+    @INLINE
     @Override
-    public void notifySplit(Address start, Address end, Size leftSize) {
-        // splitting dead space. No need to update card table: the original coalescing should have cleared all cards
-        // that overlap completely with the dead space. Others should be touched.
-        cfoTable.split(start, start.plus(leftSize), end);
+    public void notifyCoalescing(Address deadSpace, Size numDeadBytes) {
+        final Address deadObjectAddress = splitLastCard(deadSpace, numDeadBytes);
+        if (deadObjectAddress.isNotZero()) {
+            updateForFreeSpace(deadSpace, deadObjectAddress);
+            updateForFreeSpace(deadObjectAddress, deadSpace.plus(numDeadBytes));
+        } else {
+            // Otherwise, the free chunk is either smaller than a card, or it is smaller than two cards and its header spawn the two cards.
+            updateForFreeSpace(deadSpace, numDeadBytes);
+        }
+    }
+
+    @INLINE
+    @Override
+    public void notifySplitLive(Address start, Size leftSize, Address end) {
+        // We only have to set the FOT for the left-hand side of the split. The right-hand side is formatted to avoid update to its FOT.
+        // See notifyCoalescing and notifyRetireFreeSpace.
+        cfoTable.set(start, leftSize);
+    }
+
+    @INLINE
+    @Override
+    public void notifySplitDead(Address start, Size leftSize, Address end) {
+        Address splitBound = start.plus(leftSize);
+        // We need each of the split free space to be formatted as if each were just coalesced
+        prepareForSplitLive(start, leftSize);
+        prepareForSplitLive(splitBound, end.minus(splitBound).asSize());
+    }
+
+    @INLINE
+    @Override
+    public void notifyRefill(Address deadSpace, Size numDeadBytes) {
+        // We don't need to do anything as dead space are already formatted correctly during coalescing and retire events.
+    }
+
+    @INLINE
+    @Override
+    public void notifyRetireDeadSpace(Address deadSpace, Size numDeadBytes) {
+        // Retired space is unoccupied space left-over by an allocator.
+        // We only need to update the FOT table to form a single contiguous dead space.
+        // Don't reset the card table overlapping it (as is done in notifyCoalescing): cards that completely overlap with
+        // the dead space were already cleaned in the coalescing event that formed the dead space this retired dead
+        // space was originally a part of.
+        // Cards that partially overlap with live objects (i.e., at the bounds of the dead space) must be left untouched.
+        cfoTable.set(deadSpace, numDeadBytes);
+    }
+
+    @INLINE
+    @Override
+    public void notifyRetireFreeSpace(Address deadSpace, Size numDeadBytes) {
+        prepareForSplitLive(deadSpace, numDeadBytes);
     }
 }

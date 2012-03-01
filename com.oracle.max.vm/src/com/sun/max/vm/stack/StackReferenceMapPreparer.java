@@ -1075,16 +1075,16 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
 // START GENERATED CODE
     private static abstract class StackRootScanLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Receiver, Start, EmptyMap,
-            Complete, Parameter, Safepoint, PrintRef,
-            Prepare, StartThreadLocals, ScanThread, ReferenceThreadLocal,
-            ThreadSlotRange, RegisterState, StackSlot, ClearedRefMapIndexes,
-            FinalizeMaps, MapByteBefore, SetReferenceMapBits;
+            ClearedRefMapIndexes, Complete, EmptyMap,
+            FinalizeMaps, MapByteBefore, Parameter, Prepare,
+            PrintRef, Receiver, ReferenceThreadLocal, RegisterState,
+            Safepoint, ScanThread, SetReferenceMapBits, StackSlot,
+            Start, StartThreadLocals, ThreadSlotRange;
 
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x4, 0x0, 0x18, 0x0, 0x0, 0x0, 0x3, 0x12, 0x0, 0x0, 0x3, 0x20, 0x1, 0x0, 0x1, 0x2, 0x0, 0x0};
+        private static final int[] REFMAPS = new int[] {0x0, 0x0, 0x0, 0x2, 0x4, 0x2, 0x12, 0x0, 0x1, 0x18, 0x1, 0x3, 0x0, 0x20, 0x0, 0x0, 0x0, 0x0};
 
         protected StackRootScanLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1096,25 +1096,10 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         }
 
         @INLINE
-        public final void logReceiver(TypeDescriptor receiver) {
-            log(Operation.Receiver.ordinal(), objectArg(receiver));
+        public final void logClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex) {
+            log(Operation.ClearedRefMapIndexes.ordinal(), intArg(lowestBitIndex), intArg(highestBitIndex));
         }
-        protected abstract void traceReceiver(TypeDescriptor receiver);
-
-        @INLINE
-        public final void logStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
-                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex) {
-            log(Operation.Start.ordinal(), intArg(count), booleanArg(prepare), stackPointer, highestStackSlot, lowestStackSlot,
-                vmThreadArg(vmThread), intArg(highestStackSlotReferenceMapBitIndex), longArg(stackAndLowestStackSlotReferenceMapBitIndex));
-        }
-        protected abstract void traceStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
-                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex);
-
-        @INLINE
-        public final void logEmptyMap(VmThread vmThread) {
-            log(Operation.EmptyMap.ordinal(), vmThreadArg(vmThread));
-        }
-        protected abstract void traceEmptyMap(VmThread vmThread);
+        protected abstract void traceClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex);
 
         @INLINE
         public final void logComplete(VmThread vmThread, Pointer highestSlot, int highestSlotBitIndex, Pointer stackPointer, int stackPointerBitIndex,
@@ -1126,73 +1111,10 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
                 Pointer lowestSlot, int lowestSlotBitIndex);
 
         @INLINE
-        public final void logParameter(int index, TypeDescriptor parameter) {
-            log(Operation.Parameter.ordinal(), intArg(index), objectArg(parameter));
+        public final void logEmptyMap(VmThread vmThread) {
+            log(Operation.EmptyMap.ordinal(), vmThreadArg(vmThread));
         }
-        protected abstract void traceParameter(int index, TypeDescriptor parameter);
-
-        @INLINE
-        public final void logSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex) {
-            log(Operation.Safepoint.ordinal(), objectArg(helper), objectArg(interpreter), intArg(bci), intArg(safePointIndex));
-        }
-        protected abstract void traceSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex);
-
-        @INLINE
-        public final void logPrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged) {
-            log(Operation.PrintRef.ordinal(), refPointer, intArg(spOffset), refOrigin, booleanArg(isTagged));
-        }
-        protected abstract void tracePrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged);
-
-        @INLINE
-        public final void logPrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
-                int refmapFramePointerBitIndex, Pointer ttla) {
-            log(Operation.Prepare.ordinal(), booleanArg(prepare), objectArg(targetMethod), intArg(safepointIndex), refmapFramePointer, objectArg(label),
-                intArg(refmapFramePointerBitIndex), ttla);
-        }
-        protected abstract void tracePrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
-                int refmapFramePointerBitIndex, Pointer ttla);
-
-        @INLINE
-        public final void logStartThreadLocals() {
-            log(Operation.StartThreadLocals.ordinal());
-        }
-        protected abstract void traceStartThreadLocals();
-
-        @INLINE
-        public final void logScanThread(VmThread vmThread) {
-            log(Operation.ScanThread.ordinal(), vmThreadArg(vmThread));
-        }
-        protected abstract void traceScanThread(VmThread vmThread);
-
-        @INLINE
-        public final void logReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix) {
-            log(Operation.ReferenceThreadLocal.ordinal(), intArg(index), address, value, objectArg(name), objectArg(categorySuffix));
-        }
-        protected abstract void traceReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix);
-
-        @INLINE
-        public final void logThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot) {
-            log(Operation.ThreadSlotRange.ordinal(), highestSlot, lowestActiveSlot, lowestSlot);
-        }
-        protected abstract void traceThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot);
-
-        @INLINE
-        public final void logRegisterState(CiRegister reg) {
-            log(Operation.RegisterState.ordinal(), objectArg(reg));
-        }
-        protected abstract void traceRegisterState(CiRegister reg);
-
-        @INLINE
-        public final void logStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
-            log(Operation.StackSlot.ordinal(), intArg(slotIndex), tla, framePointer, booleanArg(checkTagging));
-        }
-        protected abstract void traceStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging);
-
-        @INLINE
-        public final void logClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex) {
-            log(Operation.ClearedRefMapIndexes.ordinal(), intArg(lowestBitIndex), intArg(highestBitIndex));
-        }
-        protected abstract void traceClearedRefMapIndexes(int lowestBitIndex, int highestBitIndex);
+        protected abstract void traceEmptyMap(VmThread vmThread);
 
         @INLINE
         public final void logFinalizeMaps(Interval interval, ReferenceMapEditorLogHelper helper) {
@@ -1207,6 +1129,57 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         protected abstract void traceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel);
 
         @INLINE
+        public final void logParameter(int index, TypeDescriptor parameter) {
+            log(Operation.Parameter.ordinal(), intArg(index), objectArg(parameter));
+        }
+        protected abstract void traceParameter(int index, TypeDescriptor parameter);
+
+        @INLINE
+        public final void logPrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
+                int refmapFramePointerBitIndex, Pointer ttla) {
+            log(Operation.Prepare.ordinal(), booleanArg(prepare), objectArg(targetMethod), intArg(safepointIndex), refmapFramePointer, objectArg(label),
+                intArg(refmapFramePointerBitIndex), ttla);
+        }
+        protected abstract void tracePrepare(boolean prepare, TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label,
+                int refmapFramePointerBitIndex, Pointer ttla);
+
+        @INLINE
+        public final void logPrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged) {
+            log(Operation.PrintRef.ordinal(), refPointer, intArg(spOffset), refOrigin, booleanArg(isTagged));
+        }
+        protected abstract void tracePrintRef(Pointer refPointer, int spOffset, Pointer refOrigin, boolean isTagged);
+
+        @INLINE
+        public final void logReceiver(TypeDescriptor receiver) {
+            log(Operation.Receiver.ordinal(), objectArg(receiver));
+        }
+        protected abstract void traceReceiver(TypeDescriptor receiver);
+
+        @INLINE
+        public final void logReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix) {
+            log(Operation.ReferenceThreadLocal.ordinal(), intArg(index), address, value, objectArg(name), objectArg(categorySuffix));
+        }
+        protected abstract void traceReferenceThreadLocal(int index, Pointer address, Word value, String name, String categorySuffix);
+
+        @INLINE
+        public final void logRegisterState(CiRegister reg) {
+            log(Operation.RegisterState.ordinal(), objectArg(reg));
+        }
+        protected abstract void traceRegisterState(CiRegister reg);
+
+        @INLINE
+        public final void logSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex) {
+            log(Operation.Safepoint.ordinal(), objectArg(helper), objectArg(interpreter), intArg(bci), intArg(safePointIndex));
+        }
+        protected abstract void traceSafepoint(ReferenceMapEditorLogHelper helper, ReferenceMapInterpreter interpreter, int bci, int safePointIndex);
+
+        @INLINE
+        public final void logScanThread(VmThread vmThread) {
+            log(Operation.ScanThread.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanThread(VmThread vmThread);
+
+        @INLINE
         public final void logSetReferenceMapBits(Pointer sp, Pointer fp, Pointer slotPointer, int refMapBits, int numBits,
                 String description) {
             log(Operation.SetReferenceMapBits.ordinal(), sp, fp, slotPointer, intArg(refMapBits), intArg(numBits),
@@ -1215,79 +1188,106 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         protected abstract void traceSetReferenceMapBits(Pointer sp, Pointer fp, Pointer slotPointer, int refMapBits, int numBits,
                 String description);
 
+        @INLINE
+        public final void logStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging) {
+            log(Operation.StackSlot.ordinal(), intArg(slotIndex), tla, framePointer, booleanArg(checkTagging));
+        }
+        protected abstract void traceStackSlot(int slotIndex, Pointer tla, Pointer framePointer, boolean checkTagging);
+
+        @INLINE
+        public final void logStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
+                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex) {
+            log(Operation.Start.ordinal(), intArg(count), booleanArg(prepare), stackPointer, highestStackSlot, lowestStackSlot,
+                vmThreadArg(vmThread), intArg(highestStackSlotReferenceMapBitIndex), longArg(stackAndLowestStackSlotReferenceMapBitIndex));
+        }
+        protected abstract void traceStart(int count, boolean prepare, Pointer stackPointer, Pointer highestStackSlot, Pointer lowestStackSlot,
+                VmThread vmThread, int highestStackSlotReferenceMapBitIndex, long stackAndLowestStackSlotReferenceMapBitIndex);
+
+        @INLINE
+        public final void logStartThreadLocals() {
+            log(Operation.StartThreadLocals.ordinal());
+        }
+        protected abstract void traceStartThreadLocals();
+
+        @INLINE
+        public final void logThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot) {
+            log(Operation.ThreadSlotRange.ordinal(), highestSlot, lowestActiveSlot, lowestSlot);
+        }
+        protected abstract void traceThreadSlotRange(Pointer highestSlot, Pointer lowestActiveSlot, Pointer lowestSlot);
+
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //Receiver
-                    traceReceiver(toTypeDescriptor(r, 1));
+                case 0: { //ClearedRefMapIndexes
+                    traceClearedRefMapIndexes(toInt(r, 1), toInt(r, 2));
                     break;
                 }
-                case 1: { //Start
-                    traceStart(toInt(r, 1), toBoolean(r, 2), toPointer(r, 3), toPointer(r, 4), toPointer(r, 5), toVmThread(r, 6), toInt(r, 7), toLong(r, 8));
+                case 1: { //Complete
+                    traceComplete(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3), toPointer(r, 4), toInt(r, 5), toPointer(r, 6), toInt(r, 7));
                     break;
                 }
                 case 2: { //EmptyMap
                     traceEmptyMap(toVmThread(r, 1));
                     break;
                 }
-                case 3: { //Complete
-                    traceComplete(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3), toPointer(r, 4), toInt(r, 5), toPointer(r, 6), toInt(r, 7));
-                    break;
-                }
-                case 4: { //Parameter
-                    traceParameter(toInt(r, 1), toTypeDescriptor(r, 2));
-                    break;
-                }
-                case 5: { //Safepoint
-                    traceSafepoint(toReferenceMapEditorLogHelper(r, 1), toReferenceMapInterpreter(r, 2), toInt(r, 3), toInt(r, 4));
-                    break;
-                }
-                case 6: { //PrintRef
-                    tracePrintRef(toPointer(r, 1), toInt(r, 2), toPointer(r, 3), toBoolean(r, 4));
-                    break;
-                }
-                case 7: { //Prepare
-                    tracePrepare(toBoolean(r, 1), toTargetMethod(r, 2), toInt(r, 3), toPointer(r, 4), toString(r, 5), toInt(r, 6), toPointer(r, 7));
-                    break;
-                }
-                case 8: { //StartThreadLocals
-                    traceStartThreadLocals();
-                    break;
-                }
-                case 9: { //ScanThread
-                    traceScanThread(toVmThread(r, 1));
-                    break;
-                }
-                case 10: { //ReferenceThreadLocal
-                    traceReferenceThreadLocal(toInt(r, 1), toPointer(r, 2), toWord(r, 3), toString(r, 4), toString(r, 5));
-                    break;
-                }
-                case 11: { //ThreadSlotRange
-                    traceThreadSlotRange(toPointer(r, 1), toPointer(r, 2), toPointer(r, 3));
-                    break;
-                }
-                case 12: { //RegisterState
-                    traceRegisterState(toCiRegister(r, 1));
-                    break;
-                }
-                case 13: { //StackSlot
-                    traceStackSlot(toInt(r, 1), toPointer(r, 2), toPointer(r, 3), toBoolean(r, 4));
-                    break;
-                }
-                case 14: { //ClearedRefMapIndexes
-                    traceClearedRefMapIndexes(toInt(r, 1), toInt(r, 2));
-                    break;
-                }
-                case 15: { //FinalizeMaps
+                case 3: { //FinalizeMaps
                     traceFinalizeMaps(toInterval(r, 1), toReferenceMapEditorLogHelper(r, 2));
                     break;
                 }
-                case 16: { //MapByteBefore
+                case 4: { //MapByteBefore
                     traceMapByteBefore(toInt(r, 1), toByte(r, 2), toString(r, 3));
                     break;
                 }
-                case 17: { //SetReferenceMapBits
+                case 5: { //Parameter
+                    traceParameter(toInt(r, 1), toTypeDescriptor(r, 2));
+                    break;
+                }
+                case 6: { //Prepare
+                    tracePrepare(toBoolean(r, 1), toTargetMethod(r, 2), toInt(r, 3), toPointer(r, 4), toString(r, 5), toInt(r, 6), toPointer(r, 7));
+                    break;
+                }
+                case 7: { //PrintRef
+                    tracePrintRef(toPointer(r, 1), toInt(r, 2), toPointer(r, 3), toBoolean(r, 4));
+                    break;
+                }
+                case 8: { //Receiver
+                    traceReceiver(toTypeDescriptor(r, 1));
+                    break;
+                }
+                case 9: { //ReferenceThreadLocal
+                    traceReferenceThreadLocal(toInt(r, 1), toPointer(r, 2), toWord(r, 3), toString(r, 4), toString(r, 5));
+                    break;
+                }
+                case 10: { //RegisterState
+                    traceRegisterState(toCiRegister(r, 1));
+                    break;
+                }
+                case 11: { //Safepoint
+                    traceSafepoint(toReferenceMapEditorLogHelper(r, 1), toReferenceMapInterpreter(r, 2), toInt(r, 3), toInt(r, 4));
+                    break;
+                }
+                case 12: { //ScanThread
+                    traceScanThread(toVmThread(r, 1));
+                    break;
+                }
+                case 13: { //SetReferenceMapBits
                     traceSetReferenceMapBits(toPointer(r, 1), toPointer(r, 2), toPointer(r, 3), toInt(r, 4), toInt(r, 5), toString(r, 6));
+                    break;
+                }
+                case 14: { //StackSlot
+                    traceStackSlot(toInt(r, 1), toPointer(r, 2), toPointer(r, 3), toBoolean(r, 4));
+                    break;
+                }
+                case 15: { //Start
+                    traceStart(toInt(r, 1), toBoolean(r, 2), toPointer(r, 3), toPointer(r, 4), toPointer(r, 5), toVmThread(r, 6), toInt(r, 7), toLong(r, 8));
+                    break;
+                }
+                case 16: { //StartThreadLocals
+                    traceStartThreadLocals();
+                    break;
+                }
+                case 17: { //ThreadSlotRange
+                    traceThreadSlotRange(toPointer(r, 1), toPointer(r, 2), toPointer(r, 3));
                     break;
                 }
             }

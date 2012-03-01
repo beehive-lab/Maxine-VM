@@ -25,10 +25,14 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Adaptor for factoring a number of common boiler plate for HeapScheme implemented with components of the gcx package.
@@ -103,7 +107,6 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            BaseAtomicBumpPointerAllocator.hostInitialize();
             if (MaxineVM.isDebug()) {
                 AtomicPinCounter.hostInitialize();
             }
@@ -166,21 +169,140 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         }
     }
 
-    // Logging support TODO
+    // TODO These are just placeholders that implement the minimum defined functionality
+    // required by HeapScheme
     // Located here for inheritance by sub schemes.
 
     @Override
     public TimeLogger timeLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        return timeLogger;
     }
 
     @Override
     public PhaseLogger phaseLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        return phaseLogger;
     }
 
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.PhaseLogger.class)
+    private interface PhaseLoggerInterface {
+        void scanningThreadRoots(@VMLogParam(name = "vmThread") VmThread vmThread);
+    }
+
+    static final PhaseLogger phaseLogger = new PhaseLogger();
+
+    public static final class PhaseLogger extends PhaseLoggerAuto {
+
+        PhaseLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceScanningThreadRoots(VmThread vmThread) {
+            Log.print("Scanning thread local and stack roots for thread ");
+            Log.printThread(vmThread, true);
+        }
+    }
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(parent = HeapScheme.TimeLogger.class)
+    private interface TimeLoggerInterface {
+        void stackReferenceMapPreparationTime(
+            @VMLogParam(name = "stackReferenceMapPreparationTime") long stackReferenceMapPreparationTime);
+    }
+
+    private static final TimeLogger timeLogger = new TimeLogger();
+
+    public static final class TimeLogger extends TimeLoggerAuto {
+        private static final String HZ_SUFFIX = TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK);
+        private static final String TIMINGS_LEAD = "Timings (" + HZ_SUFFIX + ") for ";
+
+        TimeLogger() {
+            super(null, null);
+        }
+
+        @Override
+        protected void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            Log.print("Stack reference map preparation time: ");
+            Log.print(stackReferenceMapPreparationTime);
+            Log.println(HZ_SUFFIX);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class PhaseLoggerAuto extends com.sun.max.vm.heap.HeapScheme.PhaseLogger {
+        public enum Operation {
+            ScanningThreadRoots;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected PhaseLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @Override
+        @INLINE
+        public final void logScanningThreadRoots(VmThread vmThread) {
+            log(Operation.ScanningThreadRoots.ordinal(), vmThreadArg(vmThread));
+        }
+        protected abstract void traceScanningThreadRoots(VmThread vmThread);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //ScanningThreadRoots
+                    traceScanningThreadRoots(toVmThread(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static abstract class TimeLoggerAuto extends com.sun.max.vm.heap.HeapScheme.TimeLogger {
+        public enum Operation {
+            StackReferenceMapPreparationTime;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected TimeLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @Override
+        @INLINE
+        public final void logStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime) {
+            log(Operation.StackReferenceMapPreparationTime.ordinal(), longArg(stackReferenceMapPreparationTime));
+        }
+        protected abstract void traceStackReferenceMapPreparationTime(long stackReferenceMapPreparationTime);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //StackReferenceMapPreparationTime
+                    traceStackReferenceMapPreparationTime(toLong(r, 1));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 
 
 }
