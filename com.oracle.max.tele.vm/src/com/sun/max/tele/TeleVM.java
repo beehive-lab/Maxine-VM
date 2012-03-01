@@ -841,6 +841,10 @@ public abstract class TeleVM implements MaxVM {
      * be achieved.
      * <p>
      * Some lazy initialization is done, in order to avoid cycles during startup.
+     * <p>
+     * Note that gathering of thread information happens <em>after</em> this during
+     * the normal refresh cycle.  See {@link TeleProcess}.
+     *
      * @param epoch the number of times the process has run so far
      * @throws TeleError if unable to acquire the VM lock
      * @see #lock
@@ -858,6 +862,7 @@ public abstract class TeleVM implements MaxVM {
                  * This depends on the {@link VmHeapAccess} already existing.
                  */
                 classAccess = VmClassAccess.make(this, epoch);
+
                 /**
                  *  Can only fully initialize the {@link VmHeapAccess} once
                  *  the {@link VmClassAccess} is fully created, otherwise there's a cycle.
@@ -870,7 +875,7 @@ public abstract class TeleVM implements MaxVM {
 
                 nativeCodeAccess = new NativeCodeAccess(this);
 
-
+                // Locate the root object in the VM that holds the VM's configuration.
                 teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
                 teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
 
@@ -891,11 +896,40 @@ public abstract class TeleVM implements MaxVM {
             }
 
             // The standard update cycle follows; it is sensitive to ordering.
+            // The general ordering is:
+            // 1. Identify any new memory locations that can hold objects and/or code
+            // 2. Update any existing remote object references or code pointers, based
+            //    on the state of the manager for each region.  As much as possible, this
+            //    should be independent of object state, since that hasn't been updated yet.
+            //    In cases where there are dependencies, steps must be taken to avoid
+            //    circularities:  (a) have the state be static in the boot heap, (b) have
+            //    the state be in some other non-managed heap, (c) force any depended-upon
+            //    objects to refresh before depending on their state.
+            // 3. Update information about classes loaded since the previous refresh; this
+            //    will be needed to model correctly any newly allocated objects or references
+            //    of the newly-loaded types.
+            // 4. Update the status, including any cached information, concerning every
+            //    remote heap object. Remote object state can depend on just about everything else,
+            //    especially the location and status of every allocated memory region, their
+            //    management(GC) status, and any remote object references that point into those
+            //    regions.
+            // 5. Update the status of remote code pointers and remote object references that
+            //    point at objects in code cache memory.
 
-            // Update status of the heap, including GC status and any new allocations.
+            // Update status of the heap:  any new heap allocations, the management (GC) status
+            // of each region, and updating any references whose state may have changed.
             heapAccess.updateMemoryStatus(epoch);
 
-            // Update the general status of the code cache, including eviction status and any new allocations.
+            // Update the general status of the code cache, including eviction status and any new
+            // allocations.  This also includes updating existing remote object references that
+            // point into any code cache that is managed.  This latter requirement creates a
+            // circularity, since some remote object references depend on the status of objects
+            // (TeleTargetMethod)s in the dynamic heap, which will not have been refreshed yet.
+            // This is resolved by having any such update to a reference first force an explicit
+            // object refresh on any TaleTargetMethod whose state matters.  That refresh, in turn,
+            // depends on the reference to that TeleTargetMethod having been updated.  That creates
+            // the requirement that references in the dynamic heap be updated before any references
+            // that might be in the code cache, i.e. why this update follows the heap update.
             codeCacheAccess.updateMemoryStatus(epoch);
 
             // Update the general status of any native, dynamically loaded libraries in the address space
@@ -904,13 +938,16 @@ public abstract class TeleVM implements MaxVM {
             // Update registry of loaded classes, so we can understand object types
             classAccess.updateCache(epoch);
 
-            // Update every local surrogate for a VM object
+            // Update every local surrogate for a VM object.
+            // All these updates depend on remote object references, all of which must have been
+            // refreshed earlier.
             objectAccess.updateCache(epoch);
 
             // Detailed update of the contents of every code cache region, as well as information about native code.
             machineCodeAccess.updateCache(epoch);
 
             // Check the status of breakpoints, for example if any are set in recently evicted compilations.
+            // This requires that the status of any managed code cache has already been updated.
             breakpointManager.updateCache(epoch);
 
             // At this point in the refresh cycle, we should be current with every VM-allocated memory region.

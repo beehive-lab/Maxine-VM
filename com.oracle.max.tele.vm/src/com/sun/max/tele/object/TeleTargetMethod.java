@@ -397,6 +397,11 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
      * permanently unused by the VM.
      */
     public boolean isCodeEvicted() {
+        // If the code has been evicted, the first evidence we might see of it could be
+        // that the TargetMethod has been collected.  That is sufficient evidence that
+        // the code has been evicted, because we assume that code cache region implementations
+        // keep a list of all currently allocated TargetMethods, and will release that list
+        // only upon eviction.
         return status().isDead() || isCodeEvicted;
     }
 

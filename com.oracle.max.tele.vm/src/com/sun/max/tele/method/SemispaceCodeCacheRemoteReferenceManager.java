@@ -59,7 +59,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     /**
      * The code cache region whose objects are being managed.
      */
-    private final VmCodeCacheRegion codeCacheRegion;
+    private final VmSemiSpaceCodeCacheRegion semispaceCodeCacheRegion;
 
     /**
      * The status of the region with respect to object management.
@@ -79,9 +79,9 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     /**
      * Creates a manager for objects allocated in a {@link SemiSpaceCodeRegion}.
      */
-    public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
+    public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmSemiSpaceCodeCacheRegion semispaceCodeCacheRegion) {
         super(vm);
-        this.codeCacheRegion = codeCacheRegion;
+        this.semispaceCodeCacheRegion = semispaceCodeCacheRegion;
         this.heapPhase = HeapPhase.ALLOCATING;
         // Create a separate map for references of each kind
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
@@ -102,8 +102,8 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      */
     @Override
     public boolean isObjectOrigin(Address origin) throws TeleError {
-        TeleError.check(codeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
-        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
+        TeleError.check(semispaceCodeCacheRegion.memoryRegion().contains(origin), "Location is outside region");
+        final TeleCompilation compilation = semispaceCodeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {
@@ -130,9 +130,9 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     @Override
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
-        TeleError.check(codeCacheRegion.contains(origin));
+        TeleError.check(semispaceCodeCacheRegion.contains(origin));
         // Locate the compilation, if any, whose code cache allocation in VM memory includes the address
-        final TeleCompilation compilation = codeCacheRegion.findCompilation(origin);
+        final TeleCompilation compilation = semispaceCodeCacheRegion.findCompilation(origin);
         if (compilation != null) {
             final TeleTargetMethod teleTargetMethod = compilation.teleTargetMethod();
             if (teleTargetMethod != null) {
@@ -176,7 +176,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
-        printStream.println(indentation + "Object holding region: " + codeCacheRegion.entityName());
+        printStream.println(indentation + "Object holding region: " + semispaceCodeCacheRegion.entityName());
         final NumberFormat formatter = NumberFormat.getInstance();
         final StringBuilder sb2 = new StringBuilder();
         final int activeReferenceCount = activeReferenceCount();
@@ -209,25 +209,42 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
 
     /**
-     * A remote object reference constrained to point only at data stored in object format in a region
-     * of code cache.  In particular, it may point only at one of the three possible data arrays pointed
-     * at by an instance of {@link TargetMethod} in the VM.
+     * A remote object reference constrained to point only at data stored in object format in a region of code cache. In
+     * particular, it may point only at one of the three possible data arrays pointed at by an instance of
+     * {@link TargetMethod} in the VM.
      * <p>
-     * The current code eviction algorithm marks the three fields that may contain references to data
-     * arrays when the method is evicted; it does so by assigning to them a sentinel reference to
-     * an empty array that lives in the boot heap.
+     * The current code eviction algorithm marks the three fields that may contain references to data arrays when the
+     * method is evicted; it does so by assigning to them a sentinel reference to an empty array that lives in the boot
+     * heap.
      *
      * @see TargetMethod
      * @see CodeEviction
      */
     private final class SemispaceCodeCacheRemoteReference extends AbstractCodeCacheRemoteReference {
 
-        private Address lastValidOrigin = Address.zero();
+        private final CodeCacheReferenceKind kind;
+        private Address origin = Address.zero();
+        private ObjectStatus status = ObjectStatus.LIVE;
 
         public SemispaceCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
-            super(vm, teleTargetMethod, kind);
+            super(vm, teleTargetMethod);
+            this.origin = teleTargetMethod.codeCacheObjectOrigin(kind);
+            this.kind = kind;
         }
 
+        @Override
+        public ObjectStatus status() {
+            // References to objects in the code cache are treated for now as either
+            // LIVE or DEAD.
+            if (status.isLive() && teleTargetMethod().isCodeEvicted()) {
+                status = ObjectStatus.DEAD;
+            }
+            return status;
+        }
+
+        // TODO (mlvdv) we actually need only check the origin if we can determine that there has
+        // been an eviction since the last time we checked (once we have a non-zero origin in the first
+        // place. Access to that information hasn't been arranged yet.
         /**
          * {@inheritDoc}
          * <p>
@@ -235,19 +252,23 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
          * when the method's code is <em>wiped</em> during eviction.
          */
         @Override
-        public Address raw() {
-            if (status().isLive()) {
-                lastValidOrigin = super.raw();
+        public Address origin() {
+            if (status().isDead()) {
+                return Address.zero();
             }
-            return lastValidOrigin;
+            origin = teleTargetMethod().codeCacheObjectOrigin(kind);
+            return origin;
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Return the actual origin of the array in the code cache, even after it has been reassigned
+         * when the method's code is <em>wiped</em> during eviction.
+         */
         @Override
-        public ObjectStatus status() {
-            // Don't look at the memory status of the teleTargetMethod; that refers to the
-            // TargetMethod object, not to the objects stored in the code cache, which is
-            // what we're dealing with here.
-            return teleTargetMethod().isCodeEvicted() ? ObjectStatus.DEAD : ObjectStatus.LIVE;
+        public Address lastValidOrigin() {
+            return origin;
         }
 
     }

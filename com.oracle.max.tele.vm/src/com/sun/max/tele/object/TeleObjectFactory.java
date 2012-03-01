@@ -325,7 +325,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         }
         if (remoteRef.status().isDead()) {
             // TODO (mlvdv) This should probably be an error when it all shakes out
-               TeleWarning.message("Attempt to create TeleObject with a DEAD Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
+            TeleWarning.message("Attempt to create TeleObject with a DEAD Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
         }
         // The reference might be LIVE, UNKNOWN, or FORWARDED; we only need to handle the FORWARDED case specially here.
 
@@ -362,8 +362,9 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             Address hubAddress;
 
             if (remoteRef.status().isForwarded()) {
-                  TeleError.unexpected("Trying to create a TeleObject for a forwarded object");
-                  hubAddress = null;
+                // TODO (mlvdv)  figure out what's needed and fix
+                TeleError.unexpected("Trying to create a TeleObject for a forwarded object @" + remoteRef.origin().to0xHexString());
+                hubAddress = null;
             } else {
                 // If the location in fact points to a well-formed object in the VM, we will be able to determine the
                 // meta-information necessary to understanding how to access information in the object.

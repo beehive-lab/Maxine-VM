@@ -64,11 +64,22 @@ public abstract class RemoteReference extends Reference {
         return refOID;
     }
 
-    public abstract Address raw();
+    /**
+     * @return the current, absolute {@linkplain Address origin} of the object pointed to in VM
+     * memory; {@link Address#zero()} if the object is {@linkplain ObjectStatus#DEAD DEAD}.
+     */
+    public abstract Address origin();
 
     /**
-     * @return is the reference a special temporary {@link ObjectStatus#DEAD} reference that should not be allowed to persist
-     * past any VM execution?
+     * @return the last, non-zero absolute {@linkplain Address origin} of the object
+     * originally pointed to in VM memory.  As long as the reference is not
+     * {@linkplain ObjectStatus#DEAD DEAD}, this is equivalent to {@link #origin()}.
+     */
+    public abstract Address lastValidOrigin();
+
+    /**
+     * @return is the reference a special temporary {@link ObjectStatus#DEAD} reference that should not be allowed to
+     *         persist past any VM execution?
      */
     public boolean isTemporary() {
         return false;
@@ -76,7 +87,7 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * @return is the reference a special temporary {@link ObjectStatus#LIVE} reference that appears to refer to an
-     * object that is not in any known VM memory region?
+     *         object that is not in any known VM memory region?
      */
     public boolean isProvisional() {
         return false;

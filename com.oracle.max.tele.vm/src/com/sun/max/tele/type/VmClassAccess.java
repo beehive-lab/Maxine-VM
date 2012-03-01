@@ -360,13 +360,14 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @throws TeleError if a classfile copied from the VM is cannot be loaded
      */
     public ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
-        if (classActorReference.toOrigin().toLong() == 0x1025ca360L) {
-               System.out.println("here");
-        }
         referenceManager().checkReference(classActorReference);
         final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
         referenceManager().checkReference(utf8ConstantReference);
         final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
+        if (stringReference.isZero()) {
+            // TODO (mlvdv) call this an error for now; should perhaps be a silent failure eventually.
+            TeleError.unexpected("ClassActor.makeClassActor(" + classActorReference.toOrigin().to0xHexString() + ": string Reference=zero");
+        }
         final String name = vm().getString(stringReference);
         try {
             return makeClassActor(name);

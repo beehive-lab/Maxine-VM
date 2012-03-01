@@ -81,15 +81,14 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
     }
 
     /**
-     * A local object wrapped into a {@link Remote Reference}, allowing it
-     * to stand in for an object in the VM, for example by the
-     * remote interpreter.
+     * A local object wrapped into a {@link Remote Reference}, allowing it to stand in for an object in the VM, for
+     * example by the remote interpreter.
      * <p>
      * The memory status is permanently {@link ObjectStatus#LIVE}.
      *
      * @see {@link TeleInterpreter}
      */
-    public class LocalObjectRemoteReference extends RemoteReference {
+    public final class LocalObjectRemoteReference extends RemoteReference {
 
         private final Object object;
 
@@ -103,7 +102,12 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public Address raw() {
+        public Address origin() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Address lastValidOrigin() {
             throw new UnsupportedOperationException();
         }
 

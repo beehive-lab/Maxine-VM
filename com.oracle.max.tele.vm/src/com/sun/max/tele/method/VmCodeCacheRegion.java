@@ -212,8 +212,8 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
         // Line 4
         codePointerManager().printSessionStats(printStream, indent + 4, verbose);
         // Line 5
-            // objectReferenceManager().printSessionStats(printStream, indent + 4, verbose);
-  }
+        // Was objectReferenceManager().printSessionStats(printStream, indent + 4, verbose);
+    }
 
     @Override
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {

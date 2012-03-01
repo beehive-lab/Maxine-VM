@@ -364,7 +364,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
             }
 
             for (SemiSpaceRemoteReference collectedReference : collectedReferences) {
-                collectedReference.markedDead = true;
+                collectedReference.status = DEAD;
                 assert originToReference.remove(collectedReference.origin.toLong()) != null;
             }
 
@@ -390,7 +390,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
 
         for (WeakReference<SemiSpaceRemoteReference> weakRef : originToReference.values()) {
             final SemiSpaceRemoteReference remoteReference = weakRef.get();
-            if (remoteReference != null && region.contains(remoteReference.raw())) {
+            if (remoteReference != null && region.contains(remoteReference.origin())) {
                 totalRefs++;
                 switch(remoteReference.status()) {
                     case LIVE:
@@ -403,7 +403,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                         forwardedRefs++;
                         break;
                     case DEAD:
-                          System.out.println("DEAD Ref=" + remoteReference.raw().to0xHexString());
                         deadRefs++;
                         break;
                 }
@@ -524,9 +523,9 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 if (weakRef != null) {
                     final SemiSpaceRemoteReference remoteReference = weakRef.get();
                     if (remoteReference != null) {
-                        if (toSpaceMemoryRegion.contains(remoteReference.raw())) {
+                        if (toSpaceMemoryRegion.contains(remoteReference.origin())) {
                             toSpaceRefs++;
-                        } else if (fromSpaceMemoryRegion.contains(remoteReference.raw())) {
+                        } else if (fromSpaceMemoryRegion.contains(remoteReference.origin())) {
                             fromSpaceRefs++;
                         }
                     }
@@ -568,7 +567,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
     private class SemiSpaceRemoteReference extends RemoteReference {
 
         private Address origin;
-        private boolean markedDead = false;
+        private ObjectStatus status = LIVE;
 
         protected SemiSpaceRemoteReference(TeleVM vm, Address origin) {
             super(vm);
@@ -577,24 +576,31 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
         }
 
         @Override
-        public Address raw() {
+        public Address origin() {
+            return status.isDead() ? Address.zero() : origin;
+        }
+
+        @Override
+        public Address lastValidOrigin() {
             return origin;
         }
 
         @Override
         public ObjectStatus status() {
-            if (markedDead) {
-                return DEAD;
-            } else if (toSpaceMemoryRegion.containsInAllocated(origin)) {
-                // Allocated objects in To-Space are LIVE, no matter what phase
-                return LIVE;
-            } else if (phase().isAnalyzing() && fromSpaceMemoryRegion.containsInAllocated(origin)) {
-                // During analysis, allocated objects in From-Space are FORWARDED if already discovered
-                // to be reachable, otherwise UNKNOWN.
-                return hasForwardPointer(origin) ? FORWARDED : UNKNOWN;
+            if (status.isNotDead()) {
+                if (toSpaceMemoryRegion.containsInAllocated(origin)) {
+                    // Allocated objects in To-Space are LIVE, no matter what phase
+                    status = LIVE;
+                } else if (phase().isAnalyzing() && fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    // During analysis, allocated objects in From-Space are FORWARDED if already discovered
+                    // to be reachable, otherwise UNKNOWN.
+                    status = hasForwardPointer(origin) ? FORWARDED : UNKNOWN;
+                } else {
+                    // Anything else is DEAD
+                    status = DEAD;
+                }
             }
-            // Anything else is DEAD
-            return DEAD;
+            return status;
         }
 
         @Override

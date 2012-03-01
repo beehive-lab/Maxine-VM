@@ -214,30 +214,49 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return remoteRef;
     }
 
-
     /**
-     * A remote object reference constrained to point only at data stored in object format in a region
-     * of code cache.  In particular, it may point only at one of the three possible data arrays pointed
-     * at by an instance of {@link TargetMethod} in the VM.
+     * A remote object reference constrained to point only at data stored in object format in an unmanaged region of
+     * code cache. In particular, it may refer only to one of the three possible data arrays pointed at by an instance
+     * of {@link TeleTargetMethod} in the VM.
      * <p>
-     * For unmanaged heaps, such data is always live by definition.
+     * Such data, by definition, never moves and is always {@linkplain ObjectStatus#LIVE LIVE}, even if/when the
+     * {@link TeleTargetMethod} responsible for it has been collected.
      *
-     * @see TargetMethod
+     * @see TeleTargetMethod
      */
     private final class UnmanagedCodeCacheRemoteReference extends AbstractCodeCacheRemoteReference {
 
+        private final CodeCacheReferenceKind kind;
+        private Address origin = Address.zero();
+
         public UnmanagedCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
-            super(vm, teleTargetMethod, kind);
+            super(vm, teleTargetMethod);
+            this.origin = teleTargetMethod.codeCacheObjectOrigin(kind);
+            this.kind = kind;
         }
 
         /**
          * {@inheritDoc}
          * <p>
-         * Objects in an unmanaged code cache region are immortal.
+         * Objects in an unmanaged code cache region are immortal; even if the
+         * {@link TeleTargetMethod} that points at them has been collected.
          */
         @Override
         public ObjectStatus status() {
             return ObjectStatus.LIVE;
+        }
+
+        @Override
+        public Address origin() {
+            if (origin.isZero() && teleTargetMethod().status().isNotDeadYet()) {
+                origin = teleTargetMethod().codeCacheObjectOrigin(kind);
+            }
+            return origin;
+        }
+
+        @Override
+        public Address lastValidOrigin() {
+            return origin;
         }
 
     }
