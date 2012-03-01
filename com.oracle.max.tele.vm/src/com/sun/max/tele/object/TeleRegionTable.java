@@ -131,4 +131,19 @@ public class TeleRegionTable extends AbstractVmHolder {
         }
         return regionTable.regionID(address);
     }
+
+    /**
+     * Return the offset from the first byte of the region pool, or Offset.allOnes() if the address is not in the region pool.
+     * @param address an address in virtual memory
+     * @return an offset in the region pool, or Offset.allOnes() if the address is not in the region pool.
+     */
+    public Offset toOffset(Address address) {
+        if (!isInitialized()) {
+            initialize();
+            if (!isInitialized()) {
+                return Offset.allOnes().asOffset();
+            }
+        }
+        return regionTable.offsetInRegionPool(address);
+    }
 }

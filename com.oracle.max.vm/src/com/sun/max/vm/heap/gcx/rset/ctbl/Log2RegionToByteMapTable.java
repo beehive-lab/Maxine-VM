@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -40,14 +41,12 @@ import com.sun.max.vm.type.*;
  */
 public class Log2RegionToByteMapTable {
     /**
-     * Offset to the {@link #table} variable. This is in order to bypass write-barrier when setting the field.
-     *
+     * Offset to the {@link #table} variable.
+     * This is primaly used to bypass write-barrier when setting the variable.
      */
-    private static int TABLE_OFFSET;
-
-    @HOSTED_ONLY
-    public static void hostInitialize() {
-        TABLE_OFFSET = ClassRegistry.findField(Log2RegionToByteMapTable.class, "table").offset();
+    @FOLD
+    public static int tableOffset() {
+        return ClassActor.fromJava(Log2RegionToByteMapTable.class).findLocalInstanceFieldActor("table").offset();
     }
 
     final int log2RangeSize;
@@ -126,7 +125,7 @@ public class Log2RegionToByteMapTable {
         assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
         final Pointer tableOrigin = Reference.fromJava(table).toOrigin();
         if (noWriteBarrier) {
-            Reference.fromJava(this).toOrigin().writeWord(TABLE_OFFSET, tableOrigin);
+            Reference.fromJava(this).toOrigin().writeWord(tableOffset(), tableOrigin);
         } else {
             this.table = table;
         }

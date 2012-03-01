@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 
@@ -35,6 +36,14 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
 
     TeleGenMSEHeapScheme(TeleVM vm) {
         super(vm);
+    }
+
+    private int cardIndex(Address address) {
+        Offset offsetInPool = teleRegionTable.toOffset(address);
+        if (offsetInPool.equals(Word.allOnes().asOffset())) {
+            return CardTableRSet.NO_CARD_INDEX;
+        }
+        return offsetInPool.asAddress().unsignedShiftedRight(CardTableRSet.LOG2_CARD_SIZE).toInt();
     }
 
     @Override
@@ -77,6 +86,23 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
             }
         }
         return origin;
+    }
+
+    class GenMSERegionInfo extends GCXHeapRegionInfo {
+
+        GenMSERegionInfo(Address address) {
+            super(address);
+        }
+
+        @Override
+        public String terseInfo() {
+            return regionID < 0 ? "-" : "region #" + regionID + " card# " + cardIndex(address);
+        }
+    }
+
+    @Override
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new GenMSERegionInfo(address);
     }
 
     public List<MaxCodeLocation> inspectableMethods() {
