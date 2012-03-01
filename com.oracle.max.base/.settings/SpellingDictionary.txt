@@ -73,10 +73,12 @@ checkcast
 checkstyle
 classfile
 classloader
+classloaders
 classpath
 clipboard
 com
 compaction
+compilee
 configurability
 deactivate
 deactivated
@@ -117,6 +119,7 @@ iconified
 idiom
 idiomatic
 iff
+immutability
 initialize
 initialized
 initializer
