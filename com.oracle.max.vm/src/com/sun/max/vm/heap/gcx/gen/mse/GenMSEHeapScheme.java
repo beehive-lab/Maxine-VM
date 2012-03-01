@@ -100,6 +100,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Card-table based remembered set for the nursery.
      */
+    @INSPECTED
     private final CardTableRSet cardTableRSet;
     /**
      * Implementation of young space evacuation. Used by minor collection operations.

@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  *
  */
 public final class CardTable extends  Log2RegionToByteMapTable {
-    CardTable() {
+    public CardTable() {
         super(CardTableRSet.LOG2_CARD_SIZE);
     }
 

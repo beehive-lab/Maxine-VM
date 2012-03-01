@@ -51,6 +51,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jni.DynamicLinker.LibInfo;
 import com.sun.max.vm.jvmti.*;
@@ -101,6 +102,8 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess BaseAtomicBumpPointerAllocator_end = new TeleInstanceWordFieldAccess(BaseAtomicBumpPointerAllocator.class, "end");
     public final TeleInstanceWordFieldAccess BaseAtomicBumpPointerAllocator_start = new TeleInstanceWordFieldAccess(BaseAtomicBumpPointerAllocator.class, "start");
     public final TeleInstanceWordFieldAccess BaseAtomicBumpPointerAllocator_top = new TeleInstanceWordFieldAccess(BaseAtomicBumpPointerAllocator.class, "top");
+    public final TeleInstanceReferenceFieldAccess CardTableRSet_cardTable = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "cardTable", CardTable.class);
+    public final TeleInstanceReferenceFieldAccess CardTableRSet_cfoTable = new TeleInstanceReferenceFieldAccess(CardTableRSet.class, "cfoTable", CardFirstObjectTable.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classfile", byte[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_componentClassActor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "componentClassActor", ClassActor.class);
@@ -140,6 +143,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");
+    public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
@@ -177,8 +181,13 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_sentinelAddress = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "sentinelAddress");
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_sentinelAsCString = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "sentinelAsCString");
     public final TeleInstanceReferenceFieldAccess LinearAllocationMemoryRegion_mark = new TeleInstanceReferenceFieldAccess(LinearAllocationMemoryRegion.class, "mark", AtomicWord.class);
+    public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaEnd = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaEnd");
+    public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaStart = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaStart");
+    public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_tableAddress = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "tableAddress");
+    public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
     public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
     public final TeleStaticIntFieldAccess MaxineVM_primordialTLBlockSize = new TeleStaticIntFieldAccess(MaxineVM.class, "primordialTLBlockSize");
+    public final TeleStaticReferenceFieldAccess MaxineVM_vm = new TeleStaticReferenceFieldAccess(MaxineVM.class, "vm", MaxineVM.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_descriptor = new TeleInstanceReferenceFieldAccess(MemberActor.class, "descriptor", Descriptor.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess MemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);
@@ -228,6 +237,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess TricolorHeapMarker_coveredAreaStart = new TeleInstanceWordFieldAccess(TricolorHeapMarker.class, "coveredAreaStart");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "string", String.class);
+    public final TeleInstanceReferenceFieldAccess VMConfiguration_heapScheme = new TeleInstanceReferenceFieldAccess(VMConfiguration.class, "heapScheme", HeapScheme.class);
     public final TeleInstanceIntFieldAccess VMLog_logEntries = new TeleInstanceIntFieldAccess(VMLog.class, "logEntries");
     public final TeleStaticReferenceFieldAccess VMLog_loggers = new TeleStaticReferenceFieldAccess(VMLog.class, "loggers", VMLogger[].class);
     public final TeleInstanceIntFieldAccess VMLog_nextId = new TeleInstanceIntFieldAccess(VMLog.class, "nextId");
