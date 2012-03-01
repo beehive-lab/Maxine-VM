@@ -87,49 +87,58 @@ public enum ObjectStatus {
     }
 
     /**
-     * Does the memory represent an object that is currently assumed
-     * to be reachable?
+     * Does the memory represent an object that is currently assumed to be reachable?
+     *
+     * @return {@code this == } {@link #LIVE}.
      */
     public boolean isLive() {
         return this == LIVE;
     }
 
     /**
-     * Does the memory represent an object that we treat provisionally
-     * as {@link #LIVE}: either {@link #LIVE}, {@link #UNKNOWN}, or {@link #FORWARDED}.
+     * Does the memory represent an object that we treat provisionally as reachable: either {@link #LIVE},
+     * {@link #UNKNOWN}, or {@link #FORWARDED}.
+     *
+     * @return {@code this != } {@link #DEAD}.
      */
     public boolean isNotDead() {
         return this != DEAD;
     }
 
     /**
-     * (During liveness analysis only) Has the formerly live object
-     * not yet been determined to be reachable?
+     * During liveness analysis only, has the formerly live object not yet been determined to be reachable?
+     * {@code false} at other times.
+     *
+     * @return {@code this == } {@link #UNKNOWN}.
      */
     public boolean isUnknown() {
         return this == UNKNOWN;
     }
 
     /**
-     * Should he object be presumed live until further notice (either
-     * live or (during liveness analysis only) not yet determined to
-     * be dead?
+     * Should he object be presumed live until further notice: either {@link #LIVE} or (during liveness analysis only)
+     * not yet determined to be {@link #DEAD}?
+     *
+     * @return {@code this == } {@link #LIVE} {@code ||} {@link #UNKNOWN}.
+     * @see Monty Python
      */
     public boolean isNotDeadYet() {
         return this == LIVE || this == UNKNOWN;
     }
 
     /**
-     * Does the memory contain a copy of an object in the VM
-     * that has been abandoned after relocation by GC.
+     * Does the memory contain a copy of an object in the VM that has been abandoned after relocation by GC.
+     *
+     * @return {@code this == } {@link #FORWARDED}.
      */
     public boolean isForwarded() {
         return this == FORWARDED;
     }
 
     /**
-     * Has the object represented by the memory been determined
-     * to be unreachable?
+     * Has the object represented by the memory been determined to be unreachable?
+     *
+     * @return {@code this == } {@link #DEAD}.
      */
     public boolean isDead() {
         return this == DEAD;
