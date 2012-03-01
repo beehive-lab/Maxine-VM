@@ -96,12 +96,14 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     /**
      * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitely by the GC.
      */
+    @INSPECTED
     public final CardTable cardTable;
 
     /**
      * The table recording the first object overlapping with every card.
      * The table is updated by allocators and free space reclamation.
      */
+    @INSPECTED
     public final CardFirstObjectTable cfoTable;
 
     /**

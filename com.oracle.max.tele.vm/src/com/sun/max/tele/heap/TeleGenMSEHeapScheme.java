@@ -27,23 +27,24 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
-import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.reference.*;
 
 
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
+    private TeleCardTableRSet teleCardTableRSet;
 
     TeleGenMSEHeapScheme(TeleVM vm) {
         super(vm);
     }
 
-    private int cardIndex(Address address) {
-        Offset offsetInPool = teleRegionTable.toOffset(address);
-        if (offsetInPool.equals(Word.allOnes().asOffset())) {
-            return CardTableRSet.NO_CARD_INDEX;
+    TeleCardTableRSet teleCardTableRSet() {
+        if (teleCardTableRSet == null) {
+            Reference cardTableRSetReference = vm().fields().GenMSEHeapScheme_cardTableRSet.readReference(toReference());
+            teleCardTableRSet = new TeleCardTableRSet(vm(), cardTableRSetReference);
         }
-        return offsetInPool.asAddress().unsignedShiftedRight(CardTableRSet.LOG2_CARD_SIZE).toInt();
+        return teleCardTableRSet;
     }
 
     @Override
@@ -89,14 +90,16 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     }
 
     class GenMSERegionInfo extends GCXHeapRegionInfo {
+        final int cardIndex;
 
         GenMSERegionInfo(Address address) {
             super(address);
+            cardIndex = teleCardTableRSet().cardIndex(address);
         }
 
         @Override
         public String terseInfo() {
-            return regionID < 0 ? "-" : "region #" + regionID + " card# " + cardIndex(address);
+            return (regionID < 0 ? "-" : "region #" + regionID) + (cardIndex < 0 ? " -" : " card# " + cardIndex);
         }
     }
 

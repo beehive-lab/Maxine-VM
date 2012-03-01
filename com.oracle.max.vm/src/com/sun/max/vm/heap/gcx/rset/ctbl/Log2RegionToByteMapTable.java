@@ -54,20 +54,24 @@ public class Log2RegionToByteMapTable {
      * Start of the contiguous range of virtual memory covered by this byte map table.
      * This address must be aligned to size of the region covered by a single byte.
      */
+    @INSPECTED
     private Address coveredAreaStart;
     /**
      * End of the contiguous range of virtual memory covered by this byte map table.
      * This address must be aligned to size of the region covered by a single byte.
     */
+    @INSPECTED
     private Address coveredAreaEnd;
 
     /**
      * Table containing a single byte of information per region.
      */
     private byte [] table;
+
     /**
      * Address of the first element of the table.
      */
+    @INSPECTED
     Pointer tableAddress;
     /**
      * Address of the first element of the table biased by the covered area start.
@@ -132,6 +136,24 @@ public class Log2RegionToByteMapTable {
         tableAddress = tableOrigin.plus(tableHeaderSize());
         biasedTableAddress = tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
         FatalError.check(this.table == table && byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
+    }
+
+    /**
+     * Inspector support.
+     *
+     * @param coveredAreaStart
+     * @param coveredAreaEnd
+     * @param tableAddress
+     */
+    @HOSTED_ONLY
+    public void initialize(Address coveredAreaStart, Address coveredAreaEnd, Address tableAddress) {
+        this.coveredAreaStart = coveredAreaStart;
+        this.coveredAreaEnd = coveredAreaEnd;
+        assert coveredAreaStart.isAligned(1 << log2RangeSize) : "start of covered area must be aligned to specified power of 2";
+        assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
+        this.tableAddress = tableAddress.asPointer();
+        biasedTableAddress = this.tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
+        FatalError.check(byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
     }
 
     /**
