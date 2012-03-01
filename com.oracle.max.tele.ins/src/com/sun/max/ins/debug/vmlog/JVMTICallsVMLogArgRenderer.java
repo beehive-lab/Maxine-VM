@@ -82,11 +82,18 @@ public class JVMTICallsVMLogArgRenderer extends VMLogArgRenderer {
                     }
                     break;
 
+                case GetArgumentsSize:
+                case GetMethodName:
+                case GetMethodDeclaringClass:
+                case GetMethodLocation:
+                case GetLineNumberTable:
+                case GetMethodModifiers:
                 case SetBreakpoint:
-                    // Checkstyle: stop
+                case ClearBreakpoint:
                     if (argNum == 2) {
+                        // methodId
+                        return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
                     }
-                    // Checkstyle: resume
                     break;
 
                 default:

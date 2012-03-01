@@ -747,7 +747,7 @@ public final class DependenciesManager {
 
         @INLINE
         public final void logInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl) {
-            log(Operation.InvalidateUCM.ordinal(), objectArg(targetMethod), classActorArg(context), objectArg(method), objectArg(impl));
+            log(Operation.InvalidateUCM.ordinal(), objectArg(targetMethod), classActorArg(context), methodActorArg(method), methodActorArg(impl));
         }
         protected abstract void traceInvalidateUCM(TargetMethod targetMethod, ClassActor context, MethodActor method, MethodActor impl);
 

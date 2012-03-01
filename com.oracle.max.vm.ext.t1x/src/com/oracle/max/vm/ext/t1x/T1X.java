@@ -199,12 +199,7 @@ public class T1X implements RuntimeCompiler {
         // causing runaway recursion.
         ClassActor holder = methodActor.holder();
         boolean consider = !holder.isReflectionStub() && JVMTI.compiledCodeEventsNeeded();
-        if (!consider) {
-            return false;
-        }
-        // Nor do we instrument VM classes
-        String name = holder.packageName();
-        return !(name.startsWith("com.sun.max") || name.startsWith("com.oracle.max"));
+        return consider;
     }
 
     private static final int MIN_OPCODE_LINE_LENGTH = 100;
