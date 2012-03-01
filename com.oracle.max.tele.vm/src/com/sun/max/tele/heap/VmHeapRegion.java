@@ -141,7 +141,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
         // Line 3
         // TODO (mlvdv)  change this, since the manager can manage multiple regions.
  //       objectReferenceManager.printSessionStats(printStream, indent + 4, verbose);
-   }
+    }
 
     @Override
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {

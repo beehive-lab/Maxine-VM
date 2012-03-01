@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.heap.*;
@@ -173,13 +172,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     private final long oid;
     private TeleHub teleHub = null;
 
-    private Pointer lastValidPointer;
-
-    /**
-     * Becomes permanently {@code false} when GC has determined that the object is no longer reachable.
-     */
-    private ObjectStatus status = ObjectStatus.LIVE;
-
     /**
      * Creates a "surrogate" object that encapsulates information about an object in the VM.
      * <p>
@@ -201,11 +193,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      */
     protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
         super(vm);
+        assert reference != null;
         this.reference = (RemoteReference) reference;
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
-        lastValidPointer = Pointer.zero();
-
     }
 
     private TimedTrace tracer() {
@@ -215,31 +206,46 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return updateTracer;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <strong>Note</strong>: this update gets called automatically as part of {@link TeleObject} instance creation.
+     *
+     * @see TeleObjectFactory#make(Reference)
+     */
     public final void updateCache(long epoch) {
-        // Note that this method gets called automatically as part of instance creation
-        // in {@link TeleObjectFactory#make(Reference)}
-
         // TODO (mlvdv) restore thread-lock assertion here for all updates??
 
         final StatsPrinter statsPrinter = new StatsPrinter();
 
-        // Do some specialized tracing here, since there are subclasses that we
-        // want to contribute to the tracing statistics, and since we want to
-        // selectively trace certain subclasses.
-        tracer().begin(getObjectUpdateTraceValue(epoch));
+        if (status().isNotDead()) {
+            // Do some specialized tracing here, since there are subclasses that we
+            // want to contribute to the tracing statistics, and since we want to
+            // selectively trace certain subclasses.
+            tracer().begin(getObjectUpdateTraceValue(epoch));
 
-        if (epoch > lastUpdateEpoch) {
-            if (updateObjectCache(epoch, statsPrinter)) {
-                lastUpdateEpoch = epoch;
+            if (epoch > lastUpdateEpoch) {
+                if (updateObjectCache(epoch, statsPrinter)) {
+                    lastUpdateEpoch = epoch;
+                }
+            } else {
+                statsPrinter.addStat("Redundant update skipped");
+                Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
             }
-        } else {
-            statsPrinter.addStat("Redundant update skipped");
-            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
+            tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
         }
-        tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
-        /*
-         * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
-         */
+    }
+
+    /**
+     * Force an immediate update of any cached data if it has not yet been done during the current refresh cycle.
+     * @see #updateCache(long)
+     */
+    public final void updateCacheIfNeeded() {
+        final long currentEpoch = vm().teleProcess().epoch();
+        if (currentEpoch > lastUpdateEpoch) {
+            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + "out of order update at " + reference.origin().to0xHexString());
+        }
+        updateCache(currentEpoch);
     }
 
     /**
@@ -256,12 +262,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
-     * update statistics reporting and to handle a uniform method for avoiding redundant updates.
+     * Internal call to subclasses to update their state, wrapped in order to provide timing and update statistics
+     * reporting and for there to be a uniform bail-out if there is an update failure.
      * <p>
-     * If the object is known to be dead then the update fails immediately.
-     * <p>
-     * All subclasses should call this as super immediately and halt any update is fails.
+     * The intention is for updates to take place top-down, so every override should first call {@code super()} and then
+     * halt the update if there is an updating failure.
      *
      * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
@@ -269,18 +274,23 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * @returns whether the object's cache was successfully updated.
      */
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        if (status.isNotDead()) {
-            if (reference().readWord(0).asAddress().equals(Memory.zappedMarker())) {
-                status = ObjectStatus.DEAD;
-            } else {
-                status = reference().status();
-            }
-        }
-        return status.isNotDead();
+        return true;
     }
 
+    /**
+     * Gets the {@linkplain ObjectStatus status} of the {@link RemoteReference} held by this instance of
+     * {@link TeleObject}.
+     * <p>
+     * Note that during the normal refresh cycle, all instances of {@link RemoteReference}, including the one held here,
+     * will be updated before any instance of {@link TeleObject}. As a consequence, this method can be relied upon
+     * during the object-updating part of the refresh cycle, even if this particular instance has not yet been updated.
+     * This is important when dealing with circularities.
+     *
+     * @return the {@linkplain ObjectStatus status} of the {@link RemoteReference} held by this instance, independent of
+     *         any other state cached by this instance.
+     */
     public final ObjectStatus status() {
-        return status;
+        return reference().status();
     }
 
     // TODO (mlvdv)  REVIEW!
@@ -298,7 +308,13 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * @return canonical reference to this object in the VM
+     * Gets the reference to the object in the VM represented by this instance.  Note that
+     * in the refresh cycle, the reference will be updated before this instance is updated, so that
+     * the {@link RemoteReference#status()} can be relied upon after heap references have been
+     * updated, even if there is uncertainty whether any cached information about the object
+     * has been refreshed yet.
+     *
+     * @return canonical reference to this object in the VM, never {@code null}.
      */
     public final RemoteReference reference() {
         return reference;
@@ -367,22 +383,17 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * The current "origin" of the object in VM memory, which may change through GC as long as the object remains live.
-     * When the object is no longer live, the last live location is returned. <br>
+     * The current "origin" of the object in VM memory.
+     * <p>
      * Note that the origin is not necessarily beginning of the object's memory allocation, depending on the particular
      * object layout used.
      *
-     * @return current absolute location of the object's origin, subject to change by GC
+     * @return current absolute location of the object's origin, subject to change by GC, or
+     * {@link Address#zero()} if the object status is {@linkplain ObjectStatus#DEAD DEAD}.
      * @see GeneralLayout
-     *
      */
-    public Pointer origin() {
-        if (status().isForwarded() || status().isDead()) {
-            return lastValidPointer;
-        }
-        Pointer pointer = reference.toOrigin();
-        lastValidPointer = pointer;
-        return pointer;
+    public final Pointer origin() {
+        return reference.toOrigin();
     }
 
     /**
@@ -395,16 +406,16 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * Gets the current area of memory in which the object is stored.
      *
      * @return current memory region occupied by this object in the VM,
-     * subject to relocation by GC.
+     * subject to relocation by GC, {@code null} if object is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (status().isForwarded() || status().isDead()) {
-            // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
+        if (status().isDead()) {
+            return null;
         }
         return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
     }
 
+    // TODO (mlvdv) Review
     public final MaxMemoryRegion getForwardedMemoryRegion() {
         if (status().isForwarded()) {
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardReference().toOrigin()), objectSize());
@@ -647,11 +658,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         protected void register(TeleObject teleObject, Object object, boolean newInstance) {
             Object oldValue = teleObjectToObject.put(teleObject, object);
             int numberOfCopies = numberOfCopies();
-            if (oldValue == null && newInstance && Trace.hasLevel(1)) {
+            if (oldValue == null && newInstance && Trace.hasLevel(COPY_TRACE_VALUE)) {
                 copiesPerType.get(object.getClass()).value++;
                 totalCopies++;
                 if ((numberOfCopies % 100) == 0) {
-                     Trace.line(COPY_TRACE_VALUE, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
+                    Trace.line(COPY_TRACE_VALUE, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
                 }
             }
         }

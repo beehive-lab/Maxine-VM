@@ -45,7 +45,8 @@ import com.sun.max.vm.reference.*;
 public final class RemoteReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
     /**
-     * The default implementation of {@link Reference#zero()}.
+     * The default implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It always holds
+     * the {@linkplain Address#zero() null address} and always has status {@linkplain ObjectStatus#DEAD DEAD}.
      */
     private static class NullReference extends ConstantRemoteReference {
 
@@ -54,7 +55,7 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         }
 
         @Override
-        public ObjectStatus status() {
+        public final ObjectStatus status() {
             return ObjectStatus.DEAD;
         }
 
@@ -65,26 +66,24 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     /**
-     * An implementation of {@link Reference#zero()} that carries with it the history
-     * of why it was created:  a textual explanation, along with the location in
-     * memory where the creation of a remote reference was attempted but failed,
-     * resulting in this null reference.
+     * A specialized implementation of {@link Reference#zero()}, used as a {@code null} remote reference. It carries
+     * with it the history of why it was created: a textual explanation, along with the location in memory where the
+     * creation of a remote reference was attempted and whose failure resulted in creation of this null reference.
      */
-    private static class AnnotatedNullReference extends NullReference {
+    private static final class AnnotatedNullReference extends NullReference {
 
         private final String description;
-        private final Address failedAddress;
+        private final Address failedOrigin;
 
-        AnnotatedNullReference(TeleVM vm, String description, Address failedAddress) {
+        AnnotatedNullReference(TeleVM vm, String description, Address failedOrigin) {
             super(vm);
             this.description = description;
-            this.failedAddress = failedAddress;
+            this.failedOrigin = failedOrigin;
         }
-
 
         @Override
         public String toString() {
-            return "ZeroRef: " + description + failedAddress.to0xHexString();
+            return "ZeroRef: " + description + failedOrigin.to0xHexString();
         }
     }
 
@@ -113,22 +112,30 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
      * containing this information.
      *
      * @param description a description of what part of the system attempted the reference creation, and why it failed
-     * @param failedAddress the location in VM memory at which the reference creation was attempted
+     * @param failedOrigin the location in VM memory at which the reference creation was attempted
      * @return a null reference annotated with historical information
      */
-    public RemoteReference makeZeroReference(String description, Address failedAddress) {
-        return new AnnotatedNullReference(vm, description, failedAddress);
+    public RemoteReference makeZeroReference(String description, Address failedOrigin) {
+        return new AnnotatedNullReference(vm, description, failedOrigin);
     }
 
+    /**
+     * {@inheritDoc}
+     * Gets the origin of a {@link RemoteReference}.
+     * <p>
+     * @return the origin of an object referred to; {@link Pointer#zero()} if the
+     * reference is {@linkplain ObjectStatus#DEAD DEAD}.
+     */
     public Pointer toOrigin(Reference ref) {
-        if (isZero(ref)) {
+        final RemoteReference remoteRef = (RemoteReference) ref;
+        if (isZero(remoteRef)) {
+            // A {@link RemoteReference} with zero raw value is by definition DEAD.
             return Pointer.zero();
         }
-        if (ref instanceof LocalObjectRemoteReference) {
+        if (remoteRef instanceof LocalObjectRemoteReference) {
             throw new UnsupportedOperationException();
         }
-        final RemoteReference remoteRef = (RemoteReference) ref;
-        return remoteRef.raw().asPointer();
+        return remoteRef.origin().asPointer();
     }
 
     public Reference fromOrigin(Pointer origin) {
@@ -164,12 +171,12 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
      * We admit to multiple implementations of the zero reference
      * for debugging purposes (some may be annotated).  The
      * test for a null/zero reference is defined in terms of the
-     * actually address being stored.  No legitimate reference may
+     * actually origin being stored.  No legitimate reference may
      * have this location.
      */
     public boolean isZero(Reference ref) {
         final RemoteReference remoteRef = (RemoteReference) ref;
-        return remoteRef.raw().isZero();
+        return remoteRef.origin().isZero();
     }
 
     @INLINE

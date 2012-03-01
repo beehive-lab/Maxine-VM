@@ -90,7 +90,8 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * Gets the location of an object's origin in VM memory.
      *
      * @param reference a remote reference to a VM object
-     * @return a VM memory location that is the object's origin.
+     * @return a VM memory location that is the object's origin;
+     * {@linkplain Address#zero()} if the reference is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public Address toOrigin(Reference reference) {
         return referenceScheme.toOrigin(reference);
@@ -137,57 +138,55 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * <li>Returns {@link Reference#zero()} if the specified location is {@link Address#zero()}.</li>
      * </ol>
      *
-     * @param address a location in VM Memory
+     * @param origin a location in VM Memory
      * @return a reference
      */
-    public RemoteReference makeReference(Address address) {
-        if (address.isZero()) {
+    public RemoteReference makeReference(Address origin) {
+        if (origin.isZero()) {
             return zeroReference();
         }
         vm().lock();
         try {
-            final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(address);
+            final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
             if (maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
                 // In an object-holding region
                 final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-                final RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(address);
+                final RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
                 if (remoteReference != null) {
                     // A valid origin
                     return remoteReference;
                 } else {
                     // In an object holding region, but not an origin
-                    return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), address);
+                    return referenceScheme.makeZeroReference("Null ref: not a valid origin in " + objectHoldingRegion.entityName(), origin);
                 }
             } else if (maxMemoryRegion != null) {
                 // In a region that isn't supposed to hold objects
-                return referenceScheme.makeZeroReference("Null ref: in non-object holding region " + maxMemoryRegion.owner().entityName(), address);
+                return referenceScheme.makeZeroReference("Null ref: in non-object holding region " + maxMemoryRegion.owner().entityName(), origin);
             }
             // Not in any memory region we know about
-            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(address)) {
-                return new ProvisionalRemoteReference(vm(), address);
+            if (vm().isAttaching() && objects().isPlausibleOriginUnsafe(origin)) {
+                return new ProvisionalRemoteReference(vm(), origin);
             }
-            return referenceScheme.makeZeroReference("Null ref: in no known memory region", address);
+            return referenceScheme.makeZeroReference("Null ref: in no known memory region", origin);
         } finally {
             vm().unlock();
         }
     }
 
     /**
-     * Create a remote instance of {@link Reference} whose origin is at a given address,
-     * but without any checking that a valid object is at that address and without any
-     * support for possible relocation.
+     * Create a remote instance of {@link Reference} whose origin is at a given address, but without any checking that a
+     * valid object is at that address and without any support for possible relocation.
      * <p>
-     * <strong>Unsafe:</strong> These are not canonical and should only be used
-     * for temporary, low level access to object state.  They should not be retained across
-     * VM execution.
+     * <strong>Unsafe:</strong> These are not canonical and should only be used for temporary, low level access to
+     * object state. They should not be retained across VM execution.
      * <p>
      * The object status is permanently {@link ObjectStatus#DEAD}.
      *
-     * @param address a location in VM memory about which almost nothing is guaranteed
-     * @return the address wrapped as a remote object reference
+     * @param origin a constant location in VM memory about which almost nothing is guaranteed
+     * @return the address wrapped as a remote object reference for temporary use
      */
-    public RemoteReference makeTemporaryRemoteReference(Address address) {
-        return new TemporaryRemoteReference(vm(), address);
+    public RemoteReference makeTemporaryRemoteReference(Address origin) {
+        return new TemporaryRemoteReference(vm(), origin);
     }
 
     /**
@@ -199,11 +198,11 @@ public final class VmReferenceManager extends AbstractVmHolder {
      * <p>
      * Memory status is permanently {@link ObjectStatus#LIVE}.
      *
-     * @param address a location in an unknown region of VM memory where an object appears to be stored
+     * @param origin a location in an unknown region of VM memory where an object appears to be stored
      * @return the address wrapped as a reference for temporary use.
      */
-    public RemoteReference makeUnknownRemoteReference(Address address) {
-        return new ProvisionalRemoteReference(vm(), address);
+    public RemoteReference makeUnknownRemoteReference(Address origin) {
+        return new ProvisionalRemoteReference(vm(), origin);
     }
 
     public ReferenceValue createReferenceValue(Reference reference) {
@@ -216,10 +215,16 @@ public final class VmReferenceManager extends AbstractVmHolder {
     }
 
 
-    private final class TemporaryRemoteReference extends ConstantRemoteReference {
+    /**
+     * A constant reference intended for use when performing some computation on
+     * an {@link Address} that is implemented by re-using reference-based VM code.
+     *
+     * @see VmReferenceManager#makeTemporaryRemoteReference(Address)
+     */
+    private static final class TemporaryRemoteReference extends ConstantRemoteReference {
 
-        TemporaryRemoteReference(TeleVM vm, Address raw) {
-            super(vm, raw);
+        TemporaryRemoteReference(TeleVM vm, Address origin) {
+            super(vm, origin);
         }
 
         @Override
@@ -233,10 +238,16 @@ public final class VmReferenceManager extends AbstractVmHolder {
         }
     }
 
-    private final class ProvisionalRemoteReference extends ConstantRemoteReference {
+    /**
+     * A constant reference intended to represent what appears to be a legitimate object but whose enclosing memory
+     * region and manger are so far unknown.
+     *
+     * @see VmReferenceManager#makeUnknownRemoteReference(Address)
+     */
+    private static final class ProvisionalRemoteReference extends ConstantRemoteReference {
 
-        ProvisionalRemoteReference(TeleVM vm, Address raw) {
-            super(vm, raw);
+        ProvisionalRemoteReference(TeleVM vm, Address origin) {
+            super(vm, origin);
         }
 
         @Override

@@ -26,9 +26,8 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A fixed, remote {@link Address} in VM memory, wrapped as if it were a {@link Reference}
- * so that it can be manipulated with standard VM code.
- * <p>
+ * A reference to an object in the VM whose location and status never change.
+ *
  * Equality for instances is defined as {@link Address} equality with other instances of the class.
  *
  * @see Reference
@@ -36,11 +35,11 @@ import com.sun.max.unsafe.*;
  */
 public abstract class ConstantRemoteReference extends RemoteReference {
 
-    private final Address raw;
+    private final Address origin;
 
-    protected ConstantRemoteReference(TeleVM vm, Address rawRef) {
+    protected ConstantRemoteReference(TeleVM vm, Address origin) {
         super(vm);
-        raw = rawRef;
+        this.origin = origin;
     }
 
     /**
@@ -49,27 +48,37 @@ public abstract class ConstantRemoteReference extends RemoteReference {
      * In this implementation, the remote location does not change, so this method is constant.
      */
     @Override
-    public final Address raw() {
-        return raw;
+    public final Address origin() {
+        return origin;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In this implementation, the remote location does not change, so this method is constant.
+     */
+    @Override
+    public final Address lastValidOrigin() {
+        return origin;
     }
 
     @Override
     public final boolean equals(Object other) {
         if (other instanceof ConstantRemoteReference) {
             final ConstantRemoteReference constantTeleRef = (ConstantRemoteReference) other;
-            return raw.equals(constantTeleRef.raw);
+            return origin.equals(constantTeleRef.origin);
         }
         return false;
     }
 
     @Override
-    public int hashCode() {
-        return raw.toInt();
+    public final int hashCode() {
+        return origin.toInt();
     }
 
     @Override
     public String toString() {
-        return raw().toString();
+        return origin().toString();
     }
 
 }
