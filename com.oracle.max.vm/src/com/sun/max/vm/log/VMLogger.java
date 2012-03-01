@@ -42,50 +42,95 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A {@linkplain VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
- * range {@code [0 .. N-1]}. A series of "log" methods are provided, that take the operation code and a varying number
- * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}).
+ * <h1>The Maxine Project: Virtual Machine Logging</h1>
  * <p>
+ * The preferred method for debugging Maxine is interactively with the Maxine Inspector.
+ * However, there are times when pure interactive debugging is inadequate, for example, in complex
+ * multi-threaded situations. To address this Maxine has, historically, used tracing calls,
+ * embedded in the VM source code and using the {@link Log} class, that output specific data
+ * to either the standard output or a file. This approach has some drawbacks:
+ * <p>
+ * <ul>
+ * <li>Although largely string based, the tracing calls must follow strict rules regarding
+ * GC interaction and multi-threading.</li>
+ * <li>The source code can become obfuscated by the tracing code.</li>
+ * <li>There format of the tracing output is fixed by the tracing calls.</li>
+ * <li>There is no connection to the Maxine Inspector.</li>
+ * </ul>
+ * <p>
+ * The framework provided by {@linkplain VMLogger} attempts to address these drawbacks in the following ways:
+ * <ul>
+ * <li>Replace the tracing generation calls with more abstract calls to methods in {@linkplain VMLogger}.</li>
+ * <li>Handle multi-threading, GC issues automatically.
+ * <li>Integrate the {@linkplain VMLogger} data with the Maxine Inspector.</li>
+ * <li>Provide optional custom tracing in the style of {@linkplain Log} but driven from the log.
+ * </ul>
+ * <p>
+ * Note, the name {@code log} can be confusing. The existing {@linkplain Log} class
+ * is not a log in the sense defined by {@linkplain VMLogger}, rather it is a mechanism for
+ * printing the strings, scalars and some objects types, e.g., threads, to an output stream.
+ * In other words it is message oriented, similar to the {@link java.util.logging.Logger platform logging} framework.
+ * {@linkplain VMLogger} is more "type" oriented and is targeted towards in-memory log storage,
+ * with log inspection handled by the Maxine Inspector. By storing object values directly in the log,
+ * rather than a string encoding, the Inspector mechanisms for drilling down into the fields of an
+ * object can be exploited.
+ * <p>
+ * The expectation is that each component of the VM has one or more associated loggers. Loggers are
+ * identified by a short name and a longer description. A given logger is disabled by default but
+ * can be enabled with a command line option at VM startup. N.B. A Logger can be enabled in
+ * {@link MaxineVM#isHosted() hosted mode} if that is appropriate for the VM component.
+ * All logger state is reset when the target VM starts, so host settings do not persist.
+ * <p>
+ * The expectation is that most loggers will be implemented using the automatic generation
+ * features of {@link VMLoggerGenerator} and not be hand-written. See the section below entitled Automatic Generation.
+ * <h2>VMLogger Basics</h2>
+ * <p>
+ * A {@linkplain VMLogger} defines a set of operations, cardinality {@code N} each identified by an {@code int} code in the
+ * range {@code [0 .. N-1]}. A series of {@code log} methods are provided, that take the operation code and a varying number
+ * of {@link Word} arguments (up to {@link VMLog.Record#MAX_ARGS}). Each {@code log} operation creates a {@link VMLog.Record log record}
+ * that is stored in a circular buffer, the size of which is determined when the VM image is built.
  * The thread (id) generating the log record is automatically recorded.
  * <p>
- * A logger typically will implement the {@link VMLogger#operationName(int)} method that returns a descriptive name for
- * the operation.
+ * In order to connect the operation code with a {@linkplain String} value that can be used to identify the operation,
+ * e.g. for tracing, VM startup options, etc., a logger should provide an overriding implementation of {@link VMLogger#operationName(int)}
+ * that returns a descriptive name for the operation.
  * <h2>Enabling Logging</h2>
  * <p>
  * Logging is enabled on a per logger basis through the use of a standard {@code -XX:+LogXXX} option derived from the
- * logger name. Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX}, and a default
- * implementation is provided, although this can be overridden. Enabling tracing also enables logging, as the trace is
- * driven from the log. <b>N.B.</b>It is not possible to check the options until the VM startup has reached a certain
+ * logger name, in this case {@code XXX}. Tracing to the {@link Log} stream is also available through {@code -XX:+TraceXXX}.
+ * A default tracing implementation is provided, although this can be overridden by a given logger. Enabling tracing also enables logging, as the trace is
+ * driven from the log. <b>N.B.</b> It is not possible to check the options until the VM startup has reached a certain
  * point. In order not to lose logging in the early phases, logging, but not tracing, is always enabled on VM startup.
  * <p>
  * Fine control over which operations are logged (and therefore traced) is provided by the
  * {@code -XX:LogXXXInclude=pattern} and {@code -XX:LogXXXExclude=pattern} options. The {@code pattern} is a regular
  * expression in the syntax expected by {@link java.util.regex.Pattern} and refers to the operation names returned by
- * {@link VMLogger#operationName(int)}. By default all operations are logged. However, if the include option is set,
+ * {@linkplain VMLogger#operationName}. By default all operations are logged. However, if the include option is set,
  * only those operations that match the pattern are logged. In either case, if the exclude option is provided, the set
  * is reduced by those operations that match the exclude pattern.
  * <p>
  * The management of log records is handled in a separate class; a subclass of {@link VMLog}. A {@linkplain VMLogger instance}
  * requests a {@link VMLog.Record record} that can store a given number of arguments from the singleton {@link #vmLog}
  * instance and then records the values. The format of the log record is opaque to allow a variety of implementations.
- * <p>
+ *
  * <h2>Performance</h2>
+ * <p>
  * In simple use logging affects performance even when disabled because the disabled check happens inside the
- * {@link VMLogger} log methods, so the cost of the argument marshalling and method call is always paid when used in the
+ * {@link VMLogger} log methods, so the cost of the argument evaluation and method call is always paid when used in the
  * straightforward manner, e.g.:
  *
- * {@code  logger.log(op, arg1, arg2);}
+ * {@code logger.log(op, arg1, arg2);}
  *
- * If performance is an issue, replace the above with a guarded call, vis:
+ * <p>It is recommended that all log calls be guarded as follows:</p>
  *
  * <pre>
  * if (logger.enabled()) {
  *     logger.log(op, arg1, arg2);
  * }
  * </pre>
- *
+ * <p>
  * The {@code enabled} method is always {@link INLINE inlined}.
- *
+ * <p>
  * N.B. The guard can be a more complex condition. However, it is important not to use disjunctive conditions that could
  * result in a value of {@code true} for the guard when {@code logger.enabled()} would return false, E.g.,
  *
@@ -94,7 +139,7 @@ import com.sun.max.vm.thread.*;
  *     logger.log(op, arg1, arg2);
  * }
  * </pre>
- *
+ * <p>
  * Conjunctive conditions can be useful. For example, say we wanted to suppress logging until a counter reaches a
  * certain value:
  *
@@ -105,30 +150,32 @@ import com.sun.max.vm.thread.*;
  * </pre>
  * <p>
  * <h2>Dependent Loggers</h2>
- * It is possible to have one logger override the default settings for other loggers. E.g., say we have loggers A and B,
- * but we want a way to turn both loggers on with a single overriding option. The way to do this is to create a logger,
- * say ALL, typically with no operations, that forces A and B into the enabled state if, and only if, it is itself
- * enabled. This can be achieved by overriding {@link #checkOptions()} for the ALL logger, and calling the
- * {@link #forceDependentLoggerState} method. See {@link Heap#gcAllLogger} for an example of this.
  * <p>
- * It is also possible for a logger, say C, to inherit the settings of another logger, say ALL, again by forcing ALL to
- * check its options from within C's {@code checkOptions} and then use ALL's values to set C's settings. This is
- * appropriate when ALL cannot know about C for abstraction reasons. See {@link #checkDominantLoggerOptions>}.
+ * It is possible to have one logger override the default settings for other loggers. E.g., say we have loggers {@code A} and {@code B},
+ * but we want a way to turn both loggers on with a single overriding option. The way to do this is to create a logger,
+ * say {@code ALL}, typically with no operations, that forces {@code A} and {@code B} into the enabled state if, and only if, it is itself
+ * enabled. This can be achieved by overriding {@link VMLogger#checkOptions()} for the {@code ALL} logger, and calling the
+ * {@link VMLogger#forceDependentLoggerState} method. See {@link Heap#gcAllLogger} for an example of this.
+ * <p>
+ * It is also possible for a logger, say {@code C}, to inherit the settings of another logger, say {@code ALL}, again by forcing {@code ALL} to
+ * check its options from within {@code C}'s {@code checkOptions} and then use {@code ALL}'s values to set {@code C}'s settings. This is
+ * appropriate when {@code ALL} cannot know about {@code C} for abstraction reasons. See {@link VMLogger#checkDominantLoggerOptions}.
  * <p>
  * N.B. The order in which loggers have their options checked by the normal VM startup is unspecified. Hence, a logger
  * must always force the checking of a dependent logger's options before accessing its state.
  * <p>
- * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid meta-circularities
- * in low-level code, see {@link VMLog#setThreadState(boolean)}.
+ * Logging (for all loggers) may be enabled/disabled for a given thread, which can be useful to avoid unwanted recursion
+ * in low-level code, see {@link VMLog#setThreadState}.
  *
- * <h2>Type Safety</h2>
+ * <h2>Automatic Generation</h2>
+ * <p>
  * The standard type-safe way to log a collection of heteregenously typed values would be to first define a class
  * containing fields that correspond to the values, then acquire an instance of such a class, store the values in the
  * fields and then save the instance in the log. Note that this generally involves allocation; at best it involves
  * acquiring a pre-allocated instance in some way. It also necessarily involves a level of indirection in the log buffer
  * itself, as the buffer is constrained to be a container of reference values.
  *
- * Since {@link VMLog} is a low level mechanism that must function in parts of the VM where allocation is impossible, for
+ * Since VM logging is a low level mechanism that must function in parts of the VM where allocation is impossible, for
  * example, during garbage collection, the standard approach is not appropriate. It is also important to minimize the
  * storage overhead for log records and the performance overhead of logging the data. Therefore, a less type safe
  * approach is adopted, that is partly mitigated by automatic generation of logger code at VM image build time.
@@ -156,10 +203,11 @@ import com.sun.max.vm.thread.*;
  * // START GENERATED CODE
  * // END GENERATED CODE
  * </pre>
+ * <p>
  * somewhere in the source, typically at the end of the class.
  * When {@link VMLoggerGenerator} is executed it scans all VM classes for interfaces annotated with {@link VMLoggerInterface}
  * and then generates an abstract class containing the log methods, abstract method definitions for the associated {@code trace}
- * methods, and an implementation of the {@link #trace(Record r)} method that decodes the operation and invokes the
+ * methods, and an implementation of the {@link VMLogger#trace} method that decodes the operation and invokes the
  * appropriate {@code trace} method.
  * <p>
  * The developer then defines the concrete implementation class that inherits from the automatically generated class
@@ -182,15 +230,16 @@ import com.sun.max.vm.thread.*;
  *     }
  * }
  * </pre>
+ * <p>
  * Note that if an argument name is not identified {@link VMLogParam} it will be defined as {@code argN}, where
  * {@code N} is the argument index.
  * <p>
  * {@link VMLogger} has built-in support for several standard reference types, that have alternate representations
  * as scalar values, such as {@link ClassActor}. As a general principle, reference types without an alternate, unique, scalar
  * representation should be avoided as log method arguments. However, this is sometimes difficult or inconvenient, so
- * it is possible to store references types. These should be passed using {@link VMLogger#objectArg(Object)}
- * and retrieved using {@link VMLogger#toObject(Record, int)}. This is automatically handled by the generator.
- * <b>N.B.</b> storing reference types in the log makes them reachable until such time as they are overwritten.
+ * it is possible to store references types. These should be passed using {@link VMLogger#objectArg}
+ * and retrieved using {@link VMLogger#toObject}. This is automatically handled by the generator.
+ * <b>N.B.</b> Storing reference types in the log makes them reachable until such time as they are overwritten.
  * It is assumed that {@code Enum} types are always stored using their ordinal value. The generator creates the
  * appropriate conversions methods. It assumes that the {@code enum} declares the following field:
  * <pre>
@@ -198,14 +247,17 @@ import com.sun.max.vm.thread.*;
  * </pre>
  *
  * <h3>Tracing</h3>
- * When the tracing option for a logger is enabled, {@link #doTrace(Record)} is invoked immediately after the log record is created.
- * After checking that calls to the {@link Log} class are possible, {@link Log#lock} is called, then
- * {@link #trace(Record)} is called, followed by {@link Log#unlock}.
  * <p>
- * A default implementation of {@link #trace} is provided that calls methods in the {@link Log} class to print the
+ * When the tracing option for a logger is enabled, {@link VMLogger#doTrace} is invoked immediately after the log record is created.
+ * After checking that calls to the {@link Log} class are possible, {@link Log#lock} is called, then
+ * {@link VMLogger#trace} is called, followed by {@link Log#unlock}.
+ * <p>
+ * A default implementation of {@link VMLogger} is provided that calls methods in the {@link Log} class to print the
  * logger name, thread name and arguments. There are two ways to customize the output. The first is to override the
- * {@link #logArg(int, Word)} method to customize the output of a particular argument - the default action is to print
- * the value as a hex number. The second is to override {@link #trace} and do full customization.
+ * {@link VMLogger#logArg(int, Word)} method to customize the output of a particular argument - the default action is to print
+ * the value as a hex number. The second is to override {@link VMLogger#trace} and do full customization.
+ * <b>N.B.</b> Although the log is locked automatically and safepoints are disabled, custom tracing must still
+ * take care not to invoke object allocation. In particular, string concatenation and formatting should not be used.
  * <h2>Inspector Integration</h2>
  * <p>
  * The Inspector is generally able to display the log arguments appropriately, by using reflection to discover the types of the
@@ -405,7 +457,7 @@ public class VMLogger {
 
     /**
      * Unlock a locked log.
-     * @param lockDisabledSafepoints value return from matching {@ink #lock} call.
+     * @param lockDisabledSafepoints value return from matching {@link #lock} call.
      */
     public void unlock(boolean lockDisabledSafepoints) {
         Log.unlock(lockDisabledSafepoints);
