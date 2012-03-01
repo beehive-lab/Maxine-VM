@@ -197,7 +197,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess VMLogArray$Record6_arg6 = new TeleInstanceWordFieldAccess(VMLogArray.Record6.class, "arg6");
     public final TeleInstanceWordFieldAccess VMLogArray$Record7_arg7 = new TeleInstanceWordFieldAccess(VMLogArray.Record7.class, "arg7");
     public final TeleInstanceWordFieldAccess VMLogArray$Record8_arg8 = new TeleInstanceWordFieldAccess(VMLogArray.Record8.class, "arg8");
-    public final TeleStaticIntFieldAccess RegionTable_TableOffset = new TeleStaticIntFieldAccess(RegionTable.class, "TableOffset");
     public final TeleInstanceIntFieldAccess RegionTable_length = new TeleInstanceIntFieldAccess(RegionTable.class, "length");
     public final TeleInstanceIntFieldAccess RegionTable_regionInfoSize = new TeleInstanceIntFieldAccess(RegionTable.class, "regionInfoSize");
     public final TeleInstanceWordFieldAccess RegionTable_regionPoolEnd = new TeleInstanceWordFieldAccess(RegionTable.class, "regionPoolEnd");

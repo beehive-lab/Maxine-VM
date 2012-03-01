@@ -55,7 +55,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     /**
      * Log2 of a card size in bytes.
      */
-    static final int LOG2_CARD_SIZE = 9;
+    static public final int LOG2_CARD_SIZE = 9;
 
     /**
      * Number of bytes per card.
@@ -66,7 +66,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
 
     static final int NUM_WORDS_PER_CARD = 1 << LOG2_NUM_WORDS_PER_CARD;
 
-    static final int NO_CARD_INDEX = -1;
+    static public final  int NO_CARD_INDEX = -1;
 
     static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
 
@@ -157,9 +157,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      */
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            if (phase == Phase.BOOTSTRAPPING) {
-                Log2RegionToByteMapTable.hostInitialize();
-            } else if (phase == Phase.SERIALIZING_IMAGE) {
+            if (phase == Phase.SERIALIZING_IMAGE) {
                 // Build a table of indexes to reference literals that point to the card table.
                 assert biasedCardTableAddressCiConstant != null;
                 literalRecorder = new ReferenceLiteralLocationRecorder(Code.bootCodeRegion(), biasedCardTableAddressCiConstant.asObject());
