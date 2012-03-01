@@ -148,10 +148,8 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
                     boolean eventCauseFound = false;
 
                     assert vm().lockHeldByCurrentThread();
-                    vm().unlock();
                     // Wait here for VM process to stop
                     ProcessState newState = waitUntilStopped();
-                    vm().lock();
 
                     ++epoch;
 
