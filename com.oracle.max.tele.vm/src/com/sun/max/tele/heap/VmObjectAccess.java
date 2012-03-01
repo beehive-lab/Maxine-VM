@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.method.*;
@@ -162,9 +163,14 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(address);
         if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
             final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            return objectHoldingRegion.objectReferenceManager().isObjectOrigin(address);
+            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(address)) {
+                return true;
+            }
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + address.to0xHexString());
+            return false;
         }
-           return false;
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + address.to0xHexString());
+        return false;
     }
 
 
