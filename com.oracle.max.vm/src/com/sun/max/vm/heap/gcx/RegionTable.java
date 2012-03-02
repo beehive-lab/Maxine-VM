@@ -57,8 +57,16 @@ public final class RegionTable {
         return theRegionTable.regionID(address) == DebuggedRegion;
     }
 
-    @INSPECTED
+    /**
+     * Inspector support for fast retrieval of region info from region id.
+     */
+    @HOSTED_ONLY
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
+
+    @FOLD
+    static int tableOffset() {
+        return ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
+    }
 
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
@@ -78,7 +86,7 @@ public final class RegionTable {
     }
 
     private Pointer table() {
-        return Reference.fromJava(this).toOrigin().plus(TableOffset);
+        return Reference.fromJava(this).toOrigin().plus(tableOffset());
     }
 
     @INSPECTED
@@ -131,8 +139,15 @@ public final class RegionTable {
         return regionID;
     }
 
-    private int inHeapAddressRegionID(Address addr) {
-        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    public Offset offsetInRegionPool(Address address) {
+        if (!isInHeapRegion(address)) {
+            return Word.allOnes().asOffset();
+        }
+        return address.minus(regionPoolStart).asOffset();
+    }
+
+    private int inHeapAddressRegionID(Address address) {
+        return address.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
     /**
@@ -149,13 +164,21 @@ public final class RegionTable {
 
     /**
      * Inspector support.
-     * @param regionID
-     * @return
+     *
+     * @param regionID a unique region identifier
+     * @return an offset from the region table's address to the HeapRegionInfo instance for the requested region identifier.
      */
     @HOSTED_ONLY
     public int regionInfoOffset(int regionID) {
         return TableOffset +  regionID * regionInfoSize;
     }
+
+    /**
+     * Inspector support.
+     *
+     * @param offsetFromTableAddress an offset from the region table's address to a HeapRegionInfo instance
+     * @return a unique region identifier
+     */
     @HOSTED_ONLY
     public int regionIDFromRegionInfoOffset(int offsetFromTableAddress) {
         int offsetFromTableBase = offsetFromTableAddress - TableOffset;

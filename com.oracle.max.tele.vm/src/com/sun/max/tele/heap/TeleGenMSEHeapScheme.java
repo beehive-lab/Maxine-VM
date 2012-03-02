@@ -29,12 +29,22 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.reference.*;
 
 
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
+    private TeleCardTableRSet teleCardTableRSet;
 
     TeleGenMSEHeapScheme(TeleVM vm) {
         super(vm);
+    }
+
+    TeleCardTableRSet teleCardTableRSet() {
+        if (teleCardTableRSet == null) {
+            Reference cardTableRSetReference = vm().fields().GenMSEHeapScheme_cardTableRSet.readReference(toReference());
+            teleCardTableRSet = new TeleCardTableRSet(vm(), cardTableRSetReference);
+        }
+        return teleCardTableRSet;
     }
 
     @Override
@@ -77,6 +87,25 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
             }
         }
         return origin;
+    }
+
+    class GenMSERegionInfo extends GCXHeapRegionInfo {
+        final int cardIndex;
+
+        GenMSERegionInfo(Address address) {
+            super(address);
+            cardIndex = teleCardTableRSet().cardIndex(address);
+        }
+
+        @Override
+        public String terseInfo() {
+            return (regionID < 0 ? "-" : "region #" + regionID) + (cardIndex < 0 ? " -" : " card# " + cardIndex);
+        }
+    }
+
+    @Override
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new GenMSERegionInfo(address);
     }
 
     public List<MaxCodeLocation> inspectableMethods() {
