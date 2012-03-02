@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
 
 
 /**
- * Generational Heap Scheme. WORK IN PROGRESS.
+ * Generational Heap Scheme.
  */
 final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
     /**
