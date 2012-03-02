@@ -153,7 +153,7 @@ public class Graal implements RuntimeCompiler {
             NativeStubGraphBuilder.initialize();
 
             // Ensure all the Node classes used by Maxine have their NodeClass instances in the image.
-            for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            for (ClassActor classActor : BOOT_CLASS_REGISTRY.allBootImageClasses()) {
                 if (Node.class.isAssignableFrom(classActor.toJava())) {
                     Class<?> nodeClass = classActor.toJava();
                     if (!Modifier.isAbstract(nodeClass.getModifiers())) {
