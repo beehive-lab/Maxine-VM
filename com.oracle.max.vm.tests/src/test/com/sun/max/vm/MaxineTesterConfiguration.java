@@ -115,6 +115,11 @@ public class MaxineTesterConfiguration {
         if (JDK.JDK_VERSION == JDK.JDK_7) {
             output(Classes.forName("test.output.MethodHandles01"), FAIL_ALL);
             output(Classes.forName("test.output.MethodHandles02"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles03"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles04"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles05"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles06"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles07"), FAIL_ALL);
         }
 
 
