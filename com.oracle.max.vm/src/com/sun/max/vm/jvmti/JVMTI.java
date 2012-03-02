@@ -120,8 +120,8 @@ public class JVMTI {
             for (int j = 0; j < jvmtiEnv.bootClassPathAdd.length; j++) {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
-            VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
         }
+        VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
     }
 
     /**
