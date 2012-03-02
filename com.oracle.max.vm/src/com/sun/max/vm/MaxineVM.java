@@ -105,6 +105,7 @@ public final class MaxineVM {
     /**
      * The current VM context.
      */
+    @INSPECTED
     @CONSTANT
     private static MaxineVM vm;
 
@@ -557,6 +558,7 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void core_dump();
 
+    @INSPECTED
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;

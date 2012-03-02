@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -40,14 +41,12 @@ import com.sun.max.vm.type.*;
  */
 public class Log2RegionToByteMapTable {
     /**
-     * Offset to the {@link #table} variable. This is in order to bypass write-barrier when setting the field.
-     *
+     * Offset to the {@link #table} variable.
+     * This is primaly used to bypass write-barrier when setting the variable.
      */
-    private static int TABLE_OFFSET;
-
-    @HOSTED_ONLY
-    public static void hostInitialize() {
-        TABLE_OFFSET = ClassRegistry.findField(Log2RegionToByteMapTable.class, "table").offset();
+    @FOLD
+    public static int tableOffset() {
+        return ClassActor.fromJava(Log2RegionToByteMapTable.class).findLocalInstanceFieldActor("table").offset();
     }
 
     final int log2RangeSize;
@@ -55,20 +54,24 @@ public class Log2RegionToByteMapTable {
      * Start of the contiguous range of virtual memory covered by this byte map table.
      * This address must be aligned to size of the region covered by a single byte.
      */
+    @INSPECTED
     private Address coveredAreaStart;
     /**
      * End of the contiguous range of virtual memory covered by this byte map table.
      * This address must be aligned to size of the region covered by a single byte.
     */
+    @INSPECTED
     private Address coveredAreaEnd;
 
     /**
      * Table containing a single byte of information per region.
      */
     private byte [] table;
+
     /**
      * Address of the first element of the table.
      */
+    @INSPECTED
     Pointer tableAddress;
     /**
      * Address of the first element of the table biased by the covered area start.
@@ -126,13 +129,31 @@ public class Log2RegionToByteMapTable {
         assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
         final Pointer tableOrigin = Reference.fromJava(table).toOrigin();
         if (noWriteBarrier) {
-            Reference.fromJava(this).toOrigin().writeWord(TABLE_OFFSET, tableOrigin);
+            Reference.fromJava(this).toOrigin().writeWord(tableOffset(), tableOrigin);
         } else {
             this.table = table;
         }
         tableAddress = tableOrigin.plus(tableHeaderSize());
         biasedTableAddress = tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
         FatalError.check(this.table == table && byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
+    }
+
+    /**
+     * Inspector support.
+     *
+     * @param coveredAreaStart
+     * @param coveredAreaEnd
+     * @param tableAddress
+     */
+    @HOSTED_ONLY
+    public void initialize(Address coveredAreaStart, Address coveredAreaEnd, Address tableAddress) {
+        this.coveredAreaStart = coveredAreaStart;
+        this.coveredAreaEnd = coveredAreaEnd;
+        assert coveredAreaStart.isAligned(1 << log2RangeSize) : "start of covered area must be aligned to specified power of 2";
+        assert coveredAreaEnd.isAligned(1 << log2RangeSize) : "end of covered area must be aligned to specified power of 2";
+        this.tableAddress = tableAddress.asPointer();
+        biasedTableAddress = this.tableAddress.minus(coveredAreaStart.unsignedShiftedRight(log2RangeSize));
+        FatalError.check(byteAddressFor(coveredAreaStart).equals(tableAddress), "incorrect initialization of region table");
     }
 
     /**

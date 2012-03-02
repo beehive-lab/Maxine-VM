@@ -37,15 +37,18 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     /**
      * The allocation hand of the allocator.
      */
+    @INSPECTED
     protected volatile Address top;
     /**
      * Soft-end of the contiguous region of memory the allocator allocate from.
      * The {@link #headroom} controls how far from the actual end of the region
      */
+    @INSPECTED
     private Address end;
     /**
      * Start of the contiguous region of memory the allocator allocate from.
      */
+    @INSPECTED
     private Address start; // keep it private, so the only way to update it is via refill / reset / clear methods.
 
     protected final T refillManager;
@@ -197,14 +200,16 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
-     * Make the allocator parseable without filling up the allocator.
+     * Make the allocator parsable without filling up the allocator.
      * This is unsafe and should only be used when non concurrent allocation can take place.
      */
     final void unsafeMakeParsable() {
         Pointer cell = top.asPointer();
-        Pointer hardLimit = hardLimit().asPointer();
-        if (cell.lessThan(hardLimit)) {
-            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+        if (cell.isNotZero()) {
+            Pointer hardLimit = hardLimit().asPointer();
+            if (cell.lessThan(hardLimit)) {
+                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+            }
         }
     }
 
