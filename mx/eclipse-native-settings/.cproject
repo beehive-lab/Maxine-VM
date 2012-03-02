@@ -35,8 +35,6 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
-			<storageModule moduleId="org.eclipse.cdt.core.pathentry"/>
-			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
@@ -83,8 +81,9 @@
 		</profile>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.pathentry">
-		<pathentry include="/usr/include" kind="inc" path="" system="true"/>
 		<pathentry kind="out" path="build"/>
 		<pathentry kind="src" path=""/>
+		<pathentry include="/usr/include" kind="inc" path="" system="true"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope"/>
 </cproject>
