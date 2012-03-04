@@ -78,7 +78,7 @@ public class CompiledPrototype extends Prototype {
     private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
     private final HashSet<MethodActor> methodActorsWithInlining = new HashSet<MethodActor>();
     private final HashMap<String, Link> stubs = new HashMap<String, Link>();
-    private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
+    private final Queue<MethodActor> worklist = new ConcurrentLinkedQueue<MethodActor>();
 
     /**
      * The link from a <i>parent</i> method to a <i>child</i> method where the parent caused the child to be
@@ -563,7 +563,7 @@ public class CompiledPrototype extends Prototype {
         if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                 processInvalidatedTargetMethods();
-                final MethodActor methodActor = worklist.removeFirst();
+                final MethodActor methodActor = worklist.poll();
                 if (needsCompilation(methodActor)) {
                     TargetMethod targetMethod;
                     try {
@@ -587,8 +587,8 @@ public class CompiledPrototype extends Prototype {
             while (true) {
                 while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                     processInvalidatedTargetMethods();
-                    final MethodActor methodActor = worklist.removeFirst();
-                    if (needsCompilation(methodActor)) {
+                    final MethodActor methodActor = worklist.poll();
+                    if (methodActor != null && needsCompilation(methodActor)) {
                         ++submittedCompilations;
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
