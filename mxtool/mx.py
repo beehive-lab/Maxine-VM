@@ -966,7 +966,7 @@ def build(args, parser=None):
                                         
                                 if jasminAvailable:
                                     log('Assembling Jasmin file ' + src)
-                                    subprocess.check_call(['jasmin', '-d', jasminOutputDir, src])
+                                    run(['jasmin', '-d', jasminOutputDir, src])
                                 else:
                                     log('The jasmin executable could not be found - skipping ' + src)
                                     with file(classFile, 'a'):
