@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
 import static com.sun.max.vm.jdk.JDK.*;
 
 import java.io.*;
@@ -41,10 +42,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
@@ -60,12 +61,14 @@ import com.sun.max.vm.value.*;
  *
  * The {@linkplain BootClassLoader#BOOT_CLASS_LOADER boot class loader} is associated the
  * {@linkplain #BOOT_CLASS_REGISTRY boot class registry}.
+ * The {@linkplain VMClassLoader#VM_CLASS_LOADER M class loader} is associated the
+ * {@linkplain #VM_CLASS_REGISTRY VM class registry}
  *
  * This class also contains a number static variables for the actors of well known classes,
  * methods and fields.
  *
  * Note that this design (a separate dictionary of classes per class loader) differs from
- * the global system dictionary (implementedin systemDictionary.[hpp|cpp]) used by HotSpot.
+ * the global system dictionary (implemented in systemDictionary.[hpp|cpp]) used by HotSpot.
  */
 public final class ClassRegistry {
 
@@ -73,6 +76,10 @@ public final class ClassRegistry {
      * The class registry associated with the boot class loader.
      */
     public static final ClassRegistry BOOT_CLASS_REGISTRY = new ClassRegistry(HOSTED_BOOT_CLASS_LOADER);
+    /**
+     * The class registry associated with the VM class loader.
+     */
+    public static final ClassRegistry VM_CLASS_REGISTRY = new ClassRegistry(HOSTED_VM_CLASS_LOADER);
 
     public static final TupleClassActor OBJECT = createClass(Object.class);
     public static final TupleClassActor CLASS = createClass(Class.class);
@@ -82,7 +89,7 @@ public final class ClassRegistry {
     public static final TupleClassActor JLR_FINAL_REFERENCE = createClass(Classes.forName("java.lang.ref.FinalReference"));
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
-    public static final HybridClassActor STATIC_HUB = createClass(StaticHub.class);
+    public static final HybridClassActor STATIC_HUB = createClass(StaticHub.class, VM_CLASS_REGISTRY);
 
     public static final PrimitiveClassActor VOID = createPrimitiveClass(Kind.VOID);
     public static final PrimitiveClassActor BYTE = createPrimitiveClass(Kind.BYTE);
@@ -159,6 +166,9 @@ public final class ClassRegistry {
 
     private final ConcurrentHashMap<Object, Object>[] propertyMaps;
 
+    @INSPECTED
+    private ClassRegistry bootClassRegistry;
+
     /**
      * The class loader associated with this registry.
      */
@@ -171,7 +181,10 @@ public final class ClassRegistry {
         }
         this.classLoader = classLoader;
         if (MaxineVM.isHosted()) {
-            bootImageClasses = new ClassActor[0];
+            bootImageClasses = new ConcurrentLinkedQueue<ClassActor>();
+            if (classLoader == HOSTED_VM_CLASS_LOADER) {
+                bootClassRegistry = BOOT_CLASS_REGISTRY;
+            }
         }
     }
 
@@ -189,7 +202,7 @@ public final class ClassRegistry {
                 }
                 return testClassRegistry;
             }
-            return BOOT_CLASS_REGISTRY;
+            return classLoader == HOSTED_BOOT_CLASS_LOADER ? BOOT_CLASS_REGISTRY : VM_CLASS_REGISTRY;
         }
         if (classLoader == null) {
             return BOOT_CLASS_REGISTRY;
@@ -215,6 +228,11 @@ public final class ClassRegistry {
         return typeDescriptorToClassActor.size();
     }
 
+    @HOSTED_ONLY
+    public static int numberOfBootImageClassActors() {
+        return BOOT_CLASS_REGISTRY.numberOfClassActors() + VM_CLASS_REGISTRY.numberOfClassActors();
+    }
+
     /**
      * For JVMTI.
      */
@@ -233,6 +251,7 @@ public final class ClassRegistry {
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
     private ClassActor define0(ClassActor classActor) {
+//        Trace.line(1, "defining " + classActor.typeDescriptor.toJavaString() + " in " + this);
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
 
         final ClassActor existingClassActor = typeDescriptorToClassActor.putIfAbsent(typeDescriptor, classActor);
@@ -253,10 +272,7 @@ public final class ClassRegistry {
         DependenciesManager.addToHierarchy(classActor);
 
         if (MaxineVM.isHosted()) {
-            synchronized (this) {
-                bootImageClasses = Arrays.copyOf(bootImageClasses, bootImageClasses.length + 1);
-                bootImageClasses[bootImageClasses.length - 1] = classActor;
-            }
+            bootImageClasses.add(classActor);
         }
 
         InspectableClassInfo.notifyClassLoaded(classActor);
@@ -288,6 +304,15 @@ public final class ClassRegistry {
      */
     public ClassActor get(TypeDescriptor typeDescriptor) {
         return typeDescriptorToClassActor.get(typeDescriptor);
+    }
+
+    @HOSTED_ONLY
+    public static ClassActor getInBootOrVM(TypeDescriptor typeDescriptor) {
+        ClassActor result =  BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        if (result == null) {
+            result = VM_CLASS_REGISTRY.get(typeDescriptor);
+        }
+        return result;
     }
 
     /**
@@ -446,17 +471,55 @@ public final class ClassRegistry {
     }
 
     /**
-     * Classes in the boot image.
+     * Classes in the boot image from this registry.
      */
     @HOSTED_ONLY
-    private ClassActor[] bootImageClasses;
+    private ConcurrentLinkedQueue<ClassActor> bootImageClasses;
+
+    @HOSTED_ONLY
+    private static class BootImageClassesIterator implements Iterable<ClassActor>, Iterator<ClassActor> {
+        Iterator<ClassActor> bootListIter;
+        Iterator<ClassActor> vmListIter;
+
+        private BootImageClassesIterator() {
+            bootListIter = BOOT_CLASS_REGISTRY.bootImageClasses.iterator();
+            vmListIter = VM_CLASS_REGISTRY.bootImageClasses.iterator();
+        }
+
+        public Iterator<ClassActor> iterator() {
+            return this;
+        }
+
+        public ClassActor next() {
+            if (bootListIter.hasNext()) {
+                return bootListIter.next();
+            } else if (vmListIter.hasNext()) {
+                return vmListIter.next();
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        public boolean hasNext() {
+            return bootListIter.hasNext() || vmListIter.hasNext();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    @HOSTED_ONLY
+    public Iterable<ClassActor> bootImageClasses() {
+        return bootImageClasses;
+    }
 
     /**
-     * Gets a snapshot of the classes currently in this registry.
+     * Gets a snapshot of the boot image classes currently in the {@link #BOOT_CLASS_REGISTRY} and {@link #VM_CLASS_REGISTRY}.
      */
     @HOSTED_ONLY
-    public ClassActor[] bootImageClasses() {
-        return bootImageClasses;
+    public static Iterable<ClassActor> allBootImageClasses() {
+        return new BootImageClassesIterator();
     }
 
     /**
@@ -476,17 +539,25 @@ public final class ClassRegistry {
     }
 
     /**
-     * Creates a ClassActor for a tuple or interface type.
+     * Creates a ClassActor for a tuple or interface type in the {@link #BOOT_CLASS_REGISTRY}.
      */
     @HOSTED_ONLY
     private static <T extends ClassActor> T createClass(Class javaClass) {
+        ClassActor result = createClass(javaClass, BOOT_CLASS_REGISTRY);
+        Class<T> type = null;
+        return Utils.cast(type, result);
+    }
+
+    /**
+     * Creates a ClassActor for a tuple or interface type in the given {@link ClassRegistry}.
+     */
+    @HOSTED_ONLY
+    private static <T extends ClassActor> T createClass(Class javaClass, ClassRegistry classRegistry) {
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
-        ClassActor classActor = BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        ClassActor classActor = classRegistry.get(typeDescriptor);
         if (classActor == null) {
-            final String name = typeDescriptor.toJavaString();
-            Classpath classpath = HOSTED_BOOT_CLASS_LOADER.classpath();
-            final ClasspathFile classpathFile = classpath.readClassFile(name);
-            classActor = ClassfileReader.defineClassActor(name, HOSTED_BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, false);
+            HostedClassLoader hostedClassLoader = (HostedClassLoader) classRegistry.classLoader;
+            classActor = hostedClassLoader.mustMakeClassActor(typeDescriptor);
         }
         Class<T> type = null;
         return Utils.cast(type, classActor);

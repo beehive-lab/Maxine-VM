@@ -1139,7 +1139,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final TeleObject teleBootClassRegistry = vm().objects().findTeleObject(vm().bootClassRegistryReference());
+                final TeleObject teleBootClassRegistry = vm().objects().findTeleObject(vm().vmClassRegistryReference());
                 focus().setHeapObject(teleBootClassRegistry);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());

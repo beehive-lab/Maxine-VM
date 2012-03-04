@@ -224,7 +224,18 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (verifier != null && codeAttribute != null && !compilee.holder().isReflectionStub()) {
-                    codeAttribute = verify(compilee, codeAttribute, verifier);
+                    boolean allowResolveVM = false;
+                    try {
+                        // native method (stub) verification requires VM classes to be accessible
+                        if (compilee.isNative()) {
+                            allowResolveVM = BootClassLoader.allowResolveVM(true);
+                        }
+                        codeAttribute = verify(compilee, codeAttribute, verifier);
+                    } finally {
+                        if (compilee.isNative()) {
+                            BootClassLoader.allowResolveVM(allowResolveVM);
+                        }
+                    }
                 }
 
                 this.codeAttribute = codeAttribute;

@@ -62,7 +62,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
      * @param signature the {@linkplain MethodActor#descriptor() signature} of the class method actor
      */
     public TestBytecodeAssembler(boolean isStatic, String className, String methodName, SignatureDescriptor signature) {
-        super(new ConstantPool(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER).edit());
+        super(new ConstantPool(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER).edit());
         this.isStatic = isStatic;
         this.methodName = makeSymbol(methodName);
         this.className = className == null ? null : makeSymbol(className);

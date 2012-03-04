@@ -337,7 +337,7 @@ public final class BootImageGenerator {
     private void verifyBootClasses() {
         Trace.begin(1, "verifying boot image classes");
         long start = System.currentTimeMillis();
-        for (ClassActor ca : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor ca : ClassRegistry.allBootImageClasses()) {
             if (!ca.kind.isWord) {
                 Verifier.verifierFor(ca).verify();
             }
@@ -416,7 +416,7 @@ public final class BootImageGenerator {
         Log.println();
         Log.println("==== All Loaded Classes ====");
         TreeSet<String> names = new TreeSet<String>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor.isInstanceClass() && !classActor.isReflectionStub()) {
                 names.add(classActor.toString());
             }

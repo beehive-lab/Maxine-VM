@@ -37,15 +37,18 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     /**
      * The allocation hand of the allocator.
      */
+    @INSPECTED
     protected volatile Address top;
     /**
      * Soft-end of the contiguous region of memory the allocator allocate from.
      * The {@link #headroom} controls how far from the actual end of the region
      */
+    @INSPECTED
     private Address end;
     /**
      * Start of the contiguous region of memory the allocator allocate from.
      */
+    @INSPECTED
     private Address start; // keep it private, so the only way to update it is via refill / reset / clear methods.
 
     protected final T refillManager;

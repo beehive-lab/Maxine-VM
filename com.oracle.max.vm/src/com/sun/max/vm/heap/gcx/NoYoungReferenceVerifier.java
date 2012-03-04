@@ -28,11 +28,17 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
+
 import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
 
 public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
     final CardTableRSet cardTableRSet;
     final HeapSpace youngSpace;
+    /**
+     * Controls whether the whole iterable range passed to {@link #visitCells(Address, Address)} is verified or only dirty cards in the range.
+     */
+    boolean dirtyCardsOnly;
+
     public NoYoungReferenceVerifier(CardTableRSet cardTableRSet, HeapSpace youngSpace) {
         this.cardTableRSet = cardTableRSet;
         this.youngSpace = youngSpace;
@@ -40,7 +46,18 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
 
     @Override
     public void visitCells(Address start, Address end) {
-        cardTableRSet.visitCards(start, end, DIRTY_CARD, this);
+        if (dirtyCardsOnly) {
+            cardTableRSet.visitCards(start, end, DIRTY_CARD, this);
+        } else {
+            Pointer cell = start.asPointer();
+            do {
+                cell = visitCell(cell);
+            } while (cell.lessThan(end));
+        }
+    }
+
+    public void setVisitDirtyCardsOnly(boolean dirtyCardsOnly) {
+        this.dirtyCardsOnly = dirtyCardsOnly;
     }
 
     private Pointer visitCell(Pointer cell) {
