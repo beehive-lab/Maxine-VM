@@ -175,7 +175,7 @@ public final class HostedBootClassLoader extends HostedClassLoader {
             if (!attemptingVMClassResolution.get()) {
                 attemptingVMClassResolution.set(true);
                 try {
-                    return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.loadClass(name);
+                    return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.findClass(name);
                 } finally {
                     attemptingVMClassResolution.set(false);
                 }
