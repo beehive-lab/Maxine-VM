@@ -72,7 +72,6 @@ public final class HeapRangeDumper implements Runnable {
 
     private final Pointer dynamicHubHubPtr;
     private final Pointer staticHubHubPtr;
-    private final Pointer heapFreeChunkHubPtr;
     /**
      * Bounds of the heap space. Used to conservatively identify potential heap reference.
      */
@@ -103,7 +102,6 @@ public final class HeapRangeDumper implements Runnable {
         this.heapBounds = heapBounds;
         dynamicHubHubPtr = Reference.fromJava(ClassActor.fromJava(DynamicHub.class).dynamicHub()).toOrigin();
         staticHubHubPtr = Reference.fromJava(ClassActor.fromJava(StaticHub.class).dynamicHub()).toOrigin();
-        heapFreeChunkHubPtr = Reference.fromJava(HeapFreeChunk.HEAP_FREE_CHUNK_HUB).toOrigin();
         unparsableAddressException = new RuntimeException();
     }
 
@@ -171,7 +169,7 @@ public final class HeapRangeDumper implements Runnable {
                 }
                 if (isValidHub(hubOrigin)) {
                     final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-                    if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+                    if (hub == HeapFreeChunk.heapFreeChunkHub()) {
                         Size chunkSize = HeapFreeChunk.getFreechunkSize(p);
                         p = p.plus(chunkSize);
                         continue;
@@ -228,7 +226,7 @@ public final class HeapRangeDumper implements Runnable {
             }
             if (isValidHub(hubOrigin)) {
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-                if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+                if (hub == HeapFreeChunk.heapFreeChunkHub()) {
                     Size chunkSize = HeapFreeChunk.getFreechunkSize(p);
                     Log.print("HeapFreeChunk"); Log.print(p); Log.print(" (size=");
                     Log.printToPowerOfTwoUnits(chunkSize);

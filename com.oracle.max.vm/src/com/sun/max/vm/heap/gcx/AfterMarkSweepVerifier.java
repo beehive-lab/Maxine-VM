@@ -97,7 +97,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements HeapS
         visitedCellOrigin = origin;
         final Reference hubRef = Layout.readHubReference(origin);
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (hub == HeapFreeChunk.heapFreeChunkHub()) {
             FatalError.check(heapMarker.isWhite(cell), "free chunk must not be marked");
             Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
             freeChunksByteCount += chunkSize.toLong();

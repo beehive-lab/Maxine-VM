@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.HeapSchemeAdaptor.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -44,6 +45,12 @@ public final class NoAgingEvacuator extends Evacuator {
     static {
         VMOptions.addFieldOption("-XX:", "TraceDirtyCardWalk", NoAgingEvacuator.class, "Trace Dirty Card Walk", Phase.PRISTINE);
     }
+
+    @FOLD
+    private static Size labHeadroom() {
+        return minObjectSize();
+    }
+
     /**
      * Heap Space that is being evacuated.
      */
@@ -63,8 +70,6 @@ public final class NoAgingEvacuator extends Evacuator {
      * Hint of amount of space to use to refill the promotion allocation buffer.
      */
     private Size pSize;
-
-    private final Size LAB_HEADROOM;
 
     /**
      * Remembered set of the from space.
@@ -169,7 +174,6 @@ public final class NoAgingEvacuator extends Evacuator {
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
         this.minRefillThreshold = minRefillThreshold;
-        this.LAB_HEADROOM =  MIN_OBJECT_SIZE;
         this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
     }
 
@@ -184,7 +188,7 @@ public final class NoAgingEvacuator extends Evacuator {
     @Override
     public void doBeforeGC() {
         if (MaxineVM.isDebug() && !ptop.isZero()) {
-            FatalError.check(HeapFreeChunk.isTailFreeChunk(ptop, pend.plus(LAB_HEADROOM)), "Evacuator's allocation buffer must be parseable");
+            FatalError.check(HeapFreeChunk.isTailFreeChunk(ptop, pend.plus(labHeadroom())), "Evacuator's allocation buffer must be parseable");
         }
         ptop = Pointer.zero();
         pend = Pointer.zero();
@@ -203,7 +207,7 @@ public final class NoAgingEvacuator extends Evacuator {
             pnextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
             rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(chunkSize.minus(LAB_HEADROOM)).asPointer();
+            pend = chunk.plus(chunkSize.minus(labHeadroom())).asPointer();
         }
         allocatedRangeStart = ptop;
     }
@@ -212,7 +216,7 @@ public final class NoAgingEvacuator extends Evacuator {
     protected void doAfterEvacuation() {
         survivorRanges.clear();
         fromSpace.doAfterGC();
-        Pointer limit = pend.plus(LAB_HEADROOM);
+        Pointer limit = pend.plus(labHeadroom());
         Size spaceLeft = limit.minus(ptop).asSize();
         if (spaceLeft.lessThan(minRefillThreshold)) {
             // Will trigger refill in doBeforeEvacution on next GC
@@ -250,7 +254,7 @@ public final class NoAgingEvacuator extends Evacuator {
     private Pointer refillOrAllocate(Size size) {
         if (size.lessThan(minRefillThreshold)) {
             // check if request can fit in the remaining space when taking the headroom into account.
-            Pointer limit = pend.plus(LAB_HEADROOM);
+            Pointer limit = pend.plus(labHeadroom());
             if (ptop.plus(size).equals(limit)) {
                 // Does fit.
                 return ptop;
@@ -283,7 +287,7 @@ public final class NoAgingEvacuator extends Evacuator {
             Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
             rset.notifyRefill(chunk, chunkSize);
             ptop = chunk.asPointer();
-            pend = chunk.plus(chunkSize.minus(LAB_HEADROOM)).asPointer();
+            pend = chunk.plus(chunkSize.minus(labHeadroom())).asPointer();
             // Return zero to force loop back.
             return Pointer.zero();
         }

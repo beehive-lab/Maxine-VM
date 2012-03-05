@@ -64,7 +64,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
         final Pointer origin = Layout.cellToOrigin(cell);
         checkNotYoung(origin, hubIndex());
         final Hub hub = getHub(origin);
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;
@@ -98,7 +98,7 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
             checkNotYoung(origin, hubIndex());
         }
         final Hub hub = getHub(origin);
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;

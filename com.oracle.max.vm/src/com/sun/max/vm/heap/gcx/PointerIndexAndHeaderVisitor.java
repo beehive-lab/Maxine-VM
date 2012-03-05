@@ -32,18 +32,18 @@ import com.sun.max.vm.type.*;
 
 public abstract class PointerIndexAndHeaderVisitor extends PointerIndexVisitor {
 
-    @FOLD
     /**
      * Word index to a cell's hub from its origin.
      */
+    @FOLD
     static final int hubIndex() {
         return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
     }
 
-    @FOLD
     /**
      * Word index to the first element of a reference array from its origin.
      */
+    @FOLD
     static final int firstElementIndex() {
         return Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
     }
@@ -52,8 +52,13 @@ public abstract class PointerIndexAndHeaderVisitor extends PointerIndexVisitor {
         super();
     }
 
+    @INLINE
     final protected Hub getHub(Pointer origin) {
         return UnsafeCast.asHub(origin.getReference(hubIndex()));
     }
 
+    @INLINE
+    final protected boolean isHeapFreeChunk(Hub hub) {
+        return hub == HeapFreeChunk.heapFreeChunkHub();
+    }
 }
