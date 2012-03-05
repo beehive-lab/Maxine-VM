@@ -104,7 +104,7 @@ public final class VMConfiguration {
 
         bootImagePackages = new ArrayList<BootImagePackage>();
         for (BootImagePackage pkg : BootImagePackage.getTransitiveSubPackages(
-                        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath(),
+                        HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath(),
                         new com.sun.max.config.Package())) {
 
             if (pkg.isPartOfMaxineVM(this)) {
