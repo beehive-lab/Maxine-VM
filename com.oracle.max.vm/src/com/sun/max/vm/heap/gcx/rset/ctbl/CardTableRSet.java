@@ -316,11 +316,11 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
             cell = cellVisitor.visitCell(cell, start, end);
             if (MaxineVM.isDebug()) {
                 // FIXME: this is too strong, because DeadSpaceCardTableUpdater may leave a FOT entry temporarily out-dated by up
-                // to MIN_OBJECT_SIZE words when the HeapFreeChunkHeader of the space the allocator was refill with is immediately
+                // to minObjectSize() words when the HeapFreeChunkHeader of the space the allocator was refill with is immediately
                 // before a card boundary.
                 // I 'm leaving this as is now to see whether we ever run into this case, but this
-                // should really be cell.plus(MIN_OBJECT_SIZE).greaterThan(start);
-                FatalError.check(cell.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE).greaterThan(start), "visited cell must overlap visited card.");
+                // should really be cell.plus(minObjectSize()).greaterThan(start);
+                FatalError.check(cell.plus(HeapSchemeAdaptor.minObjectSize()).greaterThan(start), "visited cell must overlap visited card.");
             }
         } while (cell.lessThan(end));
     }
@@ -464,9 +464,8 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
                 Pointer deadObjectAddress = lastCardStart.asPointer();
                 Size deadObjectSize = end.minus(deadObjectAddress).asSize();
 
-                if (deadObjectSize.lessThan(MIN_OBJECT_SIZE)) {
-                    deadObjectSize = MIN_OBJECT_SIZE;
-                    deadObjectAddress = end.minus(deadObjectSize);
+                if (deadObjectSize.lessThan(minObjectSize())) {
+                    deadObjectAddress = end.minus(minObjectSize());
                 }
                 if (MaxineVM.isDebug() && CardFirstObjectTable.TraceFOT) {
                     Log.print("Split last card of Dead Space [");

@@ -183,7 +183,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
     private Pointer allocateLarge(Size size) {
         final Size roundedUpSize = size.alignUp(regionSizeInBytes);
         final Size tailSize = roundedUpSize.minus(size);
-        final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.MIN_OBJECT_SIZE)  ? 1 : 0;
+        final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.minObjectSize())  ? 1 : 0;
         int numContiguousRegionNeeded = roundedUpSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt() + extraRegion;
 
         if (TraceLargeObjectAllocations) {

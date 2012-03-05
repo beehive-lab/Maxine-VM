@@ -300,7 +300,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
         }
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
-        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        Size effectiveSize = chunkSize.minus(tlabHeadroom());
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
@@ -328,7 +328,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      */
     private Pointer changeTLABChunkOrAllocate(Pointer etla, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
-        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        Size effectiveSize = chunkSize.minus(tlabHeadroom());
         if (size.greaterThan(effectiveSize))  {
             // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
             return objectSpace.allocate(size);
@@ -353,7 +353,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
 
         if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
+            Size realTLABSize = effectiveSize.plus(tlabHeadroom());
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
@@ -403,14 +403,14 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         }
         // TLAB may have been wiped out by a previous direct allocation routine.
         if (!tlabEnd.isZero()) {
-            final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+            final Pointer hardLimit = tlabEnd.plus(tlabHeadroom());
             final Pointer nextChunk = tlabEnd.getWord().asPointer();
 
             final Pointer cell = tlabMark;
             if (cell.plus(size).equals(hardLimit)) {
                 // Can actually fit the object in space left.
                 // zero-fill the headroom we left.
-                Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+                Memory.clearWords(tlabEnd, tlabHeadroomNumWords());
                 if (nextChunk.isZero()) {
                     // Zero-out TLAB top and mark.
                     fastRefillTLAB(etla, Pointer.zero(), Size.zero());

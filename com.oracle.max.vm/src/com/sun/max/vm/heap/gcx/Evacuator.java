@@ -263,7 +263,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         // the reference map needed to find the other references in the object
         updateEvacuatedRef(origin,  hubIndex());
         final Hub hub = getHub(origin);
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
         }
        // Update the other references in the object
@@ -326,7 +326,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             updateEvacuatedRef(origin,  hubIndex());
         }
         final Hub hub = UnsafeCast.asHub(origin.getReference(hubIndex()));
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
         }
         // Update the other references in the object
@@ -336,7 +336,6 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             // This is because the write barrier dirty the card holding tuple header, not
             // the actually modified reference. Thus bounding the iteration to the dirty card might
             // miss references on the next card.
-            // TupleReferenceMap.visitReferences(hub, origin, this, start, end);
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
                 updateSpecialReference(origin);
@@ -344,7 +343,6 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            // TupleReferenceMap.visitReferences(hub, origin, this, start, end);
             // See comment above
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
