@@ -62,24 +62,24 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
 
     private Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        checkNotYoung(origin, HUB_WORD_INDEX);
+        checkNotYoung(origin, hubIndex());
         final Hub hub = getHub(origin);
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
-                checkNotYoung(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+                checkNotYoung(origin, SpecialReferenceManager.referentIndex());
             }
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = Layout.readArrayLength(origin) + FIRST_ELEMENT_INDEX;
-            for (int index = FIRST_ELEMENT_INDEX; index < length; index++) {
+            final int length = Layout.readArrayLength(origin) + firstElementIndex();
+            for (int index = firstElementIndex(); index < length; index++) {
                 checkNotYoung(origin, index);
             }
         }
@@ -92,22 +92,22 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
             return visitCell(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
-        final Pointer hubPointer = origin.plusWords(HUB_WORD_INDEX);
+        final Pointer hubPointer = origin.plusWords(hubIndex());
 
         if (hubPointer.greaterEqual(start) && hubPointer.lessThan(end)) {
-            checkNotYoung(origin, HUB_WORD_INDEX);
+            checkNotYoung(origin, hubIndex());
         }
         final Hub hub = getHub(origin);
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (isHeapFreeChunk(hub)) {
             return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
             if (hub.isJLRReference) {
-                final Pointer referentFieldPointer = origin.plusWords(SpecialReferenceManager.REFERENT_WORD_INDEX);
+                final Pointer referentFieldPointer = origin.plusWords(SpecialReferenceManager.referentIndex());
                 if (referentFieldPointer.greaterEqual(start) && referentFieldPointer.lessThan(end)) {
-                    checkNotYoung(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+                    checkNotYoung(origin, SpecialReferenceManager.referentIndex());
                 }
             }
             return cell.plus(hub.tupleSize);
@@ -115,9 +115,9 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            int length = Layout.readArrayLength(origin) + FIRST_ELEMENT_INDEX;
-            int firstWordIndex = FIRST_ELEMENT_INDEX;
-            Pointer p = origin.plusWords(FIRST_ELEMENT_INDEX);
+            int length = Layout.readArrayLength(origin) + firstElementIndex();
+            int firstWordIndex = firstElementIndex();
+            Pointer p = origin.plusWords(firstElementIndex());
             if (p.lessThan(start)) {
                 firstWordIndex += start.minus(p).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
             }

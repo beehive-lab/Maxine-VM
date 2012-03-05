@@ -405,14 +405,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
-        Size effectiveSize = tlabSize.minus(TLAB_HEADROOM);
+        Size effectiveSize = tlabSize.minus(tlabHeadroom());
         if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
-            Log.print(tlab.plus(tlabSize.minus(TLAB_HEADROOM)));
+            Log.print(tlab.plus(tlabSize.minus(tlabHeadroom())));
             Log.print(", end=");
             Log.print(tlab.plus(tlabSize));
             Log.print(", size=");
