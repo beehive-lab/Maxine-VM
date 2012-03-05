@@ -95,7 +95,7 @@ public class JVMTICode {
             targetMethod = classMethodActor.currentTargetMethod();
             if (targetMethod == null || !targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
                 // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
-                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
+                vm().compilationBroker.compileForDeopt(classMethodActor);
             }
         } else {
             // Never compiled, but may have been inlined

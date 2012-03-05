@@ -214,7 +214,7 @@ public class C1X implements RuntimeCompiler {
         return compiler;
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
