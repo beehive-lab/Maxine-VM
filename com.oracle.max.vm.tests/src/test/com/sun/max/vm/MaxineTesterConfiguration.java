@@ -56,6 +56,7 @@ public class MaxineTesterConfiguration {
     static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, CPU.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
+    static final List<Class> zeeVMOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
     static final List<String> zeeDacapoBachTests = new LinkedList<String>();
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
@@ -70,12 +71,12 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> imageParams = new TreeMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
-    private static Class[] findOutputTests() {
+    public static Class[] findOutputTests(final String packagePrefix) {
         final ArrayList<Class> result = new ArrayList<Class>();
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if (className.startsWith("test.output.")) {
+                if (className.startsWith(packagePrefix)) {
                     Class<?> javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
                     try {
                         javaClass.getDeclaredMethod("main", String[].class);
@@ -97,7 +98,7 @@ public class MaxineTesterConfiguration {
 
     static {
         // Register all "test.output.*" classes on the class path
-        output(findOutputTests());
+        output(findOutputTests("test.output."));
 
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN, RAND_SPARC);
@@ -111,6 +112,8 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
+        
+        vmoutput(findOutputTests("test.vm.output."));
 
         if (JDK.JDK_VERSION == JDK.JDK_7) {
             output(Classes.forName("test.output.MethodHandles01"), FAIL_ALL);
@@ -281,6 +284,8 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", testCallerT1X, testCalleeT1X);
         imageConfig("jtt-msec1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests");
 
+        imageConfig("vm-output", "-run=test.com.sun.max.vm.output");
+
         maxvmConfig("std", "-Xms2g", "-Xmx2g");
         maxvmConfig("eviction1000", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=1000");
         maxvmConfig("eviction100", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=100");
@@ -346,6 +351,10 @@ public class MaxineTesterConfiguration {
 
     private static void output(Class... javaClasses) {
         zeeOutputTests.addAll(Arrays.asList(javaClasses));
+    }
+
+    private static void vmoutput(Class... javaClasses) {
+        zeeVMOutputTests.addAll(Arrays.asList(javaClasses));
     }
 
     private static void jtt(Class javaClass, Expectation... results) {
@@ -427,6 +436,12 @@ public class MaxineTesterConfiguration {
             return "jtt-c1xc1x,jtt-c1xt1x,jtt-t1xc1x,jtt-t1xt1x";
         }
         return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x";
+    }
+
+    public static List<String> defaultVMOutputImageConfigs() {
+        List<String> result = new ArrayList<String>();
+        result.add("vm-output");
+        return result;
     }
 
     public static boolean isSupported(String config) {

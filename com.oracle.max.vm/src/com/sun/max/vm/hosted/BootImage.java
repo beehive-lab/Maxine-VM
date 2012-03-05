@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -354,7 +354,7 @@ public class BootImage {
             vmThreadRunMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT);
             vmThreadAttachMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_attach, CallEntryPoint.C_ENTRY_POINT);
             vmThreadDetachMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_detach, CallEntryPoint.C_ENTRY_POINT);
-            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.BOOT_CLASS_REGISTRY).toInt();
+            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.VM_CLASS_REGISTRY).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
             heapSize = dataPrototype.heapData().length;

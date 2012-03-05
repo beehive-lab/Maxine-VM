@@ -54,7 +54,7 @@ public class VMLoggerGenerator {
     private static final String[] INDENTS = new String[] {"", INDENT4, INDENT8, INDENT12, INDENT16, INDENT20};
 
     private static boolean generate(boolean checkOnly, Class source, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
-        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm/src");
+        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm/src");
         File outputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         Class<?>[] loggerInterfaces = loggerInterfacesArg.toArray(new Class<?>[loggerInterfacesArg.size()]);
         sort(loggerInterfaces);

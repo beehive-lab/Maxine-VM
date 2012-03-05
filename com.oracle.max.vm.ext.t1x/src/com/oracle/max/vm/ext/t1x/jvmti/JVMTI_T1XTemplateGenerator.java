@@ -271,7 +271,7 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
     }
 
     static boolean generate(boolean checkOnly, Class target) throws Exception {
-        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm.ext.t1x/src");
+        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.t1x/src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(baos);
