@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.BootClassLoader.*;
 
 /**
  * The Boot class loader used when running in hosted mode.
@@ -155,22 +156,31 @@ public final class HostedBootClassLoader extends HostedClassLoader {
         return isStubClass(javaType.getName()) && cl == this;
     }
 
+    /**
+     * This guard serves a similiar purpose to {@link BootClassLoader#vmResolveOk} to handle special cases
+     * where boot classes refer to VM classes, e.g. native method stubs.
+     */
+    private static final ThreadLocal<Boolean> attemptingVMClassResolution = new ThreadLocal<Boolean>() {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    };
+
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
         try {
             return super.loadClass(name, resolve);
         } catch (ClassNotFoundException exception) {
-            // This may be a class reference to a VM class from a Maxine-modified JDK (boot) class
-            // The class will have been loaded into the HostedVMClassLoader so we should be able to
-            // locate it in the map of defined classes.
-            // N.B. we can't just invoke HostedVMClassLoader.loadClass as we are its parent
-            // so it will recurse back to here.
-            Class<?> result = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.definedClasses.get(name);
-            if (result == null) {
-                throw new ClassNotFoundException();
-            } else {
-                return result;
+            if (!attemptingVMClassResolution.get()) {
+                attemptingVMClassResolution.set(true);
+                try {
+                    return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.loadClass(name);
+                } finally {
+                    attemptingVMClassResolution.set(false);
+                }
             }
+            throw exception;
         }
     }
 
