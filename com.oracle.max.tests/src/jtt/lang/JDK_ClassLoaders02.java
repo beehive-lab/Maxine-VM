@@ -51,6 +51,24 @@ import java.net.*;
 public class JDK_ClassLoaders02 {
     public static boolean test(int i) {
         ClassLoader classLoader = JDK_ClassLoaders02.class.getClassLoader();
-        return classLoader == null || classLoader instanceof URLClassLoader;
+        return classLoader == null || findMyClassLoaderClass().isAssignableFrom(classLoader.getClass());
     }
+
+    /**
+     * If built into boot image, as is standard with tests, classloader is VM classloader.
+     * Can't name is statically else won't execute under standard VM.
+     * @return
+     */
+    private static Class<?> findMyClassLoaderClass() {
+        try {
+            return Class.forName("com.sun.max.vm.type.VMClassLoader");
+        } catch (ClassNotFoundException ex) {
+            return URLClassLoader.class;
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println("test result: " + test(0));
+    }
+
 }

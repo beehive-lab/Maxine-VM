@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
     protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         // We map all VM classloaders down into one on the local host VM
-        return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
+        return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
     }
 
     public static List<TeleClassLoader> teleClassLoaders() {

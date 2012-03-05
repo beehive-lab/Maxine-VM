@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -69,6 +70,7 @@ public final class NoAgingNursery implements HeapSpace {
     /**
      * Atomic bump pointer allocator over the nursery space. The current bounds and size of the nursery are obtained from the allocator's start and end addresses.
      */
+    @INSPECTED
     private final AtomicBumpPointerAllocator<NurseryRefiller> allocator = new AtomicBumpPointerAllocator<NurseryRefiller>(new NurseryRefiller());
 
     public NoAgingNursery(HeapAccount<? extends HeapAccountOwner> heapAccount, int regionTag) {

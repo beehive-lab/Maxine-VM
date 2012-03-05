@@ -299,7 +299,7 @@ public class JniFunctionsGenerator {
         @Override
         public void close(PrintWriter writer) throws Exception {
             super.close(writer);
-            final File vmHeaderFile = new File(new File(JavaProject.findHgRoot(), "com.oracle.max.vm.native/substrate/vm.h").getAbsolutePath());
+            final File vmHeaderFile = new File(new File(JavaProject.findWorkspace(), "com.oracle.max.vm.native/substrate/vm.h").getAbsolutePath());
             ProgramError.check(vmHeaderFile.exists(), "JMM header file " + vmHeaderFile + " does not exist");
 
             Writer vmDecls = new StringWriter();
@@ -361,7 +361,7 @@ public class JniFunctionsGenerator {
      * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
     public static boolean generate(boolean checkOnly, Class source, Class target, Customizer customizer) throws Exception {
-        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm/src");
+        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm/src");
         File inputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
 

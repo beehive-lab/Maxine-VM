@@ -137,7 +137,7 @@ public final class NativeInterfaces {
      */
     @HOSTED_ONLY
     private static StaticMethodActor[] checkAgainstJmmHeaderFile(StaticMethodActor[] jmmFunctionActors) {
-        final File jmmHeaderFile = new File(new File(JavaProject.findHgRoot(), "com.oracle.max.vm.native/substrate/jmm.h").getAbsolutePath());
+        final File jmmHeaderFile = new File(new File(JavaProject.findWorkspace(), "com.oracle.max.vm.native/substrate/jmm.h").getAbsolutePath());
         ProgramError.check(jmmHeaderFile.exists(), "JMM header file " + jmmHeaderFile + " does not exist");
 
         List<String> jmmFunctionNames = new ArrayList<String>();
