@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,6 +130,10 @@ public class FieldActor extends MemberActor implements RiResolvedField {
      * Gets the actor for this field's type.
      */
     public ClassActor type() {
+        if (isInjected(flags())) {
+            // special direct search for VM class defining injected field.
+            return ClassRegistry.get(VMClassLoader.VM_CLASS_LOADER, descriptor(), false);
+        }
         return descriptor().resolve(holder().classLoader);
     }
 

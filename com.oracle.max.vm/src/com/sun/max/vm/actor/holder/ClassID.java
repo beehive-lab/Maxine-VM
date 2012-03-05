@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ public final class ClassID {
     public static void recordArrayClassID(ClassActor elementClass, int dimension, int id) {
         if (traceArrayClassIDs) {
             createdArrayClassIDs.set(id);
-            StringBuffer sb = new StringBuffer(" ");
+            StringBuffer sb = new StringBuffer("Class ID ");
             for (int d = 0; d <= dimension; d++) {
                 sb.append('[');
             }
