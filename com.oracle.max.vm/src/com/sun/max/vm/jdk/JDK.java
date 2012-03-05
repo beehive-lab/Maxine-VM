@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,10 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.util.regex.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -50,6 +51,8 @@ public class JDK {
     public static final ClassRef java_lang_Thread                    = new ClassRef(Thread.class);
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
     public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
+
+    public static final ClassRef java_lang_invoke_MethodType = new LazyClassRef("java.lang.invoke.MethodType");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
@@ -127,6 +130,7 @@ public class JDK {
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
     public static final ClassRef sun_misc_Unsafe                     = new ClassRef(sun.misc.Unsafe.class);
     public static final ClassRef sun_misc_PerfCounter                = new LazyClassRef("sun.misc.PerfCounter");
+    public static final ClassRef sun_misc_ProxyGenerator             = new LazyClassRef("sun.misc.ProxyGenerator");
     public static final ClassRef sun_misc_Launcher                   = new LazyClassRef(sun.misc.Launcher.class);
     public static final ClassRef sun_util_calendar_ZoneInfo              = new LazyClassRef(sun.util.calendar.ZoneInfo.class);
     public static final ClassRef sun_net_www_protocol_jar_JarFileFactory = new LazyClassRef("sun.net.www.protocol.jar.JarFileFactory");
@@ -242,9 +246,19 @@ public class JDK {
     }
 
     /**
+     * The format supported for JDK version strings.
+     */
+    public static final Pattern JDK_VERSION_STRING_PATTERN = Pattern.compile("1.(\\d+)");
+
+    /**
+     * JDK version string extract from the "java.specification.version" system property.
+     */
+    public static final String JDK_VERSION_STRING = System.getProperty("java.specification.version");
+
+    /**
      * Version number of the JDK.
      */
-    public static final int JDK_VERSION;
+    public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
 
     /**
      * Value for {@linkplain JDK_VERSION} for JDK 6.
@@ -256,16 +270,27 @@ public class JDK {
      */
     public static final int JDK_7 = 7;
 
-    static {
-        String version = System.getProperty("java.specification.version");
-
-        if ("1.6".equals(version)) {
-            JDK_VERSION = JDK_6;
-        } else if ("1.7".equals(version)) {
-            JDK_VERSION = JDK_7;
-        } else {
-            JDK_VERSION = -1;
-            throw ProgramError.unexpected("Unknown java version number: " + version);
+    /**
+     * Parses a JDK version string into an integer.
+     *
+     * @param version a version string that must conform to {@value #JDK_VERSION_STRING_PATTERN}
+     * @return the integer value following the decimal in {@code version}
+     */
+    public static int jdkVersionValue(String version) {
+        Matcher m = JDK_VERSION_STRING_PATTERN.matcher(version);
+        if (!m.matches()) {
+            throw new IllegalArgumentException(version + " is not in a recognized version string format");
         }
+        return Integer.parseInt(m.group(1));
+    }
+
+    /**
+     * Version check for use with the {@link JDK_VERSION} annotation.
+     */
+    public static boolean thisVersionOrNewer(JDK_VERSION version) {
+        if (version == null) {
+            return true;
+        }
+        return JDK_VERSION >= jdkVersionValue(version.value());
     }
 }

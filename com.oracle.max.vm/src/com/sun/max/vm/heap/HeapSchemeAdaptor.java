@@ -34,7 +34,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.debug.*;
@@ -79,26 +78,41 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         }
     }
 
+    @FOLD
+    protected static DynamicHub objectHub() {
+        return ClassRegistry.OBJECT.dynamicHub();
+    }
+
+    @FOLD
+    protected static DynamicHub byteArrayHub() {
+        return ClassRegistry.BYTE_ARRAY.dynamicHub();
+    }
+
     /**
-     * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.
+     * Size in bytes of an java.lang.Object instance, presumably the minimum object size.
      */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static DynamicHub OBJECT_HUB;
+    @FOLD
+    public static Size minObjectSize() {
+        return objectHub().tupleSize;
+    }
+
     /**
-     * Local copy of Dynamic Hub for byte [] to speed up filling cell with dead object.
+     * Number of words of an java.lang.Object instance, presumably the minimum number of words.
      */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static DynamicHub BYTE_ARRAY_HUB;
-    /**
-     * Size of an java.lang.Object instance, presumably the minimum object size.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    public static Size MIN_OBJECT_SIZE;
-    /**
-     * Size of a byte array header.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static Size BYTE_ARRAY_HEADER_SIZE;
+    @FOLD
+    public static int minObjectWords() {
+        return minObjectSize().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    }
+
+    @FOLD
+    public static Size byteArrayHeaderSize() {
+        return Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
+    }
+
+    @FOLD
+    public static int numByteArrayHeaderWords() {
+        return byteArrayHeaderSize().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    }
 
     /**
      * Plants a dead instance of java.lang.Object at the specified pointer.
@@ -106,8 +120,8 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
-        Memory.clearWords(cell, MIN_OBJECT_SIZE.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
+        Memory.clearWords(cell,  minObjectWords());
+        Layout.writeHubReference(origin, Reference.fromJava(objectHub()));
     }
 
     /**
@@ -115,11 +129,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      */
     private static void plantDeadByteArray(Pointer cell, Size size) {
         DebugHeap.writeCellTag(cell);
-        final int length = size.minus(BYTE_ARRAY_HEADER_SIZE).toInt();
         final Pointer origin = Layout.arrayCellToOrigin(cell);
-        Memory.clearWords(cell, BYTE_ARRAY_HEADER_SIZE.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-        Layout.writeArrayLength(origin, length);
-        Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
+        Memory.clearWords(cell, numByteArrayHeaderWords());
+        Layout.writeArrayLength(origin, size.minus(byteArrayHeaderSize()).toInt());
+        Layout.writeHubReference(origin, Reference.fromJava(byteArrayHub()));
     }
 
 
@@ -133,9 +146,9 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public static void fillWithDeadObject(Pointer start, Pointer end) {
         Pointer cell = DebugHeap.adjustForDebugTag(start);
         Size deadObjectSize = end.minus(cell).asSize();
-        if (deadObjectSize.greaterThan(MIN_OBJECT_SIZE)) {
+        if (deadObjectSize.greaterThan(minObjectSize())) {
             plantDeadByteArray(cell, deadObjectSize);
-        } else if (deadObjectSize.equals(MIN_OBJECT_SIZE)) {
+        } else if (deadObjectSize.equals(minObjectSize())) {
             plantDeadObject(cell);
         } else {
             final boolean lockDisabledSafepoints = Log.lock();
@@ -179,12 +192,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
-            OBJECT_HUB = ClassRegistry.OBJECT.dynamicHub();
-            BYTE_ARRAY_HUB = ClassRegistry.BYTE_ARRAY.dynamicHub();
-            MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
-            BYTE_ARRAY_HEADER_SIZE = Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
-        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             releaseUnusedReservedVirtualSpace();
         }

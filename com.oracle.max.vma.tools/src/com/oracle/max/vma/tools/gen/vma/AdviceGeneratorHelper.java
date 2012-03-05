@@ -72,7 +72,7 @@ public class AdviceGeneratorHelper {
     }
 
     public static int updateSource(Class target, String updatedContent, boolean checkOnly) throws IOException {
-        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm.ext.vma/src");
+        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.vma/src");
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (updatedContent == null) {
             updatedContent = bsOut.toString();

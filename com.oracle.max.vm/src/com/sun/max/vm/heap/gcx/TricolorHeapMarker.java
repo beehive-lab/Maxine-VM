@@ -404,7 +404,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             traceMark(cell, GREY, " ***  has null hub !\n");
             MarkingError.nullHubError.report(markPhase);
         }
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (hub == HeapFreeChunk.heapFreeChunkHub()) {
             traceMark(cell, GREY, " ***  free chunk with mark !\n");
             MarkingError.markedFreeChunkError.report(markPhase);
         }
@@ -1399,7 +1399,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             while (p.lessThan(end)) {
                 final Pointer origin = Layout.cellToOrigin(p);
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-                final Size size =  (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB)  ? HeapFreeChunk.getFreechunkSize(p) : Layout.size(origin);
+                final Size size =  (hub == HeapFreeChunk.heapFreeChunkHub())  ? HeapFreeChunk.getFreechunkSize(p) : Layout.size(origin);
                 if (p.greaterThan(startPrinting)) {
                     Log.print(p); Log.print(" ["); Log.print(size.toLong()); Log.print("] ");
                     if ((objectCount & 7) == 0) {
@@ -1437,7 +1437,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             }
             final Pointer origin = Layout.cellToOrigin(p);
             final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-            if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            if (hub == HeapFreeChunk.heapFreeChunkHub()) {
                 if (MaxineVM.isDebug() && !isWhite(bitIndex)) {
                     traceMark(origin, color(bitIndex), " *** found chunk at non-white mark\n");
                     throw MarkingError.markedFreeChunkError;

@@ -35,8 +35,8 @@ include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/share/share.mk
 
 all : $(LIBRARY)
-	# The Mac OS X JDK libraries are linked against a library named libjvmlinkage.dylib.
-	if [ $(OS) = "darwin" ]; then \
+	# The Mac OS X JDK libraries are linked against a library named libjvmlinkage.dylib when JDK6 is used.
+	if [ $(OS) = "darwin" -a "$(JDK7)" = "" ]; then \
 	    rm $(PROJECT)/generated/darwin/libjvm.dylib; \
 	    cp $(LIBRARY) $(PROJECT)/generated/darwin/libjvmlinkage.dylib; \
 	fi

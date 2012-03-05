@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -406,12 +406,22 @@ public final class JDK_java_lang_System {
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
                 String javaHome = getenv("JAVA_HOME", false);
-                if (javaHome == null) {
-                    javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
-                }
-
-                if (!javaHome.endsWith("/Home")) {
-                    javaHome = javaHome + "/Home";
+                if (JDK.JDK_VERSION == JDK.JDK_6) {
+                    if (javaHome == null) {
+                        javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
+                    }
+                    if (!javaHome.endsWith("/Home")) {
+                        javaHome = javaHome + "/Home";
+                    }
+                } else if (JDK.JDK_VERSION == JDK.JDK_7) {
+                    if (javaHome == null) {
+                        javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.7/Home";
+                    }
+                    if (!javaHome.endsWith("/jre")) {
+                        javaHome = javaHome + "/jre";
+                    }
+                } else {
+                    throw FatalError.unexpected("Unsupported DARWIN JDK version");
                 }
                 return javaHome;
             }
@@ -731,7 +741,11 @@ public final class JDK_java_lang_System {
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
         if (Platform.platform().os == OS.DARWIN) {
-            initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
+            if (JDK.JDK_VERSION == JDK.JDK_6) {
+                initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
+            } else {
+                initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
+            }
         } else if (Platform.platform().os == OS.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
@@ -804,12 +818,13 @@ public final class JDK_java_lang_System {
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
      *            element 0 and the path to libzip.jnilib will be returned in element 1
      */
-    @PLATFORM(os = "!(windows|darwin)")
+    @PLATFORM(os = "!windows")
     private static void initUnixPathProperties(Properties properties, String javaHome, String isa, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/jre"), "The java.home system property should end with \"/jre\"");
+        final OS os = platform().os;
         final String jrePath = javaHome;
         final String jreLibPath = asFilesystemPath(jrePath, "lib");
-        final String jreLibIsaPath = asFilesystemPath(jreLibPath, isa);
+        final String jreLibIsaPath = os == OS.DARWIN ? jreLibPath : asFilesystemPath(jreLibPath, isa);
 
         setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), jreLibIsaPath));
 
@@ -831,11 +846,13 @@ public final class JDK_java_lang_System {
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
-        final OS os = Platform.platform().os;
         if (os == OS.LINUX) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
         } else if (os == OS.SOLARIS) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
+        } else if (os == OS.DARWIN) {
+            // TODO (ds) I'm sure what (if any) extra extension directories exist for JDK 7 on Mac OS X
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else if (os == OS.MAXVE) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
@@ -951,7 +968,13 @@ public final class JDK_java_lang_System {
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".
                 // We support this by returning its first choice here:
-                return "lib" + libraryName + ".jnilib";
+                // NOTE: The above seems to no longer be true for the JDK7 port to Mac OS X, which
+                // does away with .jnilib files. For JDK 7, we return .dylib.
+                if (JDK.JDK_VERSION == JDK.JDK_6) {
+                    return "lib" + libraryName + ".jnilib";
+                } else {
+                    return "lib" + libraryName + ".dylib";
+                }
             case LINUX:
             case MAXVE:
             case SOLARIS:

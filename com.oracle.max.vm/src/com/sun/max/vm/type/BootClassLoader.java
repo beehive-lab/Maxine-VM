@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,6 +117,30 @@ public final class BootClassLoader extends ClassLoader {
         return resolveClassOrNull(classpath(), name);
     }
 
+    private static class VMResolveState extends ThreadLocal<Boolean> {
+        @Override
+        public Boolean initialValue() {
+            return false;
+        }
+    }
+
+    /**
+     * When {@code true} {@link #findClass} will search {@link VMClassLoader} to handle special cases
+     * where boot classes refer to VM classes, e.g. native method stubs.
+     */
+    private static final VMResolveState vmResolveOk = new VMResolveState();
+
+    /**
+     * Set the capability to resolve VM classes from a boot class.
+     * @param state the new state
+     * @return the previous state
+     */
+    public static boolean allowResolveVM(boolean state) {
+        boolean v = vmResolveOk.get();
+        vmResolveOk.set(state);
+        return v;
+    }
+
     @Override
     public Class<?> findClass(String name) throws ClassNotFoundException {
         if (MaxineVM.isHosted()) {
@@ -132,7 +156,16 @@ public final class BootClassLoader extends ClassLoader {
         }
         Class c = resolveClassOrNull(classpath(), name);
         if (c == null) {
-            throw new ClassNotFoundException(name);
+            if (vmResolveOk.get()) {
+                // must use class registry, to avoid recursion back here, as boot is parent of vm
+                ClassActor ca = ClassRegistry.VM_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
+                if (ca != null) {
+                    c = ca.toJava();
+                }
+            }
+            if (c == null)  {
+                throw new ClassNotFoundException(name);
+            }
         }
         return c;
     }

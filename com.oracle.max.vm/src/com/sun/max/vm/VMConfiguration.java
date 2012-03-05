@@ -65,6 +65,7 @@ public final class VMConfiguration {
 
     @CONSTANT_WHEN_NOT_ZERO private ReferenceScheme referenceScheme;
     @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
+    @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
     @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
     @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;

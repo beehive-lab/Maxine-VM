@@ -254,7 +254,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
          * @return
          */
         Address allocateFirstFit(Size size, boolean exactFit) {
-            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.minObjectSize());
             HeapFreeChunk prevChunk = null;
             HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(head);
             do {
@@ -310,7 +310,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
         boolean canFit(Size size) {
             HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(head);
-            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.minObjectSize());
 
             while (chunk != null) {
                 if (spaceWithHeadRoom.lessThan(chunk.size) || size.equals(chunk.size)) {

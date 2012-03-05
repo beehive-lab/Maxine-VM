@@ -23,6 +23,8 @@
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
+import com.sun.max.annotate.*;
+
 /**
  * An iterator over a {@link HeapRegionList}.
  * The iterator return ranges of contiguous regions in the order of the list.
@@ -71,10 +73,20 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         nextIterable();
     }
 
+    @INLINE
+    private boolean isIterable(HeapRegionInfo rinfo) {
+        return (rinfo.flags & matchingFlags) != 0;
+    }
+
+    @INLINE
+    private boolean isIterable(HeapRegionInfo rinfo, int tag) {
+        return rinfo.tag == tag && (rinfo.flags & matchingFlags) != 0;
+    }
+
     private void nextIterable() {
         final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (cursor != INVALID_REGION_ID) {
-            if ((theRegionTable.regionInfo(cursor).flags & matchingFlags) != 0) {
+            if (isIterable(theRegionTable.regionInfo(cursor))) {
                 return;
             }
             cursor = regionList.next(cursor);
@@ -87,7 +99,7 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         int next = regionList.next(cursor);
         final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (next == endRange) {
-            if (!theRegionTable.regionInfo(next).isIterable()) {
+            if (!isIterable(theRegionTable.regionInfo(next))) {
                 break;
             }
             endRange++;
@@ -112,8 +124,7 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
     private void nextIterable(int tag) {
         final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (cursor != INVALID_REGION_ID) {
-            HeapRegionInfo rinfo = theRegionTable.regionInfo(cursor);
-            if (rinfo.tag == tag && rinfo.isIterable()) {
+            if (isIterable(theRegionTable.regionInfo(cursor), tag)) {
                 return;
             }
             cursor = regionList.next(cursor);
@@ -126,8 +137,7 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         int next = regionList.next(cursor);
         final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (next == endRange) {
-            HeapRegionInfo rinfo = theRegionTable.regionInfo(next);
-            if (!(rinfo.tag == tag && rinfo.isIterable())) {
+            if (!isIterable(theRegionTable.regionInfo(next), tag)) {
                 break;
             }
             endRange++;

@@ -44,6 +44,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.log.*;
@@ -105,6 +106,7 @@ public final class MaxineVM {
     /**
      * The current VM context.
      */
+    @INSPECTED
     @CONSTANT
     private static MaxineVM vm;
 
@@ -299,6 +301,7 @@ public final class MaxineVM {
     public static boolean isHostedOnly(AccessibleObject member) {
         return member.getAnnotation(HOSTED_ONLY.class) != null ||
                !Platform.platform().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
+               !JDK.thisVersionOrNewer(member.getAnnotation(JDK_VERSION.class)) ||
                isHostedOnly(Classes.getDeclaringClass(member));
     }
 
@@ -310,6 +313,7 @@ public final class MaxineVM {
      * <li>or annotated with {@link HOSTED_ONLY}
      * <li>or in a package that ends with {@code ".hosted"}
      * <li>or annotated with {@link PLATFORM} that does not match the target platform
+     * <li>or annotated with {@link JDK_VERSION} that is not at least the JDK version used for building the boot image
      * <li>
      * </ul>
      * <p>
@@ -344,6 +348,8 @@ public final class MaxineVM {
             // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
             result = true;
         } else if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
+            result = true;
+        } else if (!JDK.thisVersionOrNewer(javaClass.getAnnotation(JDK_VERSION.class))) {
             result = true;
         } else {
 
@@ -557,6 +563,7 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void core_dump();
 
+    @INSPECTED
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
