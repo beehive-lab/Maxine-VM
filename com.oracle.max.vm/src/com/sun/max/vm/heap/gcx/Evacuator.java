@@ -55,14 +55,13 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         } else {
             // Treat referent as strong reference.
             if (MaxineVM.isDebug() && TraceEvacVisitedCell) {
-                final int index = SpecialReferenceManager.REFERENT_WORD_INDEX;
                 Log.print("Resurecting referent");
-                Log.print(origin.getReference(index).toOrigin());
+                Log.print(origin.getReference(SpecialReferenceManager.referentIndex()).toOrigin());
                 Log.print(" from special ref ");
                 Log.print(origin); Log.print(" + ");
-                Log.println(index);
+                Log.println(SpecialReferenceManager.referentIndex());
             }
-            updateEvacuatedRef(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+            updateEvacuatedRef(origin, SpecialReferenceManager.referentIndex());
         }
     }
 
@@ -81,15 +80,15 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     }
 
     private void updateReferenceArray(Pointer refArrayOrigin) {
-        final int length = Layout.readArrayLength(refArrayOrigin) + FIRST_ELEMENT_INDEX;
-        updateReferenceArray(refArrayOrigin, FIRST_ELEMENT_INDEX, length);
+        final int length = Layout.readArrayLength(refArrayOrigin) + firstElementIndex();
+        updateReferenceArray(refArrayOrigin, firstElementIndex(), length);
     }
 
     private void updateReferenceArray(Pointer refArrayOrigin, Address start, Address end) {
-        final int endOfArrayIndex = Layout.readArrayLength(refArrayOrigin) + FIRST_ELEMENT_INDEX;
-        final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
+        final int endOfArrayIndex = Layout.readArrayLength(refArrayOrigin) + firstElementIndex();
+        final Address firstElementAddr = refArrayOrigin.plusWords(firstElementIndex());
         final Address endOfArrayAddr = refArrayOrigin.plusWords(endOfArrayIndex);
-        final int firstIndex = start.greaterThan(firstElementAddr) ? start.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : FIRST_ELEMENT_INDEX;
+        final int firstIndex = start.greaterThan(firstElementAddr) ? start.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : firstElementIndex();
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(refArrayOrigin).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : endOfArrayIndex;
         updateReferenceArray(refArrayOrigin, firstIndex, endIndex);
     }
@@ -262,7 +261,7 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
         final Pointer origin = Layout.cellToOrigin(cell);
         // Update the hub first so that is can be dereferenced to obtain
         // the reference map needed to find the other references in the object
-        updateEvacuatedRef(origin,  HUB_WORD_INDEX);
+        updateEvacuatedRef(origin,  hubIndex());
         final Hub hub = getHub(origin);
         if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
             return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
@@ -311,7 +310,8 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     }
 
     /**
-     * Scan the part of cell that overlap with a region of memory to evacuate the cells in the evacuation area it refers to and update its references to already evacuated cells.
+     * Scan the part of cell that overlap with a region of memory to evacuate the cells in the evacuation area it refers to and update its references
+     * to already evacuated cells.
      *
      * @param cell Pointer to the first word of the cell to be visited
      * @param start start of the region overlapping with the cell
@@ -321,25 +321,32 @@ public abstract class Evacuator extends PointerIndexAndHeaderVisitor implements 
     final protected Pointer scanCellForEvacuatees(Pointer cell, Address start, Address end) {
         checkCellOverlap(cell, start, end);
         final Pointer origin = Layout.cellToOrigin(cell);
-        Pointer hubReferencePtr = origin.plus(HUB_WORD_INDEX);
+        Pointer hubReferencePtr = origin.plus(hubIndex());
         if (hubReferencePtr.greaterEqual(start)) {
-            updateEvacuatedRef(origin,  HUB_WORD_INDEX);
+            updateEvacuatedRef(origin,  hubIndex());
         }
-        final Hub hub = UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        final Hub hub = UnsafeCast.asHub(origin.getReference(hubIndex()));
         if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
             return cell.plus(HeapFreeChunk.getFreechunkSize(cell));
         }
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+            // Visit all the references of the object and not just those over the range.
+            // This is because the write barrier dirty the card holding tuple header, not
+            // the actually modified reference. Thus bounding the iteration to the dirty card might
+            // miss references on the next card.
+            // TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+            TupleReferenceMap.visitReferences(hub, origin, this);
             if (hub.isJLRReference) {
                 updateSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+            // TupleReferenceMap.visitReferences(hub, origin, this, start, end);
+            // See comment above
+            TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
             updateReferenceArray(origin, start, end);
         }

@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -70,9 +69,6 @@ public final class HeapRangeDumper implements Runnable {
     public interface DumpRangeRefinement {
         void refineRange(HeapRangeDumper heapDumper, Address unparsable);
     }
-
-    private final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
-    private final int FIRST_ELEMENT_INDEX = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
 
     private final Pointer dynamicHubHubPtr;
     private final Pointer staticHubHubPtr;
@@ -125,7 +121,7 @@ public final class HeapRangeDumper implements Runnable {
 
     private boolean isValidHub(Pointer hubOrigin) {
         if (heapBounds.contains(hubOrigin)) {
-            Pointer hubhubPtr = hubOrigin.getReference(HUB_WORD_INDEX).toOrigin();
+            Pointer hubhubPtr = hubOrigin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
             return hubhubPtr.equals(dynamicHubHubPtr) ||  hubhubPtr.equals(staticHubHubPtr);
         }
         return false;
@@ -168,7 +164,7 @@ public final class HeapRangeDumper implements Runnable {
             Pointer p = start.asPointer();
             while (p.lessThan(end)) {
                 Pointer origin = Layout.cellToOrigin(p);
-                Pointer hubOrigin = origin.getReference(HUB_WORD_INDEX).toOrigin();
+                Pointer hubOrigin = origin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
                 if (hubOrigin.isZero() || hubOrigin.equals(zappedMarker)) {
                     handler.refineRange(this, origin);
                     return true;
@@ -185,7 +181,7 @@ public final class HeapRangeDumper implements Runnable {
                     if (specificLayout.isTupleLayout()) {
                         TupleReferenceMap.visitReferences(hub, origin, checkUnparsableVisitor, start, end);
                         if (hub.isJLRReference) {
-                            checkUnparsableVisitor.visit(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+                            checkUnparsableVisitor.visit(origin, SpecialReferenceManager.referentIndex());
                         }
                         p = p.plus(hub.tupleSize);
                         continue;
@@ -217,7 +213,7 @@ public final class HeapRangeDumper implements Runnable {
         final boolean lockDisabledSafepoints = Log.lock();
         while (p.lessThan(end)) {
             Pointer origin = Layout.cellToOrigin(p);
-            Pointer hubOrigin = origin.getReference(HUB_WORD_INDEX).toOrigin();
+            Pointer hubOrigin = origin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
             if (hubOrigin.equals(zappedMarker)) {
                 // Skip zap markers.
                 p = skip(origin, ZAPPED_MARKER, "ZAPPED AREA");
@@ -250,7 +246,7 @@ public final class HeapRangeDumper implements Runnable {
                         TupleReferenceMap.visitReferences(hub, origin, dumpVisitor, start, end);
                         if (hub.isJLRReference) {
                             Log.print("<s>     ");
-                            printRef(origin, SpecialReferenceManager.REFERENT_WORD_INDEX);
+                            printRef(origin, SpecialReferenceManager.referentIndex());
                         }
                     }
                     p = p.plus(size);
@@ -312,7 +308,7 @@ public final class HeapRangeDumper implements Runnable {
                 handler.refineRange(HeapRangeDumper.this, pointer.plusWords(wordIndex));
                 throw unparsableAddressException;
             }
-            Pointer hubOrigin = referencedOrigin.getWord(HUB_WORD_INDEX).asPointer();
+            Pointer hubOrigin = referencedOrigin.getWord(hubIndex()).asPointer();
             if (hubOrigin.isZero() || hubOrigin.equals(Pointer.fromLong(ZAPPED_MARKER)) || !isValidHub(hubOrigin)) {
                 handler.refineRange(HeapRangeDumper.this, pointer.plusWords(wordIndex));
                 throw unparsableAddressException;
@@ -322,7 +318,7 @@ public final class HeapRangeDumper implements Runnable {
 
     private void visitReferenceArray(Pointer refArrayOrigin, PointerIndexAndHeaderVisitor visitor) {
         final int length = Layout.readArrayLength(refArrayOrigin);
-        final Address firstElementAddr = refArrayOrigin.plusWords(FIRST_ELEMENT_INDEX);
+        final Address firstElementAddr = refArrayOrigin.plusWords(PointerIndexAndHeaderVisitor.firstElementIndex());
         final Address endOfArrayAddr = firstElementAddr.plusWords(length);
         final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;

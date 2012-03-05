@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
@@ -31,18 +32,28 @@ import com.sun.max.vm.type.*;
 
 public abstract class PointerIndexAndHeaderVisitor extends PointerIndexVisitor {
 
-    protected final int HUB_WORD_INDEX = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
+    @FOLD
+    /**
+     * Word index to a cell's hub from its origin.
+     */
+    static final int hubIndex() {
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
+    }
+
+    @FOLD
     /**
      * Word index to the first element of a reference array from its origin.
      */
-    protected final int FIRST_ELEMENT_INDEX = Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
+    static final int firstElementIndex() {
+        return Layout.referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
+    }
 
     public PointerIndexAndHeaderVisitor() {
         super();
     }
 
     final protected Hub getHub(Pointer origin) {
-        return UnsafeCast.asHub(origin.getReference(HUB_WORD_INDEX));
+        return UnsafeCast.asHub(origin.getReference(hubIndex()));
     }
 
 }
