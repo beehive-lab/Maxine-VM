@@ -30,6 +30,7 @@ import test.com.sun.max.vm.jtrun.all.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.jdk.*;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -111,8 +112,19 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
-
+        
         vmoutput(findOutputTests("test.vm.output."));
+
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            output(Classes.forName("test.output.MethodHandles01"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles02"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles03"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles04"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles05"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles06"), FAIL_ALL);
+            output(Classes.forName("test.output.MethodHandles07"), FAIL_ALL);
+        }
+
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
 //        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization

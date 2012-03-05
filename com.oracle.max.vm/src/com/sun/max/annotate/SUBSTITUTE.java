@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,12 @@ public @interface SUBSTITUTE {
      * The name of the substitutee. If the element is {@code ""}, then the name of the substitute method is used.
      */
     String value() default "";
+
+    /**
+     * The signature of the substitutee. This is required if one of the parameter types is non-public in the
+     * substitutee's package. If this element is {@code ""}, the signature is derived from the substitute.
+     */
+    String signatureDescriptor() default "";
 
     /**
      * Specifies if the substitutee must exist. This property is useful to handle differences

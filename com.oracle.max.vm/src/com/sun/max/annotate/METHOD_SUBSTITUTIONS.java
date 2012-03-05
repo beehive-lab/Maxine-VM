@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,8 +103,15 @@ public @interface METHOD_SUBSTITUTIONS {
                     Constructor constructor = null;
                     Method originalMethod = null;
 
+                    SignatureDescriptor substituteeSignature;
+                    if (substituteAnnotation.signatureDescriptor().equals("")) {
+                        substituteeSignature = SignatureDescriptor.fromJava(substituteMethod);
+                    } else {
+                        substituteeSignature = SignatureDescriptor.create(substituteAnnotation.signatureDescriptor());
+                    }
+
                     if (isConstructor) {
-                        constructor = findConstructor(substitutee, SignatureDescriptor.fromJava(substituteMethod));
+                        constructor = findConstructor(substitutee, substituteeSignature);
                         if (constructor == null) {
                             if (conditional) {
                                 Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
@@ -121,7 +128,7 @@ public @interface METHOD_SUBSTITUTIONS {
                             throw e;
                         }
                     } else {
-                        originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
+                        originalMethod = findMethod(substitutee, substituteName, substituteeSignature);
                         if (originalMethod == null) {
                             if (conditional) {
                                 Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
