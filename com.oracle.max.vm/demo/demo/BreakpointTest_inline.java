@@ -20,37 +20,47 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.debug.vmlog;
+package demo;
 
-import java.awt.*;
+/**
+ * Program used to debug Maxine's breakpoint implementation for methods that may
+ * have been inlined by the optimizing compiler at the time the breakpoint is set.
+ * Usage:
+ * <ol>
+ * <li>Set a breakpoint at the call to {@link #spinUntilDone}.</li>
+ * <li>Run the program, should hit breakpoint.</li>
+ * <li>Set a breakpoint at {@link incTotal}, which should have been optimized.</li>
+ * <li>Continue, should hit breakpoint at {@link incTotal}.</li>
+ * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
+ * </ol>
+ */
+public class BreakpointTest_inline {
 
-import com.sun.max.ins.gui.*;
-import com.sun.max.vm.jvmti.*;
-import com.sun.max.vm.log.VMLog.*;
+    public static void main(String[] args) {
 
-public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
+        forceInline();
+        spinUntilDone();
 
-    public JVMTIEventsVMLogArgRenderer(VMLogView vmLogView) {
-        super(vmLogView);
+        System.out.println(total);
     }
 
-    @Override
-    protected Component getRenderer(int header, int argNum, long argValue) {
-        int op = Record.getOperation(header);
-        switch (JVMTIEvent.JVMTIEventLogger.toEventId(op)) {
-            case JVMTIEvent.CLASS_PREPARE:
-                return safeGetReferenceValueLabel(getTeleClassActor(argValue));
-            case JVMTIEvent.BREAKPOINT:
-                if (argNum == 1) {
-                    // methodId
-                    return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
-                } else if (argNum == 2) {
-                    //location
-                    return new PlainLabel(inspection(), Long.toString(argValue));
-                }
-            default:
+    static boolean done;
+    static int total;
+
+    public static void spinUntilDone() {
+        while (!done) {
+            incTotal();
         }
-        return super.getRenderer(header, argNum, argValue);
+    }
+
+    private static void forceInline() {
+        for (int i = 0; i < 10000; i++) {
+            incTotal();
+        }
+    }
+
+    public static void incTotal() {
+        total++;
     }
 
 }

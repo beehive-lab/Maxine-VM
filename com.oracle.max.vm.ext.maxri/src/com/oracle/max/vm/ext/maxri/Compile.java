@@ -225,7 +225,7 @@ public class Compile {
         Throwable thrown = null;
         CiStatistics stats = new CiStatistics();
         try {
-            compiler.compile(classMethodActor, true, stats);
+            compiler.compile(classMethodActor, false, true, stats);
         } catch (Throwable t) {
             thrown = t;
         }
