@@ -195,7 +195,7 @@ public class Graal implements RuntimeCompiler {
         return compiler;
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
             if (method.compilee().isNative()) {

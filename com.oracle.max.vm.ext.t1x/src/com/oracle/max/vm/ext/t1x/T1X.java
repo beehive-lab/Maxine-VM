@@ -137,7 +137,7 @@ public class T1X implements RuntimeCompiler {
         return RuntimeCompiler.Nature.BASELINE;
     }
 
-    public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
+    public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         T1X t1x = this;
         if (!MaxineVM.isHosted() && useJVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
@@ -165,7 +165,7 @@ public class T1X implements RuntimeCompiler {
         TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
 
         try {
-            T1XTargetMethod t1xMethod = c.compile(method, install);
+            T1XTargetMethod t1xMethod = c.compile(method, isDeopt, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
             if (stats != null) {
@@ -459,7 +459,7 @@ public class T1X implements RuntimeCompiler {
             FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
         }
 
-        final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, true, null);
+        final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, false, true, null);
         FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode);
         int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
         if (frameSlots > T1XTargetMethod.templateSlots) {

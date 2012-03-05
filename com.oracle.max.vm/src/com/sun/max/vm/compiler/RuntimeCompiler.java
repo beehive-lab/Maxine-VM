@@ -73,13 +73,14 @@ public interface RuntimeCompiler {
      * Compiles a method to an internal representation.
      *
      * @param classMethodActor the method to compile
+     * @param isDeopt {@code true} iff this compilation is for deoptimization
      * @param install specifies if the method should be installed in the code cache. Only methods in a code region can
      *            be executed. This option exists for the purpose of testing or benchmarking a compiler at runtime
      *            without polluting the code cache.
      * @param stats externally supplied statistics object to be used if not {@code null}
      * @return a reference to the target method created by this compiler for {@code classMethodActor}
      */
-    TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats);
+    TargetMethod compile(ClassMethodActor classMethodActor, boolean isDeopt, boolean install, CiStatistics stats);
 
     /**
      * Determines the type of target method produced by this compiler.

@@ -289,6 +289,11 @@ public abstract class T1XCompilation {
     Adapter adapter;
 
     /**
+     * When {@code true} denote a compilation for deoptimzation.
+     */
+    private boolean isDeopt;
+
+    /**
      * Creates a compilation object.
      */
     public T1XCompilation(T1X compiler) {
@@ -402,8 +407,9 @@ public abstract class T1XCompilation {
     /**
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
-    public T1XTargetMethod compile(ClassMethodActor method, boolean install) {
+    public T1XTargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install) {
         try {
+            this.isDeopt = isDeopt;
             return compile1(method, method.codeAttribute(), install);
         } catch (UnsupportedSubroutineException e) {
             T1XMetrics.MethodsWithSubroutines++;
@@ -1768,8 +1774,8 @@ public abstract class T1XCompilation {
             }
             throw new CiBailout("Unsupported intrinsic " + intrinsic + ": " + errorSuffix());
         } else if ((method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
-            if (!MaxineVM.isHosted() && method.isVM()) {
-                // This must be a VM deopt, so we just compile the call
+            if (isDeopt && method.isVM()) {
+                // There is an implicit assumption here that it is ok to compile the VM method with T1X for deopt
                 return false;
             }
             T1XMetrics.Bailouts++;
