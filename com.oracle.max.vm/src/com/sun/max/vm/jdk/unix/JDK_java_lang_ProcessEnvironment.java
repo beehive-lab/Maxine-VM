@@ -35,7 +35,7 @@ import com.sun.max.vm.*;
  * that is handled internally by {@link java.lang.ProcessEnvironment the Solaris process environment}.
  */
 @METHOD_SUBSTITUTIONS(className = "java.lang.ProcessEnvironment")
-public class JDK_java_lang_ProcessEnvironment {
+public final class JDK_java_lang_ProcessEnvironment {
 
     /**
      * Maximum length of a name/value pair, in bytes.

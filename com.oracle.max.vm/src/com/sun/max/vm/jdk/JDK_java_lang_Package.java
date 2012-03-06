@@ -30,7 +30,7 @@ import com.sun.max.annotate.*;
  * Method implementations for java.lang.Package.
  */
 @METHOD_SUBSTITUTIONS(java.lang.Package.class)
-public class JDK_java_lang_Package {
+public final class JDK_java_lang_Package {
 
     @SUBSTITUTE
     public static String getSystemPackage0(String name) {

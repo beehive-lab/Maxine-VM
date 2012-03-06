@@ -29,7 +29,7 @@ import com.sun.max.vm.*;
  * Method substitutions for {@link java.lang.Shutdown}.
  */
 @METHOD_SUBSTITUTIONS(className = "java.lang.Shutdown")
-public class JDK_java_lang_Shutdown {
+public final class JDK_java_lang_Shutdown {
 
     @SUBSTITUTE
     static void halt0(int status) {

@@ -30,7 +30,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
@@ -163,44 +162,6 @@ public abstract class MachineCodeViewer extends CodeViewer {
     protected final ConstantPool localConstantPool() {
         return localConstantPool;
     }
-
-    /**
-     * Adapter for bytecode scanning that only knows the constant pool index argument of the last method invocation instruction scanned.
-     */
-    private static final class MethodRefIndexFinder extends BytecodeAdapter  {
-        int methodRefIndex = -1;
-
-        public MethodRefIndexFinder reset() {
-            methodRefIndex = -1;
-            return this;
-        }
-
-        @Override
-        protected void invokestatic(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokespecial(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokevirtual(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokeinterface(int index, int count) {
-            methodRefIndex = index;
-        }
-
-        public int methodRefIndex() {
-            return methodRefIndex;
-        }
-    }
-
-    private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
     /**
      * Does the instruction address have a machine code breakpoint set in the VM.

@@ -62,4 +62,16 @@ public class VirtualMethodActor extends ClassMethodActor {
         assert this.vTableIndex == INVALID_VTABLE_INDEX;
         this.vTableIndex = vTableIndex;
     }
+
+    /**
+     * Sets the vtable index for a substitute method to be the same as the vtable index for
+     * the original. This is required so that virtual dispatch works properly at runtime
+     * when the receiver object is of the original type.
+     */
+    @HOSTED_ONLY
+    public void resetVTableIndexForSubstitute(int vTableIndex) {
+        assert ((VirtualMethodActor) original()).vTableIndex() == vTableIndex;
+        assert this.vTableIndex != INVALID_VTABLE_INDEX;
+        this.vTableIndex = vTableIndex;
+    }
 }
