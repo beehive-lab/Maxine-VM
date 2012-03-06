@@ -31,7 +31,7 @@ import com.sun.max.vm.classfile.constant.*;
  * Method substitutions for {@link java.lang.String java.lang.String}.
  */
 @METHOD_SUBSTITUTIONS(String.class)
-public class JDK_java_lang_String {
+public final class JDK_java_lang_String {
 
     /**
      * Cast this instance to a {@code java.lang.String}.

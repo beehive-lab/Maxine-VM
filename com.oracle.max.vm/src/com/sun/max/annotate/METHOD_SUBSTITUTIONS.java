@@ -157,7 +157,6 @@ public @interface METHOD_SUBSTITUTIONS {
                     Trace.line(2, "Substituted " + originalMethodActor.format("%h.%n(%p)"));
                     Trace.line(2, "       with " + substituteMethodActor.format("%h.%n(%p)"));
                     originalMethodActor.setFlagsFromSubstitute(substituteMethodActor);
-                    //MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
                     if (substituteMethod.getAnnotation(INLINE.class) == null &&
@@ -181,9 +180,11 @@ public @interface METHOD_SUBSTITUTIONS {
             ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
             for (FieldActor field : substitutor.localInstanceFieldActors()) {
                 if (field.getAnnotation(ALIAS.class) == null) {
-                    throw FatalError.unexpected("method substitution class cannot declare any non-aliased instance fields");
+                    throw FatalError.unexpected("method substitution class cannot declare any non-aliased instance fields: " + substitutor);
                 }
             }
+
+            FatalError.check(substitutor.isFinal(), "method substitution class must be final: " + substitutor);
 
             Class holder;
             if (annotation.value() != METHOD_SUBSTITUTIONS.class) {

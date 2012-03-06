@@ -59,9 +59,8 @@ final class JDK_java_lang_Object {
      * @see java.lang.Object#hashCode()
      * @return an integer representing a default hashcode for this object
      */
-    @SUBSTITUTE
-    @Override
-    public int hashCode() {
+    @SUBSTITUTE("hashCode")
+    public int hashCode_SUBSTITUTE() {
         return ObjectAccess.makeHashCode(this);
     }
 
@@ -72,9 +71,8 @@ final class JDK_java_lang_Object {
      * @throws CloneNotSupportedException if this object does not implement the
      * {@link java.lang.Cloneable Cloneable} interface
      */
-    @SUBSTITUTE
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
+    @SUBSTITUTE("clone")
+    public Object clone_SUBSTITUTE() throws CloneNotSupportedException {
         if (Cloneable.class.isInstance(this)) {
             return Heap.clone(this);
         }

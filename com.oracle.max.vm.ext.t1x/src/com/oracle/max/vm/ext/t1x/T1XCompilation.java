@@ -1617,22 +1617,21 @@ public abstract class T1XCompilation {
                     if (processIntrinsic(virtualMethodActor)) {
                         return;
                     }
-                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
+                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
-                    } else {
-                        // emit an unprofiled virtual dispatch
-                        start(tag.resolved);
-                        CiRegister target = template.sig.out.reg;
-                        assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
-                        finish();
-                        int safepoint = callIndirect(target, receiverStackIndex);
-                        finishCall(tag, kind, safepoint, null);
                     }
+                    // emit an unprofiled virtual dispatch
+                    start(tag.resolved);
+                    CiRegister target = template.sig.out.reg;
+                    assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
+                    finish();
+                    int safepoint = callIndirect(target, receiverStackIndex);
+                    finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
                     // fall through
