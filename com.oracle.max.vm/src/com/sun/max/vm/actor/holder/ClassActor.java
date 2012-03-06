@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.actor.holder.ClassID.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
@@ -214,7 +215,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
         assert kind == typeDescriptor.toKind();
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             // All boot image classes are initialized
             initializationState = INITIALIZED;
         } else {
@@ -371,7 +372,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                 staticHub.initializeVTable(OBJECT.allVirtualMethodActors());
                 ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
 
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     if (ClassActor.this.kind.isWord) {
                         for (VirtualMethodActor vma : OBJECT.allVirtualMethodActors()) {
                             ClassMethodActor local = findLocalClassMethodActor(vma.name, vma.descriptor());
@@ -613,7 +614,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
                 arrayClassIDs[i] = ClassID.allocate();
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     ClassID.recordArrayClassID(this, i, arrayClassIDs[i]);
                 }
             }
@@ -622,7 +623,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             Ints.copyAll(arrayClassIDs, a);
             for (int i = arrayClassIDs.length; i < a.length; i++) {
                 a[i] = ClassID.allocate();
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     ClassID.recordArrayClassID(this, i, a[i]);
                 }
             }
@@ -646,7 +647,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     public static Object create(ClassActor classActor) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             return new StaticTuple(classActor);
         }
         final Object staticTuple = Heap.createTuple(classActor.staticHub());
@@ -1397,7 +1398,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     @INLINE
     public final Class<?> javaClass() {
         if (javaClass == null) {
-            if (MaxineVM.isHosted()) {
+            if (isHosted()) {
                 javaClass = JavaPrototype.javaPrototype().toJava(this);
             } else {
                 return noninlineCreateJavaClass();
@@ -1451,7 +1452,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     @INLINE
     public static ClassActor fromJava(final Class<?> javaClass) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
         return (ClassActor) Class_classActor.getObject(javaClass);
@@ -1486,7 +1487,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
             interfaceActor.gatherSuperClassActorIds(set);
         }
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             if (kind.isWord) {
                 set.remove(ClassRegistry.OBJECT.id);
             }
@@ -1672,7 +1673,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     @INLINE
     public final boolean isInstance(Object object) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             if (object == null) {
                 throw new NullPointerException();
             }
@@ -1809,12 +1810,20 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             final VirtualMethodActor implementation = getVirtualMethodActorByIIndex(interfaceIIndex + interfaceActor.iIndexInInterface());
             return implementation;
         } else if (methodActor instanceof VirtualMethodActor) {
-            final int index = ((VirtualMethodActor) methodActor).vTableIndex();
+            ClassActor receiverType = this;
+            VirtualMethodActor vma = (VirtualMethodActor) methodActor;
+            VirtualMethodActor original = (VirtualMethodActor) vma.original();
+            if (original != vma) {
+                // Substitute method must use substituted type as receiver for vtable lookup
+                receiverType = original.holder();
+                assert vma.vTableIndex() == original.vTableIndex();
+            }
+            final int index = vma.vTableIndex();
             assert index != VirtualMethodActor.INVALID_VTABLE_INDEX;
             if (index == VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX) {
                 return methodActor;
             }
-            final VirtualMethodActor implementation = getVirtualMethodActorByVTableIndex(index);
+            final VirtualMethodActor implementation = receiverType.getVirtualMethodActorByVTableIndex(index);
             return implementation;
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();

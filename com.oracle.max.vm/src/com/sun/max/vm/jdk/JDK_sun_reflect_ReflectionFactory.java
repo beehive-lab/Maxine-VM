@@ -41,7 +41,7 @@ import com.sun.max.vm.reflection.*;
  * reflection.
  */
 @METHOD_SUBSTITUTIONS(ReflectionFactory.class)
-public class JDK_sun_reflect_ReflectionFactory {
+public final class JDK_sun_reflect_ReflectionFactory {
 
     /**
      * This field stores a map from method actor to method stubs, which is needed because

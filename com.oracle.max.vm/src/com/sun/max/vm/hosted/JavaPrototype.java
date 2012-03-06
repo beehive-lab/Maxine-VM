@@ -203,7 +203,19 @@ public final class JavaPrototype extends Prototype {
                             METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
                             if (annotation != null) {
                                 loadClass(c);
-                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                                ClassActor subs = toClassActor(c);
+                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, subs);
+                                for (VirtualMethodActor sub : subs.localVirtualMethodActors()) {
+                                    if (!sub.isInstanceInitializer() && !sub.isPrivate()) {
+                                        VirtualMethodActor original = (VirtualMethodActor) METHOD_SUBSTITUTIONS.Static.findOriginal(sub);
+                                        if (original == null) {
+                                            // We cannot do vtable dispatch to methods on a substitute class.
+                                            FatalError.unexpected("Non-static method in substitution class must be private: " + sub);
+                                        } else {
+                                            sub.resetVTableIndexForSubstitute(original.vTableIndex());
+                                        }
+                                    }
+                                }
                             }
                         }
                     } catch (Exception e) {
