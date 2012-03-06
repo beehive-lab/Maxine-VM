@@ -25,66 +25,104 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# mx is a command line tool inspired by mvn (http://maven.apache.org/)
-# and hg (http://mercurial.selenic.com/). It includes a mechanism for
-# managing the dependencies between a set of projects (like Maven)
-# as well as making it simple to run commands
-# (like hg is the interface to the Mercurial commands).
-#
-# The organizing principle of mx is a project suite. A suite is a directory
-# containing one or more projects. It's not coincidental that this closely
-# matches the layout of one or more projects in a Mercurial repository.
-# The configuration information for a suite lives in an 'mx' sub-directory
-# at the top level of the suite. 
-#
-# When launched, mx treats the current working directory as a suite.
-# This is the primary suite. All other suites are called included suites.
-#
-# The configuration files (i.e. in the 'mx' sub-directory) of a suite are:
-#
-#   projects    - Defines the projects and libraries in the suite and the dependencies between them
-#   commands.py - Suite specific extensions to the commands available to mx. This is only processed
-#                 for the primary suite.
-#   includes    - Other suites to be loaded. This is recursive. 
-#   env         - A set of environment variable definitions.
-#
-# The includes and env files are typically not put under version control
-# as they usually contain local file-system paths.
-#
-# The projects file is like the pom.xml file from Maven except that
-# it is a properties file (not XML). Each non-comment line
-# in the file specifies an attribute of a project or library. The main 
-# difference between a project and a library is that the former contains
-# source code built by the mx tool where as the latter is an external
-# dependency. The format of the projects file is 
-#
-# Library specification format:
-#
-#     library@<name>@<prop>=<value>
-#
-# Built-in library properties (* = required):
-#
-#    *path: the file system path for the library to appear on a class path
-#     urls: a comma seperated list of URLs from which the library can be downloaded
-#     optional: if "true" then this library will be omitted from a class path if it doesn't exist on the file system and no URLs are specified
-#
-# Project specification format:
-#
-#     project@<name>@<prop>=<value>
-#
-# The name of a project also denotes the directory it is in.
-#
-# Built-in project properties (* = required):
-#
-#    *sourceDirs: a comma separated list of source directoriy names (relative to the project directory)
-#     dependencies: a comma separated list of the libraries and project the project depends upon (transitive dependencies may be omitted)
-#     checkstyle: the project whose Checkstyle configuration (i.e. <project>/.checkstyle_checks.xml) is used
-#     native: true if the project is native
-#     javaCompliance: the minimum JDK version (format: x.y) to which the project's sources comply (required for non-native projects)
-#
-# Other properties can be specified for projects and libraries for use by extension commands.
-#
-# Values can use environment variables with Bash syntax (e.g. ${HOME}).
+
+r"""
+mx is a command line tool inspired by mvn (http://maven.apache.org/)
+and hg (http://mercurial.selenic.com/). It includes a mechanism for
+managing the dependencies between a set of projects (like Maven)
+as well as making it simple to run commands
+(like hg is the interface to the Mercurial commands).
+
+The organizing principle of mx is a project suite. A suite is a directory
+containing one or more projects. It's not coincidental that this closely
+matches the layout of one or more projects in a Mercurial repository.
+The configuration information for a suite lives in an 'mx' sub-directory
+at the top level of the suite.
+
+When launched, mx treats the current working directory as a suite.
+This is the primary suite. All other suites are called included suites.
+
+The configuration files (i.e. in the 'mx' sub-directory) of a suite are:
+
+  projects
+      Defines the projects and libraries in the suite and the
+      dependencies between them.
+
+  commands.py
+      Suite specific extensions to the commands available to mx.
+      This is only processed for the primary suite.
+
+  includes
+      Other suites to be loaded. This is recursive.
+
+  env
+      A set of environment variable definitions. These override any
+      existing environment variables.
+
+The includes and env files are typically not put under version control
+as they usually contain local file-system paths.
+
+The projects file is like the pom.xml file from Maven except that
+it is a properties file (not XML). Each non-comment line
+in the file specifies an attribute of a project or library. The main
+difference between a project and a library is that the former contains
+source code built by the mx tool where as the latter is an external
+dependency. The format of the projects file is
+
+Library specification format:
+
+    library@<name>@<prop>=<value>
+
+Built-in library properties (* = required):
+
+   *path
+        The file system path for the library to appear on a class path.
+
+    urls
+        A comma separated list of URLs from which the library (jar) can
+        be downloaded and saved in the location specified by 'path'.
+
+    optional
+        If "true" then this library will be omitted from a class path
+        if it doesn't exist on the file system and no URLs are specified.
+
+Project specification format:
+
+    project@<name>@<prop>=<value>
+
+The name of a project also denotes the directory it is in.
+
+Built-in project properties (* = required):
+
+    subDir
+        The sub-directory of the suite in which the project directory is
+        contained. If not specified, the project directory is directly
+        under the suite directory.
+
+   *sourceDirs
+        A comma separated list of source directory names (relative to
+        the project directory).
+
+    dependencies
+        A comma separated list of the libraries and project the project
+        depends upon (transitive dependencies should be omitted).
+
+    checkstyle
+        The project whose Checkstyle configuration
+        (i.e. <project>/.checkstyle_checks.xml) is used.
+
+    native
+        "true" if the project is native.
+
+    javaCompliance
+        The minimum JDK version (format: x.y) to which the project's
+        sources comply (required for non-native projects).
+
+Other properties can be specified for projects and libraries for use
+by extension commands.
+
+Property values can use environment variables with Bash syntax (e.g. ${HOME}).
+"""
 
 import sys, os, errno, time, subprocess, shlex, types, urllib2, contextlib, StringIO, zipfile, signal
 import shutil, fnmatch, re, xml.dom.minidom
@@ -109,22 +147,22 @@ class Dependency:
     def __init__(self, suite, name):
         self.name = name
         self.suite = suite
-        
+
     def __str__(self):
         return self.name
-    
+
     def __eq__(self, other):
         return self.name == other.name
-    
+
     def __ne__(self, other):
         return self.name != other.name
 
     def __hash__(self):
         return hash(self.name)
-    
+
     def isLibrary(self):
         return isinstance(self, Library)
-    
+
 class Project(Dependency):
     def __init__(self, suite, name, srcDirs, deps, javaCompliance, dir):
         Dependency.__init__(self, suite, name)
@@ -134,7 +172,7 @@ class Project(Dependency):
         self.javaCompliance = JavaCompliance(javaCompliance) if javaCompliance is not None else None
         self.native = False
         self.dir = dir
-            
+
     def all_deps(self, deps, includeLibs, includeSelf=True):
         """
         Add the transitive set of dependencies for this project, including
@@ -155,7 +193,7 @@ class Project(Dependency):
         if not self in deps and includeSelf:
             deps.append(self)
         return deps
-    
+
     def _compute_max_dep_distances(self, name, distances, dist):
         currentDist = distances.get(name);
         if currentDist is None or currentDist < dist:
@@ -164,7 +202,7 @@ class Project(Dependency):
             if p is not None:
                 for dep in p.deps:
                     self._compute_max_dep_distances(dep, distances, dist + 1)
-                
+
     def canonical_deps(self):
         """
         Get the dependencies of this project that are not recursive (i.e. cannot be reached
@@ -177,19 +215,19 @@ class Project(Dependency):
             assert d > 0 or n == self.name
             if d == 1:
                 result.add(n)
-                
-            
+
+
         if len(result) == len(self.deps) and frozenset(self.deps) == result:
             return self.deps
         return result;
-    
+
 
     def source_dirs(self):
         """
         Get the directories in which the sources of this project are found.
         """
         return [join(self.dir, s) for s in self.srcDirs]
-        
+
     def output_dir(self):
         """
         Get the directory in which the class files of this project are found/placed.
@@ -216,7 +254,7 @@ class Library(Dependency):
         self.path = path.replace('/', os.sep)
         self.urls = urls
         self.mustExist = mustExist
-    
+
     def get_path(self, resolve):
         path = self.path
         if not isabs(path):
@@ -225,14 +263,14 @@ class Library(Dependency):
             assert not len(self.urls) == 0, 'cannot find required library  ' + self.name + " " + path;
             print('Downloading ' + self.name + ' from ' + str(self.urls))
             download(path, self.urls)
-            
+
         return path
-        
+
     def append_to_classpath(self, cp, resolve):
         path = self.get_path(resolve)
         if exists(path) or not resolve:
             cp.append(path)
-    
+
 class Suite:
     def __init__(self, dir, primary):
         self.dir = dir
@@ -248,7 +286,7 @@ class Suite:
 
     def _load_projects(self, mxDir):
         libsMap = dict()
-        projsMap = dict() 
+        projsMap = dict()
         projectsFile = join(mxDir, 'projects')
         if not exists(projectsFile):
             return
@@ -257,9 +295,9 @@ class Suite:
                 line = line.strip()
                 if len(line) != 0 and line[0] != '#':
                     key, value = line.split('=', 1)
-                    
+
                     parts = key.split('@')
-                    
+
                     if len(parts) == 2:
                         pass
                     if len(parts) != 3:
@@ -271,20 +309,20 @@ class Suite:
                         m = libsMap
                     else:
                         abort('Property name does not start with "project@" or "library@": ' + key)
-                        
+
                     attrs = m.get(name)
                     if attrs is None:
                         attrs = dict()
                         m[name] = attrs
                     value = expandvars_in_property(value)
                     attrs[attr] = value
-                        
+
         def pop_list(attrs, name):
             v = attrs.pop(name, None)
             if v is None or len(v.strip()) == 0:
                 return []
             return [n.strip() for n in v.split(',')]
-        
+
         for name, attrs in projsMap.iteritems():
             srcDirs = pop_list(attrs, 'sourceDirs')
             deps = pop_list(attrs, 'dependencies')
@@ -309,15 +347,15 @@ class Suite:
             l = Library(self, name, path, mustExist, urls)
             l.__dict__.update(attrs)
             self.libs.append(l)
-        
+
     def _load_commands(self, mxDir):
         commands = join(mxDir, 'commands.py')
         if exists(commands):
             # temporarily extend the Python path
             sys.path.insert(0, mxDir)
-    
+
             mod = __import__('commands')
-    
+
             # revert the Python path
             del sys.path[0]
 
@@ -325,17 +363,17 @@ class Suite:
                 abort(commands + ' must define an mx_init(env) function')
             if hasattr(mod, 'mx_post_parse_cmd_line'):
                 self.mx_post_parse_cmd_line = mod.mx_post_parse_cmd_line
-                
+
             mod.mx_init()
             self.commands = mod
-                
+
     def _load_includes(self, mxDir):
         includes = join(mxDir, 'includes')
         if exists(includes):
             with open(includes) as f:
                 for line in f:
                     self.includes.append(expandvars_in_property(line.strip()))
-        
+
     def _load_env(self, mxDir):
         e = join(mxDir, 'env')
         if exists(e):
@@ -345,7 +383,7 @@ class Suite:
                     if len(line) != 0 and line[0] != '#':
                         key, value = line.split('=', 1)
                         os.environ[key.strip()] = expandvars_in_property(value.strip())
-    
+
     def _post_init(self, opts):
         mxDir = join(self.dir, 'mx')
         self._load_includes(mxDir)
@@ -362,7 +400,7 @@ class Suite:
             if existing is not None:
                 abort('cannot redefine library  ' + l.name)
             _libs[l.name] = l
-        
+
 def get_os():
     """
     Get a canonical form of sys.platform.
@@ -385,7 +423,7 @@ def _loadSuite(dir, primary=False):
     if not _suites.has_key(dir):
         suite = Suite(dir, primary)
         _suites[dir] = suite
-        return suite 
+        return suite
 
 def suites():
     """
@@ -398,7 +436,7 @@ def projects():
     Get the list of all loaded projects.
     """
     return _projects.values()
-    
+
 def project(name, fatalIfMissing=True):
     """
     Get the project for a given name. This will abort if the named project does
@@ -443,7 +481,7 @@ def classpath(names=None, resolve=True, includeSelf=True):
         for n in names:
             project(n).all_deps(deps, True, includeSelf)
     return _as_classpath(deps, resolve)
-    
+
 def sorted_deps(projectNames=None, includeLibs=False):
     """
     Gets projects and libraries sorted such that dependencies
@@ -455,7 +493,7 @@ def sorted_deps(projectNames=None, includeLibs=False):
         projects = _projects.values()
     else:
         projects = [project(name) for name in projectNames]
-        
+
     for p in projects:
         p.all_deps(deps, includeLibs)
     return deps
@@ -465,12 +503,12 @@ class ArgParser(ArgumentParser):
     # Override parent to append the list of available commands
     def format_help(self):
         return ArgumentParser.format_help(self) + _format_commands()
-    
-    
+
+
     def __init__(self):
         self.java_initialized = False
         ArgumentParser.__init__(self, prog='mx')
-    
+
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
         self.add_argument('--dbg', type=int, dest='java_dbg_port', help='make Java processes wait on <port> for a debugger', metavar='<port>')
         self.add_argument('-d', action='store_const', const=8000, dest='java_dbg_port', help='alias for "-dbg 8000"')
@@ -485,15 +523,15 @@ class ArgParser(ArgumentParser):
             # Time outs are (currently) implemented with Unix specific functionality
             self.add_argument('--timeout', help='Timeout (in seconds) for command', type=int, default=0, metavar='<secs>')
             self.add_argument('--ptimeout', help='Timeout (in seconds) for subprocesses', type=int, default=0, metavar='<secs>')
-        
+
     def _parse_cmd_line(self, args=None):
         if args is None:
             args = sys.argv[1:]
 
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
-        
+
         opts = self.parse_args()
-        
+
         # Give the timeout options a default value to avoid the need for hasattr() tests
         opts.__dict__.setdefault('timeout', 0)
         opts.__dict__.setdefault('ptimeout', 0)
@@ -506,13 +544,13 @@ class ArgParser(ArgumentParser):
 
         if opts.user_home is None or opts.user_home == '':
             abort('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
-    
+
         os.environ['JAVA_HOME'] = opts.java_home
         os.environ['HOME'] = opts.user_home
-        
+
         commandAndArgs = opts.__dict__.pop('commandAndArgs')
         return opts, commandAndArgs
-    
+
 def _format_commands():
     msg = '\navailable commands:\n\n'
     for cmd in sorted(commands.iterkeys()):
@@ -551,7 +589,7 @@ def _waitWithTimeout(process, args, timeout):
                 if e.errno == errno.EINTR:
                     continue
                 raise
-    
+
     def _returncode(status):
         if os.WIFSIGNALED(status):
             return -os.WTERMSIG(status)
@@ -560,7 +598,7 @@ def _waitWithTimeout(process, args, timeout):
         else:
             # Should never happen
             raise RuntimeError("Unknown child exit status!")
-        
+
     end = time.time() + timeout
     delay = 0.0005
     while True:
@@ -577,6 +615,17 @@ def _waitWithTimeout(process, args, timeout):
 # This is a tuple of the Popen object and args.
 _currentSubprocess = None
 
+def waitOn(p):
+    if get_os() == 'windows':
+        # on windows use a poll loop, otherwise signal does not get handled
+        retcode = None
+        while retcode == None:
+            retcode = p.poll()
+            time.sleep(0.05)
+    else:
+        retcode = p.wait()
+    return retcode
+
 def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
     """
     Run a command in a subprocess, wait for it to complete and return the exit status of the process.
@@ -585,19 +634,19 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
     Each line of the standard output and error streams of the subprocess are redirected to
     out and err if they are callable objects.
     """
-    
+
     assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
     for arg in args:
         assert isinstance(arg, types.StringTypes), 'argument is not a string: ' + str(arg)
-    
+
     if _opts.verbose:
         log(' '.join(args))
-        
+
     if timeout is None and _opts.ptimeout != 0:
         timeout = _opts.ptimeout
 
-    global _currentSubprocess    
-        
+    global _currentSubprocess
+
     try:
         # On Unix, the new subprocess should be in a separate group so that a timeout alarm
         # can use os.killpg() to kill the whole subprocess group
@@ -606,13 +655,13 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
         if get_os() == 'windows':
             creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
         else:
-            preexec_fn = os.setsid  
-        
+            preexec_fn = os.setsid
+
         if not callable(out) and not callable(err) and timeout is None:
             # The preexec_fn=os.setsid
             p = subprocess.Popen(args, cwd=cwd, preexec_fn=preexec_fn, creationflags=creationflags)
             _currentSubprocess = (p, args)
-            retcode = p.wait()
+            retcode = waitOn(p)
         else:
             def redirect(stream, f):
                 for line in iter(stream.readline, ''):
@@ -631,7 +680,7 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
                 t.daemon = True # thread dies with the program
                 t.start()
             if timeout is None or timeout == 0:
-                retcode = p.wait()
+                retcode = waitOn(p)
             else:
                 if get_os() == 'windows':
                     abort('Use of timeout not (yet) supported on Windows')
@@ -650,15 +699,26 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
         if _opts.verbose:
             raise subprocess.CalledProcessError(retcode, ' '.join(args))
         abort(retcode)
-        
+
     return retcode
 
 def exe_suffix(name):
     """
-    Gets the platform specific suffix for an executable 
+    Gets the platform specific suffix for an executable
     """
     if get_os() == 'windows':
         return name + '.exe'
+    return name
+
+def lib_suffix(name):
+    """
+    Gets the platform specific suffix for a library
+    """
+    os = get_os();
+    if os == 'windows':
+        return name + '.dll'
+    if os == 'linux':
+        return name + '.so'
     return name
 
 """
@@ -672,13 +732,13 @@ class JavaCompliance:
 
     def __str__ (self):
         return '1.' + str(self.value)
-    
+
     def __cmp__ (self, other):
         if isinstance(other, types.StringType):
             other = JavaCompliance(other)
 
         return cmp(self.value, other.value)
-    
+
 """
 A JavaConfig object encapsulates info on how Java commands are run.
 """
@@ -695,11 +755,11 @@ class JavaConfig:
 
         def delAtAndSplit(s):
             return shlex.split(s.lstrip('@'))
-        
+
         self.java_args = delAtAndSplit(_opts.java_args)
         self.java_args_pfx = sum(map(delAtAndSplit, _opts.java_args_pfx), [])
         self.java_args_sfx = sum(map(delAtAndSplit, _opts.java_args_sfx), [])
-        
+
         # Prepend the -d64 VM option only if the java command supports it
         try:
             output = subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
@@ -710,18 +770,18 @@ class JavaConfig:
             except subprocess.CalledProcessError as e:
                 print e.output
                 abort(e.returncode)
-        
+
         output = output.split()
         assert output[1] == 'version'
         self.version = output[2].strip('"')
         self.javaCompliance = JavaCompliance(self.version)
-        
+
         if self.debug_port is not None:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(self.debug_port)]
 
     def format_cmd(self, args):
         return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
-    
+
 def check_get_env(key):
     """
     Gets an environment variable, aborting with a useful message if it is not set.
@@ -742,7 +802,7 @@ def log(msg=None):
     """
     Write a message to the console.
     All script output goes through this method thus allowing a subclass
-    to redirect it. 
+    to redirect it.
     """
     if msg is None:
         print
@@ -757,7 +817,7 @@ def expand_project_in_class_path_arg(cpArg):
         else:
             cp.append(part)
     return os.pathsep.join(cp)
-    
+
 def expand_project_in_args(args):
     for i in range(len(args)):
         if args[i] == '-cp' or args[i] == '-classpath':
@@ -782,7 +842,7 @@ def expandvars_in_property(value):
             abort('Property contains an undefined environment variable: ' + value)
         return result
 
-           
+
 def abort(codeOrMessage):
     """
     Aborts the program with a SystemExit exception.
@@ -790,7 +850,7 @@ def abort(codeOrMessage):
     if it is None, the exit status is zero; if it has another type (such as a string),
     the object's value is printed and the exit status is one.
     """
-    
+
     #import traceback
     #traceback.print_stack()
     currentSubprocess = _currentSubprocess
@@ -800,7 +860,7 @@ def abort(codeOrMessage):
             p.kill()
         else:
             _kill_process_group(p.pid)
-    
+
     raise SystemExit(codeOrMessage)
 
 def download(path, urls, verbose=False):
@@ -812,23 +872,23 @@ def download(path, urls, verbose=False):
     d = dirname(path)
     if d != '' and not exists(d):
         os.makedirs(d)
-        
+
     # Try it with the Java tool first since it can show a progress counter
     myDir = dirname(__file__)
-    
+
     javaSource = join(myDir, 'URLConnectionDownload.java')
     javaClass = join(myDir, 'URLConnectionDownload.class')
     if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
         subprocess.check_call([java().javac, '-d', myDir, javaSource])
     if run([java().java, '-cp', myDir, 'URLConnectionDownload', path] + urls) == 0:
         return
-        
+
     def url_open(url):
         userAgent = 'Mozilla/5.0 (compatible)'
         headers = { 'User-Agent' : userAgent }
         req = urllib2.Request(url, headers=headers)
         return urllib2.urlopen(req);
-        
+
     for url in urls:
         try:
             if (verbose):
@@ -841,7 +901,7 @@ def download(path, urls, verbose=False):
                 with contextlib.closing(url_open(url)) as f:
                     data = f.read()
                     zipdata = StringIO.StringIO(f.read())
-            
+
                 zf = zipfile.ZipFile(zipdata, 'r')
                 data = zf.read(entry)
                 with open(path, 'wb') as f:
@@ -856,10 +916,10 @@ def download(path, urls, verbose=False):
             log('Error reading from ' + url + ': ' + str(e))
         except zipfile.BadZipfile as e:
             log('Error in zip file downloaded from ' + url + ': ' + str(e))
-            
+
     abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
               '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
-            
+
 def update_file(path, content):
     """
     Updates a file with some given content if the content differs from what's in
@@ -871,32 +931,32 @@ def update_file(path, content):
         if existed:
             with open(path, 'rb') as f:
                 old = f.read()
-        
+
         if old == content:
             return False
-            
+
         with open(path, 'wb') as f:
             f.write(content)
-            
+
         log(('modified ' if existed else 'created ') + path)
         return True;
     except IOError as e:
         abort('Error while writing to ' + path + ': ' + str(e));
 
 # Builtin commands
-            
+
 def build(args, parser=None):
     """compile the Java and C sources, linking the latter
 
     Compile all the Java source code using the appropriate compilers
     and linkers for the various source code types."""
-    
+
     suppliedParser = parser is not None
     if not suppliedParser:
         parser = ArgumentParser(prog='mx build')
-    
+
     javaCompliance = java().javaCompliance
-    
+
     parser = parser if parser is not None else ArgumentParser(prog='mx build')
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
@@ -906,12 +966,12 @@ def build(args, parser=None):
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
-    
+
     if suppliedParser:
         parser.add_argument('remainder', nargs=REMAINDER, metavar='...')
 
     args = parser.parse_args(args)
-    
+
     jdtJar = None
     if args.jdt is not None:
         if args.jdt.endswith('.jar'):
@@ -923,32 +983,32 @@ def build(args, parser=None):
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
     built = set()
-    
+
     projects = None
     if args.projects is not None:
         projects = args.projects.split(',')
-        
+
     for p in sorted_deps(projects):
         if p.native:
             if args.native:
                 log('Calling GNU make {0}...'.format(p.dir))
-    
+
                 if args.clean:
                     run([gmake_cmd(), 'clean'], cwd=p.dir)
-                    
+
                 run([gmake_cmd()], cwd=p.dir)
                 built.add(p.name)
             continue
         else:
             if not args.java:
                 continue
-            
+
         # skip building this Java project if its Java compliance level is "higher" than the configured JDK
         if javaCompliance < p.javaCompliance:
             log('Excluding {0} from build (Java compliance level {1} required)'.format(p.name, p.javaCompliance))
             continue
 
-        
+
         outputDir = p.output_dir()
         if exists(outputDir):
             if args.clean:
@@ -965,14 +1025,14 @@ def build(args, parser=None):
             for dep in p.all_deps([], False):
                 if dep.name in built:
                     mustBuild = True
-                    
+
         jasminAvailable = None
         javafilelist = []
         for sourceDir in sourceDirs:
             for root, _, files in os.walk(sourceDir):
                 javafiles = [join(root, name) for name in files if name.endswith('.java') and name != 'package-info.java']
                 javafilelist += javafiles
-                
+
                 # Copy all non Java resources or assemble Jasmin files
                 nonjavafilelist = [join(root, name) for name in files if not name.endswith('.java')]
                 for src in nonjavafilelist:
@@ -983,7 +1043,7 @@ def build(args, parser=None):
                                 if line.startswith('.class '):
                                     className = line.split()[-1]
                                     break
-                        
+
                         if className is not None:
                             jasminOutputDir = p.jasmin_output_dir()
                             classFile = join(jasminOutputDir, className.replace('/', os.sep) + '.class')
@@ -995,7 +1055,7 @@ def build(args, parser=None):
                                         jasminAvailable = True
                                     except OSError as e:
                                         jasminAvailable = False
-                                        
+
                                 if jasminAvailable:
                                     log('Assembling Jasmin file ' + src)
                                     run(['jasmin', '-d', jasminOutputDir, src])
@@ -1003,25 +1063,25 @@ def build(args, parser=None):
                                     log('The jasmin executable could not be found - skipping ' + src)
                                     with file(classFile, 'a'):
                                         os.utime(classFile, None)
-                                    
+
                         else:
                             log('could not file .class directive in Jasmin source: ' + src)
-                    else:  
+                    else:
                         dst = join(outputDir, src[len(sourceDir) + 1:])
                         if exists(dirname(dst)) and (not exists(dst) or os.path.getmtime(dst) != os.path.getmtime(src)):
                             shutil.copyfile(src, dst)
-                
+
                 if not mustBuild:
                     for javafile in javafiles:
                         classfile = outputDir + javafile[len(sourceDir):-len('java')] + 'class'
                         if not exists(classfile) or os.path.getmtime(javafile) > os.path.getmtime(classfile):
                             mustBuild = True
                             break
-                
+
         if not mustBuild:
             log('[all class files for {0} are up to date - skipping]'.format(p.name))
             continue
-            
+
         if len(javafilelist) == 0:
             log('[no Java sources for {0} - skipping]'.format(p.name))
             continue
@@ -1032,7 +1092,7 @@ def build(args, parser=None):
         argfile = open(argfileName, 'wb')
         argfile.write('\n'.join(javafilelist))
         argfile.close()
-        
+
         try:
             if jdtJar is None:
                 log('Compiling Java sources for {0} with javac...'.format(p.name))
@@ -1042,11 +1102,11 @@ def build(args, parser=None):
                         """
                         Class to errFilt the 'is Sun proprietary API and may be removed in a future release'
                         warning when compiling the VM classes.
-                        
+
                         """
                         def __init__(self):
                             self.c = 0
-                        
+
                         def eat(self, line):
                             if 'proprietary API' in line:
                                 self.c = 2
@@ -1055,7 +1115,7 @@ def build(args, parser=None):
                             else:
                                 log(line.rstrip())
                     errFilt=Filter().eat
-                    
+
                 run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
             else:
                 log('Compiling Java sources for {0} with JDT...'.format(p.name))
@@ -1070,7 +1130,7 @@ def build(args, parser=None):
                          '-d', outputDir, '@' + argfile.name])
         finally:
             os.remove(argfileName)
-                    
+
     if suppliedParser:
         return args
     return None
@@ -1079,7 +1139,7 @@ def canonicalizeprojects(args):
     """process all project files to canonicalize the dependencies
 
     The exit code of this command reflects how many files were updated."""
-    
+
     changedFiles = 0
     for s in suites():
         projectsFile = join(s.dir, 'mx', 'projects')
@@ -1100,7 +1160,7 @@ def canonicalizeprojects(args):
         if update_file(projectsFile, content):
             changedFiles += 1
     return changedFiles;
-    
+
 def checkstyle(args):
     """run Checkstyle on the Java sources
 
@@ -1108,16 +1168,16 @@ def checkstyle(args):
    produced by Checkstyle result in a non-zero exit code.
 
 If no projects are given, then all Java projects are checked."""
-    
+
     for p in sorted_deps():
         if p.native:
             continue
         sourceDirs = p.source_dirs()
         dotCheckstyle = join(p.dir, '.checkstyle')
-        
+
         if not exists(dotCheckstyle):
             continue
-        
+
         for sourceDir in sourceDirs:
             javafilelist = []
             for root, _, files in os.walk(sourceDir):
@@ -1136,16 +1196,16 @@ If no projects are given, then all Java projects are checked."""
                         break
             else:
                 mustCheck = True
-            
+
             if not mustCheck:
                 log('[all Java sources in {0} already checked - skipping]'.format(sourceDir))
                 continue
 
-            if exists(timestampFile):                
+            if exists(timestampFile):
                 os.utime(timestampFile, None)
             else:
                 file(timestampFile, 'a')
-            
+
             dotCheckstyleXML = xml.dom.minidom.parse(dotCheckstyle)
             localCheckConfig = dotCheckstyleXML.getElementsByTagName('local-check-config')[0]
             configLocation = localCheckConfig.getAttribute('location')
@@ -1163,9 +1223,9 @@ If no projects are given, then all Java projects are checked."""
             else:
                 log('[unknown Checkstyle configuration type "' + configType + '" in {0} - skipping]'.format(sourceDir))
                 continue
-                
+
             exclude = join(p.dir, '.checkstyle.exclude')
-            
+
             if exists(exclude):
                 with open(exclude) as f:
                     # Convert patterns to OS separators
@@ -1177,12 +1237,12 @@ If no projects are given, then all Java projects are checked."""
                                 log('excluding: ' + name)
                             return True
                     return False
-                    
+
                 javafilelist = [name for name in javafilelist if not match(name)]
-            
+
             auditfileName = join(p.dir, 'checkstyleOutput.txt')
             log('Running Checkstyle on {0} using {1}...'.format(sourceDir, config))
-            
+
             try:
 
                 # Checkstyle is unable to read the filenames to process from a file, and the
@@ -1199,7 +1259,7 @@ If no projects are given, then all Java projects are checked."""
                             i += 1
                         else:
                             break
-                    
+
                     batch = javafilelist[:i]
                     javafilelist = javafilelist[i:]
                     try:
@@ -1224,13 +1284,13 @@ def clean(args, parser=None):
     """
 
     suppliedParser = parser is not None
-    
+
     parser = parser if suppliedParser else ArgumentParser(prog='mx build');
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not clean native projects')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not clean Java projects')
 
     args = parser.parse_args(args)
-    
+
     for p in projects():
         if p.native:
             if args.native:
@@ -1241,10 +1301,14 @@ def clean(args, parser=None):
                 if outputDir != '' and exists(outputDir):
                     log('Removing {0}...'.format(outputDir))
                     shutil.rmtree(outputDir)
-                    
+
     if suppliedParser:
         return args
-    
+
+def about(args):
+    """show the 'man page' for mx"""
+    print __doc__
+
 def help_(args):
     """show help for a given command
 
@@ -1254,11 +1318,11 @@ Given a command name, print help for that command."""
     if len(args) == 0:
         _argParser.print_help()
         return
-    
+
     name = args[0]
     if not commands.has_key(name):
         _argParser.error('unknown command: ' + name)
-    
+
     value = commands[name]
     (func, usage) = value[:2]
     doc = func.__doc__
@@ -1275,7 +1339,7 @@ Given a command name, print help for that command."""
 
 def projectgraph(args, suite=None):
     """create dot graph for project structure ("mx projectgraph | dot -Tpdf -oprojects.pdf")"""
-    
+
     print 'digraph projects {'
     print 'rankdir=BT;'
     print 'node [shape=rect];'
@@ -1289,14 +1353,14 @@ def eclipseinit(args, suite=None):
 
     if suite is None:
         suite = _mainSuite
-        
+
     def println(out, obj):
         out.write(str(obj) + '\n')
-        
+
     for p in projects():
         if not exists(p.dir):
             os.makedirs(p.dir)
-        
+
         if p.native:
             eclipseNativeSettingsDir = join(suite.dir, 'mx', 'eclipse-native-settings')
             if exists(eclipseNativeSettingsDir):
@@ -1310,7 +1374,7 @@ def eclipseinit(args, suite=None):
             continue
 
         out = StringIO.StringIO()
-        
+
         println(out, '<?xml version="1.0" encoding="UTF-8"?>')
         println(out, '<classpath>')
         for src in p.srcDirs:
@@ -1318,14 +1382,14 @@ def eclipseinit(args, suite=None):
             if not exists(srcDir):
                 os.mkdir(srcDir)
             println(out, '\t<classpathentry kind="src" path="' + src + '"/>')
-    
+
         # Every Java program depends on the JRE
         println(out, '\t<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>')
-        
+
         for dep in p.all_deps([], True):
             if dep == p:
                 continue;
-            
+
             if dep.isLibrary():
                 if hasattr(dep, 'eclipse.container'):
                     println(out, '\t<classpathentry exported="true" kind="con" path="' + getattr(dep, 'eclipse.container') + '"/>')
@@ -1342,7 +1406,7 @@ def eclipseinit(args, suite=None):
                             println(out, '\t<classpathentry exported="true" kind="lib" path="' + projRelPath + '"/>')
             else:
                 println(out, '\t<classpathentry combineaccessrules="false" exported="true" kind="src" path="/' + dep.name + '"/>')
-                        
+
         println(out, '\t<classpathentry kind="output" path="' + getattr(p, 'eclipse.output', 'bin') + '"/>')
         println(out, '</classpath>')
         update_file(join(p.dir, '.classpath'), out.getvalue())
@@ -1351,7 +1415,7 @@ def eclipseinit(args, suite=None):
         csConfig = join(project(p.checkstyleProj).dir, '.checkstyle_checks.xml')
         if exists(csConfig):
             out = StringIO.StringIO()
-            
+
             dotCheckstyle = join(p.dir, ".checkstyle")
             checkstyleConfigPath = '/' + p.checkstyleProj + '/.checkstyle_checks.xml'
             println(out, '<?xml version="1.0" encoding="UTF-8"?>')
@@ -1377,14 +1441,14 @@ def eclipseinit(args, suite=None):
                             assert isdir(exclDir), 'excluded source directory listed in ' + exclude + ' does not exist or is not a directory: ' + exclDir
                         println(out, '\t\t<filter-data value="' + line + '"/>')
                 println(out, '\t</filter>')
-                        
+
             println(out, '</fileset-config>')
             update_file(dotCheckstyle, out.getvalue())
             out.close()
-        
+
 
         out = StringIO.StringIO()
-        
+
         println(out, '<?xml version="1.0" encoding="UTF-8"?>')
         println(out, '<projectDescription>')
         println(out, '\t<name>' + p.name + '</name>')
@@ -1436,17 +1500,17 @@ def netbeansinit(args, suite=None):
 
     def println(out, obj):
         out.write(str(obj) + '\n')
-        
+
     updated = False
     for p in projects():
         if p.native:
             continue
-        
+
         if not exists(join(p.dir, 'nbproject')):
             os.makedirs(join(p.dir, 'nbproject'))
 
         out = StringIO.StringIO()
-        
+
         println(out, '<?xml version="1.0" encoding="UTF-8"?>')
         println(out, '<project name="' + p.name + '" default="default" basedir=".">')
         println(out, '\t<description>Builds, tests, and runs the project ' + p.name + '.</description>')
@@ -1454,7 +1518,7 @@ def netbeansinit(args, suite=None):
         println(out, '</project>')
         updated = update_file(join(p.dir, 'build.xml'), out.getvalue()) or updated
         out.close()
-        
+
         out = StringIO.StringIO()
         println(out, '<?xml version="1.0" encoding="UTF-8"?>')
         println(out, '<project xmlns="http://www.netbeans.org/ns/project/1">')
@@ -1470,18 +1534,18 @@ def netbeansinit(args, suite=None):
         println(out, '                <root id="test.src.dir"/>')
         println(out, '            </test-roots>')
         println(out, '        </data>')
-        
+
         firstDep = True
         for dep in p.all_deps([], True):
             if dep == p:
                 continue;
-            
+
             if not dep.isLibrary():
                 n = dep.name.replace('.', '_')
                 if firstDep:
                     println(out, '        <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">')
                     firstDep = False
-                    
+
                 println(out, '            <reference>')
                 println(out, '                <foreign-project>' + n + '</foreign-project>')
                 println(out, '                <artifact-type>jar</artifact-type>')
@@ -1490,19 +1554,19 @@ def netbeansinit(args, suite=None):
                 println(out, '                <clean-target>clean</clean-target>')
                 println(out, '                <id>jar</id>')
                 println(out, '            </reference>')
-            
+
         if not firstDep:
             println(out, '        </references>')
-            
+
         println(out, '    </configuration>')
         println(out, '</project>')
         updated = update_file(join(p.dir, 'nbproject', 'project.xml'), out.getvalue()) or updated
         out.close()
-        
+
         out = StringIO.StringIO()
-        
+
         jdkPlatform = 'JDK_' + java().version
-        
+
         content = """
 annotation.processing.enabled=false
 annotation.processing.enabled.in.editor=false
@@ -1590,12 +1654,12 @@ source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
                 mainSrc = False
             else:
                 println(out, 'src.' + src + '.dir=${' + ref + '}')
-            
-        javacClasspath = []    
+
+        javacClasspath = []
         for dep in p.all_deps([], True):
             if dep == p:
                 continue;
-            
+
             if dep.isLibrary():
                 if not dep.mustExist:
                     continue
@@ -1604,22 +1668,22 @@ source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
                     path = path.replace('\\', '\\\\')
                 ref = 'file.reference.' + dep.name + '-bin'
                 println(out, ref + '=' + path)
-                    
+
             else:
                 n = dep.name.replace('.', '_')
                 relDepPath = os.path.relpath(dep.dir, p.dir).replace(os.sep, '/')
                 ref = 'reference.' + n + '.jar'
                 println(out, 'project.' + n + '=' + relDepPath)
                 println(out, ref + '=${project.' + n + '}/dist/' + dep.name + '.jar')
-                
+
             javacClasspath.append('${' + ref + '}')
-            
+
         println(out, 'javac.classpath=\\\n    ' + (os.pathsep + '\\\n    ').join(javacClasspath))
-        
+
 
         updated = update_file(join(p.dir, 'nbproject', 'project.properties'), out.getvalue()) or updated
         out.close()
-    
+
     if updated:
         log('If using NetBeans:')
         log('  1. Ensure that a platform named "JDK ' + java().version + '" is defined (Tools -> Java Platforms)')
@@ -1627,21 +1691,21 @@ source.encoding=UTF-8""".replace(':', os.pathsep).replace('/', os.sep)
 
 def ideclean(args, suite=None):
     """remove all Eclipse and NetBeans project configurations"""
-    
+
     def rm(path):
         if exists(path):
             os.remove(path)
-    
+
     for p in projects():
         if p.native:
             continue
-        
+
         shutil.rmtree(join(p.dir, '.settings'), ignore_errors=True)
         shutil.rmtree(join(p.dir, 'nbproject'), ignore_errors=True)
         rm(join(p.dir, '.classpath'))
         rm(join(p.dir, '.project'))
         rm(join(p.dir, 'build.xml'))
-        
+
 def ideinit(args, suite=None):
     """(re)generate Eclipse and NetBeans project configurations"""
     eclipseinit(args, suite)
@@ -1653,7 +1717,7 @@ def javap(args):
     Run the JDK javap class file disassembler with the following prepended options:
 
         -private -verbose -classpath <path to project classes>"""
-        
+
     javap = java().javap
     if not exists(javap):
         abort('The javap executable does not exists: ' + javap)
@@ -1675,13 +1739,14 @@ def add_argument(*args, **kwargs):
     """
     assert _argParser is not None
     _argParser.add_argument(*args, **kwargs)
-    
+
 # Table of commands in alphabetical order.
 # Keys are command names, value are lists: [<function>, <usage msg>, <format args to doc string of function>...]
 # If any of the format args are instances of Callable, then they are called with an 'env' are before being
-# used in the call to str.format().  
+# used in the call to str.format().
 # Extensions should update this table directly
 commands = {
+    'about': [about, ''],
     'build': [build, '[options]'],
     'checkstyle': [checkstyle, ''],
     'canonicalizeprojects': [canonicalizeprojects, ''],
@@ -1703,26 +1768,26 @@ def main():
     if exists(cwdMxDir) and isdir(cwdMxDir):
         global _mainSuite
         _mainSuite = _loadSuite(os.getcwd(), True)
-            
+
     opts, commandAndArgs = _argParser._parse_cmd_line()
-    
+
     global _opts, _java
     _opts = opts
     _java = JavaConfig(opts)
-    
+
     for s in suites():
         s._post_init(opts)
-    
+
     if len(commandAndArgs) == 0:
         _argParser.print_help()
         return
-    
+
     command = commandAndArgs[0]
     command_args = commandAndArgs[1:]
-    
+
     if not commands.has_key(command):
         abort('mx: unknown command \'{0}\'\n{1}use "mx help" for more options'.format(command, _format_commands()))
-        
+
     c, _ = commands[command][:2]
     def term_handler(signum, frame):
         abort(1)
