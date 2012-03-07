@@ -1358,20 +1358,11 @@ def eclipseinit(args, suite=None):
         out.write(str(obj) + '\n')
 
     for p in projects():
+        if p.native:
+            continue
+        
         if not exists(p.dir):
             os.makedirs(p.dir)
-
-        if p.native:
-            eclipseNativeSettingsDir = join(suite.dir, 'mx', 'eclipse-native-settings')
-            if exists(eclipseNativeSettingsDir):
-                for name in os.listdir(eclipseNativeSettingsDir):
-                    path = join(eclipseNativeSettingsDir, name)
-                    if isfile(path):
-                        with open(join(eclipseNativeSettingsDir, name)) as f:
-                            content = f.read()
-                        content = content.replace('${javaHome}', java().jdk)
-                        update_file(join(p.dir, name), content)
-            continue
 
         out = StringIO.StringIO()
 
