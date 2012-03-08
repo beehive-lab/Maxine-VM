@@ -22,6 +22,10 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.thread.VmThreadLocal.*;
@@ -47,6 +51,11 @@ public class JVMTIVmThreadLocal {
      */
     static final int JVMTI_FRAME_POP = 2;
 
+    /**
+     * Bit set while thread is executing a JVMTI upcall.
+     */
+    static final int JVMTI_EXE = 4;
+
     private static final int STATUS_BIT_MASK = 0xFF;
 
     private static final int DEPTH_SHIFT = 8;
@@ -57,12 +66,18 @@ public class JVMTIVmThreadLocal {
         return JVMTI_STATE.load(tla).and(bit).isNotZero();
     }
 
+    @INLINE
     static void setBit(Pointer tla, int bit, boolean setting) {
         if (setting) {
             JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
         } else {
             JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
         }
+    }
+
+    @INLINE
+    static void setBit(int bit, boolean setting) {
+        setBit(ETLA.load(currentTLA()), bit, setting);
     }
 
     static int getDepth(Pointer tla) {
