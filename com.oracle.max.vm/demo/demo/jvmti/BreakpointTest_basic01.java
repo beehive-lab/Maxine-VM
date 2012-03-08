@@ -20,47 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package demo.jvmti;
 
-/**
- * Program used to debug Maxine's breakpoint implementation for methods that may
- * have been inlined by the optimizing compiler at the time the breakpoint is set.
- * Usage:
- * <ol>
- * <li>Set a breakpoint at the call to {@link #spinUntilDone}.</li>
- * <li>Run the program, should hit breakpoint.</li>
- * <li>Set a breakpoint at {@link incTotal}, which should have been optimized.</li>
- * <li>Continue, should hit breakpoint at {@link incTotal}.</li>
- * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
- * </ol>
- */
-public class BreakpointTest_inline {
 
+public class BreakpointTest_basic01 {
     public static void main(String[] args) {
-
-        forceInline();
-        spinUntilDone();
-
-        System.out.println(total);
+        foo(args.length == 0 ? 0 : Integer.parseInt(args[0]));
     }
 
-    static boolean done;
-    static int total;
-
-    public static void spinUntilDone() {
-        while (!done) {
-            incTotal();
-        }
+    private static void foo(int a) {
+        System.out.printf("a=%d%n", a);
     }
-
-    private static void forceInline() {
-        for (int i = 0; i < 10000; i++) {
-            incTotal();
-        }
-    }
-
-    public static void incTotal() {
-        total++;
-    }
-
 }
