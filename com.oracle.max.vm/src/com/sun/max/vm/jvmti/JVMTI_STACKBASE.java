@@ -20,41 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.lang.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
+import java.lang.annotation.*;
 
 /**
- * Small program used to debug Maxine's breakpoint implementation.
+ * Identifies a method that is the base of a stack of frames that are part of the
+ * JVMTI implementation. Therefore, they should be suppressed to an agent.
  */
-public class BreakpointTest {
-
-    static {
-        ClassMethodActor cma = ClassMethodActor.fromJava(Classes.findDeclaredMethod(BreakpointTest.class, "incTotal"));
-        MaxineVM.vm().compilationBroker.compile(cma, Nature.OPT);
-    }
-
-    public static void main(String[] args) {
-
-        spinUntilDone();
-
-        System.out.println(total);
-    }
-
-    static boolean done;
-    static int total;
-
-    public static void spinUntilDone() {
-        while (!done) {
-            incTotal();
-        }
-    }
-
-    public static void incTotal() {
-        total++;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface JVMTI_STACKBASE {
 
 }

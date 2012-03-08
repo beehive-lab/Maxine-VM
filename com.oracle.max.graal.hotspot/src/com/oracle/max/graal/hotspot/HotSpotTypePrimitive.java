@@ -161,4 +161,10 @@ public final class HotSpotTypePrimitive extends HotSpotType implements RiResolve
     public Class< ? > toJava() {
         return kind.toJavaClass();
     }
+
+    @Override
+    public boolean canUseAssumptions(RiMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

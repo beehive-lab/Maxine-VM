@@ -66,6 +66,14 @@ public class JVMTICode {
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
         targetMethod.finalizeReferenceMaps();
         targetMethods.add(targetMethod);
+        compileAndDeopt(targetMethods);
+    }
+
+    static void compileAndDeopt(ArrayList<TargetMethod> targetMethods) {
+        // compile the methods first, in case of a method used by the compilation system (VM debugging)
+        for (TargetMethod targetMethod: targetMethods) {
+            vm().compilationBroker.compileForDeopt(targetMethod.classMethodActor);
+        }
         // Calling this multiple times for different threads is harmless as it takes care to
         // filter out already invalidated methods.
         new Deoptimization(targetMethods).go();
@@ -93,10 +101,7 @@ public class JVMTICode {
             checkDeOptForMethod(classMethodActor, codeEventSettings);
             // recheck
             targetMethod = classMethodActor.currentTargetMethod();
-            if (targetMethod == null || !targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
-                // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
-                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
-            }
+            assert targetMethod != null && targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor));
         } else {
             // Never compiled, but may have been inlined
             if (inliners.size() == 0) {
@@ -108,8 +113,8 @@ public class JVMTICode {
         // Reach here if never compiled but inlined, or compiled and inlined
         // Now handle deopt of any inliners.
         if (inliners.size() > 0) {
-            // all the inliners need to be deopted and the inlinee needs to be (re)compiled
-            new Deoptimization(inliners).go();
+            // all the inliners need to be deopted and the inlinee needs to be (re)compiled (TODO check latter)
+            compileAndDeopt(inliners);
             // If never compiled, then similar to case 3, else was recompiled already
         }
     }
