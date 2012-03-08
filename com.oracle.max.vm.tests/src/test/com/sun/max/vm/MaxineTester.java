@@ -692,6 +692,9 @@ public class MaxineTester {
             } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
                 out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
                 ++timeouts;
+            } else {
+                generatedImages.put(imageConfig, null);
+                return false;
             }
         } while (timeouts < 2); // tolerate no more than one timeouts
         out().println("(image build timed out twice, aborting)");

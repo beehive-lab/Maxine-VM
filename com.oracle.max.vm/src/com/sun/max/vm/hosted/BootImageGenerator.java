@@ -220,9 +220,9 @@ public final class BootImageGenerator {
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
-            verifyBootClasses();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
+            verifyBootClasses();
             if (treeOption.getValue()) {
                 // write the tree file only if specified by the user.
                 writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
@@ -353,6 +353,10 @@ public final class BootImageGenerator {
 
     private void verifyBootClasses() {
         Trace.begin(1, "verifying boot image classes");
+        // The verification process may loaded extra classes which may in turn require generation of
+        // more vtrampoline which in turn requires the ability to allocate code. Since the boot image
+        // has already been written, resetting the boot code region is now safe.
+        Code.resetBootCodeRegion();
         long start = System.currentTimeMillis();
         for (ClassActor ca : ClassRegistry.allBootImageClasses()) {
             if (!ca.kind.isWord) {

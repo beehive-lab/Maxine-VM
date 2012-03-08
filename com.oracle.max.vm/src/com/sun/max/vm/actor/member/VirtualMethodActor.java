@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,18 @@ public class VirtualMethodActor extends ClassMethodActor {
 
     public void setVTableIndex(int vTableIndex) {
         assert this.vTableIndex == INVALID_VTABLE_INDEX;
+        this.vTableIndex = vTableIndex;
+    }
+
+    /**
+     * Sets the vtable index for a substitute method to be the same as the vtable index for
+     * the original. This is required so that virtual dispatch works properly at runtime
+     * when the receiver object is of the original type.
+     */
+    @HOSTED_ONLY
+    public void resetVTableIndexForSubstitute(int vTableIndex) {
+        assert ((VirtualMethodActor) original()).vTableIndex() == vTableIndex;
+        assert this.vTableIndex != INVALID_VTABLE_INDEX;
         this.vTableIndex = vTableIndex;
     }
 }
