@@ -28,7 +28,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.type.BootClassLoader.*;
 
 /**
  * The Boot class loader used when running in hosted mode.
