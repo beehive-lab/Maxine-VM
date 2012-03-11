@@ -28,7 +28,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.thread.VmThreadLocal.*;
 
 /**
  * Efficient state storage for thread related JVMTI information.
