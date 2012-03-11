@@ -758,7 +758,7 @@ public class Deoptimization extends VmOperation {
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            TargetMethod compiledMethod = vm().compilationBroker.compile(method, Nature.BASELINE);
+            TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
             boolean reexecute = false;

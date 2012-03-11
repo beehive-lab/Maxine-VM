@@ -290,12 +290,12 @@ public class JVMTIFunctionsGenerator {
 
         @Override
         public String customizeTracePrologue(VmEntryFunctionDeclaration decl) {
-            return logging();
+            return ENTER_JVMTI + logging();
         }
 
         @Override
         public String customizeTraceEpilogue(VmEntryFunctionDeclaration decl) {
-            return INDENT12 + "// currrently no return logging";
+            return INDENT4 + EXIT_JVMTI + INDENT12 + "// currrently no return logging";
         }
 
         @Override
@@ -321,6 +321,13 @@ public class JVMTIFunctionsGenerator {
                 logArgs = envLogArgs;
             }
             return s;
+        }
+
+        private static final String ENTER_JVMTI = inJVMTI(true);
+        private static final String EXIT_JVMTI = inJVMTI(false);
+
+        private static String inJVMTI(boolean in) {
+            return INDENT8 + "JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, " + in + ");\n";
         }
 
         private static String logging() {

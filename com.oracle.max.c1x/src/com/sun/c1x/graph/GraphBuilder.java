@@ -1095,7 +1095,7 @@ public final class GraphBuilder {
             return type;
         }
         RiResolvedType assumed = null;
-        if (C1XOptions.UseAssumptions) {
+        if (C1XOptions.UseAssumptions  && (type.canUseAssumptions(compilation.method))) {
             assumed = type.uniqueConcreteSubtype();
             if (assumed != null) {
                 if (C1XOptions.PrintAssumptions) {
@@ -2473,7 +2473,7 @@ public final class GraphBuilder {
             return true;
         }
 
-        if (C1XOptions.UseAssumptions) {
+        if (C1XOptions.UseAssumptions && (type.canUseAssumptions(compilation.method))) {
             RiResolvedType assumed = type.uniqueConcreteSubtype();
             if (assumed != null && assumed == type) {
                 if (C1XOptions.PrintAssumptions) {
@@ -2494,7 +2494,7 @@ public final class GraphBuilder {
                 return resolvedMethod;
             }
 
-            if (C1XOptions.UseAssumptions) {
+            if (C1XOptions.UseAssumptions && (resolvedMethod.holder().canUseAssumptions(compilation.method))) {
                 RiResolvedMethod concrete = resolvedMethod.holder().uniqueConcreteMethod(resolvedMethod);
                 if (concrete != null) {
                     if (C1XOptions.PrintAssumptions) {

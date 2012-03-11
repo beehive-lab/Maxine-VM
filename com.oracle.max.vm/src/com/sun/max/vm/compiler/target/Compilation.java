@@ -77,6 +77,7 @@ public class Compilation {
     public final Compilations prevCompilations;
     public Thread compilingThread;
     public TargetMethod result;
+    public final boolean isDeopt;
 
     /**
      * State of this compilation. If {@code true}, then this compilation has finished and the target
@@ -89,7 +90,8 @@ public class Compilation {
     public Compilation(RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
                        Compilations prevCompilations,
-                       Thread compilingThread, RuntimeCompiler.Nature nature) {
+                       Thread compilingThread, RuntimeCompiler.Nature nature,
+                       boolean isDeopt) {
         assert prevCompilations != null;
         this.parent = COMPILATION.get();
         this.compiler = compiler;
@@ -97,6 +99,7 @@ public class Compilation {
         this.prevCompilations = prevCompilations;
         this.compilingThread = compilingThread;
         this.nature = nature;
+        this.isDeopt = isDeopt;
 
         for (Compilation scope = parent; scope != null; scope = scope.parent) {
             if (scope.classMethodActor.equals(classMethodActor) && scope.compiler == compiler) {
@@ -209,7 +212,7 @@ public class Compilation {
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
-            result = compiler.compile(classMethodActor, true, null);
+            result = compiler.compile(classMethodActor, isDeopt, true, null);
             if (result == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }

@@ -748,6 +748,11 @@ public class VMLogger {
     }
 
     @INLINE
+    public static Word methodActorArg(MethodActor methodActor) {
+        return MethodID.fromMethodActor(methodActor);
+    }
+
+    @INLINE
     public static Word objectArg(Object object) {
         if (MaxineVM.isHosted()) {
             return ObjectArg.toArg(object);
