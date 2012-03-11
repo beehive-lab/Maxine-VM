@@ -22,13 +22,26 @@
  */
 package demo.jvmti;
 
+/**
+ * Program used to debug Maxine's breakpoint implementation. Basic test.
+ * Usage:
+ * <ol>
+ * <li>Set a breakpoint at {@link #foo}.</li>
+ * <li>Run the program, should hit breakpoint.</li>
+ * <li>Then either exit the test by continuing or step, which should step over the print.
+ *     A further step should step into main, which tests that main is instrumented for
+ *     single step.
+ * </ol>
+ */
 
 public class BreakpointTest_basic01 {
     public static void main(String[] args) {
-        foo(args.length == 0 ? 0 : Integer.parseInt(args[0]));
+        int r = foo(args.length == 0 ? 0 : Integer.parseInt(args[0]));
+        System.out.printf("foo returned %d%n", r);
     }
 
-    private static void foo(int a) {
+    private static int foo(int a) {
         System.out.printf("a=%d%n", a);
+        return a + 1;
     }
 }
