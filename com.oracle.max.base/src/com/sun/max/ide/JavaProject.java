@@ -53,6 +53,8 @@ public final class JavaProject {
 
     public static final String TEST_SOURCE_DIRECTORY_NAME = "test";
 
+    private static File workspaceDir;
+
     /**
      * Gets the paths on which all the class files referenced by a Java project can be found.
      *
@@ -130,21 +132,25 @@ public final class JavaProject {
     }
 
     /**
-     * Gets the workspace directory based on the {@value JavaProject#WORKSPACE_PROPERTY}
-     * if it exists otherwise from the {@linkplain Classpath#fromSystem() system class path}.
-     * The workspace is the directory containing the Maxine projects.
+     * Gets the workspace directory based on the {@value JavaProject#WORKSPACE_PROPERTY} if it exists otherwise from the
+     * {@linkplain Classpath#fromSystem() system class path}. The workspace is the directory containing the Maxine
+     * projects.
      */
     public static File findWorkspace() {
-        final String prop = System.getProperty(JavaProject.WORKSPACE_PROPERTY);
-        if (prop != null) {
-            File dir = new File(prop);
-            ProgramError.check(isWorkspace(dir), prop + " does not denote a workspace");
-            return dir;
+        if (workspaceDir == null) {
+            final String prop = System.getProperty(JavaProject.WORKSPACE_PROPERTY);
+            if (prop != null) {
+                File dir = new File(prop);
+                ProgramError.check(isWorkspace(dir), prop + " does not denote a workspace");
+                workspaceDir = dir;
+            } else {
+                WorkspaceFinder finder = new WorkspaceFinder();
+                finder.run(Classpath.fromSystem());
+                ProgramError.check(finder.workspace != null, "failed to find the workspace");
+                workspaceDir = finder.workspace;
+            }
         }
-        WorkspaceFinder finder = new WorkspaceFinder();
-        finder.run(Classpath.fromSystem());
-        ProgramError.check(finder.workspace != null, "failed to find the workspace");
-        return finder.workspace;
+        return workspaceDir;
     }
 
     /**
