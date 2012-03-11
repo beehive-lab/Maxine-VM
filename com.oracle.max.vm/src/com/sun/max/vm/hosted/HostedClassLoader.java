@@ -115,7 +115,10 @@ public abstract class HostedClassLoader extends ClassLoader {
         try {
             // this gets it into the correct registry
             String javaName = typeDescriptor.toJavaString();
-            loadClass(javaName);
+            // be careful about primitive types which can happen in some hosted code paths
+            if (!JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
+                loadClass(javaName);
+            }
             // now we are guaranteed to find it
             return ClassRegistry.getInBootOrVM(typeDescriptor);
         } catch (ClassNotFoundException throwable) {

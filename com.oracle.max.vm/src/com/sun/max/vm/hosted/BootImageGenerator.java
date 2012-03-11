@@ -252,25 +252,28 @@ public final class BootImageGenerator {
     };
 
     /**
-     * Add the current working directory to the class path that will be created when HostedBootClassLoader.classpath() is
+     * Add the proxyclassfiles directory to the class path that will be created when HostedBootClassLoader.classpath() is
      * first called. This is the directory where ProxyGenerator dumps out the class files it generates.
      */
     private static void enableProxyClassFileDumping() {
-        final String cwd = System.getProperty("user.dir");
+        final File wsDir = JavaProject.findWorkspace();
+        final File proxyDir = new File(wsDir, "proxyclasses");
         String javaClassPath = System.getProperty("java.class.path");
-        System.setProperty("java.class.path", cwd + File.pathSeparatorChar + javaClassPath);
-        final File cwdFile = new File(cwd);
+        System.setProperty("java.class.path", proxyDir.getAbsolutePath() + File.pathSeparatorChar + javaClassPath);
+        if (!proxyDir.exists()) {
+            proxyDir.mkdir();
+        }
 
         // See sun.misc.ProxyGenerator.saveGeneratedFiles field
         System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
-        final Set<File> existingProxyClassFilesAndDirectories = collectProxyClassFilesAndDirectories(cwdFile);
+        final Set<File> existingProxyClassFilesAndDirectories = collectProxyClassFilesAndDirectories(proxyDir);
 
         // create proxy directories
         for (String d : proxyDirs) {
-            File proxyDir = new File(cwdFile, d);
-            if (!proxyDir.exists()) {
-                proxyDir.mkdirs();
-                proxyDir.deleteOnExit();
+            File proxySubDir = new File(proxyDir, d);
+            if (!proxySubDir.exists()) {
+                proxySubDir.mkdirs();
+                proxySubDir.deleteOnExit();
             }
         }
 
@@ -278,7 +281,7 @@ public final class BootImageGenerator {
             @Override
             public void run() {
                 System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
-                for (File f : collectProxyClassFilesAndDirectories(cwdFile)) {
+                for (File f : collectProxyClassFilesAndDirectories(proxyDir)) {
                     if (!existingProxyClassFilesAndDirectories.contains(f)) {
                         f.delete();
                     }
@@ -287,7 +290,7 @@ public final class BootImageGenerator {
         });
     }
 
-    private static Set<File> collectProxyClassFilesAndDirectories(File cwd) {
+    private static Set<File> collectProxyClassFilesAndDirectories(File proxyDir) {
         final FilenameFilter proxyFilter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
@@ -295,14 +298,14 @@ public final class BootImageGenerator {
         };
 
         // proxy files without package name
-        Set<File> filesAndDirs = new HashSet<File>(Arrays.asList(cwd.listFiles(proxyFilter)));
+        Set<File> filesAndDirs = new HashSet<File>(Arrays.asList(proxyDir.listFiles(proxyFilter)));
 
         // recurse into given directories and identify proxy files there
         for (String d : proxyDirs) {
-            File proxyDir = new File(cwd, d);
-            if (proxyDir.exists()) {
-                filesAndDirs.add(proxyDir);
-                filesAndDirs.addAll(Arrays.asList(proxyDir.listFiles(proxyFilter)));
+            File proxySubDir = new File(proxyDir, d);
+            if (proxySubDir.exists()) {
+                filesAndDirs.add(proxySubDir);
+                filesAndDirs.addAll(Arrays.asList(proxySubDir.listFiles(proxyFilter)));
             }
         }
 
