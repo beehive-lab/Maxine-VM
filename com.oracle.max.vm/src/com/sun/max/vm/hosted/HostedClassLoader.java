@@ -113,10 +113,11 @@ public abstract class HostedClassLoader extends ClassLoader {
      */
     public ClassActor mustMakeClassActor(TypeDescriptor typeDescriptor) {
         try {
-            // this gets it into the correct registry
-            String javaName = typeDescriptor.toJavaString();
-            loadClass(javaName);
-            // now we are guaranteed to find it
+            if (!JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
+                // this gets it into the correct registry
+                String javaName = typeDescriptor.toJavaString();
+                loadClass(javaName);
+            }
             return ClassRegistry.getInBootOrVM(typeDescriptor);
         } catch (ClassNotFoundException throwable) {
             throw ProgramError.unexpected("could not make class Actor: " + typeDescriptor, throwable);
