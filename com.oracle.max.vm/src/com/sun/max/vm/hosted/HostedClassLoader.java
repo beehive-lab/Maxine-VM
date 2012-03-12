@@ -113,6 +113,8 @@ public abstract class HostedClassLoader extends ClassLoader {
      */
     public ClassActor mustMakeClassActor(TypeDescriptor typeDescriptor) {
         try {
+            // be careful about primitive types which can happen in some hosted code paths
+            // and can't be loaded with loadClass
             if (!JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
                 // this gets it into the correct registry
                 String javaName = typeDescriptor.toJavaString();
