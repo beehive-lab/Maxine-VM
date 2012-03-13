@@ -23,49 +23,34 @@
 package demo.jvmti;
 
 /**
- * Program used to debug Maxine's breakpoint implementation for methods that may
- * have been compiled by the optimizing compiler at the time the breakpoint is set.
+ * Program used to debug Maxine's breakpoint implementation. Basic test 02.
  * Usage:
  * <ol>
- * <li>Set a breakpoint at {@link #postOpt}.</li>
+ * <li>Set a breakpoint at {@link #foo}.</li>
  * <li>Run the program, should hit breakpoint.</li>
- * <li>Set a breakpoint at {@link incTotal}, which should have been optimized.</li>
- * <li>Continue, should hit breakpoint at {@link incTotal}.</li>
- * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
+ * <li>Now set a breakpoint at {@link #bar} and continue.
  * </ol>
+ * N.B. In the above the breakpoint at {@code bar} set after {@code bar} is compiled,
+ * so it is recompiled to instrument for the breakpoint.
  */
-public class BreakpointTest_opt01 {
 
+
+public class BreakpointTest_basic02 {
     public static void main(String[] args) {
-
-        forceOpt();
-        postOpt();
-        spinUntilDone();
-
-        System.out.println(total);
+        int arg = args.length == 0 ? 0 : Integer.parseInt(args[0]);
+        // this gets bar compiled
+        bar(arg);
+        int r = foo(arg);
+        System.out.printf("foo returned %d%n", r);
     }
 
-    static boolean done;
-    static int total;
-
-    public static void spinUntilDone() {
-        while (!done) {
-            incTotal();
-        }
+    private static int foo(int arg) {
+        return bar(arg);
     }
 
-    private static void postOpt() {
-        done = false;
-    }
-
-    private static void forceOpt() {
-        for (int i = 0; i < 10000; i++) {
-            incTotal();
-        }
-    }
-
-    public static void incTotal() {
-        total++;
+    private static int bar(int a) {
+        System.out.printf("a=%d%n", a);
+        return a + 1;
     }
 
 }
