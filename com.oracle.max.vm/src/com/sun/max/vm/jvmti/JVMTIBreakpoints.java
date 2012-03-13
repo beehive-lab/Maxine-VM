@@ -138,7 +138,7 @@ public class JVMTIBreakpoints {
      * we are effectively sorting by location.
      *
      * @param classMethodActor
-     * @return
+     * @return array of breakpoint info or null if there are none.
      */
     public static long[] getBreakpoints(ClassMethodActor classMethodActor) {
         long[] result = methodBreakpointsMap.get(classMethodActor);

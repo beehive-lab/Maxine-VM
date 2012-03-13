@@ -23,7 +23,7 @@
 package demo.jvmti;
 
 /**
- * Program used to debug Maxine's breakpoint implementation. Basic test.
+ * Program used to debug Maxine's breakpoint implementation. Basic test 01.
  * Usage:
  * <ol>
  * <li>Set a breakpoint at {@link #foo}.</li>
@@ -32,6 +32,8 @@ package demo.jvmti;
  *     A further step should step into main, which tests that main is instrumented for
  *     single step.
  * </ol>
+ * N.B. In the above the breakpoint is set before {@code foo} is compiled,
+ * so it is instrumented for the breakpoint on the first compilation.
  */
 
 public class BreakpointTest_basic01 {
