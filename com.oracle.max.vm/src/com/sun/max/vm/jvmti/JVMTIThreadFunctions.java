@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -55,6 +56,7 @@ public class JVMTIThreadFunctions {
     private static ClassActor methodClassActor;
     private static ClassActor jvmtiClassActor;
     private static ClassActor javaRunSchemeClassActor;
+    private static MethodActor[] stackBaseMethodActors;
 
     private static ClassActor vmThreadClassActor() {
         if (vmThreadClassActor == null) {
@@ -96,6 +98,16 @@ public class JVMTIThreadFunctions {
             javaRunSchemeClassActor = ClassActor.fromJava(JavaRunScheme.class);
         }
         return javaRunSchemeClassActor;
+    }
+
+    static {
+        // Should search for @JVMTI_STACKBASE
+        stackBaseMethodActors = new MethodActor[1];
+        try {
+            stackBaseMethodActors[0] = MethodActor.fromJava(JVMTIBreakpoints.class.getDeclaredMethod("event", long.class));
+        } catch (NoSuchMethodException ex) {
+            ProgramError.unexpected("failed to find method actor for JVMTIBreakpoints.event", ex);
+        }
     }
 
     static int getAllThreads(Pointer threadsCountPtr, Pointer threadsPtr) {
@@ -206,16 +218,26 @@ public class JVMTIThreadFunctions {
         StackElement(ClassMethodActor classMethodActor, int bci, FrameAccessWithIP frameAccess) {
             this.classMethodActor = classMethodActor;
             this.frameAccess = frameAccess;
+            if (bci < 0) {
+                // outside the actual bytecode area, e.g. in method entry count overflow code
+                assert JVMTI.JVMTI_VM;
+                // make it look like a call from first instruction
+                bci = 0;
+            }
             this.bci = bci;
         }
 
     }
 
     /**
-     * A stack visitor that analyses the stack, by which we mean
-     * ignoring the frames that are on the stack because of the
-     * way {@link VMOperation} brings a thread to a safepoint, and also ignores
+     * A stack visitor that analyses the stack, potentially removing
+     * frames that are VM related. If {@link JVMTI#JVMTI_VM} is {@code true}
+     * then all frames are gathered, otherwise we ignore the frames that are on the stack
+     * because of the way {@link VMOperation} brings a thread to a safepoint, and
      * "implementation" frames, i.e., VM frames, reflection stubs.
+     *
+     * Since the decision to include VM frames is optional, we abstract this into the
+     * notion of a "visible" frame.
      *
      * The nature of the mechanisms for freezing threads in {@link VMOperation}
      * and entering native code, means that there are always VM frames on the
@@ -234,20 +256,21 @@ public class JVMTIThreadFunctions {
      * is seen, then all frames are kept (except reflection stubs).
      */
     static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
-        boolean seenNonVMFrame;
+        boolean seenVisibleFrame = JVMTI.JVMTI_VM;
         LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
+
         @Override
         public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
             // "trapped" indicates the frame in the safepoint trap handler.
             // In other stack visitors in the VM this causes a reset but,
             // in this context, it is subsumed by the check for VM frames.
             ClassMethodActor classMethodActor = methodActor.original();
-            // check for first non-VM frame
-            if (seenNonVMFrame) {
+            // check for first visible frame
+            if (seenVisibleFrame) {
                 add(classMethodActor, bci);
             } else {
-                if (!JVMTIClassFunctions.isVmClass(classMethodActor.holder())) {
-                    seenNonVMFrame = true;
+                if (JVMTIClassFunctions.isVisibleClass(classMethodActor.holder())) {
+                    seenVisibleFrame = true;
                     add(classMethodActor, bci);
                 }
             }
@@ -260,7 +283,7 @@ public class JVMTIThreadFunctions {
         }
 
         private void add(ClassMethodActor classMethodActor, int bci) {
-            if (!classMethodActor.holder().isReflectionStub()) {
+            if (JVMTI.JVMTI_VM || !classMethodActor.holder().isReflectionStub()) {
                 stackElements.addFirst(new StackElement(classMethodActor, bci, getFrameAccessWithIP()));
             }
         }
@@ -288,10 +311,20 @@ public class JVMTIThreadFunctions {
              *
              * TODO handle user-defined classloader callbacks, which have VM frames sandwiched
              * between app frames.
+             *
+             * N.B. if we are including VM frames then the processing is different.
              */
 
             if (stackElements.size() == 0) {
-                // some threads, e.g., SignalDispatcher, have only VM frames, so nothing to analyse.
+                // some threads, e.g., SignalDispatcher, have only VM frames, so (usually) nothing to analyse.
+                return;
+            }
+
+            if (JVMTI.JVMTI_VM) {
+                // The usual dance to handle VM frame removal at the base is not appropriate.
+                // However, some of the frames at the top of the stack should be removed,
+                // e.g., those delivering a breakpoint event.
+                stripJVMTIFrames();
                 return;
             }
 
@@ -334,17 +367,42 @@ public class JVMTIThreadFunctions {
             while (iter.hasNext()) {
                 StackElement e = iter.next();
                 classActor = e.classMethodActor.holder();
-                if (JVMTIClassFunctions.isVmClass(classActor)) {
+                if (JVMTIClassFunctions.isVMClass(classActor)) {
                     break;
                 }
                 endIndex++;
             }
             // endIndex is the first VM frame
+            removeElements(endIndex);
+        }
+
+        /**
+         * When {@link JVMTI#JVMTI_VM} is {@code true} we strip out
+         * frames that are part of the JVMTI implementation of, e.g., breakpoints.
+         */
+        private void stripJVMTIFrames() {
+            // index 0 is base of stack
+            int index = 0;
+            for (int i = 0; i < stackElements.size(); i++) {
+                MethodActor methodActor = stackElements.get(i).classMethodActor;
+                for (MethodActor stackBaseMethodActor : stackBaseMethodActors) {
+                    if (methodActor == stackBaseMethodActor) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            if (index > 0) {
+                removeElements(index);
+            }
+        }
+
+        private void removeElements(int index) {
             int lastIndex = stackElements.size();
-            for (int i = endIndex; i < lastIndex; i++) {
+            for (int i = index; i < lastIndex; i++) {
                 // this reduces the index of everything after removed item
                 // so we always remove the same index.
-                stackElements.remove(endIndex);
+                stackElements.remove(index);
             }
         }
 

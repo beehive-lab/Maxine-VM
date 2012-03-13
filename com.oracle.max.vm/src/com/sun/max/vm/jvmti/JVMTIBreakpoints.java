@@ -79,9 +79,10 @@ public class JVMTIBreakpoints {
     private static Map<ClassMethodActor, long[]> methodBreakpointsMap = new HashMap<ClassMethodActor, long[]>();
 
     /**
-     * Used in T1X template, so no inlining.
+     * Used in T1X template and cut-off point for analysing stacks (when debugging the VM), so no inlining.
      * @param id
      */
+    @JVMTI_STACKBASE
     @NEVER_INLINE
     public static void event(long id) {
         // if single step and breakpoint deliver both, single step first
@@ -137,7 +138,7 @@ public class JVMTIBreakpoints {
      * we are effectively sorting by location.
      *
      * @param classMethodActor
-     * @return
+     * @return array of breakpoint info or null if there are none.
      */
     public static long[] getBreakpoints(ClassMethodActor classMethodActor) {
         long[] result = methodBreakpointsMap.get(classMethodActor);

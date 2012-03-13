@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,9 +50,8 @@ public class JVMTIClassLoader {
         public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
             ClassMethodActor original = method.original();
 
-            // a VM frame is one whose package prefix is either "com.sun.max" or "com.oracle.max"
             final ClassActor holder = original.holder();
-            if (holder.isReflectionStub() || JVMTIClassFunctions.isVmClass(holder)) {
+            if (holder.isReflectionStub() || JVMTIClassFunctions.isVMClass(holder)) {
                 lastFrameInVM = true;
                 nonVMMethod = null;
             } else {
