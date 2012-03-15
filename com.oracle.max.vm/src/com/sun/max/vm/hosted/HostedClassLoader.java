@@ -147,30 +147,15 @@ public abstract class HostedClassLoader extends ClassLoader {
     }
 
     /**
-     * Create a class actor with the specified name from the specified byte array.
-     * Inspector use only.
-     *
-     * @param name the name of the class
-     * @param classfileBytes a byte array containing the encoded version of the class
-     */
-    public ClassActor makeClassActor(final String name, byte[] classfileBytes) {
-        defineClass(name, classfileBytes, 0, classfileBytes.length);
-        return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
-    }
-
-    /**
      * Array/Invocation stub classes require special treatment and are handled here for all subclasses.
      * Since the classloader for the array/stub depends on the component/target type, our subclass will actually
      * handle the loading of that.
      */
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        if (name.endsWith("[]")) {
-            return findArrayClass(name, JavaTypeDescriptor.getDescriptorForJavaString(name).componentTypeDescriptor());
-        } else if (name.charAt(0) == '[') {
-            // make sure the name is slashified first
-            final String componentTypeName = name.substring(1).replace('.', '/');
-            return findArrayClass(name, JavaTypeDescriptor.parseTypeDescriptor(componentTypeName));
+        TypeDescriptor arrayElementTypeDescriptor = checkArrayClass(name);
+        if (arrayElementTypeDescriptor != null) {
+            return findArrayClass(name, arrayElementTypeDescriptor);
         } else if (isStubClass(name)) {
             return defineStubClass(name);
         } else {
@@ -178,7 +163,24 @@ public abstract class HostedClassLoader extends ClassLoader {
         }
     }
 
-    protected final boolean isStubClass(String name) {
+    /**
+     * Checks for an array class, returning the associated {@link TypeDescriptor} if so, {@code null} otherwise.
+     * @param name
+     * @return
+     */
+    private TypeDescriptor checkArrayClass(String name) {
+        if (name.endsWith("[]")) {
+            return JavaTypeDescriptor.getDescriptorForJavaString(name).componentTypeDescriptor();
+        } else if (name.charAt(0) == '[') {
+            // make sure the name is slashified first
+            final String componentTypeName = name.substring(1).replace('.', '/');
+            return JavaTypeDescriptor.parseTypeDescriptor(componentTypeName);
+        } else {
+            return null;
+        }
+    }
+
+    protected boolean isStubClass(String name) {
         return name.startsWith(InvocationStubGenerator.STUB_PACKAGE_PREFIX);
     }
 
@@ -261,5 +263,47 @@ public abstract class HostedClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if the subclass wants to reject the class
      */
     protected abstract boolean extraLoadClassChecks(Class<?> javaType) throws ClassNotFoundException;
+
+    /*
+     * Methods used exclusively by the Inspector.
+     * It is less strict in where it finds classes, for example stub classes
+     * can be found in the file system.
+     */
+
+    /**
+     * Create a class actor with the specified name from the specified byte array.
+     *
+     * @param name the name of the class
+     * @param classfileBytes a byte array containing the encoded version of the class
+     */
+    public ClassActor makeClassActor(final String name, byte[] classfileBytes) {
+        defineClass(name, classfileBytes, 0, classfileBytes.length);
+        return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
+    }
+
+    public ClassActor makeClassActor(String name)  throws ClassNotFoundException {
+        ClassActor classActor = ClassRegistry.getInBootOrVM(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        if (classActor == null) {
+            // We handle arrays/stubs slightly differently in the Inspector as we are not concerned
+            // about VM/Boot registry issues as we are during boot image generation.
+            TypeDescriptor arrayElementTypeDescriptor = checkArrayClass(name);
+            if (arrayElementTypeDescriptor != null) {
+                return ArrayClassActor.forComponentClassActor(ClassActor.fromJava(loadClass(arrayElementTypeDescriptor.toJavaString())));
+            } else if (isStubClass(name)) {
+                ClasspathFile classpathFile = classpath.readClassFile(name);
+                if (classpathFile == null) {
+                    classpathFile = ClassfileReader.findGeneratedClassfile(name);
+                }
+                if (classpathFile != null) {
+                    return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
+                }
+                throw new ClassNotFoundException(name);
+            } else {
+                // everything else we find on the classpath
+                return ClassActor.fromJava(loadClass(name));
+            }
+        }
+        return classActor;
+    }
 
 }
