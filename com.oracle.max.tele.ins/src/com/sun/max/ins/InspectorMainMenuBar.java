@@ -36,6 +36,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private final InspectionActions actions;
 
+    private InspectorMenu debugMenu;
+
     public InspectorMainMenuBar(InspectionActions actions) {
         super(actions.inspection());
         this.actions = actions;
@@ -142,8 +144,15 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
             menu.add(actions.genericWatchpointMenuItems());
             menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
+        menu.addSeparator();
+        menu.add(actions.executeHostMethod());
 
+        debugMenu = menu;
         return menu;
+    }
+
+    public InspectorMenu debugMenu() {
+        return debugMenu;
     }
 
     public InspectorMenu createViewMenu() {
