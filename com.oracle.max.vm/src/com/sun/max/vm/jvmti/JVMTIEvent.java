@@ -444,6 +444,7 @@ public class JVMTIEvent {
         }
     }
 
+    @HOSTED_ONLY
     public static String bitToName(long bitSetting) {
         for (int i = 0; i < bitSettings.length; i++) {
             if (bitSettings[i] == bitSetting) {
@@ -451,6 +452,24 @@ public class JVMTIEvent {
             }
         }
         return "???";
+    }
+
+    @HOSTED_ONLY
+    public static String eventSettings(long settings) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (int i = 0; i < 63; i++) {
+            long bit = 1L << i;
+            if ((settings & bit) != 0) {
+                if (!first) {
+                    sb.append(", ");
+                } else {
+                    first = false;
+                }
+                sb.append(JVMTIEvent.bitToName(bit));
+            }
+        }
+        return sb.toString();
     }
 
 }

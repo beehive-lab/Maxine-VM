@@ -37,6 +37,7 @@ import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
 import com.sun.max.vm.compiler.deps.DependenciesManager.DependenciesCounter;
 import com.sun.max.vm.compiler.deps.DependenciesManager.DependencyChecker;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.log.hosted.*;
 
 /**
  * Map from a class to the set of {@linkplain Dependencies dependencies}
@@ -284,13 +285,25 @@ final class ContextDependents {
             synchronized (dset) {
                 int i = 0;
                 while (i < dset.size) {
-                    Dependencies deps = dset.getDeps(i);
+                    final Dependencies deps = dset.getDeps(i);
+                    final int fi = i;
                     deps.iterate(new DependencyClosure() {
                         @Override
                         public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
                             if (inlinee == inlineeToCheck) {
-                                result.add(targetMethod);
+                                inlineLogger.logDoInlinedMethod(fi, deps, targetMethod, method, inlinee, context);
+                                add(targetMethod);
                             }
+                            return true;
+                        }
+
+                        private boolean add(TargetMethod targetMethod) {
+                            for (TargetMethod tm : result) {
+                                if (tm == targetMethod) {
+                                    return false;
+                                }
+                            }
+                            result.add(targetMethod);
                             return true;
                         }
                     });
@@ -299,6 +312,19 @@ final class ContextDependents {
             }
         }
         return result;
+    }
+
+    @VMLoggerInterface(noTrace = true)
+    private static interface InlineLoggerInterface {
+        void doInlinedMethod(int i, Dependencies deps, TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context);
+    }
+
+    private static final InlineLogger inlineLogger = new InlineLogger();
+
+    private static class InlineLogger extends InlineLoggerAuto {
+        InlineLogger() {
+            super("GetInliners", "");
+        }
     }
 
 
@@ -375,4 +401,33 @@ final class ContextDependents {
         }
         out.println("================================================================");
     }
+
+// START GENERATED CODE
+    private static abstract class InlineLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            DoInlinedMethod;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = new int[] {0x6};
+
+        protected InlineLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logDoInlinedMethod(int arg1, Dependencies arg2, TargetMethod arg3, ClassMethodActor arg4, ClassMethodActor arg5,
+                ClassActor arg6) {
+            log(Operation.DoInlinedMethod.ordinal(), intArg(arg1), objectArg(arg2), objectArg(arg3), methodActorArg(arg4), methodActorArg(arg5),
+                classActorArg(arg6));
+        }
+    }
+
+// END GENERATED CODE
 }
