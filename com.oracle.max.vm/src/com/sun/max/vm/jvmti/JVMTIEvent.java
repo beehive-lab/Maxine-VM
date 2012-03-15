@@ -27,7 +27,10 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.thread.*;
 
@@ -49,18 +52,43 @@ import com.sun.max.vm.thread.*;
  */
 public class JVMTIEvent {
 
-    private static class JVMTIEventLogger extends VMLogger {
+    public static class JVMTIEventLogger extends VMLogger {
         private JVMTIEventLogger() {
             super("JVMTIEvents", EVENT_COUNT, null);
         }
 
         @Override
         public String operationName(int op) {
-            return name(op + JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
+            return name(toEventId(op));
         }
+
+        public static int toEventId(int op) {
+            return op + JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL;
+        }
+
+        void logEvent(int eventId, Object arg) {
+            int zEventId = eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL;
+            switch (eventId) {
+                case CLASS_LOAD:
+                case CLASS_PREPARE: {
+                    ClassActor classActor = ClassActor.fromJava((Class) arg);
+                    log(zEventId, classActorArg(classActor));
+                    break;
+                }
+                case BREAKPOINT: {
+                    EventBreakpointID bptId = (EventBreakpointID) arg;
+                    log(zEventId, Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    break;
+                }
+
+                default:
+                    log(zEventId);
+            }
+        }
+
     }
 
-    private static JVMTIEventLogger logger = new JVMTIEventLogger();
+    static final JVMTIEventLogger logger = new JVMTIEventLogger();
 
     static class MutableLong {
         long value;
@@ -166,10 +194,6 @@ public class JVMTIEvent {
                                    computeEventBitSetting(METHOD_ENTRY) | computeEventBitSetting(METHOD_EXIT) |
                                    computeEventBitSetting(BREAKPOINT) | computeEventBitSetting(SINGLE_STEP) |
                                    computeEventBitSetting(FRAME_POP);
-
-    static void log(int eventId) {
-        logger.log(eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
-    }
 
     /**
      * Returns the bit setting for the given event, or -1 if invalid.
@@ -420,6 +444,7 @@ public class JVMTIEvent {
         }
     }
 
+    @HOSTED_ONLY
     public static String bitToName(long bitSetting) {
         for (int i = 0; i < bitSettings.length; i++) {
             if (bitSettings[i] == bitSetting) {
@@ -427,6 +452,24 @@ public class JVMTIEvent {
             }
         }
         return "???";
+    }
+
+    @HOSTED_ONLY
+    public static String eventSettings(long settings) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (int i = 0; i < 63; i++) {
+            long bit = 1L << i;
+            if ((settings & bit) != 0) {
+                if (!first) {
+                    sb.append(", ");
+                } else {
+                    first = false;
+                }
+                sb.append(JVMTIEvent.bitToName(bit));
+            }
+        }
+        return sb.toString();
     }
 
 }

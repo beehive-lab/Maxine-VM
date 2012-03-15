@@ -98,21 +98,37 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         super.initCompile(method, codeAttribute);
         eventBci = new boolean[bciToPos.length];
         breakpoints = JVMTIBreakpoints.getBreakpoints(method);
+        if (breakpoints != null) {
+            eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.BREAKPOINT);
+        }
         breakpointIndex = 0;
         if (JVMTIBreakpoints.isSingleStepEnabled()) {
             eventSettings |= JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP);
         }
         methodID = MethodID.fromMethodActor(method);
-        doMethodEntry = JVMTI.byteCodeEventNeeded(-1);
+        doMethodEntry = byteCodeEventNeededAndSet(-1);
         doMethodExit = 0; // TODO
-        doFieldAccess = JVMTI.byteCodeEventNeeded(Bytecodes.GETFIELD);
-        doFieldModification = JVMTI.byteCodeEventNeeded(Bytecodes.PUTFIELD);
-        doPopFrame = JVMTI.byteCodeEventNeeded(Bytecodes.RETURN);
+        doFieldAccess = byteCodeEventNeededAndSet(Bytecodes.GETFIELD);
+        doFieldModification = byteCodeEventNeededAndSet(Bytecodes.PUTFIELD);
+        doPopFrame = byteCodeEventNeededAndSet(Bytecodes.RETURN);
         // turn off recompiling to optimized code.
         if (breakpoints != null || singleStep() || doMethodEntry != 0 || doMethodExit != 0 || doFieldAccess != 0 ||
                         doFieldModification != 0 || doPopFrame  != 0) {
             methodProfileBuilder = null;
         }
+    }
+
+    /**
+     * Check whether instrumentation is needed for given bytecode, and set {@link #eventSettings} if so.
+     * @param bytecode
+     * @return the corresponding eventId or zero if not needed.
+     */
+    private int byteCodeEventNeededAndSet(int bytecode) {
+        int eventId = JVMTI.byteCodeEventNeeded(bytecode);
+        if (eventId != 0) {
+            eventSettings |= JVMTIEvent.bitSetting(eventId);
+        }
+        return eventId;
     }
 
     @Override

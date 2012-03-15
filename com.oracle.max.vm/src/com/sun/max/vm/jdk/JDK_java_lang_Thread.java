@@ -281,6 +281,20 @@ public final class JDK_java_lang_Thread {
     }
 
     /**
+     * The sole reason this is substituted is to ensure it is never inlined.
+     * Why? Because JDWP agents set a (hidden) breakpoint here and if it is inlined we have
+     * to recompile the inliners, at least one of which cannot be compiled with T1X.
+     */
+    @NEVER_INLINE
+    @SUBSTITUTE
+    @Deprecated
+    private void resume() {
+        thisThread().checkAccess();
+        resume0();
+    }
+
+
+    /**
      * Resumes this thread at the OS level.
      * @see java.lang.Thread#resume0()
      */

@@ -20,24 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.log.hosted;
-
-import java.lang.annotation.*;
-
-import com.sun.max.vm.log.*;
-
+package demo.jvmti;
 
 /**
- * Identifies an interface as a {@link VMLogger} for auto-generation.
+ * Program used to debug Maxine's breakpoint implementation. Basic test 02.
+ * Usage:
+ * <ol>
+ * <li>Set a breakpoint at {@link #foo}.</li>
+ * <li>Run the program, should hit breakpoint.</li>
+ * <li>Now set a breakpoint at {@link #bar} and continue.
+ * </ol>
+ * N.B. In the above the breakpoint at {@code bar} set after {@code bar} is compiled,
+ * so it is recompiled to instrument for the breakpoint.
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface VMLoggerInterface {
-    /**
-     * Identifies the parent class for the auto-generated implementation.
-     * @return
-     */
-    Class parent() default VMLogger.class;
-    boolean defaultConstructor() default false;
-    boolean noTrace() default false;
+
+
+public class BreakpointTest_basic02 {
+    public static void main(String[] args) {
+        int arg = args.length == 0 ? 0 : Integer.parseInt(args[0]);
+        // this gets bar compiled
+        bar(arg);
+        int r = foo(arg);
+        System.out.printf("foo returned %d%n", r);
+    }
+
+    private static int foo(int arg) {
+        return bar(arg);
+    }
+
+    private static int bar(int a) {
+        System.out.printf("a=%d%n", a);
+        return a + 1;
+    }
 
 }

@@ -38,6 +38,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FramePopEventData;
@@ -121,6 +122,7 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
+        VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
     }
 
     /**
@@ -236,10 +238,12 @@ public class JVMTI {
 
     /**
      * Are there any agents requesting any events needing compiled code support?
+     * @param classMethodActor the method about to be compiled or {@code null} if none.
      * @return
      */
-    public static synchronized boolean compiledCodeEventsNeeded() {
-        return JVMTIEvent.anyCodeEventsSet();
+    public static synchronized boolean compiledCodeEventsNeeded(ClassMethodActor classMethodActor) {
+        return JVMTIEvent.anyCodeEventsSet() ||
+            (classMethodActor == null ? false : JVMTIBreakpoints.hasBreakpoints(classMethodActor));
     }
 
     /**
@@ -328,7 +332,7 @@ public class JVMTI {
             return;
         }
 
-        JVMTIEvent.log(eventId);
+        JVMTIEvent.logger.logEvent(eventId, arg1);
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
@@ -603,5 +607,11 @@ public class JVMTI {
         }
 
     }
+
+    /**
+     * In it's default setting, VM classes are invisible to JVMTI.
+     * They don't show up in stack traces, heap traces or the set of loaded classes.
+     */
+    static boolean JVMTI_VM;
 
 }

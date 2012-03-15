@@ -65,34 +65,37 @@ public final class BootImageGenerator {
 
     public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
-    private final OptionSet options = new OptionSet();
+    private static final OptionSet options = new OptionSet();
 
-    private final Option<Boolean> help = options.newBooleanOption("help", false,
+    private static final Option<Boolean> help = options.newBooleanOption("help", false,
             "Show help message and exit.");
 
-    private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
+    private static final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
-    private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
+    private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
-    private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
+    private static final Option<String> targetWSRootDirectoryOption = options.newStringOption("target-ws-root", null,
+            "The directory prefix for redirected output of the binary image generator.");
+
+    private static final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
 
-    private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
+    private static final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
-    private final Option<String> compilationBrokerClassOption = options.newStringOption("compilationBrokerClass", null,
+    private static final Option<String> compilationBrokerClassOption = options.newStringOption("compilationBrokerClass", null,
             "The CompilationBroker subclass to use.");
 
-    private final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
+    private static final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
             "Trace array class id creation and prints reserved class id without array class actors.");
 
     // TODO: clean this up. Just for getting perf numbers.
-    private final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
+    private static final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
             "Generate inline TLAB allocation code in boot image.");
     // TODO: clean this up. Just for getting perf numbers.
-    private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
+    private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     public static boolean nativeTests;
@@ -103,6 +106,18 @@ public final class BootImageGenerator {
      */
     public static File getDefaultVMDirectory() {
         return new File(JavaProject.findWorkspace(), DEFAULT_VM_DIRECTORY);
+    }
+
+    /**
+     * Gets the default VM directory where the VM executable, shared libraries, boot image
+     * and related files are located, with optional override of ws root.
+     */
+    public static File getDefaultVMDirectory(String targetWSRoot) {
+        if (targetWSRoot == null) {
+            return vmDirectoryOption.getValue();
+        } else {
+            return new File(targetWSRoot, DEFAULT_VM_DIRECTORY);
+        }
     }
 
     /**
@@ -190,7 +205,7 @@ public final class BootImageGenerator {
 
             nativeTests = testNative.getValue();
 
-            final File vmDirectory = vmDirectoryOption.getValue();
+            final File vmDirectory = getDefaultVMDirectory(targetWSRootDirectoryOption.getValue());
             vmDirectory.mkdirs();
 
             // Create and installs the VM
