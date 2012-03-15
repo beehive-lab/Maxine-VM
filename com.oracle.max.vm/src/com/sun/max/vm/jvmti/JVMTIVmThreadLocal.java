@@ -61,8 +61,24 @@ public class JVMTIVmThreadLocal {
 
     private static final int DEPTH_MASK = 0xFFFF00;
 
+    /**
+     * Checks if given bit is set in given threadlocals area.
+     * @param tla
+     * @param bit
+     * @return {@code true} iff the bit is set.
+     */
     static boolean bitIsSet(Pointer tla, int bit) {
         return JVMTI_STATE.load(tla).and(bit).isNotZero();
+    }
+
+    /**
+     * Checks if given bit is set in current thread's threadlocals area.
+     * @param tla
+     * @param bit
+     * @return {@code true} iff the bit is set.
+     */
+    static boolean bitIsSet(int bit) {
+        return bitIsSet(ETLA.load(currentTLA()), bit);
     }
 
     @INLINE

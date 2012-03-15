@@ -30,21 +30,33 @@ import com.sun.max.vm.log.VMLog.*;
 
 public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
 
+    private final PlainLabel DELIVERING;
+    private final PlainLabel IGNORING;
+
     public JVMTIEventsVMLogArgRenderer(VMLogView vmLogView) {
         super(vmLogView);
+        DELIVERING = new PlainLabel(vmLogView.inspection(), "Delivering");
+        IGNORING = new PlainLabel(vmLogView.inspection(), "Ignoring");
     }
 
     @Override
     protected Component getRenderer(int header, int argNum, long argValue) {
+        if (argNum == 1) {
+            if (argValue == 0) {
+                return DELIVERING;
+            } else {
+                return IGNORING;
+            }
+        }
         int op = Record.getOperation(header);
         switch (JVMTIEvent.JVMTIEventLogger.toEventId(op)) {
             case JVMTIEvent.CLASS_PREPARE:
                 return safeGetReferenceValueLabel(getTeleClassActor(argValue));
             case JVMTIEvent.BREAKPOINT:
-                if (argNum == 1) {
+                if (argNum == 2) {
                     // methodId
                     return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
-                } else if (argNum == 2) {
+                } else if (argNum == 3) {
                     //location
                     return new PlainLabel(inspection(), Long.toString(argValue));
                 }
