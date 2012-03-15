@@ -66,23 +66,23 @@ public class JVMTIEvent {
             return op + JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL;
         }
 
-        void logEvent(int eventId, Object arg) {
+        void logEvent(int eventId, boolean ignoring, Object arg) {
             int zEventId = eventId - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL;
             switch (eventId) {
                 case CLASS_LOAD:
                 case CLASS_PREPARE: {
                     ClassActor classActor = ClassActor.fromJava((Class) arg);
-                    log(zEventId, classActorArg(classActor));
+                    log(zEventId, booleanArg(ignoring), classActorArg(classActor));
                     break;
                 }
                 case BREAKPOINT: {
                     EventBreakpointID bptId = (EventBreakpointID) arg;
-                    log(zEventId, Address.fromLong(bptId.methodID), intArg(bptId.location));
+                    log(zEventId, booleanArg(ignoring), Address.fromLong(bptId.methodID), intArg(bptId.location));
                     break;
                 }
 
                 default:
-                    log(zEventId);
+                    log(zEventId, booleanArg(ignoring));
             }
         }
 

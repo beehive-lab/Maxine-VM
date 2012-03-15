@@ -306,10 +306,17 @@ public class JVMTI {
             return true;
         }
         if (jvmtiEnvsIndex == 0) {
+            // no agents
+            return true;
+        }
+
+        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.JVMTI_EXE)) {
+            // already in a agent callback : VM breakpoint
             return true;
         }
 
         if ((JVMTIEvent.getPhase(eventId) & phase) == 0) {
+            // wrong phase
             return true;
         }
         return false;
@@ -328,11 +335,11 @@ public class JVMTI {
     public static void event(int eventId, Object arg1) {
         boolean ignoring = ignoreEvent(eventId);
 
+        JVMTIEvent.logger.logEvent(eventId, ignoring, arg1);
+
         if (ignoring) {
             return;
         }
-
-        JVMTIEvent.logger.logEvent(eventId, arg1);
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
