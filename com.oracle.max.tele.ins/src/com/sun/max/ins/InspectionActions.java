@@ -40,6 +40,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
@@ -4494,6 +4495,92 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction listSettings() {
         return listSettings;
     }
+
+    /**
+     * Action: execute a static method on a value.
+     */
+    class ExecuteHostMethod extends InspectorAction {
+        private static final String DEFAULT_TITLE = "Execute a host method";
+
+        ExecuteHostMethod(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        private Method getMethod(MethodKey methodKey) {
+            String className = methodKey.holder().toJavaString();
+            Class<?> klass = Classes.forName(className);
+            Class<?>[] parameterTypes = methodKey.signature().resolveParameterTypes(ClassLoader.getSystemClassLoader());
+            try {
+                return klass.getDeclaredMethod(methodKey.name().string, parameterTypes);
+            } catch (NoSuchMethodException ex) {
+                gui().errorMessage("no such method");
+                return null;
+            }
+        }
+
+        @Override
+        protected void procedure() {
+            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for method execution...", "Select");
+            if (typeDescriptor != null) {
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Method for execution", "Execute");
+                if (methodKey != null) {
+                    Method method = getMethod(methodKey);
+                    Kind[] parameterKinds = methodKey.signature().copyParameterKinds(null, 0);
+                    gui().getMainMenuBar().debugMenu().add(new ExecuteSpecificHostMethod("Execute " + method.getName(), method, parameterKinds));
+                    invoke(method, parameterKinds);
+                }
+            }
+        }
+
+        protected void invoke(Method method, Kind[] parameterKinds) {
+            final Value[] arguments = MethodArgsDialog.getArgs(inspection(), parameterKinds, null);
+            if (arguments == null) {
+                // User clicked cancel.
+                return;
+            }
+            Object[] objArgs = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Value value = arguments[i];
+                Kind kind = value.kind();
+                if (kind == Kind.LONG) {
+                    objArgs[i] = value.asLong();
+                } else {
+                    gui().errorMessage("unsupported argument type");
+                }
+            }
+            try {
+                Object returnValue = method.invoke(null, objArgs);
+                gui().informationMessage("Method " + method.getName() + " returned " + returnValue.toString());
+                gui().frame().add(new TextLabel(inspection(), returnValue.toString()));
+            } catch (Exception e) {
+                gui().informationMessage("Method " + method.getName() + " threw " + e.getMessage());
+            }
+        }
+    }
+
+    private InspectorAction executeHostMethod = new ExecuteHostMethod(null);
+
+    public final InspectorAction executeHostMethod() {
+        return executeHostMethod;
+    }
+
+    private class ExecuteSpecificHostMethod extends ExecuteHostMethod {
+        private final Method method;
+        private final Kind[] parameterKinds;
+
+        ExecuteSpecificHostMethod(String actionTitle, Method method, Kind[] parameterKinds) {
+            super(actionTitle);
+            this.method = method;
+            this.parameterKinds = parameterKinds;
+        }
+
+        @Override
+        protected void procedure() {
+            invoke(method, parameterKinds);
+        }
+
+    }
+
 
     /**
      * @return menu items for memory-related actions that are independent of context

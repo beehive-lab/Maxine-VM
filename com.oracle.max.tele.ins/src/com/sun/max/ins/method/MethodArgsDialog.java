@@ -36,7 +36,10 @@ import com.sun.max.vm.value.*;
 public final class MethodArgsDialog {
 
     public static Value[] getArgs(Inspection inspection, MethodActor classMethodActor, ReferenceValue receiver) {
-        final Kind[] argKinds = classMethodActor.getParameterKinds();
+        return getArgs(inspection, classMethodActor.getParameterKinds(), receiver);
+    }
+
+    public static Value[] getArgs(Inspection inspection, Kind[] argKinds, ReferenceValue receiver) {
         final Value[] args = new Value[argKinds.length];
         int i = 0;
 
