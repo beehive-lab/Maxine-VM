@@ -402,21 +402,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * @throws ClassNotFoundException if not already loaded and unavailable on the classpath.
      */
     private ClassActor makeClassActor(String name) throws ClassNotFoundException {
-        // The VM registry includes all ClassActors for classes loaded locally
-        // using the prototype class loader
-        HostedVMClassLoader classLoader = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
-        synchronized (classLoader) {
-            ClassActor classActor = ClassRegistry.getInBootOrVM(JavaTypeDescriptor.getDescriptorForJavaString(name));
-            if (classActor == null) {
-                // Try to load the class from the local classpath.
-                if (name.endsWith("[]")) {
-                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
-                } else {
-                    classActor = ClassActor.fromJava(classLoader.loadClass(name));
-                }
-            }
-            return classActor;
-        }
+        return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor(name);
     }
 
     /**
