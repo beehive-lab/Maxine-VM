@@ -38,5 +38,6 @@ public @interface VMLoggerInterface {
      */
     Class parent() default VMLogger.class;
     boolean defaultConstructor() default false;
+    boolean noTrace() default false;
 
 }
