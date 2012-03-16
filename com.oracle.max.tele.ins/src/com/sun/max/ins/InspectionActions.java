@@ -4499,10 +4499,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Action: execute a static method on a value.
      */
-    class ExecuteHostMethod extends InspectorAction {
-        private static final String DEFAULT_TITLE = "Execute a host method";
+    class InvokeHostMethod extends InspectorAction {
+        private static final String DEFAULT_TITLE = "Invoke a host method";
 
-        ExecuteHostMethod(String actionTitle) {
+        InvokeHostMethod(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -4520,13 +4520,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for method execution...", "Select");
+            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for method invocation...", "Select");
             if (typeDescriptor != null) {
-                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Method for execution", "Execute");
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Method for invocation", "Invoke");
                 if (methodKey != null) {
                     Method method = getMethod(methodKey);
                     Kind[] parameterKinds = methodKey.signature().copyParameterKinds(null, 0);
-                    gui().getMainMenuBar().debugMenu().add(new ExecuteSpecificHostMethod("Execute " + method.getName(), method, parameterKinds));
+                    gui().getMainMenuBar().debugMenu().add(new ExecuteSpecificHostMethod("Invoke " + method.getName(), method, parameterKinds));
                     invoke(method, parameterKinds);
                 }
             }
@@ -4550,21 +4550,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 Object returnValue = method.invoke(null, objArgs);
-                gui().informationMessage("Method " + method.getName() + " returned " + returnValue.toString());
-                gui().frame().add(new TextLabel(inspection(), returnValue.toString()));
+                views().activateSingletonView(ViewKind.INVOKE_METHOD_LOG);
+                InvokeMethodLogView.getInvokeMethodLogView().appendText(returnValue.toString());
             } catch (Exception e) {
                 gui().informationMessage("Method " + method.getName() + " threw " + e.getMessage());
             }
         }
     }
 
-    private InspectorAction executeHostMethod = new ExecuteHostMethod(null);
+    private InspectorAction invokeHostMethod = new InvokeHostMethod(null);
 
-    public final InspectorAction executeHostMethod() {
-        return executeHostMethod;
+    public final InspectorAction invokeHostMethod() {
+        return invokeHostMethod;
     }
 
-    private class ExecuteSpecificHostMethod extends ExecuteHostMethod {
+    private class ExecuteSpecificHostMethod extends InvokeHostMethod {
         private final Method method;
         private final Kind[] parameterKinds;
 
@@ -4718,6 +4718,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
                 menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
                 menu.add(views().activateSingletonViewAction(ViewKind.VMLOG));
+                menu.add(views().activateSingletonViewAction(ViewKind.INVOKE_METHOD_LOG));
             }
         };
     }

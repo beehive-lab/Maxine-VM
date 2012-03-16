@@ -145,7 +145,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
             menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
         menu.addSeparator();
-        menu.add(actions.executeHostMethod());
+        menu.add(actions.invokeHostMethod());
 
         debugMenu = menu;
         return menu;
