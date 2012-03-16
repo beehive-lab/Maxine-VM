@@ -51,9 +51,9 @@ public class JVMTIVmThreadLocal {
     static final int JVMTI_FRAME_POP = 2;
 
     /**
-     * Bit set while thread is executing a JVMTI upcall.
+     * Bit set while thread is executing a JVMTI/JNI upcall.
      */
-    static final int JVMTI_EXE = 4;
+    public static final int IN_UPCALL = 4;
 
     private static final int STATUS_BIT_MASK = 0xFF;
 
@@ -82,17 +82,13 @@ public class JVMTIVmThreadLocal {
     }
 
     @INLINE
-    static void setBit(Pointer tla, int bit, boolean setting) {
-        if (setting) {
-            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
-        } else {
-            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
-        }
+    public static void setBit(Pointer tla, int bit) {
+        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
     }
 
     @INLINE
-    static void setBit(int bit, boolean setting) {
-        setBit(ETLA.load(currentTLA()), bit, setting);
+    public static void unsetBit(Pointer tla, int bit) {
+        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
     }
 
     static int getDepth(Pointer tla) {
