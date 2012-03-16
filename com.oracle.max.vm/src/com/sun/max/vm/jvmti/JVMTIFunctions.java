@@ -110,7 +110,6 @@ public class JVMTIFunctions  {
     private static int SetEventNotificationMode(Pointer env, int mode, int event_type, JniHandle event_thread) {
         // Source: JVMTIFunctionsSource.java:102
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEventNotificationMode.ordinal(), env, Address.fromInt(mode), Address.fromInt(event_type), event_thread);        }
 
@@ -134,7 +133,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -147,7 +145,6 @@ public class JVMTIFunctions  {
     private static int GetAllThreads(Pointer env, Pointer threads_count_ptr, Pointer threads_ptr) {
         // Source: JVMTIFunctionsSource.java:113
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAllThreads.ordinal(), env, threads_count_ptr, threads_ptr);        }
 
@@ -167,7 +164,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -176,7 +172,6 @@ public class JVMTIFunctions  {
     private static int SuspendThread(Pointer env, JniHandle thread) {
         // Source: JVMTIFunctionsSource.java:120
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SuspendThread.ordinal(), env, thread);        }
 
@@ -205,7 +200,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -214,7 +208,6 @@ public class JVMTIFunctions  {
     private static int ResumeThread(Pointer env, JniHandle thread) {
         // Source: JVMTIFunctionsSource.java:128
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ResumeThread.ordinal(), env, thread);        }
 
@@ -243,7 +236,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -252,7 +244,6 @@ public class JVMTIFunctions  {
     private static int StopThread(Pointer env, JniHandle thread, JniHandle exception) {
         // Source: JVMTIFunctionsSource.java:136
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.StopThread.ordinal(), env, thread, exception);        }
 
@@ -266,7 +257,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -275,7 +265,6 @@ public class JVMTIFunctions  {
     private static int InterruptThread(Pointer env, JniHandle thread) {
         // Source: JVMTIFunctionsSource.java:141
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.InterruptThread.ordinal(), env, thread);        }
 
@@ -304,7 +293,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -313,7 +301,6 @@ public class JVMTIFunctions  {
     private static int GetThreadInfo(Pointer env, JniHandle thread, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:149
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadInfo.ordinal(), env, thread, info_ptr);        }
 
@@ -342,7 +329,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -351,7 +337,6 @@ public class JVMTIFunctions  {
     private static int GetOwnedMonitorInfo(Pointer env, JniHandle thread, Pointer owned_monitor_count_ptr, Pointer owned_monitors_ptr) {
         // Source: JVMTIFunctionsSource.java:157
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetOwnedMonitorInfo.ordinal(), env, thread, owned_monitor_count_ptr, owned_monitors_ptr);        }
 
@@ -365,7 +350,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -374,7 +358,6 @@ public class JVMTIFunctions  {
     private static int GetCurrentContendedMonitor(Pointer env, JniHandle thread, Pointer monitor_ptr) {
         // Source: JVMTIFunctionsSource.java:162
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentContendedMonitor.ordinal(), env, thread, monitor_ptr);        }
 
@@ -388,7 +371,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -397,7 +379,6 @@ public class JVMTIFunctions  {
     private static int RunAgentThread(Pointer env, JniHandle jthread, Address proc, Pointer arg, int priority) {
         // Source: JVMTIFunctionsSource.java:167
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RunAgentThread.ordinal(), env, jthread, proc, arg, Address.fromInt(priority));        }
 
@@ -417,7 +398,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -426,7 +406,6 @@ public class JVMTIFunctions  {
     private static int GetTopThreadGroups(Pointer env, Pointer group_count_ptr, Pointer groups_ptr) {
         // Source: JVMTIFunctionsSource.java:174
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTopThreadGroups.ordinal(), env, group_count_ptr, groups_ptr);        }
 
@@ -446,7 +425,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -455,7 +433,6 @@ public class JVMTIFunctions  {
     private static int GetThreadGroupInfo(Pointer env, JniHandle group, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:181
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadGroupInfo.ordinal(), env, group, info_ptr);        }
 
@@ -484,7 +461,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -493,7 +469,6 @@ public class JVMTIFunctions  {
     private static int GetThreadGroupChildren(Pointer env, JniHandle group, Pointer thread_count_ptr, Pointer threads_ptr, Pointer group_count_ptr, Pointer groups_ptr) {
         // Source: JVMTIFunctionsSource.java:189
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadGroupChildren.ordinal(), env, group, thread_count_ptr, threads_ptr, group_count_ptr, groups_ptr);        }
 
@@ -523,7 +498,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -532,7 +506,6 @@ public class JVMTIFunctions  {
     private static int GetFrameCount(Pointer env, JniHandle thread, Pointer count_ptr) {
         // Source: JVMTIFunctionsSource.java:198
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFrameCount.ordinal(), env, thread, count_ptr);        }
 
@@ -561,7 +534,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -570,7 +542,6 @@ public class JVMTIFunctions  {
     private static int GetThreadState(Pointer env, JniHandle thread, Pointer thread_state_ptr) {
         // Source: JVMTIFunctionsSource.java:206
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadState.ordinal(), env, thread, thread_state_ptr);        }
 
@@ -599,7 +570,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -608,7 +578,6 @@ public class JVMTIFunctions  {
     private static int GetCurrentThread(Pointer env, Pointer thread_ptr) {
         // Source: JVMTIFunctionsSource.java:214
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThread.ordinal(), env, thread_ptr);        }
 
@@ -629,7 +598,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -638,7 +606,6 @@ public class JVMTIFunctions  {
     private static int GetFrameLocation(Pointer env, JniHandle thread, int depth, Pointer method_ptr, Pointer location_ptr) {
         // Source: JVMTIFunctionsSource.java:222
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFrameLocation.ordinal(), env, thread, Address.fromInt(depth), method_ptr, location_ptr);        }
 
@@ -667,7 +634,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -676,7 +642,6 @@ public class JVMTIFunctions  {
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
         // Source: JVMTIFunctionsSource.java:230
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.NotifyFramePop.ordinal(), env, Address.fromInt(depth));        }
 
@@ -700,7 +665,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -709,7 +673,6 @@ public class JVMTIFunctions  {
     private static int GetLocalObject(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:238
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
 
@@ -741,7 +704,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -750,7 +712,6 @@ public class JVMTIFunctions  {
     private static int GetLocalInt(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:247
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
 
@@ -782,7 +743,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -791,7 +751,6 @@ public class JVMTIFunctions  {
     private static int GetLocalLong(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:256
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
 
@@ -823,7 +782,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -832,7 +790,6 @@ public class JVMTIFunctions  {
     private static int GetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:265
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
 
@@ -864,7 +821,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -873,7 +829,6 @@ public class JVMTIFunctions  {
     private static int GetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:274
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value_ptr);        }
 
@@ -905,7 +860,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -914,7 +868,6 @@ public class JVMTIFunctions  {
     private static int SetLocalObject(Pointer env, JniHandle thread, int depth, int slot, JniHandle value) {
         // Source: JVMTIFunctionsSource.java:283
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalObject.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), value);        }
 
@@ -943,7 +896,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -952,7 +904,6 @@ public class JVMTIFunctions  {
     private static int SetLocalInt(Pointer env, JniHandle thread, int depth, int slot, int value) {
         // Source: JVMTIFunctionsSource.java:291
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalInt.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(value));        }
 
@@ -981,7 +932,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -990,7 +940,6 @@ public class JVMTIFunctions  {
     private static int SetLocalLong(Pointer env, JniHandle thread, int depth, int slot, long value) {
         // Source: JVMTIFunctionsSource.java:299
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalLong.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(value));        }
 
@@ -1019,7 +968,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1028,7 +976,6 @@ public class JVMTIFunctions  {
     private static int SetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, float value) {
         // Source: JVMTIFunctionsSource.java:307
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalFloat.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromInt(Float.floatToRawIntBits(value)));        }
 
@@ -1057,7 +1004,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1066,7 +1012,6 @@ public class JVMTIFunctions  {
     private static int SetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, double value) {
         // Source: JVMTIFunctionsSource.java:315
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetLocalDouble.ordinal(), env, thread, Address.fromInt(depth), Address.fromInt(slot), Address.fromLong(Double.doubleToRawLongBits(value)));        }
 
@@ -1095,7 +1040,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1104,7 +1048,6 @@ public class JVMTIFunctions  {
     private static int CreateRawMonitor(Pointer env, Pointer name, Pointer monitor_ptr) {
         // Source: JVMTIFunctionsSource.java:323
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.CreateRawMonitor.ordinal(), env, name, monitor_ptr);        }
 
@@ -1124,7 +1067,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1133,7 +1075,6 @@ public class JVMTIFunctions  {
     private static int DestroyRawMonitor(Pointer env, Word rawMonitor) {
         // Source: JVMTIFunctionsSource.java:330
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.DestroyRawMonitor.ordinal(), env, rawMonitor);        }
 
@@ -1150,7 +1091,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1159,7 +1099,6 @@ public class JVMTIFunctions  {
     private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
         // Source: JVMTIFunctionsSource.java:336
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorEnter.ordinal(), env, rawMonitor);        }
 
@@ -1174,7 +1113,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1183,7 +1121,6 @@ public class JVMTIFunctions  {
     private static int RawMonitorExit(Pointer env, Word rawMonitor) {
         // Source: JVMTIFunctionsSource.java:342
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorExit.ordinal(), env, rawMonitor);        }
 
@@ -1198,7 +1135,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1207,7 +1143,6 @@ public class JVMTIFunctions  {
     private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
         // Source: JVMTIFunctionsSource.java:348
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorWait.ordinal(), env, rawMonitor, Address.fromLong(millis));        }
 
@@ -1222,7 +1157,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1231,7 +1165,6 @@ public class JVMTIFunctions  {
     private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
         // Source: JVMTIFunctionsSource.java:354
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorNotify.ordinal(), env, rawMonitor);        }
 
@@ -1246,7 +1179,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1255,7 +1187,6 @@ public class JVMTIFunctions  {
     private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
         // Source: JVMTIFunctionsSource.java:360
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RawMonitorNotifyAll.ordinal(), env, rawMonitor);        }
 
@@ -1270,7 +1201,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1279,7 +1209,6 @@ public class JVMTIFunctions  {
     private static int SetBreakpoint(Pointer env, MethodID method, long location) {
         // Source: JVMTIFunctionsSource.java:366
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
 
@@ -1300,7 +1229,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1309,7 +1237,6 @@ public class JVMTIFunctions  {
     private static int ClearBreakpoint(Pointer env, MethodID method, long location) {
         // Source: JVMTIFunctionsSource.java:373
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearBreakpoint.ordinal(), env, method, Address.fromLong(location));        }
 
@@ -1330,7 +1257,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1343,7 +1269,6 @@ public class JVMTIFunctions  {
     private static int SetFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
         // Source: JVMTIFunctionsSource.java:383
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetFieldAccessWatch.ordinal(), env, klass, field);        }
 
@@ -1376,7 +1301,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1385,7 +1309,6 @@ public class JVMTIFunctions  {
     private static int ClearFieldAccessWatch(Pointer env, JniHandle klass, FieldID field) {
         // Source: JVMTIFunctionsSource.java:392
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearFieldAccessWatch.ordinal(), env, klass, field);        }
 
@@ -1418,7 +1341,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1427,7 +1349,6 @@ public class JVMTIFunctions  {
     private static int SetFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
         // Source: JVMTIFunctionsSource.java:401
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetFieldModificationWatch.ordinal(), env, klass, field);        }
 
@@ -1460,7 +1381,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1469,7 +1389,6 @@ public class JVMTIFunctions  {
     private static int ClearFieldModificationWatch(Pointer env, JniHandle klass, FieldID field) {
         // Source: JVMTIFunctionsSource.java:410
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ClearFieldModificationWatch.ordinal(), env, klass, field);        }
 
@@ -1502,7 +1421,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1511,7 +1429,6 @@ public class JVMTIFunctions  {
     private static int IsModifiableClass(Pointer env, JniHandle klass, Pointer is_modifiable_class_ptr) {
         // Source: JVMTIFunctionsSource.java:419
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsModifiableClass.ordinal(), env, klass, is_modifiable_class_ptr);        }
 
@@ -1525,7 +1442,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1534,7 +1450,6 @@ public class JVMTIFunctions  {
     private static int Allocate(Pointer env, long size, Pointer mem_ptr) {
         // Source: JVMTIFunctionsSource.java:424
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.Allocate.ordinal(), env, Address.fromLong(size), mem_ptr);        }
 
@@ -1564,7 +1479,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1573,7 +1487,6 @@ public class JVMTIFunctions  {
     private static int Deallocate(Pointer env, Pointer mem) {
         // Source: JVMTIFunctionsSource.java:443
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.Deallocate.ordinal(), env, mem);        }
 
@@ -1589,7 +1502,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1598,7 +1510,6 @@ public class JVMTIFunctions  {
     private static int GetClassSignature(Pointer env, JniHandle klass, Pointer signature_ptr, Pointer generic_ptr) {
         // Source: JVMTIFunctionsSource.java:450
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassSignature.ordinal(), env, klass, signature_ptr, generic_ptr);        }
 
@@ -1624,7 +1535,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1633,7 +1543,6 @@ public class JVMTIFunctions  {
     private static int GetClassStatus(Pointer env, JniHandle klass, Pointer status_ptr) {
         // Source: JVMTIFunctionsSource.java:457
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassStatus.ordinal(), env, klass, status_ptr);        }
 
@@ -1662,7 +1571,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1671,7 +1579,6 @@ public class JVMTIFunctions  {
     private static int GetSourceFileName(Pointer env, JniHandle klass, Pointer source_name_ptr) {
         // Source: JVMTIFunctionsSource.java:465
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSourceFileName.ordinal(), env, klass, source_name_ptr);        }
 
@@ -1703,7 +1610,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1712,7 +1618,6 @@ public class JVMTIFunctions  {
     private static int GetClassModifiers(Pointer env, JniHandle klass, Pointer modifiers_ptr) {
         // Source: JVMTIFunctionsSource.java:474
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassModifiers.ordinal(), env, klass, modifiers_ptr);        }
 
@@ -1742,7 +1647,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1751,7 +1655,6 @@ public class JVMTIFunctions  {
     private static int GetClassMethods(Pointer env, JniHandle klass, Pointer method_count_ptr, Pointer methods_ptr) {
         // Source: JVMTIFunctionsSource.java:483
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassMethods.ordinal(), env, klass, method_count_ptr, methods_ptr);        }
 
@@ -1780,7 +1683,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1789,7 +1691,6 @@ public class JVMTIFunctions  {
     private static int GetClassFields(Pointer env, JniHandle klass, Pointer field_count_ptr, Pointer fields_ptr) {
         // Source: JVMTIFunctionsSource.java:491
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassFields.ordinal(), env, klass, field_count_ptr, fields_ptr);        }
 
@@ -1818,7 +1719,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1827,7 +1727,6 @@ public class JVMTIFunctions  {
     private static int GetImplementedInterfaces(Pointer env, JniHandle klass, Pointer interface_count_ptr, Pointer interfaces_ptr) {
         // Source: JVMTIFunctionsSource.java:499
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetImplementedInterfaces.ordinal(), env, klass, interface_count_ptr, interfaces_ptr);        }
 
@@ -1856,7 +1755,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1865,7 +1763,6 @@ public class JVMTIFunctions  {
     private static int IsInterface(Pointer env, JniHandle klass, Pointer is_interface_ptr) {
         // Source: JVMTIFunctionsSource.java:507
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsInterface.ordinal(), env, klass, is_interface_ptr);        }
 
@@ -1894,7 +1791,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1903,7 +1799,6 @@ public class JVMTIFunctions  {
     private static int IsArrayClass(Pointer env, JniHandle klass, Pointer is_array_class_ptr) {
         // Source: JVMTIFunctionsSource.java:517
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsArrayClass.ordinal(), env, klass, is_array_class_ptr);        }
 
@@ -1932,7 +1827,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1941,7 +1835,6 @@ public class JVMTIFunctions  {
     private static int GetClassLoader(Pointer env, JniHandle klass, Pointer classloader_ptr) {
         // Source: JVMTIFunctionsSource.java:527
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassLoader.ordinal(), env, klass, classloader_ptr);        }
 
@@ -1969,7 +1862,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -1978,7 +1870,6 @@ public class JVMTIFunctions  {
     private static int GetObjectHashCode(Pointer env, JniHandle handle, Pointer hash_code_ptr) {
         // Source: JVMTIFunctionsSource.java:536
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectHashCode.ordinal(), env, handle, hash_code_ptr);        }
 
@@ -2003,7 +1894,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2012,7 +1902,6 @@ public class JVMTIFunctions  {
     private static int GetObjectMonitorUsage(Pointer env, JniHandle object, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:548
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectMonitorUsage.ordinal(), env, object, info_ptr);        }
 
@@ -2026,7 +1915,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2035,7 +1923,6 @@ public class JVMTIFunctions  {
     private static int GetFieldName(Pointer env, JniHandle klass, FieldID field, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
         // Source: JVMTIFunctionsSource.java:553
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldName.ordinal(), env, klass, field, name_ptr, signature_ptr, generic_ptr);        }
 
@@ -2065,7 +1952,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2074,7 +1960,6 @@ public class JVMTIFunctions  {
     private static int GetFieldDeclaringClass(Pointer env, JniHandle klass, FieldID field, Pointer declaring_class_ptr) {
         // Source: JVMTIFunctionsSource.java:561
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldDeclaringClass.ordinal(), env, klass, field, declaring_class_ptr);        }
 
@@ -2098,7 +1983,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2107,7 +1991,6 @@ public class JVMTIFunctions  {
     private static int GetFieldModifiers(Pointer env, JniHandle klass, FieldID field, Pointer modifiers_ptr) {
         // Source: JVMTIFunctionsSource.java:569
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetFieldModifiers.ordinal(), env, klass, field, modifiers_ptr);        }
 
@@ -2132,7 +2015,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2141,7 +2023,6 @@ public class JVMTIFunctions  {
     private static int IsFieldSynthetic(Pointer env, JniHandle klass, FieldID field, Pointer is_synthetic_ptr) {
         // Source: JVMTIFunctionsSource.java:578
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsFieldSynthetic.ordinal(), env, klass, field, is_synthetic_ptr);        }
 
@@ -2170,7 +2051,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2179,7 +2059,6 @@ public class JVMTIFunctions  {
     private static int GetMethodName(Pointer env, MethodID method, Pointer name_ptr, Pointer signature_ptr, Pointer generic_ptr) {
         // Source: JVMTIFunctionsSource.java:589
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodName.ordinal(), env, method, name_ptr, signature_ptr, generic_ptr);        }
 
@@ -2200,7 +2079,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2209,7 +2087,6 @@ public class JVMTIFunctions  {
     private static int GetMethodDeclaringClass(Pointer env, MethodID method, Pointer declaring_class_ptr) {
         // Source: JVMTIFunctionsSource.java:596
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodDeclaringClass.ordinal(), env, method, declaring_class_ptr);        }
 
@@ -2233,7 +2110,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2242,7 +2118,6 @@ public class JVMTIFunctions  {
     private static int GetMethodModifiers(Pointer env, MethodID method, Pointer modifiers_ptr) {
         // Source: JVMTIFunctionsSource.java:604
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodModifiers.ordinal(), env, method, modifiers_ptr);        }
 
@@ -2267,7 +2142,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2280,7 +2154,6 @@ public class JVMTIFunctions  {
     private static int GetMaxLocals(Pointer env, MethodID method, Pointer max_ptr) {
         // Source: JVMTIFunctionsSource.java:616
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMaxLocals.ordinal(), env, method, max_ptr);        }
 
@@ -2304,7 +2177,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2313,7 +2185,6 @@ public class JVMTIFunctions  {
     private static int GetArgumentsSize(Pointer env, MethodID method, Pointer size_ptr) {
         // Source: JVMTIFunctionsSource.java:624
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetArgumentsSize.ordinal(), env, method, size_ptr);        }
 
@@ -2337,7 +2208,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2346,7 +2216,6 @@ public class JVMTIFunctions  {
     private static int GetLineNumberTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
         // Source: JVMTIFunctionsSource.java:632
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLineNumberTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
 
@@ -2373,7 +2242,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2382,7 +2250,6 @@ public class JVMTIFunctions  {
     private static int GetMethodLocation(Pointer env, MethodID method, Pointer start_location_ptr, Pointer end_location_ptr) {
         // Source: JVMTIFunctionsSource.java:641
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetMethodLocation.ordinal(), env, method, start_location_ptr, end_location_ptr);        }
 
@@ -2406,7 +2273,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2415,7 +2281,6 @@ public class JVMTIFunctions  {
     private static int GetLocalVariableTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
         // Source: JVMTIFunctionsSource.java:649
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalVariableTable.ordinal(), env, method, entry_count_ptr, table_ptr);        }
 
@@ -2439,7 +2304,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2448,7 +2312,6 @@ public class JVMTIFunctions  {
     private static int SetNativeMethodPrefix(Pointer env, Pointer prefix) {
         // Source: JVMTIFunctionsSource.java:657
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetNativeMethodPrefix.ordinal(), env, prefix);        }
 
@@ -2462,7 +2325,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2471,7 +2333,6 @@ public class JVMTIFunctions  {
     private static int SetNativeMethodPrefixes(Pointer env, int prefix_count, Pointer prefixes) {
         // Source: JVMTIFunctionsSource.java:662
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetNativeMethodPrefixes.ordinal(), env, Address.fromInt(prefix_count), prefixes);        }
 
@@ -2485,7 +2346,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2494,7 +2354,6 @@ public class JVMTIFunctions  {
     private static int GetBytecodes(Pointer env, MethodID method, Pointer bytecode_count_ptr, Pointer bytecodes_ptr) {
         // Source: JVMTIFunctionsSource.java:667
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetBytecodes.ordinal(), env, method, bytecode_count_ptr, bytecodes_ptr);        }
 
@@ -2521,7 +2380,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2530,7 +2388,6 @@ public class JVMTIFunctions  {
     private static int IsMethodNative(Pointer env, MethodID method, Pointer is_native_ptr) {
         // Source: JVMTIFunctionsSource.java:676
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodNative.ordinal(), env, method, is_native_ptr);        }
 
@@ -2555,7 +2412,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2564,7 +2420,6 @@ public class JVMTIFunctions  {
     private static int IsMethodSynthetic(Pointer env, MethodID method, Pointer is_synthetic_ptr) {
         // Source: JVMTIFunctionsSource.java:685
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodSynthetic.ordinal(), env, method, is_synthetic_ptr);        }
 
@@ -2593,7 +2448,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2602,7 +2456,6 @@ public class JVMTIFunctions  {
     private static int GetLoadedClasses(Pointer env, Pointer class_count_ptr, Pointer classes_ptr) {
         // Source: JVMTIFunctionsSource.java:696
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLoadedClasses.ordinal(), env, class_count_ptr, classes_ptr);        }
 
@@ -2622,7 +2475,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2631,7 +2483,6 @@ public class JVMTIFunctions  {
     private static int GetClassLoaderClasses(Pointer env, JniHandle initiatingLoader, Pointer class_count_ptr, Pointer classes_ptr) {
         // Source: JVMTIFunctionsSource.java:703
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassLoaderClasses.ordinal(), env, initiatingLoader, class_count_ptr, classes_ptr);        }
 
@@ -2660,7 +2511,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2669,7 +2519,6 @@ public class JVMTIFunctions  {
     private static int PopFrame(Pointer env, JniHandle thread) {
         // Source: JVMTIFunctionsSource.java:711
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.PopFrame.ordinal(), env, thread);        }
 
@@ -2683,7 +2532,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2692,7 +2540,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnObject(Pointer env, JniHandle thread, JniHandle value) {
         // Source: JVMTIFunctionsSource.java:716
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnObject.ordinal(), env, thread, value);        }
 
@@ -2706,7 +2553,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2715,7 +2561,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnInt(Pointer env, JniHandle thread, int value) {
         // Source: JVMTIFunctionsSource.java:721
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnInt.ordinal(), env, thread, Address.fromInt(value));        }
 
@@ -2729,7 +2574,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2738,7 +2582,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnLong(Pointer env, JniHandle thread, long value) {
         // Source: JVMTIFunctionsSource.java:726
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnLong.ordinal(), env, thread, Address.fromLong(value));        }
 
@@ -2752,7 +2595,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2761,7 +2603,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnFloat(Pointer env, JniHandle thread, float value) {
         // Source: JVMTIFunctionsSource.java:731
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnFloat.ordinal(), env, thread, Address.fromInt(Float.floatToRawIntBits(value)));        }
 
@@ -2775,7 +2616,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2784,7 +2624,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnDouble(Pointer env, JniHandle thread, double value) {
         // Source: JVMTIFunctionsSource.java:736
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnDouble.ordinal(), env, thread, Address.fromLong(Double.doubleToRawLongBits(value)));        }
 
@@ -2798,7 +2637,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2807,7 +2645,6 @@ public class JVMTIFunctions  {
     private static int ForceEarlyReturnVoid(Pointer env, JniHandle thread) {
         // Source: JVMTIFunctionsSource.java:741
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceEarlyReturnVoid.ordinal(), env, thread);        }
 
@@ -2821,7 +2658,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2830,7 +2666,6 @@ public class JVMTIFunctions  {
     private static int RedefineClasses(Pointer env, int class_count, Pointer class_definitions) {
         // Source: JVMTIFunctionsSource.java:746
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RedefineClasses.ordinal(), env, Address.fromInt(class_count), class_definitions);        }
 
@@ -2844,7 +2679,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2853,7 +2687,6 @@ public class JVMTIFunctions  {
     private static int GetVersionNumber(Pointer env, Pointer version_ptr) {
         // Source: JVMTIFunctionsSource.java:751
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetVersionNumber.ordinal(), env, version_ptr);        }
 
@@ -2872,7 +2705,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2881,7 +2713,6 @@ public class JVMTIFunctions  {
     private static int GetCapabilities(Pointer env, Pointer capabilities_ptr) {
         // Source: JVMTIFunctionsSource.java:759
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCapabilities.ordinal(), env, capabilities_ptr);        }
 
@@ -2900,7 +2731,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2909,7 +2739,6 @@ public class JVMTIFunctions  {
     private static int GetSourceDebugExtension(Pointer env, JniHandle klass, Pointer source_debug_extension_ptr) {
         // Source: JVMTIFunctionsSource.java:767
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSourceDebugExtension.ordinal(), env, klass, source_debug_extension_ptr);        }
 
@@ -2941,7 +2770,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2950,7 +2778,6 @@ public class JVMTIFunctions  {
     private static int IsMethodObsolete(Pointer env, MethodID method, Pointer is_obsolete_ptr) {
         // Source: JVMTIFunctionsSource.java:776
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IsMethodObsolete.ordinal(), env, method, is_obsolete_ptr);        }
 
@@ -2974,7 +2801,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -2983,7 +2809,6 @@ public class JVMTIFunctions  {
     private static int SuspendThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
         // Source: JVMTIFunctionsSource.java:784
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SuspendThreadList.ordinal(), env, Address.fromInt(request_count));        }
 
@@ -3010,7 +2835,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3019,7 +2843,6 @@ public class JVMTIFunctions  {
     private static int ResumeThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
         // Source: JVMTIFunctionsSource.java:796
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ResumeThreadList.ordinal(), env, Address.fromInt(request_count));        }
 
@@ -3046,7 +2869,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3079,7 +2901,6 @@ public class JVMTIFunctions  {
     private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
         // Source: JVMTIFunctionsSource.java:826
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAllStackTraces.ordinal(), env, Address.fromInt(max_frame_count), stack_info_ptr, thread_count_ptr);        }
 
@@ -3102,7 +2923,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3111,7 +2931,6 @@ public class JVMTIFunctions  {
     private static int GetThreadListStackTraces(Pointer env, int thread_count, Pointer thread_list, int max_frame_count, Pointer stack_info_ptr) {
         // Source: JVMTIFunctionsSource.java:836
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadListStackTraces.ordinal(), env, Address.fromInt(thread_count), thread_list, Address.fromInt(max_frame_count), stack_info_ptr);        }
 
@@ -3134,7 +2953,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3143,7 +2961,6 @@ public class JVMTIFunctions  {
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
         // Source: JVMTIFunctionsSource.java:846
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadLocalStorage.ordinal(), env, thread, data_ptr);        }
 
@@ -3172,7 +2989,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3181,7 +2997,6 @@ public class JVMTIFunctions  {
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
         // Source: JVMTIFunctionsSource.java:854
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetThreadLocalStorage.ordinal(), env, thread, data);        }
 
@@ -3207,7 +3022,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3216,7 +3030,6 @@ public class JVMTIFunctions  {
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
         // Source: JVMTIFunctionsSource.java:861
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetStackTrace.ordinal(), env, thread, Address.fromInt(start_depth), Address.fromInt(max_frame_count), frame_buffer, count_ptr);        }
 
@@ -3248,7 +3061,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3261,7 +3073,6 @@ public class JVMTIFunctions  {
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
         // Source: JVMTIFunctionsSource.java:875
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTag.ordinal(), env, object, tag_ptr);        }
 
@@ -3281,7 +3092,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3290,7 +3100,6 @@ public class JVMTIFunctions  {
     private static int SetTag(Pointer env, JniHandle object, long tag) {
         // Source: JVMTIFunctionsSource.java:882
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetTag.ordinal(), env, object, Address.fromLong(tag));        }
 
@@ -3307,7 +3116,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3316,7 +3124,6 @@ public class JVMTIFunctions  {
     private static int ForceGarbageCollection(Pointer env) {
         // Source: JVMTIFunctionsSource.java:888
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.ForceGarbageCollection.ordinal(), env);        }
 
@@ -3331,7 +3138,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3340,7 +3146,6 @@ public class JVMTIFunctions  {
     private static int IterateOverObjectsReachableFromObject(Pointer env, JniHandle object, Address object_reference_callback, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:894
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverObjectsReachableFromObject.ordinal(), env, object, object_reference_callback, user_data);        }
 
@@ -3354,7 +3159,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3363,7 +3167,6 @@ public class JVMTIFunctions  {
     private static int IterateOverReachableObjects(Pointer env, Address heap_root_callback, Address stack_ref_callback, Address object_ref_callback, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:899
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverReachableObjects.ordinal(), env, heap_root_callback, stack_ref_callback, object_ref_callback, user_data);        }
 
@@ -3377,7 +3180,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3386,7 +3188,6 @@ public class JVMTIFunctions  {
     private static int IterateOverHeap(Pointer env, int object_filter, Address heap_object_callback, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:904
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverHeap.ordinal(), env, Address.fromInt(object_filter), heap_object_callback, user_data);        }
 
@@ -3400,7 +3201,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3409,7 +3209,6 @@ public class JVMTIFunctions  {
     private static int IterateOverInstancesOfClass(Pointer env, JniHandle klass, int object_filter, Address heap_object_callback, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:909
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateOverInstancesOfClass.ordinal(), env, klass, Address.fromInt(object_filter), heap_object_callback, user_data);        }
 
@@ -3423,7 +3222,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3436,7 +3234,6 @@ public class JVMTIFunctions  {
     private static int GetObjectsWithTags(Pointer env, int tag_count, Pointer tags, Pointer count_ptr, Pointer object_result_ptr, Pointer tag_result_ptr) {
         // Source: JVMTIFunctionsSource.java:917
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectsWithTags.ordinal(), env, Address.fromInt(tag_count), tags, count_ptr, object_result_ptr, tag_result_ptr);        }
 
@@ -3456,7 +3253,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3465,7 +3261,6 @@ public class JVMTIFunctions  {
     private static int FollowReferences(Pointer env, int heap_filter, JniHandle klass, JniHandle initial_object, Pointer callbacks, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:924
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.FollowReferences.ordinal(), env, Address.fromInt(heap_filter), klass, initial_object, callbacks, user_data);        }
 
@@ -3479,7 +3274,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3488,7 +3282,6 @@ public class JVMTIFunctions  {
     private static int IterateThroughHeap(Pointer env, int heap_filter, JniHandle klass, Pointer callbacks, Pointer user_data) {
         // Source: JVMTIFunctionsSource.java:929
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.IterateThroughHeap.ordinal(), env, Address.fromInt(heap_filter), klass, callbacks, user_data);        }
 
@@ -3517,7 +3310,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3538,7 +3330,6 @@ public class JVMTIFunctions  {
     private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
         // Source: JVMTIFunctionsSource.java:947
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetJNIFunctionTable.ordinal(), env, function_table);        }
 
@@ -3552,7 +3343,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3561,7 +3351,6 @@ public class JVMTIFunctions  {
     private static int GetJNIFunctionTable(Pointer env, Pointer function_table) {
         // Source: JVMTIFunctionsSource.java:952
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetJNIFunctionTable.ordinal(), env, function_table);        }
 
@@ -3575,7 +3364,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3584,7 +3372,6 @@ public class JVMTIFunctions  {
     private static int SetEventCallbacks(Pointer env, Pointer callbacks, int size_of_callbacks) {
         // Source: JVMTIFunctionsSource.java:957
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEventCallbacks.ordinal(), env, callbacks, Address.fromInt(size_of_callbacks));        }
 
@@ -3603,7 +3390,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3612,7 +3398,6 @@ public class JVMTIFunctions  {
     private static int GenerateEvents(Pointer env, int event_type) {
         // Source: JVMTIFunctionsSource.java:965
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GenerateEvents.ordinal(), env, Address.fromInt(event_type));        }
 
@@ -3626,7 +3411,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3635,7 +3419,6 @@ public class JVMTIFunctions  {
     private static int GetExtensionFunctions(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
         // Source: JVMTIFunctionsSource.java:970
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetExtensionFunctions.ordinal(), env, extension_count_ptr, extensions);        }
 
@@ -3649,7 +3432,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3658,7 +3440,6 @@ public class JVMTIFunctions  {
     private static int GetExtensionEvents(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
         // Source: JVMTIFunctionsSource.java:975
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetExtensionEvents.ordinal(), env, extension_count_ptr, extensions);        }
 
@@ -3672,7 +3453,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3681,7 +3461,6 @@ public class JVMTIFunctions  {
     private static int SetExtensionEventCallback(Pointer env, int extension_event_index, Address callback) {
         // Source: JVMTIFunctionsSource.java:980
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetExtensionEventCallback.ordinal(), env, Address.fromInt(extension_event_index), callback);        }
 
@@ -3695,7 +3474,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3704,7 +3482,6 @@ public class JVMTIFunctions  {
     private static int DisposeEnvironment(Pointer env) {
         // Source: JVMTIFunctionsSource.java:985
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.DisposeEnvironment.ordinal(), env);        }
 
@@ -3719,7 +3496,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3728,7 +3504,6 @@ public class JVMTIFunctions  {
     private static int GetErrorName(Pointer env, int error, Pointer name_ptr) {
         // Source: JVMTIFunctionsSource.java:991
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetErrorName.ordinal(), env, Address.fromInt(error), name_ptr);        }
 
@@ -3753,7 +3528,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3762,7 +3536,6 @@ public class JVMTIFunctions  {
     private static int GetJLocationFormat(Pointer env, Pointer format_ptr) {
         // Source: JVMTIFunctionsSource.java:1005
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetJLocationFormat.ordinal(), env, format_ptr);        }
 
@@ -3776,7 +3549,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3785,7 +3557,6 @@ public class JVMTIFunctions  {
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
         // Source: JVMTIFunctionsSource.java:1010
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemProperties.ordinal(), env, count_ptr, property_ptr);        }
 
@@ -3799,7 +3570,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3808,7 +3578,6 @@ public class JVMTIFunctions  {
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:1015
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemProperty.ordinal(), env, property, value_ptr);        }
 
@@ -3828,7 +3597,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3837,7 +3605,6 @@ public class JVMTIFunctions  {
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
         // Source: JVMTIFunctionsSource.java:1022
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetSystemProperty.ordinal(), env, property, value);        }
 
@@ -3851,7 +3618,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3860,7 +3626,6 @@ public class JVMTIFunctions  {
     private static int GetPhase(Pointer env, Pointer phase_ptr) {
         // Source: JVMTIFunctionsSource.java:1027
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetPhase.ordinal(), env, phase_ptr);        }
 
@@ -3878,7 +3643,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3887,7 +3651,6 @@ public class JVMTIFunctions  {
     private static int GetCurrentThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:1034
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
 
@@ -3901,7 +3664,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3910,7 +3672,6 @@ public class JVMTIFunctions  {
     private static int GetCurrentThreadCpuTime(Pointer env, Pointer nanos_ptr) {
         // Source: JVMTIFunctionsSource.java:1039
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCurrentThreadCpuTime.ordinal(), env, nanos_ptr);        }
 
@@ -3924,7 +3685,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3933,7 +3693,6 @@ public class JVMTIFunctions  {
     private static int GetThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:1044
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadCpuTimerInfo.ordinal(), env, info_ptr);        }
 
@@ -3947,7 +3706,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3956,7 +3714,6 @@ public class JVMTIFunctions  {
     private static int GetThreadCpuTime(Pointer env, JniHandle thread, Pointer nanos_ptr) {
         // Source: JVMTIFunctionsSource.java:1049
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadCpuTime.ordinal(), env, thread, nanos_ptr);        }
 
@@ -3970,7 +3727,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -3979,7 +3735,6 @@ public class JVMTIFunctions  {
     private static int GetTimerInfo(Pointer env, Pointer info_ptr) {
         // Source: JVMTIFunctionsSource.java:1054
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTimerInfo.ordinal(), env, info_ptr);        }
 
@@ -3993,7 +3748,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4002,7 +3756,6 @@ public class JVMTIFunctions  {
     private static int GetTime(Pointer env, Pointer nanos_ptr) {
         // Source: JVMTIFunctionsSource.java:1059
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetTime.ordinal(), env, nanos_ptr);        }
 
@@ -4021,7 +3774,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4030,7 +3782,6 @@ public class JVMTIFunctions  {
     private static int GetPotentialCapabilities(Pointer env, Pointer capabilities_ptr) {
         // Source: JVMTIFunctionsSource.java:1067
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetPotentialCapabilities.ordinal(), env, capabilities_ptr);        }
 
@@ -4052,7 +3803,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4065,7 +3815,6 @@ public class JVMTIFunctions  {
     private static int AddCapabilities(Pointer env, Pointer capabilities_ptr) {
         // Source: JVMTIFunctionsSource.java:1079
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.AddCapabilities.ordinal(), env, capabilities_ptr);        }
 
@@ -4085,7 +3834,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4094,7 +3842,6 @@ public class JVMTIFunctions  {
     private static int RelinquishCapabilities(Pointer env, Pointer capabilities_ptr) {
         // Source: JVMTIFunctionsSource.java:1086
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RelinquishCapabilities.ordinal(), env, capabilities_ptr);        }
 
@@ -4121,7 +3868,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4130,7 +3876,6 @@ public class JVMTIFunctions  {
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
         // Source: JVMTIFunctionsSource.java:1100
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAvailableProcessors.ordinal(), env, processor_count_ptr);        }
 
@@ -4149,7 +3894,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4158,7 +3902,6 @@ public class JVMTIFunctions  {
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
         // Source: JVMTIFunctionsSource.java:1108
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassVersionNumbers.ordinal(), env, klass, minor_version_ptr, major_version_ptr);        }
 
@@ -4178,7 +3921,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4187,7 +3929,6 @@ public class JVMTIFunctions  {
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
         // Source: JVMTIFunctionsSource.java:1115
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetConstantPool.ordinal(), env, klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr);        }
 
@@ -4201,7 +3942,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4210,7 +3950,6 @@ public class JVMTIFunctions  {
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
         // Source: JVMTIFunctionsSource.java:1120
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetEnvironmentLocalStorage.ordinal(), env, data_ptr);        }
 
@@ -4224,7 +3963,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4233,7 +3971,6 @@ public class JVMTIFunctions  {
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
         // Source: JVMTIFunctionsSource.java:1125
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetEnvironmentLocalStorage.ordinal(), env, data);        }
 
@@ -4247,7 +3984,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4256,7 +3992,6 @@ public class JVMTIFunctions  {
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
         // Source: JVMTIFunctionsSource.java:1130
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToBootstrapClassLoaderSearch.ordinal(), env, segment);        }
 
@@ -4274,7 +4009,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4283,7 +4017,6 @@ public class JVMTIFunctions  {
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
         // Source: JVMTIFunctionsSource.java:1137
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.SetVerboseFlag.ordinal(), env, Address.fromInt(flag), Address.fromInt(value ? 1 : 0));        }
 
@@ -4314,7 +4047,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4323,7 +4055,6 @@ public class JVMTIFunctions  {
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
         // Source: JVMTIFunctionsSource.java:1159
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.AddToSystemClassLoaderSearch.ordinal(), env, segment);        }
 
@@ -4337,7 +4068,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4346,7 +4076,6 @@ public class JVMTIFunctions  {
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
         // Source: JVMTIFunctionsSource.java:1164
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.RetransformClasses.ordinal(), env, Address.fromInt(class_count), classes);        }
 
@@ -4360,7 +4089,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4369,7 +4097,6 @@ public class JVMTIFunctions  {
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
         // Source: JVMTIFunctionsSource.java:1169
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetOwnedMonitorStackDepthInfo.ordinal(), env, thread, monitor_info_count_ptr, monitor_info_ptr);        }
 
@@ -4383,7 +4110,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4392,7 +4118,6 @@ public class JVMTIFunctions  {
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
         // Source: JVMTIFunctionsSource.java:1174
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectSize.ordinal(), env, object, size_ptr);        }
 
@@ -4412,7 +4137,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }
@@ -4421,7 +4145,6 @@ public class JVMTIFunctions  {
     private static int GetLocalInstance(Pointer env, JniHandle thread, int depth, Pointer value_ptr) {
         // Source: JVMTIFunctionsSource.java:1181
         Pointer anchor = prologue(env);
-        JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, true);
         if (logger.enabled()) {
             logger.log(LogOperations.GetLocalInstance.ordinal(), env, thread, Address.fromInt(depth), value_ptr);        }
 
@@ -4441,7 +4164,6 @@ public class JVMTIFunctions  {
             return JVMTI_ERROR_INTERNAL;
         } finally {
             epilogue(anchor);
-            JVMTIVmThreadLocal.setBit(JVMTIVmThreadLocal.JVMTI_EXE, false);
             // currrently no return logging
         }
     }

@@ -688,7 +688,7 @@ public class JVMTIThreadFunctions {
         if (depth < op.stackTraceVisitor.stackElements.size()) {
             Pointer tla = vmThread.tla();
             JVMTIVmThreadLocal.setDepth(tla, depth);
-            JVMTIVmThreadLocal.setBit(tla, JVMTI_FRAME_POP, true);
+            JVMTIVmThreadLocal.setBit(tla, JVMTI_FRAME_POP);
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_NO_MORE_FRAMES;

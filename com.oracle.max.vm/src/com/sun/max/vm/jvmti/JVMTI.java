@@ -310,7 +310,7 @@ public class JVMTI {
             return true;
         }
 
-        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.JVMTI_EXE)) {
+        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.IN_UPCALL)) {
             // already in a agent callback : VM breakpoint
             return true;
         }
