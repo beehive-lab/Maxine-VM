@@ -43,6 +43,11 @@ public class CompilationEvent {
      */
     public static final String AFTER_PARSING = "After graph building";
 
+    /**
+     * The name of the event fired immediately after register allocation is finished.
+     */
+    public static final String AFTER_REGISTER_ALLOCATION = "After register number assignment";
+
     private final C1XCompilation compilation;
     private final String label;
     private RiResolvedMethod method;
