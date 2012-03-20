@@ -1192,6 +1192,8 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (l instanceof CompareOp) {
                 // attempt to reduce If ((a cmp b) op const)
                 reduceIfCompareOpConstant(i, r.asConstant());
+            } else if (l instanceof UnsignedCompareOp) {
+                reduceIfUnsignedCompareOpConstant(i, r.asConstant());
             }
         }
 
@@ -1255,6 +1257,29 @@ public class Canonicalizer extends DefaultValueVisitor {
             } else {
                 setCanonical(canon);
             }
+        }
+    }
+
+    private void reduceIfUnsignedCompareOpConstant(If i, CiConstant rtc) {
+        UnsignedCompareOp cmp = (UnsignedCompareOp) i.x();
+        Condition ifcond = cmp.condition;
+        if (rtc.asInt() == 0) {
+            ifcond = ifcond.negate();
+        } else if (rtc.asInt() != 1) {
+            return;
+        }
+        if (i.condition() == Condition.NE) {
+            ifcond = ifcond.negate();
+        } else if (i.condition() != Condition.EQ) {
+            return;
+        }
+
+        If canon = new If(cmp.x(), ifcond, false, cmp.y(), i.successor(true), i.successor(false), cmp.stateBefore(), i.isSafepointPoll());
+        if (cmp.x() == cmp.y()) {
+            // re-canonicalize the new if
+            visitIf(canon);
+        } else {
+            setCanonical(canon);
         }
     }
 

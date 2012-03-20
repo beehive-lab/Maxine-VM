@@ -593,6 +593,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case BE : acond = ConditionFlag.belowEqual; break;
                     case AE : acond = ConditionFlag.aboveEqual; break;
                     case BT : acond = ConditionFlag.below; break;
+                    case AT : acond = ConditionFlag.above; break;
                     default : throw Util.shouldNotReachHere();
                 }
                 // Checkstyle: on
@@ -1435,7 +1436,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
        // info.addRegisterOop(exceptionOop);
         directCall(unwind ? CiRuntimeCall.UnwindException : CiRuntimeCall.HandleException, info);
         // enough room for two byte trap
-        masm.nop();
+        if (!C1XOptions.EmitNopAfterCall) {
+            masm.nop();
+        }
     }
 
     private void emitXIRShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest) {
