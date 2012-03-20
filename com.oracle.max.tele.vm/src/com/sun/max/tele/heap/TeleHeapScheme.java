@@ -93,4 +93,11 @@ public interface TeleHeapScheme extends TeleScheme {
      * @return an implementation of MaxMarBitsInfo or null
      */
     MaxMarkBitsInfo markBitInfo();
+
+    /**
+     * Update information about the state of the heap scheme that is read and cached at the end of each VM execution cycle.
+     * These information typically help the TeleHeapScheme to quickly decide on the status of a
+     * address in the heap.
+     */
+    void updateCache(long epoch);
 }
