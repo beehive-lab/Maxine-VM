@@ -1294,6 +1294,10 @@ public class Canonicalizer extends DefaultValueVisitor {
             case LE: succ = i.successor(true); break;
             case GT: succ = i.successor(false); break;
             case GE: succ = i.successor(true); break;
+            case BT: succ = i.successor(false); break;
+            case BE: succ = i.successor(true); break;
+            case AT: succ = i.successor(false); break;
+            case AE: succ = i.successor(true); break;
             default:
                 throw Util.shouldNotReachHere();
         }
