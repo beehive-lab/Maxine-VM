@@ -72,4 +72,7 @@ final class TeleMSEHeapScheme extends TeleRegionBasedHeapScheme {
         // TODO (ld)
         return null;
     }
+    public void updateCache(long epoch) {
+    }
+
 }

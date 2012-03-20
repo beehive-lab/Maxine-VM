@@ -28,7 +28,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
-public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder implements TeleHeapScheme{
+public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder implements TeleHeapScheme {
 
     protected final TeleRegionTable teleRegionTable;
 

@@ -82,9 +82,13 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private static final int TRACE_VALUE = 1;
 
+    private static final HeapPhase [] heapPhases = HeapPhase.values();
+
     private final TimedTrace updateTracer;
 
     private long lastUpdateEpoch = -1L;
+
+    private HeapPhase lastUpdateHeapPhase = HeapPhase.ALLOCATING;
 
     protected static VmHeapAccess vmHeap;
 
@@ -107,6 +111,20 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         }
         TeleError.check(heap != 0L, "Heap cannot start at 0");
         return heap;
+    }
+
+    /**
+     * Return the current heap phase of the inspected VM.
+     *
+     * @param vm the inspected VM
+     * @return the current heap phase
+     */
+    public HeapPhase heapPhase(TeleVM vm) {
+        return heapPhases[vm.fields().InspectableHeapInfo_heapPhaseOrdinal.readInt(vm)];
+    }
+
+    public HeapPhase lastUpdateHeapPhase() {
+        return lastUpdateHeapPhase;
     }
 
     /**
@@ -365,7 +383,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
         } else {
             updateTracer.begin();
-
+            lastUpdateHeapPhase = heapPhase(vm());
             // Check GC status and update references if a GC has completed since last time we checked
             final long oldGcStartedCount = gcStartedCount;
             gcStartedCount = fields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
@@ -442,6 +460,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             }
 
             allHeapRegions = Collections.unmodifiableList(discoveredHeapRegions);
+
+            teleHeapScheme.updateCache(epoch);
 
             // Check for the {@link TeleRootTableMemoryRegion} description, even though it
             // is not properly considered a heap region.
