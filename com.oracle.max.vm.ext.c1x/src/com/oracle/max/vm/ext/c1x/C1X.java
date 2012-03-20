@@ -34,6 +34,8 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
@@ -199,6 +201,8 @@ public class C1X implements RuntimeCompiler {
         public void compilationEvent(CompilationEvent event) {
             if (event.getLabel() == CompilationEvent.AFTER_PARSING) {
                 new WordTypeRewriter().apply(event.getCompilation());
+            } else if (event.getLabel() == CompilationEvent.AFTER_REGISTER_ALLOCATION && ((MethodActor) event.getCompilation().method).isTemplate()) {
+                processTemplate(event.getCompilation());
             }
         }
 
@@ -207,6 +211,38 @@ public class C1X implements RuntimeCompiler {
         @Override
         public void compilationFinished(CompilationEvent event) { }
     }
+
+    /**
+     * T1X templates are compiled in a special way without a return instruction. The control flow just falls through to the
+     * next template.  Therefore, we have to make sure that 1) the template has only one exit point, and 2) that this exit point
+     * is the last block.
+     * Condition 1) can be ensured by careful coding of the templates, i.e., having no return statement in the middle of the
+     * template. If one of the fatal errors below triggers, this condition is violated.
+     * Condition 2) is guaranteed by this code: we move the return block to the end of the block list.
+     *
+     * Note that we currently do not check that templates do not have stubs (which would be at the end of the method).
+     */
+    private static void processTemplate(C1XCompilation compilation) {
+        List<BlockBegin> code = compilation.hir().linearScanOrder();
+        BlockBegin returnBlock = null;
+        for (int i = code.size() - 1; i >= 0; i--) {
+            BlockBegin block = code.get(i);
+
+            LIROpcode lastOp = block.lir().at(block.lir().length() - 1).code;
+            if (block.numberOfSux() == 0 && lastOp != LIROpcode.Unwind) {
+                if (returnBlock != null) {
+                    FatalError.unexpected("Template has more than one return instruction");
+                }
+                returnBlock = block;
+                code.remove(i);
+            }
+        }
+        if (returnBlock == null) {
+            FatalError.unexpected("Template has no return instruction");
+        }
+        code.add(returnBlock);
+    }
+
 
     public C1XCompiler compiler() {
         if (isHosted() && compiler == null) {
