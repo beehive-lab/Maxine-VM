@@ -45,6 +45,7 @@ import com.sun.max.vm.thread.*;
 /**
  * This class presents a low-level VM logging facility that closely resembles (but extends) that offered by standard
  * {@link PrintStream}s. All output of the methods in this class goes to a configurable {@linkplain #os output stream}.
+ * The environment variable MAXINE_LOG_FILE can be used to specify a file as the log output stream.
  */
 @NEVER_INLINE
 public final class Log {
