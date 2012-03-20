@@ -117,5 +117,7 @@ final class TeleMSHeapScheme extends AbstractVmHolder implements TeleHeapScheme 
         // TODO (ld)
         return null;
     }
+    public void updateCache(long epoch) {
+    }
 
 }
