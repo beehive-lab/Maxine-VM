@@ -298,7 +298,7 @@ public final class Throw {
      * @param index the index that is out of the bounds of {@code array}
      */
     @NEVER_INLINE
-    public static void arrayIndexOutOfBoundsException(Object array, int index) {
+    public static ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException(Object array, int index) {
         FatalError.check(array != null, "Arguments for raising an ArrayIndexOutOfBoundsException cannot be null");
         throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + readArrayLength(array));
     }
@@ -311,7 +311,7 @@ public final class Throw {
      * @param value the value whose type is not assignable to the component type of {@code array}
      */
     @NEVER_INLINE
-    public static void arrayStoreException(Object array, Object value) {
+    public static ArrayStoreException arrayStoreException(Object array, Object value) {
         FatalError.check(array != null && value != null, "Arguments for raising an ArrayStoreException cannot be null");
         final ClassActor arrayClassActor = MaxineVM.isHosted() ? ClassActor.fromJava(array.getClass()) : ObjectAccess.readClassActor(array);
         final ClassActor componentClassActor = arrayClassActor.componentClassActor();
@@ -326,13 +326,13 @@ public final class Throw {
      * @param object the object whose type is not assignable to {@code classActor}
      */
     @NEVER_INLINE
-    public static void classCastException(ClassActor classActor, Object object) {
+    public static ClassCastException classCastException(ClassActor classActor, Object object) {
         FatalError.check(object != null && classActor != null, "Arguments for raising a ClassCastException cannot be null");
         throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name);
     }
 
     @NEVER_INLINE
-    public static void nullPointerException() {
+    public static NullPointerException nullPointerException() {
         throw new NullPointerException();
     }
 
@@ -343,7 +343,7 @@ public final class Throw {
      * @param length the negative array length
      */
     @NEVER_INLINE
-    public static void negativeArraySizeException(int length) {
+    public static NegativeArraySizeException negativeArraySizeException(int length) {
         throw new NegativeArraySizeException(String.valueOf(length));
     }
 
