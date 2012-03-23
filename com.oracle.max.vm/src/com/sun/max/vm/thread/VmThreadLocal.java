@@ -377,9 +377,11 @@ public class VmThreadLocal implements FormatWithToString {
     /**
      * Performs various initialization that can only be done once all the VM thread locals have
      * been created and registered with this class.
+     *
+     * N.B. javac will not compile the following without explicit package names
      */
-    @HOSTED_ONLY
-    static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+    @com.sun.max.annotate.HOSTED_ONLY
+    static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
 
         public void initializationComplete() {
             assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
