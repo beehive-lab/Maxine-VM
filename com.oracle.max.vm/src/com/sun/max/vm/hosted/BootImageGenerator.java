@@ -76,12 +76,6 @@ public final class BootImageGenerator {
     private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
-    private static final Option<String> targetWSRootDirectoryOption = options.newStringOption("target-ws-root", null,
-            "The directory prefix for redirected output of the binary image generator.");
-
-    private static final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
-            "The output directory for the binary image generator.");
-
     private static final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
@@ -98,6 +92,28 @@ public final class BootImageGenerator {
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
+    // Options regarding target workspace location shared with the Inspector
+
+    public static final OptionSet targetVMDirOptions = new OptionSet();
+
+    /**
+     * Partial override of the location of the target VM and associated files, relative to a new workspace root.
+     * Abstracts project names, OS and platform details.
+     */
+    private static final Option<String> targetWSRootDirectoryOption = targetVMDirOptions.newStringOption("target-ws-root", null,
+            "Alternate workspace root for output of the binary image generator.");
+
+    /**
+     * A complete override of the location of the target VM and associated files. Must be absolutely specific
+     * about location, i.e., project names, OS and platform.
+     */
+    private static final Option<File> vmDirectoryOption = targetVMDirOptions.newFileOption("vmdir", getDefaultVMDirectory(),
+            "The output directory for the binary image generator.");
+
+    static {
+        options.addOptions(targetVMDirOptions);
+    }
+
     public static boolean nativeTests;
 
     /**
@@ -105,19 +121,26 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findWorkspace(), DEFAULT_VM_DIRECTORY);
+        return getDefaultVMDirectory(false);
     }
 
     /**
      * Gets the default VM directory where the VM executable, shared libraries, boot image
-     * and related files are located, with optional override of ws root.
+     * and related files are located, with optional override.
      */
-    public static File getDefaultVMDirectory(String targetWSRoot) {
-        if (targetWSRoot == null) {
-            return vmDirectoryOption.getValue();
-        } else {
-            return new File(targetWSRoot, DEFAULT_VM_DIRECTORY);
+    public static File getDefaultVMDirectory(boolean checkOptions) {
+        File wsRoot = JavaProject.findWorkspace();
+        if (checkOptions) {
+            if (vmDirectoryOption.isAssigned()) {
+                return vmDirectoryOption.getValue();
+            } else {
+                String path = targetWSRootDirectoryOption.getValue();
+                if (path != null) {
+                    wsRoot = new File(path);
+                }
+            }
         }
+        return new File(wsRoot, DEFAULT_VM_DIRECTORY);
     }
 
     /**
@@ -205,7 +228,7 @@ public final class BootImageGenerator {
 
             nativeTests = testNative.getValue();
 
-            final File vmDirectory = getDefaultVMDirectory(targetWSRootDirectoryOption.getValue());
+            final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();
 
             // Create and installs the VM
@@ -229,7 +252,7 @@ public final class BootImageGenerator {
             }
 
             if (DependenciesManager.dependenciesLogger.traceEnabled()) {
-                DependenciesManager.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
+                DependenciesStats.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
             }
 
             // ClassID debugging
