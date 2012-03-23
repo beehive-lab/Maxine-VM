@@ -24,15 +24,13 @@ package com.sun.max.vm.heap;
 
 import java.util.*;
 
-//TODO (mlvdv) articulate behavior with respect to relocated/forwarded objects.
 /**
  * The status of an object in the VM, or more precisely the status of the region of memory
- * in which an object's state is or was represented.
+ * in which an object's state is or might have been represented.
  * <ul>
  * <li> {@link #LIVE}: Determined to be reachable as of the most recent collection</li>
  * <li> {@link #UNKNOWN}: During liveness analysis:  formerly live, not yet determined reachable</li>
- * <li> {@link #DEAD}: Determined unreachable; no further assumptions about memory may be made</li>
- * <li> {@link #FORWARDED}: a possibly obsolete status, may be removed</li>
+ * <li> {@link #DEAD}: Unreachable object; no assumptions about memory may be made</li>
  * </ul>
  * <p>
  * Possible transitions:
@@ -62,13 +60,7 @@ public enum ObjectStatus {
     /**
      * The region of memory formerly represented an object that has been collected.
      */
-    DEAD("Dead", "The region of memory formerly represented an object that has been collected"),
-
-    /**
-     * The region of memory formerly represented an object that has been moved to another location.
-     * This status is possibly obsolete and may be removed.
-     */
-    FORWARDED("Forwarded", "An object that has been moved to another location");
+    DEAD("Dead", "The region of memory formerly represented an object that has been collected");
 
     private final String label;
     private final String description;
@@ -96,8 +88,8 @@ public enum ObjectStatus {
     }
 
     /**
-     * Does the memory represent an object that we treat provisionally as reachable: either {@link #LIVE},
-     * {@link #UNKNOWN}, or {@link #FORWARDED}.
+     * Does the memory represent an object that we treat provisionally as reachable: either {@link #LIVE} or
+     * {@link #UNKNOWN}.
      *
      * @return {@code this != } {@link #DEAD}.
      */
@@ -107,32 +99,12 @@ public enum ObjectStatus {
 
     /**
      * During liveness analysis only, has the formerly live object not yet been determined to be reachable?
-     * {@code false} at other times.
+     * Always returns {@code false} during other GC phases.
      *
      * @return {@code this == } {@link #UNKNOWN}.
      */
     public boolean isUnknown() {
         return this == UNKNOWN;
-    }
-
-    /**
-     * Should he object be presumed live until further notice: either {@link #LIVE} or (during liveness analysis only)
-     * not yet determined to be {@link #DEAD}?
-     *
-     * @return {@code this == } {@link #LIVE} {@code ||} {@link #UNKNOWN}.
-     * @see Monty Python
-     */
-    public boolean isNotDeadYet() {
-        return this == LIVE || this == UNKNOWN;
-    }
-
-    /**
-     * Does the memory contain a copy of an object in the VM that has been abandoned after relocation by GC.
-     *
-     * @return {@code this == } {@link #FORWARDED}.
-     */
-    public boolean isForwarded() {
-        return this == FORWARDED;
     }
 
     /**
