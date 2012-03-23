@@ -114,17 +114,6 @@ public abstract class DependencyProcessor {
     protected abstract DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor);
 
     /**
-     * Visit all the dependencies, that start at {@code index}, associated with this processor.
-     * applying {@link DependencyVisitor#visit} to each dependency.
-     * @param dependencyVisitor visitor to apply
-     * @param context {@linkplain ClassActor class actor}
-     * @param dependencies the associated{@linkplain Dependencies} instance
-     * @param index start index of this processor's data in {@code dependencies.packed}
-     * @return {@code < 0} to terminate the visitor, otherwise the index after all of this processor's data
-     */
-    protected abstract int visitAll(DependencyVisitor dependencyVisitor, ClassActor context, Dependencies dependencies, int index);
-
-    /**
      * Visit a specific dependency invoking the given {@linkplain DependencyProcessorVisitor}, which may be {@code null}.
      * N.B. {@code dependencyProcessorVisitor} must be an instance of the {@linkplain DependencyProcessorVisitor}
      * defined by this processor.
@@ -135,13 +124,5 @@ public abstract class DependencyProcessor {
      * @return the index of the next dependency or {@code -1} to terminate the visit.
      */
     protected abstract int visit(DependencyProcessorVisitor dependenciesProcessorVisitor, ClassActor context, Dependencies dependencies, int index);
-
-    /**
-     * Skip over the data for this dependency.
-     * @param dependenciesthe associated{@linkplain Dependencies} instance
-     * @param index start index of this processor's data in {@code dependencies.packed}
-     * @return value of {@code index} after this processor's data
-     */
-    protected abstract int skip(Dependencies dependencies, int index);
 
 }

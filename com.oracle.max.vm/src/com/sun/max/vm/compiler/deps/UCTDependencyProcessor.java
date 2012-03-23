@@ -102,11 +102,6 @@ public class UCTDependencyProcessor extends DependencyProcessor {
     }
 
     @Override
-    protected int visitAll(DependencyVisitor dependencyVisitor, ClassActor context, Dependencies dependencies, int index) {
-        return dependencyVisitor.visit(dependencies, context, this, index);
-    }
-
-    @Override
     protected DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor) {
         return dependencyVisitor instanceof UCTDependencyProcessorVisitor ? (UCTDependencyProcessorVisitor) dependencyVisitor : null;
     }
@@ -120,11 +115,6 @@ public class UCTDependencyProcessor extends DependencyProcessor {
             }
         }
         return index; // no data to process
-    }
-
-    @Override
-    protected int skip(Dependencies dependencies, int index) {
-        return index;
     }
 
     public static ClassActor getUniqueConcreteSubtype(ClassActor classActor) {

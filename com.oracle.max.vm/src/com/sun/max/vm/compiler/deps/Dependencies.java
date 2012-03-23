@@ -134,6 +134,7 @@ public final class Dependencies {
      * of the associated {@link DependencyProcessor dependency processor}. If a dependency is present,
      * and it has associated data, the length of its data follows the "flags" field, otherwise the length field is absent.
      * I.e. there is <b>not</b> a length field of zero for processors that do not encode extra data.
+     * This knowledge is encoded in {@linkplain DependencyProcessor#hasData }.
      * <p>
      * The common part of the packed structure is as follows:
      * <pre>
@@ -399,10 +400,14 @@ public final class Dependencies {
                     int mask = 1 << b;
                     if ((flags & mask) != 0) {
                         DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessorsArray[b];
-                        i = dependencyProcessor.visitAll(dc, contextClassActor, this, i);
-                        if (i < 0) {
-                            return;
-                        }
+                        short length = dependencyProcessor.hasData ? packed[i++] : 0;
+                        int end = i + length;
+                        do {
+                            i = dc.visit(this, contextClassActor, dependencyProcessor, i);
+                            if (i < 0) {
+                                return;
+                            }
+                        } while (i < end);
                     }
                 }
 
@@ -416,7 +421,9 @@ public final class Dependencies {
                     int mask = 1 << b;
                     if ((flags & mask) != 0) {
                         DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessorsArray[b];
-                        i = dependencyProcessor.skip(this, i);
+                        if (dependencyProcessor.hasData) {
+                            i += 1 + packed[i];
+                        }
                     }
                 }
             }

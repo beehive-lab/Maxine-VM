@@ -198,7 +198,12 @@ public class UCMDependencyProcessor extends DependencyProcessor {
 
     private static final UCMDependencyProcessor singleton = new UCMDependencyProcessor();
 
-    private static UniqueConcreteMethodSearch ucms;
+    private static ThreadLocal<UniqueConcreteMethodSearch> ucms = new ThreadLocal<UniqueConcreteMethodSearch>() {
+        @Override
+        public UniqueConcreteMethodSearch initialValue() {
+            return new UniqueConcreteMethodSearch();
+        }
+    };
 
     UCMDependencyProcessor() {
         super(CiAssumptions.ConcreteMethod.class);
@@ -208,10 +213,7 @@ public class UCMDependencyProcessor extends DependencyProcessor {
     protected boolean validate(Assumption assumption, ClassDeps classDeps) {
         ClassActor contextClassActor = (ClassActor) ((ContextAssumption) assumption).context;
         ConcreteMethod cm = (ConcreteMethod) assumption;
-        if (ucms == null) {
-            ucms = new UniqueConcreteMethodSearch();
-        }
-        if (ucms.doIt(contextClassActor, (MethodActor) cm.dependee) != cm.dependee) {
+        if (ucms.get().doIt(contextClassActor, (MethodActor) cm.dependee) != cm.dependee) {
             return false;
         }
 
@@ -226,20 +228,6 @@ public class UCMDependencyProcessor extends DependencyProcessor {
             classDeps.add(this, (short) method.holder().id);
         }
         return true;
-    }
-
-    @Override
-    protected int visitAll(DependencyVisitor dependencyVisitor, ClassActor context, Dependencies dependencies, int index) {
-        int i = index;
-        short length = dependencies.packed[i++];
-        int end = i + length;
-        while (i < end) {
-            i = dependencyVisitor.visit(dependencies, context, this, i);
-            if (i < 0) {
-                return i;
-            }
-        }
-        return i;
     }
 
     @Override
@@ -272,11 +260,6 @@ public class UCMDependencyProcessor extends DependencyProcessor {
             }
         }
         return i;
-    }
-
-    @Override
-    protected int skip(Dependencies dependencies, int index) {
-        return index + 1 + dependencies.packed[index];
     }
 
     public static MethodActor getUniqueConcreteMethod(ClassActor declaredType, MethodActor method) {
