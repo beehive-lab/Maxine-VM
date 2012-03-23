@@ -263,7 +263,7 @@ public abstract class VMLog implements Heap.GCCallback {
      * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
      */
     @HOSTED_ONLY
-    static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+    static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
 
         public void initializationComplete() {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
