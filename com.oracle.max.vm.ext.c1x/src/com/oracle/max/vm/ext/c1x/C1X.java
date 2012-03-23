@@ -219,7 +219,7 @@ public class C1X implements RuntimeCompiler {
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
-            Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
+            Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.start();
@@ -229,7 +229,7 @@ public class C1X implements RuntimeCompiler {
                     C1XTimers.INSTALL.stop();
                 }
                 if (deps != null) {
-                    DependenciesManager.registerValidatedTarget(deps, maxTargetMethod);
+                    Dependencies.registerValidatedTarget(deps, maxTargetMethod);
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {

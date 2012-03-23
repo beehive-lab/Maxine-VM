@@ -204,7 +204,7 @@ public class Graal implements RuntimeCompiler {
                 compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL, plan);
             }
 
-            Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
+            Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (GraalOptions.Time) {
                     compiler().context.timers.startScope("Install Target Method");
@@ -214,7 +214,7 @@ public class Graal implements RuntimeCompiler {
                     compiler().context.timers.endScope();
                 }
                 if (deps != null) {
-                    DependenciesManager.registerValidatedTarget(deps, maxTargetMethod);
+                    Dependencies.registerValidatedTarget(deps, maxTargetMethod);
                 }
                 TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, method);
                 try {
