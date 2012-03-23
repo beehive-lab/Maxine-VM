@@ -123,7 +123,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     }
 
     public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        // Objects are not forwarded in this region.
+        // Objects are relocated, but are not forwarded in this region.
         return null;
     }
 
@@ -269,6 +269,28 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         @Override
         public Address lastValidOrigin() {
             return origin;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Objects in code cache allocations may be relocated, but they are never <em>forwarded</em>
+         * in the usual GC sense.
+         */
+        @Override
+        public boolean isForwarded() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Objects in code cache allocations may be relocated, but they are never <em>forwarded</em>
+         * in the usual GC sense.
+         */
+        @Override
+        public Address forwardedFrom() {
+            return Address.zero();
         }
 
     }

@@ -27,11 +27,12 @@ import java.util.concurrent.atomic.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
  * Special implementations of VM {@link Reference}s to objects that permit reuse of many
- * VM classes and schemas in the context of non-local inspection.
+ * VM classes and schemas in the context of non-local VM heap inspection.
  *
  * @see VmReferenceManager
  */
@@ -44,8 +45,6 @@ public abstract class RemoteReference extends Reference {
     private static final AtomicLong nextOID = new AtomicLong(1);
 
     protected RemoteReference forwardedTeleRef = null;
-
-    protected boolean collectedByGC = false;
 
     protected RemoteReference(TeleVM vm) {
         this.vm = vm;
@@ -65,20 +64,67 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return the current, absolute {@linkplain Address origin} of the object pointed to in VM
-     * memory; {@link Address#zero()} if the object is {@linkplain ObjectStatus#DEAD DEAD}.
+     * @return the status of the memory to which this instance refers: {@linkplain ObjectStatus#LIVE LIVE},
+     * {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is {@linkplain HeapPhase#ANALYZING ANALYZING})
+     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     */
+    public abstract ObjectStatus status();
+
+    /**
+     * Gets the absolute location of the object's <em>origin</em> in VM memory.  This may or may not
+     * be the same as the beginning of the object's storage, depending on the {@link LayoutScheme} being used.
+     * <p>
+     * When an object is <em>forwarded</em> during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase of
+     * a GC, this is the location of the new copy.  The location of the old copy is available during that
+     * phase via the {@link #forwardedFrom()} method.
+     * <p>
+     * {@link Address#zero()} when the object has become <em>unreachable</em> and its status {@linkplain ObjectStatus#DEAD DEAD}.
+     *
+     * @return the VM memory location of the object; {@link Address#zero()} when {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public abstract Address origin();
 
     /**
-     * @return the last, non-zero absolute {@linkplain Address origin} of the object
-     * originally pointed to in VM memory.  As long as the reference is not
-     * {@linkplain ObjectStatus#DEAD DEAD}, this is equivalent to {@link #origin()}.
+     * Gets the most recent location in VM memory at which the object was {@linkplain ObjectStatus#LIVE LIVE}. This is
+     * equivalent to {@link #origin()} until the reference becomes {@linkplain ObjectStatus#DEAD DEAD}.
+     *
+     * @return the most recent, non-zero absolute {@linkplain Address origin} of the object while
+     *         {@linkplain ObjectStatus#LIVE LIVE}.
      */
     public abstract Address lastValidOrigin();
 
     /**
-     * @return is the reference a special temporary {@link ObjectStatus#DEAD} reference that should not be allowed to
+     * Returns {@code true} during the period when an object is being moved to a new location in VM memory by a
+     * relocating GC, only possible when the heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING}.  This
+     * state can be characterized as the object existing in two places simultaneously, even if complete
+     * information about its two locations has not been discovered.
+     * <p>
+     * During such a period:
+     * <ul>
+     * <li> {@link #origin()} returns the location of the <em>new</em> copy of the object;</li>
+     * <li> {@link #forwardedFrom()}, if known, returns the <em>old</em> copy of the object, or
+     * {@code null} if not yet discovered; and </li>
+     * <li> {@link #status()} returns {@linkplain ObjectStatus#LIVE LIVE}.</li>
+     * </ul>
+     *
+     * @return {@code true} iff the object has been copied to a new location during a heap's
+     *         {@linkplain HeapPhase#ANALYZING ANALYZING} phase; always {@code false} during other heap phases
+     * @see #forwardedFrom()
+     */
+    public abstract boolean isForwarded();
+
+    /**
+     * Returns the location of the <em>old</em> copy of the object in VM memory during any period of time when the
+     * object is being <em>forwarded</em>. This is available <em>only</em> when the heap phase is
+     * {@linkplain HeapPhase#ANALYZING ANALYZING} <em>and</em> the object has been copied to a new location. In all
+     * other situations returns {@link Address#zero()}.
+     *
+     * @return the former address of an object while it is being <em>forwarded</em>.
+     * @see #isForwarded()
+     */
+    public abstract Address forwardedFrom();
+    /**
+     * @return is the reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be allowed to
      *         persist past any VM execution?
      */
     public boolean isTemporary() {
@@ -86,7 +132,7 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return is the reference a special temporary {@link ObjectStatus#LIVE} reference that appears to refer to an
+     * @return is the reference a special temporary {@linkplain ObjectStatus#LIVE LIVE} reference that appears to refer to an
      *         object that is not in any known VM memory region?
      */
     public boolean isProvisional() {
@@ -98,46 +144,6 @@ public abstract class RemoteReference extends Reference {
      */
     public boolean isLocal() {
         return false;
-    }
-
-    /**
-     * @return the status of the memory to which this instance refers
-     */
-    public abstract ObjectStatus status();
-
-
-    /**
-     * Gets the reference to the location of the new copy of this object, <em>only</em> when the heap is in the
-     * {@linkplain HeapPhase#ANALYZING ANALYZING} phase, and <em>only</em> when the object is forwarded. {@code null}
-     * otherwise.
-     */
-    public RemoteReference getForwardReference() {
-        return null;
-    }
-
-    // TODO (mlvdv) Old Heap
-    /**
-     * Records that this instance refers to an object that has been copied elsewhere, and all
-     * references should subsequently be forwarded.
-     *
-     * @param forwardedMutableTeleRef reference to another VM object that has superseded the one
-     * to which this instance refers.
-     */
-    public final void setForwardedTeleReference(RemoteReference forwardedMutableTeleRef) {
-        this.forwardedTeleRef = forwardedMutableTeleRef;
-    }
-
-    // TODO (mlvdv) Old Heap
-    /**
-     * @return reference to the VM object to which this instance refers, possibly following
-     * a forwarding reference if set.
-     */
-    @Deprecated
-    public final RemoteReference getForwardedTeleRef() {
-        if (forwardedTeleRef != null) {
-            return forwardedTeleRef.getForwardedTeleRef();
-        }
-        return this;
     }
 
 }

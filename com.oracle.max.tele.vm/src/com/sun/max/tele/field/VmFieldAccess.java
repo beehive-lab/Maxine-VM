@@ -171,9 +171,9 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_sentinelAsCString = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "sentinelAsCString");
     public final TeleInstanceReferenceFieldAccess LinearAllocationMemoryRegion_mark = new TeleInstanceReferenceFieldAccess(LinearAllocationMemoryRegion.class, "mark", AtomicWord.class);
     public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
-    public final TeleStaticReferenceFieldAccess MaxineVM_vm = new TeleStaticReferenceFieldAccess(MaxineVM.class, "vm", MaxineVM.class);
     public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
     public final TeleStaticIntFieldAccess MaxineVM_primordialTLBlockSize = new TeleStaticIntFieldAccess(MaxineVM.class, "primordialTLBlockSize");
+    public final TeleStaticReferenceFieldAccess MaxineVM_vm = new TeleStaticReferenceFieldAccess(MaxineVM.class, "vm", MaxineVM.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_descriptor = new TeleInstanceReferenceFieldAccess(MemberActor.class, "descriptor", Descriptor.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess MemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);

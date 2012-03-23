@@ -169,7 +169,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().status().isNotDeadYet()) {
+        if (teleObject().status().isNotDead()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

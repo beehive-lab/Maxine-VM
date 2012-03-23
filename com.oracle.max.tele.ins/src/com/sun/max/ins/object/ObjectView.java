@@ -183,7 +183,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             // Omit the prefix for live objects (the usual case).
             titleText.append("(").append(status.label()).append(") ");
         }
-        if (status.isNotDeadYet()) {
+        if (status.isNotDead()) {
             // Revise the title of the object if we still can
             Pointer pointer = teleObject.origin();
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
@@ -256,8 +256,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     protected void refreshState(boolean force) {
         final ObjectStatus status = teleObject.status();
-        if (status.isForwarded() && followingTeleObject) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
+        if (teleObject.reference().isForwarded() && followingTeleObject) {
+            //Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardReference().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (viewManager.isObjectViewObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
@@ -285,16 +285,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             }
         }
         setTitle();
-        switch(status) {
-            case DEAD:
-                setStateColor(preference().style().deadObjectBackgroundColor());
-                break;
-            case FORWARDED:
-                setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-                break;
-            default:
-                setStateColor(null);
-        }
+       if (status.isDead()) {
+           setStateColor(preference().style().deadObjectBackgroundColor());
+       } else if (teleObject.reference().isForwarded()) {
+           setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+       } else {
+           setStateColor(null);
+       }
     }
 
 }

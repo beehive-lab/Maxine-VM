@@ -102,6 +102,11 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
+        public ObjectStatus status() {
+            return ObjectStatus.LIVE;
+        }
+
+        @Override
         public Address origin() {
             throw new UnsupportedOperationException();
         }
@@ -112,8 +117,13 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
-        public ObjectStatus status() {
-            return ObjectStatus.LIVE;
+        public boolean isForwarded() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Address forwardedFrom() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

@@ -62,6 +62,27 @@ public abstract class ConstantRemoteReference extends RemoteReference {
         return origin;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * These objects never move, and so are never <em>forwarded</em>.
+     */
+    @Override
+    public boolean isForwarded() {
+        return false;
+
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * These objects never move, and so are never <em>forwarded</em>.
+     */
+    @Override
+    public Address forwardedFrom() {
+        return Address.zero();
+    }
+
     @Override
     public final boolean equals(Object other) {
         if (other instanceof ConstantRemoteReference) {
