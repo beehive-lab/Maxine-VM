@@ -38,6 +38,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.Log.LogPrintStream;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.*;
@@ -49,7 +50,7 @@ import com.sun.max.vm.stack.*;
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
  * <p>
- * All {@link VmThreadLocal} objects must be instantiated before {@link #completeInitialization()},
+ * All {@link VmThreadLocal} objects must be instantiated before {@link #initializationComplete()},
  * {@link #tlaSize()} or {@link #values()} is called. The recommended way to ensure this is
  * to explicitly reference these instances from the constructor of a {@link BootImagePackage}
  * subclass. A set of {@code registerThreadLocal()} methods are provided in
@@ -378,24 +379,31 @@ public class VmThreadLocal implements FormatWithToString {
      * been created and registered with this class.
      */
     @HOSTED_ONLY
-    public static void completeInitialization() {
-        assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
-        try {
-            final List<VmThreadLocal> valuesNeedingInitialization = new ArrayList<VmThreadLocal>();
-            final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
-            for (VmThreadLocal value : VALUES) {
-                if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
-                    valuesNeedingInitialization.add(value);
+    static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+
+        public void initializationComplete() {
+            assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
+            try {
+                final List<VmThreadLocal> valuesNeedingInitialization = new ArrayList<VmThreadLocal>();
+                final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
+                for (VmThreadLocal value : VALUES) {
+                    if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
+                        valuesNeedingInitialization.add(value);
+                    }
+                    if (value.isReference) {
+                        assert value.index <= 63 : "Need larger reference map for thread locals";
+                        REFERENCE_MAP |= 1L << value.index;
+                    }
                 }
-                if (value.isReference) {
-                    assert value.index <= 63 : "Need larger reference map for thread locals";
-                    REFERENCE_MAP |= 1L << value.index;
-                }
+                VmThreadLocal.valuesNeedingInitialization = valuesNeedingInitialization.toArray(new VmThreadLocal[valuesNeedingInitialization.size()]);
+            } catch (NoSuchMethodException e) {
+                throw ProgramError.unexpected(e);
             }
-            VmThreadLocal.valuesNeedingInitialization = valuesNeedingInitialization.toArray(new VmThreadLocal[valuesNeedingInitialization.size()]);
-        } catch (NoSuchMethodException e) {
-            throw ProgramError.unexpected(e);
         }
+    }
+
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
     }
 
     @HOSTED_ONLY
@@ -623,7 +631,7 @@ public class VmThreadLocal implements FormatWithToString {
      *
      * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
      *
-     * Note: this method is accessed via reflection in {@link #completeInitialization()}.
+     * Note: this method is accessed via reflection in {@link #initializationComplete()}.
      */
     public void initialize() {
     }
