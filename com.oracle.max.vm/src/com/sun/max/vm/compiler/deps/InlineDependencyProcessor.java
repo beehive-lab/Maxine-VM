@@ -124,20 +124,6 @@ public class InlineDependencyProcessor extends DependencyProcessor {
     }
 
     @Override
-    protected int visitAll(DependencyVisitor dependencyVisitor, ClassActor context, Dependencies dependencies, int index) {
-        int i = index;
-        short length = dependencies.packed[i++];
-        int end = i + length;
-        while (i < end) {
-            i = dependencyVisitor.visit(dependencies, context, this, i);
-            if (i < 0) {
-                return i;
-            }
-        }
-        return i;
-    }
-
-    @Override
     protected DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor) {
         return dependencyVisitor instanceof InlineDependencyProcessorVisitor ? (InlineDependencyProcessorVisitor) dependencyVisitor : null;
     }
@@ -166,10 +152,6 @@ public class InlineDependencyProcessor extends DependencyProcessor {
         return i;
     }
 
-    @Override
-    protected int skip(Dependencies dependencies, int index) {
-        return index + 1 + dependencies.packed[index];
-    }
     /**
      * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
      *
