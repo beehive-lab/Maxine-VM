@@ -87,7 +87,7 @@ public class JVMTICode {
      */
     static void deOptForNewBreakpoint(ClassMethodActor classMethodActor) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        ArrayList<TargetMethod> inliners = DependenciesManager.getInliners(classMethodActor);
+        ArrayList<TargetMethod> inliners = InlineDependencyProcessor.getInliners(classMethodActor);
         // There are three possibilities to consider:
         // 1. It was inlined everywhere so never compiled in isolation (targetMethod == null) && inliners.size() > 0
         // 2. It was inlined somewhere but also compiled in isolation (targetMethod != null) && inliners.size() > 0

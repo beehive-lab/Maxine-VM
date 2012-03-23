@@ -24,20 +24,10 @@ package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.profile.*;
-import com.sun.max.profile.ValueMetrics.IntegerDistribution;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
-import com.sun.max.vm.compiler.deps.DependenciesManager.DependenciesCounter;
-import com.sun.max.vm.compiler.deps.DependenciesManager.DependencyChecker;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.log.hosted.*;
 
 /**
  * Map from a class to the set of {@linkplain Dependencies dependencies}
@@ -47,10 +37,10 @@ import com.sun.max.vm.log.hosted.*;
  * a context class.
  * <p>
  * There is no strong reference (path) from a context class in the dependency map
- * to the assumption objects. Instead, the set of assumption objects are indirectly
- * referenced by their {@linkplain Dependencies#id identifiers}. This
- * prevents a class from being kept alive simply because it is involved in an
- * assumption. This is important for simplifying class unloading.
+ * to the {@linkplain Dependencies} instances. Instead, the set of {@linkplain Dependencies}
+ * objects are indirectly referenced by their {@linkplain Dependencies#id identifiers}.
+ * This prevents a class from being kept alive simply because it is involved in a
+ * dependency. This is important for simplifying class unloading.
  */
 final class ContextDependents {
 
@@ -168,7 +158,7 @@ final class ContextDependents {
      */
     static final int INITIAL_CAPACITY = 600;
 
-    private final ConcurrentHashMap<ClassActor, DSet> map = new ConcurrentHashMap<ClassActor, DSet>(INITIAL_CAPACITY);
+    static final ConcurrentHashMap<ClassActor, DSet> map = new ConcurrentHashMap<ClassActor, DSet>(INITIAL_CAPACITY);
 
     /**
      * Adds a mapping from each context type in a dependencies object to the dependency object.
@@ -207,7 +197,7 @@ final class ContextDependents {
      */
     int removeDependencies(final Dependencies deps) {
         final int[] removed = {0};
-        deps.iterate(new DependencyClosure() {
+        deps.iterate(new Dependencies.DependencyVisitor() {
             @Override
             public boolean nextContextClass(ClassActor type, ClassActor prev) {
                 if (type != null) {
@@ -230,204 +220,4 @@ final class ContextDependents {
         return removed[0];
     }
 
-    private final DependencyChecker checker = new DependencyChecker();
-
-    /**
-     * Removes any dependencies that are invalidated by a class hierarchy change.
-     *
-     * @param ancestor a type for which dependencies need to be re-validated
-     * @param concreteType the new sub-type causing the hierarchy change
-     * @param a list of invalidated dependencies (may be null)
-     * @return the invalidated dependencies
-     */
-    ArrayList<Dependencies> flushInvalidDependencies(ClassActor ancestor, ClassActor concreteType, ArrayList<Dependencies> invalidated) {
-        assert classHierarchyLock.isWriteLockedByCurrentThread() : "must hold the class hierarchy lock in write mode";
-        // We hold the classHierarchyLock in write mode.
-        // This means there cannot be any concurrent modifications to the dependencies.
-        DSet dset = map.get(ancestor);
-        if (dset == null) {
-            return invalidated;
-        }
-        checker.reset(ancestor, concreteType);
-        int i = 0;
-        while (i < dset.size) {
-            Dependencies deps = dset.getDeps(i);
-            checker.reset();
-            deps.iterate(checker);
-            if (!checker.valid()) {
-                if (invalidated == null) {
-                    invalidated = new ArrayList<Dependencies>();
-                }
-                invalidated.add(deps);
-                dset.removeAt(i);
-            } else {
-                i++;
-            }
-        }
-        if (dset.size == 0) {
-            map.remove(ancestor);
-        }
-
-        return invalidated;
-    }
-
-    /**
-     * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
-     *
-     * @param inlineeToCheck
-     * @return
-     */
-    public ArrayList<TargetMethod> getInliners(final ClassMethodActor inlineeToCheck) {
-        // TODO Worry about a concurrent compilation adding a new class with a method that inlines inlineeToCheck?
-        //      Only solution now is to hold the classHierarchyLock in write mode
-        final ArrayList<TargetMethod> result = new ArrayList<TargetMethod>();
-        for (DSet dset : contextDependents.map.values()) {
-            synchronized (dset) {
-                int i = 0;
-                while (i < dset.size) {
-                    final Dependencies deps = dset.getDeps(i);
-                    final int fi = i;
-                    deps.iterate(new DependencyClosure() {
-                        @Override
-                        public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
-                            if (inlinee == inlineeToCheck) {
-                                inlineLogger.logDoInlinedMethod(fi, deps, targetMethod, method, inlinee, context);
-                                add(targetMethod);
-                            }
-                            return true;
-                        }
-
-                        private boolean add(TargetMethod targetMethod) {
-                            for (TargetMethod tm : result) {
-                                if (tm == targetMethod) {
-                                    return false;
-                                }
-                            }
-                            result.add(targetMethod);
-                            return true;
-                        }
-                    });
-                    i++;
-                }
-            }
-        }
-        return result;
-    }
-
-    @VMLoggerInterface(noTrace = true)
-    private static interface InlineLoggerInterface {
-        void doInlinedMethod(int i, Dependencies deps, TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context);
-    }
-
-    private static final InlineLogger inlineLogger = new InlineLogger();
-
-    private static class InlineLogger extends InlineLoggerAuto {
-        InlineLogger() {
-            super("GetInliners", "");
-        }
-    }
-
-
-    /**
-     * Dump statistics.
-     */
-    @HOSTED_ONLY
-    void printStatistics(PrintStream out) {
-        final DependenciesCounter uctCounter = new DependenciesCounter(0);
-        IntegerDistribution numDistinctAssumptionsPerType = ValueMetrics.newIntegerDistribution("numDistinctAssumptionsPerType", 0, 20);
-        IntegerDistribution numUCTAssumptionsPerType = ValueMetrics.newIntegerDistribution("numUCTAssumptionsPerType", 0, 20);
-        IntegerDistribution numAssumptionsPerType = ValueMetrics.newIntegerDistribution("numDependenciesPerType", 0, 20);
-        IntegerDistribution numDependentsPerType = ValueMetrics.newIntegerDistribution("numDependentPerType", 0, 20);
-        HashMap<DependenciesCounter, DependenciesCounter> assumptionsCounters = new HashMap<DependenciesCounter, DependenciesCounter>(20);
-
-        for (ClassActor type : map.keySet()) {
-            DSet dset = map.get(type);
-            int numDependents = dset.size;
-            for (int i = 0; i < dset.size; i++) {
-                final Dependencies deps = dset.getDeps(i);
-                deps.countAssumptionsPerType(type.id, assumptionsCounters);
-            }
-
-            numDependentsPerType.record(numDependents);
-            DependenciesCounter c = assumptionsCounters.remove(uctCounter);
-            numUCTAssumptionsPerType.record(c != null ? c.count : 0);
-            numDistinctAssumptionsPerType.record(assumptionsCounters.size());
-            int totalTypeAssumptions = 0;
-            for (DependenciesCounter co : assumptionsCounters.values()) {
-                totalTypeAssumptions += co.count;
-            }
-            numAssumptionsPerType.record(totalTypeAssumptions);
-        }
-
-        out.println("# types with dependent methods: " + map.size());
-        numDependentsPerType.report("# dependents / types", out);
-        numAssumptionsPerType.report("# total assumptions / type", out);
-        numDistinctAssumptionsPerType.report("# distinct assumptions / type", out);
-        numUCTAssumptionsPerType.report("# UCT assumption / type, stream", out);
-    }
-
-    @HOSTED_ONLY
-    private void printDependents(ClassActor type, final PrintStream out) {
-        DSet dset = map.get(type);
-        int numDependents = dset.size;
-        out.println("class " + type + " (id = " + type.id + ") has " + numDependents + " dependents");
-        for (int i = 0; i < dset.size; i++) {
-            final Dependencies deps = dset.getDeps(i);
-            deps.iterate(new DependencyClosure(type.id) {
-                @Override
-                public boolean doConcreteSubtype(TargetMethod method, ClassActor context, ClassActor subtype) {
-                    out.println("    " + context + " has unique concrete implementation" + subtype + " [" + deps + "]");
-                    return true;
-                }
-                @Override
-                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
-                    out.println("    " + impl + " is a unique concrete method [" + deps + "]");
-                    return true;
-                }
-                @Override
-                public void doInvalidated() {
-                    out.println("assumptions have been invalidated");
-                }
-            });
-        }
-    }
-
-    @HOSTED_ONLY
-    void dump(PrintStream out) {
-        out.println("================================================================");
-        out.println("DependentTargetMethodTable has " + map.size() + " entries");
-        for (ClassActor type : map.keySet()) {
-            printDependents(type, out);
-        }
-        out.println("================================================================");
-    }
-
-// START GENERATED CODE
-    private static abstract class InlineLoggerAuto extends com.sun.max.vm.log.VMLogger {
-        public enum Operation {
-            DoInlinedMethod;
-
-            public static final Operation[] VALUES = values();
-        }
-
-        private static final int[] REFMAPS = new int[] {0x6};
-
-        protected InlineLoggerAuto(String name, String optionDescription) {
-            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
-        }
-
-        @Override
-        public String operationName(int opCode) {
-            return Operation.VALUES[opCode].name();
-        }
-
-        @INLINE
-        public final void logDoInlinedMethod(int arg1, Dependencies arg2, TargetMethod arg3, ClassMethodActor arg4, ClassMethodActor arg5,
-                ClassActor arg6) {
-            log(Operation.DoInlinedMethod.ordinal(), intArg(arg1), objectArg(arg2), objectArg(arg3), methodActorArg(arg4), methodActorArg(arg5),
-                classActorArg(arg6));
-        }
-    }
-
-// END GENERATED CODE
 }
