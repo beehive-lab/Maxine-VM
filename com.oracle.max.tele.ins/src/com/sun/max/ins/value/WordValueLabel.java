@@ -415,6 +415,7 @@ public class WordValueLabel extends ValueLabel {
                         if (teleObject == null) {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         }
+                        // TODO (mlvdv) check now to see if it is a forwarded reference
                     } else if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         stack = thread.stack();
                         displayMode = (valueMode == ValueMode.REFERENCE || forceTxt) ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;

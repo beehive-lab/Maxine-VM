@@ -98,6 +98,8 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
         return gcStartedCount;
     }
 
+    // TODO (mlvdv)  Update; won't work now; important for attach mode
+
     /**
      * Creates a representation of the contents of the {@linkplain InspectableHeapInfo inspectable list} of dynamic heap
      * regions in the VM, using low level mechanisms and performing no checking that the location or objects are valid.

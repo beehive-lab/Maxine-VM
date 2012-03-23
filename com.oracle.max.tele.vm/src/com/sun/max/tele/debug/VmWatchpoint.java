@@ -533,7 +533,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         private TeleObjectWatchpoint(WatchpointKind kind, VmWatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
             super(kind, watchpointManager, description, teleObject.origin().plus(offset), nBytes, settings);
-            TeleError.check(teleObject.status().isNotDeadYet(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
+            TeleError.check(teleObject.status().isNotDead(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
             setRelocationWatchpoint(teleObject.origin());
@@ -627,6 +627,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
         protected void updateAfterGC() {
             assert isAlive();
             super.updateAfterGC();
+            // TODO (mlvdv) watchpoint on forwarded object?
             switch(teleObject.status()) {
                 case LIVE:
                 case UNKNOWN:
@@ -635,12 +636,6 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
                     if (!teleObject.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
                         TeleWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
                     }
-                    break;
-                case FORWARDED:
-                    // A relocatable watchpoint should not exist on a forwarded
-                    // object.  It should not be permitted in the first place, and a transition
-                    // from live to forwarded should have caused this watchpoint to be relocated.
-                    TeleWarning.message("Watchpoint relocation failure - watchpoint on forwarded object: " + this);
                     break;
                 case DEAD:
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
@@ -845,7 +840,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDeadYet()) {
+                if (teleObject.status().isNotDead()) {
                     watchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -882,7 +877,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDeadYet()) {
+                if (teleObject.status().isNotDead()) {
                     watchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -918,7 +913,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDeadYet()) {
+                if (teleObject.status().isNotDead()) {
                     watchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
@@ -956,7 +951,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             }
             VmWatchpoint watchpoint;
             try {
-                if (teleObject.status().isNotDeadYet()) {
+                if (teleObject.status().isNotDead()) {
                     watchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
                 } else {
                     String amendedDescription = (description == null) ? "" : description;

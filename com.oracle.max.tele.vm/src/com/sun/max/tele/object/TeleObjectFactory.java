@@ -42,7 +42,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.Reference;
@@ -223,7 +222,6 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(MaxineVM.class, getConstructor(TeleMaxineVM.class));
         classToTeleTupleObjectConstructor.put(VMConfiguration.class, getConstructor(TeleVMConfiguration.class));
-        classToTeleTupleObjectConstructor.put(SemiSpaceHeapScheme.class, getConstructor(TeleSemiSpaceHeapScheme.class));
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
         classToTeleTupleObjectConstructor.put(CiConstant.class, getConstructor(TeleCiConstant.class));
@@ -296,6 +294,20 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         }
     }
 
+
+
+    /**
+     * Registers a type of surrogate object to be created for a specific VM object type.
+     * The local object must be a concrete subtype of {@link TeleTuple Object} and must have
+     * a constructor that takes two arguments:  {@link TeleVM}, {@link RemoteReference}.
+     *
+     * @param vmClass the VM class for which a specialized representation is desired
+     * @param localClass the class of local surrogates for the VM type objects.
+     */
+    public void register(Class vmClass, Class localClass) {
+        classToTeleTupleObjectConstructor.put(vmClass, getConstructor(localClass));
+    }
+
     /**
      * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
@@ -334,6 +346,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         if (teleObject != null) {
             return teleObject;
         }
+
+        // TODO (mlvdv) this should no longer be needed.  If the reference has an ok status, that's we should need.
         // Keep all the VM traffic outside of synchronization.
         if (!objects().isValidOrigin(remoteRef.toOrigin())) {
             return null;
@@ -361,7 +375,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         try {
             Address hubAddress;
 
-            if (remoteRef.status().isForwarded()) {
+            if (remoteRef.isForwarded()) {
                 // TODO (mlvdv)  figure out what's needed and fix
                 TeleError.unexpected("Trying to create a TeleObject for a forwarded object @" + remoteRef.origin().to0xHexString());
                 hubAddress = null;

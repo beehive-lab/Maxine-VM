@@ -187,19 +187,11 @@ public final class ObjectFieldsTable extends InspectorTable {
 
     @Override
     public Color cellBackgroundColor() {
-        Color result = null;
         // Gets called during superclass initialization
-        if (teleObject != null) {
-            switch(teleObject.status()) {
-                case DEAD:
-                    result = preference().style().deadObjectBackgroundColor();
-                    break;
-                case FORWARDED:
-                    result = preference().style().forwardedObjectBackgroundColor();
-                    break;
-            }
+        if (teleObject != null && teleObject.status().isDead()) {
+            return preference().style().deadObjectBackgroundColor();
         }
-        return result;
+        return null;
     }
 
     @Override

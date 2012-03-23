@@ -80,9 +80,6 @@ public final class StringPane extends InspectorScrollPane {
                 case DEAD:
                     background = preference().style().deadObjectBackgroundColor();
                     break;
-                case FORWARDED:
-                    background = preference().style().forwardedObjectBackgroundColor();
-                    break;
             }
             textArea.selectAll();
             textArea.replaceSelection(stringValue);

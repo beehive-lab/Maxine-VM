@@ -90,7 +90,7 @@ public final class StringView extends ObjectView<StringView> {
     @Override
     protected void refreshState(boolean force) {
         super.refreshState(force);
-        if (teleObject().status().isNotDeadYet()) {
+        if (teleObject().status().isNotDead()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);

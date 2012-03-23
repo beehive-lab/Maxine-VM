@@ -248,7 +248,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
 
         @Override
         public Address origin() {
-            if (origin.isZero() && teleTargetMethod().status().isNotDeadYet()) {
+            if (origin.isZero() && teleTargetMethod().status().isNotDead()) {
                 origin = teleTargetMethod().codeCacheObjectOrigin(kind);
             }
             return origin;
@@ -259,6 +259,25 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             return origin;
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Unmanaged objects never move, and so are never <em>forwarded</em>.
+         */
+        @Override
+        public boolean isForwarded() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Unmanaged objects never move, and so are never <em>forwarded</em>.
+         */
+        @Override
+        public Address forwardedFrom() {
+            return Address.zero();
+        }
     }
 
 }

@@ -148,44 +148,39 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static  final int MAX_VM_LOCK_TRIALS = 100;
 
-    /**
-     * Determines whether a location in VM memory is the origin of a VM object
-     * in a region known to hold objects.
-     *
-     * @param address an absolute memory location in the VM.
-     * @return whether there is an object whose origin is at the address, false if unable
-     * to complete the check, for example if the VM is busy or terminated
-     */
-    public boolean isValidOrigin(Address address) {
-        if (address.isZero() || address.equals(zappedMarker)) {
+    public boolean isValidOrigin(Address origin) {
+        if (origin.isZero() || origin.equals(zappedMarker)) {
             return false;
         }
-        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(address);
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
         if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
             final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
-            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(address)) {
+            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
                 return true;
             }
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + address.to0xHexString());
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
             return false;
         }
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + address.to0xHexString());
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
         return false;
     }
 
-
-
-//
-//        final VmHeapRegion heapRegion = vm().heap().findHeapRegion(address);
-//        if (heapRegion != null) {
-//            return heapRegion.objectReferenceManager().isObjectOrigin(address);
-//        }
-//        final VmCodeCacheRegion compiledCodeRegion = vm().codeCache().findCodeCacheRegion(address);
-//        if (compiledCodeRegion != null) {
-//            return compiledCodeRegion.objectReferenceManager().isObjectOrigin(address);
-//        }
-//        return false;
-
+    public boolean isForwardedOrigin(Address origin) {
+        if (origin.isZero() || origin.equals(zappedMarker)) {
+            return false;
+        }
+        final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
+        if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
+            if (objectHoldingRegion.objectReferenceManager().isObjectOrigin(origin)) {
+                return true;
+            }
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, in region " + objectHoldingRegion.entityName() + " @" + origin.to0xHexString());
+            return false;
+        }
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "not valid origin, unknown region @" + origin.to0xHexString());
+        return false;
+    }
 
     /**
      * Checks if a location in VM memory could be the origin of an object representation,
@@ -316,6 +311,18 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         } catch (Throwable throwable) {
         }
         return null;
+    }
+
+    /**
+     * Registers a type of surrogate object to be created for a specific VM object type.
+     * The local object must be a concrete subtype of {@link TeleTupleObject} and must have
+     * a constructor that takes two arguments:  {@link TeleVM}, {@link RemoteReference}.
+     *
+     * @param clazz the VM class for which a specialized representation is desired
+     * @param constructor constructor for the local representation to be constructed
+     */
+    public void registerTeleObjectType(Class vmClass, Class localClass) {
+        teleObjectFactory.register(vmClass, localClass);
     }
 
     /**
@@ -458,7 +465,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
 
     /**
-     * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
+     * Low-level predicate for identifying the special case of a {@link StaticTuple} in the VM,
      * using only the most primitive operations, since it is needed for building all the higher-level
      * services in the Inspector.
      * <p>
@@ -474,7 +481,7 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
      *  No type checks are performed, however, since this predicate must not depend on such higher-level information.
      *
      * @param origin a memory location in the VM
-     * @return whether the object (probably)  points at an instance of {@link StaticTuple}
+     * @return whether the object (probably) points at an instance of {@link StaticTuple}
      * @see #isValidOrigin(Pointer)
      */
     private boolean isStaticTuple(Address origin) {

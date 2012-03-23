@@ -293,18 +293,11 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
         return reference().status();
     }
 
-    // TODO (mlvdv)  REVIEW!
+    // TODO (mlvdv) Old heap
+    @Deprecated
     public final TeleObject getForwardedTeleObject() {
-        if (status().isForwarded()) {
-            RemoteReference forwardedRemoteRef = reference.getForwardReference();
-            TeleObject teleObject = objects().findObjectByOID(forwardedRemoteRef.makeOID());
-            if (teleObject == null) {
-                reference = forwardedRemoteRef;
-                return this;
-            }
-            return teleObject;
-        }
-        return this;
+        TeleError.unimplemented();
+        return null;
     }
 
     /**
@@ -413,14 +406,6 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
             return null;
         }
         return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
-    }
-
-    // TODO (mlvdv) Review
-    public final MaxMemoryRegion getForwardedMemoryRegion() {
-        if (status().isForwarded()) {
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardReference().toOrigin()), objectSize());
-        }
-        return null;
     }
 
     /**
