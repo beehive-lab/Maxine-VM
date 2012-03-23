@@ -116,6 +116,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @INSPECTED
     private LinearAllocationMemoryRegion fromSpace = null;
+
     @INSPECTED
     private LinearAllocationMemoryRegion toSpace = null;
 
@@ -363,8 +364,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 startTimer(gcTimer);
 
                 startTimer(clearTimer);
-                swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
+                swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
+
+                // For the purposes of inspection, we declare this phase change immediately after the swap
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
                 if (Heap.logGCPhases()) {
                     phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
@@ -427,17 +431,22 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     phaseLogger.logProcessingSpecialReferences(VMLogger.Interval.END);
                 }
 
-                // The reclaiming phase doesn't do anything in a semi-space collector since all
+                // Bring the To-Space marks up to date, mainly for debugging.
+                toSpace.mark.set(allocationMark()); // not otherwise updated during move.
+
+                // The reclaiming phase doesn't do anything substantial in a semispace collector since all
                 // space of the from space is implicitly reclaimed once the liveness analysis (i.e.,
                 // the copying of all objects reachable from roots) is done.
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.RECLAIMING);
 
-                // Bring the inspectable mark up to date, since it is not updated during the move.
-                toSpace.mark.set(allocationMark()); // for debugging
+                // Now officially mark From-space as having no allocations.
+                fromSpace.mark.set(fromSpace.start());
+
 
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.

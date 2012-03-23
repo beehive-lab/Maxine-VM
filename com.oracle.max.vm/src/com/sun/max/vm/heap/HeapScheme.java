@@ -443,21 +443,6 @@ public interface HeapScheme extends VMScheme {
      */
     public static final class Inspect {
 
-        private static class GCCallback implements Heap.GCCallback{
-
-            public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
-                if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
-                    notifyHeapPhaseChange(HeapPhase.ANALYZING);
-                } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
-                    notifyHeapPhaseChange(HeapPhase.ALLOCATING);
-                }
-            }
-        }
-
-        static {
-            Heap.registerGCCallback(new GCCallback());
-        }
-
         /**
          * Sets up machinery for inspection of heap activity.
          * <p>
