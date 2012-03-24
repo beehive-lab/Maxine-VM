@@ -366,10 +366,10 @@ public class UCTDependencyProcessor extends DependencyProcessor {
         }
         checker.reset(ancestor, concreteType);
         int i = 0;
-        while (i < dset.size) {
+        while (i < dset.size()) {
             Dependencies deps = dset.getDeps(i);
             checker.reset();
-            deps.iterate(checker);
+            deps.visit(checker);
             if (!checker.valid()) {
                 if (invalidated == null) {
                     invalidated = new ArrayList<Dependencies>();
@@ -380,7 +380,7 @@ public class UCTDependencyProcessor extends DependencyProcessor {
                 i++;
             }
         }
-        if (dset.size == 0) {
+        if (dset.size() == 0) {
             map.remove(ancestor);
         }
 

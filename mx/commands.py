@@ -346,6 +346,21 @@ def inspect(args):
     else:
         mx.run(cmd)
 
+def inspectoragent(args):
+    """launch the Inspector agent
+
+    Launch the Inspector agent.
+
+    The agent listens on a given port for an incoming connection from
+    a remote Inspector process."""
+
+    cmd = mx.java().format_cmd(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
+    if mx.get_os() == 'darwin':
+        # The -E option propagates the environment variables into the sudo process
+        mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
+    else:
+        mx.run(cmd)
+    
 def javadoc(args):
     """run javadoc over the Maxine Java source files
 
@@ -651,6 +666,7 @@ def mx_init():
         'helloworld': [helloworld, '[VM options]'],
         'image': [image, '[options] classes|packages...'],
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
+        'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
         'javadoc': [javadoc, ''],
         'jnigen': [jnigen, ''],
         'jttgen': [jttgen, ''],
@@ -672,6 +688,6 @@ def mx_init():
 def mx_post_parse_cmd_line(opts):
     global _vmdir
     if opts.vmdir is None:
-        _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated', mx.get_os())
+        _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated',  mx.get_os())
     else:
         _vmdir = opts.vmdir

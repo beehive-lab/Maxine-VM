@@ -42,13 +42,13 @@ import com.sun.max.vm.actor.holder.*;
  * This prevents a class from being kept alive simply because it is involved in a
  * dependency. This is important for simplifying class unloading.
  */
-final class ContextDependents {
+public final class ContextDependents {
 
     /**
      * A set of {@link Dependencies} identifiers stored in an array. This data structure is designed
      * specifically as the value type in {@link ContextDependents#map}.
      */
-    static final class DSet {
+    public static final class DSet {
 
         /**
          * Creates a new set with one element.
@@ -59,8 +59,12 @@ final class ContextDependents {
             size = 1;
         }
 
-        int[] data;
-        int size;
+        private int[] data;
+        private int size;
+
+        public int size() {
+            return size;
+        }
 
         /**
          * Gets the dependency ID at a given index.
@@ -72,7 +76,7 @@ final class ContextDependents {
         /**
          * Gets the dependency at a given index.
          */
-        Dependencies getDeps(int index) {
+        public Dependencies getDeps(int index) {
             return Dependencies.fromId(get(index));
         }
 
@@ -158,7 +162,7 @@ final class ContextDependents {
      */
     static final int INITIAL_CAPACITY = 600;
 
-    static final ConcurrentHashMap<ClassActor, DSet> map = new ConcurrentHashMap<ClassActor, DSet>(INITIAL_CAPACITY);
+    public static final ConcurrentHashMap<ClassActor, DSet> map = new ConcurrentHashMap<ClassActor, DSet>(INITIAL_CAPACITY);
 
     /**
      * Adds a mapping from each context type in a dependencies object to the dependency object.
@@ -197,7 +201,7 @@ final class ContextDependents {
      */
     int removeDependencies(final Dependencies deps) {
         final int[] removed = {0};
-        deps.iterate(new Dependencies.DependencyVisitor() {
+        deps.visit(new Dependencies.DependencyVisitor() {
             @Override
             public boolean nextContextClass(ClassActor type, ClassActor prev) {
                 if (type != null) {

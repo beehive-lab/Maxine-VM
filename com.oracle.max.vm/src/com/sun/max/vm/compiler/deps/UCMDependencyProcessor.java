@@ -243,16 +243,16 @@ public class UCMDependencyProcessor extends DependencyProcessor {
         MethodActor impl = null;
         MethodActor method = null;
         if (mindex >= 0) {
-            impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(context.id, mindex)));
-            assert impl != null;
+            impl = ucmVisitor == null ? null : MethodID.toMethodActor(MethodID.fromWord(MemberID.create(context.id, mindex)));
             method = impl;
         } else {
             int implHolder = dependencies.packed[i++];
-            impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(implHolder, -mindex - 1)));
             int methodHolderID = dependencies.packed[i++];
-            ClassActor methodHolder = ClassID.toClassActor(methodHolderID);
-            method = methodHolder.findLocalMethodActor(impl.name, impl.descriptor());
-            assert method != null : impl;
+            if (ucmVisitor != null) {
+                impl = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(implHolder, -mindex - 1)));
+                ClassActor methodHolder = ClassID.toClassActor(methodHolderID);
+                method = methodHolder.findLocalMethodActor(impl.name, impl.descriptor());
+            }
         }
         if (ucmVisitor != null) {
             if (!ucmVisitor.doConcreteMethod(dependencies.targetMethod, method, impl, context)) {

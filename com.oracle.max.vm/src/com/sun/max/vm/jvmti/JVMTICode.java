@@ -62,7 +62,7 @@ public class JVMTICode {
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         // we check here if the code is already adequate for the settings we want
-        if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
+        if (JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings)) {
             return;
         }
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
@@ -103,7 +103,7 @@ public class JVMTICode {
             checkDeOptForMethod(classMethodActor, codeEventSettings);
             // recheck
             targetMethod = classMethodActor.currentTargetMethod();
-            assert targetMethod != null && targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor));
+            assert targetMethod != null && JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings);
         } else {
             // Never compiled, but may have been inlined
             if (inliners.size() == 0) {
