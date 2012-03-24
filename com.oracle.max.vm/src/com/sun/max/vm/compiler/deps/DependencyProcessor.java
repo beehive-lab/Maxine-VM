@@ -114,9 +114,11 @@ public abstract class DependencyProcessor {
     protected abstract DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor);
 
     /**
-     * Visit a specific dependency invoking the given {@linkplain DependencyProcessorVisitor}, which may be {@code null}.
-     * N.B. {@code dependencyProcessorVisitor} must be an instance of the {@linkplain DependencyProcessorVisitor}
+     * Visit a specific dependency invoking the given {@linkplain DependencyProcessorVisitor}, which may be {@code null},
+     * indicating that the data need only be skipped (as efficiently as possible).
+     * N.B. If not {@code null}, {@code dependencyProcessorVisitor} must be an instance of the {@linkplain DependencyProcessorVisitor}
      * defined by this processor.
+     *
      * @param dependencyProcessorVisitor visitor to apply
      * @param context {@linkplain ClassActor class actor}
      * @param dependencies the associated{@linkplain Dependencies} instance

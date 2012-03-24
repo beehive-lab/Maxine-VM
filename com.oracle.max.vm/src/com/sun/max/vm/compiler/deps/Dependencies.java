@@ -56,7 +56,7 @@ import com.sun.max.vm.type.*;
 public final class Dependencies {
 
     /**
-     * Client for {@linkplain Dependencies#iterate(DependencyVisitor) iterating}
+     * Client for {@linkplain Dependencies#visit(DependencyVisitor) iterating}
      * over the basic structure of a {@link Dependencies} object.
      * <p>
      * Note that there are no method definitions related to {@linkplain DependencyProcessor}
@@ -255,6 +255,14 @@ public final class Dependencies {
         return buf;
     }
 
+    public int getInt(int index) {
+        return (packed[index] << 16) | packed[index + 1];
+    }
+
+    public long getLong(int index) {
+        return (getInt(index) << 32) | getInt(index + 2);
+    }
+
     static short getMIndex(MethodActor methodActor) {
         int mindex = methodActor.memberIndex();
         FatalError.check(mindex <= Short.MAX_VALUE && mindex >= 0, "method index range not supported");
@@ -376,13 +384,13 @@ public final class Dependencies {
     }
 
     /**
-     * Iterates over all the dependencies in the packed form.
+     * Visits all the dependencies in the packed form.
      *
-     * @param dc visitor the dependencies are fed to
+     * @param visitor visitor the dependencies are fed to
      */
-    public void iterate(DependencyVisitor dc) {
+    public void visit(DependencyVisitor visitor) {
         if (packed == INVALIDATED) {
-            dc.doInvalidated();
+            visitor.doInvalidated();
             return;
         }
         int i = 0;
@@ -391,8 +399,8 @@ public final class Dependencies {
             int contextClassID = packed[i++];
             int flags = packed[i++];
             final ClassActor contextClassActor = ClassID.toClassActor(contextClassID);
-            if (dc.classID == ClassID.NULL_CLASS_ID || dc.classID == contextClassID) {
-                if (!dc.nextContextClass(contextClassActor, prev)) {
+            if (visitor.classID == ClassID.NULL_CLASS_ID || visitor.classID == contextClassID) {
+                if (!visitor.nextContextClass(contextClassActor, prev)) {
                     return;
                 }
                 // scan every set dependencies' data
@@ -403,7 +411,7 @@ public final class Dependencies {
                         short length = dependencyProcessor.hasData ? packed[i++] : 0;
                         int end = i + length;
                         do {
-                            i = dc.visit(this, contextClassActor, dependencyProcessor, i);
+                            i = visitor.visit(this, contextClassActor, dependencyProcessor, i);
                             if (i < 0) {
                                 return;
                             }
@@ -412,7 +420,7 @@ public final class Dependencies {
                 }
 
                 // if we were just iterating one context and this was it we are done
-                if (dc.classID == contextClassID) {
+                if (visitor.classID == contextClassID) {
                     return;
                 }
             } else {
@@ -430,7 +438,7 @@ public final class Dependencies {
             prev = contextClassActor;
 
         }
-        dc.nextContextClass(null, prev);
+        visitor.nextContextClass(null, prev);
         assert i == packed.length;
     }
 
@@ -466,7 +474,7 @@ public final class Dependencies {
             return value;
         } else {
             final StringBuilder sb = new StringBuilder(value + Arrays.toString(packed));
-            iterate(new AllDependencyVisitors.ToStringDependencyVisitor(sb));
+            visit(new AllDependencyVisitors.ToStringDependencyVisitor(sb));
             return sb.toString();
         }
     }

@@ -30,6 +30,7 @@ import com.oracle.max.vm.ext.t1x.jvmti.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.*;
 
@@ -87,7 +88,11 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
         // if we compiled any event calls create a JVMTI_T1XTargetMethod, otherwise a vanilla one
         if (anyEventCalls) {
-            return new JVMTI_T1XTargetMethod(comp, install, eventBci, eventSettings, breakpoints);
+            Dependencies deps = JVMTI_DependencyProcessor.recordInstrumentation(method.holder(), eventSettings, breakpoints);
+            assert deps != null;
+            T1XTargetMethod targetMethod = new JVMTI_T1XTargetMethod(comp, install, eventBci);
+            Dependencies.registerValidatedTarget(deps, targetMethod);
+            return targetMethod;
         } else {
             return new T1XTargetMethod(comp, install);
         }

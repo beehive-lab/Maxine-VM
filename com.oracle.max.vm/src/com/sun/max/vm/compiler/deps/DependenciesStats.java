@@ -82,9 +82,9 @@ public class DependenciesStats {
 
         for (ClassActor type : map.keySet()) {
             DSet dset = map.get(type);
-            numDependentsPerType.record(dset.size);
+            numDependentsPerType.record(dset.size());
 
-            for (int i = 0; i < dset.size; i++) {
+            for (int i = 0; i < dset.size(); i++) {
                 final Dependencies deps = dset.getDeps(i);
                 countDependenciesPerType(deps, type.id, dependencyCounters);
             }
@@ -121,12 +121,12 @@ public class DependenciesStats {
     @HOSTED_ONLY
     private static void printDependents(ClassActor type, final PrintStream out) {
         DSet dset = map.get(type);
-        int numDependents = dset.size;
+        int numDependents = dset.size();
         out.println("\nclass " + type + " (id = " + type.id + ") has " + numDependents + " dependents");
-        for (int i = 0; i < dset.size; i++) {
+        for (int i = 0; i < dset.size(); i++) {
             final Dependencies deps = dset.getDeps(i);
             out.println("  " + deps);
-            deps.iterate(new DependencyVisitor(type.id) {
+            deps.visit(new DependencyVisitor(type.id) {
                 @Override
                 protected int visit(Dependencies dependencies, ClassActor context, DependencyProcessor dependencyProcessor, int index) {
                     StringBuilder sb = new StringBuilder();
@@ -148,7 +148,7 @@ public class DependenciesStats {
 
     @HOSTED_ONLY
     private static void countDependenciesPerType(final Dependencies deps, int classID, final HashMap<DependencyProcessor, Counter> counters) {
-        deps.iterate(new DependencyVisitor(classID) {
+        deps.visit(new DependencyVisitor(classID) {
             @Override
             protected int visit(Dependencies dependencies, ClassActor context, DependencyProcessor dependencyProcessor, int index) {
                 counters.get(dependencyProcessor).count++;

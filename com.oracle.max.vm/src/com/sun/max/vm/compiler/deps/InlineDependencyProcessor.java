@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.compiler.deps;
 
+import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -140,17 +142,19 @@ public class InlineDependencyProcessor extends DependencyProcessor {
         } else {
             inlineeMIndex = -inlineeMIndex - 1;
             int inlineeHolderID = dependencies.packed[i++];
-            inlineeHolder = ClassID.toClassActor(inlineeHolderID);
+            inlineeHolder = inlineVisitor != null ? ClassID.toClassActor(inlineeHolderID) : null;
         }
-        ClassMethodActor inliningMethod = dependencies.targetMethod.classMethodActor;
-        ClassMethodActor inlineeMethod = (ClassMethodActor) MethodID.toMethodActor(MethodID.fromWord(MemberID.create(inlineeHolder.id, inlineeMIndex)));
         if (inlineVisitor != null) {
+            ClassMethodActor inliningMethod = dependencies.targetMethod.classMethodActor;
+            ClassMethodActor inlineeMethod = (ClassMethodActor) MethodID.toMethodActor(MethodID.fromWord(MemberID.create(inlineeHolder.id, inlineeMIndex)));
             if (!inlineVisitor.doInlinedMethod(dependencies.targetMethod, inliningMethod, inlineeMethod, context)) {
                 return -1;
             }
         }
         return i;
     }
+
+    private static final ArrayList<TargetMethod> EMPTY = new ArrayList<TargetMethod>(0);
 
     /**
      * Returns all the {@link TargetMethod} instances that inlined {@code inlineeToCheck}.
@@ -159,40 +163,47 @@ public class InlineDependencyProcessor extends DependencyProcessor {
      * @return
      */
     public static ArrayList<TargetMethod> getInliners(final ClassMethodActor inlineeToCheck) {
-        // TODO Worry about a concurrent compilation adding a new class with a method that inlines inlineeToCheck?
-        //      Only solution now is to hold the classHierarchyLock in write mode
+        if (inlineeToCheck.isDeclaredNeverInline()) {
+            return EMPTY;
+        }
         final ArrayList<TargetMethod> result = new ArrayList<TargetMethod>();
-        for (DSet dset : ContextDependents.map.values()) {
-            synchronized (dset) {
-                int i = 0;
-                while (i < dset.size) {
-                    final Dependencies deps = dset.getDeps(i);
-                    final int fi = i;
-                    deps.iterate(new FindInliners() {
-                        @Override
-                        public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
-                            if (inlinee == inlineeToCheck) {
-                                inlineLogger.logDoInlinedMethod(fi, deps, targetMethod, method, inlinee, context);
-                                add(targetMethod);
-                            }
-                            return true;
-                        }
+        classHierarchyLock.readLock().lock();
+        try {
+            for (DSet dset : ContextDependents.map.values()) {
+                synchronized (dset) {
+                    int i = 0;
+                    while (i < dset.size()) {
+                        final Dependencies deps = dset.getDeps(i);
+                        final int fi = i;
+                        deps.visit(new FindInliners() {
 
-                        private boolean add(TargetMethod targetMethod) {
-                            for (TargetMethod tm : result) {
-                                if (tm == targetMethod) {
-                                    return false;
+                            @Override
+                            public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
+                                if (inlinee == inlineeToCheck) {
+                                    inlineLogger.logDoInlinedMethod(fi, deps, targetMethod, method, inlinee, context);
+                                    add(targetMethod);
                                 }
+                                return true;
                             }
-                            result.add(targetMethod);
-                            return true;
-                        }
-                    });
-                    i++;
+
+                            private boolean add(TargetMethod targetMethod) {
+                                for (TargetMethod tm : result) {
+                                    if (tm == targetMethod) {
+                                        return false;
+                                    }
+                                }
+                                result.add(targetMethod);
+                                return true;
+                            }
+                        });
+                        i++;
+                    }
                 }
             }
+            return result;
+        } finally {
+            classHierarchyLock.readLock().unlock();
         }
-        return result;
     }
 
     private static abstract class FindInliners extends Dependencies.DependencyVisitor implements InlineDependencyProcessor.InlineDependencyProcessorVisitor {
