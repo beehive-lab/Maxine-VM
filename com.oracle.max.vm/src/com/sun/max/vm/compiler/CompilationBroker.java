@@ -507,6 +507,10 @@ public class CompilationBroker {
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
+        if (mpo.compilationDisabled) {
+            mpo.entryCount = Integer.MAX_VALUE;
+            return;
+        }
         if (Heap.isAllocationDisabledForCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because allocation is currently disabled");
             // We don't want to see another counter overflow in the near future

@@ -91,8 +91,9 @@ public class JVMTI_DependencyProcessor extends DependencyProcessor {
     protected boolean validate(CiAssumptions.Assumption assumption, ClassDeps classDeps) {
         JVMTI_Assumption jvmtiAssumption = (JVMTI_Assumption) assumption;
         classDeps.add(this, jvmtiAssumption.eventSettings);
-        classDeps.add(this, jvmtiAssumption.breakpoints.length);
-        for (int i = 0; i < jvmtiAssumption.breakpoints.length; i++) {
+        int length = jvmtiAssumption.breakpoints == null ? 0 : jvmtiAssumption.breakpoints.length;
+        classDeps.add(this, length);
+        for (int i = 0; i < length; i++) {
             classDeps.add(this, jvmtiAssumption.breakpoints[i]);
         }
         return true;
@@ -112,7 +113,7 @@ public class JVMTI_DependencyProcessor extends DependencyProcessor {
         int length = dependencies.getInt(i);
         i += 2;
         if (jvmtiVisitor != null) {
-            long[] breakpoints = new long[length];
+            long[] breakpoints = length == 0 ? null : new long[length];
             for (int b = 0; b < length; b++) {
                 breakpoints[b] = dependencies.getLong(i);
                 i += 4;
@@ -142,11 +143,12 @@ public class JVMTI_DependencyProcessor extends DependencyProcessor {
                 // terminate visit
                 return false;
             }
+            // continue searching
             return true;
         }
 
         private boolean check(long eventSettings, long[] breakpoints) {
-            if ((eventSettings & this.eventSettingsToMatch) == eventSettings) {
+            if ((eventSettingsToMatch & eventSettings) == eventSettingsToMatch) {
                 if (breakpointsToMatch == null) {
                     return true;
                 }
