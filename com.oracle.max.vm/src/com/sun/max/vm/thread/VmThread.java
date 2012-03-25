@@ -626,6 +626,8 @@ public class VmThread {
 
         // Enable safepoints:
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
+        // prologue sets the IN_UPCALL bit, but we aren't actually in a JVMTI/JNI upcall
+        JVMTIVmThreadLocal.unsetBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
 
         final VmThread thread = VmThread.current();
 

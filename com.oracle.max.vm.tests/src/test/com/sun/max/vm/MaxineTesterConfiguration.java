@@ -125,6 +125,7 @@ public class MaxineTesterConfiguration {
             output(Classes.forName("test.output.MethodHandles07"), FAIL_ALL);
         }
 
+        vmoutput(findOutputTests("test.vm.output."));
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
 //        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization

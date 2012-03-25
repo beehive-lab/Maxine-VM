@@ -166,10 +166,8 @@ public class C1X implements RuntimeCompiler {
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
 
-            // Boot image code may not be safely deoptimizable due to metacircular issues
-            // so only enable speculative optimizations at runtime
-            C1XOptions.UseAssumptions = false;
-
+            // Speculative opts (UseAssumptions) are the default in the boot image as they are limited
+            // to VM classes, which form a closed world.
             optionsRegistered = true;
         }
 
@@ -183,7 +181,7 @@ public class C1X implements RuntimeCompiler {
         }
 
         if (phase == Phase.STARTING) {
-            // Now it is safe to use speculative opts
+            // Speculative opts are ok provided the compilation broker can handle deopt
             C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
@@ -252,12 +250,12 @@ public class C1X implements RuntimeCompiler {
         return compiler;
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
-            Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
+            Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.start();
@@ -267,7 +265,7 @@ public class C1X implements RuntimeCompiler {
                     C1XTimers.INSTALL.stop();
                 }
                 if (deps != null) {
-                    DependenciesManager.registerValidatedTarget(deps, maxTargetMethod);
+                    Dependencies.registerValidatedTarget(deps, maxTargetMethod);
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {
