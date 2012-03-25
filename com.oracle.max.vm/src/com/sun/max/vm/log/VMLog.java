@@ -29,6 +29,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.Heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -262,18 +263,25 @@ public abstract class VMLog implements Heap.GCCallback {
      * Called to create the specific {@link VMLog} subclass at an appropriate point in the image build.
      */
     @HOSTED_ONLY
-    public static void bootImageInitialize() {
-        nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
-        vmLog = Factory.create();
-        vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-        operationRefMaps = new int[loggers.length][];
-        for (VMLogger logger : loggers) {
-            if (logger != null) {
-                logger.setVMLog(vmLog, new VMLogHosted());
-                operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+    static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
+
+        public void initializationComplete() {
+            nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
+            vmLog = Factory.create();
+            vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+            operationRefMaps = new int[loggers.length][];
+            for (VMLogger logger : loggers) {
+                if (logger != null) {
+                    logger.setVMLog(vmLog, new VMLogHosted());
+                    operationRefMaps[logger.loggerId] = logger.operationRefMaps;
+                }
             }
+            Heap.registerGCCallback(vmLog);
         }
-        Heap.registerGCCallback(vmLog);
+    }
+
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
     }
 
     /**

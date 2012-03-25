@@ -40,6 +40,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
@@ -4496,6 +4497,92 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action: execute a static method on a value.
+     */
+    class InvokeHostMethod extends InspectorAction {
+        private static final String DEFAULT_TITLE = "Invoke a host method";
+
+        InvokeHostMethod(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        private Method getMethod(MethodKey methodKey) {
+            String className = methodKey.holder().toJavaString();
+            Class<?> klass = Classes.forName(className);
+            Class<?>[] parameterTypes = methodKey.signature().resolveParameterTypes(ClassLoader.getSystemClassLoader());
+            try {
+                return klass.getDeclaredMethod(methodKey.name().string, parameterTypes);
+            } catch (NoSuchMethodException ex) {
+                gui().errorMessage("no such method");
+                return null;
+            }
+        }
+
+        @Override
+        protected void procedure() {
+            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for method invocation...", "Select");
+            if (typeDescriptor != null) {
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Method for invocation", "Invoke");
+                if (methodKey != null) {
+                    Method method = getMethod(methodKey);
+                    Kind[] parameterKinds = methodKey.signature().copyParameterKinds(null, 0);
+                    gui().getMainMenuBar().debugMenu().add(new ExecuteSpecificHostMethod("Invoke " + method.getName(), method, parameterKinds));
+                    invoke(method, parameterKinds);
+                }
+            }
+        }
+
+        protected void invoke(Method method, Kind[] parameterKinds) {
+            final Value[] arguments = MethodArgsDialog.getArgs(inspection(), parameterKinds, null);
+            if (arguments == null) {
+                // User clicked cancel.
+                return;
+            }
+            Object[] objArgs = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Value value = arguments[i];
+                Kind kind = value.kind();
+                if (kind == Kind.LONG) {
+                    objArgs[i] = value.asLong();
+                } else {
+                    gui().errorMessage("unsupported argument type");
+                }
+            }
+            try {
+                Object returnValue = method.invoke(null, objArgs);
+                views().activateSingletonView(ViewKind.INVOKE_METHOD_LOG);
+                InvokeMethodLogView.getInvokeMethodLogView().appendText(returnValue.toString());
+            } catch (Exception e) {
+                gui().informationMessage("Method " + method.getName() + " threw " + e.getMessage());
+            }
+        }
+    }
+
+    private InspectorAction invokeHostMethod = new InvokeHostMethod(null);
+
+    public final InspectorAction invokeHostMethod() {
+        return invokeHostMethod;
+    }
+
+    private class ExecuteSpecificHostMethod extends InvokeHostMethod {
+        private final Method method;
+        private final Kind[] parameterKinds;
+
+        ExecuteSpecificHostMethod(String actionTitle, Method method, Kind[] parameterKinds) {
+            super(actionTitle);
+            this.method = method;
+            this.parameterKinds = parameterKinds;
+        }
+
+        @Override
+        protected void procedure() {
+            invoke(method, parameterKinds);
+        }
+
+    }
+
+
+    /**
      * @return menu items for memory-related actions that are independent of context
      */
     public InspectorMenuItems genericMemoryMenuItems() {
@@ -4631,6 +4718,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
                 menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
                 menu.add(views().activateSingletonViewAction(ViewKind.VMLOG));
+                menu.add(views().activateSingletonViewAction(ViewKind.INVOKE_METHOD_LOG));
             }
         };
     }

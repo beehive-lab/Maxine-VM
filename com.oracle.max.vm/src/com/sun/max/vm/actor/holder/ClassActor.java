@@ -135,11 +135,15 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     private int nextSiblingId;
 
+    public static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
+    public static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
+
     /**
      * Holds the class id of the unique concrete sub-type of
      * this class actor, {@link ClassID#NULL_CLASS_ID} if the class has
      * no concrete sub-type, or the class id of the java.lang.Object class
-     * if there is multiple concrete sub-types.
+     * (@link {@link #HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK}
+     * if there are multiple concrete sub-types.
      */
     public volatile int uniqueConcreteType;
 
@@ -504,8 +508,23 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return false;
     }
 
+    public boolean canUseAssumptions(RiMethod method) {
+        if (MaxineVM.isHosted()) {
+            if (!isVM()) {
+                // JDK is not a close world, and don't want to deopt boot image
+                return false;
+            } else {
+                // TODO possibly remove this if templates can handle the consequences
+                MethodActor methodActor = (MethodActor) method;
+                return !methodActor.isTemplate();
+            }
+        } else {
+            return true;
+        }
+    }
+
     public final boolean isVM() {
-        return classLoader == VMClassLoader.VM_CLASS_LOADER;
+        return classLoader == (MaxineVM.isHosted() ? HostedVMClassLoader.HOSTED_VM_CLASS_LOADER : VMClassLoader.VM_CLASS_LOADER);
     }
 
     public boolean isPrimitiveClassActor() {
@@ -1833,7 +1852,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     @Override
     public final RiResolvedType uniqueConcreteSubtype() {
-        return DependenciesManager.getUniqueConcreteSubtype(this);
+        return UCTDependencyProcessor.getUniqueConcreteSubtype(this);
     }
 
     /**
@@ -1844,7 +1863,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * @return the unique concrete incarnation of the method, or null
      */
     public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
-        return DependenciesManager.getUniqueConcreteMethod(this, (MethodActor) method);
+        return UCMDependencyProcessor.getUniqueConcreteMethod(this, (MethodActor) method);
     }
 
     public RiResolvedField[] declaredFields() {

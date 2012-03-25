@@ -246,7 +246,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
         record(new InlinedMethod(method, method.holder(), inlinee));
     }
 
-    private void record(Assumption assumption) {
+    public void record(Assumption assumption) {
         if (list == null) {
             list = new Assumption[4];
         } else {
