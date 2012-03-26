@@ -206,7 +206,7 @@ public class JVMTIEvent {
     /**
      * Pre-computed bit settings for each event.
      */
-    private static long[] bitSettings = new long[EVENT_COUNT];
+    private static final long[] bitSettings = new long[EVENT_COUNT];
 
     /**
      * This provides a fast check for compiled code event checks.
@@ -259,7 +259,7 @@ public class JVMTIEvent {
     /**
      * A set of bits that correspond to the phases in which it is legal to dispatch the event.
      */
-    private static int[] phases = new int[EVENT_COUNT];
+    private static final int[] phases = new int[EVENT_COUNT];
 
     static {
         Heap.registerGCCallback(new GCCallback());

@@ -25,6 +25,8 @@ package com.oracle.max.vm.ext.t1x.jvmti;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 
+import java.util.*;
+
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
@@ -62,16 +64,16 @@ import com.sun.max.vm.runtime.*;
  */
 public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
 
-    private final boolean[] eventBci;
+    private final BitSet eventBci;
 
-    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, boolean[] eventBci) {
+    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, BitSet eventBci) {
         super(comp, install);
         this.eventBci = eventBci;
     }
 
     @Override
     protected CodePointer findTemplateCallReturnAddress(Info info, int bci, RiMethod callee) throws FatalError {
-        if (!eventBci[bci]) {
+        if (!eventBci.get(bci)) {
             // no instrumentation code was generated for this bytecode so no special treatment.
             return super.findTemplateCallReturnAddress(info, bci, callee);
         }

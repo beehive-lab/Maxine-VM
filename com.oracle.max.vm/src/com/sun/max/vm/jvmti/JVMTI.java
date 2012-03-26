@@ -247,12 +247,12 @@ public class JVMTI {
     }
 
     /**
-     * Support for determining if we need to compile special code to dispatch
-     * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
-     * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
-     * @return the eventId corresponding to the bytecode or 0 if not needed
+     * Returns the {@link JVMTIEvent event id} that corresponds to a given bytecode,
+     * should it be instrumented.
+     * @param opcode
+     * @return
      */
-    public static synchronized int byteCodeEventNeeded(int opcode) {
+    public static int eventForBytecode(int opcode) {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
@@ -279,6 +279,17 @@ public class JVMTI {
 
             }
         }
+        return eventId;
+    }
+
+    /**
+     * Support for determining if we need to compile special code to dispatch
+     * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
+     * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
+     * @return the eventId corresponding to the bytecode or 0 if not needed
+     */
+    public static synchronized int byteCodeEventNeeded(int opcode) {
+        int eventId = eventForBytecode(opcode);
         return JVMTIEvent.isEventSet(eventId) ? eventId : 0;
     }
 

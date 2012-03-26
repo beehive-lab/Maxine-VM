@@ -24,6 +24,8 @@ package com.oracle.max.vm.ext.t1x.jvmti.amd64;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
+import java.util.*;
+
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.t1x.jvmti.*;
@@ -38,36 +40,28 @@ import com.sun.max.vm.profile.*;
 /**
  * Custom compilation class for generating JVMTI code-related events.
  *
- * When any JVMTI agents have requested <i>any</i> of the events that require
- * compiled code modifications, an instance of this class is used to compile
- * a method.
+ * When any JVMTI agents have requested <i>any</i> of the events that require compiled code modifications, an instance
+ * of this class is used to compile a method.
  *
- * This class is capable of compiling code that is an exact match for the set of events
- * that are needed. However, it can also operate in "interpreter" mode where all possible
- * events are compiled in from the outset. Since single-step is one such event this
- * effectively puts the code in interpreted mode, as the event delivery code will
- * be called on every bytecode. Evidently, it is the responsibility of the
- * event delivery code to suppress delivery of unwanted events. The remainder of
- * the discussion assumes the strict mode.
+ * This class is capable of compiling code that is an exact match for the set of events that are needed. However, for
+ * the debugging events, it can also operate in a mode where all possible events are compiled in from the
+ * outset. Since single-step is one such event this effectively puts the code in interpreted mode, as the event delivery
+ * code will be called on every bytecode. Evidently, it is the responsibility of the event delivery code to suppress
+ * delivery of unwanted events. The remainder of the discussion assumes the strict mode.
  *
- * Prior to compilation, in {@link #initCompile}, a check is made for which kinds
- * of events are required. This results in {@link #eventSettings} having those
- * bits sets, where the bit numbers correspond to the {@link JVMTIEvent} values.
+ * Prior to compilation, in {@link #initCompile}, a check is made for which kinds of events are required. This results
+ * in {@link #eventSettings} having those bits sets, where the bit numbers correspond to the {@link JVMTIEvent} values.
  *
- * Some events, e.g., field access/modification events, require that modified templates
- * be used to translate the bytecode. Prior to each bytecode translation, the templates
- * are set appropriately in {@link #setTemplates(boolean)}.
+ * Some events, e.g., field access/modification events, require that modified templates be used to translate the
+ * bytecode. Prior to each bytecode translation, the templates are set appropriately in {@link #setTemplates(boolean)}.
  *
- * Breakpoints are handled by checking every bytecode location against
- * the list of set breakpoints and on a match, generating the code
- * for the breakpoint event (via a template for {@link Bytecodes#BREAKPOINT)
- * before the code for the actual bytecode (before advice essentially).
- * There is no compelling need to recompile to remove a breakpoint, we just
+ * Breakpoints are handled by checking every bytecode location against the list of set breakpoints and on a match,
+ * generating the code for the breakpoint event (via a template for {@link Bytecodes#BREAKPOINT) before the code for the
+ * actual bytecode (before advice essentially). There is no compelling need to recompile to remove a breakpoint, we just
  * don't deliver the event.
  *
- * TODO: Since field events are specified per field by the agent, a further optimization
- * would be to determine whether the specific field being accessed is subject to a watch.
- *
+ * TODO: Since field events are specified per field by the agent, a further optimization would be to determine whether
+ * the specific field being accessed is subject to a watch.
  */
 public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     /**
@@ -91,18 +85,17 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      */
     private MethodID methodID;
     /**
-     * Effectively a bitmask indicating a bytecode that has an associated event.
+     * Indicates whether a bytecode has an associated event.
      */
-    private boolean[] eventBci;
+    private BitSet eventBci;
     /**
-     * {@cod etrue} iff any event calls were actually compiled in the method.
+     * The settings as a {@link JVMTIEvent} bitmask.
      */
-    private boolean anyEventCalls;
     private long eventSettings;
 
-    private int doFieldAccess;
-    private int doFieldModification;
-    private int doPopFrame;
+    private static final int GETFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.GETFIELD);
+    private static final int PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
+    private static final int RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
 
     private final T1X defaultT1X;
 
@@ -115,7 +108,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     @Override
     protected T1XTargetMethod newT1XTargetMethod(T1XCompilation comp, boolean install) {
         // if we compiled any event calls create a JVMTI_T1XTargetMethod, otherwise a vanilla one
-        if (anyEventCalls) {
+        if (!eventBci.isEmpty()) {
             // disable the method profiler
             MethodProfile methodProfile = methodProfileBuilder.methodProfileObject();
             methodProfile.compilationDisabled = true;
@@ -134,7 +127,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         super.initCompile(method, codeAttribute);
-        eventBci = new boolean[bciToPos.length];
+        eventBci = new BitSet(bciToPos.length);
         breakpoints = JVMTIBreakpoints.getBreakpoints(method);
         // N.B. Just because there are breakpoints defined, doesn't mean that
         // breakpoint events are currently enabled by the agent.
@@ -148,9 +141,9 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         }
         methodID = MethodID.fromMethodActor(method);
         checkByteCodeEventNeeded(-1);  // METHOD_ENTRY
-        doFieldAccess = checkByteCodeEventNeeded(Bytecodes.GETFIELD);
-        doFieldModification = checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
-        doPopFrame = checkByteCodeEventNeeded(Bytecodes.RETURN);
+        checkByteCodeEventNeeded(Bytecodes.GETFIELD);
+        checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
+        checkByteCodeEventNeeded(Bytecodes.RETURN);
     }
 
     /**
@@ -158,7 +151,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      * @param bytecode
      * @return the corresponding eventId or zero if not needed.
      */
-    private int  checkByteCodeEventNeeded(int bytecode) {
+    private int checkByteCodeEventNeeded(int bytecode) {
         int eventId = JVMTI.byteCodeEventNeeded(bytecode);
         if (eventId != 0) {
             eventSettings |= JVMTIEvent.bitSetting(eventId);
@@ -206,15 +199,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             }
         }
 
-        int eventId = 0;
+        boolean bytecodeEvent = false;
         switch (opcode) {
             case Bytecodes.GETFIELD:
             case Bytecodes.GETSTATIC:
-                eventId = doFieldAccess;
+                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(GETFIELD_EVENT)) != 0;
                 break;
             case Bytecodes.PUTFIELD:
             case Bytecodes.PUTSTATIC:
-                eventId = doFieldModification;
+                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(PUTFIELD_EVENT)) != 0;
                 break;
             case Bytecodes.IRETURN:
             case Bytecodes.LRETURN:
@@ -222,19 +215,19 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             case Bytecodes.DRETURN:
             case Bytecodes.ARETURN:
             case Bytecodes.RETURN:
-                eventId = doPopFrame;
+                bytecodeEvent = (eventSettings & JVMTIEvent.bitSetting(RETURN_EVENT)) != 0;
                 break;
 
             default:
         }
 
-        if (eventId != 0) {
+        if (bytecodeEvent) {
             eventCall = true;
             setTemplates(eventCall);
         }
-        eventBci[currentBCI] = eventCall;
+
         if (eventCall) {
-            anyEventCalls = true;
+            eventBci.set(currentBCI);
         }
     }
 
