@@ -111,10 +111,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && MaxineVM.isDebug() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // VM-generation time initialization.
-            AtomicPinCounter.hostInitialize();
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
+        if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.logGCTime()) {
