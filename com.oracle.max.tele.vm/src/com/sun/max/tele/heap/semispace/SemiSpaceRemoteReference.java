@@ -22,8 +22,9 @@
  */
 package com.sun.max.tele.heap.semispace;
 
-import static com.sun.max.vm.heap.HeapPhase.*;
 import static com.sun.max.vm.heap.ObjectStatus.*;
+
+import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
@@ -47,12 +48,12 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
      * the data held by the reference and by allowable state transitions.
      */
-    private enum RefState {
+    private static enum RefState {
 
         /**
          * Live reference in To-Space, heap not {@link #ANALYZING}.
          */
-        REF_LIVE {
+        REF_LIVE ("LIVE (not Analyzing)"){
 
             // Properties
             @Override
@@ -88,7 +89,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * Reference in From-Space, heap {@link #ANALYZING}, not forwarded.
          */
-        REF_FROM {
+        REF_FROM ("UNKNOWN (Analyzing: From-only)"){
 
             // Properties
             @Override ObjectStatus status() {
@@ -125,7 +126,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * Reference in To-Space, heap {@link #ANALYZING}, presumed to be forwarded new copy, old copy not discovered.
          */
-        REF_TO {
+        REF_TO("LIVE (Analyzing: To only)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -159,7 +160,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             }
         },
 
-        REF_FROM_TO {
+        REF_FROM_TO ("LIVE (Analyzing: From+To)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -189,7 +190,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             }
         },
 
-        REF_DEAD {
+        REF_DEAD ("Dead") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -214,6 +215,12 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             // Transitions (none: death is final)
 
         };
+
+        private final String label;
+
+        RefState(String label) {
+            this.label = label;
+        }
 
         // Properties
 
@@ -272,6 +279,27 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             TeleError.unexpected("Illegal state transition");
         }
 
+    }
+
+    public static final class RefStateCount {
+        public final String stateName;
+        public final long count;
+        private RefStateCount(RefState state, long count) {
+            this.stateName = state.label;
+            this.count = count;
+        }
+    }
+
+    public static List<RefStateCount> getStateCounts(List<SemiSpaceRemoteReference> refs) {
+        final long[] refCounts = new long[RefState.values().length];
+        final List<RefStateCount> stateCounts = new ArrayList<RefStateCount>();
+        for (SemiSpaceRemoteReference ref : refs) {
+            refCounts[ref.refState.ordinal()]++;
+        }
+        for (int i = 0; i < RefState.values().length; i++) {
+            stateCounts.add(new RefStateCount(RefState.values()[i], refCounts[i]));
+        }
+        return stateCounts;
     }
 
     /**
