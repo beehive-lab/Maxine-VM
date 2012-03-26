@@ -36,6 +36,8 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.heap.semispace.*;
+import com.sun.max.tele.heap.semispace.SemiSpaceRemoteReference.RefStateCount;
+import com.sun.max.tele.heap.semispace.SemiSpaceRemoteReference.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -596,70 +598,6 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         return remoteReference == null ? vm().referenceManager().zeroReference() : remoteReference;
     }
 
-    private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleLinearAllocationMemoryRegion region) {
-        final NumberFormat formatter = NumberFormat.getInstance();
-
-        int totalRefs = 0;
-        int liveRefs = 0;
-        int unknownRefs = 0;
-        int deadRefs = 0;
-
-//        for (WeakReference<SemiSpaceRemoteReference> weakRef : toSpaceRefMap.values()) {
-//            final SemiSpaceRemoteReference remoteReference = weakRef.get();
-//            if (remoteReference != null && region.contains(remoteReference.origin())) {
-//                totalRefs++;
-//                switch(remoteReference.status()) {
-//                    case LIVE:
-//                        liveRefs++;
-//                        break;
-//                    case UNKNOWN:
-//                        unknownRefs++;
-//                        break;
-//                    case DEAD:
-//                        deadRefs++;
-//                        break;
-//                }
-//            }
-//        }
-
-        // Line 0
-        String indentation = Strings.times(' ', indent);
-        final StringBuilder sb0 = new StringBuilder();
-        sb0.append("Dynamic region: ");
-        sb0.append(find(region).entityName());
-        printStream.println(indentation + sb0.toString());
-
-        // increase indentation
-        indentation += Strings.times(' ', 4);
-
-        // Line 1
-        final StringBuilder sb1 = new StringBuilder();
-        sb1.append("memory: ");
-        final MemoryUsage usage = region.getUsage();
-        final long size = usage.getCommitted();
-        if (size > 0) {
-            sb1.append("size=" + formatter.format(size));
-            final long used = usage.getUsed();
-            sb1.append(", usage=" + (Long.toString(100 * used / size)) + "%");
-        } else {
-            sb1.append(" <unallocated>");
-        }
-        printStream.println(indentation + sb1.toString());
-
-        // Line 2, indented
-        final StringBuilder sb2 = new StringBuilder();
-        sb2.append("refs=").append(formatter.format(totalRefs));
-        sb2.append(" (");
-        sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
-        sb2.append(ObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs)).append(", ");
-        sb2.append(ObjectStatus.DEAD.label()).append("=").append(formatter.format(deadRefs));
-        sb2.append(")");
-        if (verbose) {
-            sb2.append(", ref. mgr=").append(getClass().getSimpleName());
-        }
-        printStream.println(indentation + sb2.toString());
-    }
-
     /**
      * Do either of the heap regions contain the address anywhere in their extents (ignoring the allocation marker)?
      */
@@ -732,24 +670,86 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
     }
 
 
+    private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleLinearAllocationMemoryRegion region, SemiSpaceReferenceMap map) {
+        final NumberFormat formatter = NumberFormat.getInstance();
+        int totalRefs = 0;
+        int liveRefs = 0;
+        int unknownRefs = 0;
+        int deadRefs = 0;
+
+        for (SemiSpaceRemoteReference ref : map.values()) {
+            switch(ref.status()) {
+                case LIVE:
+                    liveRefs++;
+                    break;
+                case UNKNOWN:
+                    unknownRefs++;
+                    break;
+                case DEAD:
+                    deadRefs++;
+                    break;
+            }
+        }
+        totalRefs = liveRefs + unknownRefs + deadRefs;
+
+        // Line 0
+        String indentation = Strings.times(' ', indent);
+        final StringBuilder sb0 = new StringBuilder();
+        sb0.append("heap region: ");
+        sb0.append(find(region).entityName());
+        if (verbose) {
+            sb0.append(", ref. mgr=").append(getClass().getSimpleName());
+        }
+        printStream.println(indentation + sb0.toString());
+
+        // increase indentation
+        indentation += Strings.times(' ', 4);
+
+        // Line 1
+        final StringBuilder sb1 = new StringBuilder();
+        sb1.append("memory: ");
+        final MemoryUsage usage = region.getUsage();
+        final long size = usage.getCommitted();
+        if (size > 0) {
+            sb1.append("size=" + formatter.format(size));
+            final long used = usage.getUsed();
+            sb1.append(", used=" + formatter.format(used) + " (" + (Long.toString(100 * used / size)) + "%)");
+        } else {
+            sb1.append(" <unallocated>");
+        }
+        printStream.println(indentation + sb1.toString());
+
+        // Line 2, indented
+        final StringBuilder sb2 = new StringBuilder();
+        sb2.append("mapped object refs=").append(formatter.format(totalRefs));
+        if (totalRefs > 0) {
+            sb2.append(", object status: ");
+            sb2.append(ObjectStatus.LIVE.label()).append("=").append(formatter.format(liveRefs)).append(", ");
+            sb2.append(ObjectStatus.UNKNOWN.label()).append("=").append(formatter.format(unknownRefs));
+        }
+        printStream.println(indentation + sb2.toString());
+        if (deadRefs > 0) {
+            printStream.println(indentation + "ERROR: " + formatter.format(deadRefs) + " DEAD refs in map");
+        }
+
+        // Line 3, optional
+        if (verbose && totalRefs > 0) {
+            printStream.println(indentation +  "Mapped object ref states:");
+            final String stateIndentation = indentation + Strings.times(' ', 4);
+            for (RefStateCount refStateCount : SemiSpaceRemoteReference.getStateCounts(map.values())) {
+                if (refStateCount.count > 0) {
+                    printStream.println(stateIndentation + refStateCount.stateName + ": " + formatter.format(refStateCount.count));
+                }
+            }
+        }
+    }
+
     @Override
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
         if (!heapRegions.isEmpty()) {
-            int toSpaceRefs = 0;
-            int fromSpaceRefs = 0;
+            int toSpaceRefs = toSpaceRefMap.values().size();
+            int fromSpaceRefs = fromSpaceRefMap.values().size();
 
-//            for (WeakReference<SemiSpaceRemoteReference> weakRef : toSpaceRefMap.values()) {
-//                if (weakRef != null) {
-//                    final SemiSpaceRemoteReference remoteReference = weakRef.get();
-//                    if (remoteReference != null) {
-//                        if (toSpaceMemoryRegion.contains(remoteReference.origin())) {
-//                            toSpaceRefs++;
-//                        } else if (fromSpaceMemoryRegion.contains(remoteReference.origin())) {
-//                            fromSpaceRefs++;
-//                        }
-//                    }
-//                }
-//            }
             final NumberFormat formatter = NumberFormat.getInstance();
 
             // Line 0
@@ -757,7 +757,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
             final StringBuilder sb0 = new StringBuilder();
             sb0.append("Dynamic Heap:");
             if (verbose) {
-                sb0.append("  mgr=").append(vm().heapScheme().name());
+                sb0.append("  VMScheme=").append(vm().heapScheme().name());
             }
             printStream.println(indentation + sb0.toString());
 
@@ -768,18 +768,11 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
             final StringBuilder sb1 = new StringBuilder();
             sb1.append("phase=").append(phase().label());
             sb1.append(", collections completed=").append(formatter.format(gcCompletedCount));
+            sb1.append(", total object refs mapped=").append(formatter.format(toSpaceRefs + fromSpaceRefs));
             printStream.println(indentation + sb1.toString());
 
-            // Line 2
-            final StringBuilder sb2 = new StringBuilder();
-            sb2.append("total object refs:");
-            sb2.append(" fromSpace=").append(formatter.format(fromSpaceRefs));
-            sb2.append(", toSpace=").append(formatter.format(toSpaceRefs));
-            printStream.println(indentation + sb2.toString());
-
-
-            printRegionObjectStats(printStream, indent + 4, verbose, toSpaceMemoryRegion);
-            printRegionObjectStats(printStream, indent + 4, verbose, fromSpaceMemoryRegion);
+            printRegionObjectStats(printStream, indent + 4, verbose, toSpaceMemoryRegion, toSpaceRefMap);
+            printRegionObjectStats(printStream, indent + 4, verbose, fromSpaceMemoryRegion, fromSpaceRefMap);
         }
     }
 
