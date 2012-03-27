@@ -131,7 +131,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
     private long lastUpdateEpoch = -1L;
     private long lastAnalyzingPhaseCount = 0L;
-    private long lastReclaimingPhaseCount = 0;
+    private long lastReclaimingPhaseCount = 0L;
 
     /**
      * The VM object that implements the {@link HeapScheme} in the current configuration.
@@ -169,7 +169,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         @Override
         public String toString() {
             final StringBuilder msg = new StringBuilder();
-            msg.append("phase =").append(phase.label());
+            msg.append("GC phase=").append(phase.label());
             msg.append(" #starts=").append(gcStartedCount);
             msg.append(", #complete=").append(gcCompletedCount);
             return msg.toString();
@@ -178,7 +178,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
     protected RemoteSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);
-        this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+        this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
         this.referenceUpdateTracer = new ReferenceUpdateTracer();
 
         final VmAddressSpace addressSpace = vm().addressSpace();
@@ -251,6 +251,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
             return;
         }
         if (heapRegions.size() < 2) {
+            Trace.begin(TRACE_VALUE, tracePrefix() + "looking for heap regions");
             /*
              * The two heap regions have not yet been discovered. Don't check the epoch, since this check may
              * need to be run more than once during the startup sequence, as the information needed for access to
@@ -273,7 +274,9 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                     vm().addressSpace().add(fromVmHeapRegion.memoryRegion());
                 }
             }
-        } else if (epoch > lastUpdateEpoch) {
+            Trace.end(TRACE_VALUE, tracePrefix() + "looking for heap regions, " + heapRegions.size() + " found");
+        }
+        if (heapRegions.size() == 2 && epoch > lastUpdateEpoch) {
 
             heapUpdateTracer.begin();
 
@@ -295,18 +298,21 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                  * been swapped, and we must account for that before examining what has happened since the swap.
                  */
                 if (lastAnalyzingPhaseCount < gcStartedCount()) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + "first halt in new GC cycle, swapping semispace heap regions");
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", swapping semispace heap regions");
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
                     assert fromSpaceRefMap.isEmpty();
                     // Swap the maps to reflect the swapped locations of the two regions in the heap
                     final WeakRemoteReferenceMap<SemiSpaceRemoteReference> tempRefMap = toSpaceRefMap;
                     toSpaceRefMap = fromSpaceRefMap;
                     fromSpaceRefMap = tempRefMap;
+
                     // Transition the state of all references that are now in From-Space
-                    for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
+                    final List<SemiSpaceRemoteReference> refs = fromSpaceRefMap.values();
+                    for (SemiSpaceRemoteReference fromSpaceRef : refs) {
                         // A former To-Space reference that is now in From-Space: transition state
                         fromSpaceRef.analysisBegins();
                     }
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + refs.size());
                     lastAnalyzingPhaseCount = gcStartedCount();
                 }
 
@@ -317,7 +323,9 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                  */
                 if (lastReclaimingPhaseCount < gcStartedCount()) {
                     // The transition to reclaiming hasn't yet been processed, so check for any newly forwarded references.
-                    Trace.line(TRACE_VALUE, tracePrefix() + "checking for forwarded From-Space objects");
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "checking From-Space refs, GC cycle=" + gcStartedCount());
+                    int forwarded = 0;
+                    int live = 0;
                     for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
                         switch (fromSpaceRef.status()) {
                             case UNKNOWN:
@@ -329,10 +337,12 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                                     // After the state change, the official origin is now the one in To-Space.
                                     // Note that the reference is still in the From-Space map, indexed by what is now the "forwardedFrom" origin.
                                     toSpaceRefMap.put(toOrigin, fromSpaceRef);
+                                    forwarded++;
                                 }
                                 break;
                             case LIVE:
                                 // Do nothing; already has a forwarding pointer and is in the To-Space map
+                                live++;
                                 break;
                             case DEAD:
                                 TeleError.unexpected(tracePrefix() + "DEAD reference found in From-Space map");
@@ -341,6 +351,8 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                                 TeleError.unknownCase();
                         }
                     }
+                    Trace.end(TRACE_VALUE, tracePrefix() + "checking From-Space refs, GC cycle=" + gcStartedCount()
+                                    + " forwarded=" + (live + forwarded) + "(old=" + live + ", new=" + forwarded + ")");
                 }
 
                 if (phase().isReclaiming() && lastReclaimingPhaseCount < gcStartedCount()) {
@@ -350,7 +362,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                      * entry to the {@linkplain #RECLAIMING} phase.  This is the opportunity
                      * to update reference maps while full information is still available in the collector.
                      */
-                    Trace.line(TRACE_VALUE, tracePrefix() + "first halt in GC reclaiming phase; clearing From-Space references");
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount() + "; clearing From-Space references");
                     assert lastReclaimingPhaseCount == gcStartedCount() - 1;
                     lastReclaimingPhaseCount = gcStartedCount();
                     for (SemiSpaceRemoteReference toSpaceRef : toSpaceRefMap.values()) {
@@ -368,13 +380,17 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                                 TeleError.unknownCase();
                         }
                     }
+                    int forwarded = 0;
+                    int died = 0;
                     for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
                         switch (fromSpaceRef.status()) {
                             case LIVE:
                                 // Do nothing; the reference will already be in the To-Space map.
+                                forwarded++;
                                 break;
                             case UNKNOWN:
                                 fromSpaceRef.analysisEnds();
+                                died++;
                                 break;
                             case DEAD:
                                 TeleError.unexpected(tracePrefix() + "DEAD reference found in From-Space map");
@@ -384,6 +400,8 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                         }
                     }
                     fromSpaceRefMap.clear();
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount() + ", forwarded=" + forwarded + ", died=" + died);
+
                 }
             }
             lastUpdateEpoch = epoch;
