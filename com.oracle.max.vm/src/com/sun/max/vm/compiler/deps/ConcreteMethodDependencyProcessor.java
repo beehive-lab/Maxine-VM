@@ -29,6 +29,7 @@ import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.Dependencies.*;
@@ -63,7 +64,7 @@ import com.sun.max.vm.jni.*;
      *
  * </pre>
  */
-public class UCMDependencyProcessor extends DependencyProcessor {
+public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
 
     /**
      * Essentially the Maxine specific mirror of {@link CiAssumptions.ConcreteMethod}.
@@ -196,7 +197,12 @@ public class UCMDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    private static final UCMDependencyProcessor singleton = new UCMDependencyProcessor();
+    private static final ConcreteMethodDependencyProcessor singleton = new ConcreteMethodDependencyProcessor();
+
+    @HOSTED_ONLY
+    public static DependencyProcessor getDependencyProcessor() {
+        return singleton;
+    }
 
     private static ThreadLocal<UniqueConcreteMethodSearch> ucms = new ThreadLocal<UniqueConcreteMethodSearch>() {
         @Override
@@ -205,7 +211,7 @@ public class UCMDependencyProcessor extends DependencyProcessor {
         }
     };
 
-    UCMDependencyProcessor() {
+    ConcreteMethodDependencyProcessor() {
         super(CiAssumptions.ConcreteMethod.class);
     }
 
@@ -267,7 +273,7 @@ public class UCMDependencyProcessor extends DependencyProcessor {
         assert declaredType.isSubtypeOf(method.holder());
         classHierarchyLock.readLock().lock();
         try {
-            return new UCMDependencyProcessor.UniqueConcreteMethodSearch().doIt(declaredType, method);
+            return new ConcreteMethodDependencyProcessor.UniqueConcreteMethodSearch().doIt(declaredType, method);
         } finally {
             classHierarchyLock.readLock().unlock();
         }

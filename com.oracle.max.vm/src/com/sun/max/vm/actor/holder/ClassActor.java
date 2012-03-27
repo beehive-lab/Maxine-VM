@@ -1852,7 +1852,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     @Override
     public final RiResolvedType uniqueConcreteSubtype() {
-        return UCTDependencyProcessor.getUniqueConcreteSubtype(this);
+        return ConcreteTypeDependencyProcessor.getUniqueConcreteSubtype(this);
     }
 
     /**
@@ -1863,7 +1863,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * @return the unique concrete incarnation of the method, or null
      */
     public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
-        return UCMDependencyProcessor.getUniqueConcreteMethod(this, (MethodActor) method);
+        return ConcreteMethodDependencyProcessor.getUniqueConcreteMethod(this, (MethodActor) method);
     }
 
     public RiResolvedField[] declaredFields() {

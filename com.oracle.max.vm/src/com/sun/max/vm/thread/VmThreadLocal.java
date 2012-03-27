@@ -50,7 +50,7 @@ import com.sun.max.vm.stack.*;
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
  * <p>
- * All {@link VmThreadLocal} objects must be instantiated before {@link #initializationComplete()},
+ * All {@link VmThreadLocal} objects must be instantiated before {@link #initializationComplete(boolean)},
  * {@link #tlaSize()} or {@link #values()} is called. The recommended way to ensure this is
  * to explicitly reference these instances from the constructor of a {@link BootImagePackage}
  * subclass. A set of {@code registerThreadLocal()} methods are provided in
@@ -383,7 +383,7 @@ public class VmThreadLocal implements FormatWithToString {
     @com.sun.max.annotate.HOSTED_ONLY
     static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
 
-        public void initializationComplete() {
+        public void initializationComplete(boolean complete) {
             assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
             try {
                 final List<VmThreadLocal> valuesNeedingInitialization = new ArrayList<VmThreadLocal>();
@@ -633,7 +633,7 @@ public class VmThreadLocal implements FormatWithToString {
      *
      * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
      *
-     * Note: this method is accessed via reflection in {@link #initializationComplete()}.
+     * Note: this method is accessed via reflection in {@link #initializationComplete(boolean)}.
      */
     public void initialize() {
     }

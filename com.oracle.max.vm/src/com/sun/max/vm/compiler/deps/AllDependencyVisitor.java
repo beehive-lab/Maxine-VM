@@ -33,9 +33,9 @@ import com.sun.max.vm.compiler.target.*;
 
 // START GENERATED CODE
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyVisitor;
-import com.sun.max.vm.compiler.deps.InlineDependencyProcessor.InlineDependencyProcessorVisitor;
-import com.sun.max.vm.compiler.deps.UCMDependencyProcessor.UCMDependencyProcessorVisitor;
-import com.sun.max.vm.compiler.deps.UCTDependencyProcessor.UCTDependencyProcessorVisitor;
+import com.sun.max.vm.compiler.deps.InlinedMethodDependencyProcessor.InlineDependencyProcessorVisitor;
+import com.sun.max.vm.compiler.deps.ConcreteMethodDependencyProcessor.UCMDependencyProcessorVisitor;
+import com.sun.max.vm.compiler.deps.ConcreteTypeDependencyProcessor.UCTDependencyProcessorVisitor;
 
 
 class AllDependencyVisitors {
@@ -44,22 +44,22 @@ class AllDependencyVisitors {
             implements InlineDependencyProcessorVisitor, UCMDependencyProcessorVisitor, UCTDependencyProcessorVisitor {
 
         ToStringDependencyVisitor(StringBuilder sb) {
-            UCTDependencyProcessor.toStringUCTDependencyProcessorVisitor.setStringBuilder(sb);
-            UCMDependencyProcessor.toStringUCMDependencyProcessorVisitor.setStringBuilder(sb);
-            InlineDependencyProcessor.toStringInlineDependencyProcessorVisitor.setStringBuilder(sb);
+            ConcreteTypeDependencyProcessor.toStringUCTDependencyProcessorVisitor.setStringBuilder(sb);
+            ConcreteMethodDependencyProcessor.toStringUCMDependencyProcessorVisitor.setStringBuilder(sb);
+            InlinedMethodDependencyProcessor.toStringInlineDependencyProcessorVisitor.setStringBuilder(sb);
         }
 
         public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
-            return UCMDependencyProcessor.toStringUCMDependencyProcessorVisitor.doConcreteMethod(targetMethod, method, impl, context);
+            return ConcreteMethodDependencyProcessor.toStringUCMDependencyProcessorVisitor.doConcreteMethod(targetMethod, method, impl, context);
         }
 
         public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
-            return InlineDependencyProcessor.toStringInlineDependencyProcessorVisitor.doInlinedMethod(targetMethod, method, inlinee, context);
+            return InlinedMethodDependencyProcessor.toStringInlineDependencyProcessorVisitor.doInlinedMethod(targetMethod, method, inlinee, context);
 
         }
 
         public boolean doConcreteSubtype(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
-            return UCTDependencyProcessor.toStringUCTDependencyProcessorVisitor.doConcreteSubtype(targetMethod, context, subtype);
+            return ConcreteTypeDependencyProcessor.toStringUCTDependencyProcessorVisitor.doConcreteSubtype(targetMethod, context, subtype);
         }
 
     }

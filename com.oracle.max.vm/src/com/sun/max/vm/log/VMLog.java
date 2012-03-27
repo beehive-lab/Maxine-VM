@@ -265,7 +265,7 @@ public abstract class VMLog implements Heap.GCCallback {
     @HOSTED_ONLY
     static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
 
-        public void initializationComplete() {
+        public void initializationComplete(boolean complete) {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);

@@ -65,7 +65,7 @@ import com.sun.max.vm.log.hosted.*;
      *     }
  * </pre>
  */
-public class InlineDependencyProcessor extends DependencyProcessor {
+public class InlinedMethodDependencyProcessor extends DependencyProcessor {
 
     /**
      * Essentially the Maxine specific mirror of {@link CiAssumptions.InlinedMethod}.
@@ -100,9 +100,14 @@ public class InlineDependencyProcessor extends DependencyProcessor {
         return toStringInlineDependencyProcessorVisitor;
     }
 
-    private static final InlineDependencyProcessor singleton = new InlineDependencyProcessor();
+    private static final InlinedMethodDependencyProcessor singleton = new InlinedMethodDependencyProcessor();
 
-    InlineDependencyProcessor() {
+    @HOSTED_ONLY
+    public static DependencyProcessor getDependencyProcessor() {
+        return singleton;
+    }
+
+    InlinedMethodDependencyProcessor() {
         super(CiAssumptions.InlinedMethod.class);
     }
 
@@ -206,7 +211,7 @@ public class InlineDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    private static abstract class FindInliners extends Dependencies.DependencyVisitor implements InlineDependencyProcessor.InlineDependencyProcessorVisitor {
+    private static abstract class FindInliners extends Dependencies.DependencyVisitor implements InlinedMethodDependencyProcessor.InlineDependencyProcessorVisitor {
 
     }
 
