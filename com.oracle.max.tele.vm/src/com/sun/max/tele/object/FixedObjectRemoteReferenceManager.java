@@ -144,7 +144,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         final StringBuilder sb2 = new StringBuilder();
         final int activeReferenceCount = activeReferenceCount();
         final int totalReferenceCount = totalReferenceCount();
-        sb2.append("object refs:  active=" + formatter.format(activeReferenceCount));
+        sb2.append("mapped object refs:  active=" + formatter.format(activeReferenceCount));
         sb2.append(", inactive=" + formatter.format(totalReferenceCount - activeReferenceCount));
         if (verbose) {
             sb2.append(", ref. mgr=" + getClass().getSimpleName());
