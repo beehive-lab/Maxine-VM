@@ -721,47 +721,6 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
     }
 
-//    /**
-//     * A weak map:  Address -> SemiSpaceRemoteReference.
-//     */
-//    private static class SemiSpaceReferenceMap {
-//
-//        private final Map<Long, WeakReference<SemiSpaceRemoteReference>> map = new HashMap<Long, WeakReference<SemiSpaceRemoteReference>>();
-//
-//        SemiSpaceRemoteReference get(Address origin) {
-//            final WeakReference<SemiSpaceRemoteReference> weakRef = map.get(origin.toLong());
-//            return weakRef == null ? null : weakRef.get();
-//        }
-//
-//        List<SemiSpaceRemoteReference> values() {
-//            final ArrayList<SemiSpaceRemoteReference> values = new ArrayList<SemiSpaceRemoteReference>(map.size());
-//            for (WeakReference<SemiSpaceRemoteReference> weakRef : map.values()) {
-//                if (weakRef != null) {
-//                    final SemiSpaceRemoteReference ref = weakRef.get();
-//                    if (ref != null) {
-//                        values.add(ref);
-//                    }
-//                }
-//            }
-//            return values;
-//        }
-//
-//        void put(Address origin, SemiSpaceRemoteReference ref) {
-//            assert origin.isNotZero();
-//            final WeakReference<SemiSpaceRemoteReference> oldWeakRef = map.put(origin.toLong(), new WeakReference<SemiSpaceRemoteReference>(ref));
-//            assert oldWeakRef == null || oldWeakRef.get() == null;
-//        }
-//
-//        boolean isEmpty() {
-//            return map.isEmpty();
-//        }
-//
-//        void clear() {
-//            map.clear();
-//        }
-//
-//    }
-
     /**
      * Delayed evaluation of a trace message.
      */
