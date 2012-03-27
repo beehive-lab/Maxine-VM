@@ -121,6 +121,17 @@ public abstract class RemoteReference extends Reference {
      * @see #isForwarded()
      */
     public abstract Address forwardedFrom();
+
+    /**
+     * Generates a string describing the status of the object in VM memory with respect to memory management, designed
+     * to provide useful information to a person:  information that the Inspector can't already deduce from the standard
+     * interfaces. For example, the Inspector can identify the region into which the reference points and the basic
+     * status of the object's {@linkplain ObjectStatus status}.
+     *
+     * @return an optional string with information useful to a person, null if unavailable.
+     */
+    public abstract String gcDescription();
+
     /**
      * @return is the reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be allowed to
      *         persist past any VM execution?

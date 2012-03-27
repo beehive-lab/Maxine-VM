@@ -26,7 +26,7 @@ import static com.sun.max.vm.heap.ObjectStatus.*;
 
 import java.util.*;
 
-import com.sun.max.tele.*;
+import com.sun.max.tele.heap.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -216,7 +216,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
 
         };
 
-        private final String label;
+        protected final String label;
 
         RefState(String label) {
             this.label = label;
@@ -248,6 +248,10 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          * @see RemoteReference#lastValidOrigin()
          */
         abstract Address lastValidOrigin(SemiSpaceRemoteReference ref);
+
+        String gcDescription(SemiSpaceRemoteReference ref) {
+            return label;
+        }
 
         // Transitions
 
@@ -308,8 +312,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param toOrigin the location of the object in VM To-Space.
      * @return a remote reference to an ordinary live object
      */
-    public static SemiSpaceRemoteReference createLive(TeleVM vm, Address toOrigin) {
-        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(vm, Address.zero(), toOrigin);
+    public static SemiSpaceRemoteReference createLive(RemoteSemiSpaceHeapScheme remoteScheme, Address toOrigin) {
+        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(remoteScheme, Address.zero(), toOrigin);
         ref.refState = RefState.REF_LIVE;
         return ref;
     }
@@ -322,8 +326,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param fromOrigin the location of the object in VM From-Space.
      * @return a remote reference to the an object in From-Space with unknown reachability
      */
-    public static SemiSpaceRemoteReference createFromOnly(TeleVM vm, Address fromOrigin) {
-        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(vm, fromOrigin, Address.zero());
+    public static SemiSpaceRemoteReference createFromOnly(RemoteSemiSpaceHeapScheme remoteScheme, Address fromOrigin) {
+        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(remoteScheme, fromOrigin, Address.zero());
         ref.refState = RefState.REF_FROM;
         return ref;
     }
@@ -336,8 +340,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param toOrigin the location of the object in VM To-Space.
      * @return a remote reference to the new copy of a forwarded object in To-Space
      */
-    public static SemiSpaceRemoteReference createToOnly(TeleVM vm, Address toOrigin) {
-        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(vm, Address.zero(), toOrigin);
+    public static SemiSpaceRemoteReference createToOnly(RemoteSemiSpaceHeapScheme remoteScheme, Address toOrigin) {
+        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(remoteScheme, Address.zero(), toOrigin);
         ref.refState = RefState.REF_TO;
         return ref;
     }
@@ -349,8 +353,8 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * @param toOrigin the location of the newly copied object in VM To-Space.
      * @return a remote reference to both copies of a forwarded object
      */
-    public static SemiSpaceRemoteReference createFromTo(TeleVM vm, Address fromOrigin, Address toOrigin) {
-        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(vm, fromOrigin, toOrigin);
+    public static SemiSpaceRemoteReference createFromTo(RemoteSemiSpaceHeapScheme remoteScheme, Address fromOrigin, Address toOrigin) {
+        final SemiSpaceRemoteReference ref = new SemiSpaceRemoteReference(remoteScheme, fromOrigin, toOrigin);
         ref.refState = RefState.REF_FROM_TO;
         return ref;
     }
@@ -376,10 +380,13 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      */
     private RefState refState = null;
 
-    private SemiSpaceRemoteReference(TeleVM vm, Address fromOrigin, Address toOrigin) {
-        super(vm);
+    private final RemoteSemiSpaceHeapScheme remoteScheme;
+
+    private SemiSpaceRemoteReference(RemoteSemiSpaceHeapScheme remoteScheme, Address fromOrigin, Address toOrigin) {
+        super(remoteScheme.vm());
         this.fromOrigin = fromOrigin;
         this.toOrigin = toOrigin;
+        this.remoteScheme = remoteScheme;
     }
 
     @Override
@@ -405,6 +412,11 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     @Override
     public Address forwardedFrom() {
         return refState.forwardedFrom(this);
+    }
+
+    @Override
+    public String gcDescription() {
+        return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
     }
 
     /**

@@ -501,7 +501,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                     TeleError.check(remoteReference.status().isLive());
                 } else if (toSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
                     // A newly discovered object in the allocated area of To-Space; add a new reference to the To-Space map.
-                    remoteReference = SemiSpaceRemoteReference.createLive(vm(), origin);
+                    remoteReference = SemiSpaceRemoteReference.createLive(this, origin);
                     toSpaceRefMap.put(origin, remoteReference);
                 }
                 break;
@@ -520,7 +520,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                          * the original copy had been discovered, then it would already have been added to both the
                          * From-Space and To-Space maps.  Add a new reference to the To-Space map.
                          */
-                        remoteReference =  SemiSpaceRemoteReference.createToOnly(vm(), origin);
+                        remoteReference =  SemiSpaceRemoteReference.createToOnly(this, origin);
                         toSpaceRefMap.put(origin, remoteReference);
                     }
                 } else if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
@@ -542,7 +542,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                              * A newly discovered object in the allocated area of From-Space that is not forwarded; add
                              * a new reference to the From-Space map, where it is indexed by its origin in From-Space.
                              */
-                            remoteReference = SemiSpaceRemoteReference.createFromOnly(vm(), origin);
+                            remoteReference = SemiSpaceRemoteReference.createFromOnly(this, origin);
                             fromSpaceRefMap.put(origin, remoteReference);
                         } else if (objects().hasForwardingAddressUnsafe(origin)) {
                             /*
@@ -566,7 +566,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                                  * "forwardedFrom" origin, and to the To-Space map, where it is indexed by its new
                                  * origin.
                                  */
-                                remoteReference = SemiSpaceRemoteReference.createFromTo(vm(), origin, toOrigin);
+                                remoteReference = SemiSpaceRemoteReference.createFromTo(this, origin, toOrigin);
                                 fromSpaceRefMap.put(origin, remoteReference);
                                 toSpaceRefMap.put(toOrigin, remoteReference);
                             }

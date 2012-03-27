@@ -84,6 +84,11 @@ public abstract class ConstantRemoteReference extends RemoteReference {
     }
 
     @Override
+    public String gcDescription() {
+        return "object in an unmanaged region";
+    }
+
+    @Override
     public final boolean equals(Object other) {
         if (other instanceof ConstantRemoteReference) {
             final ConstantRemoteReference constantTeleRef = (ConstantRemoteReference) other;
