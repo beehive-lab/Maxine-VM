@@ -367,9 +367,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-                // For the purposes of inspection, we declare this phase change immediately after the swap
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
-
                 if (Heap.logGCPhases()) {
                     phaseLogger.logScanningRoots(VMLogger.Interval.BEGIN);
                 }
@@ -506,6 +503,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         final Address oldFromSpaceStart = fromSpace.start();
         final Size oldFromSpaceSize = fromSpace.size();
 
+        // Inspectability: stopping the VM between here and the phase notification below will confuse the Inspector
+
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
         fromSpace.mark.set(toSpace.getAllocationMark());
@@ -513,6 +512,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
         toSpace.mark.set(toSpace.start());
+
+        // For the purposes of inspection, we declare this phase change immediately after the swap;
+        // The Inspector gets confused it the VM stops after the swap, but when the phase
+        // appears to still be allocating.
+        HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
