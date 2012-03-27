@@ -44,8 +44,6 @@ public abstract class RemoteReference extends Reference {
 
     private static final AtomicLong nextOID = new AtomicLong(1);
 
-    protected RemoteReference forwardedTeleRef = null;
-
     protected RemoteReference(TeleVM vm) {
         this.vm = vm;
     }
