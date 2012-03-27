@@ -463,9 +463,27 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside semispace heap regions");
-        return inLiveArea(origin) && objects().isPlausibleOriginUnsafe(origin);
-
-        // TODO (mlvdv):  if in from space, short circuit the test if the pointer is forwarded.
+        switch(phase()) {
+            case ALLOCATING:
+            case RECLAIMING:
+                return toSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
+            case ANALYZING:
+                if (toSpaceMemoryRegion.containsInAllocated(origin)) {
+                    return objects().isPlausibleOriginUnsafe(origin);
+                }
+                if (fromSpaceMemoryRegion.containsInAllocated(origin)) {
+                    if (objects().hasForwardingAddressUnsafe(origin)) {
+                        final Address forwardAddress = objects().getForwardingAddressUnsafe(origin);
+                        return toSpaceMemoryRegion.containsInAllocated(forwardAddress) && objects().isPlausibleOriginUnsafe(forwardAddress);
+                    } else {
+                        return objects().isPlausibleOriginUnsafe(origin);
+                    }
+                }
+                break;
+            default:
+                TeleError.unknownCase();
+        }
+        return false;
     }
 
     public RemoteReference makeReference(Address origin) throws TeleError {
