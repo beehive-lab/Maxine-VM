@@ -254,7 +254,11 @@ public final class JavaPrototype extends Prototype {
      *
      */
     public interface InitializationCompleteCallback {
-        void initializationComplete();
+        /**
+         * Invoked on all registered callbacks after all classes are loaded and initialized.
+         * @param complete value from {@link JavaPrototype#initialize(boolean)}
+         */
+        void initializationComplete(boolean complete);
     }
 
     private static ArrayList<InitializationCompleteCallback> initializationCompleteCallbacks = new ArrayList<InitializationCompleteCallback>();
@@ -327,7 +331,7 @@ public final class JavaPrototype extends Prototype {
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
         for (InitializationCompleteCallback completionCallback : initializationCompleteCallbacks) {
-            completionCallback.initializationComplete();
+            completionCallback.initializationComplete(complete);
         }
 
     }

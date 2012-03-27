@@ -278,6 +278,9 @@ public final class Dependencies {
         if (assumptions == null) {
             return null;
         }
+        if (MaxineVM.isHosted()) {
+            DependenciesManager.checkDependencyProcessorLoaded(assumptions);
+        }
         classHierarchyLock.readLock().lock();
         try {
             FatalError.check(ClassID.largestClassId() <= Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
@@ -292,7 +295,7 @@ public final class Dependencies {
                         return Dependencies.INVALID;
                     }
                 } else {
-                    assert false : "unhandled subtype of CiAssumptions";
+                    assert false : "unhandled subtype of CiAssumptions: " + a.getClass().getName();
                 }
 
             }

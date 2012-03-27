@@ -32,6 +32,7 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -48,7 +49,7 @@ import com.sun.max.vm.type.*;
  *
  * This dependency has no additional data in the packed format.
  */
-public class UCTDependencyProcessor extends DependencyProcessor {
+public class ConcreteTypeDependencyProcessor extends DependencyProcessor {
 
     /**
      * Essentially the Maxine specific mirror of {@link CiAssumptions.ConcreteSubtype}.
@@ -87,9 +88,14 @@ public class UCTDependencyProcessor extends DependencyProcessor {
         return toStringUCTDependencyProcessorVisitor;
     }
 
-    private static final UCTDependencyProcessor singleton = new UCTDependencyProcessor();
+    private static final ConcreteTypeDependencyProcessor singleton = new ConcreteTypeDependencyProcessor();
 
-    UCTDependencyProcessor() {
+    @HOSTED_ONLY
+    public static DependencyProcessor getDependencyProcessor() {
+        return singleton;
+    }
+
+    ConcreteTypeDependencyProcessor() {
         super(CiAssumptions.ConcreteSubtype.class, false);
     }
 
@@ -279,7 +285,7 @@ public class UCTDependencyProcessor extends DependencyProcessor {
      * Verifies dependencies on a given type when a concrete sub-type is added to the descendants of the type.
      */
     static final class DependencyChecker extends Dependencies.DependencyVisitor
-            implements UCMDependencyProcessor.UCMDependencyProcessorVisitor, UCTDependencyProcessor.UCTDependencyProcessorVisitor {
+            implements ConcreteMethodDependencyProcessor.UCMDependencyProcessorVisitor, ConcreteTypeDependencyProcessor.UCTDependencyProcessorVisitor {
         /**
          * Type on which the assumption are made.
          */
