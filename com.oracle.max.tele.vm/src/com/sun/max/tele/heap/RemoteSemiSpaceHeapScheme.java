@@ -26,7 +26,6 @@ import static com.sun.max.vm.heap.HeapPhase.*;
 
 import java.io.*;
 import java.lang.management.*;
-import java.lang.ref.*;
 import java.text.*;
 import java.util.*;
 
@@ -37,7 +36,6 @@ import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.heap.semispace.*;
 import com.sun.max.tele.heap.semispace.SemiSpaceRemoteReference.RefStateCount;
-import com.sun.max.tele.heap.semispace.SemiSpaceRemoteReference.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -45,9 +43,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 
@@ -150,7 +146,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
     /**
      * Map:  VM address in To-Space --> a {@link SemiSpaceRemoteReference} that refers to the object whose origin is at that location.
      */
-    private SemiSpaceReferenceMap toSpaceRefMap = new SemiSpaceReferenceMap();
+    private WeakRemoteReferenceMap<SemiSpaceRemoteReference> toSpaceRefMap = new WeakRemoteReferenceMap<SemiSpaceRemoteReference>();
 
     /**
      * The VM object that describes the location of the collector's From-Space; the location changes when the spaces get swapped.
@@ -160,9 +156,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
     /**
      * Map:  VM address in From-Space --> a {@link SemiSpaceRemoteReference} that refers to the object whose origin is at that location.
      */
-    private SemiSpaceReferenceMap fromSpaceRefMap = new SemiSpaceReferenceMap();
-
-    private final int gcForwardingPointerOffset;
+    private WeakRemoteReferenceMap<SemiSpaceRemoteReference> fromSpaceRefMap = new WeakRemoteReferenceMap<SemiSpaceRemoteReference>();
 
     private long collected = 0;
     private long forwarded = 0;
@@ -186,8 +180,6 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         super(vm);
         this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         this.referenceUpdateTracer = new ReferenceUpdateTracer();
-        // The collector stores forwarding pointers in the Hub field of the header
-        gcForwardingPointerOffset = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
 
         final VmAddressSpace addressSpace = vm().addressSpace();
         // There might already be dynamically allocated regions in a dumped image or when attaching to a running VM
@@ -307,7 +299,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
                     assert fromSpaceRefMap.isEmpty();
                     // Swap the maps to reflect the swapped locations of the two regions in the heap
-                    final SemiSpaceReferenceMap tempRefMap = toSpaceRefMap;
+                    final WeakRemoteReferenceMap<SemiSpaceRemoteReference> tempRefMap = toSpaceRefMap;
                     toSpaceRefMap = fromSpaceRefMap;
                     fromSpaceRefMap = tempRefMap;
                     // Transition the state of all references that are now in From-Space
@@ -329,10 +321,10 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                     for (SemiSpaceRemoteReference fromSpaceRef : fromSpaceRefMap.values()) {
                         switch (fromSpaceRef.status()) {
                             case UNKNOWN:
-                                if (hasForwardPointer(fromSpaceRef.origin())) {
+                                if (objects().hasForwardingAddressUnsafe(fromSpaceRef.origin())) {
                                     // A From-Space reference that has been forwarded since the last time we looked:
                                     // transition state and add to To-Space map.
-                                    final Address toOrigin = getForward(fromSpaceRef.origin());
+                                    final Address toOrigin = objects().getForwardingAddressUnsafe(fromSpaceRef.origin());
                                     fromSpaceRef.addToOrigin(toOrigin);
                                     // After the state change, the official origin is now the one in To-Space.
                                     // Note that the reference is still in the From-Space map, indexed by what is now the "forwardedFrom" origin.
@@ -476,34 +468,6 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         // TODO (mlvdv):  if in from space, short circuit the test if the pointer is forwarded.
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Using only low-level mechanisms, return a plausible location for a forwarded
-     * copy of the object whose presumed location is specified.  This is unsafe, but it
-     * does apply sanity checks that should minimize false positives:
-     * checks:
-     * <ol>
-     * <li>Heap must be in the {@link #ANALYZING} phase.</li>
-     * <li>The presumed object origin must be in the live area of the {@code From} space.</li>
-     * <li>The word where forwarding pointers are stored must be <em>tagged</em> as if a forwarding pointer.</li>
-     * <li>The derived forwarding address must be in the live area of the {@code To} space.</li>
-     * </ol>
-     */
-    public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
-        TeleError.check(contains(origin), "Location is outside semispace heap regions");
-        if (phase() == ANALYZING) {
-            Word forwardingWord = readForwardWord(origin);
-            if (isForwardPointer(forwardingWord)) {
-                final Address forwardedCopyOrigin = forwardAddress(forwardingWord);
-                if (toSpaceMemoryRegion.containsInAllocated(forwardedCopyOrigin)) {
-                    return forwardedCopyOrigin;
-                }
-            }
-        }
-        return null;
-    }
-
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
         // It is an error to attempt creating a reference if the address is completely outside the managed region(s).
@@ -545,29 +509,29 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
                     remoteReference = fromSpaceRefMap.get(origin);
                     if (remoteReference != null) {
                         // A reference to the object is already in the From-Space map
-                        if (!remoteReference.isForwarded() && hasForwardPointer(origin)) {
+                        if (!remoteReference.isForwarded() && objects().hasForwardingAddressUnsafe(origin)) {
                             /*
                              * An object in From-Space that has been forwarded since the last time we checked:
                              * transition state and add the reference to the To-Space map.
                              */
-                            final Address toOrigin = getForward(origin);
+                            final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
                             remoteReference.addToOrigin(toOrigin);
                             toSpaceRefMap.put(toOrigin, remoteReference);
                         }
                     } else {
-                        if (!hasForwardPointer(origin) && objects().isPlausibleOriginUnsafe(origin)) {
+                        if (!objects().hasForwardingAddressUnsafe(origin) && objects().isPlausibleOriginUnsafe(origin)) {
                             /*
                              * A newly discovered object in the allocated area of From-Space that is not forwarded; add
                              * a new reference to the From-Space map, where it is indexed by its origin in From-Space.
                              */
                             remoteReference = SemiSpaceRemoteReference.createFromOnly(vm(), origin);
                             fromSpaceRefMap.put(origin, remoteReference);
-                        } else if (hasForwardPointer(origin)) {
+                        } else if (objects().hasForwardingAddressUnsafe(origin)) {
                             /*
                              * A newly discovered object in the allocated area of From-Space that is forwarded.
                              * Check to see if we already know about the copy in To-Space.
                              */
-                            final Address toOrigin = getForward(origin);
+                            final Address toOrigin = objects().getForwardingAddressUnsafe(origin);
                             remoteReference = toSpaceRefMap.get(toOrigin);
                             if (remoteReference != null) {
                                 /*
@@ -624,53 +588,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         return false;
     }
 
-    /**
-     * Assuming that the argument is the location of an object in managed
-     * memory that could legitimately be forwarded, read the word that would
-     * hold the forwarding pointer.
-     */
-    private Word readForwardWord(Address origin) {
-        return memory().readWord(origin.plus(gcForwardingPointerOffset));
-    }
-
-    /**
-     * Does a word appear to represent a forwarding pointer,
-     * as used by this GC implementation.
-     */
-    private boolean isForwardPointer(Word word) {
-        return word.asAddress().and(1).toLong() == 1;
-    }
-
-    /**
-     * Assumes the address is a valid object origin; returns whether
-     * the object holds a forwarding pointer, without checking whether
-     * the result is a legitimate address or a plausible location
-     * for a forwarded object copy.
-     */
-    private boolean hasForwardPointer(Address origin) {
-        return isForwardPointer(readForwardWord(origin));
-    }
-
-    /**
-     * Assumes that the argument is a valid object origin and that
-     * it holds a forwarding pointer; return the origin at which
-     * forwarding points without any sanity checks.
-     */
-    private Address getForward(Address origin) {
-        return forwardAddress(readForwardWord(origin));
-    }
-
-    /**
-     * Gets the actual address of a forwarding pointer, assuming
-     * that the argument is a forwarding address.
-     */
-    private Address forwardAddress(Word word) {
-        Address newCellAddress = word.asAddress().minus(1);
-        return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
-    }
-
-
-    private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleLinearAllocationMemoryRegion region, SemiSpaceReferenceMap map) {
+    private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleLinearAllocationMemoryRegion region, WeakRemoteReferenceMap<SemiSpaceRemoteReference> map) {
         final NumberFormat formatter = NumberFormat.getInstance();
         int totalRefs = 0;
         int liveRefs = 0;
@@ -803,46 +721,46 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
     }
 
-    /**
-     * A weak map:  Address -> SemiSpaceRemoteReference.
-     */
-    private static class SemiSpaceReferenceMap {
-
-        private final Map<Long, WeakReference<SemiSpaceRemoteReference>> map = new HashMap<Long, WeakReference<SemiSpaceRemoteReference>>();
-
-        SemiSpaceRemoteReference get(Address origin) {
-            final WeakReference<SemiSpaceRemoteReference> weakRef = map.get(origin.toLong());
-            return weakRef == null ? null : weakRef.get();
-        }
-
-        List<SemiSpaceRemoteReference> values() {
-            final ArrayList<SemiSpaceRemoteReference> values = new ArrayList<SemiSpaceRemoteReference>(map.size());
-            for (WeakReference<SemiSpaceRemoteReference> weakRef : map.values()) {
-                if (weakRef != null) {
-                    final SemiSpaceRemoteReference ref = weakRef.get();
-                    if (ref != null) {
-                        values.add(ref);
-                    }
-                }
-            }
-            return values;
-        }
-
-        void put(Address origin, SemiSpaceRemoteReference ref) {
-            assert origin.isNotZero();
-            final WeakReference<SemiSpaceRemoteReference> oldWeakRef = map.put(origin.toLong(), new WeakReference<SemiSpaceRemoteReference>(ref));
-            assert oldWeakRef == null || oldWeakRef.get() == null;
-        }
-
-        boolean isEmpty() {
-            return map.isEmpty();
-        }
-
-        void clear() {
-            map.clear();
-        }
-
-    }
+//    /**
+//     * A weak map:  Address -> SemiSpaceRemoteReference.
+//     */
+//    private static class SemiSpaceReferenceMap {
+//
+//        private final Map<Long, WeakReference<SemiSpaceRemoteReference>> map = new HashMap<Long, WeakReference<SemiSpaceRemoteReference>>();
+//
+//        SemiSpaceRemoteReference get(Address origin) {
+//            final WeakReference<SemiSpaceRemoteReference> weakRef = map.get(origin.toLong());
+//            return weakRef == null ? null : weakRef.get();
+//        }
+//
+//        List<SemiSpaceRemoteReference> values() {
+//            final ArrayList<SemiSpaceRemoteReference> values = new ArrayList<SemiSpaceRemoteReference>(map.size());
+//            for (WeakReference<SemiSpaceRemoteReference> weakRef : map.values()) {
+//                if (weakRef != null) {
+//                    final SemiSpaceRemoteReference ref = weakRef.get();
+//                    if (ref != null) {
+//                        values.add(ref);
+//                    }
+//                }
+//            }
+//            return values;
+//        }
+//
+//        void put(Address origin, SemiSpaceRemoteReference ref) {
+//            assert origin.isNotZero();
+//            final WeakReference<SemiSpaceRemoteReference> oldWeakRef = map.put(origin.toLong(), new WeakReference<SemiSpaceRemoteReference>(ref));
+//            assert oldWeakRef == null || oldWeakRef.get() == null;
+//        }
+//
+//        boolean isEmpty() {
+//            return map.isEmpty();
+//        }
+//
+//        void clear() {
+//            map.clear();
+//        }
+//
+//    }
 
     /**
      * Delayed evaluation of a trace message.
