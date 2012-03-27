@@ -40,6 +40,7 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -69,7 +70,6 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
 
     private static VmObjectAccess vmObjectAccess;
 
-    final Address zappedMarker = Address.fromLong(Memory.ZAPPED_MARKER);
 
     public static VmObjectAccess make(TeleVM vm) {
         if (vmObjectAccess == null) {
@@ -77,6 +77,13 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         }
         return vmObjectAccess;
     }
+
+    final Address zappedMarker = Address.fromLong(Memory.ZAPPED_MARKER);
+
+    /**
+     * Offset from an object's origin where GC implementations store forwarding pointers.
+     */
+    private final int gcForwardingAddressOffset;
 
     private final TimedTrace updateTracer;
 
@@ -104,6 +111,8 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
 
+        // All Maxine collectors stores forwarding pointers in the Hub field of the header
+        this.gcForwardingAddressOffset = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
         this.entityDescription = "Object creation and management for the " + vm.entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
@@ -463,6 +472,40 @@ public final class VmObjectAccess extends AbstractVmHolder implements TeleVMCach
         arrayLayout(kind).copyElements(src, srcIndex, dst, dstIndex, length);
     }
 
+    /**
+     * Assumes the address is a valid object origin; returns whether the object holds a forwarding pointer.
+     * <p>
+     * <strong>Does not</strong> check whether the origin is a plausible object origin or even whether it is a
+     * legitimate address at all.
+     */
+    public boolean hasForwardingAddressUnsafe(Address origin) {
+        return readForwardWordUnsafe(origin).asAddress().and(1).toLong() == 1;
+    }
+
+    /**
+     * Returns the actual address pointed at by a forwarding address stored in the object at
+     * the specified location in VM memory, <em>assuming</em> that the object's origin is
+     * actually holding a forwarding address.
+     * <p>
+     * <string>Does not</strong> check whether the origin is a plausible object origin, whether there
+     * is actually a forwarding address stored in the object, or even whether the origin is a legitimate
+     * address at all.
+     */
+    public Address getForwardingAddressUnsafe(Address origin) {
+        Address newCellAddress = readForwardWordUnsafe(origin).asAddress().minus(1);
+        return Layout.generalLayout().cellToOrigin(newCellAddress.asPointer());
+    }
+
+    /**
+     * Assuming that the argument is the origin of an object in VM memory, reads the word that would hold the forwarding
+     * address.
+     * <p>
+     * <strong>Does not</strong> check whether the origin is a plausible object origin or even whether it is a
+     * legitimate address at all.
+     */
+    private Word readForwardWordUnsafe(Address origin) {
+        return memory().readWord(origin.plus(gcForwardingAddressOffset));
+    }
 
     /**
      * Low-level predicate for identifying the special case of a {@link StaticTuple} in the VM,

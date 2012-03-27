@@ -52,19 +52,6 @@ public interface RemoteObjectReferenceManager {
     boolean isObjectOrigin(Address origin) throws TeleError;
 
     /**
-     * Attempts to locate the origin of the copy of an object if it has been forwarded,
-     * using low-level mechanisms only, {@code null} if not forwarded.
-     * <p>
-     * <strong>Unsafe</strong>Does not confirm that the argument is the origin
-     * of an object, nor that the returned address is the origin of an object.
-     *
-     * @param origin the presumed location of an object in the memory being managed
-     * @return the origin of the object's new copy, if forwarded, else {@code null}
-     * @throws TeleError if the origin is not in the memory regions being managed.
-     */
-    Address getForwardingAddressUnsafe(Address origin) throws TeleError;
-
-    /**
      * Creates a canonical remote reference to an object whose origin
      * in VM memory is at a specified address, {@link Reference#zero()} if there is no
      * object with that origin.
