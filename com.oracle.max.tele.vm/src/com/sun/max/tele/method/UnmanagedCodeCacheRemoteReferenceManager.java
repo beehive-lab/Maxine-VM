@@ -278,6 +278,11 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         public Address forwardedFrom() {
             return Address.zero();
         }
+
+        @Override
+        public String gcDescription() {
+            return "object in an unmanaged code cache region: " + kind.label();
+        }
     }
 
 }

@@ -570,6 +570,10 @@ public class WordValueLabel extends ValueLabel {
                     } else {
                         toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
                     }
+                    final String gcDescription = teleObject.reference().gcDescription();
+                    if (gcDescription != null) {
+                        toolTipSB.append("<br>GC: " + gcDescription);
+                    }
                     setWrappedToolTipHtmlText(toolTipSB.toString());
                 } catch (Throwable throwable) {
                     // If we don't catch this the views will not be updated at all.
@@ -597,6 +601,10 @@ public class WordValueLabel extends ValueLabel {
                             toolTipSB.append(htmlify("<unknown memory region>"));
                         } else {
                             toolTipSB.append("\"").append(nameDisplay.longName(memoryRegion)).append("\"");
+                        }
+                        final String gcDescription = teleObject.reference().gcDescription();
+                        if (gcDescription != null) {
+                            toolTipSB.append("<br>GC: " + gcDescription);
                         }
                         setWrappedToolTipHtmlText(toolTipSB.toString());
                         break;

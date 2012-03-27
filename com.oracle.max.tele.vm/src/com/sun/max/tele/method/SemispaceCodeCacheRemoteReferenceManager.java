@@ -293,6 +293,11 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             return Address.zero();
         }
 
+        @Override
+        public String gcDescription() {
+            return "object in a semispace managed code cache region:  " + kind.label();
+        }
+
     }
 
 }

@@ -127,6 +127,11 @@ public final class LocalObjectRemoteReferenceManager extends AbstractVmHolder {
         }
 
         @Override
+        public String gcDescription() {
+            return null;
+        }
+
+        @Override
         protected void finalize() throws Throwable {
             synchronized (objectToLocalObjectRemoteReference) {
                 objectToLocalObjectRemoteReference.remove(object);

@@ -107,7 +107,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#scalarLiterals()
          */
-        SCALAR_LITERALS,
+        SCALAR_LITERALS ("array of scalar literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code Object[]} in the code cache
@@ -121,7 +121,7 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#referenceLiterals()
          */
-        REFERENCE_LITERALS,
+        REFERENCE_LITERALS ("array of reference literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]} in the code cache holding
@@ -134,7 +134,17 @@ public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements T
          *
          * @see TargetMethod#code()
          */
-        CODE;
+        CODE ("byte array holding machine code for a compilation");
+
+        private final String label;
+
+        CodeCacheReferenceKind(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
     }
 
     /**
