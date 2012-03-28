@@ -77,10 +77,16 @@ public class MaxineTesterConfiguration {
             @Override
             protected boolean visitClass(String className) {
                 if (className.startsWith(packagePrefix)) {
-                    Class<?> javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
                     try {
+                        Class<?> javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
                         javaClass.getDeclaredMethod("main", String[].class);
                         result.add(javaClass);
+                    } catch (UnsupportedClassVersionError e) {
+                        if (className.substring(0, className.length() -2).endsWith("MethodHandles") && JDK.JDK_VERSION != JDK.JDK_7) {
+                            // silently ignore JDK7 specific test if building with an earlier JDK
+                            return true;
+                        }
+                        throw e;
                     } catch (Exception e) {
                     }
                 }
@@ -103,7 +109,6 @@ public class MaxineTesterConfiguration {
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN, RAND_SPARC);
         output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
-//        output(test.output.GCTest8.class,                  RAND_ALL);
 //        output(test.output.MegaThreads.class,              RAND_ALL);
 //        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
         output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
@@ -112,7 +117,7 @@ public class MaxineTesterConfiguration {
         output(Classes.forName("test.output.WeakReferenceTest03_01"),               RAND_ALL);
         output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
         output(Classes.forName("test.output.GCTest8"),                              RAND_ALL);
-        
+
         vmoutput(findOutputTests("test.vm.output."));
 
         if (JDK.JDK_VERSION == JDK.JDK_7) {
