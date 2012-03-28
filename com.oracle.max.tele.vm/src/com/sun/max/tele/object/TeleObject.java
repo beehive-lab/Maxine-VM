@@ -402,10 +402,10 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * subject to relocation by GC, {@code null} if object is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (status().isDead()) {
-            return null;
+        if (reference.toOrigin().isNotZero() && objectSize() > 0) {
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
         }
-        return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
+        return null;
     }
 
     /**
