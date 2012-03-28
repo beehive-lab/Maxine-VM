@@ -38,14 +38,14 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.Heap.GCCallbackPhase;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
@@ -184,27 +184,16 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     public SemiSpaceHeapScheme() {
         super();
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(false, false, false);
+        collectHeap = new CollectHeap();
+        fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
+        toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
 
-        if (MaxineVM.isHosted() && phase == Phase.BOOTSTRAPPING) {
-            collectHeap = new CollectHeap();
-        }
-
         if (phase == MaxineVM.Phase.PRISTINE) {
-
-            try {
-                Heap.enableImmortalMemoryAllocation();
-                fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
-                toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
-
-            } finally {
-                Heap.disableImmortalMemoryAllocation();
-            }
-
             allocateHeap();
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());

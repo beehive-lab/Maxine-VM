@@ -33,12 +33,9 @@ import com.sun.max.vm.runtime.*;
 public final class AtomicPinCounter {
     private volatile int pinnedCounter = 0;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static int pinnedCounterOffset;
-
-    @HOSTED_ONLY
-    public static void hostInitialize() {
-        pinnedCounterOffset = ClassActor.fromJava(AtomicPinCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
+    @FOLD
+    private static int pinnedCounterOffset() {
+        return ClassActor.fromJava(AtomicPinCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
     }
 
     public void increment() {
@@ -48,7 +45,7 @@ public final class AtomicPinCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue >= 0, "Unbalance pinned request");
             newValue  = oldValue + 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset(), oldValue, newValue) != oldValue);
     }
 
     public void decrement() {
@@ -58,6 +55,6 @@ public final class AtomicPinCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue > 0, "Unbalance pinned request");
             newValue  = oldValue - 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset(), oldValue, newValue) != oldValue);
     }
 }
