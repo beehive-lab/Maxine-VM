@@ -200,12 +200,12 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
         vm().addInitializationListener(new InitializationListener() {
 
-            public void initialiationComplete(long epoch) {
+            public void initialiationComplete(final long initializationEpoch) {
                 objects().registerTeleObjectType(SemiSpaceHeapScheme.class, TeleSemiSpaceHeapScheme.class);
                 // Get the VM object that represents the heap implementation; can't do this any sooner during startup.
                 scheme = (TeleSemiSpaceHeapScheme) teleHeapScheme();
                 assert scheme != null;
-                updateMemoryStatus(epoch);
+                updateMemoryStatus(initializationEpoch);
                 /*
                  * Add a heap phase listener that will will force the VM to stop any time the heap transitions from
                  * analysis to the reclaiming phase of a GC. This is exactly the moment in a GC cycle when reference
@@ -219,7 +219,9 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
 
                         public void gcPhaseChange(HeapPhase phase) {
                             // Dummy handler; the actual updates must be done early during the refresh cycle.
-                            Trace.line(TRACE_VALUE, tracePrefix() + " VM stopped for reference updates");
+                            final long phaseChangeEpoch = vm().teleProcess().epoch();
+                            Trace.line(TRACE_VALUE, tracePrefix() + " VM stopped for reference updates, epoch=" + phaseChangeEpoch + ", gc cycle=" + gcStartedCount());
+                            Trace.line(TRACE_VALUE, tracePrefix() + " Note: updates have long since been done by the time this (dummy) handler is called");
                         }
                     }, RECLAIMING);
                 } catch (MaxVMBusyException e) {
