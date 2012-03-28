@@ -727,7 +727,7 @@ A JavaCompliance simplifies comparing Java compliance values extracted from a JD
 class JavaCompliance:
     def __init__(self, ver):
         m = re.match('1\.(\d+).*', ver)
-        assert m is not None, 'not a recognized version string: ' + vstring
+        assert m is not None, 'not a recognized version string: ' + ver
         self.value = int(m.group(1))
 
     def __str__ (self):
@@ -749,6 +749,7 @@ class JavaConfig:
         self.java =  exe_suffix(join(self.jdk, 'bin', 'java'))
         self.javac = exe_suffix(join(self.jdk, 'bin', 'javac'))
         self.javap = exe_suffix(join(self.jdk, 'bin', 'javap'))
+        self.javadoc = exe_suffix(join(self.jdk, 'bin', 'javadoc'))
 
         if not exists(self.java):
             abort('Java launcher derived from JAVA_HOME does not exist: ' + self.java)
@@ -957,6 +958,8 @@ def build(args, parser=None):
 
     javaCompliance = java().javaCompliance
 
+    defaultEcjPath = join(_mainSuite.dir, 'mx', 'ecj.jar')
+    
     parser = parser if parser is not None else ArgumentParser(prog='mx build')
     parser.add_argument('-f', action='store_true', dest='force', help='force compilation even if class files are up to date')
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
@@ -965,7 +968,7 @@ def build(args, parser=None):
     parser.add_argument('--projects', action='store', help='comma separated projects to build (omit to build all projects)')
     parser.add_argument('--no-java', action='store_false', dest='java', help='do not build Java projects')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build native projects')
-    parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
+    parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler (default: ' + defaultEcjPath + ')', default=defaultEcjPath, metavar='<path>')
 
     if suppliedParser:
         parser.add_argument('remainder', nargs=REMAINDER, metavar='...')
@@ -976,6 +979,9 @@ def build(args, parser=None):
     if args.jdt is not None:
         if args.jdt.endswith('.jar'):
             jdtJar=args.jdt
+            if not exists(jdtJar) and os.path.abspath(jdtJar) == os.path.abspath(defaultEcjPath):
+                # Silently ignore JDT if default location is used but not ecj.jar exists there
+                jdtJar = None
         elif isdir(args.jdt):
             plugins = join(args.jdt, 'plugins')
             choices = [f for f in os.listdir(plugins) if fnmatch.fnmatch(f, 'org.eclipse.jdt.core_*.jar')]
@@ -1053,7 +1059,7 @@ def build(args, parser=None):
                                         with open(os.devnull) as devnull:
                                             subprocess.call('jasmin', stdout=devnull, stderr=subprocess.STDOUT)
                                         jasminAvailable = True
-                                    except OSError as e:
+                                    except OSError:
                                         jasminAvailable = False
 
                                 if jasminAvailable:
@@ -1119,15 +1125,18 @@ def build(args, parser=None):
                 run([java().javac, '-g', '-J-Xmx1g', '-source', args.compliance, '-classpath', cp, '-d', outputDir, '@' + argfile.name], err=errFilt)
             else:
                 log('Compiling Java sources for {0} with JDT...'.format(p.name))
+                jdtArgs = [java().java, '-Xmx1g', '-jar', jdtJar,
+                         '-' + args.compliance,
+                         '-cp', cp, '-g', '-enableJavadoc',
+                         '-warn:-unusedImport,-unchecked',
+                         '-d', outputDir]
                 jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
                 if not exists(jdtProperties):
-                    raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
-                run([java().java, '-Xmx1g', '-jar', jdtJar,
-                         '-properties', jdtProperties,
-                         '-' + args.compliance,
-                         '-cp', cp, '-g',
-                         '-warn:-unusedImport,-unchecked',
-                         '-d', outputDir, '@' + argfile.name])
+                    log('JDT properties file {0} not found - fix by running "mx eclipseinit"'.format(jdtProperties))
+                else:
+                    jdtArgs += ['-properties', jdtProperties]
+                jdtArgs.append('@' + argfile.name)
+                run(jdtArgs)
         finally:
             os.remove(argfileName)
 
@@ -1393,8 +1402,10 @@ def eclipseinit(args, suite=None):
                         if isabs(path):
                             println(out, '\t<classpathentry exported="true" kind="lib" path="' + path + '"/>')
                         else:
-                            projRelPath = os.path.relpath(join(suite.dir, path), p.dir)
-                            println(out, '\t<classpathentry exported="true" kind="lib" path="' + projRelPath + '"/>')
+                            # Relative paths for "lib" class path entries have various semantics depending on the Eclipse
+                            # version being used (e.g. see https://bugs.eclipse.org/bugs/show_bug.cgi?id=274737) so it's
+                            # safest to simply use absolute paths.
+                            println(out, '\t<classpathentry exported="true" kind="lib" path="' + join(suite.dir, path) + '"/>')
             else:
                 println(out, '\t<classpathentry combineaccessrules="false" exported="true" kind="src" path="/' + dep.name + '"/>')
 
@@ -1702,6 +1713,86 @@ def ideinit(args, suite=None):
     eclipseinit(args, suite)
     netbeansinit(args, suite)
 
+def javadoc(args):
+    """generate javadoc for some/all Java projects"""
+    
+    parser = ArgumentParser(prog='mx javadoc')
+    parser.add_argument('--unified', action='store_true', help='put javadoc in a single directory instead of one per project')
+    parser.add_argument('--force', action='store_true', help='(re)generate javadoc even if package-list file exists')
+    parser.add_argument('--projects', action='store', help='comma separated projects to process (omit to process all projects)')
+    parser.add_argument('--argfile', action='store', help='name of file containing extra javadoc options')
+    parser.add_argument('-m', '--memory', action='store', help='-Xmx value to pass to underlying JVM')
+    
+    args = parser.parse_args(args)
+    
+    # build list of projects to be processed
+    candidates = sorted_deps()
+    if args.projects is not None:
+        candidates = [project(name) for name in args.projects.split(',')]
+        
+    def assess_candidate(p, projects):
+        if p in projects:
+            return False
+        if args.force or args.unified or not exists(join(p.dir, 'javadoc', 'package-list')):
+            projects.append(p)
+            return True
+        return False
+        
+    projects = []
+    for p in candidates:
+        if not p.native:
+            deps = p.all_deps([], includeLibs=False, includeSelf=False)
+            for d in deps:
+                assess_candidate(d, projects)
+            if not assess_candidate(p, projects):
+                log('[package-list file exists - skipping {0}]'.format(p.name))
+
+    
+    def find_packages(sourceDirs, pkgs=set()):
+        for sourceDir in sourceDirs:
+            for root, _, files in os.walk(sourceDir):
+                if len([name for name in files if name.endswith('.java')]) != 0:
+                    pkgs.add(root[len(sourceDir) + 1:].replace('/','.'))
+        return pkgs
+
+    extraArgs = []
+    if args.argfile is not None:
+        extraArgs += ['@' + args.argfile]
+    if args.memory is not None:
+        extraArgs.append('-J-Xmx' + args.memory)
+
+    if not args.unified:
+        for p in projects:
+            pkgs = find_packages(p.source_dirs(), set())
+            deps = p.all_deps([], includeLibs=False, includeSelf=False)
+            links = ['-link', 'http://docs.oracle.com/javase/6/docs/api/']
+            out = join(p.dir, 'javadoc')
+            for d in deps:
+                depOut = join(d.dir, 'javadoc')
+                links.append('-link')
+                links.append(os.path.relpath(depOut, out))
+            cp = classpath(p.name, includeSelf=True)
+            sp = os.pathsep.join(p.source_dirs())
+            log('Generating javadoc for {0} in {1}'.format(p.name, out))
+            run([java().javadoc, '-J-Xmx2g', '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
+            log('Generated javadoc for {0} in {1}'.format(p.name, out))
+    else:
+        pkgs = set()
+        sp = []
+        names = []
+        for p in projects:
+            find_packages(p.source_dirs(), pkgs)
+            sp += p.source_dirs()
+            names.append(p.name)
+            
+        links = ['-link', 'http://docs.oracle.com/javase/6/docs/api/']
+        out = join(_mainSuite.dir, 'javadoc')
+        cp = classpath()
+        sp = os.pathsep.join(sp)
+        log('Generating javadoc for {0} in {1}'.format(', '.join(names), out))
+        run([java().javadoc, '-classpath', cp, '-quiet', '-d', out, '-sourcepath', sp] + links + extraArgs + list(pkgs))
+        log('Generated javadoc for {0} in {1}'.format(', '.join(names), out))
+
 def javap(args):
     """launch javap with a -classpath option denoting all available classes
 
@@ -1748,6 +1839,7 @@ commands = {
     'ideinit': [ideinit, ''],
     'projectgraph': [projectgraph, ''],
     'javap': [javap, ''],
+    'javadoc': [javadoc, '[options]'],
     'netbeansinit': [netbeansinit, ''],
     'projects': [show_projects, ''],
 }
