@@ -1,0 +1,54 @@
+# use glob syntax
+syntax: glob
+
+TEST-*
+*.class
+*.pyc
+*.log
+*.iml
+log*.txt
+manifest*
+^core
+*.swp
+generated-classes.jar
+.#*
+.metadata
+*.orig
+.DS_Store
+Maxine.ipr
+Maxine.iws
+build.xml
+nbproject
+maxine-tester
+test-logs.zip
+mx/.checkstyle*.timestamp
+mx/env
+mx/includes
+*~
+*.cfg
+vee2010-results
+Base/loaded-classes.jar
+*.pyc
+.classpath
+.project
+.settings/org.eclipse.jdt.core.prefs
+.settings/org.eclipse.jdt.ui.prefs
+
+# switch to regexp syntax
+syntax: regexp
+^TEST-.*
+^manifest.*
+^[^/]*\.log
+^[^/]*\.jar
+^[^/]*/bin/
+^[^/]*/build/
+^[^/]*/generated/
+^[^/]*/dist/
+^[^/]*/nbproject/private
+^[^/]*/trace.*
+^trace.*
+^dist/
+^scratch/
+^xref/
+^javadoc/
+^out/
