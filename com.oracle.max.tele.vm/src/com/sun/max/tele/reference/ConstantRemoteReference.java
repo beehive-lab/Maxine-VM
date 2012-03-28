@@ -55,22 +55,11 @@ public abstract class ConstantRemoteReference extends RemoteReference {
     /**
      * {@inheritDoc}
      * <p>
-     * In this implementation, the remote location does not change, so this method is constant.
-     */
-    @Override
-    public final Address lastValidOrigin() {
-        return origin;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
      * These objects never move, and so are never <em>forwarded</em>.
      */
     @Override
     public boolean isForwarded() {
         return false;
-
     }
 
     /**

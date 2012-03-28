@@ -263,17 +263,6 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         /**
          * {@inheritDoc}
          * <p>
-         * Return the actual origin of the array in the code cache, even after it has been reassigned
-         * when the method's code is <em>wiped</em> during eviction.
-         */
-        @Override
-        public Address lastValidOrigin() {
-            return origin;
-        }
-
-        /**
-         * {@inheritDoc}
-         * <p>
          * Objects in code cache allocations may be relocated, but they are never <em>forwarded</em>
          * in the usual GC sense.
          */

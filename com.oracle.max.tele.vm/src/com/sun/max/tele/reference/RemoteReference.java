@@ -69,27 +69,19 @@ public abstract class RemoteReference extends Reference {
     public abstract ObjectStatus status();
 
     /**
-     * Gets the absolute location of the object's <em>origin</em> in VM memory.  This may or may not
-     * be the same as the beginning of the object's storage, depending on the {@link LayoutScheme} being used.
+     * Gets the absolute location of the object's <em>origin</em> in VM memory. This may or may not be the same as the
+     * beginning of the object's storage, depending on the {@link LayoutScheme} being used.
      * <p>
-     * When an object is <em>forwarded</em> during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase of
-     * a GC, this is the location of the new copy.  The location of the old copy is available during that
-     * phase via the {@link #forwardedFrom()} method.
+     * When an object is <em>forwarded</em> during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase of a GC, this is
+     * the location of the new copy. The location of the old copy is available during that phase via the
+     * {@link #forwardedFrom()} method.
      * <p>
-     * {@link Address#zero()} when the object has become <em>unreachable</em> and its status {@linkplain ObjectStatus#DEAD DEAD}.
+     * Returns the last valid origin when the object has become <em>unreachable</em> and its status is
+     * {@linkplain ObjectStatus#DEAD DEAD}.
      *
-     * @return the VM memory location of the object; {@link Address#zero()} when {@linkplain ObjectStatus#DEAD DEAD}.
+     * @return the VM memory location of the object
      */
     public abstract Address origin();
-
-    /**
-     * Gets the most recent location in VM memory at which the object was {@linkplain ObjectStatus#LIVE LIVE}. This is
-     * equivalent to {@link #origin()} until the reference becomes {@linkplain ObjectStatus#DEAD DEAD}.
-     *
-     * @return the most recent, non-zero absolute {@linkplain Address origin} of the object while
-     *         {@linkplain ObjectStatus#LIVE LIVE}.
-     */
-    public abstract Address lastValidOrigin();
 
     /**
      * Returns {@code true} during the period when an object is being moved to a new location in VM memory by a

@@ -72,10 +72,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
                 return Address.zero();
             }
-            @Override
-            Address lastValidOrigin(SemiSpaceRemoteReference ref) {
-                return origin(ref);
-            }
 
             // Transitions
             @Override
@@ -105,10 +101,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             @Override
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
                 return Address.zero();
-            }
-            @Override
-            Address lastValidOrigin(SemiSpaceRemoteReference ref) {
-                return origin(ref);
             }
 
             // Transitions
@@ -143,10 +135,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
                 return Address.zero();
             }
-            @Override
-            Address lastValidOrigin(SemiSpaceRemoteReference ref) {
-                return origin(ref);
-            }
 
             // Transitions
             @Override
@@ -177,10 +165,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
                 return ref.fromOrigin;
             }
-            @Override
-            Address lastValidOrigin(SemiSpaceRemoteReference ref) {
-                return origin(ref);
-            }
 
             // Transitions
             @Override
@@ -201,15 +185,11 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             }
             @Override
             Address origin(SemiSpaceRemoteReference ref) {
-                return Address.zero();
+                return ref.fromOrigin;
             }
             @Override
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
                 return Address.zero();
-            }
-            @Override
-            Address lastValidOrigin(SemiSpaceRemoteReference ref) {
-                return ref.fromOrigin;
             }
 
             // Transitions (none: death is final)
@@ -243,11 +223,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          * @see RemoteReference#forwardedFrom()
          */
         abstract Address forwardedFrom(SemiSpaceRemoteReference ref);
-
-        /**
-         * @see RemoteReference#lastValidOrigin()
-         */
-        abstract Address lastValidOrigin(SemiSpaceRemoteReference ref);
 
         String gcDescription(SemiSpaceRemoteReference ref) {
             return label;
@@ -397,11 +372,6 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     @Override
     public Address origin() {
         return refState.origin(this);
-    }
-
-    @Override
-    public Address lastValidOrigin() {
-        return refState.lastValidOrigin(this);
     }
 
     @Override

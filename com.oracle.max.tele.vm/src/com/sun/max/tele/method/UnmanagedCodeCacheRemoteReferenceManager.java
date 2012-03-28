@@ -254,11 +254,6 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
             return origin;
         }
 
-        @Override
-        public Address lastValidOrigin() {
-            return origin;
-        }
-
         /**
          * {@inheritDoc}
          * <p>
