@@ -310,6 +310,25 @@ public class CompilationBroker {
     }
 
     /**
+     * Default compilation, not for deopt.
+     * @param cma
+     * @param nature
+     * @return
+     */
+    public TargetMethod compile(ClassMethodActor cma, Nature nature) {
+        return compile(cma, nature, false);
+    }
+
+    /**
+     * Deopt compilation.
+     * @param cma
+     * @return
+     */
+    public TargetMethod compileForDeopt(ClassMethodActor cma) {
+        return compile(cma, Nature.BASELINE, true);
+    }
+
+    /**
      * Produces a target method for the specified method actor. If another thread is currently
      * compiling {@code cma}, then the result of that compilation is returned. Otherwise,
      * a new compilation is scheduled and its result is returned. Either way, this methods
@@ -317,10 +336,11 @@ public class CompilationBroker {
      *
      * @param cma the method for which to make the target method
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isDeopt if the compilation is for a deoptimzation
      * @return a newly compiled version of a {@code cma}
      * @throws InteralError if an uncaught exception is thrown during compilation
      */
-    public TargetMethod compile(ClassMethodActor cma, Nature nature) {
+    public TargetMethod compile(ClassMethodActor cma, Nature nature, boolean isDeopt) {
         boolean retryRun = false;
         while (true) {
             Compilation compilation;
@@ -347,7 +367,7 @@ public class CompilationBroker {
                     if (retryRun) {
                         compiler = selectRetryCompiler(cma, nature, compiler);
                     }
-                    compilation = new Compilation(compiler, cma, prevCompilations, Thread.currentThread(), nature);
+                    compilation = new Compilation(compiler, cma, prevCompilations, Thread.currentThread(), nature, isDeopt);
                     cma.compiledState = compilation;
                 }
             }
@@ -487,6 +507,10 @@ public class CompilationBroker {
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
+        if (mpo.compilationDisabled) {
+            mpo.entryCount = Integer.MAX_VALUE;
+            return;
+        }
         if (Heap.isAllocationDisabledForCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because allocation is currently disabled");
             // We don't want to see another counter overflow in the near future
@@ -789,7 +813,7 @@ public class CompilationBroker {
 
         public void initialize(Phase phase) {
         }
-        public TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
+        public TargetMethod compile(ClassMethodActor classMethodActor, boolean isDeopt, boolean install, CiStatistics stats) {
             return null;
         }
         public Nature nature() {

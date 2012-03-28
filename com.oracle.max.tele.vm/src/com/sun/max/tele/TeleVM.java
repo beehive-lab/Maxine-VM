@@ -252,8 +252,6 @@ public abstract class TeleVM implements MaxVM {
             "Location kind of target VM: local | remote | file");
         public final Option<List<String>> targetLocationOption = newStringListOption("location", "",
             "Location info of target VM: hostname[, port, id] | pathname");
-        public final Option<File> vmDirectoryOption = newFileOption("vmdir", BootImageGenerator.getDefaultVMDirectory(),
-            "Path to directory containing VM executable, shared libraries and boot image.");
         public final Option<List<String>> classpathOption = newStringListOption("cp", null, File.pathSeparatorChar,
             "Additional locations to use when searching for Java class files. These locations are searched after the jar file containing the " +
             "boot image classes but before the locations corresponding to the class path of this JVM process.");
@@ -285,6 +283,7 @@ public abstract class TeleVM implements MaxVM {
         public Options() {
             heapOption = newStringOption("heap", "1024", "Relocation address for the heap and code in the boot image.");
             vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
+            addOptions(BootImageGenerator.targetVMDirOptions);
         }
     }
 
@@ -386,7 +385,7 @@ public abstract class TeleVM implements MaxVM {
             final Classpath extraClasspath = new Classpath(classpathList.toArray(new String[classpathList.size()]));
             classpathPrefix = classpathPrefix.prepend(extraClasspath);
         }
-        vmDirectory = options.vmDirectoryOption.getValue();
+        vmDirectory = BootImageGenerator.getDefaultVMDirectory(true);
         classpathPrefix = classpathPrefix.prepend(BootImageGenerator.getBootImageJarFile(vmDirectory).getAbsolutePath());
         checkClasspath(classpathPrefix);
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);

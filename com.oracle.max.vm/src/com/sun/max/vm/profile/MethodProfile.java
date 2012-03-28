@@ -81,6 +81,13 @@ public class MethodProfile {
      */
     private int[] info;
 
+    /**
+     * When {@code true} re-compilation is disabled.
+     * This is used by JVMTI to prevent methods with JVMTI instrumentation from
+     * being recompiled with the optimizing compiler (and so removing the instrumentation).
+     */
+    public boolean compilationDisabled;
+
     protected MethodProfile() {
     }
 

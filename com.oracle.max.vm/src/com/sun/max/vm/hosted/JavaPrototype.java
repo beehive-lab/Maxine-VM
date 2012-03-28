@@ -42,7 +42,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.Package;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -251,6 +250,24 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
+     * Callback interface for classes that want to optimize/check some static data once all classes are loaded and initialized.
+     *
+     */
+    public interface InitializationCompleteCallback {
+        /**
+         * Invoked on all registered callbacks after all classes are loaded and initialized.
+         * @param complete value from {@link JavaPrototype#initialize(boolean)}
+         */
+        void initializationComplete(boolean complete);
+    }
+
+    private static ArrayList<InitializationCompleteCallback> initializationCompleteCallbacks = new ArrayList<InitializationCompleteCallback>();
+
+    public static void registerInitializationCompleteCallback(InitializationCompleteCallback completionCallback) {
+        initializationCompleteCallbacks.add(completionCallback);
+    }
+
+    /**
      * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
      * context if it hasn't been set.
      *
@@ -312,8 +329,11 @@ public final class JavaPrototype extends Prototype {
         }
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-        VMLog.bootImageInitialize();
-        VmThreadLocal.completeInitialization();
+
+        for (InitializationCompleteCallback completionCallback : initializationCompleteCallbacks) {
+            completionCallback.initializationComplete(complete);
+        }
+
     }
 
     /**

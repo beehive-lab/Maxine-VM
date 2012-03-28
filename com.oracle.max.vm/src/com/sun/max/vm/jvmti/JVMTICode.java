@@ -27,7 +27,6 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.util.*;
 
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
@@ -48,8 +47,11 @@ public class JVMTICode {
         long codeEventSettings = JVMTIEvent.codeEventSettings(jvmtiEnv, vmThread);
         if (codeEventSettings != 0) {
             SingleThreadStackTraceVmOperation op = new FindAppFramesStackTraceOperation(vmThread).submitOp();
-            // we only deopt the top frame, which means we need to handle leaving the frame later
-            checkDeOptForMethod(op.stackTraceVisitor.getStackElement(0).classMethodActor, codeEventSettings);
+            // we only deopt the top frame, which means we need to handle leaving the frame later.
+            // if we are in thread termination, stack may be empty
+            if (op.stackTraceVisitor.stackElements.size() > 0) {
+                checkDeOptForMethod(op.stackTraceVisitor.getStackElement(0).classMethodActor, codeEventSettings);
+            }
         } else {
             // is it worth reopting? perhaps if we are resuming without, say, single step set and
             // the code contains single step event calls. They won't be delivered but they reduce
@@ -60,12 +62,20 @@ public class JVMTICode {
     static void checkDeOptForMethod(ClassMethodActor classMethodActor, long codeEventSettings) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
         // we check here if the code is already adequate for the settings we want
-        if (targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
+        if (JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings)) {
             return;
         }
         ArrayList<TargetMethod> targetMethods = new ArrayList<TargetMethod>();
         targetMethod.finalizeReferenceMaps();
         targetMethods.add(targetMethod);
+        compileAndDeopt(targetMethods);
+    }
+
+    static void compileAndDeopt(ArrayList<TargetMethod> targetMethods) {
+        // compile the methods first, in case of a method used by the compilation system (VM debugging)
+        for (TargetMethod targetMethod : targetMethods) {
+            vm().compilationBroker.compileForDeopt(targetMethod.classMethodActor);
+        }
         // Calling this multiple times for different threads is harmless as it takes care to
         // filter out already invalidated methods.
         new Deoptimization(targetMethods).go();
@@ -77,7 +87,7 @@ public class JVMTICode {
      */
     static void deOptForNewBreakpoint(ClassMethodActor classMethodActor) {
         TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-        ArrayList<TargetMethod> inliners = DependenciesManager.getInliners(classMethodActor);
+        ArrayList<TargetMethod> inliners = InlinedMethodDependencyProcessor.getInliners(classMethodActor);
         // There are three possibilities to consider:
         // 1. It was inlined everywhere so never compiled in isolation (targetMethod == null) && inliners.size() > 0
         // 2. It was inlined somewhere but also compiled in isolation (targetMethod != null) && inliners.size() > 0
@@ -93,10 +103,7 @@ public class JVMTICode {
             checkDeOptForMethod(classMethodActor, codeEventSettings);
             // recheck
             targetMethod = classMethodActor.currentTargetMethod();
-            if (targetMethod == null || !targetMethod.jvmtiCheck(codeEventSettings, JVMTIBreakpoints.getBreakpoints(classMethodActor))) {
-                // Wasn't active so didn't get recompiled, or a previous baseline was picked up by deopt
-                vm().compilationBroker.compile(classMethodActor, Nature.BASELINE);
-            }
+            assert targetMethod != null && JVMTI_DependencyProcessor.checkSettings(classMethodActor, codeEventSettings);
         } else {
             // Never compiled, but may have been inlined
             if (inliners.size() == 0) {
@@ -108,8 +115,8 @@ public class JVMTICode {
         // Reach here if never compiled but inlined, or compiled and inlined
         // Now handle deopt of any inliners.
         if (inliners.size() > 0) {
-            // all the inliners need to be deopted and the inlinee needs to be (re)compiled
-            new Deoptimization(inliners).go();
+            // all the inliners need to be deopted and the inlinee needs to be (re)compiled (TODO check latter)
+            compileAndDeopt(inliners);
             // If never compiled, then similar to case 3, else was recompiled already
         }
     }

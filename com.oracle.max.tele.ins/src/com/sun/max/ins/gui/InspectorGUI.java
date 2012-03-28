@@ -233,4 +233,6 @@ public interface InspectorGUI {
      * @return a standard display label that represents unavailable data in all situations.
      */
     InspectorLabel getUnavailableDataTableCellRenderer();
+
+    InspectorMainMenuBar getMainMenuBar();
 }

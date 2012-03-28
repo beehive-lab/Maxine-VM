@@ -79,7 +79,7 @@ public class Snippets {
     @INLINE
     public static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
-            Throw.negativeArraySizeException(length);
+            throw Throw.negativeArraySizeException(length);
         }
         if (MaxineVM.isHosted()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
@@ -656,10 +656,10 @@ public class Snippets {
     public static void checkCast(ClassActor classActor, Object object) {
         if (MaxineVM.isHosted()) {
             if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
-                Throw.classCastException(classActor, object);
+                throw Throw.classCastException(classActor, object);
             }
         } else if (!classActor.isNullOrInstance(object)) {
-            Throw.classCastException(classActor, object);
+            throw Throw.classCastException(classActor, object);
         }
     }
 

@@ -22,9 +22,12 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.thread.VmThreadLocal.*;
 
 /**
  * Efficient state storage for thread related JVMTI information.
@@ -47,22 +50,45 @@ public class JVMTIVmThreadLocal {
      */
     static final int JVMTI_FRAME_POP = 2;
 
+    /**
+     * Bit set while thread is executing a JVMTI/JNI upcall.
+     */
+    public static final int IN_UPCALL = 4;
+
     private static final int STATUS_BIT_MASK = 0xFF;
 
     private static final int DEPTH_SHIFT = 8;
 
     private static final int DEPTH_MASK = 0xFFFF00;
 
+    /**
+     * Checks if given bit is set in given threadlocals area.
+     * @param tla
+     * @param bit
+     * @return {@code true} iff the bit is set.
+     */
     static boolean bitIsSet(Pointer tla, int bit) {
         return JVMTI_STATE.load(tla).and(bit).isNotZero();
     }
 
-    static void setBit(Pointer tla, int bit, boolean setting) {
-        if (setting) {
-            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
-        } else {
-            JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
-        }
+    /**
+     * Checks if given bit is set in current thread's threadlocals area.
+     * @param tla
+     * @param bit
+     * @return {@code true} iff the bit is set.
+     */
+    static boolean bitIsSet(int bit) {
+        return bitIsSet(ETLA.load(currentTLA()), bit);
+    }
+
+    @INLINE
+    public static void setBit(Pointer tla, int bit) {
+        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).or(bit));
+    }
+
+    @INLINE
+    public static void unsetBit(Pointer tla, int bit) {
+        JVMTI_STATE.store(tla, JVMTI_STATE.load(tla).and(~bit));
     }
 
     static int getDepth(Pointer tla) {
