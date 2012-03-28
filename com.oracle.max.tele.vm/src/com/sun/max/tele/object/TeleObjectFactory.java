@@ -339,7 +339,6 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
             // TODO (mlvdv) This should probably be an error when it all shakes out
             TeleWarning.message("Attempt to create TeleObject with a DEAD Reference" + remoteRef.toString() + " @" + remoteRef.toOrigin().to0xHexString());
         }
-        // The reference might be LIVE, UNKNOWN, or FORWARDED; we only need to handle the FORWARDED case specially here.
 
         //assert vm().lockHeldByCurrentThread();
         TeleObject teleObject = getTeleObject(remoteRef);
@@ -349,9 +348,10 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
 
         // TODO (mlvdv) this should no longer be needed.  If the reference has an ok status, that's we should need.
         // Keep all the VM traffic outside of synchronization.
-        if (!objects().isValidOrigin(remoteRef.toOrigin())) {
-            return null;
-        }
+//        if (!objects().isValidOrigin(remoteRef.toOrigin())) {
+//            TeleWarning.message("Attempt to create TeleObject with an invalid origin");
+//            final boolean isIt = objects().isValidOrigin(remoteRef.toOrigin());
+//        }
 
         // Most important of the roles played by a {@link TeleObject} is to capture
         // the type of the object at the specified location.  This gets done empirically,
@@ -373,17 +373,7 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         ClassActor classActor = null;
 
         try {
-            Address hubAddress;
-
-            if (remoteRef.isForwarded()) {
-                // TODO (mlvdv)  figure out what's needed and fix
-                TeleError.unexpected("Trying to create a TeleObject for a forwarded object @" + remoteRef.origin().to0xHexString());
-                hubAddress = null;
-            } else {
-                // If the location in fact points to a well-formed object in the VM, we will be able to determine the
-                // meta-information necessary to understanding how to access information in the object.
-                hubAddress = Layout.readHubReferenceAsWord(remoteRef).asAddress();
-            }
+            final Address hubAddress = Layout.readHubReferenceAsWord(remoteRef).asAddress();
             hubReference = referenceManager().makeReference(hubAddress);
             classActorReference = fields().Hub_classActor.readReference(hubReference);
             classActor = classes().makeClassActor(classActorReference);
