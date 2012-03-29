@@ -40,7 +40,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.object.*;
