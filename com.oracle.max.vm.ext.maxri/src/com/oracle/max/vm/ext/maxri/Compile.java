@@ -147,7 +147,7 @@ public class Compile {
         if (verboseOption.getValue() > 0) {
             out.print("Initializing Java prototype... ");
         }
-        JavaPrototype.initialize(false);
+        JavaPrototype.initialize();
         if (verboseOption.getValue() > 0) {
             out.println("done");
         }

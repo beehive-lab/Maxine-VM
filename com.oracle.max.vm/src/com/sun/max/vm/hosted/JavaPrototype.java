@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
  * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
  * boot image or otherwise executing code that loads and uses {@link ClassActor}s.
  *
- * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(boolean, int) initialized} once.
+ * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(int) initialized} once.
  *
  */
 public final class JavaPrototype extends Prototype {
@@ -256,9 +256,8 @@ public final class JavaPrototype extends Prototype {
     public interface InitializationCompleteCallback {
         /**
          * Invoked on all registered callbacks after all classes are loaded and initialized.
-         * @param complete value from {@link JavaPrototype#initialize(boolean)}
          */
-        void initializationComplete(boolean complete);
+        void initializationComplete();
     }
 
     private static ArrayList<InitializationCompleteCallback> initializationCompleteCallbacks = new ArrayList<InitializationCompleteCallback>();
@@ -270,27 +269,23 @@ public final class JavaPrototype extends Prototype {
     /**
      * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
      * context if it hasn't been set.
-     *
-     * @param complete specifies whether to load more than just the VM scheme packages
      */
-    public static void initialize(final boolean complete) {
-        initialize(complete, 1);
+    public static void initialize() {
+        initialize(1);
     }
 
     /**
      * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
      * context if it hasn't been set.
-     *
-     * @param complete specifies whether to load more than just the VM scheme packages
      * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
      *            equal to 1 implies package loading is to be single-threaded.
      */
-    public static void initialize(final boolean complete, int threadCount) {
+    public static void initialize(int threadCount) {
         assert theJavaPrototype == null : "Cannot initialize the JavaPrototype more than once";
         if (MaxineVM.vm() == null) {
             new VMConfigurator(null).create(true);
         }
-        theJavaPrototype = new JavaPrototype(complete, threadCount);
+        theJavaPrototype = new JavaPrototype(threadCount);
     }
 
     /**
@@ -300,7 +295,7 @@ public final class JavaPrototype extends Prototype {
      * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
      *            equal to 1 implies package loading is to be single-threaded.
      */
-    private JavaPrototype(final boolean complete, int threadCount) {
+    private JavaPrototype(int threadCount) {
         VMConfiguration config = vmConfig();
         packageLoader = new PrototypePackageLoader(HOSTED_VM_CLASS_LOADER, HOSTED_VM_CLASS_LOADER.classpath());
         theJavaPrototype = this;
@@ -321,17 +316,15 @@ public final class JavaPrototype extends Prototype {
 
         loadMethodSubstitutions(config);
 
-        if (complete) {
-            for (BootImagePackage maxPackage : config.bootImagePackages) {
-                loadBootImagePackage(maxPackage);
-            }
-            loadExtraClassesAndPackages();
+        for (BootImagePackage maxPackage : config.bootImagePackages) {
+            loadBootImagePackage(maxPackage);
         }
+        loadExtraClassesAndPackages();
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
         for (InitializationCompleteCallback completionCallback : initializationCompleteCallbacks) {
-            completionCallback.initializationComplete(complete);
+            completionCallback.initializationComplete();
         }
 
     }
