@@ -136,15 +136,15 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * Size of the contiguous region of memory the allocator allocates from.
      * @return size in bytes
      */
-    final Size size() {
+    public final Size size() {
         return hardLimit().minus(start).asSize();
     }
 
-    final Size usedSpace() {
+    public final Size usedSpace() {
         return top.minus(start).asSize();
     }
 
-    protected final Size freeSpace() {
+    public final Size freeSpace() {
         return hardLimit().minus(top).asSize();
     }
 
@@ -153,7 +153,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return end.plus(headroom());
     }
 
-    protected final void refill(Address chunk, Size chunkSize) {
+    public final void refill(Address chunk, Size chunkSize) {
         // Make sure we can cause any attempt to allocate to fail, regardless of the
         // value of top
         end = Address.zero();
@@ -187,7 +187,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     /**
      * Atomically fill up the allocator with a dead object  to make it parsable.
      */
-    protected final void doBeforeGC() {
+    public final void doBeforeGC() {
         Pointer cell = top.asPointer();
         if (!cell.isZero()) {
             Pointer hardLimit = hardLimit().asPointer();

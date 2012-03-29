@@ -269,7 +269,9 @@ public abstract class VMLog implements Heap.GCCallback {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-            operationRefMaps = new int[loggers.length][];
+            // must provision an extra entry for the operationRefMaps as the logger IDs starts at 1, not 0.
+            // Hence the last logger has an id of length, not length - 1.
+            operationRefMaps = new int[loggers.length + 1][];
             for (VMLogger logger : loggers) {
                 if (logger != null) {
                     logger.setVMLog(vmLog, new VMLogHosted());
