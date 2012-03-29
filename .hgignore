@@ -50,5 +50,5 @@ syntax: regexp
 ^dist/
 ^scratch/
 ^xref/
-^javadoc/
 ^out/
+javadoc/
