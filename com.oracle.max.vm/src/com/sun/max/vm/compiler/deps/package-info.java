@@ -26,65 +26,96 @@
  * action (e.g. deoptimization) being applied to a compiled method.
  *
  * <h1>Overall Architecture</h1>
- * A <dependency> is a relationship between a {@link TargetMethod}, that is, the result of a compilation,
+ * A <i>dependency</i> is a relationship between a {@link com.sun.max.vm.compiler.target.TargetMethod}, that is, the result of a compilation,
  * and an assumption that was made by the compiler during the compilation. The assumption may be any invariant
- * that can be checked for validity at any future time.
+ * that can be checked for validity at a future time.
  * <p>
- * Assumptions are specified by subclasses of {@link CiAssumptions.Assumption}. Instances of such classes
+ * Assumptions are specified by subclasses of {@link com.sun.cri.ci.CiAssumptions.Assumption}. Instances of such classes
  * typically contain references to VM objects that, for example, represent methods, i.e., {@link RiResolvedMethod}.
  * Note that assumptions at this level are generally specified using compiler and VM independent types,
- * and are defined in a compiler and VM project (package). However, there is nothing that prevents a VM specific assumption
+ * and are defined in a compiler and VM independent project (package). However, there is nothing that prevents a VM specific assumption
  * being defined using VM specific types.
  * <p>
  * Since an assumption has to be validated any time the global state of the VM changes, for example, a new class
- * is loaded, they must persist as long as the associated {@linkplain TargetMethod}.
+ * is loaded, it must persist as long as the associated {@linkplain com.sun.max.vm.compiler.target.TargetMethod}.
  * To minimize the amount of storage space occupied by assumptions, and to simplify analysis in a
- * concrete VM, validated assumptions are converted to {@link Dependencies dependencies}, which
+ * concrete VM, validated assumptions are converted to {@link com.sun.max.vm.compiler.deps.Dependencies dependencies}, which
  * use a densely encoded form of the concrete VM types using small integers, such as {@link ClassID}.
  * <p>
- * All assumptions have an associated <i>context</i> class which, loosely, identifies the class that
- * the assumption affects. For example, the {@link CiAssumptions.ConcreteSubtype concrete subtype}
+ * All assumptions have an associated <i>context</i> class which identifies the class that
+ * the assumption affects. For example, the {@link com.sun.cri.ci.CiAssumptions.ConcreteSubtype concrete subtype}
  * assumption specifies that a class {@code T} has a single unique subtype {@code U}. In this case,
  * {@code T} is defined to be the context class.
  * <p>
  * The possible set of assumptions and associated dependencies is open-ended. In order to provide for easy extensibility
- * while keeping the core of the system independent, the concept of a {@link DependencyProcessor} is introduced.
- * A {@linkplain DependencyProcessor} is responsible for the following:
+ * while keeping the core of the system independent, the concept of a {@link com.sun.max.vm.compiler.deps.DependencyProcessor} is introduced.
+ * A {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor} is responsible for the following:
  * <ol>
  * <li> the validation of the associated assumption.</li>
  * <li> the encoding of the assumption into an efficient packed form</li>
  * <li> the processing of the packed form, converting back to an object form for ease of analysis</li>
- * <li> supporting the application of a {@link DependencyVisitor dependency visitor} for analysis</li>
+ * <li> supporting the application of a {@link com.sun.max.vm.compiler.deps.DependencyVisitor dependency visitor} for analysis</li>
  * <li> providing a string based representation of the dependency for tracing</li>
  * </ol>
  * <h2>Analysing Dependencies</h2>
- * A {@link DependencyVistor visitor pattern} is used to support the analysis of a {@linkplain Dependencies} instance.
+ * A {@link com.sun.max.vm.compiler.deps.DependencyVistor visitor pattern} is used to support the analysis of a
+ * {@linkplain com.sun.max.vm.compiler.deps.Dependencies} instance.
  * Recall that each such instance relates to a single {@linkplain TargetMethod}, may contain dependencies related to
  * several context classes and each of these may contain dependencies corresponding to several
- * {@linkplain DependencyProcessor dependency processors}.
+ * {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors}.
  * <p>
- * Since the set of {@linkplain DependencyProcessor dependency processors} is open ended, and a visitor may want to visit
+ * Since the set of {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors} is open ended, and a visitor may want to visit
  * the data corresponding to several dependency processors in one visit, implementation class inheritance cannot be used to
- * create a specific visitor. Instead, a two-level type structure is used, with interfaces defined in the
- * {@linkplain DependencyProcessor} class declaring the statically typed methods that result from decoding the packed
+ * create a specific visitor. Instead, a two-level type structure is used, with interfaces defined in the specific
+ * {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor} class that declare the statically typed methods that result from decoding the packed
  * form of the dependency. Note that these typically correspond closely to the original {@linkplain CiAssumptions.Assumption}
  * but with compiler/VM independent types replaced with Maxine specific types. E.g., {@link RiResolvedType} replaced with
  * {@linkplain ClassActor}.
  * <p>
- * <h3>{@linkplain DependencyVisitor}</h3>
- * {@linkplain DependencyVisitor handles the aspects of the iteration that are independent of the
- * {@linkplain DependencyProcessor dependency processors}. See {@link DependencyVisitor} for more details.
+ * <h3>{@linkplain com.sun.max.vm.compiler.deps.DependencyVisitor}</h3>
+ * {@linkplain com.sun.max.vm.compiler.deps.DependencyVisitor} handles the aspects of the iteration that are independent of the
+ * {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors}.
+ * See {@link com.sun.max.vm.compiler.deps.DependencyVisitor} for more details.
  * <p>
- * The data for each {@linkplain DependencyProcessor dependency processor} is processed by
- * delegating to {@link DependencyProcessor#visitAll}, which will in turn invoke {@linkplain DependencyVisitor#visit}
+ * The data for each {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processor} is visited by
+ * invoking {@link com.sun.max.vm.compiler.deps.DependencyVisitor#visit}
  * for each individual dependency. This method is generic since it cannot know anything about the types
  * of the data associated with the dependency. The default implementation handles this by calling
- * {@link DependencyProcessor#match(DependencyVisitor dependencyVisitor} which returns {@code dependencyVisitor} null if
- * implements the {@link DependencyProcessorVisitor} interface defined by the processor that specifies the types of the data in the dependency,
+ * {@link com.sun.max.vm.compiler.deps.DependencyProcessor#match(DependencyVisitor dependencyVisitor)} which returns {@code dependencyVisitor} if the visitor
+ * implements the {@link com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} interface defined by the processor that specifies the types of the data in the dependency,
  * or {@code null} if not. It then invokes {@link DependencyProcessor#visit} with this value, which invokes the
- * typed method if the value is non-null, and steps the index to the next dependency. Defining {@link DependencyProcessor#visit}
- * this way allows a different {@link DependencyProcessorVisitor} to be called by an overriding implementation of
- * {@linkplain DependencyVisitor#visit}. For example, a visitor that cannot know all the  {@linkplain DependencyProcessor dependency processors}
+ * typed method in the interface if the value is non-null, and steps the index to the next dependency. Defining {@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit}
+ * this way allows a different {@link com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} to be called by an overriding implementation of
+ * {@linkplain com.sun.max.vm.compiler.deps.DependencyVisitor#visit}. For example, a visitor that cannot know all the  {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor dependency processors}
  * in the system, yet wants to invoke the {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor}.
+ * <h2>Defining a new Dependency Processor</h2>
+ * The first step is to define a new subclass of {@link com.sun.cri.ci.CiAssumptions.Assumption}. If, as is typical, the dependency is
+ * used within the optimizing compiler, then this subclass should be defined by adding it to {@link CiAssumptions}.
+ * <p>
+ * Next define a subclass of {@linkplain DependencyProcessor} that will handle this assumption in Maxine, and place it in the
+ * {@code com.sun.max.vm.compiler.deps} package. By convention the name of the class should be "DependencyProcessorTTT", where
+ * TTT is the name of the  {@linkplain CiAssumptions.Assumption} subclass. Define a nested interface that extends
+ * of {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessorVisitor} and defines a method with the same arguments as the method in the
+ * {@linkplain CiAssumptions.Assumption} subclass. To support generic tracing of dependencies you should also define
+ * a subclass of {@link com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor} that implements your interface method(s) and appends appropriate
+ * tracing data to the {@link java.lang.StringBuilder} variable in {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor.ToStringDependencyProcessorVisitor}.
+ * <p>
+ * Define a {@code static final} instance of the {@linkplain com.sun.max.vm.compiler.deps.DependencyProcessor} subclass, which will cause it to be
+ * registered with {@linkplain com.sun.max.vm.compiler.deps.DependenciesManager} during boot image generation. To cope with
+ * other hosted-only applications that may not load all classes, also defined a {@code static} method named
+ * {@code getDependencyProcessor} that returns the singleton value.
+ * <p>
+ * Finally, implement the remaining abstract methods:
+ * <ul>
+ * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#match}</li>
+ * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor.getToStringDependencyProcessorVisitor}</li>
+ * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit}</li>
+ * </ul>
+ * The first two have trivial implementations. The {@code visit} method must step over the specific dependency
+ * data and, if the {@code dependencyProcessorVisitor} is not {@code null}, invoke the associated method,
+ * with the encoded data transformed into the appropriate argument types. Evidently, if the visitor is {@code null},
+ * processing related to transforming the encoded data should be avoided.
+ *
  */
 package com.sun.max.vm.compiler.deps;
+
