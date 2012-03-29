@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.heap;
+package com.sun.max.tele.heap.region;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -28,7 +28,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
 
-public class TeleCardTableRSet extends TeleTupleObject {
+// TODO (mlvdv) instantiate through ordinary TeleObjectFactory
+public final class TeleCardTableRSet extends TeleTupleObject {
     /**
      * Local shallow copy of the card table. Only has the bounds of the table and covered address.
      * Allow to re-use card table code for various card computations (e.g., card index to card table or heap address, heap address to card index,etc.)
@@ -37,7 +38,7 @@ public class TeleCardTableRSet extends TeleTupleObject {
      */
     final CardTable cardTable;
 
-    protected TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
+    public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
         super(vm, cardTableRSetReference);
         Reference cardTableReference = vm().fields().CardTableRSet_cardTable.readReference(cardTableRSetReference);
         Address coveredAreaStart = vm().fields().Log2RegionToByteMapTable_coveredAreaStart.readWord(cardTableReference).asAddress();

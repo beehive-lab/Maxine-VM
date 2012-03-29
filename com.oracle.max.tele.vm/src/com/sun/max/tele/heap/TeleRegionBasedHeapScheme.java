@@ -24,6 +24,7 @@ package com.sun.max.tele.heap;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -37,6 +38,8 @@ public abstract class TeleRegionBasedHeapScheme extends AbstractVmHolder impleme
         teleRegionTable = TeleRegionTable.makeTheTeleRegionTable(vm);
     }
 
+    // TODO (mlvdv)  Use AbstractRemoteHeapScheme.teleHeapScheme()
+    @Deprecated
     protected Reference toReference() {
         Reference vmReference = vm().fields().MaxineVM_vm.readReference(vm());
         return TeleInstanceReferenceFieldAccess.readPath(vmReference,  vm().fields().MaxineVM_config, vm().fields().VMConfiguration_heapScheme);

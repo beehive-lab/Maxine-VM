@@ -42,7 +42,7 @@ import com.sun.max.vm.reference.*;
  * <li>The heap is always in the {@linkplain HeapPhase#ALLOCATING ALLOCATING} phase.</li>
  * <ul>
  */
-public class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
+public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
 
     List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>();
 

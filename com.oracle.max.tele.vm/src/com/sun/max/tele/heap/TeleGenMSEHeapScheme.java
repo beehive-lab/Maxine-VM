@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.layout.*;
@@ -70,6 +71,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     }
 
 
+    // TODO (mlvdv) instantiate through ordinary TeleObjectFactory
     TeleCardTableRSet teleCardTableRSet() {
         if (teleCardTableRSet == null) {
             Reference cardTableRSetReference = vm().fields().GenMSEHeapScheme_cardTableRSet.readReference(toReference());
