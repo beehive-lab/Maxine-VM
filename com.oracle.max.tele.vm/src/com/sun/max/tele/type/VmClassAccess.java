@@ -49,7 +49,7 @@ import com.sun.max.vm.type.*;
  * The singleton cache of information that identifies all classes known to
  * be loaded in the VM.
  * <p>
- * The registry identifies each loaded class with a {@link RemoteReference} that points at the {@link ClassActor} for the
+ * The registry identifies each loaded class with a {@link TeleReference} that points at the {@link ClassActor} for the
  * class in the VM. The registry does <em>not</em> created any instances of {@link TeleClassActor} for them, however, in
  * order to avoid unnecessary overhead.
  * <p>
@@ -155,43 +155,50 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         this.lastUpdateEpoch = epoch;
         int count = 0;
         try {
-            final Reference classRegistryRef = vm.bootClassRegistryReference();
-            VmFieldAccess f = fields();
-            final Reference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
-            Reference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
-            int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
-            for (int i = 0; i < segmentArrayLength; i++) {
-                final Reference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
-                if (!segmentRef.isZero()) {
-                    Reference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
-                    if (!entryArrayRef.isZero()) {
-                        int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
-                        for (int j = 0; j != entryArrayLength; j++) {
-                            RemoteReference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
-                            while (!entryRef.isZero()) {
-                                if (entryRef.isProvisional() && vm.isAttaching()) {
-                                    // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
-                                    // fully initialized yet so we add it to a fix-up list and handle it later
-                                    attachFixupList.add(entryRef);
-                                } else {
-                                    final Reference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
-                                    if (!classActorRef.isZero()) {
-                                        addToRegistry(classActorRef);
-                                        count++;
-                                    }
-                                }
-                                entryRef = (RemoteReference) f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
-                            }
-                        }
-                    }
-                }
-            }
+            final Reference vmClassRegistryReference = vm.vmClassRegistryReference();
+            count = processClassRegistry(vmClassRegistryReference);
+            count += processClassRegistry(fields().ClassRegistry_bootClassRegistry.readReference(vmClassRegistryReference));
             ClassID.setMapping(classIDMapping);
         } catch (Throwable throwable) {
             TeleError.unexpected("could not build inspector type registry", throwable);
         }
         initialClassCount = count;
         initTracer.end(statsPrinter);
+    }
+
+    private int processClassRegistry(Reference classRegistryRef) {
+        int count = 0;
+        VmFieldAccess f = fields();
+        final Reference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryRef);
+        Reference segmentArrayRef = f.ConcurrentHashMap_segments.readReference(hashMapRef);
+        int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
+        for (int i = 0; i < segmentArrayLength; i++) {
+            final Reference segmentRef = referenceManager().makeReference(Layout.getWord(segmentArrayRef, i).asAddress());
+            if (!segmentRef.isZero()) {
+                Reference entryArrayRef = f.ConcurrentHashMap$Segment_table.readReference(segmentRef);
+                if (!entryArrayRef.isZero()) {
+                    int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
+                    for (int j = 0; j != entryArrayLength; j++) {
+                        RemoteReference entryRef = referenceManager().makeReference(Layout.getWord(entryArrayRef, j).asAddress());
+                        while (!entryRef.isZero()) {
+                            if (entryRef.isProvisional() && vm().isAttaching()) {
+                                // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
+                                // fully initialized yet so we add it to a fix-up list and handle it later
+                                attachFixupList.add(entryRef);
+                            } else {
+                                Reference classActorRef = f.ConcurrentHashMap$HashEntry_value.readReference(entryRef);
+                                if (!classActorRef.isZero()) {
+                                    addToRegistry(classActorRef);
+                                    count++;
+                                }
+                            }
+                            entryRef = (RemoteReference) f.ConcurrentHashMap$HashEntry_next.readReference(entryRef);
+                        }
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /** {@inheritDoc}
@@ -277,7 +284,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
                 }
                 return true;
             }
-        }.run(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
+        }.run(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.classpath());
         Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
                 + typesOnClasspath.size() + " types found]");
         this.typesOnClasspath = typesOnClasspath;
@@ -351,7 +358,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
      * {@link ClassActor} in the VM, creating it if needed.
      * Creation is done by loading the class, either from the classpath if present, or
      * by copying the classfile from the VM.  In either case the class is loaded by the
-     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
+     * {@link HostedVMClassLoader#HOSTED_VM_CLASS_LOADER}.
      *
      * @param classActorReference  a {@link ClassActor} in the VM.
      * @return Local, canonical, equivalent {@link ClassActor} created by loading the same class.
@@ -381,7 +388,7 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
             try {
-                return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
+                return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor(name, classfile);
             } catch (ClassFormatError classFormatError) {
                 final String msg = "in " + tracePrefix() + " unable to load classfile copied from VM, error message follows:\n   " + classFormatError;
                 TeleError.unexpected(msg, null);
@@ -392,34 +399,19 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
 
     /**
      * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
-     * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
+     * the classpath using the {@link HostedVMClassLoader#HOSTED_VM_CLASS_LOADER}.
      *
      * @param name the name of a class
      * @return Local {@link ClassActor} corresponding to the class, possibly created by loading it from classpath.
      * @throws ClassNotFoundException if not already loaded and unavailable on the classpath.
      */
     private ClassActor makeClassActor(String name) throws ClassNotFoundException {
-        // The VM registry includes all ClassActors for classes loaded locally
-        // using the prototype class loader
-        HostedBootClassLoader classLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
-        synchronized (classLoader) {
-            ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
-            if (classActor == null) {
-                // Try to load the class from the local classpath.
-                if (name.endsWith("[]")) {
-                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
-                } else {
-                    classActor = classLoader.makeClassActor(
-                                    JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
-                }
-            }
-            return classActor;
-        }
+        return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor(name);
     }
 
     /**
      * Gets a canonical local {@classActor} corresponding to the type of a heap object in the VM, creating one if
-     * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
+     * needed by loading the class using the {@link HostedVMClassLoader#HOSTED_VM_CLASS_LOADER} from either the
      * classpath, or if not found on the classpath, by copying the classfile from the VM.
      *
      * @param objectReference An {@link Object} in the VM heap.

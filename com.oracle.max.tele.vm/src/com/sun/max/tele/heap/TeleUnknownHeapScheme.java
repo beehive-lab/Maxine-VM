@@ -103,4 +103,7 @@ final class TeleUnknownHeapScheme extends AbstractVmHolder implements LegacyTele
         return null;
     }
 
+    public void updateCache(long epoch) {
+    }
+
 }

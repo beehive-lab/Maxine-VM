@@ -153,4 +153,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements LegacyTe
         return null;
     }
 
+    public void updateCache(long epoch) {
+    }
+
 }

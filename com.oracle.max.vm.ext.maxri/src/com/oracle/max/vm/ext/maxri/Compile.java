@@ -160,6 +160,7 @@ public class Compile {
         }
 
         final Classpath classpath = Classpath.fromSystem();
+//        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, null);
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
@@ -224,7 +225,7 @@ public class Compile {
         Throwable thrown = null;
         CiStatistics stats = new CiStatistics();
         try {
-            compiler.compile(classMethodActor, true, stats);
+            compiler.compile(classMethodActor, false, true, stats);
         } catch (Throwable t) {
             thrown = t;
         }

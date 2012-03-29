@@ -55,7 +55,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     /**
      * Log2 of a card size in bytes.
      */
-    static final int LOG2_CARD_SIZE = 9;
+    static public final int LOG2_CARD_SIZE = 9;
 
     /**
      * Number of bytes per card.
@@ -66,7 +66,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
 
     static final int NUM_WORDS_PER_CARD = 1 << LOG2_NUM_WORDS_PER_CARD;
 
-    static final int NO_CARD_INDEX = -1;
+    static public final  int NO_CARD_INDEX = -1;
 
     static final Address CARD_ADDRESS_MASK = Address.fromInt(CARD_SIZE - 1).not();
 
@@ -96,12 +96,14 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
     /**
      * The table recording card state. The table is updated by compiler-generated write-barrier execution and explicitely by the GC.
      */
+    @INSPECTED
     public final CardTable cardTable;
 
     /**
      * The table recording the first object overlapping with every card.
      * The table is updated by allocators and free space reclamation.
      */
+    @INSPECTED
     public final CardFirstObjectTable cfoTable;
 
     /**
@@ -157,9 +159,7 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
      */
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            if (phase == Phase.BOOTSTRAPPING) {
-                Log2RegionToByteMapTable.hostInitialize();
-            } else if (phase == Phase.SERIALIZING_IMAGE) {
+            if (phase == Phase.SERIALIZING_IMAGE) {
                 // Build a table of indexes to reference literals that point to the card table.
                 assert biasedCardTableAddressCiConstant != null;
                 literalRecorder = new ReferenceLiteralLocationRecorder(Code.bootCodeRegion(), biasedCardTableAddressCiConstant.asObject());
@@ -316,11 +316,11 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
             cell = cellVisitor.visitCell(cell, start, end);
             if (MaxineVM.isDebug()) {
                 // FIXME: this is too strong, because DeadSpaceCardTableUpdater may leave a FOT entry temporarily out-dated by up
-                // to MIN_OBJECT_SIZE words when the HeapFreeChunkHeader of the space the allocator was refill with is immediately
+                // to minObjectSize() words when the HeapFreeChunkHeader of the space the allocator was refill with is immediately
                 // before a card boundary.
                 // I 'm leaving this as is now to see whether we ever run into this case, but this
-                // should really be cell.plus(MIN_OBJECT_SIZE).greaterThan(start);
-                FatalError.check(cell.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE).greaterThan(start), "visited cell must overlap visited card.");
+                // should really be cell.plus(minObjectSize()).greaterThan(start);
+                FatalError.check(cell.plus(HeapSchemeAdaptor.minObjectSize()).greaterThan(start), "visited cell must overlap visited card.");
             }
         } while (cell.lessThan(end));
     }
@@ -464,9 +464,8 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
                 Pointer deadObjectAddress = lastCardStart.asPointer();
                 Size deadObjectSize = end.minus(deadObjectAddress).asSize();
 
-                if (deadObjectSize.lessThan(MIN_OBJECT_SIZE)) {
-                    deadObjectSize = MIN_OBJECT_SIZE;
-                    deadObjectAddress = end.minus(deadObjectSize);
+                if (deadObjectSize.lessThan(minObjectSize())) {
+                    deadObjectAddress = end.minus(minObjectSize());
                 }
                 if (MaxineVM.isDebug() && CardFirstObjectTable.TraceFOT) {
                     Log.print("Split last card of Dead Space [");

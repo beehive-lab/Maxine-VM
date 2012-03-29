@@ -48,12 +48,19 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
      * appended to a TLAB to fill unused space before a TLAB refill.
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
      */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static Size TLAB_HEADROOM;
+    @FOLD
+    protected static Size tlabHeadroom() {
+        return minObjectSize();
+    }
+
+    @FOLD
+    protected static int tlabHeadroomNumWords() {
+        return tlabHeadroom().unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    }
 
     protected static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
         // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
-        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        Pointer hardLimit = tlabEnd.plus(tlabHeadroom());
         if (tlabAllocationMark.greaterThan(tlabEnd)) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("TLAB_MARK = ");
@@ -104,13 +111,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // VM-generation time initialization.
-            TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            if (MaxineVM.isDebug()) {
-                AtomicPinCounter.hostInitialize();
-            }
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
+        if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.logGCTime()) {

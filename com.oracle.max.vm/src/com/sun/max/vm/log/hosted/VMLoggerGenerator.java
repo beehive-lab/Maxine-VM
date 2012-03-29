@@ -41,6 +41,11 @@ import com.sun.max.vm.thread.*;
 /**
  * Checks/Generates the boilerplate of a {@link VMLogger} implementation from
  * an interface specified by the developer.
+ *
+ * TODO
+ * <ol>
+ * <li>Handle subclasses in standard argument types, e.g, ClassMethodActor.
+ * </ol>
  */
 @HOSTED_ONLY
 public class VMLoggerGenerator {
@@ -54,7 +59,7 @@ public class VMLoggerGenerator {
     private static final String[] INDENTS = new String[] {"", INDENT4, INDENT8, INDENT12, INDENT16, INDENT20};
 
     private static boolean generate(boolean checkOnly, Class source, ArrayList<Class<?>> loggerInterfacesArg) throws Exception {
-        File base = new File(JavaProject.findHgRoot(), "com.oracle.max.vm/src");
+        File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm/src");
         File outputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         Class<?>[] loggerInterfaces = loggerInterfacesArg.toArray(new Class<?>[loggerInterfacesArg.size()]);
         sort(loggerInterfaces);
@@ -69,7 +74,7 @@ public class VMLoggerGenerator {
             int[] refMaps = computeRefMaps(methods, enumArgMap);
             out.format("%sprivate static abstract class %s extends %s {%n", INDENT4, autoName, sanitizedName(vmLoggerInterface.parent().getName()));
             Map<String, Integer> enumMap = outOperationEnum(out, methods);
-            Set<String> refTypes = new HashSet<String>();
+            Set<Class> customTypes = new HashSet<Class>();
 
             out.printf("%sprivate static final int[] REFMAPS = %s;%n%n", INDENT8, refMapArray(refMaps));
             out.printf("%sprotected %s(String name, String optionDescription) {%n", INDENT8, autoName);
@@ -141,63 +146,72 @@ public class VMLoggerGenerator {
                 out.print(");\n");
                 out.printf("%s}%n", INDENT8);
 
-                // trace call in case body
-                int indx = 4;
-                StringBuilder caseBody = new StringBuilder(INDENTS[indx]).append("case ");
-                caseBody.append(enumMap.get(uName)).append(':').append(" { //").append(uName).append('\n');
-                caseBody.append(INDENTS[indx + 1]).append("trace").append(uName).append('(');
-                argIndex = 1;
-                for (Class< ? > parameter : parameters) {
-                    if (argIndex > 1) {
-                        caseBody.append(", ");
-                    }
-                    caseBody.append(wrapTraceArg(refTypes, source, parameter, argIndex));
-                    argIndex++;
-                }
-                caseBody.append(");\n");
-                caseBody.append(INDENTS[indx + 1]).append("break;\n");
-                caseBody.append(INDENTS[indx]).append("}\n");
-                traceCaseBodies.add(caseBody.toString());
-
-                // trace method
-                out.printf("%sprotected abstract void trace%s(", INDENT8, uName);
-                argIndex = 1;
-                for (Class< ? > parameter : parameters) {
-                    Annotation[] paramAnnotations = parameterAnnotations[argIndex - 1];
-                    if (argIndex > 1) {
-                        out.print(",");
-                        if (argIndex % 6 == 0) {
-                            out.printf("%n%s", INDENT16);
-                        } else {
-                            out.print(' ');
+                /*
+                 * Tracing from here on.
+                 */
+                if (!vmLoggerInterface.noTrace()) {
+                    // trace call in case body
+                    int indx = 4;
+                    StringBuilder caseBody = new StringBuilder(INDENTS[indx]).append("case ");
+                    caseBody.append(enumMap.get(uName)).append(':').append(" { //").append(uName).append('\n');
+                    caseBody.append(INDENTS[indx + 1]).append("trace").append(uName).append('(');
+                    argIndex = 1;
+                    for (Class< ? > parameter : parameters) {
+                        if (argIndex > 1) {
+                            caseBody.append(", ");
                         }
+                        caseBody.append(wrapTraceArg(customTypes, source, parameter, argIndex));
+                        argIndex++;
                     }
-                    formalNames[argIndex] = formalName(paramAnnotations, argIndex);
-                    out.printf("%s %s", parameter.getSimpleName(), formalNames[argIndex]);
-                    argIndex++;
+                    caseBody.append(");\n");
+                    caseBody.append(INDENTS[indx + 1]).append("break;\n");
+                    caseBody.append(INDENTS[indx]).append("}\n");
+                    traceCaseBodies.add(caseBody.toString());
+
+                    // trace method
+                    out.printf("%sprotected abstract void trace%s(", INDENT8, uName);
+                    argIndex = 1;
+                    for (Class< ? > parameter : parameters) {
+                        Annotation[] paramAnnotations = parameterAnnotations[argIndex - 1];
+                        if (argIndex > 1) {
+                            out.print(",");
+                            if (argIndex % 6 == 0) {
+                                out.printf("%n%s", INDENT16);
+                            } else {
+                                out.print(' ');
+                            }
+                        }
+                        formalNames[argIndex] = formalName(paramAnnotations, argIndex);
+                        out.printf("%s %s", parameter.getSimpleName(), formalNames[argIndex]);
+                        argIndex++;
+                    }
+                    out.print(");\n\n");
                 }
-                out.print(");\n\n");
-            }
-            outTraceMethod(out, traceCaseBodies);
-
-            // casts
-            for (String type : refTypes) {
-                out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
-                out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, type);
-                out.printf("%s}%n", INDENT8);
-                out.printf("%s@INTRINSIC(UNSAFE_CAST)%n", INDENT8);
-                out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, type, type);
             }
 
-            // enum args
-            for (Class klass : enumArgMap) {
-                final String type = klass.getSimpleName();
-                out.printf("%n%sprivate static %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
-                out.printf("%sreturn %s.VALUES[r.getIntArg(argNum)];%n", INDENT12, type);
-                out.printf("%s}%n%n", INDENT8);
-                out.printf("%sprivate static Word %sArg(%s enumType) {%n", INDENT8, toFirstLower(type), type);
-                out.printf("%sreturn Address.fromInt(enumType.ordinal());%n", INDENT12);
-                out.printf("%s}%n", INDENT8);
+            if (!vmLoggerInterface.noTrace()) {
+                outTraceMethod(out, traceCaseBodies);
+
+                // casts
+                for (Class type : customTypes) {
+                    String typeName = type.getSimpleName();
+                    out.printf("%sstatic %s to%s(Record r, int argNum) {%n", INDENT8, typeName, typeName);
+                    out.printf("%sreturn as%s(toObject(r, argNum));%n", INDENT12, typeName);
+                    out.printf("%s}%n", INDENT8);
+                    out.printf("%s@INTRINSIC(UNSAFE_CAST)%n", INDENT8);
+                    out.printf("%sprivate static native %s as%s(Object arg);%n", INDENT8, typeName, typeName);
+                }
+
+                // enum args
+                for (Class klass : enumArgMap) {
+                    final String type = klass.getSimpleName();
+                    out.printf("%n%sprivate static %s to%s(Record r, int argNum) {%n", INDENT8, type, type);
+                    out.printf("%sreturn %s.VALUES[r.getIntArg(argNum)];%n", INDENT12, type);
+                    out.printf("%s}%n%n", INDENT8);
+                    out.printf("%sprivate static Word %sArg(%s enumType) {%n", INDENT8, toFirstLower(type), type);
+                    out.printf("%sreturn Address.fromInt(enumType.ordinal());%n", INDENT12);
+                    out.printf("%s}%n", INDENT8);
+                }
             }
 
             out.printf("%s}%n%n", INDENT4);
@@ -347,24 +361,39 @@ public class VMLoggerGenerator {
         return false;
     }
 
-    private static boolean isStandardArgMethod(String name, Class sourceClass) {
+    /**
+     * Attempts to locate an existing definition for the given argument class, either
+     * in {@link VMLogger} or a custom definition in the user {@code sourceClass).
+     * @param argClass
+     * @param log
+     * @param sourceClass
+     * @return {@code null} if no definition found, otherwise the argument class (possibly a superclass of {@code argClass}).
+     */
+    private static Class isStandardArgMethod(Class argClass, boolean log, Class sourceClass) {
         // look in VMLogger first
-        if (isStandardArgMethodX(name, VMLogger.class)) {
-            return true;
+        Class result = isStandardArgMethodX(argClass, log, VMLogger.class);
+        if (result == null) {
+            // now check source class for custom definition
+            result = isStandardArgMethodX(argClass, log, sourceClass);
         }
-        if (isStandardArgMethodX(name, sourceClass)) {
-            return true;
-        }
-        return false;
+        return result;
     }
 
-    private static boolean isStandardArgMethodX(String name, Class klass) {
-        for (Method m : klass.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                return true;
+    private static Class isStandardArgMethodX(Class argClass, boolean log, Class sourceClass) {
+        // The most common case is an exact match against the argument class
+        String methodName = log ? logArgMethodName(argClass) : traceArgMethodName(argClass);
+        for (Method m : sourceClass.getDeclaredMethods()) {
+            if (m.getName().equals(methodName)) {
+                return argClass;
             }
         }
-        return false;
+        // ok, it could be a subclass, e.g. ClassMethodActor <: MethodActor
+        Class argSuperClass = argClass.getSuperclass();
+        if (argSuperClass == null || argSuperClass == Object.class) {
+            return null;
+        } else {
+            return isStandardArgMethodX(argSuperClass, log, sourceClass);
+        }
     }
 
     private static String operationName(Method method) {
@@ -450,38 +479,35 @@ public class VMLoggerGenerator {
         }
     }
 
-    private static String wrapLogArg(Class sourceClass, Class klass, String argName) {
-        String methodName = logArgMethodName(toFirstLower(klass.getSimpleName()));
-        if (isStandardArgMethod(methodName, sourceClass)) {
-            return wrapLogArg(methodName, argName);
+    private static String wrapLogArg(Class sourceClass, Class argClass, String argName) {
+        Class standardArgClass = isStandardArgMethod(argClass, true, sourceClass);
+        if (standardArgClass == null) {
+            standardArgClass = Object.class;
         }
-        // default to Object
-        return wrapLogArg(logArgMethodName("object"), argName);
+        return wrapLogArg(logArgMethodName(standardArgClass), argName);
     }
 
-    private static String logArgMethodName(String type) {
-        return type + "Arg";
+    private static String logArgMethodName(Class argClass) {
+        return toFirstLower(argClass.getSimpleName()) + "Arg";
     }
 
-    private static String traceArgMethodName(String type) {
-        return "to" + type;
+    private static String traceArgMethodName(Class argClass) {
+        return "to" + toFirstUpper(argClass.getSimpleName());
     }
 
     private static String wrapLogArg(String methodName, String name) {
         return methodName + "(" + name + ")";
     }
 
-    private static String wrapTraceArg(Set<String> refTypes, Class sourceClass, Class klass, int argNum) {
-        String type = toFirstUpper(klass.getSimpleName());
-        String methodName = traceArgMethodName(type);
-        if (isStandardArgMethod(methodName, sourceClass)) {
-            return wrapTraceArg(methodName, argNum);
-        } else {
-            if (!klass.isEnum()) {
-                refTypes.add(type);
+    private static String wrapTraceArg(Set<Class> customTypes, Class sourceClass, Class argClass, int argNum) {
+        Class standardArgClass = isStandardArgMethod(argClass, false, sourceClass);
+        if (standardArgClass == null) {
+            if (!argClass.isEnum()) {
+                customTypes.add(argClass);
             }
-            return wrapTraceArg(methodName, argNum);
+            standardArgClass = argClass;
         }
+        return wrapTraceArg(traceArgMethodName(standardArgClass), argNum);
     }
 
     private static String wrapTraceArg(String kind, int argNum) {

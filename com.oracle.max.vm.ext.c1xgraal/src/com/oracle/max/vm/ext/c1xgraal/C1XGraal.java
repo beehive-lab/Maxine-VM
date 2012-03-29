@@ -67,14 +67,14 @@ public class C1XGraal implements RuntimeCompiler {
         }
     }
 
-    public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
+    public final TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         String name = vm().compilationBroker.compilerFor(method);
         if (forceC1X(method) || (name != null && name.equals("C1X"))) {
-            return c1x.compile(method, install, stats);
+            return c1x.compile(method, false, install, stats);
         } else {
             if (FailOverToC1X) {
                 try {
-                    return graal.compile(method, install, stats);
+                    return graal.compile(method, false, install, stats);
                 } catch (Throwable t) {
                     String errorMessage = "Compilation of " + method + " by Graal failed";
                     if (VMOptions.verboseOption.verboseCompilation) {
@@ -91,10 +91,10 @@ public class C1XGraal implements RuntimeCompiler {
                         Log.println(": Retrying with C1X...");
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    return c1x.compile(method, install, stats);
+                    return c1x.compile(method, false, install, stats);
                 }
             } else {
-                return graal.compile(method, install, stats);
+                return graal.compile(method, false, install, stats);
             }
         }
     }

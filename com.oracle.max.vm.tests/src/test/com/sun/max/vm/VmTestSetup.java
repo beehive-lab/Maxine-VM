@@ -90,7 +90,7 @@ public class VmTestSetup extends TestSetup {
         vmConfig().initializeSchemes(Phase.TERMINATING);
         if (false) {
             // Re-enable this when it proves useful. Otherwise, it just clutters the workspace with unwanted files.
-            ClassfileReader.writeClassfilesToJar(new File(JavaProject.findHgRoot(), "loaded-classes.jar"));
+            ClassfileReader.writeClassfilesToJar(new File(JavaProject.findWorkspace(), "loaded-classes.jar"));
         }
     }
 }

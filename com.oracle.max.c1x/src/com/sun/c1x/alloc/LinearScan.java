@@ -2319,6 +2319,9 @@ public final class LinearScan {
         }
 
         printLir("After register number assignment", true);
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, CompilationEvent.AFTER_REGISTER_ALLOCATION, compilation.hir().startBlock, false, true));
+        }
 
         EdgeMoveOptimizer.optimize(ir.linearScanOrder());
         if (C1XOptions.OptControlFlow) {

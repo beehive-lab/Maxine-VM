@@ -201,9 +201,9 @@ public final class VmMethodAccess extends AbstractVmHolder {
                 final TeleClassActor teleClassActor = classes().findTeleClassActor(methodKey.holder());
                 if (teleClassActor != null) {
                     // the class has been loaded; find a matching method
-                    final String methodKeyString = methodKey.signature().toJavaString(true, true);
                     for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-                        if (teleClassMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
+                        MethodKey testMethodKey = new MethodKey.MethodActorKey(teleClassMethodActor.methodActor());
+                        if (testMethodKey.equals(methodKey)) {
                             return teleClassMethodActor;
                         }
                     }

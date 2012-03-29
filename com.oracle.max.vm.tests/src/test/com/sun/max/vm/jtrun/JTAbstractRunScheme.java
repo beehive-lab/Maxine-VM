@@ -23,12 +23,10 @@
 package test.com.sun.max.vm.jtrun;
 
 import static com.sun.max.vm.VMOptions.*;
+import test.com.sun.max.vm.run.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 
@@ -37,15 +35,14 @@ import com.sun.max.vm.run.java.*;
  * It behaves as the standard {@link JavaRunScheme} if a main class is specified on the command.
  * If no main class is specified, then the tests will be run and the VM will exit.
  */
-public abstract class JTAbstractRunScheme extends JavaRunScheme {
+public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
 
     @HOSTED_ONLY
     public JTAbstractRunScheme() {
+        super("test");
     }
 
-    protected static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
     protected static boolean nativeTests;
-    protected static boolean noTests;
     protected static int testStart;
     protected static int testEnd;
     protected static int testCount;
@@ -54,46 +51,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
                     "The number of the first test to run."), MaxineVM.Phase.STARTING);
     private static VMIntOption endOption  = register(new VMIntOption("-XX:TesterEnd=", -1,
                     "The number of the last test to run. Specify 0 to run exactly one test."), MaxineVM.Phase.STARTING);
-    private static final boolean COMPILE_ALL_TEST_METHODS = true;
-
-    @HOSTED_ONLY
-    public void addClassToImage(Class<?> javaClass) {
-        final ClassActor actor = ClassActor.fromJava(javaClass);
-        if (actor == null) {
-            return;
-        }
-
-        if (COMPILE_ALL_TEST_METHODS) {
-            // add all virtual and static methods to the image
-            addMethods(actor.localStaticMethodActors());
-            addMethods(actor.localVirtualMethodActors());
-        } else {
-            // add only the test method to the image
-            final StaticMethodActor method = actor.findLocalStaticMethodActor(testMethod);
-            if (method != null) {
-                addMethodToImage(method);
-            }
-        }
-        for (Class<?> declaredClass : javaClass.getDeclaredClasses()) {
-            // load all inner and anonymous classes into the image as well
-            addClassToImage(declaredClass);
-        }
-    }
-
-    @HOSTED_ONLY
-    private void addMethods(ClassMethodActor[] methodActors) {
-        if (methodActors != null) {
-            for (ClassMethodActor method : methodActors) {
-                addMethodToImage(method);
-            }
-        }
-    }
-
-    @HOSTED_ONLY
-    private void addMethodToImage(ClassMethodActor method) {
-        CompiledPrototype.registerVMEntryPoint(method);
-    }
-
     private boolean classesRegistered;
 
     @HOSTED_ONLY
@@ -108,20 +65,13 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         }
     }
 
-    @Override
-    protected boolean parseMain() {
-        return noTests;
-    }
-
     protected abstract void runTests();
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        noTests = VMOptions.parseMain(false);
+        super.initialize(phase);
         if (phase == MaxineVM.Phase.STARTING) {
-            if (nativeTests || noTests) {
-                super.initialize(phase);
-            }
+            noTests = VMOptions.parseMain(false);
             if (!noTests) {
                 testStart = startOption.getValue();
                 if (testStart < 0) {
@@ -138,8 +88,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
                 }
                 runTests();
             }
-        } else {
-            super.initialize(phase);
         }
         JTUtil.verbose = 3;
         if (MaxineVM.isHosted()) {

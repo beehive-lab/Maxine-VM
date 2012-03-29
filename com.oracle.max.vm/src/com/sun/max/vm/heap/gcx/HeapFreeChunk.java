@@ -48,26 +48,30 @@ import com.sun.max.vm.type.*;
  * TODO (ld) need to revisit the visibility of this class.
  */
 public class HeapFreeChunk {
-
-    public static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
+    @FOLD
+    public static final DynamicHub heapFreeChunkHub() {
+        return ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
+    }
 
     @FOLD
     public static Size heapFreeChunkHeaderSize() {
-        return HeapFreeChunk.HEAP_FREE_CHUNK_HUB.tupleSize;
+        return HeapFreeChunk.heapFreeChunkHub().tupleSize;
     }
 
     /**
      * Index of the word storing "next" field of the heap free chunk.
      */
-    protected static final int NEXT_INDEX;
+    @FOLD
+    protected static int nextIndex() {
+        return ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
+    }
+
     /**
      * Index of the word storing "size" field of the heap free chunk.
      */
-    protected static final int SIZE_INDEX;
-
-    static {
-        NEXT_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
-        SIZE_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
+    @FOLD
+    protected static int sizeIndex() {
+        return ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     @INLINE
@@ -87,26 +91,26 @@ public class HeapFreeChunk {
 
     @INLINE
     public static Address getFreeChunkNext(Address chunkAddress) {
-        return chunkAddress.asPointer().getWord(NEXT_INDEX).asAddress();
+        return chunkAddress.asPointer().getWord(nextIndex()).asAddress();
 
     }
     @INLINE
     public static Size getFreechunkSize(Address chunkAddress) {
-        return chunkAddress.asPointer().getWord(SIZE_INDEX).asSize();
+        return chunkAddress.asPointer().getWord(sizeIndex()).asSize();
     }
 
     @INLINE
     public static void setFreeChunkNext(Address chunkAddress, Address nextChunkAddress) {
-        chunkAddress.asPointer().setWord(NEXT_INDEX, nextChunkAddress);
+        chunkAddress.asPointer().setWord(nextIndex(), nextChunkAddress);
     }
 
     @INLINE
     public static void setFreeChunkSize(Address chunkAddress, Size size) {
-        chunkAddress.asPointer().setWord(SIZE_INDEX, size);
+        chunkAddress.asPointer().setWord(sizeIndex(), size);
     }
 
     public static boolean isHeapFreeChunkOrigin(Pointer origin) {
-        return Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()));
+        return Reference.fromJava(heapFreeChunkHub()).toOrigin().equals(origin.readWord(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt()));
     }
     /**
      * Return true if the specified area is formated as a tail chunk (i.e., chunk with a null next field).
@@ -115,7 +119,7 @@ public class HeapFreeChunk {
      * @return
      */
     public static boolean isTailFreeChunk(Pointer start, Pointer end) {
-        if (end.lessThan(start.plus(HEAP_FREE_CHUNK_HUB.tupleSize))) {
+        if (end.lessThan(start.plus(heapFreeChunkHeaderSize()))) {
             return false;
         }
         final Pointer origin = Layout.cellToOrigin(start);
@@ -149,9 +153,9 @@ public class HeapFreeChunk {
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk, DynamicHub hub) {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
-            FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
+            FatalError.check(hub.isSubClassHub(heapFreeChunkHub().classActor),
                             "Should format with a sub-class of HeapFreeChunk");
-            FatalError.check(numBytes.greaterEqual(HEAP_FREE_CHUNK_HUB.tupleSize), "Size must be at least a heap free chunk size");
+            FatalError.check(numBytes.greaterEqual(heapFreeChunkHeaderSize()), "Size must be at least a heap free chunk size");
             Memory.setWords(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes, deadSpaceMark());
         }
         Cell.plantTuple(cell, hub);
@@ -167,7 +171,7 @@ public class HeapFreeChunk {
      * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk) {
-        return format(deadSpace, numBytes, nextChunk, HEAP_FREE_CHUNK_HUB);
+        return format(deadSpace, numBytes, nextChunk, heapFreeChunkHub());
     }
 
     @INLINE

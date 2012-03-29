@@ -91,6 +91,7 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
     /**
      * Set size according to the current allocations. This also effectively disables further allocations.
      */
+    @HOSTED_ONLY
     public void trim() {
         setSize(getAllocationMark().minus(start()).asSize());
     }

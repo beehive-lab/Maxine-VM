@@ -224,7 +224,18 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (verifier != null && codeAttribute != null && !compilee.holder().isReflectionStub()) {
-                    codeAttribute = verify(compilee, codeAttribute, verifier);
+                    boolean allowResolveVM = false;
+                    try {
+                        // native method (stub) verification requires VM classes to be accessible
+                        if (compilee.isNative()) {
+                            allowResolveVM = BootClassLoader.allowResolveVM(true);
+                        }
+                        codeAttribute = verify(compilee, codeAttribute, verifier);
+                    } finally {
+                        if (compilee.isNative()) {
+                            BootClassLoader.allowResolveVM(allowResolveVM);
+                        }
+                    }
                 }
 
                 this.codeAttribute = codeAttribute;
@@ -368,15 +379,29 @@ public abstract class ClassMethodActor extends MethodActor {
      * Gets a target method for this class method actor, invoking a compiler to produce one if necessary.
      */
     public final TargetMethod makeTargetMethod() {
-        return makeTargetMethod(null);
+        return makeTargetMethod((Nature) null);
     }
 
+    /**
+     * Variant that detects that the caller is a deopted VM method and passes that on.
+     * @param caller
+     * @return
+     */
+    public final TargetMethod makeTargetMethod(TargetMethod caller) {
+        boolean isVMDeopt = caller.isBaseline() && caller.classMethodActor.isVM();
+        return makeTargetMethod(null, isVMDeopt);
+    }
+
+    public final TargetMethod makeTargetMethod(Nature nature) {
+        return makeTargetMethod(nature, false);
+    }
     /**
      * Gets a target method for this class method actor, invoking a compiler to produce one if necessary.
      *
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isVMDeopt
      */
-    public final TargetMethod makeTargetMethod(Nature nature) {
+    private TargetMethod makeTargetMethod(Nature nature, boolean isVMDeopt) {
         TargetMethod currentTargetMethod = Compilations.currentTargetMethod(compiledState, nature);
         if (currentTargetMethod != null) {
             // fast path: a suitable compiled version of method is available
@@ -384,7 +409,7 @@ public abstract class ClassMethodActor extends MethodActor {
         }
 
         // slow path: a suitable compiled version of method is *not* available
-        return vm().compilationBroker.compile(this, nature);
+        return vm().compilationBroker.compile(this, nature, isVMDeopt);
     }
 
     private static BytecodeTransformation transformationClient;

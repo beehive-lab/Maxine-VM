@@ -76,6 +76,8 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private long lastUpdateEpoch = -1L;
 
+    private HeapPhase lastUpdateHeapPhase = HeapPhase.ALLOCATING;
+
     protected static VmHeapAccess vmHeap;
 
     public static long heapAddressOption() {
@@ -97,6 +99,11 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
         }
         TeleError.check(heap != 0L, "Heap cannot start at 0");
         return heap;
+    }
+
+    @Deprecated
+    public HeapPhase lastUpdateHeapPhase() {
+        return lastUpdateHeapPhase;
     }
 
     /**

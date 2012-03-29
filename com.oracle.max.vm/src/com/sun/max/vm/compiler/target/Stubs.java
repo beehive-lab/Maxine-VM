@@ -268,7 +268,7 @@ public class Stubs {
             throw new AbstractMethodError();
         }
 
-        CodePointer vtableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT);
+        CodePointer vtableEntryPoint = selectedCallee.makeTargetMethod(caller).getEntryPoint(VTABLE_ENTRY_POINT);
         hub.setWord(vTableIndex, vtableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(vtableEntryPoint, caller);
@@ -300,7 +300,7 @@ public class Stubs {
             throw new AbstractMethodError();
         }
 
-        CodePointer itableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT);
+        CodePointer itableEntryPoint = selectedCallee.makeTargetMethod(caller).getEntryPoint(VTABLE_ENTRY_POINT);
         hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint.toAddress());
 
         CodePointer adjustedEntryPoint = adjustEntryPointForCaller(itableEntryPoint, caller);
@@ -384,7 +384,7 @@ public class Stubs {
         final TargetMethod caller = cpCallSite.toTargetMethod();
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
 
-        final CodePointer calleeEntryPoint = callee.makeTargetMethod().getEntryPoint(caller.callEntryPoint);
+        final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
 
         // remember calls from boot code region to baseline code cache

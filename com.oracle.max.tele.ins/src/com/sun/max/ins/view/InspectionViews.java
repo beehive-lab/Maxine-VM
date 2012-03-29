@@ -31,6 +31,7 @@ import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.NotepadView.NotepadViewManager;
 import com.sun.max.ins.UserFocusView.UserFocusViewManager;
+import com.sun.max.ins.InvokeMethodLogView.InvokeMethodLogViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsView.BreakpointsViewManager;
 import com.sun.max.ins.debug.MarkBitsView.*;
@@ -165,6 +166,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public NotepadViewManager viewManager() {
                 final NotepadViewManager viewManager = NotepadView.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        INVOKE_METHOD_LOG(true, false, "Log of method invocation output") {
+
+            @Override
+            public InvokeMethodLogViewManager viewManager() {
+                final InvokeMethodLogViewManager viewManager = InvokeMethodLogView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }

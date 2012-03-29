@@ -353,6 +353,11 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("pairOffset", "pair"),
         JDK.sun_misc_PerfCounter,
             new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1)), true),
+        JDK.sun_misc_ProxyGenerator,
+            new ValueField("saveGeneratedFiles", BooleanValue.from(false), true),
+        JDK.java_lang_invoke_MethodType,
+            new FieldOffsetRecomputation("ptypesOffset", "ptypes"),
+            new FieldOffsetRecomputation("rtypeOffset", "rtype"),
     };
     // Checkstyle: resume
 
@@ -540,7 +545,7 @@ public final class JDKInterceptor {
     }
 
     /**
-     * An intercepted field whose boot image value is a fixed to a value given in the
+     * An intercepted field whose boot image value is fixed to a value given in the
      * {@linkplain ValueField#ValueField(String, Value) constructor}.
      */
     private static class ValueField extends InterceptedField {

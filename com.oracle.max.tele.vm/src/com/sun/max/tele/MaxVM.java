@@ -308,7 +308,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
      */
-    Reference bootClassRegistryReference();
+    Reference vmClassRegistryReference();
 
     /**
      * Creates a boxed value that acts as a reference to an object in the VM, useful for

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,7 +114,7 @@ public final class JDK_java_lang_Thread {
             name = "Thread-" + String.valueOf(nextThreadNum());
         }
         vmThread.setJavaThread(javaThread, name);
-        if (Platform.platform().os == OS.DARWIN) {
+        if (JDK.JDK_VERSION == JDK.JDK_6 && Platform.platform().os == OS.DARWIN) {
             // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
             // which indicates if the priority should be explicitly set. For all calls to init() this
             // argument is true *except* for a call for the purpose of attaching a thread when it is false.
@@ -279,6 +279,20 @@ public final class JDK_java_lang_Thread {
             vmThread.suspend0();
         }
     }
+
+    /**
+     * The sole reason this is substituted is to ensure it is never inlined.
+     * Why? Because JDWP agents set a (hidden) breakpoint here and if it is inlined we have
+     * to recompile the inliners, at least one of which cannot be compiled with T1X.
+     */
+    @NEVER_INLINE
+    @SUBSTITUTE
+    @Deprecated
+    private void resume() {
+        thisThread().checkAccess();
+        resume0();
+    }
+
 
     /**
      * Resumes this thread at the OS level.

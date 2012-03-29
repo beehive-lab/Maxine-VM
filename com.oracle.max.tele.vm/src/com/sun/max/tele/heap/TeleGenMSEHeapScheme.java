@@ -25,16 +25,57 @@ package com.sun.max.tele.heap;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.field.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.reference.*;
 
 
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
+    private TeleCardTableRSet teleCardTableRSet;
+    private Address nurseryEnd = Address.zero();
+    private Address nurseryStart = Address.zero();
+    private Address nurseryTop = Address.zero();
+    private Reference nurseryAllocator = Reference.zero();
+    private long lastUpdateEpoch = -1L;
 
     TeleGenMSEHeapScheme(TeleVM vm) {
         super(vm);
+    }
+
+    boolean isInNursery(Address address) {
+        return address.greaterEqual(nurseryStart) && address.lessThan(nurseryEnd);
+    }
+
+    boolean isLiveInNursery(Address address) {
+        return address.greaterEqual(nurseryStart) && address.lessThan(nurseryTop);
+
+    }
+
+    private void initializeNursery() {
+        if (nurseryAllocator.isZero()) {
+            nurseryAllocator =   TeleInstanceReferenceFieldAccess.readPath(toReference(),
+                            vm().fields().GenMSEHeapScheme_youngSpace, vm().fields().NoAgingNursery_allocator);
+        }
+        nurseryStart = vm().fields().BaseAtomicBumpPointerAllocator_start.readWord(nurseryAllocator).asAddress();
+        nurseryEnd = vm().fields().BaseAtomicBumpPointerAllocator_end.readWord(nurseryAllocator).asAddress();
+    }
+
+    private void updateNurseryTop() {
+        // TODO: add invariant check that the new nursery top must be greater or equal to the old one unless
+        // the GC count is different or we're not in allocating phase.
+        nurseryTop = vm().fields().BaseAtomicBumpPointerAllocator_top.readWord(nurseryAllocator).asAddress();
+    }
+
+
+    TeleCardTableRSet teleCardTableRSet() {
+        if (teleCardTableRSet == null) {
+            Reference cardTableRSetReference = vm().fields().GenMSEHeapScheme_cardTableRSet.readReference(toReference());
+            teleCardTableRSet = new TeleCardTableRSet(vm(), cardTableRSetReference);
+        }
+        return teleCardTableRSet;
     }
 
     @Override
@@ -79,6 +120,52 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
         return origin;
     }
 
+
+
+    class GenMSERegionInfo extends GCXHeapRegionInfo {
+        final int cardIndex;
+
+        GenMSERegionInfo(Address address) {
+            super(address);
+            cardIndex = teleCardTableRSet().cardIndex(address);
+        }
+
+        @Override
+        public String terseInfo() {
+            return (regionID < 0 ? "-" : "region #" + regionID) + (cardIndex < 0 ? " -" : " card# " + cardIndex);
+        }
+
+        @Override
+        public MaxMemoryStatus status() {
+            if (regionID < 0) {
+                final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                if (heapRegion == null) {
+                    // The location is not in any memory region allocated by the heap.
+                    return MaxMemoryStatus.UNKNOWN;
+                }
+                // in doubt...
+                return MaxMemoryStatus.LIVE;
+            }
+            switch(vm().heap().lastUpdateHeapPhase()) {
+                case ALLOCATING:
+                    if (isInNursery(address)) {
+                        return address.lessThan(nurseryTop) ? MaxMemoryStatus.LIVE : MaxMemoryStatus.FREE;
+                    }
+                    return MaxMemoryStatus.LIVE;
+                case RECLAIMING:
+                    return MaxMemoryStatus.LIVE;
+                case ANALYZING:
+                    return MaxMemoryStatus.LIVE;
+            }
+            return MaxMemoryStatus.UNKNOWN;
+        }
+    }
+
+    @Override
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new GenMSERegionInfo(address);
+    }
+
     public List<MaxCodeLocation> inspectableMethods() {
         // TODO (ld)
         return EMPTY_METHOD_LIST;
@@ -87,6 +174,21 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     public MaxMarkBitsInfo markBitInfo() {
         // TODO (ld)
         return null;
+    }
+
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            if (nurseryStart.isZero()) {
+                initializeNursery();
+                if (nurseryStart.isZero()) {
+                    lastUpdateEpoch = epoch;
+                    return;
+                }
+            }
+            // refresh nursery allocator's allocation hand.
+            updateNurseryTop();
+            lastUpdateEpoch = epoch;
+        }
     }
 
     @Override

@@ -436,6 +436,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         moveToMiddle(view.getJComponent());
     }
 
+    public InspectorMainMenuBar getMainMenuBar() {
+        return menuBar;
+    }
+
 
     public InspectorAction moveToMiddleAction(final AbstractView view) {
         return new InspectorAction(inspection, "Move to center of frame") {

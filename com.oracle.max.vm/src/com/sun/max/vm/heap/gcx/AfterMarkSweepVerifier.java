@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,7 +97,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements HeapS
         visitedCellOrigin = origin;
         final Reference hubRef = Layout.readHubReference(origin);
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        if (hub == HeapFreeChunk.heapFreeChunkHub()) {
             FatalError.check(heapMarker.isWhite(cell), "free chunk must not be marked");
             Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
             freeChunksByteCount += chunkSize.toLong();

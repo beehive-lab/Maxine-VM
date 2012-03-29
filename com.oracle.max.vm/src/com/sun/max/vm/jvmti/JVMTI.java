@@ -38,6 +38,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FramePopEventData;
@@ -121,6 +122,7 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd[j] = 0;
             }
         }
+        VMOptions.addFieldOption("-XX:", "JVMTI_VM", "Include VM classes in JVMTI results.");
     }
 
     /**
@@ -236,19 +238,21 @@ public class JVMTI {
 
     /**
      * Are there any agents requesting any events needing compiled code support?
+     * @param classMethodActor the method about to be compiled or {@code null} if none.
      * @return
      */
-    public static synchronized boolean compiledCodeEventsNeeded() {
-        return JVMTIEvent.anyCodeEventsSet();
+    public static synchronized boolean compiledCodeEventsNeeded(ClassMethodActor classMethodActor) {
+        return JVMTIEvent.anyCodeEventsSet() ||
+            (classMethodActor == null ? false : JVMTIBreakpoints.hasBreakpoints(classMethodActor));
     }
 
     /**
-     * Support for determining if we need to compile special code to dispatch
-     * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
-     * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
-     * @return the eventId corresponding to the bytecode or 0 if not needed
+     * Returns the {@link JVMTIEvent event id} that corresponds to a given bytecode,
+     * should it be instrumented.
+     * @param opcode
+     * @return
      */
-    public static synchronized int byteCodeEventNeeded(int opcode) {
+    public static int eventForBytecode(int opcode) {
         int eventId;
         if (opcode == -1) {
             eventId = JVMTI_EVENT_METHOD_ENTRY;
@@ -275,6 +279,17 @@ public class JVMTI {
 
             }
         }
+        return eventId;
+    }
+
+    /**
+     * Support for determining if we need to compile special code to dispatch
+     * specific JVMTI events, e.g. METHOD_ENTRY, FIELD_ACCESS.
+     * The value -1 is used to indicate METHOD_ENTRY as this is a pseudo bytecode.
+     * @return the eventId corresponding to the bytecode or 0 if not needed
+     */
+    public static synchronized int byteCodeEventNeeded(int opcode) {
+        int eventId = eventForBytecode(opcode);
         return JVMTIEvent.isEventSet(eventId) ? eventId : 0;
     }
 
@@ -302,10 +317,17 @@ public class JVMTI {
             return true;
         }
         if (jvmtiEnvsIndex == 0) {
+            // no agents
+            return true;
+        }
+
+        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.IN_UPCALL)) {
+            // already in a agent callback : VM breakpoint
             return true;
         }
 
         if ((JVMTIEvent.getPhase(eventId) & phase) == 0) {
+            // wrong phase
             return true;
         }
         return false;
@@ -324,11 +346,11 @@ public class JVMTI {
     public static void event(int eventId, Object arg1) {
         boolean ignoring = ignoreEvent(eventId);
 
+        JVMTIEvent.logger.logEvent(eventId, ignoring, arg1);
+
         if (ignoring) {
             return;
         }
-
-        JVMTIEvent.log(eventId);
 
         // Regardless of interest in these events there are things that must be done
         switch (eventId) {
@@ -603,5 +625,11 @@ public class JVMTI {
         }
 
     }
+
+    /**
+     * In it's default setting, VM classes are invisible to JVMTI.
+     * They don't show up in stack traces, heap traces or the set of loaded classes.
+     */
+    static boolean JVMTI_VM;
 
 }

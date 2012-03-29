@@ -60,6 +60,7 @@ def configs(arg):
     
 def copycheck(args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
+    mx.build(['--projects', 'com.oracle.max.base'])
     mx.run_java(['-cp', mx.classpath('com.oracle.max.base', resolve=False), 'com.sun.max.tools.CheckCopyright'] + args)
 
 def eclipse(args):
@@ -95,15 +96,17 @@ def gate(args):
     if mx.checkstyle([]):
         mx.abort('Checkstyle warnings were found')
     
-    mx.log('Running copycheck')
-    hgNode = os.getenv('hg_node')
-    if hgNode is None:
-        copycheck(['-modified', '-reporterrors=true', '-continueonerror'])
-    else:
-        revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
-        revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
-        changesetCount = revTip - revLast + 1
-        copycheck(['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
+    if exists(join(_maxine_home, '.hg')):
+        # Copyright check depends on the sources being in a Mercurial repo
+        mx.log('Running copycheck')
+        hgNode = os.getenv('hg_node')
+        if hgNode is None:
+            copycheck(['-modified', '-reporterrors=true', '-continueonerror'])
+        else:
+            revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
+            revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
+            changesetCount = revTip - revLast + 1
+            copycheck(['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
 
     mx.log('Ensuring JavaTester harness is up to date')
     try:
@@ -343,6 +346,21 @@ def inspect(args):
     else:
         mx.run(cmd)
 
+def inspectoragent(args):
+    """launch the Inspector agent
+
+    Launch the Inspector agent.
+
+    The agent listens on a given port for an incoming connection from
+    a remote Inspector process."""
+
+    cmd = mx.java().format_cmd(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
+    if mx.get_os() == 'darwin':
+        # The -E option propagates the environment variables into the sudo process
+        mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
+    else:
+        mx.run(cmd)
+    
 def jnigen(args):
     """(re)generate Java source for native function interfaces (i.e. JNI, JMM, JVMTI)
 
@@ -621,7 +639,7 @@ def _vm_image():
     return join(_vmdir, 'maxine.vm')
 
 def mx_init():
-    mx.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
+    mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
     
     commands = {
         'c1x': [c1x, '[options] patterns...'],
@@ -635,6 +653,7 @@ def mx_init():
         'helloworld': [helloworld, '[VM options]'],
         'image': [image, '[options] classes|packages...'],
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
+        'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
         'jnigen': [jnigen, ''],
         'jttgen': [jttgen, ''],
         'loggen': [loggen, ''],
@@ -655,6 +674,6 @@ def mx_init():
 def mx_post_parse_cmd_line(opts):
     global _vmdir
     if opts.vmdir is None:
-        _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated', mx.get_os())
+        _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated',  mx.get_os())
     else:
         _vmdir = opts.vmdir
