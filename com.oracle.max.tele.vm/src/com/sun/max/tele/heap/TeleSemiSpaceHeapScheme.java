@@ -153,4 +153,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractVmHolder implements TeleHeap
         return null;
     }
 
+    public void updateCache(long epoch) {
+    }
+
 }

@@ -103,4 +103,7 @@ final class TeleUnknownHeapScheme extends AbstractVmHolder implements TeleHeapSc
         return null;
     }
 
+    public void updateCache(long epoch) {
+    }
+
 }
