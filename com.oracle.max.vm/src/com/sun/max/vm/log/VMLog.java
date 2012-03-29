@@ -235,7 +235,7 @@ public abstract class VMLog implements Heap.GCCallback {
      * Array of registered {@link VMLogger} instances.
      */
     @INSPECTED
-    private static VMLogger[] loggers = new VMLogger[16];
+    private static VMLogger[] loggers = new VMLogger[32];
     private static int nextLoggerIndex;
 
     /**
