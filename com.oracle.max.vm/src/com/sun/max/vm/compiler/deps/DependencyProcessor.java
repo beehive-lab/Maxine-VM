@@ -107,9 +107,9 @@ public abstract class DependencyProcessor {
     /**
      * Checks if {@code dependenciesVisitor} implements the {@linkplain DependencyProcessorVisitor} defined
      * by this processor.
-     * @param dependenciesVisitor
-     * @return {@code null} if {@code dependenciesVisitor} does not implement this processor's
-     *         {@linkplain DependencyProcessorVisitor}, otherwise {@code dependenciesVisitor} cast to that type.
+     * @param dependencyVisitor
+     * @return {@code null} if {@code dependencyVisitor} does not implement this processor's
+     *         {@linkplain DependencyProcessorVisitor}, otherwise {@code dependencyVisitor} cast to that type.
      */
     protected abstract DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor);
 
@@ -125,6 +125,6 @@ public abstract class DependencyProcessor {
      * @param index start index of the dependency
      * @return the index of the next dependency or {@code -1} to terminate the visit.
      */
-    protected abstract int visit(DependencyProcessorVisitor dependenciesProcessorVisitor, ClassActor context, Dependencies dependencies, int index);
+    protected abstract int visit(DependencyProcessorVisitor dependencyProcessorVisitor, ClassActor context, Dependencies dependencies, int index);
 
 }

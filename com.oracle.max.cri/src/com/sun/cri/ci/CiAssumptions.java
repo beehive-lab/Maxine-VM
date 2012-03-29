@@ -28,9 +28,13 @@ import java.util.*;
 import com.sun.cri.ri.*;
 
 /**
- * Class for recording optimistic assumptions made during compilation.
- * Recorded assumption can be visited for subsequent processing using
- * an implementation of the {@link CiAssumptionProcessor} interface.
+ * Records optimistic assumptions made during compilation.
+ *
+ * Each instance of this class is capable of recording a list of {@link Assumption assumptions} that can be retrieved
+ * using {@link #iterator()}.
+ *
+ * A fixed set of standard {@linkplain Assumption assumptions} are defined here along with methods to record them.
+ * Processing the assumptions is the responsibility of a specific VM/compiler combination and is not addressed here.
  */
 public final class CiAssumptions implements Serializable, Iterable<CiAssumptions.Assumption> {
 
