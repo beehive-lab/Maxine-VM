@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.t1x.jvmti.*;
 import com.sun.cri.bytecode.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -97,6 +98,19 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     private static final int PUTFIELD_EVENT = JVMTI.eventForBytecode(Bytecodes.PUTFIELD);
     private static final int RETURN_EVENT = JVMTI.eventForBytecode(Bytecodes.RETURN);
 
+    private static final long DEBUG_EVENTS = JVMTIEvent.bitSetting(JVMTIEvent.BREAKPOINT) |
+                                             JVMTIEvent.bitSetting(JVMTIEvent.SINGLE_STEP) |
+                                             JVMTIEvent.bitSetting(JVMTIEvent.FRAME_POP);
+
+    /**
+     * If {@code true}, all debugging-related events will compiled in from the get go.
+     */
+    private static boolean JVMTI_CDE;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "JVMTI_CDE", "Compile for all debugging events");
+    }
+
     private final T1X defaultT1X;
 
     public JVMTI_AMD64T1XCompilation(T1X compiler) {
@@ -144,6 +158,13 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         checkByteCodeEventNeeded(Bytecodes.GETFIELD);
         checkByteCodeEventNeeded(Bytecodes.PUTFIELD);
         checkByteCodeEventNeeded(Bytecodes.RETURN);
+
+        if (JVMTI_CDE) {
+            // any debug events => all debug events
+            if ((eventSettings & DEBUG_EVENTS) != 0) {
+                eventSettings = DEBUG_EVENTS;
+            }
+        }
     }
 
     /**

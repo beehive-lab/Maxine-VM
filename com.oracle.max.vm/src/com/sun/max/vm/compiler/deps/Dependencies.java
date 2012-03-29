@@ -29,11 +29,13 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.DependencyProcessor.DependencyProcessorVisitor;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.jni.MemberID;
 import com.sun.max.vm.type.*;
 
 /**
@@ -67,12 +69,11 @@ public final class Dependencies {
      * Two constructors are provided, one that visits all dependencies regardless of context class,
      * and one that only visits dependencies of a specific context class.
      *
-     * An invalidated {@linkplain Dependencies} causes {@link #doInvalidated() to be invoked.
+     * An invalidated {@linkplain Dependencies} causes {@link #doInvalidated()} to be invoked.
      * Otherwise the data associated with each {@linkplain DependencyProcessor} is visited, possibly filtered by context class.
      * It is the responsibility of the {@linkplain DependencyProcessor} to process this data, invoking
      * the {@linkplain DependencyProcessorVisitor} if the visitor subclass implements the related subclass
      * of {@linkplain DependencyProcessorVisitor}.
-
      */
     public static abstract class DependencyVisitor {
         public DependencyVisitor() {
@@ -127,8 +128,8 @@ public final class Dependencies {
      * Data structure used while encoding the dependencies for a class into a {@code short[]}.
      * {@code records[n]} holds the records for the n'th dependency type.
      *
-     * The unique ids for {@ClassActor} and {@link MethodActor} are used in the array to save space. The
-     * {@link ClassActor context} id of the dependencies is always the first element of the array. The encoding is
+     * The unique ids for {@link ClassActor} and {@link MethodActor} are used in the array to save space. The
+     * {@linkplain ClassActor context} id of the dependencies is always the first element of the array. The encoding is
      * extensible to new dependencies through a "flags" field, which specifies which dependencies are present. The
      * additional data for the dependencies follows the "flags" field, in the order specified by the bit number
      * of the associated {@link DependencyProcessor dependency processor}. If a dependency is present,
@@ -178,7 +179,7 @@ public final class Dependencies {
         /**
          * Add a piece of dependency data for the {@linkplain DependencyProcessor}.
          * @param dp
-         * @param s
+         * @param val
          */
         public void add(DependencyProcessor dp, short val) {
             get(dp).add(val);
