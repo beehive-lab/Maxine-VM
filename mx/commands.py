@@ -639,7 +639,7 @@ def _vm_image():
     return join(_vmdir, 'maxine.vm')
 
 def mx_init():
-    mx.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
+    mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
     
     commands = {
         'c1x': [c1x, '[options] patterns...'],

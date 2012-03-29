@@ -105,7 +105,6 @@ public final class DependenciesManager {
     @HOSTED_ONLY
     static synchronized int registerDependencyProcessor(DependencyProcessor dependencyProcessor,
                     Class< ? extends CiAssumptions.Assumption> assumptionClass) {
-        System.out.println("registerDependencyProcessor for " + assumptionClass.getName());
         ProgramError.check(dependencyProcessors.put(assumptionClass, dependencyProcessor) == null);
         ProgramError.check(nextDependencyProcessorId < MAX_DEPENDENCY_PROCESSORS);
         /*

@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.graal;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -60,6 +59,7 @@ import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Integration of the Graal compiler into Maxine's compilation framework.
@@ -153,7 +153,7 @@ public class Graal implements RuntimeCompiler {
             NativeStubGraphBuilder.initialize();
 
             // Ensure all the Node classes used by Maxine have their NodeClass instances in the image.
-            for (ClassActor classActor : BOOT_CLASS_REGISTRY.allBootImageClasses()) {
+            for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
                 if (Node.class.isAssignableFrom(classActor.toJava())) {
                     Class<?> nodeClass = classActor.toJava();
                     if (!Modifier.isAbstract(nodeClass.getModifiers())) {

@@ -124,7 +124,7 @@ by extension commands.
 Property values can use environment variables with Bash syntax (e.g. ${HOME}).
 """
 
-import sys, os, errno, time, subprocess, shlex, types, urllib2, contextlib, StringIO, zipfile, signal
+import sys, os, errno, time, subprocess, shlex, types, urllib2, contextlib, StringIO, zipfile, signal, xml.sax.saxutils
 import shutil, fnmatch, re, xml.dom.minidom
 from collections import Callable
 from threading import Thread
@@ -510,6 +510,7 @@ class ArgParser(ArgumentParser):
         ArgumentParser.__init__(self, prog='mx')
 
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
+        self.add_argument('-V', action='store_true', dest='very_verbose', help='enable very verbose output')
         self.add_argument('--dbg', type=int, dest='java_dbg_port', help='make Java processes wait on <port> for a debugger', metavar='<port>')
         self.add_argument('-d', action='store_const', const=8000, dest='java_dbg_port', help='alias for "-dbg 8000"')
         self.add_argument('--cp-pfx', dest='cp_prefix', help='class path prefix', metavar='<arg>')
@@ -535,6 +536,9 @@ class ArgParser(ArgumentParser):
         # Give the timeout options a default value to avoid the need for hasattr() tests
         opts.__dict__.setdefault('timeout', 0)
         opts.__dict__.setdefault('ptimeout', 0)
+
+        if opts.very_verbose:
+            opts.verbose = True
 
         if opts.java_home is None:
             opts.java_home = os.environ.get('JAVA_HOME')
@@ -640,6 +644,10 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
         assert isinstance(arg, types.StringTypes), 'argument is not a string: ' + str(arg)
 
     if _opts.verbose:
+        if _opts.very_verbose:
+            log('Environment variables:')
+            for key in sorted(os.environ.keys()):
+                log('    ' + key + '=' + os.environ[key])
         log(' '.join(args))
 
     if timeout is None and _opts.ptimeout != 0:
@@ -697,7 +705,10 @@ def run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None):
 
     if retcode and nonZeroIsFatal:
         if _opts.verbose:
-            raise subprocess.CalledProcessError(retcode, ' '.join(args))
+            if _opts.very_verbose:
+                raise subprocess.CalledProcessError(retcode, ' '.join(args))
+            else:
+                log('[exit code: ' + str(retcode)+ ']')
         abort(retcode)
 
     return retcode
@@ -1128,11 +1139,13 @@ def build(args, parser=None):
                 jdtArgs = [java().java, '-Xmx1g', '-jar', jdtJar,
                          '-' + args.compliance,
                          '-cp', cp, '-g', '-enableJavadoc',
-                         '-warn:-unusedImport,-unchecked',
                          '-d', outputDir]
                 jdtProperties = join(p.dir, '.settings', 'org.eclipse.jdt.core.prefs')
                 if not exists(jdtProperties):
-                    log('JDT properties file {0} not found - fix by running "mx eclipseinit"'.format(jdtProperties))
+                    # Try to fix a missing properties file by running eclipseinit
+                    eclipseinit([])
+                if not exists(jdtProperties):
+                    log('JDT properties file {0} not found'.format(jdtProperties))
                 else:
                     jdtArgs += ['-properties', jdtProperties]
                 jdtArgs.append('@' + argfile.name)
@@ -1366,6 +1379,9 @@ def eclipseinit(args, suite=None):
     def println(out, obj):
         out.write(str(obj) + '\n')
 
+    source_locator_memento = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<sourceLookupDirector><sourceContainers duplicates="false">'
+    entities = { '"':  "&quot;", "'":  "&apos;", '\n': '&#10;' }
+
     for p in projects():
         if p.native:
             continue
@@ -1479,7 +1495,6 @@ def eclipseinit(args, suite=None):
         update_file(join(p.dir, '.project'), out.getvalue())
         out.close()
 
-        out = StringIO.StringIO()
         settingsDir = join(p.dir, ".settings")
         if not exists(settingsDir):
             os.mkdir(settingsDir)
@@ -1493,6 +1508,24 @@ def eclipseinit(args, suite=None):
                         content = f.read()
                     content = content.replace('${javaCompliance}', str(p.javaCompliance))
                     update_file(join(settingsDir, name), content)
+                    
+        memento = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<javaProject name="' + p.name + '"/>\n'
+        source_locator_memento += '\n<container memento="' + xml.sax.saxutils.escape(memento, entities) + '" typeId="org.eclipse.jdt.launching.sourceContainer.javaProject"/>'
+        
+    source_locator_memento += '</sourceContainers>\n</sourceLookupDirector>'
+    launch = r"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.remoteJavaApplication">
+<stringAttribute key="org.eclipse.debug.core.source_locator_id" value="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"/>
+<stringAttribute key="org.eclipse.debug.core.source_locator_memento" value="{0}"/>
+<booleanAttribute key="org.eclipse.jdt.launching.ALLOW_TERMINATE" value="true"/>
+<mapAttribute key="org.eclipse.jdt.launching.CONNECT_MAP">
+<mapEntry key="hostname" value="localhost"/>
+<mapEntry key="port" value="8000"/>
+</mapAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value=""/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_CONNECTOR_ID" value="org.eclipse.jdt.launching.socketAttachConnector"/>
+</launchConfiguration>""".format(xml.sax.saxutils.escape(source_locator_memento, entities))
+    update_file(join(suite.dir, 'mx', 'attach-8000.launch'), launch)
 
 def netbeansinit(args, suite=None):
     """(re)generate NetBeans project configurations"""
