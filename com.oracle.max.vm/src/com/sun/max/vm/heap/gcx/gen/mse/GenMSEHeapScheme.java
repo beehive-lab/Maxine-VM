@@ -38,6 +38,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -46,7 +47,7 @@ import com.sun.max.vm.thread.*;
 
 
 /**
- * Generational Heap Scheme. WORK IN PROGRESS.
+ * Generational Heap Scheme with a mark-sweep old generation and a simple copying collector nursery.
  */
 final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implements HeapAccountOwner, XirWriteBarrierSpecification, RSetCoverage {
     /**
@@ -83,10 +84,12 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Young generation.
      */
+    @INSPECTED
     private final NoAgingNursery youngSpace;
     /**
      * Tenured generation.
      */
+    @INSPECTED
     private final FirstFitMarkSweepSpace<GenMSEHeapScheme> oldSpace;
 
     /**
@@ -97,6 +100,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Card-table based remembered set for the nursery.
      */
+    @INSPECTED
     private final CardTableRSet cardTableRSet;
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
@@ -403,14 +407,14 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
-        Size effectiveSize = tlabSize.minus(TLAB_HEADROOM);
+        Size effectiveSize = tlabSize.minus(tlabHeadroom());
         if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
-            Log.print(tlab.plus(tlabSize.minus(TLAB_HEADROOM)));
+            Log.print(tlab.plus(tlabSize.minus(tlabHeadroom())));
             Log.print(", end=");
             Log.print(tlab.plus(tlabSize));
             Log.print(", size=");

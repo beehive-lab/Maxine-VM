@@ -27,19 +27,15 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * A simple tool that counts (and print to the log) references that escapes a particular heap account.
  * References to the boot image aren't counted as escaping.
  * The tools is currently used to verify that no references escape the {@link HeapRegionManager}'s heap account.
  */
-class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
+class OutgoingReferenceChecker extends PointerIndexAndHeaderVisitor implements CellVisitor {
     private final Object accountOwner;
     private final RegionTable regionTable;
-    private final int hubIndex;
-    private final int refArrayFirstIndex;
     private long outgoingReferenceCount = 0L;
 
     /**
@@ -48,8 +44,6 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
     OutgoingReferenceChecker(HeapAccount<?> heapAccount) {
         accountOwner = heapAccount.owner();
         regionTable = RegionTable.theRegionTable();
-        hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
-        refArrayFirstIndex = Layout.referenceArrayLayout().getElementOffsetFromOrigin(0).toInt() >> Word.widthValue().log2numberOfBytes;
     }
 
     void reset() {
@@ -76,13 +70,12 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
     @Override
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        final Reference hubRef = Layout.readHubReference(origin);
-        final Hub hub = UnsafeCast.asHub(hubRef.toJava());
-        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+        final Hub hub = getHub(origin);
+        if (isHeapFreeChunk(hub)) {
             Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
             return cell.plus(chunkSize);
         }
-        checkReference(origin, hubIndex);
+        checkReference(origin, hubIndex());
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
@@ -90,8 +83,8 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
         } else if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = refArrayFirstIndex + Layout.readArrayLength(origin);
-            for (int index = refArrayFirstIndex; index < length; index++) {
+            final int length = firstElementIndex() + Layout.readArrayLength(origin);
+            for (int index = firstElementIndex(); index < length; index++) {
                 checkReference(origin, index);
             }
         }

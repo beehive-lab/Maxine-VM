@@ -48,6 +48,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 //import com.sun.max.vm.log.*;  // see comment on JxxFunctionsLogger
 import com.sun.max.vm.log.VMLog.*;
@@ -121,6 +122,7 @@ public final class JniFunctions {
     public static Pointer prologue(Pointer env) {
         SafepointPoll.setLatchRegister(env.minus(JNI_ENV.offset));
         Pointer etla = ETLA.load(currentTLA());
+        JVMTIVmThreadLocal.setBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
         Pointer anchor = reenterJavaFromNative(etla);
         return anchor;
     }
@@ -133,6 +135,7 @@ public final class JniFunctions {
     public static void epilogue(Pointer anchor) {
         // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
         Pointer etla = ETLA.load(currentTLA());
+        JVMTIVmThreadLocal.unsetBit(etla, JVMTIVmThreadLocal.IN_UPCALL);
         Snippets.nativeCallPrologue0(etla, JavaFrameAnchor.PREVIOUS.get(anchor));
     }
 
@@ -252,14 +255,12 @@ public final class JniFunctions {
                 Log.print(opName);
                 Log.print(": ");
                 MethodActor methodActor = MethodID.toMethodActor(MethodID.fromWord(r.getArg(2)));
-                // limited in early startup, no heap
-                if (MaxineVM.isPrimordialOrPristine()) {
-                    Log.print(methodActor.holder().name);
-                    Log.println('.');
-                    Log.print(methodActor.name);
-                } else {
-                    Log.print(MethodID.toMethodActor(MethodID.fromWord(r.getArg(2))).format("%H.%n(%P)"));
-                }
+                // Note: do not use "format" method, since we might be at a place where memory allocation is not possible
+                // (for example, at the JNI call to synchronize before a GC)
+                Log.print(methodActor.holder().name);
+                Log.print('.');
+                Log.print(methodActor.name);
+
                 if (address.isNotZero()) {
                     Log.print(" = ");
                     Log.printSymbol(address);
@@ -3043,7 +3044,7 @@ public final class JniFunctions {
     }
 
     @VM_ENTRY_POINT
-    private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
+    private static Pointer GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
         // Source: JniFunctionsSource.java:1096
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
@@ -3052,10 +3053,10 @@ public final class JniFunctions {
 
         try {
             setCopyPointer(isCopy, true);
-            return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
+            return copyString((String) string.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
-            return asJniHandle(0);
+            return asPointer(0);
         } finally {
             epilogue(anchor);
             if (logger.enabled()) {
@@ -4624,12 +4625,7 @@ public final class JniFunctions {
         try {
             // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
             setCopyPointer(isCopy, true);
-            final char[] a = ((String) string.unhand()).toCharArray();
-            final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
-            for (int i = 0; i < a.length; i++) {
-                pointer.setChar(i, a[i]);
-            }
-            return pointer;
+            return copyString((String) string.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
@@ -4642,9 +4638,17 @@ public final class JniFunctions {
         }
     }
 
+    private static Pointer copyString(String string) {
+        final Pointer pointer = Memory.mustAllocate(string.length() * Kind.CHAR.width.numberOfBytes);
+        for (int i = 0; i < string.length(); i++) {
+            pointer.setChar(i, string.charAt(i));
+        }
+        return pointer;
+    }
+
     @VM_ENTRY_POINT
     private static void ReleaseStringCritical(Pointer env, JniHandle string, Pointer chars) {
-        // Source: JniFunctionsSource.java:1722
+        // Source: JniFunctionsSource.java:1725
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ReleaseStringCritical.ordinal(), UPCALL_ENTRY, anchor, env, string, chars);
@@ -4665,7 +4669,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1727
+        // Source: JniFunctionsSource.java:1730
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.NewWeakGlobalRef.ordinal(), UPCALL_ENTRY, anchor, env, handle);
@@ -4687,7 +4691,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1732
+        // Source: JniFunctionsSource.java:1735
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.DeleteWeakGlobalRef.ordinal(), UPCALL_ENTRY, anchor, env, handle);
@@ -4708,7 +4712,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        // Source: JniFunctionsSource.java:1737
+        // Source: JniFunctionsSource.java:1740
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ExceptionCheck.ordinal(), UPCALL_ENTRY, anchor, env);
@@ -4732,7 +4736,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        // Source: JniFunctionsSource.java:1744
+        // Source: JniFunctionsSource.java:1747
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.NewDirectByteBuffer.ordinal(), UPCALL_ENTRY, anchor, env, address, Address.fromLong(capacity));
@@ -4755,7 +4759,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
-        // Source: JniFunctionsSource.java:1750
+        // Source: JniFunctionsSource.java:1753
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetDirectBufferAddress.ordinal(), UPCALL_ENTRY, anchor, env, buffer);
@@ -4782,7 +4786,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        // Source: JniFunctionsSource.java:1760
+        // Source: JniFunctionsSource.java:1763
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetDirectBufferCapacity.ordinal(), UPCALL_ENTRY, anchor, env, buffer);
@@ -4808,7 +4812,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        // Source: JniFunctionsSource.java:1769
+        // Source: JniFunctionsSource.java:1772
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectRefType.ordinal(), UPCALL_ENTRY, anchor, env, obj);

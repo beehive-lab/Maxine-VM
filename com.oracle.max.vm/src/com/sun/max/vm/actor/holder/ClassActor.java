@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.actor.holder.ClassID.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
@@ -134,11 +135,15 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     private int nextSiblingId;
 
+    public static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
+    public static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
+
     /**
      * Holds the class id of the unique concrete sub-type of
      * this class actor, {@link ClassID#NULL_CLASS_ID} if the class has
      * no concrete sub-type, or the class id of the java.lang.Object class
-     * if there is multiple concrete sub-types.
+     * (@link {@link #HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK}
+     * if there are multiple concrete sub-types.
      */
     public volatile int uniqueConcreteType;
 
@@ -214,7 +219,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
         assert kind == typeDescriptor.toKind();
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             // All boot image classes are initialized
             initializationState = INITIALIZED;
         } else {
@@ -371,7 +376,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                 staticHub.initializeVTable(OBJECT.allVirtualMethodActors());
                 ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
 
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     if (ClassActor.this.kind.isWord) {
                         for (VirtualMethodActor vma : OBJECT.allVirtualMethodActors()) {
                             ClassMethodActor local = findLocalClassMethodActor(vma.name, vma.descriptor());
@@ -503,6 +508,25 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return false;
     }
 
+    public boolean canUseAssumptions(RiMethod method) {
+        if (MaxineVM.isHosted()) {
+            if (!isVM()) {
+                // JDK is not a close world, and don't want to deopt boot image
+                return false;
+            } else {
+                // TODO possibly remove this if templates can handle the consequences
+                MethodActor methodActor = (MethodActor) method;
+                return !methodActor.isTemplate();
+            }
+        } else {
+            return true;
+        }
+    }
+
+    public final boolean isVM() {
+        return classLoader == (MaxineVM.isHosted() ? HostedVMClassLoader.HOSTED_VM_CLASS_LOADER : VMClassLoader.VM_CLASS_LOADER);
+    }
+
     public boolean isPrimitiveClassActor() {
         return false;
     }
@@ -609,7 +633,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
                 arrayClassIDs[i] = ClassID.allocate();
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     ClassID.recordArrayClassID(this, i, arrayClassIDs[i]);
                 }
             }
@@ -618,7 +642,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             Ints.copyAll(arrayClassIDs, a);
             for (int i = arrayClassIDs.length; i < a.length; i++) {
                 a[i] = ClassID.allocate();
-                if (MaxineVM.isHosted()) {
+                if (isHosted()) {
                     ClassID.recordArrayClassID(this, i, a[i]);
                 }
             }
@@ -642,7 +666,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     public static Object create(ClassActor classActor) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             return new StaticTuple(classActor);
         }
         final Object staticTuple = Heap.createTuple(classActor.staticHub());
@@ -955,7 +979,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     public final StaticMethodActor findLocalStaticMethodActor(Utf8Constant name) {
         for (StaticMethodActor staticMethodActor : localStaticMethodActors) {
-            if (staticMethodActor.name.equals(name)) {
+            if (staticMethodActor.name == name) {
                 return staticMethodActor;
             }
         }
@@ -1393,7 +1417,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     @INLINE
     public final Class<?> javaClass() {
         if (javaClass == null) {
-            if (MaxineVM.isHosted()) {
+            if (isHosted()) {
                 javaClass = JavaPrototype.javaPrototype().toJava(this);
             } else {
                 return noninlineCreateJavaClass();
@@ -1447,7 +1471,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     @INLINE
     public static ClassActor fromJava(final Class<?> javaClass) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
         return (ClassActor) Class_classActor.getObject(javaClass);
@@ -1482,7 +1506,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
             interfaceActor.gatherSuperClassActorIds(set);
         }
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             if (kind.isWord) {
                 set.remove(ClassRegistry.OBJECT.id);
             }
@@ -1668,7 +1692,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      */
     @INLINE
     public final boolean isInstance(Object object) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             if (object == null) {
                 throw new NullPointerException();
             }
@@ -1805,12 +1829,20 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
             final VirtualMethodActor implementation = getVirtualMethodActorByIIndex(interfaceIIndex + interfaceActor.iIndexInInterface());
             return implementation;
         } else if (methodActor instanceof VirtualMethodActor) {
-            final int index = ((VirtualMethodActor) methodActor).vTableIndex();
+            ClassActor receiverType = this;
+            VirtualMethodActor vma = (VirtualMethodActor) methodActor;
+            VirtualMethodActor original = (VirtualMethodActor) vma.original();
+            if (original != vma) {
+                // Substitute method must use substituted type as receiver for vtable lookup
+                receiverType = original.holder();
+                assert vma.vTableIndex() == original.vTableIndex();
+            }
+            final int index = vma.vTableIndex();
             assert index != VirtualMethodActor.INVALID_VTABLE_INDEX;
             if (index == VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX) {
                 return methodActor;
             }
-            final VirtualMethodActor implementation = getVirtualMethodActorByVTableIndex(index);
+            final VirtualMethodActor implementation = receiverType.getVirtualMethodActorByVTableIndex(index);
             return implementation;
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
@@ -1820,7 +1852,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     @Override
     public final RiResolvedType uniqueConcreteSubtype() {
-        return DependenciesManager.getUniqueConcreteSubtype(this);
+        return ConcreteTypeDependencyProcessor.getUniqueConcreteSubtype(this);
     }
 
     /**
@@ -1831,7 +1863,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * @return the unique concrete incarnation of the method, or null
      */
     public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
-        return DependenciesManager.getUniqueConcreteMethod(this, (MethodActor) method);
+        return ConcreteMethodDependencyProcessor.getUniqueConcreteMethod(this, (MethodActor) method);
     }
 
     public RiResolvedField[] declaredFields() {

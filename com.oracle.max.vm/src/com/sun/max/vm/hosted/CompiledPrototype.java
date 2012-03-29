@@ -78,7 +78,7 @@ public class CompiledPrototype extends Prototype {
     private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
     private final HashSet<MethodActor> methodActorsWithInlining = new HashSet<MethodActor>();
     private final HashMap<String, Link> stubs = new HashMap<String, Link>();
-    private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
+    private final Queue<MethodActor> worklist = new ConcurrentLinkedQueue<MethodActor>();
 
     /**
      * The link from a <i>parent</i> method to a <i>child</i> method where the parent caused the child to be
@@ -186,7 +186,7 @@ public class CompiledPrototype extends Prototype {
     private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
         final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -274,7 +274,7 @@ public class CompiledPrototype extends Prototype {
             final String className = classNameAndMethod.substring(0, ix);
             final String methodName = classNameAndMethod.substring(ix + 1);
             try {
-                final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
+                final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, className));
                 forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
 
                     public void run(ClassMethodActor classMethodActor) {
@@ -563,7 +563,7 @@ public class CompiledPrototype extends Prototype {
         if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                 processInvalidatedTargetMethods();
-                final MethodActor methodActor = worklist.removeFirst();
+                final MethodActor methodActor = worklist.poll();
                 if (needsCompilation(methodActor)) {
                     TargetMethod targetMethod;
                     try {
@@ -587,8 +587,8 @@ public class CompiledPrototype extends Prototype {
             while (true) {
                 while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                     processInvalidatedTargetMethods();
-                    final MethodActor methodActor = worklist.removeFirst();
-                    if (needsCompilation(methodActor)) {
+                    final MethodActor methodActor = worklist.poll();
+                    if (methodActor != null && needsCompilation(methodActor)) {
                         ++submittedCompilations;
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
@@ -690,7 +690,7 @@ public class CompiledPrototype extends Prototype {
 
     public void compileFoldableMethods() {
         Trace.begin(1, "compiling foldable methods");
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.isDeclaredFoldable()) {
@@ -705,7 +705,7 @@ public class CompiledPrototype extends Prototype {
 
     public void resolveAlias() {
         Trace.begin(1, "resolving alias annotations");
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : VM_CLASS_REGISTRY.bootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     ALIAS.Static.aliasedMethod(classMethodActor);
@@ -837,7 +837,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor.isReferenceClassActor()) {
                 linkVTable(classActor);
             }
@@ -865,15 +865,14 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkITableEntries");
 
         final IntHashMap<InterfaceActor> serialToInterfaceActor = new IntHashMap<InterfaceActor>();
-        ClassActor[] classes = BOOT_CLASS_REGISTRY.bootImageClasses();
-        for (ClassActor classActor : classes) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;
                 serialToInterfaceActor.put(interfaceActor.id, interfaceActor);
             }
         }
 
-        for (ClassActor classActor : classes) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor.isReferenceClassActor()) {
                 linkITable(classActor, serialToInterfaceActor);
             }

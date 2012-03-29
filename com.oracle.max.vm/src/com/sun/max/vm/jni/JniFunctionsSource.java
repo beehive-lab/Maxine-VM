@@ -1093,9 +1093,9 @@ public final class JniFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
+    private static Pointer GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
         setCopyPointer(isCopy, true);
-        return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
+        return copyString((String) string.unhand());
     }
 
     @VM_ENTRY_POINT
@@ -1710,10 +1710,13 @@ public final class JniFunctionsSource {
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
         // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
         setCopyPointer(isCopy, true);
-        final char[] a = ((String) string.unhand()).toCharArray();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
-        for (int i = 0; i < a.length; i++) {
-            pointer.setChar(i, a[i]);
+        return copyString((String) string.unhand());
+    }
+
+    private static Pointer copyString(String string) {
+        final Pointer pointer = Memory.mustAllocate(string.length() * Kind.CHAR.width.numberOfBytes);
+        for (int i = 0; i < string.length(); i++) {
+            pointer.setChar(i, string.charAt(i));
         }
         return pointer;
     }

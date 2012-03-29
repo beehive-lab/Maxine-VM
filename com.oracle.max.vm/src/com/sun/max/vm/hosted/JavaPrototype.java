@@ -24,7 +24,7 @@ package com.sun.max.vm.hosted;
 
 import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -40,8 +40,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.Package;
-import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -100,7 +100,7 @@ public final class JavaPrototype extends Prototype {
      * @param name the name of the java class as a string
      */
     public void loadClass(String name) {
-        Class clazz = Classes.load(HOSTED_BOOT_CLASS_LOADER, name);
+        Class clazz = Classes.load(HOSTED_VM_CLASS_LOADER, name);
         Classes.initialize(clazz);
     }
 
@@ -189,6 +189,7 @@ public final class JavaPrototype extends Prototype {
 
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
+     * Substitutor classes are only treated if the JDK version is appropriate.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
         for (BootImagePackage bootImagePackage : vmConfiguration.bootImagePackages) {
@@ -197,10 +198,24 @@ public final class JavaPrototype extends Prototype {
                 for (String cn : classes) {
                     try {
                         Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
-                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
-                        if (annotation != null) {
-                            loadClass(c);
-                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                        if (JDK.thisVersionOrNewer(c.getAnnotation(JDK_VERSION.class))) {
+                            METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                            if (annotation != null) {
+                                loadClass(c);
+                                ClassActor subs = toClassActor(c);
+                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, subs);
+                                for (VirtualMethodActor sub : subs.localVirtualMethodActors()) {
+                                    if (!sub.isInstanceInitializer() && !sub.isPrivate()) {
+                                        VirtualMethodActor original = (VirtualMethodActor) METHOD_SUBSTITUTIONS.Static.findOriginal(sub);
+                                        if (original == null) {
+                                            // We cannot do vtable dispatch to methods on a substitute class.
+                                            FatalError.unexpected("Non-static method in substitution class must be private: " + sub);
+                                        } else {
+                                            sub.resetVTableIndexForSubstitute(original.vTableIndex());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     } catch (Exception e) {
                         throw ProgramError.unexpected(e);
@@ -232,6 +247,24 @@ public final class JavaPrototype extends Prototype {
             }
             return null;
         }
+    }
+
+    /**
+     * Callback interface for classes that want to optimize/check some static data once all classes are loaded and initialized.
+     *
+     */
+    public interface InitializationCompleteCallback {
+        /**
+         * Invoked on all registered callbacks after all classes are loaded and initialized.
+         * @param complete value from {@link JavaPrototype#initialize(boolean)}
+         */
+        void initializationComplete(boolean complete);
+    }
+
+    private static ArrayList<InitializationCompleteCallback> initializationCompleteCallbacks = new ArrayList<InitializationCompleteCallback>();
+
+    public static void registerInitializationCompleteCallback(InitializationCompleteCallback completionCallback) {
+        initializationCompleteCallbacks.add(completionCallback);
     }
 
     /**
@@ -269,7 +302,7 @@ public final class JavaPrototype extends Prototype {
      */
     private JavaPrototype(final boolean complete, int threadCount) {
         VMConfiguration config = vmConfig();
-        packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
+        packageLoader = new PrototypePackageLoader(HOSTED_VM_CLASS_LOADER, HOSTED_VM_CLASS_LOADER.classpath());
         theJavaPrototype = this;
 
         if (Trace.hasLevel(1)) {
@@ -296,8 +329,11 @@ public final class JavaPrototype extends Prototype {
         }
 
         config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-        VMLog.bootImageInitialize();
-        VmThreadLocal.completeInitialization();
+
+        for (InitializationCompleteCallback completionCallback : initializationCompleteCallbacks) {
+            completionCallback.initializationComplete(complete);
+        }
+
     }
 
     /**
@@ -317,7 +353,8 @@ public final class JavaPrototype extends Prototype {
             javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
             methodActorMap.put(methodActor, javaMethod);
         }
-        assert MethodActor.fromJava(javaMethod) == methodActor;
+        MethodActor jMethodActor = MethodActor.fromJava(javaMethod);
+        assert jMethodActor == methodActor;
         return javaMethod;
     }
 
@@ -387,7 +424,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
-        ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        ClassActor classActor = ClassRegistry.getInBootOrVM(typeDescriptor);
         if (classActor != null) {
             return classActor;
         }
@@ -529,6 +566,7 @@ public final class JavaPrototype extends Prototype {
 
         objectMap.put(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BootClassLoader.BOOT_CLASS_LOADER);
         objectMap.put(BootClassLoader.BOOT_CLASS_LOADER.getParent(), NULL);
+        objectMap.put(HostedVMClassLoader.HOSTED_VM_CLASS_LOADER, VMClassLoader.VM_CLASS_LOADER);
 
         objectMap.put(VmThread.hostSystemThreadGroup, VmThread.systemThreadGroup);
         objectMap.put(VmThread.hostMainThreadGroup, VmThread.mainThreadGroup);

@@ -25,6 +25,8 @@ package com.oracle.max.vm.ext.t1x.jvmti;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 
+import java.util.*;
+
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
@@ -62,55 +64,16 @@ import com.sun.max.vm.runtime.*;
  */
 public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
 
-    private final boolean[] eventBci;
-    private final long eventSettings;
-    private final long[] breakpoints;
+    private final BitSet eventBci;
 
-    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, boolean[] eventBci, long eventSettings, long[] breakpoints) {
+    public JVMTI_T1XTargetMethod(T1XCompilation comp, boolean install, BitSet eventBci) {
         super(comp, install);
         this.eventBci = eventBci;
-        this.eventSettings = eventSettings;
-        this.breakpoints = breakpoints;
-    }
-
-    @Override
-    /**
-     * Checks if this method supports the event settings and breakpoints passed as arguments.
-     * This does not need to be an exact match since events are not delivered if they are not enabled.
-     * However, this method must support at least the requested settings.
-     * @param eventSettings
-     * @param breakpoints
-     * @return
-     */
-    public boolean jvmtiCheck(long eventSettings, long[] breakpoints) {
-        if ((eventSettings & this.eventSettings) == eventSettings) {
-            if (breakpoints == null) {
-                return true;
-            }
-            if (this.breakpoints == null) {
-                return false;
-            }
-            for (long rb : breakpoints) {
-                boolean match = false;
-                for (long thisRb : this.breakpoints) {
-                    if (rb == thisRb) {
-                        match = true;
-                        break;
-                    }
-                }
-                if (!match) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return false;
-        }
     }
 
     @Override
     protected CodePointer findTemplateCallReturnAddress(Info info, int bci, RiMethod callee) throws FatalError {
-        if (!eventBci[bci]) {
+        if (!eventBci.get(bci)) {
             // no instrumentation code was generated for this bytecode so no special treatment.
             return super.findTemplateCallReturnAddress(info, bci, callee);
         }

@@ -36,6 +36,7 @@ import org.junit.runner.notification.*;
 import test.com.sun.max.vm.ExternalCommand.OutputComparison;
 import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
+import test.vm.output.*;
 
 import com.sun.max.*;
 import com.sun.max.ide.*;
@@ -46,6 +47,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 
 /**
  * This class combines all the testing modes of the Maxine virtual machine into a central
@@ -202,6 +204,9 @@ public class MaxineTester {
                 } else if ("javatester".equals(test)) {
                     // run the JTImage tests
                     new JTImageHarness().run();
+                } else if ("vmoutput".equals(test)) {
+                    // run the VM output tests
+                    new OutputImageHarness(MaxineTesterConfiguration.zeeVMOutputTests).run();
                 } else if ("dacapo2006".equals(test)) {
                     // run the DaCapo 2006 tests
                     new DaCapo2006Harness(MaxineTesterConfiguration.zeeDacapo2006Tests).run();
@@ -588,11 +593,14 @@ public class MaxineTester {
         return Strings.padLengthWithSpaces(16, str);
     }
 
-    static class JTResult {
+    static class ImageTestResult {
         final String summary;
-        final String nextTestOption;
+        /**
+         * The string indicating the next test option to run, {@code null} to terminate the tests.
+         */
+        String nextTestOption;
 
-        JTResult(String summary, String nextTestOption) {
+        ImageTestResult(String summary, String nextTestOption) {
             this.nextTestOption = nextTestOption;
             this.summary = summary;
         }
@@ -664,25 +672,32 @@ public class MaxineTester {
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final Logs logs = new Logs(imageDir, "IMAGEGEN", imageConfig);
 
-        final int exitValue = exec(null, javaArgs, null, null, logs, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
-        if (exitValue == 0) {
-            // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
-            copyBinary(imageDir, "maxvm");
-            if (OS.current() == OS.DARWIN) {
-                copyBinary(imageDir, mapLibraryName("jvmlinkage"));
+        int timeouts = 0;
+        do {
+            final int exitValue = exec(null, javaArgs, null, null, logs, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
+            if (exitValue == 0) {
+                // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
+                copyBinary(imageDir, "maxvm");
+                if (OS.current() == OS.DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
+                    copyBinary(imageDir, mapLibraryName("jvmlinkage"));
+                } else {
+                    copyBinary(imageDir, mapLibraryName("jvm"));
+                }
+                copyBinary(imageDir, mapLibraryName("javatest"));
+                copyBinary(imageDir, mapLibraryName("hosted"));
+                copyBinary(imageDir, mapLibraryName("tele"));
+
+                generatedImages.put(imageConfig, imageDir);
+                return true;
+            } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
+                out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
+                ++timeouts;
             } else {
-                copyBinary(imageDir, mapLibraryName("jvm"));
+                generatedImages.put(imageConfig, null);
+                return false;
             }
-            copyBinary(imageDir, mapLibraryName("javatest"));
-            copyBinary(imageDir, mapLibraryName("hosted"));
-            copyBinary(imageDir, mapLibraryName("tele"));
-
-
-            generatedImages.put(imageConfig, imageDir);
-            return true;
-        } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
-        }
+        } while (timeouts < 2); // tolerate no more than one timeouts
+        out().println("(image build timed out twice, aborting)");
         generatedImages.put(imageConfig, null);
         return false;
     }
@@ -1176,22 +1191,160 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a test harness that builds the JTT tests into a Maxine VM image and then
-     * runs the JavaTester with that VM in a remote process.
-     *
+     * A combo of {@link JTImageHarness} and {@link OutputHarness} that runs "output" style tests
+     * that are built into an image, because they test VM facilities.
      */
-    public static class JTImageHarness implements Harness {
-        private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: -XX:TesterStart=(\\d+).*");
+    public static class OutputImageHarness extends ImageHarness {
+
+        private static class OutputImageTestResult extends ImageTestResult {
+            File log;
+            OutputImageTestResult(String summary, String nextTestOption, File log) {
+                super(summary, nextTestOption);
+                this.log = log;
+            }
+        }
+
+        final Iterable<Class> testList;
+        final Iterator<Class> iter;
+        Class<?> testClass;
+//        String testName;
+
+        public OutputImageHarness(List<Class> tests) {
+            super("VM output", MaxineTesterConfiguration.defaultVMOutputImageConfigs(), testOption(tests.get(0).getName()));
+            this.testList = tests;
+            iter = testList.iterator();
+            testClass = tests.get(0);
+            iter.next(); // skip initial
+        }
+
+        private static String testOption(String name) {
+            return "-XX:Test=" + name;
+        }
+
+        private String nextTestOption() {
+            if (iter.hasNext()) {
+                testClass = iter.next();
+                return testOption(testClass.getName());
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        protected ImageTestResult runImageTest(String config, File imageDir, String nextTestOption, int executions) {
+            OutputImageTestResult imageTestResult = (OutputImageTestResult) super.runImageTest(config, imageDir, nextTestOption, executions);
+            if (stopTesting()) {
+                return imageTestResult;
+            }
+            // Now run a refvm and compare output, unless MaxineOnly
+            if (!MaxineOnly.class.isAssignableFrom(testClass)) {
+                final JavaCommand command = new JavaCommand(testClass.getName());
+                for (String option : defaultJVMOptions()) {
+                    command.addVMOption(option);
+                }
+                command.addClasspath(System.getProperty("java.class.path"));
+                ExternalCommand refVMCommand = new ExternalCommand(imageDir, null, new Logs(imageDir, "REFVM_" + testClass.getName(), null), command.getExecArgs(javaExecutableOption.getValue()), null);
+                ExternalCommand.Result refResult = refVMCommand.exec(false, javaRunTimeOutOption.getValue());
+                File refLog = refResult.command().logs.get(STDOUT);
+                if (!Files.compareFiles(imageTestResult.log, refLog, null)) {
+                    out().println("  Standard out " + imageTestResult.log + " and " + refLog + " do not match");
+                }
+                imageTestResult.nextTestOption = nextTestOption();
+            }
+            return imageTestResult;
+        }
+
+        @Override
+        protected ImageTestResult parseTestOutput(String config, File outputFile) {
+            // don't bump nextOption yet
+            return new OutputImageTestResult("done", null, outputFile);
+        }
+    }
+
+    public static abstract class ImageHarness implements Harness {
+
+        protected final String harnessName;
+        protected final String harnessNameUC;
+        protected final List<String> harnessImageConfigs;
+        protected final String initialTestOption;
+
+        ImageHarness(String harnessName, List<String> imageConfigs, String initialTestOption) {
+            this.harnessName = harnessName;
+            this.harnessNameUC = harnessName.toUpperCase().replace(' ', '_');
+            this.harnessImageConfigs = imageConfigs;
+            this.initialTestOption = initialTestOption;
+        }
 
         public void run() {
-            for (final String config : jtImageConfigsOption.getValue()) {
+            for (final String config : harnessImageConfigs) {
                 if (!stopTesting() && MaxineTesterConfiguration.isSupported(config)) {
-                    JTImageHarness.runJavaTesterTests(config);
+                    runImageTests(config);
                 }
             }
         }
 
-        private static JTResult parseJavaTesterOutputFile(String config, File outputFile) {
+        protected abstract ImageTestResult parseTestOutput(String config, File outputFile);
+
+        protected void runImageTests(String config) {
+            final File imageDir = new File(outputDirOption.getValue(), config);
+
+            final PrintStream out = out();
+            out.println(harnessName + ": Started " + config);
+            if (skipImageGenOption.getValue() || generateImage(imageDir, config)) {
+                ImageTestResult imageTestResult = new ImageTestResult(null, initialTestOption);
+                int executions = 0;
+                while (imageTestResult.nextTestOption != null) {
+                    imageTestResult = runImageTest(config, imageDir, imageTestResult.nextTestOption, executions);
+                    executions++;
+                }
+            } else {
+                out.println("(image build failed)");
+                Logs logs = new Logs(imageDir, "IMAGEGEN", config);
+                out.println("  -> see: " + fileRef(logs.get(STDOUT)));
+                out.println("  -> see: " + fileRef(logs.get(STDERR)));
+            }
+        }
+
+        protected ImageTestResult runImageTest(String config, File imageDir, String nextTestOption, int executions) {
+            Logs logs = new Logs(imageDir, harnessNameUC + (executions == 0 ? "" : "-" + executions), config);
+            JavaCommand command = new JavaCommand((Class) null);
+            command.addArgument(nextTestOption);
+            int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
+            ImageTestResult result = parseTestOutput(config, logs.get(STDOUT));
+            String summary = result.summary;
+            final PrintStream out = out();
+            nextTestOption = result.nextTestOption;
+            out.print(harnessName + ": Stopped " + config + " - ");
+            if (exitValue == 0) {
+                out.println(summary);
+            } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
+                out.println("(timed out): " + summary);
+                out.println("  -> see: " + fileRef(logs.get(STDOUT)));
+                out.println("  -> see: " + fileRef(logs.get(STDERR)));
+            } else {
+                out.println("(exit = " + exitValue + "): " + summary);
+                out.println("  -> see: " + fileRef(logs.get(STDOUT)));
+                out.println("  -> see: " + fileRef(logs.get(STDERR)));
+            }
+            return result;
+        }
+
+    }
+
+    /**
+     * This class implements a test harness that builds the JTT tests into a Maxine VM image and then
+     * runs the JavaTester with that VM in a remote process.
+     *
+     */
+    public static class JTImageHarness extends ImageHarness {
+        private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: -XX:TesterStart=(\\d+).*");
+
+        JTImageHarness() {
+            super("Java tester", jtImageConfigsOption.getValue(), "-XX:TesterStart=0");
+        }
+
+        @Override
+        protected ImageTestResult parseTestOutput(String config, File outputFile) {
             String nextTestOption = null;
             String lastTest = null;
             String lastTestNumber = null;
@@ -1225,7 +1378,7 @@ public class MaxineTester {
                             nextTestOption = null;
                             // found the terminating line indicating how many tests passed
                             if (failedLines.isEmpty()) {
-                                return new JTResult(line, null);
+                                return new ImageTestResult(line, null);
                             }
                             break;
                         } else if (line.contains("failed")) {
@@ -1245,58 +1398,21 @@ public class MaxineTester {
                         failedLines.add("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
-                        return new JTResult("no unexpected failures", nextTestOption);
+                        return new ImageTestResult("no unexpected failures", nextTestOption);
                     }
                     StringBuffer buffer = new StringBuffer("unexpected failures: ");
                     for (String failed : failedLines) {
                         buffer.append("\n").append(failed);
                     }
-                    return new JTResult(buffer.toString(), nextTestOption);
+                    return new ImageTestResult(buffer.toString(), nextTestOption);
                 } finally {
                     reader.close();
                 }
             } catch (IOException e) {
-                return new JTResult("could not open file: " + outputFile.getPath(), null);
+                return new ImageTestResult("could not open file: " + outputFile.getPath(), null);
             }
         }
 
-        private static void runJavaTesterTests(String config) {
-            final File imageDir = new File(outputDirOption.getValue(), config);
-
-            final PrintStream out = out();
-            out.println("Java tester: Started " + config);
-            if (skipImageGenOption.getValue() || generateImage(imageDir, config)) {
-                String nextTestOption = "-XX:TesterStart=0";
-                int executions = 0;
-                while (nextTestOption != null) {
-                    Logs logs = new Logs(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
-                    JavaCommand command = new JavaCommand((Class) null);
-                    command.addArgument(nextTestOption);
-                    int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
-                    JTResult result = JTImageHarness.parseJavaTesterOutputFile(config, logs.get(STDOUT));
-                    String summary = result.summary;
-                    nextTestOption = result.nextTestOption;
-                    out.print("Java tester: Stopped " + config + " - ");
-                    if (exitValue == 0) {
-                        out.println(summary);
-                    } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-                        out.println("(timed out): " + summary);
-                        out.println("  -> see: " + fileRef(logs.get(STDOUT)));
-                        out.println("  -> see: " + fileRef(logs.get(STDERR)));
-                    } else {
-                        out.println("(exit = " + exitValue + "): " + summary);
-                        out.println("  -> see: " + fileRef(logs.get(STDOUT)));
-                        out.println("  -> see: " + fileRef(logs.get(STDERR)));
-                    }
-                    executions++;
-                }
-            } else {
-                out.println("(image build failed)");
-                Logs logs = new Logs(imageDir, "IMAGEGEN", config);
-                out.println("  -> see: " + fileRef(logs.get(STDOUT)));
-                out.println("  -> see: " + fileRef(logs.get(STDERR)));
-            }
-        }
     }
 
     /**

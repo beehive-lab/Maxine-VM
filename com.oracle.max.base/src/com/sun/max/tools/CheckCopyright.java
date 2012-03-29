@@ -186,7 +186,7 @@ public class CheckCopyright {
 
         hgPath = HG_PATH.getValue();
 
-        workSpaceDirectory = JavaProject.findHgRoot();
+        workSpaceDirectory = JavaProject.findWorkspace();
 
         if (FILE_PATTERN.getValue() != null) {
             CopyrightKind.addCopyrightFilesPattern(FILE_PATTERN.getValue());

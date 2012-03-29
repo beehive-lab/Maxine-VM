@@ -97,7 +97,7 @@ public final class TeleInterpreter {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
-        classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.getDescriptorForJavaString(declaringClassName));
+        classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.getDescriptorForJavaString(declaringClassName));
         classMethodActor = classActor.findClassMethodActor(SymbolTable.makeSymbol(name), signature);
 
         if (classMethodActor == null) {
@@ -122,7 +122,7 @@ public final class TeleInterpreter {
         ClassActor classActor;
         ClassMethodActor classMethodActor;
 
-        classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(declaringClass));
+        classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(declaringClass));
         classMethodActor = classActor.findClassMethodActor(SymbolTable.makeSymbol(name), signature);
 
         if (classMethodActor == null) {

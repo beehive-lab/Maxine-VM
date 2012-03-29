@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,12 +41,12 @@ import com.sun.max.vm.value.*;
 public abstract class TeleMethodAccess extends AbstractVmHolder {
 
     private static MethodActor findMethodActor(Class holder, String name, SignatureDescriptor signature) {
-        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
+        final ClassActor classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         return classActor.findMethodActor(SymbolTable.makeSymbol(name), signature);
     }
 
     private static MethodActor findMethodActor(Class holder, String name) {
-        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
+        final ClassActor classActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         MethodActor uniqueMethodActor = null;
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (methodActor.name.string.equals(name)) {

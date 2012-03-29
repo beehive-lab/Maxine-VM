@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 
 package com.sun.max.tele;
+
+import com.sun.max.vm.jdk.*;
 
 
 /**
@@ -92,7 +94,7 @@ public interface MaxPlatform {
 
         public String libjvmName() {
             String base = "libjvm";
-            if (this == DARWIN) {
+            if (this == DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
                 return base + "linkage";
             } else  {
                 return base;

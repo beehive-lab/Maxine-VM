@@ -1,5 +1,6 @@
-#Thu Jul 29 14:43:54 CEST 2010
 eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.solaris.base.945602881/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.solaris.base.945602881/appendContributed=true
 indexer/filesToParseUpFront=cstdarg, stdarg.h, stddef.h, sys/resource.h, ctime, sys/types.h, signal.h, cstdio
 indexer/indexAllFiles=true
 indexer/indexUnusedHeadersWithAlternateLang=false

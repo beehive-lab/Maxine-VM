@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.sun.max.vm.*;
  * that is handled internally by {@link java.lang.ProcessEnvironment the Solaris process environment}.
  */
 @METHOD_SUBSTITUTIONS(className = "java.lang.ProcessEnvironment")
-public class JDK_java_lang_ProcessEnvironment {
+public final class JDK_java_lang_ProcessEnvironment {
 
     /**
      * Maximum length of a name/value pair, in bytes.

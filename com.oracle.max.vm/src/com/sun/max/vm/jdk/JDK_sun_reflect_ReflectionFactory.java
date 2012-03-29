@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.sun.max.vm.reflection.*;
  * reflection.
  */
 @METHOD_SUBSTITUTIONS(ReflectionFactory.class)
-public class JDK_sun_reflect_ReflectionFactory {
+public final class JDK_sun_reflect_ReflectionFactory {
 
     /**
      * This field stores a map from method actor to method stubs, which is needed because

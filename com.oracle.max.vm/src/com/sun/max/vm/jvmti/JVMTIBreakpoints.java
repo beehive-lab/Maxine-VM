@@ -61,6 +61,7 @@ public class JVMTIBreakpoints {
     private static final long UNSET = -1;
     private static final long SINGLE_STEP = 1L << 63;
     public static final long SINGLE_STEP_AND_BREAK = 1L << 62;
+    private static final long ID_MASK = 0x0000ffffffffffffL;
 
     /**
      * Table of all breakpoints, encoded by {@link #createBreakpointID(MethodID, long)}.
@@ -79,19 +80,29 @@ public class JVMTIBreakpoints {
     private static Map<ClassMethodActor, long[]> methodBreakpointsMap = new HashMap<ClassMethodActor, long[]>();
 
     /**
-     * Used in T1X template, so no inlining.
+     * Used in T1X template and cut-off point for analysing stacks (when debugging the VM), so no inlining.
      * @param id
      */
+    @JVMTI_STACKBASE
     @NEVER_INLINE
     public static void event(long id) {
-        // if single step and breakpoint deliver both, single step first
+        // if single step and breakpoint deliver both, single step first (see spec)
         if ((id & SINGLE_STEP) != 0) {
             event(JVMTI_EVENT_SINGLE_STEP, id);
             if ((id & SINGLE_STEP_AND_BREAK) == 0) {
                 return;
             }
         }
-        event(JVMTI_EVENT_BREAKPOINT, id);
+        // Since we do not aggressively recompile when a breakpoint is cleared
+        // it is possible this breakpoint has been cleared and therefore the event
+        // should not be delivered.
+        long idMasked = id & ID_MASK;
+        for (int i = 0; i < table().length; i++) {
+            if (table[i] == idMasked) {
+                event(JVMTI_EVENT_BREAKPOINT, id);
+                return;
+            }
+        }
     }
 
     private static void event(int eventType, long id) {
@@ -125,7 +136,29 @@ public class JVMTIBreakpoints {
     }
 
     static int clearBreakpoint(ClassMethodActor classMethodActor, MethodID methodID, long location) {
-        return JVMTI_ERROR_NONE;
+        long id = createBreakpointID(methodID, location);
+        long m = methodID.asAddress().toLong();
+        boolean found = false;
+        int count = 0;
+        for (int i = 0; i < table().length; i++) {
+            if (table[i] == id) {
+                table[i] = UNSET;
+                found = true;
+            } else if (getMethodID(id) == m) {
+                // another bpt in same method
+                count++;
+            }
+        }
+        if (found) {
+            if (count == 0) {
+                // last breakpoint
+                methodBreakpointsMap.put(classMethodActor, null);
+                // TODO check if we should allow this to re-opt (no other events set)
+            }
+            return JVMTI_ERROR_NONE;
+        } else {
+            return JVMTI_ERROR_NOT_FOUND;
+        }
     }
 
     public static boolean hasBreakpoints(ClassMethodActor classMethodActor) {
@@ -137,7 +170,7 @@ public class JVMTIBreakpoints {
      * we are effectively sorting by location.
      *
      * @param classMethodActor
-     * @return
+     * @return array of breakpoint info or null if there are none.
      */
     public static long[] getBreakpoints(ClassMethodActor classMethodActor) {
         long[] result = methodBreakpointsMap.get(classMethodActor);

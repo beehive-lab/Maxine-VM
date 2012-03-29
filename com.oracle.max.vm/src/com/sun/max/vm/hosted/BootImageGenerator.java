@@ -65,35 +65,54 @@ public final class BootImageGenerator {
 
     public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
-    private final OptionSet options = new OptionSet();
+    private static final OptionSet options = new OptionSet();
 
-    private final Option<Boolean> help = options.newBooleanOption("help", false,
+    private static final Option<Boolean> help = options.newBooleanOption("help", false,
             "Show help message and exit.");
 
-    private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
+    private static final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
-    private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
+    private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
-    private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
-            "The output directory for the binary image generator.");
-
-    private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
+    private static final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
-    private final Option<String> compilationBrokerClassOption = options.newStringOption("compilationBrokerClass", null,
+    private static final Option<String> compilationBrokerClassOption = options.newStringOption("compilationBrokerClass", null,
             "The CompilationBroker subclass to use.");
 
-    private final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
+    private static final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
             "Trace array class id creation and prints reserved class id without array class actors.");
 
     // TODO: clean this up. Just for getting perf numbers.
-    private final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
+    private static final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
             "Generate inline TLAB allocation code in boot image.");
     // TODO: clean this up. Just for getting perf numbers.
-    private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
+    private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
+
+    // Options regarding target workspace location shared with the Inspector
+
+    public static final OptionSet targetVMDirOptions = new OptionSet();
+
+    /**
+     * Partial override of the location of the target VM and associated files, relative to a new workspace root.
+     * Abstracts project names, OS and platform details.
+     */
+    private static final Option<String> targetWSRootDirectoryOption = targetVMDirOptions.newStringOption("target-ws-root", null,
+            "Alternate workspace root for output of the binary image generator.");
+
+    /**
+     * A complete override of the location of the target VM and associated files. Must be absolutely specific
+     * about location, i.e., project names, OS and platform.
+     */
+    private static final Option<File> vmDirectoryOption = targetVMDirOptions.newFileOption("vmdir", getDefaultVMDirectory(),
+            "The output directory for the binary image generator.");
+
+    static {
+        options.addOptions(targetVMDirOptions);
+    }
 
     public static boolean nativeTests;
 
@@ -102,7 +121,26 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findHgRoot(), DEFAULT_VM_DIRECTORY);
+        return getDefaultVMDirectory(false);
+    }
+
+    /**
+     * Gets the default VM directory where the VM executable, shared libraries, boot image
+     * and related files are located, with optional override.
+     */
+    public static File getDefaultVMDirectory(boolean checkOptions) {
+        File wsRoot = JavaProject.findWorkspace();
+        if (checkOptions) {
+            if (vmDirectoryOption.isAssigned()) {
+                return vmDirectoryOption.getValue();
+            } else {
+                String path = targetWSRootDirectoryOption.getValue();
+                if (path != null) {
+                    wsRoot = new File(path);
+                }
+            }
+        }
+        return new File(wsRoot, DEFAULT_VM_DIRECTORY);
     }
 
     /**
@@ -190,7 +228,7 @@ public final class BootImageGenerator {
 
             nativeTests = testNative.getValue();
 
-            final File vmDirectory = vmDirectoryOption.getValue();
+            final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();
 
             // Create and installs the VM
@@ -214,15 +252,15 @@ public final class BootImageGenerator {
             }
 
             if (DependenciesManager.dependenciesLogger.traceEnabled()) {
-                DependenciesManager.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
+                DependenciesStats.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
             }
 
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
-            verifyBootClasses();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
+            verifyBootClasses();
             if (treeOption.getValue()) {
                 // write the tree file only if specified by the user.
                 writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
@@ -240,36 +278,46 @@ public final class BootImageGenerator {
         }
     }
 
+    /**
+     * This is an array of directory names relative to the current working directory (system property "user.dir")
+     * to which proxies will be dumped. These directories are created before boot image construction, and deleted
+     * afterwards, if they had not existed beforehand. Note that all directories of a path have to be given.
+     */
+    private static String[] proxyDirs = new String[] {
+        "java",
+        "java/lang",
+        "java/lang/invoke",
+    };
+
+    /**
+     * Add the current working directory to the class path that will be created when HostedBootClassLoader.classpath() is
+     * first called. This is the directory where ProxyGenerator dumps out the class files it generates.
+     */
     private static void enableProxyClassFileDumping() {
-        // Add the current working directory to the class path that
-        // will be created when HostedBootClassLoader.classpath() is
-        // first called. This is the directory where ProxyGenerator
-        // dumps out the class files it generates.
         final String cwd = System.getProperty("user.dir");
         String javaClassPath = System.getProperty("java.class.path");
         System.setProperty("java.class.path", cwd + File.pathSeparatorChar + javaClassPath);
+        final File cwdFile = new File(cwd);
 
         // See sun.misc.ProxyGenerator.saveGeneratedFiles field
         System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
-        final File[] existingProxyClassFiles = new File(cwd).listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
-            }
-        });
+        final Set<File> existingProxyClassFilesAndDirectories = collectProxyClassFilesAndDirectories(cwdFile);
 
-        Runtime.getRuntime().addShutdownHook(new Thread("RemovingProxyClassFiles") {
+        // create proxy directories
+        for (String d : proxyDirs) {
+            File proxyDir = new File(cwdFile, d);
+            if (!proxyDir.exists()) {
+                proxyDir.mkdirs();
+                proxyDir.deleteOnExit();
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread("RemovingProxyClassFilesAndDirectories") {
             @Override
             public void run() {
                 System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
-                File cwdFile = new File(cwd);
-                File[] proxyClassFiles = cwdFile.listFiles(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
-                    }
-                });
-                HashSet<File> set = new HashSet<File>(Arrays.asList(existingProxyClassFiles));
-                for (File f : proxyClassFiles) {
-                    if (!set.contains(f)) {
+                for (File f : collectProxyClassFilesAndDirectories(cwdFile)) {
+                    if (!existingProxyClassFilesAndDirectories.contains(f)) {
                         f.delete();
                     }
                 }
@@ -277,19 +325,26 @@ public final class BootImageGenerator {
         });
     }
 
-    private static void disableProxyClassFileDumping(Set<File> preexistingProxyClassFiles) {
-        System.setProperty("sun.misc.ProxyGenerator.saveGeneratedFiles", "false");
-        File cwd = new File(System.getProperty("user.dir"));
-        File[] proxyClassFiles = cwd.listFiles(new FilenameFilter() {
+    private static Set<File> collectProxyClassFilesAndDirectories(File cwd) {
+        final FilenameFilter proxyFilter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.startsWith(JDK_java_lang_reflect_Proxy.proxyClassNamePrefix) && name.endsWith(".class");
             }
-        });
-        for (File f : proxyClassFiles) {
-            if (!preexistingProxyClassFiles.contains(f)) {
-                f.delete();
+        };
+
+        // proxy files without package name
+        Set<File> filesAndDirs = new HashSet<File>(Arrays.asList(cwd.listFiles(proxyFilter)));
+
+        // recurse into given directories and identify proxy files there
+        for (String d : proxyDirs) {
+            File proxyDir = new File(cwd, d);
+            if (proxyDir.exists()) {
+                filesAndDirs.add(proxyDir);
+                filesAndDirs.addAll(Arrays.asList(proxyDir.listFiles(proxyFilter)));
             }
         }
+
+        return filesAndDirs;
     }
 
     /**
@@ -336,8 +391,12 @@ public final class BootImageGenerator {
 
     private void verifyBootClasses() {
         Trace.begin(1, "verifying boot image classes");
+        // The verification process may loaded extra classes which may in turn require generation of
+        // more vtrampoline which in turn requires the ability to allocate code. Since the boot image
+        // has already been written, resetting the boot code region is now safe.
+        Code.resetBootCodeRegion();
         long start = System.currentTimeMillis();
-        for (ClassActor ca : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor ca : ClassRegistry.allBootImageClasses()) {
             if (!ca.kind.isWord) {
                 Verifier.verifierFor(ca).verify();
             }
@@ -416,7 +475,7 @@ public final class BootImageGenerator {
         Log.println();
         Log.println("==== All Loaded Classes ====");
         TreeSet<String> names = new TreeSet<String>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+        for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             if (classActor.isInstanceClass() && !classActor.isReflectionStub()) {
                 names.add(classActor.toString());
             }

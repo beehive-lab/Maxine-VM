@@ -35,15 +35,15 @@ import com.sun.max.program.Classpath.Entry;
 public final class JavaProject {
 
     /**
-     * System property name specifying a directory containing a Mercurial repository.
+     * System property name specifying the Maxine workspace.
      */
-    public static final String HG_ROOT_PROPERTY = "hg.root";
+    public static final String WORKSPACE_PROPERTY = "ws.root";
 
     /**
-     * Determines if a given directory contains a Mercurial repository.
+     * Determines if a given directory contains a Maxine workspace.
      */
-    public static boolean isHgRoot(File dir) {
-        return new File(dir, ".hg").isDirectory();
+    public static boolean isWorkspace(File dir) {
+        return new File(new File(dir, "mx"), "projects").isFile();
     }
 
     private JavaProject() {
@@ -52,6 +52,8 @@ public final class JavaProject {
     public static final String SOURCE_DIRECTORY_NAME = "src";
 
     public static final String TEST_SOURCE_DIRECTORY_NAME = "test";
+
+    private static File workspaceDir;
 
     /**
      * Gets the paths on which all the class files referenced by a Java project can be found.
@@ -85,18 +87,18 @@ public final class JavaProject {
         return new Classpath(classPathEntries);
     }
 
-    static class HgRootFinder extends ClasspathTraversal {
+    static class WorkspaceFinder extends ClasspathTraversal {
 
-        File hgRoot;
+        File workspace;
         File project;
 
 
-        boolean deriveHgRoot(File start) {
+        boolean deriveWorkspace(File start) {
             File dir = start;
             File child = null;
             while (dir != null) {
-                if (isHgRoot(dir)) {
-                    hgRoot = dir;
+                if (isWorkspace(dir)) {
+                    workspace = dir;
                     project = child;
                     return true;
                 }
@@ -110,7 +112,7 @@ public final class JavaProject {
         protected boolean visitFile(File parent, String resource) {
             String classFile = JavaProject.class.getName().replace('.', File.separatorChar) + ".class";
             if (resource.equals(classFile)) {
-                if (deriveHgRoot(parent)) {
+                if (deriveWorkspace(parent)) {
                     return false;
                 }
             }
@@ -121,7 +123,7 @@ public final class JavaProject {
             String classFile = JavaProject.class.getName().replace('.', File.separatorChar) + ".class";
             if (resource.equals(classFile)) {
                 File archiveFile = new File(archive.getName());
-                if (deriveHgRoot(archiveFile)) {
+                if (deriveWorkspace(archiveFile)) {
                     return false;
                 }
             }
@@ -130,20 +132,25 @@ public final class JavaProject {
     }
 
     /**
-     * Gets the directory containing a Mercurial repository based on the {@value JavaProject#HG_ROOT_PROPERTY}
-     * if it exists otherwise from the {@linkplain Classpath#fromSystem() system class path}.
+     * Gets the workspace directory based on the {@value JavaProject#WORKSPACE_PROPERTY} if it exists otherwise from the
+     * {@linkplain Classpath#fromSystem() system class path}. The workspace is the directory containing the Maxine
+     * projects.
      */
-    public static File findHgRoot() {
-        final String prop = System.getProperty(JavaProject.HG_ROOT_PROPERTY);
-        if (prop != null) {
-            File dir = new File(prop);
-            ProgramError.check(isHgRoot(dir), prop + " does not contain a Mercurial repository");
-            return dir;
+    public static File findWorkspace() {
+        if (workspaceDir == null) {
+            final String prop = System.getProperty(JavaProject.WORKSPACE_PROPERTY);
+            if (prop != null) {
+                File dir = new File(prop);
+                ProgramError.check(isWorkspace(dir), prop + " does not denote a workspace");
+                workspaceDir = dir;
+            } else {
+                WorkspaceFinder finder = new WorkspaceFinder();
+                finder.run(Classpath.fromSystem());
+                ProgramError.check(finder.workspace != null, "failed to find the workspace");
+                workspaceDir = finder.workspace;
+            }
         }
-        HgRootFinder finder = new HgRootFinder();
-        finder.run(Classpath.fromSystem());
-        ProgramError.check(finder.hgRoot != null, "failed to find a directory containing a Mercurial repository");
-        return finder.hgRoot;
+        return workspaceDir;
     }
 
     /**
@@ -158,8 +165,8 @@ public final class JavaProject {
         final Classpath classPath = getClassPath(projClass, includeDependencies);
         final List<String> sourcePath = new LinkedList<String>();
         for (Entry entry : classPath.entries()) {
-            HgRootFinder finder = new HgRootFinder();
-            finder.deriveHgRoot(entry.file());
+            WorkspaceFinder finder = new WorkspaceFinder();
+            finder.deriveWorkspace(entry.file());
             final File projectDirectory = finder.project;
             if (projectDirectory != null) {
                 final File srcDirectory = new File(projectDirectory, SOURCE_DIRECTORY_NAME);

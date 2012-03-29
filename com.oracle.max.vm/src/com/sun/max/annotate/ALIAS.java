@@ -39,14 +39,14 @@ import com.sun.max.vm.type.*;
  * without using reflection. Aliases avoid the boxing/unboxing required by reflection and they type check an aliased
  * field access or method invocation statically.
  *
- * The idiom for using ALIAS is somewhat related to the {@link @SUBSTITUTE} annotation, but reversed and are often used
+ * The idiom for using ALIAS is somewhat related to the {@link @SUBSTITUTE} annotation, but reversed; both are often used
  * in combination. In both cases a separate class is used to declare the aliased or substituted methods. In the
  * substitution case occurrences of {@code this} actually refer to the instance of the class being substituted. In the
  * aliased case we pretend that the class declaring the aliased method is an instance of the aliasee in order to access
  * its fields or invoke its methods.
  *
  * For example, assume we want to create an instance of a class {@code Foo} which has a private constructor
- * that takes one {@code int} argument. To to this we declare a new class {@code FooAlias} that contains the following:
+ * that takes one {@code int} argument. To do this we declare a new class {@code FooAlias} that contains the following:
  *
  * <code>
  * final class FooAlias {
@@ -57,7 +57,7 @@ import com.sun.max.vm.type.*;
  *     static native FooAlias asThis(Foo foo);
  *
  *     public static Foo createFoo(int arg) {
- *         final Foo foo = (Foo) Heap.createTuple(ClassActor.fromJava(Foo,.class).dynamicHub());
+ *         final Foo foo = (Foo) Heap.createTuple(ClassActor.fromJava(Foo.class).dynamicHub());
  *         FooAlias thisFoo = asThis(foo);
  *         thisFoo.init(arg);
  *         return foo;

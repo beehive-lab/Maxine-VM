@@ -29,6 +29,10 @@ mx/includes
 vee2010-results
 Base/loaded-classes.jar
 *.pyc
+.classpath
+.project
+.settings/org.eclipse.jdt.core.prefs
+.settings/org.eclipse.jdt.ui.prefs
 
 # switch to regexp syntax
 syntax: regexp
@@ -46,5 +50,5 @@ syntax: regexp
 ^dist/
 ^scratch/
 ^xref/
-^javadoc/
 ^out/
+javadoc/

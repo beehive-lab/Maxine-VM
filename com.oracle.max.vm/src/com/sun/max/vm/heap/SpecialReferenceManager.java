@@ -97,7 +97,12 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
-    public static final int REFERENT_WORD_INDEX =  JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
+    @FOLD
+    public static int referentIndex() {
+        return JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
+    }
+
+    // public static final int REFERENT_WORD_INDEX =  JDK.java_lang_ref_Reference.classActor().findLocalInstanceFieldActor("referent").offset() >>  Word.widthValue().log2numberOfBytes;
 
     /**
      * The head of the list of discovered references.

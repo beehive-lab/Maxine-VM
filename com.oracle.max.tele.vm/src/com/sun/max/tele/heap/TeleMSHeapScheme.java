@@ -69,12 +69,10 @@ final class TeleMSHeapScheme extends AbstractVmHolder implements LegacyTeleHeapS
             }
 
             public String terseInfo() {
-                // Laurent: Provide text to appear in Memory View display cell
                 return "";
             }
 
             public String shortDescription() {
-                // Laurent: more information could be added here, will appear in tooltip
                 return vm().heapScheme().name();
             }
 
@@ -118,6 +116,8 @@ final class TeleMSHeapScheme extends AbstractVmHolder implements LegacyTeleHeapS
     public MaxMarkBitsInfo markBitInfo() {
         // TODO (ld)
         return null;
+    }
+    public void updateCache(long epoch) {
     }
 
 }
