@@ -22,19 +22,18 @@
  */
 package com.sun.max.vm.compiler.deps;
 
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAssumptions.Assumption;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 
 /**
@@ -86,6 +85,25 @@ public final class DependenciesManager {
     public static final ReentrantReadWriteLock classHierarchyLock = new ReentrantReadWriteLock();
 
     /**
+     * Used during registration to accumulate {@linkplain DependencyProcessor} instances.
+     */
+    @HOSTED_ONLY
+    private static final ArrayList<DependencyProcessor> dependencyProcessorList = new ArrayList<DependencyProcessor>();
+
+    private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+
+        @Override
+        public void initializationComplete() {
+            dependencyProcessorsArray = new DependencyProcessor[dependencyProcessorList.size()];
+            dependencyProcessorList.toArray(dependencyProcessorsArray);
+        }
+    }
+
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
+    }
+
+    /**
      * The dependency processors, ordered by their id number.
      */
     @CONSTANT_WHEN_NOT_ZERO
@@ -107,56 +125,8 @@ public final class DependenciesManager {
                     Class< ? extends CiAssumptions.Assumption> assumptionClass) {
         ProgramError.check(dependencyProcessors.put(assumptionClass, dependencyProcessor) == null);
         ProgramError.check(nextDependencyProcessorId < MAX_DEPENDENCY_PROCESSORS);
-        /*
-         * It would be ideal to just use a HOSTED_ONLY list here and allocate the array once
-         * in an InitializationCompleteCallback. Unfortunately, this code is used in situations where
-         * the initialization is not "complete", so we have to be prepared for dependency processors
-         * to show up at any time. So in the HOSTED_ONLY context, dependencyProcessorsArray is not CONSTANT_WHEN_NOT_ZERO,
-         * but we don't care about that, as it is definitely constant when building the boot image.
-         *
-         * It's actually worse because the implementation class for a given assumption may not even
-         * be loaded by the time an assumption is validated, so we have to check using checkLoaded.
-         */
-        int index = 0;
-        if (dependencyProcessorsArray == null) {
-            dependencyProcessorsArray = new DependencyProcessor[1];
-        } else {
-            index = dependencyProcessorsArray.length;
-            DependencyProcessor[] newDependencyProcessorsArray = new DependencyProcessor[index + 1];
-            System.arraycopy(dependencyProcessorsArray, 0, newDependencyProcessorsArray, 0, index);
-            dependencyProcessorsArray = newDependencyProcessorsArray;
-        }
-        dependencyProcessorsArray[index] = dependencyProcessor;
+        dependencyProcessorList.add(dependencyProcessor);
         return nextDependencyProcessorId++;
-    }
-
-    /**
-     * See comment in {@link #registerDependencyProcessor}.
-     * If the dependency processor is not loaded, we assume a mapping from the assumption
-     * to the dependency processor name, and try to load it.
-     * @param assumptions
-     */
-    @HOSTED_ONLY
-    static void checkDependencyProcessorLoaded(CiAssumptions assumptions) {
-        for (Assumption a : assumptions) {
-            Class <? extends Assumption> aClass = a.getClass();
-            DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessors.get(aClass);
-            if (dependencyProcessor == null) {
-                String name = aClass.getName();
-                int dollar = name.lastIndexOf('$');
-                if (dollar > 0) {
-                    name = name.substring(dollar + 1);
-                }
-                name = "com.sun.max.vm.compiler.deps." + name + "DependencyProcessor";
-                try {
-                    Class<?> klass = Class.forName(name);
-                    Method method = klass.getDeclaredMethod("getDependencyProcessor");
-                    dependencyProcessor = (DependencyProcessor) method.invoke(null, new Object[0]);
-                } catch (Exception ex) {
-                    ProgramError.unexpected("failed to load dependency processor class for assumption: " + name, ex);
-                }
-            }
-        }
     }
 
     /**

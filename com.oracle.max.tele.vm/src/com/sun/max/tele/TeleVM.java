@@ -488,7 +488,7 @@ public abstract class TeleVM implements MaxVM {
         vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
-        JavaPrototype.initialize(false);
+        JavaPrototype.initialize();
     }
 
     /**

@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.log;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -227,16 +229,26 @@ public abstract class VMLog implements Heap.GCCallback {
     }
 
     private static final String LOG_ENTRIES_PROPERTY = "max.vmlog.entries";
+    private final static int DEFAULT_LOG_ENTRIES = 8192;
+
+    /**
+     * Offset to {@link #nextId} used in compare and swap.
+     */
     @CONSTANT_WHEN_NOT_ZERO
     private static int nextIdOffset;
-    private final static int DEFAULT_LOG_ENTRIES = 8192;
+
+    /**
+     * List used to accumulate loggers during registration phase.
+     */
+    @HOSTED_ONLY
+    private static ArrayList<VMLogger> loggerList = new ArrayList<VMLogger>();
 
     /**
      * Array of registered {@link VMLogger} instances.
      */
     @INSPECTED
-    private static VMLogger[] loggers = new VMLogger[16];
-    private static int nextLoggerIndex;
+    @CONSTANT_WHEN_NOT_ZERO
+    private static VMLogger[] loggers;
 
     /**
      * Number of log records maintained in the circular buffer.
@@ -248,6 +260,7 @@ public abstract class VMLog implements Heap.GCCallback {
      * The actual {@link VMLog} instance in this VM image.
      */
     @INSPECTED
+    @CONSTANT_WHEN_NOT_ZERO
     private static VMLog vmLog;
 
     /**
@@ -257,6 +270,13 @@ public abstract class VMLog implements Heap.GCCallback {
     @INSPECTED
     protected volatile int nextId;
 
+    /**
+     * Array of refMaps indexed by the logger id.
+     * This array is indexed by {@link VMLogger#loggerId} which
+     * ranges from {@code 1..loggers.length} for a valid logger.
+     * So this array is one element larger than {@link #loggers}.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
     protected static int[][] operationRefMaps;
 
     /**
@@ -265,12 +285,12 @@ public abstract class VMLog implements Heap.GCCallback {
     @HOSTED_ONLY
     static class InitializationCompleteCallback implements com.sun.max.vm.hosted.JavaPrototype.InitializationCompleteCallback {
 
-        public void initializationComplete(boolean complete) {
+        public void initializationComplete() {
             nextIdOffset = ClassActor.fromJava(VMLog.class).findLocalInstanceFieldActor("nextId").offset();
             vmLog = Factory.create();
             vmLog.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-            // must provision an extra entry for the operationRefMaps as the logger IDs starts at 1, not 0.
-            // Hence the last logger has an id of length, not length - 1.
+            loggers = new VMLogger[loggerList.size()];
+            loggerList.toArray(loggers);
             operationRefMaps = new int[loggers.length + 1][];
             for (VMLogger logger : loggers) {
                 if (logger != null) {
@@ -316,12 +336,7 @@ public abstract class VMLog implements Heap.GCCallback {
 
     @HOSTED_ONLY
     public static void registerLogger(VMLogger logger) {
-        if (nextLoggerIndex >= loggers.length) {
-            VMLogger[] newLoggers = new VMLogger[2 * loggers.length];
-            System.arraycopy(loggers, 0, newLoggers, 0, loggers.length);
-            loggers = newLoggers;
-        }
-        loggers[nextLoggerIndex++] = logger;
+        loggerList.add(logger);
     }
 
     private void checkLogEntriesProperty() {
