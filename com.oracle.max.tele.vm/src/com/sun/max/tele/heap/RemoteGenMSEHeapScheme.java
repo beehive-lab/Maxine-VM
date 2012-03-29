@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,57 +22,51 @@
  */
 package com.sun.max.tele.heap;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.gcx.mse.*;
+import com.sun.max.vm.heap.gcx.gen.mse.*;
 
 /**
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
  */
-final class TeleMSEHeapScheme extends TeleRegionBasedHeapScheme {
-    TeleMSEHeapScheme(TeleVM vm) {
+public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme implements RemoteObjectReferenceManager {
+
+    public RemoteGenMSEHeapScheme(TeleVM vm) {
         super(vm);
     }
 
     public Class heapSchemeClass() {
-        return MSEHeapScheme.class;
+        return GenMSEHeapScheme.class;
     }
 
-    public int gcForwardingPointerOffset() {
-        // MS is a non-moving collector. Doesn't do any forwarding.
-        return -1;
+    public void initialize(long epoch) {
+        // TODO Auto-generated method stub
     }
 
-    public Pointer getForwardedOrigin(Pointer origin) {
-        // MS is a non-moving collector. Doesn't do any forwarding.
-        return origin;
-    }
-
-    public Pointer getTrueLocationFromPointer(Pointer pointer) {
-        return pointer;
-    }
-
-    public boolean isForwardingPointer(Pointer pointer) {
-        return false;
-    }
-
-    public boolean isObjectForwarded(Pointer origin) {
-        return false;
-    }
-
-    public List<MaxCodeLocation> inspectableMethods() {
-        // TODO (ld)
-        return Collections.emptyList();
-    }
-
-    public MaxMarkBitsInfo markBitInfo() {
-        // TODO (ld)
+    public List<VmHeapRegion> heapRegions() {
+        // TODO Auto-generated method stub
         return null;
     }
-    public void updateCache(long epoch) {
+
+    public boolean isObjectOrigin(Address origin) throws TeleError {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public RemoteReference makeReference(Address origin) throws TeleError {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        // TODO Auto-generated method stub
     }
 
 }

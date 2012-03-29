@@ -23,6 +23,7 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 

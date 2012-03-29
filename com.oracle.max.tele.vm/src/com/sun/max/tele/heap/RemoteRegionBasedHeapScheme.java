@@ -23,11 +23,13 @@
 package com.sun.max.tele.heap;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.heap.region.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapScheme {
 
+    // TODO (mlvdv) make this a telObject, see TeleRegionTable comments
     protected final TeleRegionTable teleRegionTable;
 
     public RemoteRegionBasedHeapScheme(TeleVM vm) {
@@ -35,52 +37,72 @@ public abstract class RemoteRegionBasedHeapScheme extends AbstractRemoteHeapSche
         teleRegionTable = TeleRegionTable.makeTheTeleRegionTable(vm);
     }
 
-    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
 
-        return new MaxMemoryManagementInfo() {
-            final int regionID = teleRegionTable.regionID(address);
+    class GCXHeapRegionInfo implements MaxMemoryManagementInfo {
 
-            public MaxMemoryStatus status() {
-                if (regionID < 0) {
-                    final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
-                    if (heapRegion == null) {
-                        // The location is not in any memory region allocated by the heap.
-                        return MaxMemoryStatus.UNKNOWN;
-                    }
+        final Address address;
+        final int regionID;
+
+        GCXHeapRegionInfo(Address address) {
+            this.address = address;
+            this.regionID =  teleRegionTable.regionID(address);
+        }
+
+        // TODO (mlvdv) search through the regions handled by this manager
+        public MaxMemoryStatus status() {
+            if (regionID < 0) {
+                final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                if (heapRegion == null) {
+                    // The location is not in any memory region allocated by the heap.
+                    return MaxMemoryStatus.UNKNOWN;
                 }
-
-                // Unclear what the semantics of this should be during GC.
-                // We should be able to tell past the marking phase if an address point to a live object.
-                // But what about during the marking phase ? The only thing that can be told is that
-                // what was dead before marking begin should still be dead during marking.
-
-                // TODO (ld) This requires the inspector to know intimately about the heap structures.
-                // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
-                // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
-                // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
-
-                return MaxMemoryStatus.LIVE;
             }
+             // Unclear what the semantics of this should be during GC.
+            // We should be able to tell past the marking phase if an address point to a live object.
+            // But what about during the marking phase ? The only thing that can be told is that
+            // what was dead before marking begin should still be dead during marking.
 
-            public String terseInfo() {
-                return regionID < 0 ? "-" : "region #" + regionID;
-            }
+            // TODO (ld) This requires the inspector to know intimately about the heap structures.
+            // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
+            // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
+            // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
 
-            public String shortDescription() {
-                // Laurent: more information could be added here, will appear in tooltip
-                return vm().heapScheme().name();
-            }
+            return MaxMemoryStatus.LIVE;
+        }
 
-            public Address address() {
-                return address;
-            }
+        public String terseInfo() {
+            return regionID < 0 ? "-" : "region #" + regionID;
+        }
 
-            public TeleObject tele() {
-                if (regionID < 0) {
-                    return null;
-                }
-                return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
+        public String shortDescription() {
+            // Laurent: more information could be added here, will appear in tooltip
+            return vm().heapScheme().name();
+        }
+
+        public Address address() {
+            return address;
+        }
+
+        public TeleObject tele() {
+            if (regionID < 0) {
+                return null;
             }
-        };
+            return objects().makeTeleObject(vm().referenceManager().makeReference(teleRegionTable.regionInfo(regionID).asPointer()));
+        }
     }
+
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new GCXHeapRegionInfo(address);
+    }
+
+    /**
+     * Gets the heap region tag's name for the specified tag.
+     *
+     * @param tag a valid region tag used by this heap scheme
+     * @return a textual representation of the tag, or the empty string if the tag is invalid or if the heap scheme doesn't tag its regions
+     */
+    public String tagName(int tag) {
+        return "";
+    }
+
 }

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele.heap.region;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 
+// TODO (mlvdv) recast this as a descendant of TeleObject, register it in REmoteRegionBasedHeapScheme.
 /**
  * Inspector's surrogate for the heap region table used by region based GC (currently, MSE heap scheme).
  * @see RegionTable

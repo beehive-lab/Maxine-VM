@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,13 @@
  */
 package com.sun.max.tele.heap;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.ms.*;
 
@@ -33,9 +36,9 @@ import com.sun.max.vm.heap.gcx.ms.*;
  * Implementation details about the heap in the VM,
  * specialized for the mark-sweep implementation.
  */
-final class TeleMSHeapScheme extends AbstractVmHolder implements LegacyTeleHeapScheme {
+public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
 
-    TeleMSHeapScheme(TeleVM vm) {
+    public RemoteMSHeapScheme(TeleVM vm) {
         super(vm);
     }
 
@@ -43,12 +46,19 @@ final class TeleMSHeapScheme extends AbstractVmHolder implements LegacyTeleHeapS
         return MSHeapScheme.class;
     }
 
+    public void initialize(long epoch) {
+    }
+
+    public List<VmHeapRegion> heapRegions() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
         return new MaxMemoryManagementInfo() {
 
             public MaxMemoryStatus status() {
-                // TODO (mlvdv) Until we get anything better, should at least be sure that
-                // the address is in some part of the heap.
+                // TODO (mlvdv) ensure the location is in one of the regions being managed.
                 final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
                 if (heapRegion == null) {
                     // The location is not in any memory region allocated by the heap.
@@ -86,38 +96,15 @@ final class TeleMSHeapScheme extends AbstractVmHolder implements LegacyTeleHeapS
         };
     }
 
-    public int gcForwardingPointerOffset() {
-        // MS is a non-moving collector. Doesn't do any forwarding.
-        return -1;
-    }
-
-    public Pointer getForwardedOrigin(Pointer origin) {
-        // MS is a non-moving collector. Doesn't do any forwarding.
-        return origin;
-    }
-
-    public Pointer getTrueLocationFromPointer(Pointer pointer) {
-        return pointer;
-    }
-
-    public boolean isForwardingPointer(Pointer pointer) {
+    public boolean isObjectOrigin(Address origin) throws TeleError {
         return false;
     }
 
-    public boolean isObjectForwarded(Pointer origin) {
-        return false;
-    }
-
-    public List<MaxCodeLocation> inspectableMethods() {
-        // TODO (ld)
-        return Collections.emptyList();
-    }
-
-    public MaxMarkBitsInfo markBitInfo() {
-        // TODO (ld)
+    public RemoteReference makeReference(Address origin) throws TeleError {
         return null;
     }
-    public void updateCache(long epoch) {
+
+    public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
     }
 
 }
