@@ -47,10 +47,10 @@ import com.sun.max.vm.log.hosted.*;
      *     inlined_methods {
      *         short length;        // length of 'deps'
      *         short deps[length];  // array of local_inlined_method_dep and non_local_inlined_method_dep structs (defined below)
-     *                           // the context class is always the holder of an inlining method, and the ClassMethodActor
-     *                           // of the TargetMethod always denotes the inlining method, so it does not need to be recorded
+     *                           // the context class is always the holder of an inlining method, and the {@link ClassMethodActor}
+     *                           // of the {@link TargetMethod} always denotes the inlining method, so it does not need to be recorded
      *                           // in the dependency data. N.B. This means that the inlining method is lost
-     *                           // until the TargetMethod is {@link DependenciesManager#registerValidatedTarget(Dependencies, TargetMethod) set}
+     *                           // until the TargetMethod is {@link Dependencies#registerValidatedTarget(Dependencies, TargetMethod) set}
      *     }
      *
      *     // identifies an inlined method in same class as inliner
