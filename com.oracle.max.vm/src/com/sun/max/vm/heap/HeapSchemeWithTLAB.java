@@ -537,7 +537,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         tlabReset(currentTLA());
     }
 
-    public static final TLABLogger logger = /*MaxineVM.isDebug()*/ true  ? new TLABLogger(true) : new TLABLogger();
+    public static final TLABLogger logger = MaxineVM.isDebug() ? new TLABLogger(true) : new TLABLogger();
 
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)

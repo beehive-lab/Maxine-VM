@@ -665,7 +665,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     @Override
     public Pointer processLiveObject(Pointer liveObject) {
         final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep && !deadSpace.isZero()) {
+        if (MaxineVM.isDebug() && !deadSpace.isZero()) {
             printDeadSpace(deadSpace);
         }
 
@@ -680,8 +680,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep) {
-            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
+        if (MaxineVM.isDebug()) {
+            logger.logGap(leftLiveObject, rightLiveObject);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
