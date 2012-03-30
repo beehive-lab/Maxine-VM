@@ -90,7 +90,7 @@ public class MaxRuntime implements GraalRuntime {
             RuntimeCompiler.optimizingCompilerOption.setValue(NullOptCompiler.class.getName());
             RuntimeCompiler.baselineCompilerOption.setValue(NullBaselineCompiler.class.getName());
             VMConfigurator.installStandard(BuildLevel.PRODUCT);
-            JavaPrototype.initialize(false);
+            JavaPrototype.initialize();
         }
         return runtime();
     }

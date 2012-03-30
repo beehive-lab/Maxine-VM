@@ -79,7 +79,6 @@ public class PackageLoader {
                 classes.add(javaClass);
             }
         }
-        ProgramWarning.check(classNames.length != 0, "no classes found in package: " + packageName);
         return classes;
     }
 
