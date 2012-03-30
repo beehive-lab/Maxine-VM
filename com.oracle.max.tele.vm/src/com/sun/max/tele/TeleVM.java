@@ -238,6 +238,8 @@ public abstract class TeleVM implements MaxVM {
      */
     private static TeleVMConfiguration teleVMConfiguration;
 
+    private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
+
     /**
      * An abstraction description of the VM's platform, suitable for export.
      */
@@ -1020,6 +1022,13 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxInspectionMode inspectionMode() {
         return mode;
+    }
+
+    public final List<TeleVMScheme> schemes() {
+        if (schemes.isEmpty()) {
+            schemes.add(teleVMConfiguration.teleHeapScheme());
+        }
+        return schemes;
     }
 
     public final VmClassAccess classes() {
