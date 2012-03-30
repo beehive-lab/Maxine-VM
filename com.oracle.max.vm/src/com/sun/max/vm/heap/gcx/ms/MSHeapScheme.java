@@ -69,13 +69,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      */
     final FreeHeapSpaceManager objectSpace;
 
-    /**
-     * Space where large object are allocated from if {@link MSHeapScheme#UseLOS} is true.
-     * Implements the {@link Sweeper} interface to be notified by a sweeper of
-     * free space.
-     */
-    final LargeObjectSpace largeObjectSpace;
-
     private final Collect collect = new Collect();
 
     final AfterMarkSweepVerifier afterGCVerifier;
@@ -84,7 +77,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     public MSHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
         objectSpace = new FreeHeapSpaceManager();
-        largeObjectSpace = new LargeObjectSpace();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker));
 
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);

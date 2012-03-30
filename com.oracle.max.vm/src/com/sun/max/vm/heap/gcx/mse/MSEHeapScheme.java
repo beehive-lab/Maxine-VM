@@ -130,9 +130,10 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
-
         theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, 0);
         // All reserved space (but the one used by the heap region manager) is now uncommitted.
+        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
+
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
