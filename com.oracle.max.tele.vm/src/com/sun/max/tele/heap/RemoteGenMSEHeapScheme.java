@@ -26,17 +26,26 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
+ * @see GenMSEHeapScheme
  */
 public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme implements RemoteObjectReferenceManager {
+
+    /**
+     * The VM object that implements the {@link HeapScheme} in the current configuration.
+     */
+    private TeleGenMSEHeapScheme scheme;
 
     public RemoteGenMSEHeapScheme(TeleVM vm) {
         super(vm);
@@ -47,12 +56,20 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
     }
 
     public void initialize(long epoch) {
-        // TODO Auto-generated method stub
+
+        vm().addInitializationListener(new InitializationListener() {
+
+            public void initialiationComplete(final long initializationEpoch) {
+                objects().registerTeleObjectType(GenMSEHeapScheme.class, TeleGenMSEHeapScheme.class);
+                // Get the VM object that represents the heap implementation; can't do this any sooner during startup.
+                scheme = (TeleGenMSEHeapScheme) teleHeapScheme();
+                assert scheme != null;
+            }
+        });
     }
 
     public List<VmHeapRegion> heapRegions() {
-        // TODO Auto-generated method stub
-        return null;
+        return Collections.emptyList();
     }
 
     public boolean isObjectOrigin(Address origin) throws TeleError {
@@ -69,4 +86,16 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
         // TODO Auto-generated method stub
     }
 
+
+    /**
+     * Surrogate object for the scheme instance in the VM.
+     */
+    public static class TeleGenMSEHeapScheme extends TeleHeapScheme {
+
+        public TeleGenMSEHeapScheme(TeleVM vm, Reference reference) {
+            super(vm, reference);
+        }
+
+
+    }
 }

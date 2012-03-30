@@ -84,6 +84,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxInspectionMode inspectionMode();
 
     /**
+     * @return object instances that implement the VM's {@linkplain VMScheme schemes}.
+     */
+    List<TeleVMScheme> schemes();
+
+    /**
      * @return access to the VM's class registry and related information.
      */
     MaxClasses classes();
