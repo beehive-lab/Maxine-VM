@@ -235,7 +235,7 @@ public final class BootImageGenerator {
             configurator.create(true);
 
             // Initialize the Java prototype
-            JavaPrototype.initialize(true, prototypeGenerator.threadsOption.getValue());
+            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue());
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.

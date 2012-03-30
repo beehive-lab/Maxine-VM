@@ -361,19 +361,6 @@ def inspectoragent(args):
     else:
         mx.run(cmd)
     
-def javadoc(args):
-    """run javadoc over the Maxine Java source files
-
-   Run javadoc over the Maxine Java source code and place the generated
-   HTML in $maxine_dir/javadoc.
-
-options:
- -clean     removes existing generated javadoc first
- -projects p1,p2,... limit to listed projects
- <any other javadoc option>
-
-    Use \"mx javadoc -help\" to see what other options this command accepts."""
-    
 def jnigen(args):
     """(re)generate Java source for native function interfaces (i.e. JNI, JMM, JVMTI)
 
@@ -652,7 +639,7 @@ def _vm_image():
     return join(_vmdir, 'maxine.vm')
 
 def mx_init():
-    mx.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
+    mx.add_argument('--vmdir', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
     
     commands = {
         'c1x': [c1x, '[options] patterns...'],
@@ -667,7 +654,6 @@ def mx_init():
         'image': [image, '[options] classes|packages...'],
         'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
         'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
-        'javadoc': [javadoc, ''],
         'jnigen': [jnigen, ''],
         'jttgen': [jttgen, ''],
         'loggen': [loggen, ''],
