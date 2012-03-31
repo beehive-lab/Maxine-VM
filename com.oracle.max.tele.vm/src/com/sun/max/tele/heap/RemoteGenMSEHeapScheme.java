@@ -38,6 +38,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
+ *
  * @see GenMSEHeapScheme
  */
 public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme implements RemoteObjectReferenceManager {
@@ -92,10 +93,36 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
      */
     public static class TeleGenMSEHeapScheme extends TeleHeapScheme {
 
+        private TeleNoAgingNursery nursery;
+
+        private TeleFirstFitMarkSweepSpace oldSpace;
+
+        private TeleCardTableRSet cardTableRSet;
+
         public TeleGenMSEHeapScheme(TeleVM vm, Reference reference) {
             super(vm, reference);
         }
 
+        @Override
+        protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+            if (!super.updateObjectCache(epoch, statsPrinter)) {
+                return false;
+            }
+            // TODO (mlvdv) do these ever change once set?
+            if (nursery == null) {
+                final Reference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readReference(reference());
+                nursery = (TeleNoAgingNursery) objects().makeTeleObject(nurseryRef);
+            }
+            if (oldSpace == null) {
+                final Reference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readReference(reference());
+                oldSpace = (TeleFirstFitMarkSweepSpace) objects().makeTeleObject(oldSpaceRef);
+            }
+            if (cardTableRSet == null) {
+                final Reference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readReference(reference());
+                cardTableRSet = (TeleCardTableRSet) objects().makeTeleObject(cardTableRSetRef);
+            }
+            return true;
+        }
 
     }
 }
