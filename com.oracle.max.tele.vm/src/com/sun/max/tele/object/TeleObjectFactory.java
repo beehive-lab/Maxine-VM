@@ -41,11 +41,17 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.hom.*;
+import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.reference.direct.*;
+import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -203,6 +209,14 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(String.class, getConstructor(TeleString.class));
         classToTeleTupleObjectConstructor.put(Enum.class, getConstructor(TeleEnum.class));
         classToTeleTupleObjectConstructor.put(ClassLoader.class, getConstructor(TeleClassLoader.class));
+        // Default representation of scheme implementations; should be specialized for implementation-specific support
+        classToTeleTupleObjectConstructor.put(AbstractMonitorScheme.class, getConstructor(TeleMonitorScheme.class));
+        classToTeleTupleObjectConstructor.put(DirectReferenceScheme.class, getConstructor(TeleReferenceScheme.class));
+        classToTeleTupleObjectConstructor.put(HeapSchemeAdaptor.class, getConstructor(TeleHeapScheme.class));
+        classToTeleTupleObjectConstructor.put(HomLayoutScheme.class, getConstructor(TeleLayoutScheme.class));
+        classToTeleTupleObjectConstructor.put(JavaRunScheme.class, getConstructor(TeleRunScheme.class));
+        classToTeleTupleObjectConstructor.put(MonitorScheme.class, getConstructor(TeleMonitorScheme.class));
+        classToTeleTupleObjectConstructor.put(OhmLayoutScheme.class, getConstructor(TeleLayoutScheme.class));
         // Maxine Actors
         classToTeleTupleObjectConstructor.put(FieldActor.class, getConstructor(TeleFieldActor.class));
         classToTeleTupleObjectConstructor.put(VirtualMethodActor.class, getConstructor(TeleVirtualMethodActor.class));

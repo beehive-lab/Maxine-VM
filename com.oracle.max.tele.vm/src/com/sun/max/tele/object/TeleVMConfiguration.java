@@ -26,19 +26,67 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 
+/**
+ * Access to configuration information in the VM.
+ */
 public final class TeleVMConfiguration extends TeleTupleObject {
 
     private TeleHeapScheme teleHeapScheme;
+    private TeleLayoutScheme teleLayoutScheme;
+    private TeleMonitorScheme teleMonitorScheme;
+    private TeleReferenceScheme teleReferenceScheme;
+    private TeleRunScheme teleRunScheme;
 
     public TeleVMConfiguration(TeleVM vm, Reference reference) {
         super(vm, reference);
     }
 
-    public TeleHeapScheme teleHeapScheme() {
+    public TeleHeapScheme heapScheme() {
         if (teleHeapScheme == null) {
             final Reference heapSchemeReference = fields().VMConfiguration_heapScheme.readReference(getReference());
             teleHeapScheme = (TeleHeapScheme) objects().makeTeleObject(heapSchemeReference);
         }
         return teleHeapScheme;
+    }
+
+    public TeleLayoutScheme layoutScheme() {
+        if (teleLayoutScheme == null) {
+            final Reference layoutSchemeReference = fields().VMConfiguration_layoutScheme.readReference(getReference());
+            teleLayoutScheme = (TeleLayoutScheme) objects().makeTeleObject(layoutSchemeReference);
+        }
+        return teleLayoutScheme;
+    }
+
+    public TeleMonitorScheme monitorScheme() {
+        if (teleMonitorScheme == null) {
+            final Reference monitorSchemeReference = fields().VMConfiguration_monitorScheme.readReference(getReference());
+            TeleObject monitorScheme = objects().makeTeleObject(monitorSchemeReference);
+            if (monitorScheme instanceof TeleMonitorScheme) {
+                teleMonitorScheme = (TeleMonitorScheme) monitorScheme;
+            }
+        }
+        return teleMonitorScheme;
+    }
+
+    public TeleReferenceScheme referenceScheme() {
+        if (teleReferenceScheme == null) {
+            final Reference referenceSchemeReference = fields().VMConfiguration_referenceScheme.readReference(getReference());
+            TeleObject referenceScheme = objects().makeTeleObject(referenceSchemeReference);
+            if (referenceScheme instanceof TeleReferenceScheme) {
+                teleReferenceScheme = (TeleReferenceScheme) referenceScheme;
+            }
+        }
+        return teleReferenceScheme;
+    }
+
+    public TeleRunScheme runScheme() {
+        if (teleRunScheme == null) {
+            final Reference runSchemeReference = fields().VMConfiguration_runScheme.readReference(getReference());
+            TeleObject runScheme = objects().makeTeleObject(runSchemeReference);
+            if (runScheme instanceof TeleRunScheme) {
+                teleRunScheme = (TeleRunScheme) runScheme;
+            }
+        }
+        return teleRunScheme;
     }
 }

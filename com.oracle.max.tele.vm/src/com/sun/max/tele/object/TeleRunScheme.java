@@ -23,24 +23,24 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.run.*;
 
 
 /**
- * Supertype for all implementations of the VM heap.
+ * Supertype for all implementations of the VM run scheme.
  *
- * @see HeapScheme
+ * @see RunScheme
  */
-public class TeleHeapScheme extends TeleVMScheme {
+public class TeleRunScheme extends TeleVMScheme {
 
-    public TeleHeapScheme(TeleVM vm, Reference reference) {
+    public TeleRunScheme(TeleVM vm, Reference reference) {
         super(vm, reference);
     }
 
     @Override
     public String schemeName() {
-        return HeapScheme.class.getSimpleName();
+        return RunScheme.class.getSimpleName();
     }
 
 }
