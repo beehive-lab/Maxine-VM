@@ -70,7 +70,7 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
      * are neither relocated nor collected.
      */
     public  HeapPhase phase() {
-        return HeapPhase.ALLOCATING;
+        return HeapPhase.MUTATING;
     }
 
     public boolean isObjectOrigin(Address origin) throws TeleError {

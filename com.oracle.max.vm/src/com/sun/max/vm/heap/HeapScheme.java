@@ -470,7 +470,7 @@ public interface HeapScheme extends VMScheme {
          * <p>
          * It is assumed that the heap pass through the three phases in the following order:
          * <ol>
-         * <li>{@link HeapPhase#ALLOCATING}: this is the initial phase, and a transition
+         * <li>{@link HeapPhase#MUTATING}: this is the initial phase, and a transition
          * into this phase is taken to be the conclusion of a GC.</li>
          * <li>{@link HeapPhase#ANALYZING}: a transition into this phase is taken to be
          * the beginning of a GC.</li>
@@ -487,7 +487,7 @@ public interface HeapScheme extends VMScheme {
                 case RECLAIMING:
                     inspectableGCReclaiming();
                     break;
-                case ALLOCATING:
+                case MUTATING:
                     inspectableGCCompleted();
                     break;
             }
@@ -584,7 +584,7 @@ public interface HeapScheme extends VMScheme {
 
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
-         * at the conclusions of a GC, i.e. when the phase has just changed back to {@link HeapPhase#ALLOCATING}.
+         * at the conclusions of a GC, i.e. when the phase has just changed back to {@link HeapPhase#MUTATING}.
          * <p>
          * This particular method is intended for use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.

@@ -657,9 +657,9 @@ public abstract class TeleVM implements MaxVM {
     private VMEventDispatcher<MaxGCPhaseListener> gcReclaimingListeners;
 
     /**
-     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#ALLOCATING} phase.
+     * Dispatcher for GC completion events, i.e. when entering the {@link HeapPhase#MUTATING} phase.
      */
-    private VMEventDispatcher<MaxGCPhaseListener> gcAllocatingListeners;
+    private VMEventDispatcher<MaxGCPhaseListener> gcMutatingListeners;
 
     /**
      * Dispatcher for thread entry events (i.e., when a {@link VmThread} enters its run method).
@@ -810,10 +810,10 @@ public abstract class TeleVM implements MaxVM {
             }
         };
 
-        this.gcAllocatingListeners =  new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcAllocatingMethodLocation(), "at GC completion") {
+        this.gcMutatingListeners =  new VMEventDispatcher<MaxGCPhaseListener>(methodAccess.gcMutatingMethodLocation(), "at GC completion") {
             @Override
             protected void listenerDo(MaxThread thread, MaxGCPhaseListener listener) {
-                listener.gcPhaseChange(HeapPhase.ALLOCATING);
+                listener.gcPhaseChange(HeapPhase.MUTATING);
             }
         };
 
@@ -1126,7 +1126,7 @@ public abstract class TeleVM implements MaxVM {
         if (phase == null) {
             gcAnalyzingListeners.add(listener, teleProcess);
             gcReclaimingListeners.add(listener, teleProcess);
-            gcAllocatingListeners.add(listener, teleProcess);
+            gcMutatingListeners.add(listener, teleProcess);
         } else {
             switch (phase) {
                 case ANALYZING:
@@ -1135,8 +1135,8 @@ public abstract class TeleVM implements MaxVM {
                 case RECLAIMING:
                     gcReclaimingListeners.add(listener, teleProcess);
                     break;
-                case ALLOCATING:
-                    gcAllocatingListeners.add(listener, teleProcess);
+                case MUTATING:
+                    gcMutatingListeners.add(listener, teleProcess);
                     break;
             }
         }
@@ -1152,7 +1152,7 @@ public abstract class TeleVM implements MaxVM {
         if (phase == null) {
             gcAnalyzingListeners.remove(listener);
             gcReclaimingListeners.remove(listener);
-            gcAllocatingListeners.remove(listener);
+            gcMutatingListeners.remove(listener);
         } else {
             switch (phase) {
                 case ANALYZING:
@@ -1161,8 +1161,8 @@ public abstract class TeleVM implements MaxVM {
                 case RECLAIMING:
                     gcReclaimingListeners.remove(listener);
                     break;
-                case ALLOCATING:
-                    gcAllocatingListeners.remove(listener);
+                case MUTATING:
+                    gcMutatingListeners.remove(listener);
                     break;
             }
         }

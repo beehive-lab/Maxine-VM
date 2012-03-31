@@ -191,7 +191,7 @@ public final class Inspection implements InspectionHolder {
                 sb.append(UNKNOWN.label());
             } else {
                 sb.append(vmState.processState().label());
-                if (vmState.heapPhase() != HeapPhase.ALLOCATING) {
+                if (vmState.heapPhase() != HeapPhase.MUTATING) {
                     sb.append(", heap=" + vmState.heapPhase().label());
                 }
                 if (vmState.isInEviction()) {

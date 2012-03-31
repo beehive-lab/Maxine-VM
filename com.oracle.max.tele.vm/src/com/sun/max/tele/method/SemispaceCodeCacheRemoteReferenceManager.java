@@ -82,7 +82,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmSemiSpaceCodeCacheRegion semispaceCodeCacheRegion) {
         super(vm);
         this.semispaceCodeCacheRegion = semispaceCodeCacheRegion;
-        this.heapPhase = HeapPhase.ALLOCATING;
+        this.heapPhase = HeapPhase.MUTATING;
         // Create a separate map for references of each kind
         for (CodeCacheReferenceKind kind : CodeCacheReferenceKind.values()) {
             refMaps.put(kind, new HashMap<TeleTargetMethod, WeakReference<SemispaceCodeCacheRemoteReference> >());

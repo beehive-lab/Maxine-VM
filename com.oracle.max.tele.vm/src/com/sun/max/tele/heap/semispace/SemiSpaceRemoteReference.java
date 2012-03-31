@@ -396,7 +396,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * reference immediately after the spaces are swapped.
      * <p>
      * <strong>Pre:</strong> An ordinary {@link #LIVE} object in To-Space, not forwarded, with the heap phase
-     * {@link #ALLOCATING} (or possibly in the latter part of {@link #RECLAIMING}).
+     * {@link #MUTATING} (or possibly in the latter part of {@link #RECLAIMING}).
      * <p>
      * <strong>Post:</strong> An object whose origin is in From-Space and whose reachability has not yet been
      * determined during an {@link #ANALYZING} heap phase.

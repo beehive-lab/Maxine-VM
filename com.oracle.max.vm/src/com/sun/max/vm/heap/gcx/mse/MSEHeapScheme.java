@@ -324,7 +324,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
             markSweepSpace.doAfterGC();
 
             JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {
