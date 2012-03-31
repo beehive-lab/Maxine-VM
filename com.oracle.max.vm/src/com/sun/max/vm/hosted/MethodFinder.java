@@ -338,7 +338,7 @@ public class MethodFinder {
 
     public static void main(String[] args) {
         System.out.print("Creating Java prototype... ");
-        JavaPrototype.initialize(false);
+        JavaPrototype.initialize();
         System.out.println("done");
 
         MethodFinder matcher = new MethodFinder();

@@ -194,6 +194,8 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion;
         theHeapRegionManager().initialize(firstUnusedByteAddress, endOfReservedSpace, maxSize, HeapRegionInfo.class, BOOT.tag());
+        // All reserved space (but the one used by the heap region manager) is now uncommitted.
+        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
 
         try {
             enableCustomAllocation(theHeapRegionManager().allocator());
@@ -408,20 +410,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = youngSpace.allocate(tlabSize);
         Size effectiveSize = tlabSize.minus(tlabHeadroom());
-        if (traceTLAB()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.printCurrentThread(false);
-            Log.print(": Allocated TLAB at ");
-            Log.print(tlab);
-            Log.print(" [TOP=");
-            Log.print(tlab.plus(tlabSize.minus(tlabHeadroom())));
-            Log.print(", end=");
-            Log.print(tlab.plus(tlabSize));
-            Log.print(", size=");
-            Log.print(tlabSize);
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
         refillTLAB(etla, tlab, effectiveSize);
     }
 

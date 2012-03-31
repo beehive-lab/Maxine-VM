@@ -268,7 +268,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     /**
      * Log 2 to compute the bitmap word index from an offset from the beginning of the covered area.
      */
-    final int log2BitmapWord;
+    public final int log2BitmapWord;
 
     /**
      * Start of the contiguous range of addresses covered by the mark bitmap.
@@ -554,7 +554,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
             Size coveredAreaSize = end.minus(start).asSize();
             FatalError.check(bitmapSize.toLong() >= bitmapSize(coveredAreaSize).toLong(), "Mark bitmap too small to cover heap");
         }
-        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= log2BitmapWord, "Region size too small for heap marker");
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);

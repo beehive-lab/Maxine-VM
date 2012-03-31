@@ -217,8 +217,10 @@ public final class VMConfiguration {
         vm().compilationBroker.initialize(phase);
         for (int i = 0; i < vmSchemes.size(); i++) {
             try {
-                //Log.print("Initializing: ");
-                //Log.println(vmSchemes.get(i).name());
+//                Log.print("Initializing: ");
+//                Log.print(vmSchemes.get(i).name());
+//                Log.print(" @");
+//                Log.println(phase.name());
                 vmSchemes.get(i).initialize(phase);
             } catch (Throwable t) {
                 FatalError.unexpected("Error initializing scheme " + vmSchemes.get(i).name() + " in phase " + phase.name(), t);
