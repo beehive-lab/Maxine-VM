@@ -42,6 +42,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.reference.Reference;
@@ -219,6 +220,11 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
         classToTeleTupleObjectConstructor.put(MemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
         classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
+        // Maxine heap management
+        classToTeleTupleObjectConstructor.put(BaseAtomicBumpPointerAllocator.class, getConstructor(TeleBaseAtomicBumpPointerAllocator.class));
+        classToTeleTupleObjectConstructor.put(CardTableRSet.class, getConstructor(TeleCardTableRSet.class));
+        classToTeleTupleObjectConstructor.put(FirstFitMarkSweepSpace.class, getConstructor(TeleFirstFitMarkSweepSpace.class));
+        classToTeleTupleObjectConstructor.put(NoAgingNursery.class, getConstructor(TeleNoAgingNursery.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(MaxineVM.class, getConstructor(TeleMaxineVM.class));
         classToTeleTupleObjectConstructor.put(VMConfiguration.class, getConstructor(TeleVMConfiguration.class));
