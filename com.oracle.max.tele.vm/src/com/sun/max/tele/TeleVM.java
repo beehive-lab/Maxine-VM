@@ -1026,7 +1026,26 @@ public abstract class TeleVM implements MaxVM {
 
     public final List<TeleVMScheme> schemes() {
         if (schemes.isEmpty()) {
-            schemes.add(teleVMConfiguration.teleHeapScheme());
+            TeleHeapScheme heapScheme = teleVMConfiguration.heapScheme();
+            if (heapScheme != null) {
+                schemes.add(heapScheme);
+            }
+            TeleLayoutScheme layoutScheme = teleVMConfiguration.layoutScheme();
+            if (layoutScheme != null) {
+                schemes.add(layoutScheme);
+            }
+            TeleMonitorScheme monitorScheme = teleVMConfiguration.monitorScheme();
+            if (monitorScheme != null) {
+                schemes.add(monitorScheme);
+            }
+            TeleReferenceScheme referenceScheme = teleVMConfiguration.referenceScheme();
+            if (referenceScheme != null) {
+                schemes.add(referenceScheme);
+            }
+            TeleRunScheme runScheme = teleVMConfiguration.runScheme();
+            if (runScheme != null) {
+                schemes.add(runScheme);
+            }
         }
         return schemes;
     }
