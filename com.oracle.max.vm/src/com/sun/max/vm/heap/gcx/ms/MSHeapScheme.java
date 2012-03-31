@@ -68,13 +68,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      */
     final FreeHeapSpaceManager objectSpace;
 
-    /**
-     * Space where large object are allocated from if {@link MSHeapScheme#UseLOS} is true.
-     * Implements the {@link Sweeper} interface to be notified by a sweeper of
-     * free space.
-     */
-    final LargeObjectSpace largeObjectSpace;
-
     private final Collect collect = new Collect();
 
     final AfterMarkSweepVerifier afterGCVerifier;
@@ -83,7 +76,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     public MSHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
         objectSpace = new FreeHeapSpaceManager();
-        largeObjectSpace = new LargeObjectSpace();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker));
 
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
@@ -352,22 +344,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = objectSpace.allocateTLAB(tlabSize);
         Size effectiveSize = setNextTLABChunk(tlab);
-
-        if (traceTLAB()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Size realTLABSize = effectiveSize.plus(tlabHeadroom());
-            Log.printCurrentThread(false);
-            Log.print(": Allocated TLAB at ");
-            Log.print(tlab);
-            Log.print(" [TOP=");
-            Log.print(tlab.plus(effectiveSize));
-            Log.print(", end=");
-            Log.print(tlab.plus(realTLABSize));
-            Log.print(", size=");
-            Log.print(realTLABSize.toInt());
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
         refillTLAB(etla, tlab, effectiveSize);
     }
 

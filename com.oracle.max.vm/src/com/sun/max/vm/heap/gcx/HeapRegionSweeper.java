@@ -101,39 +101,11 @@ public abstract class HeapRegionSweeper extends Sweeper {
      */
     final DeadSpaceListener deadSpaceListener;
 
+    boolean traceGap;
+
     protected HeapRegionSweeper(boolean zapDeadReferences, DeadSpaceListener deadSpaceListener) {
         this.zapDeadReferences = zapDeadReferences;
         this.deadSpaceListener = deadSpaceListener;
-    }
-
-    private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Gap between [");
-        Log.print(leftLiveObject);
-        Log.print(", ");
-        Log.print(rightLiveObject);
-        Log.print("] = @");
-        Log.print(gapAddress);
-        Log.print("(");
-        Log.print(gapSize.toLong());
-        Log.print(")");
-
-        if (gapSize.greaterEqual(minReclaimableSpace())) {
-            Log.println(" => reclaimable");
-        } else {
-            Log.println(" => dark matter");
-        }
-        Log.unlock(lockDisabledSafepoints);
-    }
-
-    private void printNotifiedDeadSpace(Address deadSpace, Size size) {
-        final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Dead Space @");
-        Log.print(deadSpace);
-        Log.print("(");
-        Log.print(size.toLong());
-        Log.println(")");
-        Log.unlock(lockDisabledSafepoints);
     }
 
     final public int liveBytes() {
@@ -195,17 +167,38 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrFreeBytes += chunkSize.toInt();
     }
 
+    private void recordIfReclaimable(Address address, Size size) {
+        if (size.greaterEqual(minReclaimableSpace)) {
+            if (MaxineVM.isDebug()) {
+                logger.logFreeSpace(address, size);
+            }
+            recordFreeSpace(address, size);
+        } else {
+            if (zapDeadReferences) {
+                HeapSchemeAdaptor.fillWithDeadObject(address.asPointer(), address.asPointer().plus(size));
+            }
+            if (MaxineVM.isDebug()) {
+                logger.logDeadSpace(address, size);
+            }
+        }
+    }
+
     /**
      * Process a region without any live mark. If the region isn't part of a multi-region object, then it is free.
      * Otherwise, if it is the tail of a multi-region object, we need to record a single chunk after its tail.
      */
     public void processDeadRegion() {
         if (csrIsLiveMultiRegionObjectTail) {
+            Size tailSize = csrEnd.minus(csrLastLiveAddress).asSize();
             if (MaxineVM.isDebug()) {
-                FatalError.check(csrLastLiveAddress.greaterThan(csrInfo.regionStart()), "Last live address must be greater than start of a live multi-regions object's tail");
+                FatalError.check(csrLastLiveAddress.greaterThan(csrInfo.regionStart()),
+                                "Last live address must be greater than start of a live multi-regions object's tail");
             }
-            recordFreeSpace(csrLastLiveAddress, csrEnd.minus(csrLastLiveAddress).asSize());
+            recordIfReclaimable(csrLastLiveAddress, tailSize);
         } else {
+            if (MaxineVM.isDebug()) {
+                logger.logFreeSpace(csrInfo.regionStart(), Size.fromInt(regionSizeInBytes));
+            }
             csrFreeBytes = regionSizeInBytes;
         }
     }
@@ -246,13 +239,11 @@ public abstract class HeapRegionSweeper extends Sweeper {
         FatalError.check(rightLiveObject.lessEqual(endOfSweepingRegion()), "dead space must not cross region boundary");
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
+        if (MaxineVM.isDebug()) {
+            logger.logGap(leftLiveObject, rightLiveObject);
+        }
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug() &&  ((TraceSweep && Heap.verbose()) || TraceGap)) {
-            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
-        }
-        if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
-            recordFreeSpace(endOfLeftObject, numDeadBytes);
-        }
+        recordIfReclaimable(endOfLeftObject, numDeadBytes);
         csrLastLiveAddress = rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
         return csrLastLiveAddress.asPointer();
     }
@@ -268,8 +259,8 @@ public abstract class HeapRegionSweeper extends Sweeper {
     public void processDeadSpace(Address freeChunk, Size size) {
         assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
         csrLastLiveAddress = freeChunk.plus(size);
-        if (MaxineVM.isDebug() && ((TraceSweep && Heap.verbose()) || TraceGap)) {
-            printNotifiedDeadSpace(freeChunk, size);
+        if (MaxineVM.isDebug()) {
+            logger.logFreeSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);
     }
@@ -279,11 +270,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         final Size numDeadBytes = liveObject.minus(csrLastLiveAddress).asSize();
         if (!numDeadBytes.isZero()) {
             final Pointer deadSpace = csrLastLiveAddress.asPointer();
-            if (numDeadBytes.greaterThan(minReclaimableSpace)) {
-                recordFreeSpace(deadSpace, numDeadBytes);
-            } else if (zapDeadReferences) {
-                HeapSchemeAdaptor.fillWithDeadObject(deadSpace, liveObject);
-            }
+            recordIfReclaimable(deadSpace, numDeadBytes);
             deadSpaceListener.notifyCoalescing(deadSpace, numDeadBytes);
         }
         final Size numLiveBytes = Layout.size(Layout.cellToOrigin(liveObject));

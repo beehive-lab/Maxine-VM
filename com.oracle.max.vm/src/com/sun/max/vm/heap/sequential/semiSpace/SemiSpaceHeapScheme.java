@@ -945,7 +945,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     static void padTLAB(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
-        if (traceTLAB()) {
+        if (logTLAB()) {
             final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
             HeapSchemeWithTLAB.logger.logPad(vmThread, tlabMark, padWords);
         }

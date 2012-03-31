@@ -58,11 +58,12 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
      * The former seems more efficient for now.
      */
     private static boolean UseLog2BinIndexing = true;
+
     static {
         VMOptions.addFieldOption("-XX:", "UseLog2BinIndexing", FreeHeapSpaceManager.class, "Use log2(msb(Size)) - log2FirstBin for bin index instead of Size >> log2FirstBin)", Phase.PRISTINE);
     }
 
-    private static boolean TraceTLAB = false;
+    private static boolean TraceTLABChunk = false;
 
     /**
      * Minimum size to be treated as a large object.
@@ -388,7 +389,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
                 last = Address.zero();
             }
 
-            if (MaxineVM.isDebug() && TraceTLAB) {
+            if (MaxineVM.isDebug() && TraceTLABChunk) {
                 printAllocatedChunk(result, lastChunkAddress, numAllocatedChunks);
             }
 
@@ -476,7 +477,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
             Address additionalChunks = binTryAllocate(1, size, true);
             if (!additionalChunks.isZero()) {
                 HeapFreeChunk.format(additionalChunks, size, initialChunks);
-                if (MaxineVM.isDebug() && TraceTLAB) {
+                if (MaxineVM.isDebug() && TraceTLABChunk) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("binAllocateTLAB from TLAB bin #1: additional chunk = ");
                     Log.print(additionalChunks);
@@ -665,7 +666,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     @Override
     public Pointer processLiveObject(Pointer liveObject) {
         final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep && !deadSpace.isZero()) {
+        if (MaxineVM.isDebug() && !deadSpace.isZero()) {
             printDeadSpace(deadSpace);
         }
 
@@ -680,8 +681,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep) {
-            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
+        if (MaxineVM.isDebug()) {
+            logger.logGap(leftLiveObject, rightLiveObject);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
@@ -736,7 +737,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         }
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
 
-        TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
+        TraceTLABChunk = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
         // Refill allocator if space left below this:
         Size allocatorRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);

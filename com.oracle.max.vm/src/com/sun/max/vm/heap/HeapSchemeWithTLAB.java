@@ -65,9 +65,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @returns {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
      */
     @INLINE
-    public static boolean traceTLAB() {
+    public static boolean logTLAB() {
         return logger.enabled();
     }
+
+    public static boolean traceTLAB() {
+        return logger.traceEnabled();
+    }
+
 
     public static void setTraceTLAB(boolean b) {
         logger.enableTrace(b);
@@ -145,7 +150,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer etla = VmThreadLocal.ETLA.load(tla);
             final Pointer tlabMark = TLAB_MARK.load(etla);
             Pointer tlabTop = TLAB_TOP.load(etla);
-            if (traceTLAB()) {
+            if (logTLAB()) {
                 logger.logReset(UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava()), tlabTop, tlabMark);
             }
             if (tlabTop.equals(Address.zero())) {
@@ -348,7 +353,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         TLAB_TOP.store(etla, tlabTop);
         TLAB_MARK.store(etla, tlab);
-        if (traceTLAB()) {
+        if (logTLAB()) {
             VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
             logger.logRefill(vmThread, tlabTop, tlabTop, tlab.plus(initialTlabSize), initialTlabSize.toInt());
         }
@@ -537,7 +542,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         tlabReset(currentTLA());
     }
 
-    public static final TLABLogger logger = /*MaxineVM.isDebug()*/ true  ? new TLABLogger(true) : new TLABLogger();
+    public static final TLABLogger logger = MaxineVM.isDebug() ? new TLABLogger(true) : new TLABLogger();
 
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)

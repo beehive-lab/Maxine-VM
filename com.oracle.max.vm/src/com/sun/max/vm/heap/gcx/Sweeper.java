@@ -24,9 +24,12 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.VMOptions.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 
 /**
  * Interface that space managers must implement to be notified of sweeping events emitted by a sweeping collector.
@@ -38,9 +41,7 @@ import com.sun.max.vm.MaxineVM.Phase;
  */
 public abstract class Sweeper {
 
-    static boolean TraceSweep;
-    static boolean TraceGap = false;
-
+    static boolean TraceSweep = false;
     static {
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceSweep", Sweeper.class, "Trace heap sweep operations", Phase.PRISTINE);
@@ -52,6 +53,8 @@ public abstract class Sweeper {
                         "Minimum size of contiguous space considered for space reclamation." +
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
+
+    protected SweepLogger logger = MaxineVM.isDebug() ? new SweepLogger(true) : new SweepLogger();
 
     /**
      * Invoked when doing precise sweeping on the first black object following the pointer last returned by this method.
@@ -123,4 +126,112 @@ public abstract class Sweeper {
      */
     public abstract Address endOfSweepingRegion();
 
+    @HOSTED_ONLY
+    @VMLoggerInterface(defaultConstructor = true)
+    private interface SweepLoggerInterface {
+        void gap(
+                        @VMLogParam(name = "leftLiveObject") Pointer leftLiveObject,
+                        @VMLogParam(name = "rightLiveObject") Pointer rightLiveObject);
+        void deadSpace(
+                        @VMLogParam(name = "deadSpace") Address deadSpace,
+                        @VMLogParam(name = "size") Size size);
+        void freeSpace(
+                        @VMLogParam(name = "freeSpace") Address freeSpace,
+                        @VMLogParam(name = "size") Size size);
+    }
+
+    static final class SweepLogger extends SweepLoggerAuto {
+        SweepLogger(boolean active) {
+            super("Swept", "Trace dead space reclaimed by the sweeper");
+        }
+        SweepLogger() {
+        }
+        private void traceSpace(String spaceType, Address space, Size size) {
+            Log.print(spaceType);
+            Log.print(" Space @");
+            Log.print(space);
+            Log.print("(");
+            Log.print(size.toLong());
+            Log.println(")");
+        }
+
+        @Override
+        protected void traceDeadSpace(Address deadSpace, Size size) {
+            traceSpace("Dead", deadSpace, size);
+        }
+
+        @Override
+        protected void traceGap(Pointer leftLiveObject, Pointer rightLiveObject) {
+            Log.print("Gap between [");
+            Log.print(leftLiveObject);
+            Log.print(", ");
+            Log.print(rightLiveObject);
+            Log.print("]");
+        }
+        @Override
+        protected void traceFreeSpace(Address freeSpace, Size size) {
+            traceSpace("Free", freeSpace, size);
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class SweepLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            DeadSpace, FreeSpace, Gap;
+
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected SweepLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        protected SweepLoggerAuto() {
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logDeadSpace(Address deadSpace, Size size) {
+            log(Operation.DeadSpace.ordinal(), deadSpace, size);
+        }
+        protected abstract void traceDeadSpace(Address deadSpace, Size size);
+
+        @INLINE
+        public final void logFreeSpace(Address freeSpace, Size size) {
+            log(Operation.FreeSpace.ordinal(), freeSpace, size);
+        }
+        protected abstract void traceFreeSpace(Address freeSpace, Size size);
+
+        @INLINE
+        public final void logGap(Pointer leftLiveObject, Pointer rightLiveObject) {
+            log(Operation.Gap.ordinal(), leftLiveObject, rightLiveObject);
+        }
+        protected abstract void traceGap(Pointer leftLiveObject, Pointer rightLiveObject);
+
+        @Override
+        protected void trace(Record r) {
+            switch (r.getOperation()) {
+                case 0: { //DeadSpace
+                    traceDeadSpace(toAddress(r, 1), toSize(r, 2));
+                    break;
+                }
+                case 1: { //FreeSpace
+                    traceFreeSpace(toAddress(r, 1), toSize(r, 2));
+                    break;
+                }
+                case 2: { //Gap
+                    traceGap(toPointer(r, 1), toPointer(r, 2));
+                    break;
+                }
+            }
+        }
+    }
+
+// END GENERATED CODE
 }
