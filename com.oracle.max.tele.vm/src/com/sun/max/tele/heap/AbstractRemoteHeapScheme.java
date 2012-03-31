@@ -62,7 +62,7 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
      */
     public TeleHeapScheme teleHeapScheme() {
         final TeleVMConfiguration vmConfiguration = vm().teleVMConfiguration();
-        return vmConfiguration == null ? null : vmConfiguration.teleHeapScheme();
+        return vmConfiguration == null ? null : vmConfiguration.heapScheme();
     }
 
     public void updateMemoryStatus(long epoch) {
