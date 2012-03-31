@@ -280,7 +280,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {

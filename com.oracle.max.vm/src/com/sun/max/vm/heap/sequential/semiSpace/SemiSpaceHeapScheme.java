@@ -432,7 +432,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
-                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+                HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
@@ -504,7 +504,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         // For the purposes of inspection, we declare this phase change immediately after the swap;
         // The Inspector gets confused it the VM stops after the swap, but when the phase
-        // appears to still be allocating.
+        // appears to still be mutating.
         HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ANALYZING);
 
         top = toSpace.end();

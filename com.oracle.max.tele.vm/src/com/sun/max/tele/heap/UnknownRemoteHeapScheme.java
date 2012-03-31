@@ -39,7 +39,7 @@ import com.sun.max.vm.reference.*;
  * <ul>
  * <li>Information about VM heap regions will be reported in {@link InspectableHeapInfo}</li>
  * <li>Any address in any of regions is valid</li>
- * <li>The heap is always in the {@linkplain HeapPhase#ALLOCATING ALLOCATING} phase.</li>
+ * <li>The heap is always in the {@link HeapPhase#MUTATING} phase.</li>
  * <ul>
  */
 public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {

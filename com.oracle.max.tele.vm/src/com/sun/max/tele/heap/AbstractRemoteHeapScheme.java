@@ -37,7 +37,7 @@ import com.sun.max.vm.tele.*;
 
 public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implements RemoteHeapScheme {
 
-    protected HeapPhase phase = HeapPhase.ALLOCATING;
+    protected HeapPhase phase = HeapPhase.MUTATING;
     protected long gcStartedCount = 0;
     protected long gcCompletedCount = 0;
 

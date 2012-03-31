@@ -1103,7 +1103,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
                         }
                     };
                     try {
-                        vm().addGCPhaseListener(gcCompletedListener, HeapPhase.ALLOCATING);
+                        vm().addGCPhaseListener(gcCompletedListener, HeapPhase.MUTATING);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleWarning.message("update after watchpoint changes failed to set GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;
@@ -1112,7 +1112,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
             } else { // no watchpoints
                 if (gcCompletedListener != null) {
                     try {
-                        vm().removeGCPhaseListener(gcCompletedListener, HeapPhase.ALLOCATING);
+                        vm().removeGCPhaseListener(gcCompletedListener, HeapPhase.MUTATING);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleWarning.message("update after watchpoint changes failed to remove GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;

@@ -76,7 +76,7 @@ public final class InspectableHeapInfo {
      * detection of phase change by watchpoint.
      */
     @INSPECTED
-    private static int heapPhaseOrdinal = HeapPhase.ALLOCATING.ordinal();
+    private static int heapPhaseOrdinal = HeapPhase.MUTATING.ordinal();
 
     /**
      * Inspectable counter of the number of Garbage Collections that have <strong>begun</strong>.
@@ -183,11 +183,11 @@ public final class InspectableHeapInfo {
             case RECLAIMING:
                 inspectableGCReclaiming(gcStartedCounter);
                 break;
-            case ALLOCATING:
+            case MUTATING:
                 gcCompletedCounter++;
                 // From the Inspector's perspective, a GC is complete when
                 // the two epoch counters become equal.
-                inspectableGCAllocating(gcCompletedCounter);
+                inspectableGCMutating(gcCompletedCounter);
                 break;
         }
     }
@@ -235,7 +235,7 @@ public final class InspectableHeapInfo {
     /**
      * An empty method whose purpose is to be interrupted by the Inspector
      * when it needs to observe the VM at the conclusion of a GC, i.e. hwen
-     * it enters the {@link HeapPhase#ALLOCATING}.
+     * it enters the {@link HeapPhase#MUTATING}.
      * <p>
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the conclusion of GC, another, more
@@ -249,7 +249,7 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCAllocating(long gcCompletedCounter) {
+    private static void inspectableGCMutating(long gcCompletedCounter) {
     }
 
     /**

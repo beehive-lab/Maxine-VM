@@ -66,7 +66,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
 
     private void updateNurseryTop() {
         // TODO: add invariant check that the new nursery top must be greater or equal to the old one unless
-        // the GC count is different or we're not in allocating phase.
+        // the GC count is different or we're not in mutating phase.
         nurseryTop = vm().fields().BaseAtomicBumpPointerAllocator_top.readWord(nurseryAllocator).asAddress();
     }
 
@@ -149,7 +149,7 @@ public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
                 return MaxMemoryStatus.LIVE;
             }
             switch(vm().heap().lastUpdateHeapPhase()) {
-                case ALLOCATING:
+                case MUTATING:
                     if (isInNursery(address)) {
                         return address.lessThan(nurseryTop) ? MaxMemoryStatus.LIVE : MaxMemoryStatus.FREE;
                     }

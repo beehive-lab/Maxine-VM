@@ -71,7 +71,7 @@ import com.sun.max.vm.runtime.*;
  * The two regions are allocated linearly; the well-defined area that is currently allocated in each
  * region is defined as the "live area"; no references in the maps point outside a live area.
  * <p>
- * When the heap phase is either {@link #ALLOCATING} or {@link #RECLAIMING}:
+ * When the heap phase is either {@link #MUTATING} or {@link #RECLAIMING}:
  * <ul>
  * <li>For every reference in the To-Space map:
  * <ul>
@@ -484,7 +484,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
     public boolean isObjectOrigin(Address origin) throws TeleError {
         TeleError.check(contains(origin), "Location is outside semispace heap regions");
         switch(phase()) {
-            case ALLOCATING:
+            case MUTATING:
             case RECLAIMING:
                 return toSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin);
             case ANALYZING:
@@ -512,7 +512,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
         TeleError.check(contains(origin), "Location is outside semispace heap regions");
         SemiSpaceRemoteReference remoteReference = null;
         switch(phase()) {
-            case ALLOCATING:
+            case MUTATING:
             case RECLAIMING:
                 // There are only To-Space references during this heap phase.
                 remoteReference = toSpaceRefMap.get(origin);
@@ -615,7 +615,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
      */
     private boolean inLiveArea(Address address) {
         switch(phase()) {
-            case ALLOCATING:
+            case MUTATING:
             case RECLAIMING:
                 return toSpaceMemoryRegion.containsInAllocated(address);
             case ANALYZING:

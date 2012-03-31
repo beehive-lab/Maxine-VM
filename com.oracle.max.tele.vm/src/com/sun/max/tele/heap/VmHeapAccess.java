@@ -76,7 +76,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
     private long lastUpdateEpoch = -1L;
 
-    private HeapPhase lastUpdateHeapPhase = HeapPhase.ALLOCATING;
+    private HeapPhase lastUpdateHeapPhase = HeapPhase.MUTATING;
 
     protected static VmHeapAccess vmHeap;
 

@@ -312,7 +312,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             oldSpace.doAfterGC();
             youngSpaceEvacuator.doAfterGC();
             fullCollectionCount++;
-            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.ALLOCATING);
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
         }
 
         @Override

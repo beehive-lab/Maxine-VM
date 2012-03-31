@@ -611,7 +611,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             final InspectorStyle style = inspection.preference().style();
             switch (maxVMState.processState()) {
                 case STOPPED:
-                    if (maxVMState.heapPhase() != HeapPhase.ALLOCATING) {
+                    if (maxVMState.heapPhase() != HeapPhase.MUTATING) {
                         desktopPane.setBackground(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
                         menuBar.setStateColor(style.vmStoppedInGCBackgroundColor(invalidReferenceDetected));
                     } else if (maxVMState.isInEviction()) {
