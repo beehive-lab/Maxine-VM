@@ -63,12 +63,11 @@ public final class VMConfiguration {
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
 
-    @CONSTANT_WHEN_NOT_ZERO private ReferenceScheme referenceScheme;
-    @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
-    @INSPECTED
-    @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
-    @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
-    @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
+    @INSPECTED @CONSTANT_WHEN_NOT_ZERO private ReferenceScheme referenceScheme;
+    @INSPECTED @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
+    @INSPECTED @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
+    @INSPECTED @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
+    @INSPECTED @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,
