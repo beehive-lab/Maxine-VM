@@ -472,7 +472,7 @@ public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme im
      * Finds an existing heap region, if any, that has been created using the
      * remote object describing it.
      */
-    private VmHeapRegion find(TeleRuntimeMemoryRegion runtimeMemoryRegion) {
+    private VmHeapRegion find(TeleMemoryRegion runtimeMemoryRegion) {
         for (VmHeapRegion heapRegion : heapRegions) {
             if (runtimeMemoryRegion == heapRegion.representation()) {
                 return heapRegion;

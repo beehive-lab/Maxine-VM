@@ -66,6 +66,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
+    @INSPECTED
     final FreeHeapSpaceManager objectSpace;
 
     private final Collect collect = new Collect();

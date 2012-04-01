@@ -51,6 +51,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
+import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jni.*;
@@ -146,9 +147,11 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess Compilations_optimized = new TeleInstanceReferenceFieldAccess(Compilations.class, "optimized", TargetMethod.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
+    public final TeleInstanceWordFieldAccess ContiguousHeapSpace_committedEnd = new TeleInstanceWordFieldAccess(ContiguousHeapSpace.class, "committedEnd");
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");
+    public final TeleInstanceReferenceFieldAccess FreeHeapSpaceManager_committedHeapSpace = new TeleInstanceReferenceFieldAccess(FreeHeapSpaceManager.class, "committedHeapSpace", ContiguousHeapSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
@@ -188,6 +191,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaEnd = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaEnd");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_coveredAreaStart = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "coveredAreaStart");
     public final TeleInstanceWordFieldAccess Log2RegionToByteMapTable_tableAddress = new TeleInstanceWordFieldAccess(Log2RegionToByteMapTable.class, "tableAddress");
+    public final TeleInstanceReferenceFieldAccess MSHeapScheme_objectSpace = new TeleInstanceReferenceFieldAccess(MSHeapScheme.class, "objectSpace", FreeHeapSpaceManager.class);
     public final TeleInstanceReferenceFieldAccess MaxineVM_config = new TeleInstanceReferenceFieldAccess(MaxineVM.class, "config", VMConfiguration.class);
     public final TeleStaticWordFieldAccess MaxineVM_primordialTLBlock = new TeleStaticWordFieldAccess(MaxineVM.class, "primordialTLBlock");
     public final TeleStaticIntFieldAccess MaxineVM_primordialTLBlockSize = new TeleStaticIntFieldAccess(MaxineVM.class, "primordialTLBlockSize");

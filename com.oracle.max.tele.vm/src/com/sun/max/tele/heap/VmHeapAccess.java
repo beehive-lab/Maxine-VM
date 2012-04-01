@@ -141,7 +141,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Surrogate for the object in VM memory that describes the memory region holding the boot heap.
      */
-    private TeleRuntimeMemoryRegion teleBootHeapMemoryRegion = null;
+    private TeleMemoryRegion teleBootHeapMemoryRegion = null;
 
     /**
      * Description of the boot region holding objects in the VM.
@@ -151,7 +151,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
     /**
      * Surrogate for the object in VM memory that describes the memory region holding the immortal heap.
      */
-    private TeleRuntimeMemoryRegion teleImmortalHeapRegion = null;
+    private TeleMemoryRegion teleImmortalHeapRegion = null;
 
     /**
      * Description of the immortal region holding objects in the Vm.
@@ -251,7 +251,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
 
         // Get a local surrogate for the instance of {@link MemoryRegion} in the VM that describes the boot heap
         final Reference bootHeapRegionReference = fields().Heap_bootHeapRegion.readReference(vm());
-        this.teleBootHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
+        this.teleBootHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(bootHeapRegionReference);
 
         // Replace the faked representation of the boot heap with one represented uniformly via reference to the VM object
         vm().addressSpace().remove(this.bootHeapRegion.memoryRegion());
@@ -305,7 +305,7 @@ public final class VmHeapAccess extends AbstractVmHolder implements MaxHeap, VmA
             if (teleImmortalHeapRegion == null) {
                 final Reference immortalHeapReference = fields().ImmortalHeap_immortalHeap.readReference(vm());
                 if (!immortalHeapReference.isZero()) {
-                    teleImmortalHeapRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(immortalHeapReference);
+                    teleImmortalHeapRegion = (TeleMemoryRegion) objects().makeTeleObject(immortalHeapReference);
                     immortalHeapRegion = new VmHeapRegion(vm(), teleImmortalHeapRegion);
                     vm().addressSpace().add(immortalHeapRegion.memoryRegion());
                 }
