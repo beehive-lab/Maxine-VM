@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,30 +24,27 @@ package com.sun.max.tele.object;
 
 import java.lang.management.*;
 
-import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a {@link LinearAllocationMemoryRegion} object in the VM,
- * which represents a region of memory
- * that is allocated linearly from the beginning, and which holds an
- * <i>allocation mark</i> that represents the limit of the current allocation.
- * <br>
- * Usage defaults to 100% if nothing can be determined about the allocation mark.
+ * Canonical surrogate for a {@link ContiguousHeapSpace} object in the VM.
+ *
+ * @see ContiguousHeapSpace
  */
-public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
+public class TeleContiguousHeapSpace extends TeleMemoryRegion {
 
     private static final int TRACE_VALUE = 1;
 
     /**
      * Cached contents of the mark field from the {@link LinearAllocationMemoryRegion} object in the VM.
      */
-    private Address markCache;
+    private Address committedEndCache;
 
     private MemoryUsage usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
 
@@ -55,20 +52,20 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
 
         @Override
         public String toString() {
-            return "mark=" + markCache.to0xHexString();
+            return "committedEnd=" + committedEndCache.to0xHexString();
         }
     };
 
-    public TeleLinearAllocationMemoryRegion(TeleVM vm, Reference linearAllocationMemoryRegionReference) {
-        super(vm, linearAllocationMemoryRegionReference);
-        // Initialize mark to region end: default 100% utilization
-        markCache = super.getRegionEnd();
-        updateMarkCache();
+    public TeleContiguousHeapSpace(TeleVM vm, Reference contiguousHeapSpaceReference) {
+        super(vm, contiguousHeapSpaceReference);
+        // Initialize committed end to region end: default 100% utilization
+        committedEndCache = super.getRegionEnd();
+        updateCommittedEndCache();
     }
 
     /** {@inheritDoc}
      * <p>
-     * Preempt upward the priority for tracing on {@link LinearAllocationMemoryRegion} objects,
+     * Preempt upward the priority for tracing on {@link ContiguousHeapSpace} objects,
      * since they usually represent very significant regions.
      */
     @Override
@@ -79,8 +76,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
     /**
      * {@inheritDoc}
      * <p>
-     * Reads the allocation marker and estimates usage in a memory region that
-     * is allocated linearly.
+     * Reads the committed end address.
      */
     @Override
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
@@ -88,22 +84,18 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
             return false;
         }
         statsPrinter.addStat(localStatsPrinter);
-        return updateMarkCache();
+        return updateCommittedEndCache();
     }
 
     /**
-     * Attempts to read information about the {@link LinearAllocationMemoryRegion}
-     * region's mark from the object in VM memory.
+     * Attempts to read information about the committed end of the space in VM memory.
      */
-    private boolean updateMarkCache() {
+    private boolean updateCommittedEndCache() {
         try {
-            final Reference markReference = fields().LinearAllocationMemoryRegion_mark.readReference(reference());
-            markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
-            // This essentially marks the usage cache as dirty.
-            usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
+            committedEndCache = fields().ContiguousHeapSpace_committedEnd.readWord(reference()).asAddress();
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability
-            TeleWarning.message("TeleLinearAllocationMemoryRegion: ", dataIOError);
+            TeleWarning.message("TeleContiguousHeapSpace: ", dataIOError);
             dataIOError.printStackTrace();
             return false;
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
@@ -113,12 +105,12 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
 
     /** {@inheritDoc}
      * <p>
-     * This override reports "used memory" to be between region start and the allocation mark.
+     * This override reports "used memory" to be the memory that is "committed".
      */
     @Override
     public final MemoryUsage getUsage() {
         if (isAllocated()) {
-            long used = markCache.minus(getRegionStart()).toLong();
+            long used = committedEndCache.minus(getRegionStart()).toLong();
             long committed = getRegionNBytes();
             if (used != usageCache.getUsed() || committed != usageCache.getCommitted()) {
                 usageCache = new MemoryUsage(-1L, used, committed, -1L);
@@ -127,22 +119,13 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
         return usageCache;
     }
 
-    /**
-     * Gets most recently read value from the mark field of the {@link LinearAllocationMemoryRegion} in the VM.
-     */
-    @Override
-    public Address mark() {
-        return markCache;
-    }
-
     /** {@inheritDoc}
      * <p>
-     * In a {@link LinearAllocationMemoryRegion}, the allocated region is assumed to be between
-     * the region's start and its "mark" location.
+     * By default, assume that everything up to the committed end mark is allocated.
      */
     @Override
     public boolean containsInAllocated(Address address) {
-        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(markCache) : false;
+        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(committedEndCache) : false;
     }
 
 }

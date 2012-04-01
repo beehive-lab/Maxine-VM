@@ -52,7 +52,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
     private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY_REGION_LIST = Collections.emptyList();
 
     private final String entityDescription;
-    private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
+    private final TeleMemoryRegion teleRuntimeMemoryRegion;
     private final MaxEntityMemoryRegion<MaxHeapRegion> memoryRegion;
     private final RemoteObjectReferenceManager objectReferenceManager;
 
@@ -61,7 +61,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      * a VM object describing the memory region.  The region is assumed to be at a fixed location, and
      * it is assumed to be unmanaged: objects, once created are never moved or collected.
      */
-    public VmHeapRegion(TeleVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+    public VmHeapRegion(TeleVM vm, TeleMemoryRegion teleRuntimeMemoryRegion) {
         super(vm);
         this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
         this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleRuntimeMemoryRegion);
@@ -89,7 +89,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      * a VM object describing the memory region.  The region is assumed to be at a fixed location, and
      * it is assumed to be unmanaged: objects, once created are never moved or collected.
      */
-    public VmHeapRegion(TeleVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion, RemoteObjectReferenceManager objectReferenceManager) {
+    public VmHeapRegion(TeleVM vm, TeleMemoryRegion teleRuntimeMemoryRegion, RemoteObjectReferenceManager objectReferenceManager) {
         super(vm);
         this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
         this.memoryRegion = new DelegatedHeapRegionMemoryRegion(vm, teleRuntimeMemoryRegion);
@@ -164,7 +164,7 @@ public final class VmHeapRegion extends AbstractVmHolder implements MaxHeapRegio
      */
     private final class DelegatedHeapRegionMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxHeapRegion> {
 
-        protected DelegatedHeapRegionMemoryRegion(MaxVM vm, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+        protected DelegatedHeapRegionMemoryRegion(MaxVM vm, TeleMemoryRegion teleRuntimeMemoryRegion) {
             super(vm, teleRuntimeMemoryRegion);
             assert teleRuntimeMemoryRegion != null;
         }

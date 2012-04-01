@@ -34,10 +34,12 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link MemoryRegion} object in the VM, which represents a region of VM memory.
- * <br>
+ * <p>
  * Usage defaults to 100%.
+ *
+ * @see MemoryRegion
  */
-public class TeleRuntimeMemoryRegion extends TeleTupleObject {
+public class TeleMemoryRegion extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 2;
 
@@ -54,7 +56,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         }
     };
 
-    TeleRuntimeMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
+    TeleMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
         super(vm, runtimeMemoryRegionReference);
         TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + "Initializing");
         timedTrace.begin();

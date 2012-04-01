@@ -79,7 +79,7 @@ import com.sun.max.vm.type.*;
  * @see VmCodeCacheRegion
  * @see TeleClassMethodActor
  */
-public final class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
+public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMethodAccess {
 
     private static final int TRACE_VALUE = 2;
 

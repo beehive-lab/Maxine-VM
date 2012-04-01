@@ -31,6 +31,7 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.ms.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Implementation details about the heap in the VM,
@@ -107,4 +108,32 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
     }
 
+
+    /**
+     * Surrogate object for the scheme instance in the VM.
+     */
+    public static class TeleGenMSHeapScheme extends TeleHeapScheme {
+
+        private TeleFreeHeapSpaceManager freeHeapSpaceManager;
+
+
+        public TeleGenMSHeapScheme(TeleVM vm, Reference reference) {
+            super(vm, reference);
+        }
+
+        @Override
+        protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+            if (!super.updateObjectCache(epoch, statsPrinter)) {
+                return false;
+            }
+            // TODO (mlvdv) do these ever change once set?
+            if (freeHeapSpaceManager == null) {
+                final Reference freeHeapSpaceManagerRef = fields().MSHeapScheme_objectSpace.readReference(reference());
+                freeHeapSpaceManager = (TeleFreeHeapSpaceManager) objects().makeTeleObject(freeHeapSpaceManagerRef);
+            }
+
+            return true;
+        }
+
+    }
 }

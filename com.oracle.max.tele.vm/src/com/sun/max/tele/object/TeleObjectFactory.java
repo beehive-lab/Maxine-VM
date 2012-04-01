@@ -227,16 +227,18 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
         classToTeleTupleObjectConstructor.put(PrimitiveClassActor.class, getConstructor(TelePrimitiveClassActor.class));
         classToTeleTupleObjectConstructor.put(ArrayClassActor.class, getConstructor(TeleArrayClassActor.class));
         classToTeleTupleObjectConstructor.put(ReferenceClassActor.class, getConstructor(TeleReferenceClassActor.class));
+        // Memory management
+        classToTeleTupleObjectConstructor.put(MemoryRegion.class, getConstructor(TeleMemoryRegion.class));
+        classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
         // Maxine code management
         classToTeleTupleObjectConstructor.put(TargetMethod.class, getConstructor(TeleTargetMethod.class));
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));
         classToTeleTupleObjectConstructor.put(SemiSpaceCodeRegion.class, getConstructor(TeleSemiSpaceCodeRegion.class));
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
-        classToTeleTupleObjectConstructor.put(MemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
-        classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
         // Maxine heap management
         classToTeleTupleObjectConstructor.put(BaseAtomicBumpPointerAllocator.class, getConstructor(TeleBaseAtomicBumpPointerAllocator.class));
         classToTeleTupleObjectConstructor.put(CardTableRSet.class, getConstructor(TeleCardTableRSet.class));
+        classToTeleTupleObjectConstructor.put(ContiguousHeapSpace.class, getConstructor(TeleContiguousHeapSpace.class));
         classToTeleTupleObjectConstructor.put(FirstFitMarkSweepSpace.class, getConstructor(TeleFirstFitMarkSweepSpace.class));
         classToTeleTupleObjectConstructor.put(NoAgingNursery.class, getConstructor(TeleNoAgingNursery.class));
         // Other Maxine support

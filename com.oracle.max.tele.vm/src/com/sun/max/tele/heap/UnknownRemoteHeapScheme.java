@@ -82,7 +82,7 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) objects().makeTeleObject(runtimeHeapRegionsArrayReference);
             final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
             for (int i = 0; i < heapRegionReferences.length; i++) {
-                final TeleRuntimeMemoryRegion dynamicHeapMemoryRegion = (TeleRuntimeMemoryRegion) objects().makeTeleObject(heapRegionReferences[i]);
+                final TeleMemoryRegion dynamicHeapMemoryRegion = (TeleMemoryRegion) objects().makeTeleObject(heapRegionReferences[i]);
                 if (dynamicHeapMemoryRegion != null) {
                     final VmHeapRegion oldHeapRegion = find(dynamicHeapMemoryRegion);
                     if (oldHeapRegion != null) {
@@ -134,7 +134,7 @@ public final class UnknownRemoteHeapScheme extends AbstractRemoteHeapScheme {
      * Finds an existing heap region, if any, that has been created using the
      * remote object describing it.
      */
-    private VmHeapRegion find(TeleRuntimeMemoryRegion runtimeMemoryRegion) {
+    private VmHeapRegion find(TeleMemoryRegion runtimeMemoryRegion) {
         for (VmHeapRegion heapRegion : heapRegions) {
             if (runtimeMemoryRegion == heapRegion.representation()) {
                 return heapRegion;

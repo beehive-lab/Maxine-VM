@@ -162,6 +162,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     /**
      * The currently committed heap space.
      */
+    @INSPECTED
     private final ContiguousHeapSpace committedHeapSpace;
 
     private boolean useTLABBin;

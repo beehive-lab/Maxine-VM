@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -35,7 +36,10 @@ import com.sun.max.vm.runtime.*;
  * virtual memory.
  */
 public class ContiguousHeapSpace extends MemoryRegion {
+
+    @INSPECTED
     private Address committedEnd;
+
     public ContiguousHeapSpace() {
         super();
         committedEnd = start;
