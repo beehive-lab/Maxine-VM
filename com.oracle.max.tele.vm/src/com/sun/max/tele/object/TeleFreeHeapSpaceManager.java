@@ -22,43 +22,27 @@
  */
 package com.sun.max.tele.object;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a {@link ContiguousHeapSpace} object in the VM.
+ * Canonical surrogate for a free heap space manager object in the VM.
  *
- * @see ContiguousHeapSpace
+ * @see FreeHeapSpaceManager
  */
-public class TeleFreeHeapSpaceManager extends TeleMemoryRegion {
+public class TeleFreeHeapSpaceManager extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 1;
 
-    private TeleContiguousHeapSpace contiguousHeapSpace = null;
-
-    // TODO (mlvdv) can we assume that the heap space doesn't chagne once set?
-
-    private final Object localStatsPrinter = new Object() {
-
-        @Override
-        public String toString() {
-            return "";
-        }
-    };
+    /**
+     * The heap's memory; final field.
+     */
+    private TeleContiguousHeapSpace committedHeapSpace = null;
 
     public TeleFreeHeapSpaceManager(TeleVM vm, Reference freeHeapSpaceManagerReference) {
         super(vm, freeHeapSpaceManagerReference);
-    }
-
-    /** {@inheritDoc}
-     * <p>
-     * Preempt upward the priority for tracing,
-     * since they usually represent very significant regions.
-     */
-    @Override
-    protected int getObjectUpdateTraceValue(long epoch) {
-        return TRACE_VALUE;
     }
 
     /**
@@ -69,16 +53,18 @@ public class TeleFreeHeapSpaceManager extends TeleMemoryRegion {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
         }
-        final Reference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readReference(reference());
-        if (contiguousHeapSpaceRef.isZero()) {
-            contiguousHeapSpace = (TeleContiguousHeapSpace) objects().makeTeleObject(contiguousHeapSpaceRef);
+        if (committedHeapSpace == null) {
+            final Reference contiguousHeapSpaceRef = fields().FreeHeapSpaceManager_committedHeapSpace.readReference(reference());
+            if (!contiguousHeapSpaceRef.isZero()) {
+                committedHeapSpace = (TeleContiguousHeapSpace) objects().makeTeleObject(contiguousHeapSpaceRef);
+                Trace.line(TRACE_VALUE, tracePrefix() + "contiguousHeapSpace now allocated");
+            }
         }
-        statsPrinter.addStat(localStatsPrinter);
         return true;
     }
 
     public TeleContiguousHeapSpace contiguousHeapSpace() {
-        return contiguousHeapSpace;
+        return committedHeapSpace;
     }
 
 }
