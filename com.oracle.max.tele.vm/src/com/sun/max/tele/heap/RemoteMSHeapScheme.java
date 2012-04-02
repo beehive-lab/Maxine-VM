@@ -85,6 +85,14 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     protected RemoteMSHeapScheme(TeleVM vm) {
         super(vm);
         this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
+
+        if (!vm.bootImage().vmConfiguration.debugging()) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append(tracePrefix());
+            sb.append(": specialized inspector heap support for " + heapSchemeClass().getSimpleName());
+            sb.append(" will not work correctly; DEBUG boot image required");
+            TeleWarning.message(sb.toString());
+        }
     }
 
     public Class heapSchemeClass() {
