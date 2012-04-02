@@ -62,7 +62,7 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return the status of the memory to which this instance refers: {@linkplain ObjectStatus#LIVE LIVE},
+     * @return the status of the object representation in memory to which this instance refers: {@linkplain ObjectStatus#LIVE LIVE},
      * {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is {@linkplain HeapPhase#ANALYZING ANALYZING})
      * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
      */

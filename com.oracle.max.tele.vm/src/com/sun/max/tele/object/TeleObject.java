@@ -376,13 +376,14 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
     }
 
     /**
-     * The current "origin" of the object in VM memory.
+     * The current "origin" of the object in VM memory, or (if the object status is {@linkplain ObjectStatus#DEAD DEAD})
+     * the origin at which the object was list object status is {@linkplain ObjectStatus#LIVE LIVE}
      * <p>
      * Note that the origin is not necessarily beginning of the object's memory allocation, depending on the particular
      * object layout used.
      *
-     * @return current absolute location of the object's origin, subject to change by GC, or
-     * {@link Address#zero()} if the object status is {@linkplain ObjectStatus#DEAD DEAD}.
+     * @return current absolute location of the object's origin, subject to change by GC.
+     *
      * @see GeneralLayout
      */
     public final Pointer origin() {
@@ -402,7 +403,7 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
      * subject to relocation by GC, {@code null} if object is {@linkplain ObjectStatus#DEAD DEAD}.
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
-        if (reference.toOrigin().isNotZero() && objectSize() > 0) {
+        if (status().isNotDead() && objectSize() > 0) {
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
         }
         return null;
