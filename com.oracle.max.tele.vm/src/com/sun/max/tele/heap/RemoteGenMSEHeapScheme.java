@@ -35,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.reference.*;
 
+// TODO (mlvdv)  this is just a preliminary outline; NON-FUNCTIONAL
 /**
  * Implementation details about the heap in the VM,
  * specialized for the region-based mark-sweep implementation.
@@ -108,16 +109,18 @@ public final class RemoteGenMSEHeapScheme extends RemoteRegionBasedHeapScheme im
             if (!super.updateObjectCache(epoch, statsPrinter)) {
                 return false;
             }
-            // TODO (mlvdv) do these ever change once set?
             if (nursery == null) {
+                // Final in the heap scheme; no need to check once discovered
                 final Reference nurseryRef = fields().GenMSEHeapScheme_youngSpace.readReference(reference());
                 nursery = (TeleNoAgingNursery) objects().makeTeleObject(nurseryRef);
             }
             if (oldSpace == null) {
+                // Final in the heap scheme; no need to check once discovered
                 final Reference oldSpaceRef = fields().GenMSEHeapScheme_oldSpace.readReference(reference());
                 oldSpace = (TeleFirstFitMarkSweepSpace) objects().makeTeleObject(oldSpaceRef);
             }
             if (cardTableRSet == null) {
+                // Final in the heap scheme; no need to check once discovered
                 final Reference cardTableRSetRef = fields().GenMSEHeapScheme_cardTableRSet.readReference(reference());
                 cardTableRSet = (TeleCardTableRSet) objects().makeTeleObject(cardTableRSetRef);
             }
