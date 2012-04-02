@@ -264,9 +264,12 @@ public class HeapFreeChunk {
     /**
      * Size of the chunk in bytes (including the size of the instance of HeapFreeChunk prefixing the chunk).
      */
+    @INSPECTED
     Size size;
+
     /**
      * A link to a next free chunk in a linked list.
      */
+    @INSPECTED
     HeapFreeChunk next;
 }
