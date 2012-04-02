@@ -238,6 +238,9 @@ public abstract class TeleVM implements MaxVM {
      */
     private static TeleVMConfiguration teleVMConfiguration;
 
+    /**
+     * The VM object instances that implement the schemes.
+     */
     private final List<TeleVMScheme> schemes = new ArrayList<TeleVMScheme>();
 
     /**
@@ -498,12 +501,13 @@ public abstract class TeleVM implements MaxVM {
      * Creates and installs the {@linkplain MaxineVM#vm() global VM} context based on a given
      * configuration loaded from a boot image.
      *
-     * @param bootImageConfig
+     * @param bootImageConfig information about the particular build, extracted from the boot image
      */
     public static void initializeVM(VMConfiguration bootImageConfig) {
         MaxineVM vm = new MaxineVM(bootImageConfig);
         MaxineVM.set(vm);
         bootImageConfig.loadAndInstantiateSchemes(null);
+        // Create a mirror of the VM's configuration, substituting an implementation of ReferenceScheme specialized for the Inspector.
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
                         Platform.platform(),
@@ -703,6 +707,9 @@ public abstract class TeleVM implements MaxVM {
         return methodAccess;
     }
 
+    /**
+     * Clone of the configuration descriptor for the current VM, with inspector-specific adjustments.
+     */
     private final VMConfiguration vmConfiguration;
 
     private final Classpath sourcepath;
@@ -877,6 +884,8 @@ public abstract class TeleVM implements MaxVM {
                 nativeCodeAccess = new NativeCodeAccess(this);
 
                 // Locate the root object in the VM that holds the VM's configuration.
+                // We can determine most things from the local instance, but the remote
+                // object is needed for references to specific objects in the VM.
                 teleMaxineVM = (TeleMaxineVM) objects().makeTeleObject(fields().MaxineVM_vm.readReference(this));
                 teleVMConfiguration = teleMaxineVM.teleVMConfiguration();
 
@@ -1580,7 +1589,10 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * @return the VM object that hold configuration information.
+     * Gets the configuration descriptor instance on the VM; the local clone can be used
+     * for most things, but for references to other VM objects we require the remote object.
+     *
+     * @return the VM object that holds configuration information.
      */
     public final TeleVMConfiguration teleVMConfiguration() {
         return teleVMConfiguration;
