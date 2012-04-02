@@ -60,8 +60,6 @@ public final class VmReferenceManager extends AbstractVmHolder {
         return vmReferenceManager;
     }
 
-    private long lastUpdateEpoch = -1L;
-
     private final RemoteReferenceScheme referenceScheme;
 
     private VmReferenceManager(TeleVM vm, RemoteReferenceScheme referenceScheme) {
@@ -148,7 +146,7 @@ public final class VmReferenceManager extends AbstractVmHolder {
         vm().lock();
         try {
             final MaxEntityMemoryRegion<?> maxMemoryRegion = vm().addressSpace().find(origin);
-            if (maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
+            if (maxMemoryRegion != null && maxMemoryRegion.owner() instanceof VmObjectHoldingRegion<?>) {
                 // In an object-holding region
                 final VmObjectHoldingRegion<?> objectHoldingRegion = (VmObjectHoldingRegion<?>) maxMemoryRegion.owner();
                 final RemoteReference remoteReference = objectHoldingRegion.objectReferenceManager().makeReference(origin);
