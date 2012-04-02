@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,35 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
+ * Local mirror of a card table in VM memory.
+ *
  * @see CardTableRSet
  */
-public class TeleCardTableRSet extends TeleTupleObject {
+public final class TeleCardTableRSet extends TeleTupleObject {
+    /**
+     * Local shallow copy of the card table. Only has the bounds of the table and covered address.
+     * Allow to re-use card table code for various card computations (e.g., card index to card table or heap address, heap address to card index,etc.)
+     * These can then be used to fetch data off the real card table in the inspected VM.
+     */
+    final CardTable cardTable;
 
-    public TeleCardTableRSet(TeleVM vm, Reference reference) {
-        super(vm, reference);
+    public TeleCardTableRSet(TeleVM vm, Reference cardTableRSetReference) {
+        super(vm, cardTableRSetReference);
+        Reference cardTableReference = vm().fields().CardTableRSet_cardTable.readReference(cardTableRSetReference);
+        Address coveredAreaStart = vm().fields().Log2RegionToByteMapTable_coveredAreaStart.readWord(cardTableReference).asAddress();
+        Address coveredAreaEnd = vm().fields().Log2RegionToByteMapTable_coveredAreaEnd.readWord(cardTableReference).asAddress();
+        Address tableAddress  = vm().fields().Log2RegionToByteMapTable_tableAddress.readWord(cardTableReference).asAddress();
+        cardTable = new CardTable();
+        cardTable.initialize(coveredAreaStart, coveredAreaEnd, tableAddress);
+    }
+
+    public int cardIndex(Address address) {
+        return cardTable.tableEntryIndex(address);
     }
 
 }
