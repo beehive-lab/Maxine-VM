@@ -425,7 +425,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     /**
      * Representation of a remote object reference in a heap region managed by a mark sweep GC. The states of the reference
-     * represent possible states of knowledge about the particular object, especially those relevant during the
+     * represent what can be known about the object at any given time, especially those relevant during the
      * {@link #ANALYZING} phase of the heap.
      *
      * @see <a href="http://en.wikipedia.org/wiki/State_pattern">"State" design pattern</a>
@@ -437,13 +437,18 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
          * <p>
          * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
          * the data held by the reference and by allowable state transitions.
+         * <p>
+         * This state set actually defines two independent state models: one for ordinary object and one for
+         * pseudo-objects (instances of {@link HeapFreeChunk}) used by the collector to represent unallocated
+         * memory in a fashion similar to ordinary objects.  These can be treated as ordinary references for some
+         * purposes, but not all.
          */
         private static enum RefState {
 
             /**
-             * Live reference in Object-Space.
+             * Reference to a reachable object.
              */
-            REF_LIVE ("LIVE"){
+            OBJ_LIVE ("LIVE object"){
 
                 // Properties
                 @Override
@@ -453,15 +458,15 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 // Transitions
                 @Override
-                void analysisBegins(MSRemoteReference ref) {
-                    ref.refState = REF_UNKNOWN;
+                void makeUnknown(MSRemoteReference ref) {
+                    ref.refState = OBJ_UNKNOWN;
                 }
             },
 
             /**
-             * Reference in Object-Space with unknown status, heap {@link #ANALYZING}.
+             * Reference to an object whose reachability is unknown, heap {@link #ANALYZING}.
              */
-            REF_UNKNOWN ("UNKNOWN (Analyzing)") {
+            OBJ_UNKNOWN ("UNKNOWN object (Analyzing)") {
 
                 // Properties
                 @Override ObjectStatus status() {
@@ -470,16 +475,20 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 // Transitions
                 @Override
-                void analysisEnds(MSRemoteReference ref) {
-                    ref.refState = REF_DEAD;
+                void makeLive(MSRemoteReference ref) {
+                    ref.refState = OBJ_LIVE;
                 }
                 @Override
-                void foundReachable(MSRemoteReference ref) {
-                    ref.refState = REF_LIVE;
+                void makeDead(MSRemoteReference ref) {
+                    ref.refState = OBJ_DEAD;
                 }
             },
 
-            REF_DEAD ("Dead") {
+            /**
+             * Reference to an object that has been determined unreachable;
+             * no assumptions may be made about memory contents at the location.
+             */
+            OBJ_DEAD ("DEAD object") {
 
                 // Properties
                 @Override ObjectStatus status() {
@@ -488,6 +497,32 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 // Transitions (none: death is final)
 
+            },
+
+            FREE_LIVE ("LIVE free chunk") {
+
+                // Properties;
+                @Override
+                ObjectStatus status() {
+                    return LIVE;
+                }
+
+               // Transitions
+                @Override
+                void makeDead(MSRemoteReference ref) {
+                    ref.refState = FREE_DEAD;
+                }
+            },
+
+            FREE_DEAD ("DEAD free chunk") {
+
+                // Properties;
+                @Override
+                ObjectStatus status() {
+                    return DEAD;
+                }
+
+                // Transitions (none: death is final)
             };
 
             protected final String label;
@@ -519,21 +554,21 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             /**
              * @see MSRemoteReference#analysisBegins()
              */
-            void analysisBegins(MSRemoteReference ref) {
+            void makeUnknown(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
             /**
              * @see MSRemoteReference#addFromOrigin()
              */
-            void foundReachable(MSRemoteReference ref) {
+            void makeLive(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
             /**
              * @see MSRemoteReference#analysisEnds()
              */
-            void analysisEnds(MSRemoteReference ref) {
+            void makeDead(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
@@ -562,7 +597,13 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
         public static MSRemoteReference createLive(RemoteMSHeapScheme remoteScheme, Address origin) {
             final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-            ref.refState = RefState.REF_LIVE;
+            ref.refState = RefState.OBJ_LIVE;
+            return ref;
+        }
+
+        public static MSRemoteReference createFree(RemoteMSHeapScheme remoteScheme, Address origin) {
+            final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
+            ref.refState = RefState.FREE_LIVE;
             return ref;
         }
 
@@ -611,6 +652,19 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
         }
 
+
+        void makeUnknown() {
+            refState.makeUnknown(this);
+        }
+
+
+        void makeLive(MSRemoteReference ref) {
+            refState.makeLive(this);
+        }
+
+        void makeDead(MSRemoteReference ref) {
+            refState.makeDead(this);
+        }
     }
 
 }
