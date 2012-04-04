@@ -31,6 +31,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Free heap space management.
@@ -53,7 +54,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
 
     /**
      * This controls how free chunks are distributed into bins. We are experimenting with two methods:
-     * Put in the the same bin size with the same most significant bit (i.e., all size comprises between 2^i and (2^i+1) -1 ends up in the same bin. 
+     * Put in the the same bin size with the same most significant bit (i.e., all size comprises between 2^i and (2^i+1) -1 ends up in the same bin.
      * Indexing requires computing the msb.
      * Put in the same bin size that occupies the same number of 2^k block, when k is log2 of the first bin. Indexing is a simple shift in this case.
      * The former seems more efficient for now.
@@ -163,7 +164,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
     /**
      * The currently committed heap space.
      */
-    private final ContiguousHeapSpace committedHeapSpace;
+    public final ContiguousHeapSpace committedHeapSpace;
 
     private boolean useTLABBin;
 
@@ -703,10 +704,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    public ContiguousHeapSpace committedHeapSpace() {
-        return committedHeapSpace;
-    }
-
     public boolean contains(Address address) {
         return committedHeapSpace.inCommittedSpace(address);
     }
@@ -758,8 +755,13 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
      * Estimated free space left.
      * @return an estimation of the space available for allocation (in bytes).
      */
-    public synchronized Size freeSpace() {
-        return lockedFreeSpaceLeft();
+    public Size freeSpace() {
+        if (VmThread.current().isVmOperationThread()) {
+            return lockedFreeSpaceLeft();
+        }
+        synchronized (this) {
+            return lockedFreeSpaceLeft();
+        }
     }
 
     public Size usedSpace() {
