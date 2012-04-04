@@ -137,6 +137,10 @@ public final class JavaProject {
      * projects.
      */
     public static File findWorkspace() {
+        return findWorkspace(Classpath.fromSystem());
+    }
+
+    public static File findWorkspace(Classpath classpath) {
         if (workspaceDir == null) {
             final String prop = System.getProperty(JavaProject.WORKSPACE_PROPERTY);
             if (prop != null) {
@@ -145,7 +149,7 @@ public final class JavaProject {
                 workspaceDir = dir;
             } else {
                 WorkspaceFinder finder = new WorkspaceFinder();
-                finder.run(Classpath.fromSystem());
+                finder.run(classpath);
                 ProgramError.check(finder.workspace != null, "failed to find the workspace");
                 workspaceDir = finder.workspace;
             }
