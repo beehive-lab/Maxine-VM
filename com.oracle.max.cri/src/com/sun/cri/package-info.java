@@ -26,13 +26,13 @@
  * Specifically, this package defines an interface between the compiler and the runtime system of a virtual machine for
  * the instruction set defined in {@link com.sun.cri.bytecode.Bytecodes}. The interface has three components:
  * <ol>
- * <li>the {@link com.sun.cri.ci compiler-provided interface} that must be used by the runtime.
- * <li>the {@link com.sun.cri.ri runtime-provided interface} that must be used by the compiler.
- * <li>the {@link com.sun.cri.xir XIR interface} for translating object operations.
+ * <li>the {@link com.sun.cri.ci compiler-provided interface} that must be used by the runtime.</li>
+ * <li>the {@link com.sun.cri.ri runtime-provided interface} that must be used by the compiler.</li>
+ * <li>the {@link com.sun.cri.xir XIR interface} for translating object operations.</li>
  * </ol>
  *
  * The interface is independent of any particular compiler or runtime implementation.
  * <p>
- * For more details see <a href="http://wikis.sun.com/download/attachments/173802383/vee2010.pdf">Improving Compiler-Runtime Separation with XIR</a>.
+ * For more details see <a href="http://labs.oracle.com/projects/maxine/publications/vee2010.pdf">Improving Compiler-Runtime Separation with XIR</a>.
  */
 package com.sun.cri;
