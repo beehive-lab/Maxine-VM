@@ -274,7 +274,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    @FOLD
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return false;
     }
