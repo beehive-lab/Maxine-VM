@@ -312,7 +312,7 @@ public abstract class BytecodeViewer extends CodeViewer {
          * The first operand of this instruction:
          * <ul>
          * <li>if the operand is a reference kind, returns an {@link Integer} index into the {@link ConstantPool}</li>
-         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.
+         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.</li>
          * </ul>
          */
         public final Object operand1;
@@ -321,7 +321,7 @@ public abstract class BytecodeViewer extends CodeViewer {
          * The second operand of this instruction:
          * <ul>
          * <li>if the operand is a reference kind, returns an {@link Integer} index into the {@link ConstantPool}</li>
-         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.
+         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.</li>
          * </ul>
          */
         public final Object operand2;

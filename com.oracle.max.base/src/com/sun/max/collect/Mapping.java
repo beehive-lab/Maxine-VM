@@ -31,7 +31,7 @@ import java.util.*;
  * <ul>
  * <li>{@code null} keys are illegal in Mapping.</li>
  * <li>The iterators derived from {@link #keys()} and {@link #values()} do not support
- * {@linkplain Iterator#remove() removal} and are <b>not</b> fail-fast (see {@link HashMap} for a description of fail-fast).
+ * {@linkplain Iterator#remove() removal} and are <b>not</b> fail-fast (see {@link HashMap} for a description of fail-fast).</li>
  * </ul>
  */
 public interface Mapping<K, V> {

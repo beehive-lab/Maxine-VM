@@ -82,7 +82,7 @@ public final class DebugInfo {
      * <li>Encoded frames.
      * The format of this section is described by {@code frames} in the following pseudo C declarations.
      * All {@code uint}s are encoded with {@link EncodingStream#encodeUInt(int)} and the encoding
-     * of {@code value} is specified by {@link ValueCodec#writeValue(EncodingStream, CiValue)}.
+     * of {@code value} is specified by {@link ValueCodec#writeValue(EncodingStream, CiValue)}.</li>
      * <pre>
      *     {
      *         uint caller;           // index in FPT of caller frame + 1 (0 means no caller)

@@ -52,3 +52,4 @@ syntax: regexp
 ^xref/
 ^out/
 javadoc/
+wikidoc/
