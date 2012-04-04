@@ -72,7 +72,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */
-    public interface InlineDependencyProcessorVisitor extends DependencyProcessorVisitor {
+    public interface InlinedMethodDependencyProcessorVisitor extends DependencyProcessorVisitor {
         /**
          * Process an inlined method dependency.
          * @param targetMethod the method compiled with this dependency
@@ -85,7 +85,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
 
     }
 
-    static class ToStringInlineDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements InlineDependencyProcessorVisitor {
+    static class ToStringInlinedMethodDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements InlinedMethodDependencyProcessorVisitor {
         @Override
         public boolean doInlinedMethod(TargetMethod targetMethod, ClassMethodActor method, ClassMethodActor inlinee, ClassActor context) {
             sb.append(" INL[").append(inlinee).append(']');
@@ -93,21 +93,16 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    static final ToStringInlineDependencyProcessorVisitor toStringInlineDependencyProcessorVisitor = new ToStringInlineDependencyProcessorVisitor();
+    static final ToStringInlinedMethodDependencyProcessorVisitor toStringInlinedMethodDependencyProcessorVisitor = new ToStringInlinedMethodDependencyProcessorVisitor();
 
     @Override
     protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringInlineDependencyProcessorVisitor;
+        return toStringInlinedMethodDependencyProcessorVisitor;
     }
 
     private static final InlinedMethodDependencyProcessor singleton = new InlinedMethodDependencyProcessor();
 
-    @HOSTED_ONLY
-    public static DependencyProcessor getDependencyProcessor() {
-        return singleton;
-    }
-
-    InlinedMethodDependencyProcessor() {
+    private InlinedMethodDependencyProcessor() {
         super(CiAssumptions.InlinedMethod.class);
     }
 
@@ -132,12 +127,12 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
 
     @Override
     protected DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor) {
-        return dependencyVisitor instanceof InlineDependencyProcessorVisitor ? (InlineDependencyProcessorVisitor) dependencyVisitor : null;
+        return dependencyVisitor instanceof InlinedMethodDependencyProcessorVisitor ? (InlinedMethodDependencyProcessorVisitor) dependencyVisitor : null;
     }
 
     @Override
     protected int visit(DependencyProcessorVisitor dependencyProcessorVisitor, ClassActor context, Dependencies dependencies, int index) {
-        InlineDependencyProcessorVisitor inlineVisitor = (InlineDependencyProcessorVisitor) dependencyProcessorVisitor;
+        InlinedMethodDependencyProcessorVisitor inlineVisitor = (InlinedMethodDependencyProcessorVisitor) dependencyProcessorVisitor;
         int i = index;
         int mindex = dependencies.packed[i++];
         int inlineeMIndex = mindex;
@@ -211,7 +206,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    private static abstract class FindInliners extends Dependencies.DependencyVisitor implements InlinedMethodDependencyProcessor.InlineDependencyProcessorVisitor {
+    private static abstract class FindInliners extends Dependencies.DependencyVisitor implements InlinedMethodDependencyProcessor.InlinedMethodDependencyProcessorVisitor {
 
     }
 

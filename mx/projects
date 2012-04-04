@@ -117,6 +117,11 @@ project@com.oracle.max.asm@dependencies=com.oracle.max.criutils
 project@com.oracle.max.asm@checkstyle=com.oracle.max.base
 project@com.oracle.max.asm@javaCompliance=1.6
 
+project@com.oracle.max.tools@sourceDirs=src
+project@com.oracle.max.tools@dependencies=com.oracle.max.base,JDK_TOOLS
+project@com.oracle.max.tools@checkstyle=com.oracle.max.base
+project@com.oracle.max.tools@javaCompliance=1.6
+
 project@com.oracle.max.vm.ext.maxri@sourceDirs=src
 project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.graal.nodes,com.oracle.max.hcfdis
 project@com.oracle.max.vm.ext.maxri@checkstyle=com.oracle.max.base

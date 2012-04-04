@@ -29,7 +29,6 @@ import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
-import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.Dependencies.*;
@@ -71,7 +70,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
      * Implement this interface in a subclass of {@link DependencyVisitor} to
      * process these dependencies.
      */
-    public interface UCMDependencyProcessorVisitor extends DependencyProcessorVisitor {
+    public interface ConcreteMethodDependencyProcessorVisitor extends DependencyProcessorVisitor {
         /**
          * Processes a unique concrete method dependency.
          *
@@ -85,7 +84,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
 
     }
 
-    static class ToStringUCMDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements UCMDependencyProcessorVisitor {
+    static class ToStringConcreteMethodDependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements ConcreteMethodDependencyProcessorVisitor {
         public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor method, MethodActor impl, ClassActor context) {
             sb.append(" UCM[").append(method);
             if (method != impl && impl.holder() != context) {
@@ -97,11 +96,24 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    static final ToStringUCMDependencyProcessorVisitor toStringUCMDependencyProcessorVisitor = new ToStringUCMDependencyProcessorVisitor();
+    static final ToStringConcreteMethodDependencyProcessorVisitor toStringConcreteDependencyProcessorVisitor = new ToStringConcreteMethodDependencyProcessorVisitor();
 
     @Override
     protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {
-        return toStringUCMDependencyProcessorVisitor;
+        return toStringConcreteDependencyProcessorVisitor;
+    }
+
+    private static final ConcreteMethodDependencyProcessor singleton = new ConcreteMethodDependencyProcessor();
+
+    private static ThreadLocal<UniqueConcreteMethodSearch> ucms = new ThreadLocal<UniqueConcreteMethodSearch>() {
+        @Override
+        public UniqueConcreteMethodSearch initialValue() {
+            return new UniqueConcreteMethodSearch();
+        }
+    };
+
+    private ConcreteMethodDependencyProcessor() {
+        super(CiAssumptions.ConcreteMethod.class);
     }
 
     /**
@@ -197,24 +209,6 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
         }
     }
 
-    private static final ConcreteMethodDependencyProcessor singleton = new ConcreteMethodDependencyProcessor();
-
-    @HOSTED_ONLY
-    public static DependencyProcessor getDependencyProcessor() {
-        return singleton;
-    }
-
-    private static ThreadLocal<UniqueConcreteMethodSearch> ucms = new ThreadLocal<UniqueConcreteMethodSearch>() {
-        @Override
-        public UniqueConcreteMethodSearch initialValue() {
-            return new UniqueConcreteMethodSearch();
-        }
-    };
-
-    ConcreteMethodDependencyProcessor() {
-        super(CiAssumptions.ConcreteMethod.class);
-    }
-
     @Override
     protected boolean validate(Assumption assumption, ClassDeps classDeps) {
         ClassActor contextClassActor = (ClassActor) ((ContextAssumption) assumption).context;
@@ -238,12 +232,12 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
 
     @Override
     protected DependencyProcessorVisitor match(DependencyVisitor dependencyVisitor) {
-        return dependencyVisitor instanceof UCMDependencyProcessorVisitor ? (UCMDependencyProcessorVisitor) dependencyVisitor : null;
+        return dependencyVisitor instanceof ConcreteMethodDependencyProcessorVisitor ? (ConcreteMethodDependencyProcessorVisitor) dependencyVisitor : null;
     }
 
     @Override
     protected int visit(DependencyProcessorVisitor dependencyProcessorVisitor, ClassActor context, Dependencies dependencies, int index) {
-        UCMDependencyProcessorVisitor ucmVisitor = (UCMDependencyProcessorVisitor) dependencyProcessorVisitor;
+        ConcreteMethodDependencyProcessorVisitor ucmVisitor = (ConcreteMethodDependencyProcessorVisitor) dependencyProcessorVisitor;
         int i = index;
         int mindex = dependencies.packed[i++];
         MethodActor impl = null;

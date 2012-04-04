@@ -39,9 +39,9 @@
  * instances, which are cached. The following support objects are created in the constructor:
  *
  * <ul>
- * <li>{@code memoryMap}: an instance of {@link com.sun.c1x.graph.MemoryMap}
- * <li>{@code localValueMap}: an instance of {@link com.sun.c1x.opt.ValueMap}
- * <li>{@code canonicalizer}: an instance of {@link com.sun.c1x.opt.Canonicalizer}
+ * <li>{@code memoryMap}: an instance of {@link com.sun.c1x.graph.MemoryMap}</li>
+ * <li>{@code localValueMap}: an instance of {@link com.sun.c1x.opt.ValueMap}</li>
+ * <li>{@code canonicalizer}: an instance of {@link com.sun.c1x.opt.Canonicalizer}</li>
  * </ul>
  *
  * Now the {@link com.sun.c1x.graph.GraphBuilder#build} is invoked with {@code topScope} as argument.
