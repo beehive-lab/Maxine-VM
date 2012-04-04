@@ -383,7 +383,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     }
 
     @INLINE
-    @FOLD
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);

@@ -23,20 +23,17 @@
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.WriteBarrierSpecification.*;
-import com.sun.max.vm.heap.XirWriteBarrierSpecification.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
@@ -101,14 +98,16 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     /**
      * Old generation, organized as a semi-space.
      */
+    @INSPECTED
     final ContiguousSemiSpace<CardSpaceAllocator<OldSpaceRefiller>> oldSpace;
+
     /**
      * Young generation, organized as a simple linear space. The collector doesn't do aging
      * in this first prototype. Later, this will be changed for a semi-space variant
      * (either with equal-size semi-space, or with a eden / survivor semi-space).
      */
+    @INSPECTED
     final ContiguousAllocatingSpace<AtomicBumpPointerAllocator<YoungSpaceRefiller>> youngSpace;
-
 
     /**
      * Policy for resizing the heap after each GC.
@@ -175,7 +174,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     @INLINE
-    @FOLD
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
         return writeBarrierSpec.isSet(WriteBarrierSpec.POST_WRITE);
