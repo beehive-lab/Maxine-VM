@@ -171,7 +171,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
             // Make the heap inspectable
-            InspectableHeapInfo.init(false, heapBounds, heapMarker.memory());
+            InspectableHeapInfo.init(false, heapBounds, heapMarker.colorMap);
         } finally {
             disableCustomAllocation();
         }
