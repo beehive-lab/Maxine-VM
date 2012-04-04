@@ -26,7 +26,7 @@
  * Tuples object are packed for minimal space consumption, observing alignment
  * restrictions. They have a 2 word header and are laid out as shown below:
  *
- * <p><blockquote><pre>
+ * <pre>
  * cell/origin --> +-------------+
  *                 |    class    |
  *                 +-------------+
@@ -36,11 +36,11 @@
  *                 :   fields    :  // mixed reference and scalar data
  *                 |             |
  *                 +-------------+
- * </pre></blockquote></p>
+ * </pre>
  *
  * Array objects have a 3 word header and are laid out as shown below:
  *
- * <p><blockquote><pre>
+ * <pre>
  * cell/origin --> +-------------+
  *                 |    class    |
  *                 +-------------+
@@ -52,7 +52,7 @@
  *                 :  elements   :
  *                 |             |
  *                 +-------------+
- * </pre></blockquote></p>
+ * </pre>
  *
  * Unless stated otherwise, all offsets mentioned in this layout implementation are in terms of
  * bytes and are relative to the origin pointer.

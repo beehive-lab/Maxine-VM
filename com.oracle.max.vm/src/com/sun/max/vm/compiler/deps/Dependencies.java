@@ -54,6 +54,8 @@ import com.sun.max.vm.type.*;
  * the classes that are ancestors of the new class must be checked
  * to see if any of their dependent assumptions are invalidated as a result
  * of adding the new class to the hierarchy.
+ *
+ * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Dependencies">the Wiki page</a> for more details.
  */
 public final class Dependencies {
 
