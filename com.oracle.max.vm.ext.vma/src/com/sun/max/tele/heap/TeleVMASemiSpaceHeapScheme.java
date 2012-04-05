@@ -20,11 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.sun.max.tele.heap;
 
-/**
- * Defines no templates; allows a subclass of {@link T1X} to incrementally fill the templates.
- */
-public class NullT1XTemplateSource {
+import com.sun.max.tele.*;
 
+public class TeleVMASemiSpaceHeapScheme extends TeleSemiSpaceHeapScheme {
+    TeleVMASemiSpaceHeapScheme(TeleVM teleVM) {
+        super(teleVM);
+    }
 }
