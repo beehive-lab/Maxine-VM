@@ -37,37 +37,7 @@ public class TupleView extends ObjectView<TupleView> {
 
     TupleView(Inspection inspection, TeleObject teleObject) {
         super(inspection, teleObject);
-        final InspectorFrame frame = createFrame(true);
-
-        final MaxCompilation compilation = vm().machineCode().findCompilation(teleObject.origin());
-        if (compilation != null) {
-            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compilation));
-        }
-
-        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        if (teleClassMethodActor != null) {
-            // This object is associated with a class method
-            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
-            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
-            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
-
-            final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-            codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
-            codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
-            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
-            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
-
-            final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
-            final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
-            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
-            debugMenu.add(breakOnEntryMenu);
-            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
-            debugMenu.add(defaultMenuItems(MenuKind.DEBUG_MENU));
-        }
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -76,6 +46,37 @@ public class TupleView extends ObjectView<TupleView> {
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
         getContentPane().add(fieldsPane);
+
+        // View-specific menus
+        final MaxCompilation compilation = vm().machineCode().findCompilation(teleObject().origin());
+        if (compilation != null) {
+            makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compilation));
+        }
+
+        final TeleClassMethodActor teleClassMethodActor = teleObject().getTeleClassMethodActorForObject();
+        final InspectorMenu objectMenu = makeMenu(MenuKind.OBJECT_MENU);
+        if (teleClassMethodActor != null) {
+            // This object is associated with a class method
+            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
+            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
+            objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
+            objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
+
+            final InspectorMenu codeMenu = makeMenu(MenuKind.CODE_MENU);
+            codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
+            codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
+            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+
+            final InspectorMenu debugMenu = makeMenu(MenuKind.DEBUG_MENU);
+            final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
+            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
+            debugMenu.add(breakOnEntryMenu);
+            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
+            debugMenu.add(defaultMenuItems(MenuKind.DEBUG_MENU));
+        }
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

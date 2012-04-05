@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -505,5 +506,9 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected String tracePrefix() {
         return tracePrefix;
+    }
+
+    public List<InspectorAction> extraViewMenuActions() {
+        return Collections.emptyList();
     }
 }

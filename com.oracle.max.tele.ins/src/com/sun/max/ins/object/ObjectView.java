@@ -25,6 +25,8 @@ package com.sun.max.ins.object;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -87,6 +89,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
      */
     private String title = "";
 
+
     private InspectorTable objectHeaderTable;
 
     protected final ObjectViewPreferences instanceViewPreferences;
@@ -122,13 +125,29 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         final InspectorFrame frame = super.createFrame(addMenuBar);
         gui().setLocationRelativeToMouse(this, preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        return frame;
+    }
+
+    @Override
+    protected void createViewContent() {
+        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
+        if (instanceViewPreferences.showHeader()) {
+            objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
+            objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
+            // Will add without column headers
+            panel.add(objectHeaderTable, BorderLayout.NORTH);
+        }
+
+        setContentPane(panel);
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
         defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
         defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
 
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(views().memory().makeViewAction(teleObject, "View this object's memory"));
         if (vm().heap().providesHeapRegionInfo()) {
             // TODO: Need to revisit this to better integrate with the Views framework, e.g., have something like:
@@ -144,30 +163,29 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
-        frame.makeMenu(MenuKind.OBJECT_MENU);
+        // Ensure that the object menu appears in the right position, but defer its creation
+        // to subclasses, so that view-specific items can be prepended to the standard ones.
+        makeMenu(MenuKind.OBJECT_MENU);
+
 
         if (teleObject.getTeleClassMethodActorForObject() != null) {
-            frame.makeMenu(MenuKind.CODE_MENU);
+            makeMenu(MenuKind.CODE_MENU);
         }
 
         if (teleObject.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
-            frame.makeMenu(MenuKind.DEBUG_MENU);
+            makeMenu(MenuKind.DEBUG_MENU);
         }
 
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-        return frame;
-    }
-
-    @Override
-    protected void createViewContent() {
-        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
-        if (instanceViewPreferences.showHeader()) {
-            objectHeaderTable = new ObjectHeaderTable(inspection(), teleObject, instanceViewPreferences);
-            objectHeaderTable.setBorder(preference().style().defaultPaneBottomBorder());
-            // Will add without column headers
-            panel.add(objectHeaderTable, BorderLayout.NORTH);
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        final List<InspectorAction> extraViewMenuActions = extraViewMenuActions();
+        if (!extraViewMenuActions.isEmpty()) {
+            for (InspectorAction action : extraViewMenuActions) {
+                viewMenu.add(action);
+            }
+            viewMenu.addSeparator();
         }
-        setContentPane(panel);
+        viewMenu.add(defaultViewMenuItems);
     }
 
     @Override
@@ -292,6 +310,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
        } else {
            setStateColor(null);
        }
+    }
+
+    /**
+     * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
+     */
+    protected List<InspectorAction> extraViewMenuActions() {
+        return Collections.emptyList();
     }
 
 }

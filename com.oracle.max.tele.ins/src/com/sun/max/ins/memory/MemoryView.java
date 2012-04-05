@@ -461,21 +461,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         cloneButton.setToolTipText("Create a cloned copy of this memory view");
         cloneButton.setIcon(style.generalCopyIcon());
 
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
-        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        defaultMenu.addSeparator();
-        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY, this));
-        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY));
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        setOriginToSelectionAction.refresh(true);
-        memoryMenu.add(setOriginToSelectionAction);
-        memoryMenu.add(scrollToFocusAction);
-        memoryMenu.add(inspectBytesAction);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         gui().setLocationRelativeToMouse(this, inspection.preference().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
         table.scrollToOrigin();
@@ -513,6 +499,23 @@ public final class MemoryView extends AbstractView<MemoryView> {
         setContentPane(panel);
         // Force everything into consistency with the current view mode.
         updateViewMode();
+
+        // Populate menu bar
+        final InspectorMenu defaultMenu = makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        setOriginToSelectionAction.refresh(true);
+        memoryMenu.add(setOriginToSelectionAction);
+        memoryMenu.add(scrollToFocusAction);
+        memoryMenu.add(inspectBytesAction);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         // When user grows window height beyond table size, expand region being viewed.
         final JViewport viewport = scrollPane.getViewport();

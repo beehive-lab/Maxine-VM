@@ -148,13 +148,7 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
                 }
             }
         });
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
-        final InspectorMenu viewMenu = frame.makeMenu(MenuKind.VIEW_MENU);
-        viewMenu.add(showFilterCheckboxMenuItem);
-        viewMenu.addSeparator();
-        viewMenu.add(defaultViewMenuItems);
+        createFrame(true);
     }
 
     VMLogger getLogger(int id) {
@@ -211,6 +205,14 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
         contentPane.add(vmLogViewScrollPane, BorderLayout.CENTER);
         setContentPane(contentPane);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu viewMenu = makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(showFilterCheckboxMenuItem);
+        viewMenu.addSeparator();
+        viewMenu.add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

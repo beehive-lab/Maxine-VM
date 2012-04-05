@@ -88,8 +88,7 @@ public final class JavaSourceView extends FileView<JavaSourceView> {
 
     private JavaSourceView(Inspection inspection, File file) {
         super(inspection, file, VIEW_KIND);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -107,6 +106,9 @@ public final class JavaSourceView extends FileView<JavaSourceView> {
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
         setContentPane(scrollPane);
         setGeometry(preference().geometry().preferredFrameGeometry(ViewKind.JAVA_SOURCE));
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     @Override

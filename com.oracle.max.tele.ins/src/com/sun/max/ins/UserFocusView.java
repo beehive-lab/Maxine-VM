@@ -74,14 +74,7 @@ public final class UserFocusView extends AbstractView<UserFocusView> {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -105,6 +98,15 @@ public final class UserFocusView extends AbstractView<UserFocusView> {
         panel.add(table, BorderLayout.CENTER);
         setContentPane(panel);
         focus().addListener(table);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
     }
 
     @Override

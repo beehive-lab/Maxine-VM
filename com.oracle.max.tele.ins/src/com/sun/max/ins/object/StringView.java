@@ -48,9 +48,7 @@ public final class StringView extends ObjectView<StringView> {
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -85,6 +83,9 @@ public final class StringView extends ObjectView<StringView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
