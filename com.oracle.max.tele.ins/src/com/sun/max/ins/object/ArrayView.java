@@ -47,6 +47,8 @@ public final class ArrayView extends ObjectView<ArrayView> {
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
         super.createViewContent();
         getContentPane().add(elementsPane);
+        // Force the title to be recomputed, just in case the new pane is eliding
+        setTitle();
 
         // Opportunity for view-specific Object menu
         makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
@@ -61,6 +63,11 @@ public final class ArrayView extends ObjectView<ArrayView> {
     @Override
     protected List<InspectorAction> extraViewMenuActions() {
         return elementsPane.extraViewMenuActions();
+    }
+
+    @Override
+    protected boolean isElided() {
+        return elementsPane != null && elementsPane.isElided();
     }
 
 }

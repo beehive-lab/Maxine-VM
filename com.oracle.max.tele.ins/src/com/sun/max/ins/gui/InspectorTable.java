@@ -511,4 +511,45 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     public List<InspectorAction> extraViewMenuActions() {
         return Collections.emptyList();
     }
+
+    /**
+     * @return whether the current display mode is hiding some rows of the table
+     */
+    public boolean isElided() {
+        return false;
+    }
+
+    protected InspectorAction scrollToBeginningAction() {
+        return new ShowFirstRowAction(inspection());
+    }
+
+    protected InspectorAction scrollToEndAction() {
+        return new ShowLastRowAction(inspection());
+    }
+
+    private final class ShowFirstRowAction extends InspectorAction {
+
+        public ShowFirstRowAction(Inspection inspection) {
+            super(inspection, "Show first row");
+        }
+
+        @Override
+        protected void procedure() {
+            scrollToRows(0, 0);
+        }
+    }
+
+    private final class ShowLastRowAction extends InspectorAction {
+
+        public ShowLastRowAction(Inspection inspection) {
+            super(inspection, "Show last row");
+        }
+
+        @Override
+        protected void procedure() {
+            final int lastRow = getInspectorTableModel().getRowCount() - 1;
+            scrollToRows(lastRow, lastRow);
+        }
+    }
+
 }

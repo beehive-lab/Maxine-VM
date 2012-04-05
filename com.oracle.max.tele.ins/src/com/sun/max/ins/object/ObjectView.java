@@ -107,8 +107,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
                 reconstructView();
             }
             @Override
-            protected void setHideNullArrayElements(boolean hideNullArrayElements) {
-                super.setHideNullArrayElements(hideNullArrayElements);
+            protected void setElideNullArrayElements(boolean hideNullArrayElements) {
+                super.setElideNullArrayElements(hideNullArrayElements);
                 reconstructView();
             }
         };
@@ -207,6 +207,9 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
         }
         titleText.append(title);
+        if (isElided()) {
+            titleText.append("(ELIDED)");
+        }
         final MaxMemoryRegion memoryRegion = vm().state().findMemoryRegion(currentObjectOrigin);
         titleText.append(" in ").append(memoryRegion == null ? "unknown region" : memoryRegion.regionName());
         return titleText.toString();
@@ -317,6 +320,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
      */
     protected List<InspectorAction> extraViewMenuActions() {
         return Collections.emptyList();
+    }
+
+    /**
+     * @return whether the display mode is hiding some of the members of the object
+     */
+    protected boolean isElided() {
+        return false;
     }
 
 }

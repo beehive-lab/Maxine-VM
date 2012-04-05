@@ -186,4 +186,8 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         return inspectorTable.extraViewMenuActions();
     }
 
+    public boolean isElided() {
+        return inspectorTable.isElided();
+    }
+
 }
