@@ -25,4 +25,4 @@
  * Collection of classes that create a variant of T1X that supports the
  * Virtual Machine Advising framework.
 */
-package com.sun.max.vm.t1x.vma;
+package com.oracle.max.vm.ext.t1x.vma;

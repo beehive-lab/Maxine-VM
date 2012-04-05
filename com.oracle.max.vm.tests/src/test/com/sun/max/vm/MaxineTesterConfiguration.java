@@ -333,8 +333,8 @@ public class MaxineTesterConfiguration {
         imageConfig("gmse",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse");
         imageConfig("gmsed",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
 
-        // VMA configs - the -vma option is interpreted by the max script to set additional system properties
-        final String vmaT1X = "com.sun.max.vm.t1x.vma.VMAT1X";
+        // VMA configs - the -vma option is interpreted by the mx tool to set additional system properties
+        final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
         final String vmaBaseline = "-baseline=" + vmaT1X;
         final String vmaRun = "-run=com.oracle.max.vm.ext.vma.run.java";
         final String vmaHeap = "-heap=com.oracle.max.vm.ext.vma.heap.semi";
