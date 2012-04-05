@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.oracle.max.vm.ext.t1x.vma;
 
 /**
  * Defines no templates; allows a subclass of {@link T1X} to incrementally fill the templates.
