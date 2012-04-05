@@ -270,20 +270,7 @@ public final class StackView extends AbstractView<StackView> {
     public StackView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(copyStackToClipboardAction);
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
+        createFrame(true);
         forceRefresh();
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
@@ -342,6 +329,20 @@ public final class StackView extends AbstractView<StackView> {
             contentPane.add(listScrollPane, BorderLayout.CENTER);
         }
         setContentPane(contentPane);
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(copyStackToClipboardAction);
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for stack"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         forceRefresh();
         // TODO (mlvdv) try to set frame selection to match global focus at creation; doesn't display.
         frameFocusChanged(null, inspection().focus().stackFrame());

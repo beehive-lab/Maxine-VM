@@ -22,9 +22,11 @@
  */
 package com.sun.max.ins.object;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.layout.*;
 
 /**
  * An object view specialized for displaying a low-level object
@@ -36,22 +38,29 @@ public final class ArrayView extends ObjectView<ArrayView> {
 
     ArrayView(Inspection inspection, TeleObject teleObject) {
         super(inspection, teleObject);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
     protected void createViewContent() {
-        super.createViewContent();
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
+        super.createViewContent();
         getContentPane().add(elementsPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
     protected void refreshState(boolean force) {
         elementsPane.refresh(force);
         super.refreshState(force);
+    }
+
+    @Override
+    protected List<InspectorAction> extraViewMenuActions() {
+        return elementsPane.extraViewMenuActions();
     }
 
 }

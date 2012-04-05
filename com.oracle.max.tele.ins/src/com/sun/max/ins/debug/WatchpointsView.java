@@ -85,22 +85,7 @@ public final class WatchpointsView extends AbstractView<WatchpointsView> impleme
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame(true);
-
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(actions().setWordWatchpoint());
-        editMenu.addSeparator();
-        editMenu.add(actions().removeSelectedWatchpoint());
-        editMenu.add(actions().removeAllWatchpoints());
-
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
-
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        createFrame(true);
 
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
@@ -119,6 +104,23 @@ public final class WatchpointsView extends AbstractView<WatchpointsView> impleme
     protected void createViewContent() {
         table = new WatchpointsTable(inspection(), viewPreferences);
         setContentPane(new InspectorScrollPane(inspection(), table));
+
+        // Populate menu bar
+        makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(actions().setWordWatchpoint());
+        editMenu.addSeparator();
+        editMenu.add(actions().removeSelectedWatchpoint());
+        editMenu.add(actions().removeAllWatchpoints());
+
+        final InspectorMenu memoryMenu = makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().viewSelectedMemoryWatchpointAction());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+
+        makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
     }
 
     @Override

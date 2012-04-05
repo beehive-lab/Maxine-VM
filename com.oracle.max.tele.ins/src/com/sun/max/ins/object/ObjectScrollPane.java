@@ -23,11 +23,13 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
+import java.util.List;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.AbstractView.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
@@ -171,6 +173,17 @@ public final class ObjectScrollPane extends InspectorScrollPane {
     @Override
     public void refresh(boolean force) {
         inspectorTable.refresh(force);
+    }
+
+    public void scrollToRows(int firstRow, int lastRow) {
+        inspectorTable.scrollToRows(firstRow, lastRow);
+    }
+
+    /**
+     * Gets any view-specific actions that should appear on the {@link MenuKind#VIEW_MENU}.
+     */
+    public List<InspectorAction> extraViewMenuActions() {
+        return inspectorTable.extraViewMenuActions();
     }
 
 }

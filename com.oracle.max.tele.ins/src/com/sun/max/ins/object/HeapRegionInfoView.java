@@ -136,9 +136,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
     HeapRegionInfoView(Inspection inspection, TeleObject teleObject) {
         super(inspection, teleObject);
         alternateDisplay = true;
-        final InspectorFrame frame = createFrame(true);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+        createFrame(true);
     }
 
     @Override
@@ -165,6 +163,9 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
             }
         });
         getContentPane().add(tabbedPane);
+
+        // Opportunity for view-specific Object menu
+        makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
