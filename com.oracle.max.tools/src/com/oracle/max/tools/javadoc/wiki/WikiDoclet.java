@@ -45,8 +45,11 @@ import com.sun.javadoc.*;
 public class WikiDoclet extends Doclet {
     private static final String TEXT = "Text";
     private static final String KENAI_MAXINE_TIP = "http://kenai.com/hg/maxine~maxine/file/tip";
-    private static final String AUTO_GEN_BEGIN = "{excerpt:hidden=true}[_Automatically generated from ";
-    private static final String AUTO_GEN_END = "{excerpt}\n";
+    private static final String HIDDEN_EXCERPT_START = "{excerpt:hidden=true}";
+    private static final String EXCERPT_END = "{excerpt}\n";
+    private static final String AUTO_GEN_BEGIN = HIDDEN_EXCERPT_START + "DO NOT EDIT: Automatically generated from ";
+    private static final String AUTO_GEN_END = EXCERPT_END;
+    private static final String HRULE = "\n----\n";
     private static String outputDir;
     private static String docletPath;
     private static String projectList;
@@ -246,14 +249,18 @@ public class WikiDoclet extends Doclet {
             commentTextArray[i] = commentText.charAt(i);
         }
         InlineTagInfo[] inlineTagInfo = computeTagIndices(commentText, inlineTags);
+        String packageInfo = "{{" + packageDoc.name() + ".package-info}}";
         sb = new StringBuilder();
         sb.append(AUTO_GEN_BEGIN);
-        sb.append(createLink(packageDoc.name(), "package-info"));
+        sb.append(packageInfo);
         sb.append(AUTO_GEN_END);
         if (includeToc) {
             sb.append("{toc}\n");
         }
         processText(new StringRange(commentText, 0, commentText.length()), inlineTagInfo, null);
+        sb.append(HRULE);
+        sb.append("Automatically generated from ");
+        sb.append(packageInfo);
         File wikiFile = new File(outputDir, packageDoc.name() + ".wiki");
         BufferedWriter wr = null;
         try {
@@ -354,7 +361,7 @@ public class WikiDoclet extends Doclet {
                     }
                     if (projectName != null) {
                         // link to source on kenai
-                        sb.append(createLink(projectName, className));
+                        sb.append(createKenaiPath(projectName, className));
                     }
 
                 } else {
@@ -416,7 +423,7 @@ public class WikiDoclet extends Doclet {
                     sb.append(getHRef(htmlTagInfo.attributes));
                     sb.append(']');
                 } else if (htmlTag.equals("HR")) {
-                    sb.append("\n----\n");
+                    sb.append(HRULE);
                 }
                 if (data != null) {
                     lastIndex = data.tagEndIndex;
@@ -431,16 +438,24 @@ public class WikiDoclet extends Doclet {
         return s.substring(index + 1, lastIndex);
     }
 
-    private static String createLink(String projectName, String className) {
+    private static String createKenaiPath(String projectName, String className) {
+        return createKenaiPath(projectName, className, true);
+    }
+
+    private static String createKenaiPath(String projectName, String className, boolean inLink) {
         StringBuilder ssb = new StringBuilder();
-        ssb.append('|');
+        if (inLink) {
+            ssb.append('|');
+        }
         ssb.append(KENAI_MAXINE_TIP);
         ssb.append('/');
         ssb.append(projectName);
         ssb.append("/src/");
         ssb.append(className.replace('.', '/'));
         ssb.append(".java");
-        ssb.append(']');
+        if (inLink) {
+            ssb.append(']');
+        }
         return ssb.toString();
     }
 
