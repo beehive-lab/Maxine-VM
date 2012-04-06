@@ -107,6 +107,7 @@
  * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor.getToStringDependencyProcessorVisitor}</li>
  * <li>{@link com.sun.max.vm.compiler.deps.DependencyProcessor#visit}</li>
  * </ul>
+ * <p>
  * The first two have trivial implementations. The {@code visit} method must step over the specific dependency
  * data and, if the {@code dependencyProcessorVisitor} is not {@code null}, invoke the associated method,
  * with the encoded data transformed into the appropriate argument types. Evidently, if the visitor is {@code null},
