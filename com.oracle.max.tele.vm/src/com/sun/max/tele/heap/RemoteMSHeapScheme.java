@@ -43,8 +43,10 @@ import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Implementation details about the heap in the VM,
- * specialized for the mark-sweep implementation.
+ * Inspection support specialized for the basic mark-sweep implementation of {@link HeapScheme}
+ * in the VM.
+ *
+ * @see MSHeapScheme
  */
 public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
 
@@ -69,8 +71,16 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
      */
     private WeakRemoteReferenceMap<MSRemoteReference> objectSpaceRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
 
+    /**
+     * Map:  VM address in Object-Space --> a {@link MSRemoteReference} that refers to the free space chunk whose origin is at that location.
+     */
+    private WeakRemoteReferenceMap<MSRemoteReference> freeSpaceRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
+
     private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(1);
 
+    /**
+     * A printer for statistics at the end of each update.
+     */
     private final Object statsPrinter = new Object() {
         @Override
         public String toString() {
@@ -109,6 +119,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 assert scheme != null;
 
                 updateMemoryStatus(initializationEpoch);
+                // TODO (mlvdv) decide where to put the phase change notification so that the GC inspection will have all the needed information.
                 /*
                  * Add a heap phase listener that will will force the VM to stop any time the heap transitions from
                  * analysis to the reclaiming phase of a GC. This is exactly the moment in a GC cycle when reference
@@ -149,8 +160,9 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     public void updateMemoryStatus(long epoch) {
 
         super.updateMemoryStatus(epoch);
-        // Can't do anything until we have the VM object that represents the scheme implementation
+
         if (scheme == null) {
+            // Can't do anything until we have the VM object that represents the scheme implementation
             return;
         }
         if (objectSpaceMemoryRegion == null) {
@@ -175,14 +187,14 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             heapUpdateTracer.begin();
 
             /*
-             * This is a normal refresh. Immediately update information about the location of the heap region; this
+             * This is a normal refresh. Immediately update information about the location/size/allocation of the heap region; this
              * update must be forced because remote objects are otherwise not refreshed until later in the update
              * cycle.
              */
             objectSpaceMemoryRegion.updateCache(epoch);
 
 
-
+            // TODO (mlvdv) based on where we are in the GC cycle, update remote references as needed.
 
             lastUpdateEpoch = epoch;
             heapUpdateTracer.end(statsPrinter);
@@ -410,7 +422,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
         private TeleFreeHeapSpaceManager objectSpace;
 
-
         public TeleMSHeapScheme(TeleVM vm, Reference reference) {
             super(vm, reference);
         }
@@ -430,7 +441,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     }
 
-
     /**
      * Representation of a remote object reference in a heap region managed by a mark sweep GC. The states of the reference
      * represent what can be known about the object at any given time, especially those relevant during the
@@ -446,7 +456,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
          * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
          * the data held by the reference and by allowable state transitions.
          * <p>
-         * This state set actually defines two independent state models: one for ordinary object and one for
+         * This set of states actually defines two independent state models: one for ordinary object and one for
          * pseudo-objects (instances of {@link HeapFreeChunk}) used by the collector to represent unallocated
          * memory in a fashion similar to ordinary objects.  These can be treated as ordinary references for some
          * purposes, but not all.
