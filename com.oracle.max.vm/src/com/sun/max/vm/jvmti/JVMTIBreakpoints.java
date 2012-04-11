@@ -86,6 +86,11 @@ public class JVMTIBreakpoints {
     @JVMTI_STACKBASE
     @NEVER_INLINE
     public static void event(long id) {
+        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.IN_UPCALL)) {
+            // already in an agent callback : VM breakpoint
+            return;
+        }
+
         // if single step and breakpoint deliver both, single step first (see spec)
         if ((id & SINGLE_STEP) != 0) {
             event(JVMTI_EVENT_SINGLE_STEP, id);

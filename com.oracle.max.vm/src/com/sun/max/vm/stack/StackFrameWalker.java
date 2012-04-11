@@ -251,8 +251,14 @@ public abstract class StackFrameWalker {
             }
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             // walk the frame for exception handling
-            Throwable throwable = ((StackUnwindingContext) context).throwable;
-            targetMethod.catchException(current, callee, throwable);
+            StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
+            boolean isCaught = targetMethod.catchException(current, callee, stackUnwindingContext.throwable, stackUnwindingContext.checking);
+            if (isCaught) {
+                // a true return can only happen in checking mode; we indicate a match by setting handlerCursor
+                assert stackUnwindingContext.checking;
+                stackUnwindingContext.handlerCursor = current;
+                proceed = false;
+            }
         } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
@@ -507,7 +513,7 @@ public abstract class StackFrameWalker {
         reset();
     }
 
-    private final StackUnwindingContext defaultStackUnwindingContext = new StackUnwindingContext();
+    public final StackUnwindingContext defaultStackUnwindingContext = new StackUnwindingContext();
 
     /**
      * Walks a thread's stack for the purpose of raising an exception.
@@ -516,6 +522,15 @@ public abstract class StackFrameWalker {
         defaultStackUnwindingContext.throwable = throwable;
         defaultStackUnwindingContext.stackPointer = sp;
         walk(ip, sp, fp, EXCEPTION_HANDLING, defaultStackUnwindingContext);
+    }
+
+    /**
+     * Walk a thread's stack to find a handler.
+     */
+    public final void findHandler(Pointer ip, Pointer sp, Pointer fp, Throwable throwable) {
+        defaultStackUnwindingContext.checking = true;
+        defaultStackUnwindingContext.handlerCursor = null;
+        unwind(ip, sp, fp, throwable);
     }
 
     /**
@@ -548,6 +563,7 @@ public abstract class StackFrameWalker {
         current.reset();
         callee.reset();
         purpose = null;
+        defaultStackUnwindingContext.checking = false;
         defaultStackUnwindingContext.stackPointer = Pointer.zero();
         defaultStackUnwindingContext.throwable = null;
     }

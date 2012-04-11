@@ -261,7 +261,8 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+    public boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check) {
         // Exceptions do not occur in stubs
+        return false;
     }
 }
