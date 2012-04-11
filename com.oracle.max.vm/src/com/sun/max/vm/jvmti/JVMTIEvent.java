@@ -455,7 +455,7 @@ public class JVMTIEvent {
     }
 
     @HOSTED_ONLY
-    public static String eventSettings(long settings) {
+    public static String inspectEventSettings(long settings) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (int i = 0; i < 63; i++) {

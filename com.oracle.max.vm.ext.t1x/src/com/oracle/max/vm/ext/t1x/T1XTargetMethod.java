@@ -838,12 +838,15 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+    public boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check) {
         StackFrameWalker sfw = current.stackFrameWalker();
         CodePointer throwAddress = throwAddress(current);
         CodePointer catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
 
         if (!catchAddress.isZero()) {
+            if (check) {
+                return true;
+            }
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(current.vmIP().minus(codeStart()).toInt());
@@ -867,6 +870,7 @@ public class T1XTargetMethod extends TargetMethod {
                 unimplISA();
             }
         }
+        return false;
     }
 
     @PLATFORM(cpu = "amd64")

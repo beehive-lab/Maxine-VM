@@ -58,7 +58,7 @@ public class JVMTIThreadFunctions {
     private static ClassActor javaRunSchemeClassActor;
     private static MethodActor[] stackBaseMethodActors;
 
-    private static ClassActor vmThreadClassActor() {
+    static ClassActor vmThreadClassActor() {
         if (vmThreadClassActor == null) {
             vmThreadClassActor = ClassActor.fromJava(VmThread.class);
         }
@@ -196,6 +196,8 @@ public class JVMTIThreadFunctions {
     private static class FrameAccessWithIP extends FrameAccess {
         CodePointer ip;
 
+        @NEVER_INLINE
+        //TODO remove
         void setCallerInfo(StackFrameCursor callerCursor) {
             this.setCallerInfo(callerCursor.sp(), callerCursor.fp());
         }
@@ -744,13 +746,15 @@ public class JVMTIThreadFunctions {
             if (depth < stackElements.size()) {
                 StackElement stackElement = getStackElement(depth);
                 ClassMethodActor classMethodActor = stackElement.classMethodActor;
-                TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                // the stack elements are logical but there may be inlining, so we must
+                // get the TargetMethod from the physical frame info.
+                FrameAccessWithIP frameAccess = stackElement.frameAccess;
+                TargetMethod targetMethod = frameAccess.ip.toTargetMethod();
                 if (!targetMethod.isBaseline() && isSet) {
-                    returnCode = JVMTI_ERROR_OPAQUE_FRAME; // TODO need dopt
+                    returnCode = JVMTI_ERROR_OPAQUE_FRAME; // TODO need deopt
                     return;
                 }
                 targetMethod.finalizeReferenceMaps();
-                FrameAccessWithIP frameAccess = stackElement.frameAccess;
                 int spi = targetMethod.findSafepointIndex(frameAccess.ip);
                 assert spi >= 0;
                 CiFrame ciFrame = targetMethod.debugInfoAt(spi, isSet ? null : frameAccess).frame();

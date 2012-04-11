@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -113,6 +114,8 @@ public final class Throw {
      * @param ip the instruction pointer to be used when determining the point at which exception was raised
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
+        JVMTIException.raiseEvent(throwable, sp, fp, ip);
+
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");

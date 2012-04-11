@@ -498,14 +498,18 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      * @param current the current stack frame
      * @param callee the callee stack frame
      * @param throwable the exception being thrown
+     * @param check just check for a handler, do not transfer control
      */
     @Override
-    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+    public boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check) {
         CodePointer ip = current.vmIP();
         Pointer sp = current.sp();
         Pointer fp = current.fp();
         CodePointer catchAddress = throwAddressToCatchAddress(ip, throwable);
         if (!catchAddress.isZero()) {
+            if (check) {
+                return true;
+            }
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(codeStart()).toInt());
@@ -543,6 +547,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             }
             throw ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
+        return false;
     }
 
     @NEVER_INLINE

@@ -1066,8 +1066,8 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer);
 
     /**
-     * Attempts to catch an exception thrown by this method or a callee method. If a handler exists,
-     * then the stack is unwound and execution is resumed at the handler.
+     * If {@code check == false}, attempts to catch an exception thrown by this method or a callee method. If a handler exists,
+     * then the stack is unwound and execution is resumed at the handler, otherwise returns {@code false}.
      * <p>
      * In the case that is an {@link #invalidated() invalidated} method, the same unwinding
      * occurs but executed is redirected to an appropriate deoptimization stub.
@@ -1077,11 +1077,15 @@ public abstract class TargetMethod extends MemoryRegion {
      * except that the operand stack is cleared (the exception object is explicitly retrieved and pushed by
      * the handler).
      *
+     * If {@code check == true} simply checks for a handler and returns {@code true} if it exists.
+     *
      * @param current the current stack frame
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
+     * @param check do not transfer control to (any) handler, just check if one exists.
+     * @return returns {@code true} iff the exception would be caught.
      */
-    public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable);
+    public abstract boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check);
 
     /**
      * Accepts a visitor for this stack frame. As this only ever happens in Inspector contexts, this method is

@@ -38,6 +38,7 @@ public class JVMTICallbacks {
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeFieldWatchCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeHeapIterationCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeBreakpointCallback");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeExceptionCallback");
     }
 
     static native int invokeAgentOnLoad(Address onLoad, Pointer options);
@@ -55,6 +56,9 @@ public class JVMTICallbacks {
                     Word fieldID, byte sigType, Word value);
     static native void invokeFramePopCallback(Pointer callback, Pointer jvmtiEnv,
                     Word thread, Word methodID, boolean wasPoppedByException);
+
+    static native void invokeExceptionCallback(Pointer callback, Pointer jvmtiEnv, boolean isCatch,
+                    Word thread, Word methodID, long location, Word throwable, Word catchMethodID, long catchLocation);
 
     static native int invokeHeapIterationCallback(Pointer callback, long classTag, long size, Pointer tagPtr, int length, Word userData);
 
