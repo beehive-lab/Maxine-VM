@@ -172,7 +172,10 @@ public class JVMTIException {
         }
 
         @NEVER_INLINE
-        boolean uncaught() {
+        boolean uncaughtByApplication() {
+            if (JVMTI.JVMTI_VM) {
+                return false;
+            }
             int catchCallerIndex = stackElements.size() - stackElementSizeAtCatch;
             for (int i = 0; i < catchCallerIndex; i++) {
                 ClassMethodActor classMethodActor = stackElements.get(i).classMethodActor;
@@ -188,6 +191,22 @@ public class JVMTIException {
             ClassActor holder = classMethodActor.holder();
             return holder.classLoader == VMClassLoader.VM_CLASS_LOADER ||
                    holder == JVMTIThreadFunctions.methodClassActor();
+        }
+
+        boolean thrownInVmStartup() {
+            if (JVMTI.JVMTI_VM) {
+                return false;
+            }
+            for (int i = 0; i < stackElements.size(); i++) {
+                ClassMethodActor classMethodActor = stackElements.get(i).classMethodActor;
+                // check for non-VM class, but not the invocation stub for main which rethrows an unhandled exception
+                if (!(isVmStartup(classMethodActor) || classMethodActor.holder().isReflectionStub())) {
+                    // if this is the top of the stack, we are in the VM startup
+                    return i == stackElements.size() - 1;
+                }
+            }
+            // no app classes, in VM startup
+            return true;
 
         }
     }
@@ -211,40 +230,48 @@ public class JVMTIException {
 
     public static void raiseEvent(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         EventState eventState = eventStateTL.get();
+        try {
+            if (eventState.inProcess) {
+                FatalError.unexpected("jvmti: exception while analyzing exception", throwable);
+            }
+            eventState.inProcess = true;
 
-        FatalError.check(!eventState.inProcess, "jvmti: exception while analyzing exception");
+            if (!sendEvent()) {
+                return;
+            }
+            ExceptionEventData exceptionEventData = eventState.exceptionEventData;
+            exceptionEventData.throwable = throwable;
 
-        if (!sendEvent()) {
-            return;
+            StackAnalyzer stackAnalyser = eventState.stackAnalyser;
+            stackAnalyser.reset();
+            stackAnalyser.walk(eventState.sfw, ip.toPointer(), sp, fp, throwable);
+
+            // There is always a handler in Maxine but it may be unhandled by the application
+            // and deciding this requires some detective work. It may also have been rethrown in the
+            // VM startup sequence and we want to ignore that (since we previously decided it was uncaught)
+            if (stackAnalyser.thrownInVmStartup()) {
+                return;
+            }
+            TargetMethod ctm = stackAnalyser.catchTargetMethod;
+            assert ctm != null;
+            if (stackAnalyser.uncaughtByApplication()) {
+                exceptionEventData.catchMethodID = MethodID.fromWord(Word.zero());
+                exceptionEventData.catchLocation = 0;
+            } else {
+                exceptionEventData.catchMethodID = MethodID.fromMethodActor(ctm.classMethodActor);
+                exceptionEventData.catchLocation = stackAnalyser.catchInfo.bci;
+            }
+
+            assert stackAnalyser.throwingMethodActor != null;
+
+            exceptionEventData.location = stackAnalyser.throwingBci;
+            exceptionEventData.methodID = MethodID.fromMethodActor(stackAnalyser.throwingMethodActor);
+
+            JVMTI.event(JVMTIEvent.EXCEPTION, exceptionEventData);
+
+        } finally {
+            eventState.inProcess = false;
         }
-        ExceptionEventData exceptionEventData = eventState.exceptionEventData;
-        exceptionEventData.throwable = throwable;
-        eventState.inProcess = true;
-
-        StackAnalyzer stackAnalyser = eventState.stackAnalyser;
-        stackAnalyser.reset();
-        stackAnalyser.walk(eventState.sfw, ip.toPointer(), sp, fp, throwable);
-
-        // there is always a handler in Maxine but it may be unhandled by the application
-        // and this requires some detective work
-        TargetMethod ctm = stackAnalyser.catchTargetMethod;
-        assert ctm != null;
-        if (stackAnalyser.uncaught()) {
-            exceptionEventData.catchMethodID = MethodID.fromWord(Word.zero());
-            exceptionEventData.catchLocation = 0;
-        } else {
-            exceptionEventData.catchMethodID = MethodID.fromMethodActor(ctm.classMethodActor);
-            exceptionEventData.catchLocation = stackAnalyser.catchInfo.bci;
-        }
-
-        assert stackAnalyser.throwingMethodActor != null;
-
-        exceptionEventData.location = stackAnalyser.throwingBci;
-        exceptionEventData.methodID = MethodID.fromMethodActor(stackAnalyser.throwingMethodActor);
-
-        JVMTI.event(JVMTIEvent.EXCEPTION, exceptionEventData);
-
-        eventState.inProcess = false;
     }
 
 }
