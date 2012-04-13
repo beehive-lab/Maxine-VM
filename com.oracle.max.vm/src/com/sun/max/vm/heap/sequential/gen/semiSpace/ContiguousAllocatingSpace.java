@@ -55,14 +55,17 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         // TODO Auto-generated method stub
         return null;
     }
+
     @Override
     public Size totalSpace() {
         return space.committedSize();
     }
+
     @Override
     public Size capacity() {
         return space.size();
     }
+
     @Override
     public Pointer allocate(Size size) {
         return allocator.allocateCleared(size);
@@ -73,6 +76,7 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
         // based on the code for TLAB overflow handling.
         return allocator.allocateCleared(size);
     }
+
     @Override
     public boolean contains(Address address) {
         return space.inCommittedSpace(address);

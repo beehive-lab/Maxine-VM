@@ -197,19 +197,29 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
         final int pageSize = Platform.platform().pageSize;
-
+        final int log2Alignment = Integer.numberOfTrailingZeros(pageSize);
         // Verify that the constraint of the heap scheme are met:
-        FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
+        FatalError.check(Heap.bootHeapRegion.start() ==
+            Heap.startOfReservedVirtualSpace(),
             "Boot heap region must be mapped at start of reserved virtual space");
 
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeOptCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
+        final Address  firstUnusedByteAddress = endOfCodeRegion.alignUp(pageSize);
 
+        try {
+            // Use immortal memory for now.
+            Heap.enableImmortalMemoryAllocation();
+            heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
+            youngSpace.space.reserve(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize());
+            youngSpace.space.growCommittedSpace(heapResizingPolicy.initialYoungGenSize());
 
-
-        cardTableRSet.initializeXirStartupConstants();
-        // Make the heap inspectable
-        InspectableHeapInfo.init(false, youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            cardTableRSet.initializeXirStartupConstants();
+            // Make the heap inspectable
+            InspectableHeapInfo.init(true, youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
+        }
     }
 
     @Override
@@ -270,8 +280,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     protected Pointer customAllocate(Pointer customAllocator, Size size) {
-        // TODO Auto-generated method stub
-        return null;
+        return ImmortalHeap.allocate(size, true);
     }
 
     /**
