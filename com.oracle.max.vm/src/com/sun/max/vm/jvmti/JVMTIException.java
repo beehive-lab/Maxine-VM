@@ -22,14 +22,20 @@
  */
 package com.sun.max.vm.jvmti;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FindAppFramesStackTraceVisitor;
+import com.sun.max.vm.jvmti.JVMTIThreadFunctions.StackElement;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 public class JVMTIException {
 
@@ -46,8 +52,9 @@ public class JVMTIException {
 
     static class EventState {
         ExceptionEventData exceptionEventData = new ExceptionEventData();
-        FindThrower findThrower = new FindThrower();
+        StackAnalyzer stackAnalyser = new StackAnalyzer();
         VmStackFrameWalker sfw = new VmStackFrameWalker(VmThread.currentTLA());
+        boolean inProcess;
     }
 
     static class EventStateThreadLocal extends ThreadLocal<EventState> {
@@ -58,37 +65,131 @@ public class JVMTIException {
     }
 
     private static EventStateThreadLocal eventStateTL = new EventStateThreadLocal();
-    private static Class<?> MAXRUNTIMECALLS;
 
-    static {
-        try {
-            MAXRUNTIMECALLS = Class.forName("com.oracle.max.vm.ext.maxri.MaxRuntimeCalls");
-        } catch (Exception ex) {
-            ProgramError.unexpected(ex);
+    /**
+     * VM implementation methods that may be on the stack above the method that actually threw the exception.
+     * This is rather ad hoc and compiler dependent, unfortunately.
+     */
+    private static final MethodActor[] throwImplMethods = new ClassMethodActor[5];
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static ClassActor throwClassActor;
+
+    @HOSTED_ONLY
+    private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+
+        @Override
+        public void initializationComplete() {
+            try {
+                throwClassActor = ClassActor.fromJava(Throw.class);
+                int i = 0;
+                throwImplMethods[i++] = MethodActor.fromJava(VmThread.class.getDeclaredMethod("throwJniException"));
+                Class<?> maxRuntimeCalls = Class.forName("com.oracle.max.vm.ext.maxri.MaxRuntimeCalls");
+                throwImplMethods[i++] = MethodActor.fromJava(maxRuntimeCalls.getDeclaredMethod("runtimeHandleException", Throwable.class));
+                throwImplMethods[i++] = MethodActor.fromJava(maxRuntimeCalls.getDeclaredMethod("runtimeUnwindException", Throwable.class));
+            } catch (Exception ex) {
+                ProgramError.unexpected(ex);
+            }
         }
     }
 
-    private static class FindThrower extends SourceFrameVisitor {
-        ClassMethodActor methodActor;
-        int bci = -1;
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
+    }
+
+    /**
+     * A variant of {@link FindAppFramesStackTraceVisitor} that locates the
+     * actual frame that threw the exception and whether or not the exception was
+     * caught. Owing to the meta-circular nature of Maxine, neither question
+     * is entirely trivial to answer.
+     *
+     */
+    private static class StackAnalyzer extends FindAppFramesStackTraceVisitor {
+        Throwable throwable;
+        ClassMethodActor throwingMethodActor;
+        TargetMethod catchTargetMethod;
+        int stackElementSizeAtCatch;
+        int throwingBci = -1;
+        TargetMethod.CatchExceptionInfo catchInfo = new TargetMethod.CatchExceptionInfo();
 
         @Override
         public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
-            Class<?> klass = methodActor.original().holder().toJava();
-            if (klass == Throw.class || klass == MAXRUNTIMECALLS) {
-                return true;
-            } else {
-                this.methodActor = methodActor.original();
-                this.bci = bci;
-                return false;
+            if (throwingMethodActor == null) {
+                ClassMethodActor methodActorOriginal = methodActor.original();
+                if (!(methodActorOriginal.holder() == throwClassActor || isThrowImplMethod(methodActor))) {
+                    this.throwingMethodActor = methodActorOriginal;
+                    this.throwingBci = bci;
+                }
             }
+            return super.visitSourceFrame(methodActor, bci, trapped, frameId);
         }
 
+        private boolean isThrowImplMethod(ClassMethodActor methodActor) {
+            for (int i = 0; i < throwImplMethods.length; i++) {
+                if (methodActor == throwImplMethods[i]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+            // raw frame visit with the info we need to check for a catch of throwable
+            if (catchTargetMethod == null) {
+                TargetMethod tm = current.targetMethod();
+                if (tm != null) {
+                    boolean isCaught = tm.catchExceptionInfo(current, throwable, catchInfo);
+                    // The way Maxine handles synchronized methods introduces an additional catch (Throwable)
+                    // which results in a negative bci value for the handler (since there is no user written
+                    // handler in the method). So we ignore this one and keep looking.
+                    if (isCaught && catchInfo.bci >= 0) {
+                        stackElementSizeAtCatch = stackElements.size() + 1; // this frame is added in the super call
+                        catchTargetMethod = tm;
+                    }
+                }
+            }
+            return super.visitFrame(current, callee);
+        }
+
+        void walk(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, Throwable throwable) {
+            walker.reset();
+            this.throwable = throwable;
+            walkRaw(walker, ip, sp, fp);
+        }
+
+        /**
+         * Resets state if the visitor is being reused.
+         */
+        @Override
         void reset() {
-            methodActor = null;
-            bci = -1;
+            super.reset();
+            throwable = null;
+            throwingMethodActor = null;
+            catchTargetMethod = null;
+            throwingBci = -1;
+            stackElementSizeAtCatch = 0;
         }
 
+        @NEVER_INLINE
+        boolean uncaught() {
+            int catchCallerIndex = stackElements.size() - stackElementSizeAtCatch;
+            for (int i = 0; i < catchCallerIndex; i++) {
+                ClassMethodActor classMethodActor = stackElements.get(i).classMethodActor;
+                if (!isVmStartup(classMethodActor)) {
+                    // application class lower than handler so its's caught
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean isVmStartup(ClassMethodActor classMethodActor) {
+            ClassActor holder = classMethodActor.holder();
+            return holder.classLoader == VMClassLoader.VM_CLASS_LOADER ||
+                   holder == JVMTIThreadFunctions.methodClassActor();
+
+        }
     }
 
     private static boolean sendEvent() {
@@ -109,49 +210,41 @@ public class JVMTIException {
     }
 
     public static void raiseEvent(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
+        EventState eventState = eventStateTL.get();
+
+        FatalError.check(!eventState.inProcess, "jvmti: exception while analyzing exception");
+
         if (!sendEvent()) {
             return;
         }
-        // Have to determine if this exception is caught (by the application).
-        // We use the pre-allocated stack walker as per Throw.raise (which called us).
-        final VmStackFrameWalker sfw = VmThread.current().unwindingStackFrameWalker(throwable);
-        boolean wasDisabled = SafepointPoll.disable();
-        sfw.findHandler(ip.toPointer(), sp, fp, throwable);
-        if (!wasDisabled) {
-            SafepointPoll.enable();
-        }
-
-        EventState eventState = eventStateTL.get();
         ExceptionEventData exceptionEventData = eventState.exceptionEventData;
         exceptionEventData.throwable = throwable;
+        eventState.inProcess = true;
 
-        StackFrameCursor handlerCursor = sfw.defaultStackUnwindingContext.handlerCursor;
+        StackAnalyzer stackAnalyser = eventState.stackAnalyser;
+        stackAnalyser.reset();
+        stackAnalyser.walk(eventState.sfw, ip.toPointer(), sp, fp, throwable);
+
         // there is always a handler in Maxine but it may be unhandled by the application
-        assert handlerCursor != null;
-
-        TargetMethod ctm = handlerCursor.ip.targetMethod();
-        if (ctm.classMethodActor.holder() == JVMTIThreadFunctions.vmThreadClassActor()) {
+        // and this requires some detective work
+        TargetMethod ctm = stackAnalyser.catchTargetMethod;
+        assert ctm != null;
+        if (stackAnalyser.uncaught()) {
             exceptionEventData.catchMethodID = MethodID.fromWord(Word.zero());
             exceptionEventData.catchLocation = 0;
         } else {
             exceptionEventData.catchMethodID = MethodID.fromMethodActor(ctm.classMethodActor);
-            exceptionEventData.catchLocation = ctm.posFor(handlerCursor.ip.vmIP());
+            exceptionEventData.catchLocation = stackAnalyser.catchInfo.bci;
         }
 
-        sfw.reset();
+        assert stackAnalyser.throwingMethodActor != null;
 
-        // ip doesn't necessarily define the throwing method, as there may be a MaxRuntimeCalls method in between.
-        //
-        FindThrower findThrower = eventState.findThrower;
-        findThrower.reset();
-        eventState.sfw.reset();
-        findThrower.walk(eventState.sfw, ip.toPointer(), sp, fp);
-
-        assert findThrower.methodActor != null;
-
-        exceptionEventData.location = findThrower.bci;
-        exceptionEventData.methodID = MethodID.fromMethodActor(findThrower.methodActor);
+        exceptionEventData.location = stackAnalyser.throwingBci;
+        exceptionEventData.methodID = MethodID.fromMethodActor(stackAnalyser.throwingMethodActor);
 
         JVMTI.event(JVMTIEvent.EXCEPTION, exceptionEventData);
+
+        eventState.inProcess = false;
     }
+
 }

@@ -1026,8 +1026,6 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
-    public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception);
-
     /**
      * Modifies the call site at the specified offset to use the new specified entry point.
      * The modification must tolerate the execution of the target method by concurrently running threads.
@@ -1066,8 +1064,8 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract void prepareReferenceMap(StackFrameCursor current, StackFrameCursor callee, FrameReferenceMapVisitor preparer);
 
     /**
-     * If {@code check == false}, attempts to catch an exception thrown by this method or a callee method. If a handler exists,
-     * then the stack is unwound and execution is resumed at the handler, otherwise returns {@code false}.
+     * Attempts to catch an exception thrown by this method or a callee method. If a handler exists,
+     * then the stack is unwound and execution is resumed at the handler.
      * <p>
      * In the case that is an {@link #invalidated() invalidated} method, the same unwinding
      * occurs but executed is redirected to an appropriate deoptimization stub.
@@ -1077,15 +1075,37 @@ public abstract class TargetMethod extends MemoryRegion {
      * except that the operand stack is cleared (the exception object is explicitly retrieved and pushed by
      * the handler).
      *
-     * If {@code check == true} simply checks for a handler and returns {@code true} if it exists.
-     *
      * @param current the current stack frame
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
-     * @param check do not transfer control to (any) handler, just check if one exists.
-     * @return returns {@code true} iff the exception would be caught.
      */
-    public abstract boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check);
+    public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable);
+
+    /**
+     * Similar to {@link #catchException} but simply checks if there is a handler for {@code exception}
+     * and returns its code address if so, otherwise {@link CodePointer#zero}.
+     * @param throwAddress the throw address
+     * @param exception
+     * @return
+     */
+    public abstract CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable throwable);
+
+    public static class CatchExceptionInfo {
+        public CodePointer codePointer;
+        public int bci;
+    }
+
+    /**
+     * Similar to {@link #catchException} save that the stack is not unwound, and just the info on the catch
+     * location is returned.
+     * @param current
+     * @param throwable
+     * @param info instance in which to store the info
+     * @return {@code true} iff the exception is handled by this method
+     */
+    public boolean catchExceptionInfo(StackFrameCursor current, Throwable throwable, CatchExceptionInfo info) {
+        return false;
+    }
 
     /**
      * Accepts a visitor for this stack frame. As this only ever happens in Inspector contexts, this method is
