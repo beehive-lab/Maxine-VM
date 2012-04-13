@@ -35,14 +35,6 @@ public class StackUnwindingContext {
      */
     public Throwable throwable;
     public Word stackPointer;
-    /**
-     * When {@code true} means walk is only checking for a handler.
-     */
-    public boolean checking;
-    /**
-     * Only set when {@code checking == true}, indicates the cursor of the handler frame, if found.
-     */
-    public StackFrameCursor handlerCursor;
 
     public StackUnwindingContext() {
     }

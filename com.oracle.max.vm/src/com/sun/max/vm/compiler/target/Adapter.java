@@ -161,8 +161,7 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public boolean catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable, boolean check) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         // Exceptions do not occur in adapters
-        return false;
     }
 }
