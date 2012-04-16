@@ -38,7 +38,6 @@ import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
@@ -231,9 +230,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
-           // Make the heap inspectable
-           HeapScheme.Inspect.init(true);
-           HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
+            // Make the heap inspectable
+            HeapScheme.Inspect.init(true);
+            HeapScheme.Inspect.notifyHeapRegions(youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
