@@ -30,7 +30,7 @@ package demo.jvmti;
  * <li>Run the program, should hit breakpoint.</li>
  * <li>Then either exit the test by continuing or step, which should step over the print.
  *     A further step should step into main, which tests that main is instrumented for
- *     single step.
+ *     single step.</li>
  * </ol>
  * N.B. In the above the breakpoint is set before {@code foo} is compiled,
  * so it is instrumented for the breakpoint on the first compilation.

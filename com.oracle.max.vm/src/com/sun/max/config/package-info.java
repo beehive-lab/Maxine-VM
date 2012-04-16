@@ -26,10 +26,10 @@
  * Then general strategy for boot image building is:
  * <ul>
  * <li>Generate a set of packages, and hence classes, from some designated root packages that are <i>candidates</> for
- * inclusion in the boot image.
+ * inclusion in the boot image.</li>
  * <li>Apply configuration options to limit the set of packages (classes) that are actually included. Examples of
  * configuration options would be hardware and operating system platforms and specific choices of the
- * {@link com.sun.max.vm.VMScheme schemes} that provide Maxine with much of its configurability.
+ * {@link com.sun.max.vm.VMScheme schemes} that provide Maxine with much of its configurability.</li>
  * </ul>
  * Note that while the boot image really is composed from a set of classes it almost always the case that all classes
  * from a package are included, so we can use package as shorthand for all the classes in the package. This is true, in
@@ -49,7 +49,7 @@
  * form of this class is {@link com.sun.max.config.Package here}.
  * <p>
  * The package discovery process is initiated by the
- * {@link com.sun.max.config.BootImagePackage#getTransitiveSubPackages(com.sun.max.program.Classpath, BootImagePackage[])
+ * {@link com.sun.max.config.BootImagePackage#getTransitiveSubPackages(com.sun.max.program.Classpath, BootImagePackage[])}
  * method. The first argument denotes the class path that the boot image builder is using, which must contain
  * all the packages needed for the build. The second argument is an array of root packages. These essentially define a forest
  * of trees that will be used as the starting point to search for packages. The {@link com.sun.max.vm.hosted.BootImageGenerator
@@ -106,15 +106,16 @@
  * <li>{@code Package()}: this is typically only used in packages that need to override
  * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM}, and causes all of the classes
  * in the package containing the {@Code Package} class to be candidates for inclusion. Nested packages are not included unless
- * some parent package was specified as recursive.
+ * some parent package was specified as recursive.</li>
  * <li>{@code Package(String name, boolean recursive)}: this is the simplest form of redirection, designating a single
- * root, {@code name}, and specifying via {@code recursive}, whether nested packages should be included (recursively).
+ * root, {@code name}, and specifying via {@code recursive}, whether nested packages should be included (recursively).</li>
  * <li>{@code Package(String name...)}: this is the most general form of constructor. {@code name} may designate a single (non-recursive) package,
  * using {@code a.b.c.*}, a (recursive) package tree using {@code a.b.c.**} or a single class using {@code a.b.c.D}. In the latter case, several
  * specifications may denote different classes from the package and the end result is the union of them all. Note that it is not possible, by design,
  * to exclude a class. However,  it is possible to exclude the classes of a package within an tree that is otherwise destined to be included by recursive inclusion.
  * This is achieve by inheriting from {@link com.sun.max.config.ExcludedPackage}, which simply defines
- * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM} to return {@code false}.
+ * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM} to return {@code false}.</li>
+ * </ul>
  * <p>
  *
  *<h2>Scheme packages</h2>

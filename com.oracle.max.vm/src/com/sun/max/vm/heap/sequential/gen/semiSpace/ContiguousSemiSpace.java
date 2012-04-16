@@ -22,15 +22,47 @@
  */
 package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
 
 
 public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? extends Refiller>> extends ContiguousAllocatingSpace<T> {
+    @INSPECTED
     ContiguousHeapSpace fromSpace;
+    /**
+     * Alignment constraint for a semi-space.
+     */
+    private int semiSpaceAlignment;
 
     ContiguousSemiSpace(T allocator) {
         super(allocator);
         fromSpace = new ContiguousHeapSpace();
+    }
+
+    public void initializeAlignment(int semiSpaceAlignment) {
+        this.semiSpaceAlignment = semiSpaceAlignment;
+    }
+
+    public Address highestAddress() {
+        Address fend = fromSpace.end();
+        Address tend = space.end();
+        return fend.greaterThan(tend) ? fend : tend;
+    }
+
+    public Address lowestAddress() {
+        Address fstart = fromSpace.start();
+        Address tstart = space.start();
+        return fstart.greaterThan(tstart) ? fstart : tstart;
+    }
+
+    @Override
+    public void initialize(Address start, Size maxSize, Size initialSize) {
+        Size semiSpaceMaxSize = maxSize.unsignedShiftedRight(1).alignDown(semiSpaceAlignment);
+        space.reserve(start, semiSpaceMaxSize);
+        fromSpace.reserve(start.plus(semiSpaceMaxSize), semiSpaceMaxSize);
+        space.growCommittedSpace(initialSize);
+        fromSpace.growCommittedSpace(initialSize);
     }
 
     void flipSpaces() {
