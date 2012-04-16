@@ -41,7 +41,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * A heap scheme implementing a two-generation heap, where each generation implements a semi-space collector.
+ * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
  *
  *
  */
@@ -211,11 +211,27 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             // Use immortal memory for now.
             Heap.enableImmortalMemoryAllocation();
             heapResizingPolicy = new FixedRatioGenHeapSizingPolicy(initSize, maxSize, YoungGenHeapPercent, log2Alignment);
-            youngSpace.space.reserve(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize());
-            youngSpace.space.growCommittedSpace(heapResizingPolicy.initialYoungGenSize());
-
+            youngSpace.initialize(firstUnusedByteAddress, heapResizingPolicy.maxYoungGenSize(), heapResizingPolicy.initialYoungGenSize());
+            Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
+            oldSpace.initializeAlignment(pageSize);
+            oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
+            initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
-            // Make the heap inspectable
+
+            Address unusedReservedSpaceStart = cardTableRSet.memory().end().alignUp(pageSize);
+            // Free reserved space we will not be using.
+            Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
+
+            // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
+            if (!Heap.AvoidsAnonOperations) {
+                if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
+                    MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+                }
+            }
+            if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
+                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
+            }
+           // Make the heap inspectable
             InspectableHeapInfo.init(true, youngSpace.space, oldSpace.space, oldSpace.fromSpace, cardTableRSet.memory());
         } finally {
             Heap.disableImmortalMemoryAllocation();
