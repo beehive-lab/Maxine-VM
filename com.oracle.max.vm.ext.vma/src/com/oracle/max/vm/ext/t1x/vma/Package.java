@@ -20,9 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.oracle.max.vm.ext.t1x.vma;
 
-/**
- * Collection of classes that create a variant of T1X that supports the
- * Virtual Machine Advising framework.
-*/
-package com.sun.max.vm.t1x.vma;
+import com.sun.max.config.BootImagePackage;
+import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.compiler.*;
+
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
+    }
+
+    private boolean isOAT1X(String className) {
+        return className != null && className.startsWith(this.name());
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return isOAT1X(CompilationBroker.optName()) || isOAT1X(CompilationBroker.baselineName());
+    }
+
+}

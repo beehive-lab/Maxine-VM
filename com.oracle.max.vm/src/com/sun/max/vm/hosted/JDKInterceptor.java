@@ -111,7 +111,7 @@ public final class JDKInterceptor {
     // Checkstyle: stop
     private static final Object[] interceptedFieldArray = {
         JDK.java_lang_ApplicationShutdownHooks,
-            new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>()), true),
+            new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>())).makeNonFinal(),
         JDK.java_lang_Class,
             "cachedConstructor",
             "newInstanceCallerCache",
@@ -132,13 +132,13 @@ public final class JDKInterceptor {
             "classRedefinedCount",
             "lastRedefinedCount",
         JDK.java_lang_ClassLoader,
-            new ZeroField("bootstrapClassPath", false, false),
+            new ZeroField("bootstrapClassPath").makeOptional(),
             "scl",
             "sclSet",
             "usr_paths",
             "sys_paths",
-            new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector()), true),
-            new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries), true),
+            new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector())).makeNonFinal(),
+            new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries)).makeNonFinal(),
         JDK.java_util_EnumMap,
             "entrySet",
         JDK.java_lang_reflect_Field,
@@ -158,26 +158,26 @@ public final class JDKInterceptor {
             "loader",
             "packageInfo",
         JDK.java_lang_Shutdown,
-            new NewShutdownHookList("hooks"),
+            new NewShutdownHookList("hooks").makeNonFinal(),
         JDK.java_lang_System,
-            new ZeroField("security", false, false),
-            new ValueField("props", ReferenceValue.from(initialSystemProperties), true),
+            new ZeroField("security").makeOptional(),
+            new ValueField("props", ReferenceValue.from(initialSystemProperties)).makeNonFinal(),
         JDK.java_lang_ref_Reference,
             "discovered",
             "pending",
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
-            new ValueField("queue", ReferenceValue.from(new ReferenceQueue()), true),
+            new ValueField("queue", ReferenceValue.from(new ReferenceQueue())).makeNonFinal(),
         JDK.java_lang_Throwable,
-            new ZeroField("backtrace", false, false),
+            new ZeroField("backtrace").makeOptional(),
         JDK.java_lang_Thread,
             "parkBlocker",
             "blocker",
             "threadLocals",
             "inheritableThreadLocals",
         JDK.java_lang_ProcessEnvironment,
-            new ZeroField("theEnvironment", true, true),
-            new ZeroField("theUnmodifiableEnvironment", true, true),
+            new ZeroField("theEnvironment").makeNonFinal(),
+            new ZeroField("theUnmodifiableEnvironment").makeNonFinal(),
         JDK.java_lang_Terminator,
             "handler",
         JDK.sun_misc_VM,
@@ -185,17 +185,17 @@ public final class JDKInterceptor {
             "finalRefCount",
             "peakFinalRefCount",
         JDK.sun_net_www_protocol_jar_JarFileFactory,
-            new ValueField("fileCache", ReferenceValue.from(new HashMap()), true),
-            new ValueField("urlCache", ReferenceValue.from(new HashMap()), true),
+            new ValueField("fileCache", ReferenceValue.from(new HashMap())).makeNonFinal(),
+            new ValueField("urlCache", ReferenceValue.from(new HashMap())).makeNonFinal(),
         JDK.sun_reflect_ConstantPool,
-            new ZeroField("constantPoolOop", false, false),
+            new ZeroField("constantPoolOop").makeOptional(),
         JDK.sun_reflect_Reflection,
-            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
-            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
+            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())).makeOptional(),
+            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())).makeOptional(),
         JDK.sun_util_calendar_ZoneInfo,
-            new ZeroField("aliasTable", true, true),
+            new ZeroField("aliasTable").makeNonFinal(),
         JDK.sun_security_jca_ProviderConfig,
-            new ValueField("LOCK", ReferenceValue.from(new Object()), false),
+            new ValueField("LOCK", ReferenceValue.from(new Object())).makeOptional(),
         JDK.java_util_Random,
             new FieldOffsetRecomputation("seedOffset", "seed"),
         JDK.java_util_concurrent_ConcurrentSkipListSet,
@@ -285,7 +285,7 @@ public final class JDKInterceptor {
         JDK.java_util_concurrent_atomic_AtomicLongArray,
             new ArrayIndexScaleRecomputation("scale", long[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceArray,
-            new ArrayIndexScaleRecomputation("scale", Object[].class),
+            new ArrayIndexScaleRecomputation("scale", Object[].class).makeOptional(),
     };
 
     private static final Object[] interceptedFieldArrayJDK7 = {
@@ -352,9 +352,9 @@ public final class JDKInterceptor {
         JDK.java_util_concurrent_atomic_AtomicMarkableReference,
             new FieldOffsetRecomputation("pairOffset", "pair"),
         JDK.sun_misc_PerfCounter,
-            new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1)), true),
+            new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1))).makeNonFinal(),
         JDK.sun_misc_ProxyGenerator,
-            new ValueField("saveGeneratedFiles", BooleanValue.from(false), true),
+            new ValueField("saveGeneratedFiles", BooleanValue.from(false)).makeNonFinal(),
         JDK.java_lang_invoke_MethodType,
             new FieldOffsetRecomputation("ptypesOffset", "ptypes"),
             new FieldOffsetRecomputation("rtypeOffset", "rtype"),
@@ -443,7 +443,7 @@ public final class JDKInterceptor {
                         i--;
                         break;
                     } else if (field instanceof String) {
-                        interceptedField = new ZeroField((String) field, false, true);
+                        interceptedField = new ZeroField((String) field);
                     } else {
                         interceptedField = (InterceptedField) field;
                     }
@@ -470,8 +470,8 @@ public final class JDKInterceptor {
             fieldMap = new HashMap<String, InterceptedField>();
             interceptedFieldMap.put(className, fieldMap);
         }
-        Trace.line(2, "registering "  +  className + "." + fieldName + " for reset to default value");
-        ZeroField zeroField = new ZeroField(fieldName, true, true);
+        ZeroField zeroField = new ZeroField(fieldName);
+        zeroField.makeNonFinal();
         zeroField.verify(new LazyClassRef(className));
         fieldMap.put(fieldName, zeroField);
     }
@@ -495,15 +495,23 @@ public final class JDKInterceptor {
     public abstract static class InterceptedField {
         private final String name;
         protected ClassRef classRef;
-        private final boolean verifyFieldExists;
+        private boolean verifyFieldExists = true;
 
         public FieldActor fieldActor;
-        private final boolean mutabilityOverride;
+        private boolean mutabilityOverride = false;
 
-        InterceptedField(String name, boolean makeNonFinal, boolean verifyFieldExists) {
-            this.mutabilityOverride = makeNonFinal;
+        InterceptedField(String name) {
             this.name = name;
-            this.verifyFieldExists = verifyFieldExists;
+        }
+
+        public InterceptedField makeNonFinal() {
+            mutabilityOverride = true;
+            return this;
+        }
+
+        public InterceptedField makeOptional() {
+            verifyFieldExists = false;
+            return this;
         }
 
         public String getName() {
@@ -550,8 +558,8 @@ public final class JDKInterceptor {
      */
     private static class ValueField extends InterceptedField {
         private final Value value;
-        ValueField(String name, Value value, boolean verifyFieldExists) {
-            super(name, false, verifyFieldExists);
+        ValueField(String name, Value value) {
+            super(name);
             this.value = value;
         }
         @Override
@@ -565,8 +573,8 @@ public final class JDKInterceptor {
      * corresponding to the field's kind.
      */
     public static class ZeroField extends InterceptedField {
-        ZeroField(String name, boolean mutabilityOverride, boolean verifyFieldExists) {
-            super(name, mutabilityOverride, verifyFieldExists);
+        ZeroField(String name) {
+            super(name);
         }
         @Override
         public Value getValue(Object object, FieldActor field) {
@@ -576,7 +584,7 @@ public final class JDKInterceptor {
 
     private static class AtomicFieldUpdaterOffsetRecomputation extends InterceptedField {
         AtomicFieldUpdaterOffsetRecomputation(String name) {
-            super(name, false, true);
+            super(name);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -616,7 +624,7 @@ public final class JDKInterceptor {
     private static class ExpiringCacheField extends InterceptedField {
         private final Map<Object, Object> newValues = new IdentityHashMap<Object, Object>();
         ExpiringCacheField(String name) {
-            super(name, false, true);
+            super(name);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -639,7 +647,7 @@ public final class JDKInterceptor {
             this(offsetFieldName, null, fieldName);
         }
         FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
-            super(offsetFieldName, false, true);
+            super(offsetFieldName);
             this.fieldName = fieldName;
             this.classRef = classRef;
         }
@@ -670,7 +678,7 @@ public final class JDKInterceptor {
     private static class ArrayBaseOffsetRecomputation extends InterceptedField {
         private final Class arrayClass;
         ArrayBaseOffsetRecomputation(String arrayBaseOffsetFieldName, Class arrayClass) {
-            super(arrayBaseOffsetFieldName, false, true);
+            super(arrayBaseOffsetFieldName);
             this.arrayClass = arrayClass;
         }
         @Override
@@ -687,7 +695,7 @@ public final class JDKInterceptor {
     private static class ArrayIndexScaleRecomputation extends InterceptedField {
         private final Class arrayClass;
         ArrayIndexScaleRecomputation(String arrayIndexScaleFieldName, Class arrayClass) {
-            super(arrayIndexScaleFieldName, false, true);
+            super(arrayIndexScaleFieldName);
             this.arrayClass = arrayClass;
         }
         @Override
@@ -723,7 +731,7 @@ public final class JDKInterceptor {
     private static class NewShutdownHookList extends InterceptedField {
         private Object result;
         NewShutdownHookList(String fieldName) {
-            super(fieldName, true, true);
+            super(fieldName);
         }
 
         @Override
