@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -330,6 +331,7 @@ public class JVMTIEvent {
         if (eventType < JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL) {
             return JVMTI_ERROR_INVALID_EVENT_TYPE;
         }
+        FatalError.check(eventType != JVMTI_EVENT_EXCEPTION_CATCH, "Exception catch events are not implemented");
         if (thread == null) {
             // Global
             long newBits = newEventBits(eventType, mode, jvmtiEnv.globalEventSettings);
