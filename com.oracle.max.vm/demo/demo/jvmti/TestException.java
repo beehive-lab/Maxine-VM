@@ -22,40 +22,10 @@
  */
 package demo.jvmti;
 
-/**
- * Program used to debug Maxine's breakpoint implementation. Basic test 03.
- * Tests that a method does not get optimized after a breakpoint is set.
- * Usage:
- * <ol>
- * <li>Set a breakpoint at {@link #foo}.</li>
- * <li>Run the program, should hit breakpoint.</li>
- * <li>Disable the breakpoint at {@link #foo}, set one at {@link #bar} and continue</li>
- * <li>Should stop in bar. Re-enable the breakpoint at {@link #foo}</li>
- * <li>Continue, should take the breakpoint.
- * </ol>
- * N.B. This test isn't definitive since, even if {@link #foo} were optimized, it should be
- * de-optimized when the breakpoint is re-enabled. However, by tracing compilations, the correct
- * behavior can be observed.
- *
- */
 
-public class BreakpointTest_basic03 {
-    public static void main(String[] args) {
-        foo();
-        tryOptFoo();
-        bar();
+class TestException extends Exception {
+    TestException(String msg) {
+        super(msg);
     }
 
-    private static void foo() {
-    }
-
-    private static void bar() {
-        foo();
-    }
-
-    private static void tryOptFoo() {
-        for (int i = 0; i < 10000; i++) {
-            foo();
-        }
-    }
 }

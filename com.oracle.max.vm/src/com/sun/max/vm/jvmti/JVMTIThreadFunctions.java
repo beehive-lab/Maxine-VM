@@ -58,7 +58,7 @@ public class JVMTIThreadFunctions {
     private static ClassActor javaRunSchemeClassActor;
     private static MethodActor[] stackBaseMethodActors;
 
-    private static ClassActor vmThreadClassActor() {
+    static ClassActor vmThreadClassActor() {
         if (vmThreadClassActor == null) {
             vmThreadClassActor = ClassActor.fromJava(VmThread.class);
         }
@@ -79,7 +79,7 @@ public class JVMTIThreadFunctions {
         return jniFunctionsClassActor;
     }
 
-    private static ClassActor methodClassActor() {
+    static ClassActor methodClassActor() {
         if (methodClassActor == null) {
             methodClassActor = ClassActor.fromJava(Method.class);
         }
@@ -196,6 +196,8 @@ public class JVMTIThreadFunctions {
     private static class FrameAccessWithIP extends FrameAccess {
         CodePointer ip;
 
+        @NEVER_INLINE
+        //TODO remove
         void setCallerInfo(StackFrameCursor callerCursor) {
             this.setCallerInfo(callerCursor.sp(), callerCursor.fp());
         }
@@ -258,6 +260,8 @@ public class JVMTIThreadFunctions {
     static class FindAppFramesStackTraceVisitor extends SourceFrameVisitor {
         boolean seenVisibleFrame = JVMTI.JVMTI_VM;
         LinkedList<StackElement> stackElements = new LinkedList<StackElement>();
+        StackElement[] stackElementsArray;    // strictly for ease of debugging in the Inspector
+        boolean raw;
 
         @Override
         public boolean visitSourceFrame(ClassMethodActor methodActor, int bci, boolean trapped, long frameId) {
@@ -283,7 +287,7 @@ public class JVMTIThreadFunctions {
         }
 
         private void add(ClassMethodActor classMethodActor, int bci) {
-            if (JVMTI.JVMTI_VM || !classMethodActor.holder().isReflectionStub()) {
+            if (JVMTI.JVMTI_VM || raw || !classMethodActor.holder().isReflectionStub()) {
                 stackElements.addFirst(new StackElement(classMethodActor, bci, getFrameAccessWithIP()));
             }
         }
@@ -292,29 +296,63 @@ public class JVMTIThreadFunctions {
             return null;
         }
 
+        /**
+         * Resets state if the visitor is being reused.
+         */
+        void reset() {
+            seenVisibleFrame = JVMTI.JVMTI_VM;
+            if (stackElements.size() > 0) {
+                stackElements = new LinkedList<StackElement>();
+            }
+        }
+
+        /**
+         * Standard walk removes VM frames.
+         */
         @Override
         public void walk(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp) {
-            super.walk(walker, ip, sp, fp);
-            /*
-             * Analysing the stack to remove the VM frames depends on knowledge
-             * of the way that threads start up. The normal case is VmThread.run
-             * calls VmThread.executeRunnable which calls Thread.run.
-             * The unusual case is an attached native thread which starts with
-             * JNIFunctions.CallStaticVoidMethodA. A special case is the
-             * main thread which has a Method.invoke, since it is is called from
-             * JavaRunScheme, unless it has returned but the VM hasn't terminated, in which
-             * case it is in VmThreadMap.joinAllNonDaemons. This analysis gets the
-             * correct base frame. We then scan upwards. If we hit another VM frame we throw everything
-             * away after that. Reason being that the initial down scan may have hit a platform
-             * class method used by the VM, but couldn't know there might be another VM class below,
-             * so decided it was an app frame.
-             *
-             * TODO handle user-defined classloader callbacks, which have VM frames sandwiched
-             * between app frames.
-             *
-             * N.B. if we are including VM frames then the processing is different.
-             */
+            walkVariant(walker, ip, sp, fp, false);
+        }
 
+        /**
+         * Raw walk that does not remove VM frames.
+         */
+        void walkRaw(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp) {
+            walkVariant(walker, ip, sp, fp, true);
+        }
+
+        void walkVariant(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, boolean raw) {
+            this.raw = raw;
+            super.walk(walker, ip, sp, fp);
+            if (!raw) {
+                removeVMFrames();
+            }
+            createDebugArray();
+
+        }
+
+        /**
+         * Remove VM frames from the stack trace in {@link #stackElements}.
+         * Analysing the stack to remove the VM frames depends on knowledge
+         * of the way that threads start up. The normal case is {@link VmThread#run}
+         * calls {@link VmThread#executeRunnable} which calls {@link Thread#run}.
+         * The unusual case is an attached native thread which starts with
+         * {@link JNIFunctions#CallStaticVoidMethodA}. A special case is the
+         * main thread which has a {@link Method#invoke}, since it is is called from
+         * {@link JavaRunScheme}, unless it has returned but the VM hasn't terminated, in which
+         * case it is in {@link VmThreadMap#joinAllNonDaemons}. This analysis gets the
+         * correct base frame. We then scan upwards. If we hit another VM frame we throw everything
+         * away after that. Reason being that the initial down scan may have hit a platform
+         * class method used by the VM, but couldn't know there might be another VM class below,
+         * so decided it was an app frame.
+         *
+         * TODO handle user-defined classloader callbacks, which have VM frames sandwiched
+         * between app frames.
+         *
+         * N.B. if we are including VM frames then the processing is different.
+         */
+
+        void removeVMFrames() {
             if (stackElements.size() == 0) {
                 // some threads, e.g., SignalDispatcher, have only VM frames, so (usually) nothing to analyse.
                 return;
@@ -374,6 +412,15 @@ public class JVMTIThreadFunctions {
             }
             // endIndex is the first VM frame
             removeElements(endIndex);
+
+        }
+
+        /**
+         * It is infinitely more convenient to see the stack elements in an array in the Inspector.
+         */
+        private void createDebugArray() {
+            stackElementsArray = new StackElement[stackElements.size()];
+            stackElements.toArray(stackElementsArray);
         }
 
         /**
@@ -451,8 +498,15 @@ public class JVMTIThreadFunctions {
         }
     }
 
+    /**
+     * Invokes a {@link FindAppFramesStackTraceVisitor} on a single thread in a {@link VmOperation}.
+     * N.B. To workaround a limitation in {@link VmOperation} where a GC cannot be run during the
+     * {@link VmOperation} unless all threads are stopped, we run this as a multi-thread operation
+     * even though that is not strictly necessary. Typically everything is stopped anyway.
+     */
     static class SingleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor stackTraceVisitor;
+        VmThread vmThread;
 
         /**
          * Create a {@link VmOperation} that runs the given {@link BaseStackTraceVisitor} on the given thread.
@@ -460,8 +514,14 @@ public class JVMTIThreadFunctions {
          * @param stackTraceVisitor
          */
         SingleThreadStackTraceVmOperation(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
-            super("JVMTISingleStackTrace", vmThread, Mode.Safepoint);
+            super("JVMTISingleStackTrace", null, Mode.Safepoint);
+            this.vmThread = vmThread;
             this.stackTraceVisitor = stackTraceVisitor;
+        }
+
+        @Override
+        protected boolean operateOnThread(VmThread vmThread) {
+            return vmThread == this.vmThread;
         }
 
         @Override
@@ -531,6 +591,9 @@ public class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    /**
+     * Invokes a {@link FindAppFramesStackTraceVisitor} on multiple threads in a {@link VmOperation}.
+     */
     static class MultipleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor[] stackTraceVisitors;
         Thread[] threads;
@@ -744,13 +807,15 @@ public class JVMTIThreadFunctions {
             if (depth < stackElements.size()) {
                 StackElement stackElement = getStackElement(depth);
                 ClassMethodActor classMethodActor = stackElement.classMethodActor;
-                TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                // the stack elements are logical but there may be inlining, so we must
+                // get the TargetMethod from the physical frame info.
+                FrameAccessWithIP frameAccess = stackElement.frameAccess;
+                TargetMethod targetMethod = frameAccess.ip.toTargetMethod();
                 if (!targetMethod.isBaseline() && isSet) {
-                    returnCode = JVMTI_ERROR_OPAQUE_FRAME; // TODO need dopt
+                    returnCode = JVMTI_ERROR_OPAQUE_FRAME; // TODO need deopt
                     return;
                 }
                 targetMethod.finalizeReferenceMaps();
-                FrameAccessWithIP frameAccess = stackElement.frameAccess;
                 int spi = targetMethod.findSafepointIndex(frameAccess.ip);
                 assert spi >= 0;
                 CiFrame ciFrame = targetMethod.debugInfoAt(spi, isSet ? null : frameAccess).frame();

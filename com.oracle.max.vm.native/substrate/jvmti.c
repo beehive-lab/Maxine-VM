@@ -124,6 +124,21 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFramePopCallback(JNIEnv *env, jcl
     (*callback)(jvmti_env, env, thread, method, wasPoppedByException);
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeExceptionCallback(JNIEnv *env, jclass c, void *callbackX,
+                jvmtiEnv *jvmti_env, jboolean is_catch, jthread thread,
+                jmethodID method, jint location,
+                jobject throwable,
+                jmethodID catch_method, jint catch_location) {
+    if (is_catch) {
+        jvmtiEventExceptionCatch callback = (jvmtiEventExceptionCatch) callbackX;
+        (*callback)(jvmti_env, env, thread, catch_method, catch_location, throwable);
+    } else {
+        jvmtiEventException callback =  (jvmtiEventException) callbackX;
+        (*callback)(jvmti_env, env, thread, method, location, throwable, catch_method, catch_location);
+    }
+}
+
 void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, jboolean is_daemon,
                 jobject thread_group, jobject context_class_loader) {
     threadInfo->name = name;

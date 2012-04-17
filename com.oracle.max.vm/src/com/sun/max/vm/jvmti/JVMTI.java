@@ -41,6 +41,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
+import com.sun.max.vm.jvmti.JVMTIException.ExceptionEventData;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FramePopEventData;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -321,11 +322,6 @@ public class JVMTI {
             return true;
         }
 
-        if (JVMTIVmThreadLocal.bitIsSet(JVMTIVmThreadLocal.IN_UPCALL)) {
-            // already in a agent callback : VM breakpoint
-            return true;
-        }
-
         if ((JVMTIEvent.getPhase(eventId) & phase) == 0) {
             // wrong phase
             return true;
@@ -416,6 +412,14 @@ public class JVMTI {
                                            framePopEventData.wasPoppedByException);
                     break;
 
+                case EXCEPTION:
+                case EXCEPTION_CATCH:
+                    ExceptionEventData exceptionEventData = asExceptionEventData(arg1);
+                    invokeExceptionCallback(callback, env, eventId == EXCEPTION_CATCH, currentThreadHandle(),
+                                    exceptionEventData.methodID, exceptionEventData.location,
+                                    JniHandles.createLocalHandle(exceptionEventData.throwable),
+                                    exceptionEventData.catchMethodID, exceptionEventData.catchLocation);
+                    break;
             }
         }
         if (eventId == VM_DEATH) {
@@ -435,6 +439,7 @@ public class JVMTI {
     @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static FramePopEventData  asFramePopEventData(Object object) { return (FramePopEventData) object; }
     @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
+    @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
 
     private static FieldEventData checkGetFieldModificationEvent(int eventType, Object object, int offset, boolean isStatic) {
         if (ignoreEvent(eventType)) {

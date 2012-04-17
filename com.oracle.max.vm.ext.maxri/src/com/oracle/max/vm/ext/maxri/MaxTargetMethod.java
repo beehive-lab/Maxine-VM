@@ -80,6 +80,12 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     private ClassActor[] exceptionClassActors;
 
     /**
+     * The handler BCI values corresponding to {@link #exceptionPositionsToCatchPositions}.
+     * Needed by JVMTI.
+     */
+    private int[] exceptionHandlerBCIs;
+
+    /**
      * Debug info.
      */
     private DebugInfo debugInfo;
@@ -184,16 +190,21 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         return debugInfo;
     }
 
+    private static int totalHandlersSize;
+
     private void initExceptionTable(CiTargetMethod ciTargetMethod) {
         if (ciTargetMethod.exceptionHandlers.size() > 0) {
+            totalHandlersSize += ciTargetMethod.exceptionHandlers.size();
             exceptionPositionsToCatchPositions = new int[ciTargetMethod.exceptionHandlers.size() * 2];
             exceptionClassActors = new ClassActor[ciTargetMethod.exceptionHandlers.size()];
+            exceptionHandlerBCIs = new int[ciTargetMethod.exceptionHandlers.size()];
 
             int z = 0;
             for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
                 exceptionPositionsToCatchPositions[z * 2] = handler.pcOffset;
                 exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
                 exceptionClassActors[z] = (handler.exceptionType == null) ? null : (ClassActor) handler.exceptionType;
+                exceptionHandlerBCIs[z] = handler.handlerBci;
                 z++;
             }
         }
@@ -240,6 +251,21 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+        return throwAddressToCatchAddress(throwAddress, exception, null);
+    }
+
+    @Override
+    public boolean catchExceptionInfo(StackFrameCursor current, Throwable throwable, CatchExceptionInfo info) {
+        CodePointer codePointer = throwAddressToCatchAddress(current.vmIP(), throwable, info);
+        if (!codePointer.isZero()) {
+            info.codePointer = codePointer;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception, CatchExceptionInfo info) {
         final int exceptionPos = throwAddress.minus(codeStart()).toInt();
         int count = getExceptionHandlerCount();
         for (int i = 0; i < count; i++) {
@@ -248,6 +274,9 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             ClassActor catchType = getCatchTypeAt(i);
 
             if (codePos == exceptionPos && checkType(exception, catchType)) {
+                if (info != null) {
+                    info.bci = getHandlerBCIAt(i);
+                }
                 return codeAt(catchPos);
             }
         }
@@ -293,6 +322,13 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
      */
     private int getExceptionHandlerCount() {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
+    }
+
+    /**
+     * Used in JVMTI context to get the bci for a catch address.
+     */
+    private int getHandlerBCIAt(int i) {
+        return exceptionHandlerBCIs[i];
     }
 
     @HOSTED_ONLY
