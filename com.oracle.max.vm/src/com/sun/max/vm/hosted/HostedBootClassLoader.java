@@ -132,10 +132,23 @@ public final class HostedBootClassLoader extends HostedClassLoader {
         return false;
     }
 
+    /**
+     * If {@code true}, no {@link OmittedClassError} exceptions will be thrown.
+     */
+    private static boolean noOmittedClassExceptions;
+
+    /**
+     * Suppresses {@link OmittedClassError} exceptions.
+     * For use by Inspector, which accepts any class.
+     */
+    public static void noOmittedClassExceptions() {
+        noOmittedClassExceptions = true;
+    }
+
     @Override
     protected boolean extraLoadClassChecks(Class<?> javaType) throws ClassNotFoundException {
         final String name = javaType.getName();
-        if (isOmittedType(name)) {
+        if (isOmittedType(name) && !noOmittedClassExceptions) {
             throw new OmittedClassError(name);
         }
         // This check prevents any VM class for which the boot loader was given "initiating" loader status
