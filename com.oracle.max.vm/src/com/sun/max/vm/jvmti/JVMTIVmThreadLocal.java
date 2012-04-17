@@ -77,7 +77,7 @@ public class JVMTIVmThreadLocal {
      * @param bit
      * @return {@code true} iff the bit is set.
      */
-    static boolean bitIsSet(int bit) {
+    public static boolean bitIsSet(int bit) {
         return bitIsSet(ETLA.load(currentTLA()), bit);
     }
 
