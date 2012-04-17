@@ -895,22 +895,25 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                } else {
+                } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {
-                        if (MaxineVM.isHosted() && classMethodActor.isTemplate()) {
+                        if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched
                         } else {
                             linkedAll = false;
-                            final int callPos = safepoints.causePosAt(safepointIndex);
-                            final CodePointer callSite = codeAt(callPos);
-                            if (!isPatchableCallSite(callSite)) {
-                                FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
-                                                " [0x" + codeStart.toHexString() + "+" + callPos + "]");
-                            }
-                            fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
+                            patchStaticTrampoline(safepointIndex, offset);
                         }
+                    } else {
+                        int callPos = safepoints.causePosAt(safepointIndex);
+                        fixupCallSite(callPos, callee.codeAt(offset));
+                    }
+                } else {
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
+                        linkedAll = false;
+                        patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeAt(offset));
@@ -921,6 +924,16 @@ public abstract class TargetMethod extends MemoryRegion {
         }
 
         return linkedAll;
+    }
+
+    private void patchStaticTrampoline(final int safepointIndex, final int offset) {
+        final int callPos = safepoints.causePosAt(safepointIndex);
+        final CodePointer callSite = codeAt(callPos);
+        if (!isPatchableCallSite(callSite)) {
+            FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                            " [0x" + codeStart.toHexString() + "+" + callPos + "]");
+        }
+        fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
     }
 
     public final TargetMethod getTargetMethod(Object o) {
