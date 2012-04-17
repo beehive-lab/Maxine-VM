@@ -122,6 +122,9 @@ public class ToStringDependencyVisitorGenerator {
         writer.close();
         boolean wouldUpdate = Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()),
                         "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
+        if (checkOnly && wouldUpdate) {
+            System.err.println(writer.toString());
+        }
         return wouldUpdate;
     }
 
