@@ -93,7 +93,7 @@ public abstract class DependencyProcessor {
         protected ToStringDependencyProcessorVisitor() {
         }
 
-        void setStringBuilder(StringBuilder sb) {
+        public void setStringBuilder(StringBuilder sb) {
             this.sb = sb;
         }
     }

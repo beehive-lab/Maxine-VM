@@ -49,11 +49,11 @@ public class JVMTI_DependencyProcessor extends DependencyProcessor {
         }
     }
 
-    interface JVMTI_DependencyProcessorVisitor extends DependencyProcessorVisitor {
+    public interface JVMTI_DependencyProcessorVisitor extends DependencyProcessorVisitor {
         boolean doCheckSettings(TargetMethod targetMethod, long eventSettings, long[] breakpoints);
     }
 
-    static class ToStringJVMTI_DependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements JVMTI_DependencyProcessorVisitor {
+    public static class ToStringJVMTI_DependencyProcessorVisitor extends ToStringDependencyProcessorVisitor implements JVMTI_DependencyProcessorVisitor {
         @Override
         public boolean doCheckSettings(TargetMethod targetMethod, long eventSettings, long[] breakpoints) {
             sb.append("JVMTI[");
@@ -68,7 +68,7 @@ public class JVMTI_DependencyProcessor extends DependencyProcessor {
 
     }
 
-    static final ToStringJVMTI_DependencyProcessorVisitor toStringJVMTI_DependencyProcessorVisitor = new ToStringJVMTI_DependencyProcessorVisitor();
+    public static final ToStringJVMTI_DependencyProcessorVisitor toStringJVMTI_DependencyProcessorVisitor = new ToStringJVMTI_DependencyProcessorVisitor();
 
     @Override
     protected ToStringDependencyProcessorVisitor getToStringDependencyProcessorVisitor() {

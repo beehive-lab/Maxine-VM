@@ -477,7 +477,7 @@ public final class Dependencies {
             return value;
         } else {
             final StringBuilder sb = new StringBuilder(value + Arrays.toString(packed));
-            visit(new AllDependencyVisitors.ToStringDependencyVisitor(sb));
+            visit(new AllToStringDependencyVisitor(sb));
             return sb.toString();
         }
     }
@@ -539,6 +539,23 @@ public final class Dependencies {
             }
         }
         return result;
+    }
+
+    static {
+        checkToStringVisitorsInSync();
+    }
+
+    @HOSTED_ONLY
+    private static void checkToStringVisitorsInSync() {
+        try {
+            boolean updatedSource = new ToStringDependencyVisitorGenerator().generate(true);
+            if (updatedSource) {
+                FatalError.unexpected("AllToStringDependencyVisitor is out of sync.\nRun ToStringDependencyVisitorGenerator, recompile (or refresh it in your IDE)" +
+                                " and restart the bootstrapping process.\n\n");
+            }
+        } catch (Exception exception) {
+            FatalError.unexpected("Error while generating AllToStringDependencyVisitor source", exception);
+        }
     }
 
 }
