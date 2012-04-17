@@ -498,8 +498,15 @@ public class JVMTIThreadFunctions {
         }
     }
 
+    /**
+     * Invokes a {@link FindAppFramesStackTraceVisitor} on a single thread in a {@link VmOperation}.
+     * N.B. To workaround a limitation in {@link VmOperation} where a GC cannot be run during the
+     * {@link VmOperation} unless all threads are stopped, we run this as a multi-thread operation
+     * even though that is not strictly necessary. Typically everything is stopped anyway.
+     */
     static class SingleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor stackTraceVisitor;
+        VmThread vmThread;
 
         /**
          * Create a {@link VmOperation} that runs the given {@link BaseStackTraceVisitor} on the given thread.
@@ -507,8 +514,14 @@ public class JVMTIThreadFunctions {
          * @param stackTraceVisitor
          */
         SingleThreadStackTraceVmOperation(VmThread vmThread, FindAppFramesStackTraceVisitor stackTraceVisitor) {
-            super("JVMTISingleStackTrace", vmThread, Mode.Safepoint);
+            super("JVMTISingleStackTrace", null, Mode.Safepoint);
+            this.vmThread = vmThread;
             this.stackTraceVisitor = stackTraceVisitor;
+        }
+
+        @Override
+        protected boolean operateOnThread(VmThread vmThread) {
+            return vmThread == this.vmThread;
         }
 
         @Override
@@ -578,6 +591,9 @@ public class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
+    /**
+     * Invokes a {@link FindAppFramesStackTraceVisitor} on multiple threads in a {@link VmOperation}.
+     */
     static class MultipleThreadStackTraceVmOperation extends VmOperation {
         FindAppFramesStackTraceVisitor[] stackTraceVisitors;
         Thread[] threads;

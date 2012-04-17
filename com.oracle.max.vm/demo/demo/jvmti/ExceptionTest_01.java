@@ -27,12 +27,12 @@ package demo.jvmti;
  * This tests an uncaught exception from main
  */
 public class ExceptionTest_01 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws TestException {
         foo();
     }
 
-    public static void foo() {
-        throw new RuntimeException("thrown from foo");
+    public static void foo() throws TestException {
+        throw new TestException("thrown from foo");
     }
 
 }

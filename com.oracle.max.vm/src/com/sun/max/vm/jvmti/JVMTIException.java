@@ -31,7 +31,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.FindAppFramesStackTraceVisitor;
-import com.sun.max.vm.jvmti.JVMTIThreadFunctions.StackElement;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
