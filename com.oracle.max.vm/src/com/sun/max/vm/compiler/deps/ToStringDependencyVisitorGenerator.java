@@ -76,7 +76,7 @@ public class ToStringDependencyVisitorGenerator {
         }
         out.printf("\nclass %s extends DependencyVisitor implements\n", GENERATED_CLASS_NAME);
         boolean first = true;
-        for (ToStringVisitorClassInfo info : search.toStringVisitorClasses) {
+        for (ToStringVisitorClassInfo info : infoArray) {
             if (first) {
                 first = false;
             } else {
