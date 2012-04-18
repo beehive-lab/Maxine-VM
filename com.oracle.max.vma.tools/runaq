@@ -1,0 +1,20 @@
+#! /bin/bash
+mx=512m
+while [ "$1" != "" ] ;
+do
+#  echo "$1"
+  case "$1" in
+  -mx )
+   shift
+   mx=$1
+   ;;
+  -v )
+   verbose="-v"
+   ;;
+  *)
+  break
+  esac
+  shift
+done
+
+java -ea -d64 -Xmx$mx -Xms$mx -cp $VMA_HOME/com.oracle.max.vma.tools/bin:$VMA_HOME/com.oracle.max.vma.ot/bin com.oracle.max.vma.ot.tools.cliquery.AnalysisQuery $verbose $*
