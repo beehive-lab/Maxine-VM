@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.sun.max.vm.heap.sequential.gen.semiSpace;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.compiler.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+
 
 public class Package extends BootImagePackage {
     public Package() {
-        super();
-    }
-
-    private boolean isOAT1X(String className) {
-        return className != null && className.startsWith(this.name());
+        registerScheme(HeapScheme.class, GenSSHeapScheme.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return isOAT1X(CompilationBroker.optName()) || isOAT1X(CompilationBroker.baselineName());
+        return vmConfiguration.schemeImplClassIsSubClass(HeapScheme.class, GenSSHeapScheme.class);
     }
-
 }

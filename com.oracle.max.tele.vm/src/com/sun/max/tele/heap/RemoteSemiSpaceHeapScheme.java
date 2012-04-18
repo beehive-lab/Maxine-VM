@@ -123,7 +123,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @see SemiSpaceHeapScheme
  */
-public final class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
+public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
 
     private static final int TRACE_VALUE = 1;
 

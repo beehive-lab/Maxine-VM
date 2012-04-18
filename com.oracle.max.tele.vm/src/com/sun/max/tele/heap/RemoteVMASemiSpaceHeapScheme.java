@@ -20,9 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.max.tele.heap;
 
-/**
- * Collection of classes that create a variant of T1X that supports the
- * Virtual Machine Advising framework.
-*/
-package com.sun.max.vm.t1x.vma;
+import com.sun.max.tele.*;
+
+
+public class RemoteVMASemiSpaceHeapScheme extends RemoteSemiSpaceHeapScheme {
+    RemoteVMASemiSpaceHeapScheme(TeleVM teleVM) {
+        super(teleVM);
+    }
+}

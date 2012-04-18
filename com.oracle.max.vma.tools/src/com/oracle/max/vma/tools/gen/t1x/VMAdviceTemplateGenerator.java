@@ -34,7 +34,7 @@ import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.t1x.vma.*;
+import com.oracle.max.vm.ext.t1x.vma.*;
 import com.sun.max.vm.type.*;
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
-
-import com.oracle.max.vm.ext.t1x.*;
-
-public class VMAT1XCompilationFactory extends T1XCompilationFactory {
-    @Override
-    public T1XCompilation newT1XCompilation(T1X t1x) {
-        return new VMAT1XCompilation(t1x);
-    }
-
-}
+/**
+ * A two-generations generational collector. The tenured space is a semi-space collector.
+ * The nursery is a copying collector with a small survivor space and a simple aging
+ * mechanism that promote objects that survive one 2 collections.
+ * WORK-IN PROGRESS. Currently the nursery doesn't age object, i.e., object that survive a collection are
+ * evacuated to the old generation right away, leaving the young generation always empty after a GC.
+ */
+package com.sun.max.vm.heap.sequential.gen.semiSpace;

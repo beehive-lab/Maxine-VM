@@ -31,7 +31,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -51,10 +50,6 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-    static boolean UseLOS = true;
-    static {
-        VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
-    }
 
     /**
      * A marking algorithm for the MSHeapScheme.
@@ -118,7 +113,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
 
         objectSpace.initialize(this, heapStart, initSize, maxSize);
-        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
+        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace;
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
 
@@ -274,7 +269,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
             if (heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.
                 // Update heapMarker's coveredArea.
-                ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
+                ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace;
                 heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
             }
             if (MaxineVM.isDebug() && Heap.logGCPhases()) {
