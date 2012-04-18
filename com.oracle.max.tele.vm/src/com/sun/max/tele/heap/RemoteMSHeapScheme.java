@@ -474,6 +474,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                     return LIVE;
                 }
 
+                @Override
+                boolean isFreeSpace() {
+                    return false;
+                }
+
                 // Transitions
                 @Override
                 void makeUnknown(MSRemoteReference ref) {
@@ -489,6 +494,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 // Properties
                 @Override ObjectStatus status() {
                     return UNKNOWN;
+                }
+
+                @Override
+                boolean isFreeSpace() {
+                    return false;
                 }
 
                 // Transitions
@@ -513,6 +523,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                     return DEAD;
                 }
 
+                @Override
+                boolean isFreeSpace() {
+                    return false;
+                }
+
                 // Transitions (none: death is final)
 
             },
@@ -523,6 +538,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 @Override
                 ObjectStatus status() {
                     return LIVE;
+                }
+
+                @Override
+                boolean isFreeSpace() {
+                    return false;
                 }
 
                // Transitions
@@ -538,6 +558,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 @Override
                 ObjectStatus status() {
                     return DEAD;
+                }
+
+                @Override
+                boolean isFreeSpace() {
+                    return false;
                 }
 
                 // Transitions (none: death is final)
@@ -566,6 +591,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             final String gcDescription(MSRemoteReference ref) {
                 return label;
             }
+
+            /**
+             * @see RemoteReference#isFreeSpace()
+             */
+            abstract boolean isFreeSpace();
 
             // Transitions
 
@@ -670,6 +700,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             return remoteScheme.heapSchemeClass().getSimpleName() + " state=" + refState.gcDescription(this);
         }
 
+        @Override
+        public boolean isFreeSpace() {
+            return refState.isFreeSpace();
+        }
 
         void makeUnknown() {
             refState.makeUnknown(this);

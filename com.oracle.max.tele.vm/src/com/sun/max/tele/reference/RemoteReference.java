@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,8 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Special implementations of VM {@link Reference}s to objects that permit reuse of many
- * VM classes and schemas in the context of non-local VM heap inspection.
+ * Special implementations of VM {@link Reference}s to objects that permit reuse of many VM classes and schemas in the
+ * context of non-local VM heap inspection.
  *
  * @see VmReferenceManager
  */
@@ -51,6 +51,7 @@ public abstract class RemoteReference extends Reference {
     public TeleVM vm() {
         return vm;
     }
+
     /**
      * @return a non-zero integer uniquely identifying the referred-to object in the VM, assigned lazily
      */
@@ -62,9 +63,9 @@ public abstract class RemoteReference extends Reference {
     }
 
     /**
-     * @return the status of the object representation in memory to which this instance refers: {@linkplain ObjectStatus#LIVE LIVE},
-     * {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is {@linkplain HeapPhase#ANALYZING ANALYZING})
-     * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
+     * @return the status of the object representation in memory to which this instance refers:
+     *         {@linkplain ObjectStatus#LIVE LIVE}, {@linkplain ObjectStatus#DEAD DEAD}, or (only possible when heap is
+     *         {@linkplain HeapPhase#ANALYZING ANALYZING}) {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.
      */
     public abstract ObjectStatus status();
 
@@ -85,15 +86,15 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * Returns {@code true} during the period when an object is being moved to a new location in VM memory by a
-     * relocating GC, only possible when the heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING}.  This
-     * state can be characterized as the object existing in two places simultaneously, even if complete
-     * information about its two locations has not been discovered.
+     * relocating GC, only possible when the heap phase is {@linkplain HeapPhase#ANALYZING ANALYZING}. This state can be
+     * characterized as the object existing in two places simultaneously, even if complete information about its two
+     * locations has not been discovered.
      * <p>
      * During such a period:
      * <ul>
      * <li> {@link #origin()} returns the location of the <em>new</em> copy of the object;</li>
-     * <li> {@link #forwardedFrom()}, if known, returns the <em>old</em> copy of the object, or
-     * {@code null} if not yet discovered; and </li>
+     * <li> {@link #forwardedFrom()}, if known, returns the <em>old</em> copy of the object, or {@code null} if not yet
+     * discovered; and</li>
      * <li> {@link #status()} returns {@linkplain ObjectStatus#LIVE LIVE}.</li>
      * </ul>
      *
@@ -116,7 +117,7 @@ public abstract class RemoteReference extends Reference {
 
     /**
      * Generates a string describing the status of the object in VM memory with respect to memory management, designed
-     * to provide useful information to a person:  information that the Inspector can't already deduce from the standard
+     * to provide useful information to a person: information that the Inspector can't already deduce from the standard
      * interfaces. For example, the Inspector can identify the region into which the reference points and the basic
      * status of the object's {@linkplain ObjectStatus status}.
      *
@@ -125,25 +126,37 @@ public abstract class RemoteReference extends Reference {
     public abstract String gcDescription();
 
     /**
-     * @return is the reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be allowed to
-     *         persist past any VM execution?
+     * @return is this reference a special temporary {@linkplain ObjectStatus#DEAD DEAD} reference that should not be
+     *         allowed to persist past any VM execution?
      */
     public boolean isTemporary() {
         return false;
     }
 
     /**
-     * @return is the reference a special temporary {@linkplain ObjectStatus#LIVE LIVE} reference that appears to refer to an
-     *         object that is not in any known VM memory region?
+     * @return is this reference a special temporary {@linkplain ObjectStatus#LIVE LIVE} reference that appears to refer
+     *         to an object that is not in any known VM memory region?
      */
     public boolean isProvisional() {
         return false;
     }
 
     /**
-     * @return is the reference a local value dressed up to look like a remote reference
+     * @return is this reference a local value dressed up to look like a remote reference
      */
     public boolean isLocal() {
+        return false;
+    }
+
+    /**
+     * Does the reference point at a pseudo-object representing free space in the heap; such a pseudo object might be
+     * represented much like an ordinary heap object, and the VM might use some of the ordinary reference machinery to
+     * refer to it, but it is assumed not to be a legitimate object in any sense, and in particular never to be
+     * reachable in the usual manner.
+     *
+     * @return does this reference point at a pseudo-object that represents free space in the heap?
+     */
+    public boolean isFreeSpace() {
         return false;
     }
 
