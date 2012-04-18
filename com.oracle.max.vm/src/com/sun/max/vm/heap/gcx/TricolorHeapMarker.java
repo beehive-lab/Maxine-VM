@@ -34,6 +34,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map.
@@ -294,9 +295,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     private Address biasedBitmapBase;
 
     /**
-     * Memory where the color map is stored.
+     * Memory where the color map is stored. Formatted as a byte array.
      */
-    final MemoryRegion colorMap;
+    public final MemoryRegion colorMap;
 
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
@@ -483,7 +484,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a size in bytes
      */
     public Size memoryRequirement(Size maxCoveredAreaSize) {
-        return bitmapSize(maxCoveredAreaSize);
+        return bitmapSize(maxCoveredAreaSize).plus(HeapSchemeAdaptor.byteArrayHeaderSize());
     }
 
     /**
@@ -540,6 +541,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
     }
 
+    @FOLD
+    private static Size markBitmapHeaderSize() {
+        return Layout.longArrayLayout().getArraySize(Kind.LONG, 0);
+    }
     /**
      * Initialize a tricolor mark bitmap to cover a specified area. The mark-bitmap is generated at VM startup.
      * The mark bitmap must be large enough to accommodate the largest possible area that the mark bitmap might cover.
@@ -547,7 +552,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @param start start of the covered area
      * @param end end of the covered area
      * @param bitmapStorage address to the first byte of the mark bitmap
-     * @param bitmapSize size of the mark bitmap
+     * @param bitmapSize size of the mark bitmap storage
      */
     public void initialize(Address start, Address end, Address bitmapStorage, Size bitmapSize) {
         if (MaxineVM.isDebug()) {
@@ -557,7 +562,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
-        base = bitmapStorage;
+        // Format the mark bitmap as an byte array
+        Pointer origin = bitmapStorage.asPointer();
+        Layout.writeArrayLength(origin, bitmapSize.minus(markBitmapHeaderSize().unsignedShiftedRight(Kind.LONG.width.log2numberOfBytes)).toInt());
+        Layout.writeHubReference(origin, Reference.fromJava(ClassRegistry.LONG_ARRAY.dynamicHub()));
+
+        base = bitmapStorage.plus(markBitmapHeaderSize());
         final int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
         if (UseRescanMap) {

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.oracle.max.vm.ext.t1x.vma;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
@@ -32,8 +32,10 @@ import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -75,8 +77,6 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         this.vmaT1X = (VMAT1X) t1x;
         templates = vmaT1X.getAltT1X().templates;
         defaultTemplates = templates;
-        makeInvokeAfterTagMap();
-        makeIfTagMap();
     }
 
     @Override
@@ -393,7 +393,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                 }
 
                 case IF_ICMPEQ: case IF_ICMPNE: case IF_ICMPLT: case IF_ICMPGE:
-                case IF_ICMPGT: case IF_ICMPLE: case IF_ACMPEQ: case IF_ACMPNE: {
+                case IF_ICMPGT: case IF_ICMPLE: {
                     start(tag);
                     CiRegister reg1 = reg(0, "value1", Kind.INT);
                     CiRegister reg2 = reg(1, "value2", Kind.INT);
@@ -402,24 +402,51 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     finish();
                     break;
                 }
+
+                case IF_ACMPEQ: case IF_ACMPNE: {
+                    start(tag);
+                    CiRegister reg1 = reg(0, "value1", Kind.REFERENCE);
+                    CiRegister reg2 = reg(1, "value2", Kind.REFERENCE);
+                    peekObject(reg1, 1);
+                    peekObject(reg2, 0);
+                    finish();
+                    break;
+                }
+
             }
         }
         super.do_branch(opcode, targetBCI);
     }
 
+    @HOSTED_ONLY
+    private static class InitializationCompleteCallback implements JavaPrototype.InitializationCompleteCallback {
+
+        @Override
+        public void initializationComplete() {
+            makeInvokeAfterTagMap();
+            makeIfTagMap();
+        }
+
+    }
+
+    static {
+        JavaPrototype.registerInitializationCompleteCallback(new InitializationCompleteCallback());
+    }
+
     /*
      * Support for finding the INVOKE adviseafter tag quickly.
      */
-    private static EnumMap<T1XTemplateTag, T1XTemplateTag> invokeAfterTagMap;
+    private static final EnumMap<T1XTemplateTag, T1XTemplateTag> invokeAfterTagMap = new EnumMap<T1XTemplateTag, T1XTemplateTag>(T1XTemplateTag.class);
 
+    @HOSTED_ONLY
     private static void makeInvokeAfterTagMap() {
-        invokeAfterTagMap = new EnumMap<T1XTemplateTag, T1XTemplateTag>(T1XTemplateTag.class);
         addToInvokeAfterTagMap(T1XTemplateTag.INVOKEINTERFACES, INVOKEINTERFACE$adviseafter);
         addToInvokeAfterTagMap(T1XTemplateTag.INVOKEVIRTUALS, INVOKEVIRTUAL$adviseafter);
         addToInvokeAfterTagMap(T1XTemplateTag.INVOKESPECIALS, INVOKESPECIAL$adviseafter);
         addToInvokeAfterTagMap(T1XTemplateTag.INVOKESTATICS, INVOKESTATIC$adviseafter);
     }
 
+    @HOSTED_ONLY
     private static void addToInvokeAfterTagMap(EnumMap<KindEnum, T1XTemplateTag> map, T1XTemplateTag value) {
         for (T1XTemplateTag tag : map.values()) {
             invokeAfterTagMap.put(tag, value);
@@ -428,7 +455,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     // reverse map from opcode to IF template tag
 
-    private static Map<Integer, T1XTemplateTag> branchTagMap;
+    private static final Map<Integer, T1XTemplateTag> branchTagMap = new HashMap<Integer, T1XTemplateTag>();
 
     private static final EnumSet<T1XTemplateTag> IF_TEMPLATE_TAGS = EnumSet.of(
                     IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE,
@@ -436,8 +463,8 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     private static final EnumSet<T1XTemplateTag> GOTO_TEMPLATE_TAGS = EnumSet.of(GOTO, GOTO_W);
 
+    @HOSTED_ONLY
     private static void makeIfTagMap() {
-        branchTagMap = new HashMap<Integer, T1XTemplateTag>();
         for (T1XTemplateTag tag : IF_TEMPLATE_TAGS) {
             branchTagMap.put(tag.opcode, tag);
         }
