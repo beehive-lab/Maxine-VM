@@ -46,10 +46,21 @@ public interface RemoteObjectReferenceManager {
      * at a specified origin, using only low-level mechanisms:  no
      * {@link Reference}s.
      *
+     * @param origin an address a location in VM memory
      * @return whether the address is the origin of a possibly live VM object
      * @throws TeleError if the origin is not in the memory regions being managed.
      */
     boolean isObjectOrigin(Address origin) throws TeleError;
+
+    /**
+     * Determines whether there is a pseudo-object, used to represent <emph>free space</emph> by GC implementations, in
+     * the VM memory at a specified origin, using only low-level mechanisms: no {@link, Reference}s.
+     *
+     * @param origin an address a location in VM memory
+     * @return whether the address is the origin of a free-space pseudo-object.
+     * @throws TeleError if the origin is not in the memory regions being managed.
+     */
+    boolean isFreeSpaceOrigin(Address origin) throws TeleError;
 
     /**
      * Creates a canonical remote reference to an object whose origin

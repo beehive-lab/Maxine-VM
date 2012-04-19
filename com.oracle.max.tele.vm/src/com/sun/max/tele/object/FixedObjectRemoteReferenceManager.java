@@ -79,6 +79,12 @@ public final class FixedObjectRemoteReferenceManager extends AbstractVmHolder im
         return objects().isPlausibleOriginUnsafe(origin);
     }
 
+
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // Assume no explicit representation of free space
+        return false;
+    }
+
     public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
         return null;
     }

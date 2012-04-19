@@ -122,6 +122,11 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return false;
     }
 
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // This collector does not represent free space explicitly.
+        return false;
+    }
+
     public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
         // Objects are relocated, but are not forwarded in this region.
         return null;
