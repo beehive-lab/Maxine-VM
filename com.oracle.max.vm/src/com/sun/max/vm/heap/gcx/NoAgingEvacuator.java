@@ -64,7 +64,7 @@ public final class NoAgingEvacuator extends Evacuator {
     /**
      * Threshold below which refills of the thread local promotion space is automatic.
      */
-    private final Size minRefillThreshold;
+    private Size minRefillThreshold;
 
     /**
      * Hint of amount of space to use to refill the promotion allocation buffer.
@@ -168,18 +168,18 @@ public final class NoAgingEvacuator extends Evacuator {
 
     private final DirtyCardEvacuationClosure heapSpaceDirtyCardClosure;
 
-    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset, Size minRefillThreshold) {
+    public NoAgingEvacuator(HeapSpace fromSpace, HeapSpace toSpace, CardTableRSet rset) {
         this.fromSpace = fromSpace;
         this.toSpace = toSpace;
         this.rset = rset;
         this.cfoTable = rset.cfoTable;
-        this.minRefillThreshold = minRefillThreshold;
         this.heapSpaceDirtyCardClosure = new DirtyCardEvacuationClosure();
     }
 
-    public void initialize(int maxSurvivorRanges, Size labSize) {
+    public void initialize(int maxSurvivorRanges, Size labSize, Size minRefillThreshold) {
         this.survivorRanges = new SurvivorRangesQueue(maxSurvivorRanges);
         this.pSize = labSize;
+        this.minRefillThreshold = minRefillThreshold;
     }
 
     /**
