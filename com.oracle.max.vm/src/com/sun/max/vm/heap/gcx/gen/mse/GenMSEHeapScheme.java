@@ -105,7 +105,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     /**
      * Implementation of young space evacuation. Used by minor collection operations.
      */
-    private NoAgingEvacuator youngSpaceEvacuator;
+    private final NoAgingEvacuator youngSpaceEvacuator;
 
     /**
      * Operation to submit to the {@link VmOperationThread} to perform a generational collection.
@@ -137,6 +137,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             new CardSpaceAllocator<RegionOverflowAllocatorRefiller>(new RegionOverflowAllocatorRefiller(cardTableRSet), cardTableRSet);
 
         oldSpace = new FirstFitMarkSweepSpace<GenMSEHeapScheme>(heapAccount, tlabAllocator, overflowAllocator, true, cardTableRSet, OLD.tag());
+        youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet);
         noYoungReferencesVerifier = new NoYoungReferenceVerifier(cardTableRSet, youngSpace);
         fotVerifier = new FOTVerifier(cardTableRSet);
         genCollection = new GenCollection();
@@ -245,8 +246,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
             // FIXME: the capacity of the survivor range queues should be dynamic. Its upper bound could be computed based on the
             // worst case evacuation and the number of fragments of old space available for allocation.
             // Same with the lab size. In non parallel evacuators, this should be all the space available for allocation in a region.
-            youngSpaceEvacuator = new NoAgingEvacuator(youngSpace, oldSpace, cardTableRSet, oldSpace.minReclaimableSpace());
-            youngSpaceEvacuator.initialize(1000, ELABSize);
+            youngSpaceEvacuator.initialize(1000, ELABSize, oldSpace.minReclaimableSpace());
 
             if (HeapRangeDumper.DumpOnError) {
                 MemoryRegion dumpingCoverage = new MemoryRegion();
