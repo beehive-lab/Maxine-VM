@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele.heap;
 
+import static com.sun.max.vm.heap.HeapPhase.*;
 import static com.sun.max.vm.heap.ObjectStatus.*;
 
 import java.io.*;
@@ -39,7 +40,9 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.ms.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -55,11 +58,20 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     private final TimedTrace heapUpdateTracer;
 
     private long lastUpdateEpoch = -1L;
+    private long lastAnalyzingPhaseCount = 0L;
+    private long lastReclaimingPhaseCount = 0L;
 
     /**
     * The VM object that implements the {@link HeapScheme} in the current configuration.
     */
     private TeleMSHeapScheme scheme;
+
+    /**
+     * The absolute address of the dynamic hub for the class {@link HeapFreeChunk}, stored
+     * on the assumption that it is in the boot heap and never changes.  This gets used for
+     * quick testing on possible free space chunk origins.
+     */
+    private Address heapFreeChunkHubOrigin = Address.zero();
 
     /**
      * The VM object that describes the location of the collector's Object-Space.
@@ -69,7 +81,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     /**
      * Map:  VM address in Object-Space --> a {@link MSRemoteReference} that refers to the object whose origin is at that location.
      */
-    private WeakRemoteReferenceMap<MSRemoteReference> objectSpaceRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
+    private WeakRemoteReferenceMap<MSRemoteReference> objectRefMap = new WeakRemoteReferenceMap<MSRemoteReference>();
 
     /**
      * Map:  VM address in Object-Space --> a {@link MSRemoteReference} that refers to the free space chunk whose origin is at that location.
@@ -103,6 +115,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             sb.append(" will not work correctly; DEBUG boot image required");
             TeleWarning.message(sb.toString());
         }
+        // TODO (mlvdv) handle attach mode, where the memory region will already be allocated and we need to know about it right away
     }
 
     public Class heapSchemeClass() {
@@ -119,7 +132,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 assert scheme != null;
 
                 updateMemoryStatus(initializationEpoch);
-                // TODO (mlvdv) decide where to put the phase change notification so that the GC inspection will have all the needed information.
                 /*
                  * Add a heap phase listener that will will force the VM to stop any time the heap transitions from
                  * analysis to the reclaiming phase of a GC. This is exactly the moment in a GC cycle when reference
@@ -128,19 +140,19 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                  * of the refresh cycle depend on references. Consequently, the needed updates take place when this
                  * manager gets refreshed (early in the refresh cycle), not when this handler eventually gets called.
                  */
-//                try {
-//                    vm().addGCPhaseListener(new MaxGCPhaseListener() {
-//
-//                        public void gcPhaseChange(HeapPhase phase) {
-//                            // Dummy handler; the actual updates must be done early during the refresh cycle.
-//                            final long phaseChangeEpoch = vm().teleProcess().epoch();
-//                            Trace.line(TRACE_VALUE, tracePrefix() + " VM stopped for reference updates, epoch=" + phaseChangeEpoch + ", gc cycle=" + gcStartedCount());
-//                            Trace.line(TRACE_VALUE, tracePrefix() + " Note: updates have long since been done by the time this (dummy) handler is called");
-//                        }
-//                    }, RECLAIMING);
-//                } catch (MaxVMBusyException e) {
-//                    TeleError.unexpected("Unable to add GC Phase Listener");
-//                }
+                try {
+                    vm().addGCPhaseListener(RECLAIMING, new MaxGCPhaseListener() {
+
+                        public void gcPhaseChange(HeapPhase phase) {
+                            // Dummy handler; the actual updates must be done early during the refresh cycle.
+                            final long phaseChangeEpoch = vm().teleProcess().epoch();
+                            Trace.line(TRACE_VALUE, tracePrefix() + " VM stopped for reference updates, epoch=" + phaseChangeEpoch + ", gc cycle=" + gcStartedCount());
+                            Trace.line(TRACE_VALUE, tracePrefix() + " Note: updates have long since been done by the time this (dummy) handler is called");
+                        }
+                    });
+                } catch (MaxVMBusyException e) {
+                    TeleError.unexpected(tracePrefix() + "Unable to add GC Phase Listener");
+                }
             }
         });
 
@@ -151,6 +163,10 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     }
 
 
+    // TODO (mlvdv) Consider whether we should periodically purge the maps of weak references to references that have been collected.
+
+    // TODO (mlvdv) Consider whether to replace the objectRefMap with separate maps:  liveObjectRefMap and unknownObjectRefMap
+
     /**
      * {@inheritDoc}
      * <p>
@@ -160,6 +176,17 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     public void updateMemoryStatus(long epoch) {
 
         super.updateMemoryStatus(epoch);
+
+        if (heapFreeChunkHubOrigin.isZero()) {
+            // Assume this never changes, once located.
+            final TeleClassActor hfcClassActor = classes().findTeleClassActor(HeapFreeChunk.class);
+            if (hfcClassActor != null) {
+                final TeleDynamicHub teleDynamicHub = hfcClassActor.getTeleDynamicHub();
+                if (teleDynamicHub != null) {
+                    heapFreeChunkHubOrigin = teleDynamicHub.origin();
+                }
+            }
+        }
 
         if (scheme == null) {
             // Can't do anything until we have the VM object that represents the scheme implementation
@@ -193,11 +220,106 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
              */
             objectSpaceMemoryRegion.updateCache(epoch);
 
+            /*
+             * Before doing anything else, update the free space references to see if any have become dead
+             */
+            // TODO (mlvdv) is this needed during the ANALYZING phase?
+            for (MSRemoteReference freeSpaceRef : freeSpaceRefMap.values()) {
+                if (!freeSpaceRef.isFreeSpace()) {
+                    // The reference no longer points at a free space chunk
+                    assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
+                    freeSpaceRef.makeDead();
+                }
+            }
+            if (phase().isCollecting()) {
 
-            // TODO (mlvdv) based on where we are in the GC cycle, update remote references as needed.
+                // TODO (mlvdv) in the most common case, where we only take the pre-defined break during each GC cycle,
+                // then we iterate over the object references three times.  This might be reduced to two, or even one,
+                // using a kind of fast-path approach but it would make the logic less clear.  Debug first, then revisit this possibility.
 
-            lastUpdateEpoch = epoch;
-            heapUpdateTracer.end(statsPrinter);
+                /*
+                 * Check first to see if a GC cycle has started since the last time we looked. If so, then any live objects
+                 * must transition state before before examining what has happened since the the cycle started.
+                 */
+                if (lastAnalyzingPhaseCount < gcStartedCount()) {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount());
+                    assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
+                    for (MSRemoteReference objectRef : objectRefMap.values()) {
+                        objectRef.makeUnknown();
+                    }
+                    Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + objectRefMap.size());
+                    lastAnalyzingPhaseCount = gcStartedCount();
+                }
+
+                /*
+                 * Check to see if any objects have been marked since we last looked.  This can happen
+                 * at any time during the analyzing phase, but we have to check one more time when we hit the reclaiming
+                 * phase.
+                 */
+                if (lastReclaimingPhaseCount < gcStartedCount()) {
+                    // The transition to reclaiming hasn't yet been processed, so check for any newly marked references.
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "checking Object refs, GC cycle=" + gcStartedCount());
+                    int live = 0;
+                    int markedLive = 0;
+                    for (MSRemoteReference objectRef : objectRefMap.values()) {
+                        switch (objectRef.status()) {
+                            case UNKNOWN:
+                                if (true) { // TODO (mlvdv) if object is marked in the MBM, not implemented yet
+                                    // An object has been marked since the last time we looked, transition back to LIVE
+                                    objectRef.makeLive();
+                                    markedLive++;
+                                }
+                                break;
+                            case LIVE:
+                                // Do nothing; already live and in the objectMap
+                                live++;
+                                break;
+                            case DEAD:
+                                TeleError.unexpected(tracePrefix() + "DEAD reference found in Object map");
+                                break;
+                            default:
+                                TeleError.unknownCase();
+                        }
+                    }
+                    Trace.end(TRACE_VALUE, tracePrefix() + "checking Object refs, GC cycle=" + gcStartedCount()
+                                    + " live=" + (live + markedLive) + "(old=" + live + ", new=" + markedLive + ")");
+                }
+
+                if (phase().isReclaiming() && lastReclaimingPhaseCount < gcStartedCount()) {
+                    /*
+                     * The heap is in a GC cycle, and this is the first VM halt during that GC cycle where we know
+                     * analysis is complete. This halt will usually be caused by the special breakpoint we've set at
+                     * entry to the {@linkplain #RECLAIMING} phase.  This is the opportunity
+                     * to update reference maps while full information is still available in the collector.
+                     */
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC RECLAIMING, cycle=" + gcStartedCount());
+                    assert lastReclaimingPhaseCount == gcStartedCount() - 1;
+                    lastReclaimingPhaseCount = gcStartedCount();
+                    for (MSRemoteReference objectRef : objectRefMap.values()) {
+                        switch (objectRef.status()) {
+                            case UNKNOWN:
+                                // The object is unreachable.
+                                assert objectRefMap.remove(objectRef.origin()) != null;
+                                objectRef.makeDead();
+                                break;
+                            case LIVE:
+                                // Do nothing; already live and in the objectMap
+                                break;
+                            case DEAD:
+                                TeleError.unexpected(tracePrefix() + "DEAD reference found in Object map");
+                                break;
+                            default:
+                                TeleError.unknownCase();
+                        }
+                    }
+                }
+
+
+
+
+                lastUpdateEpoch = epoch;
+                heapUpdateTracer.end(statsPrinter);
+            }
         }
     }
 
@@ -265,7 +387,14 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         return false;
     }
 
-    // TODO (mlvdv) refine
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        TeleError.check(contains(origin), "Location is outside MS heap region");
+        final Address hubOrigin = Layout.readHubReferenceAsWord(origin.asPointer()).asAddress();
+        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
+    }
+
+
+    // TODO (mlvdv) refine; only handles live object now, doesn't support collection.
     public RemoteReference makeReference(Address origin) throws TeleError {
         assert vm().lockHeldByCurrentThread();
         // It is an error to attempt creating a reference if the address is completely outside the managed region(s).
@@ -275,14 +404,14 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             case MUTATING:
             case RECLAIMING:
             case ANALYZING:
-                remoteReference = objectSpaceRefMap.get(origin);
+                remoteReference = objectRefMap.get(origin);
                 if (remoteReference != null) {
                     // A reference to the object is already in the Object-Space map.
                     TeleError.check(remoteReference.status().isLive());
                 } else if (objectSpaceMemoryRegion.containsInAllocated(origin) && objects().isPlausibleOriginUnsafe(origin)) {
                     // A newly discovered object in the allocated area of To-Space; add a new reference to the To-Space map.
                     remoteReference = MSRemoteReference.createLive(this, origin);
-                    objectSpaceRefMap.put(origin, remoteReference);
+                    objectRefMap.put(origin, remoteReference);
                 }
                 break;
             default:
@@ -307,6 +436,18 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
     private boolean inLiveArea(Address address) {
         // TODO (mlvdv) refine
         return objectSpaceMemoryRegion.containsInAllocated(address);
+    }
+
+    /**
+     * Checks whether the origin of a reference is currently the origin of an instance
+     * of {@link HeapFreeChunk} in VM memory.
+     *
+     * @param ref a reference, presumably once known to be the origin of a {@link HeapFreeChunk}
+     * @return whether the reference points at a {@link HeapFreeChunk}
+     */
+    private boolean isFreeSpace(MSRemoteReference ref) {
+        final Address hubOrigin = Layout.readHubReferenceAsWord(ref).asAddress();
+        return heapFreeChunkHubOrigin.isNotZero() && hubOrigin.equals(heapFreeChunkHubOrigin);
     }
 
     private void printRegionObjectStats(PrintStream printStream, int indent, boolean verbose, TeleMemoryRegion region, WeakRemoteReferenceMap<MSRemoteReference> map) {
@@ -388,7 +529,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         if (objectSpaceMemoryRegion != null) {
             final NumberFormat formatter = NumberFormat.getInstance();
 
-            final int totalRefs = objectSpaceRefMap.values().size();
+            final int totalRefs = objectRefMap.values().size();
 
             // Line 0
             String indentation = Strings.times(' ', indent);
@@ -409,7 +550,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             sb1.append(", total object refs mapped=").append(formatter.format(totalRefs));
             printStream.println(indentation + sb1.toString());
 
-            printRegionObjectStats(printStream, indent + 4, verbose, objectSpaceMemoryRegion, objectSpaceRefMap);
+            printRegionObjectStats(printStream, indent + 4, verbose, objectSpaceMemoryRegion, objectRefMap);
 
         }
     }
@@ -710,11 +851,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
         }
 
 
-        void makeLive(MSRemoteReference ref) {
+        void makeLive() {
             refState.makeLive(this);
         }
 
-        void makeDead(MSRemoteReference ref) {
+        void makeDead() {
             refState.makeDead(this);
         }
     }

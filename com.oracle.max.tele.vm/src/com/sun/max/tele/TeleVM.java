@@ -1150,7 +1150,7 @@ public abstract class TeleVM implements MaxVM {
      * Registering this listener will cause one or more breakpoints to be created, if they don't exist,
      * so this must be called after all the other inspection services are in place.
      */
-    public final void addGCPhaseListener(MaxGCPhaseListener listener, HeapPhase phase) throws MaxVMBusyException {
+    public final void addGCPhaseListener(HeapPhase phase, MaxGCPhaseListener listener) throws MaxVMBusyException {
         if (phase == null) {
             gcAnalyzingListeners.add(listener, teleProcess);
             gcReclaimingListeners.add(listener, teleProcess);

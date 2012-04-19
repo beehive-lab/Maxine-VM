@@ -121,6 +121,11 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         return false;
     }
 
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // Unmanaged means no explicit representation of free space.
+        return false;
+    }
+
     public Address getForwardingAddressUnsafe(Address origin) throws TeleError {
         // Objects are not forwarded.
         return null;

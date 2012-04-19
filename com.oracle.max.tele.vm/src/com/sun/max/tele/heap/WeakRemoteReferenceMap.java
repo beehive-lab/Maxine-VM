@@ -65,7 +65,20 @@ public final class WeakRemoteReferenceMap<Ref_Type extends RemoteReference> {
     }
 
     /**
+     * Removes an existing reference to an object whose origin is at the specified location in VM memory.
+     *
+     * @param origin a location in VM memory.
+     * @return the reference formerly in the map at the specified location, null if there was no such reference
+     */
+    public  Ref_Type remove(Address origin) {
+        final WeakReference<Ref_Type> weakRef = map.remove(origin.toLong());
+        return weakRef == null ? null : weakRef.get();
+    }
+
+    /**
      * Enumerates the {@link RemoteReference}s contained in the map.
+     *
+     * @returns a new list containing the values, modification-safe
      */
     public List<Ref_Type> values() {
         final ArrayList<Ref_Type> values = new ArrayList<Ref_Type>(map.size());
@@ -78,6 +91,13 @@ public final class WeakRemoteReferenceMap<Ref_Type extends RemoteReference> {
             }
         }
         return values;
+    }
+
+    /**
+     * @return the number of entries in the map.
+     */
+    public long size() {
+        return map.size();
     }
 
     /**

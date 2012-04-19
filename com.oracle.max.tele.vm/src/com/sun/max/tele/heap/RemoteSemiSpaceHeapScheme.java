@@ -215,7 +215,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                  * manager gets refreshed (early in the refresh cycle), not when this handler eventually gets called.
                  */
                 try {
-                    vm().addGCPhaseListener(new MaxGCPhaseListener() {
+                    vm().addGCPhaseListener(RECLAIMING, new MaxGCPhaseListener() {
 
                         public void gcPhaseChange(HeapPhase phase) {
                             // Dummy handler; the actual updates must be done early during the refresh cycle.
@@ -223,9 +223,9 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                             Trace.line(TRACE_VALUE, tracePrefix() + " VM stopped for reference updates, epoch=" + phaseChangeEpoch + ", gc cycle=" + gcStartedCount());
                             Trace.line(TRACE_VALUE, tracePrefix() + " Note: updates have long since been done by the time this (dummy) handler is called");
                         }
-                    }, RECLAIMING);
+                    });
                 } catch (MaxVMBusyException e) {
-                    TeleError.unexpected("Unable to add GC Phase Listener");
+                    TeleError.unexpected(tracePrefix() + "Unable to add GC Phase Listener");
                 }
             }
         });
@@ -290,8 +290,9 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
             toSpaceMemoryRegion.updateCache(epoch);
             fromSpaceMemoryRegion.updateCache(epoch);
 
+
             /*
-             * We only need to check reference state when we're in a collection; otherwise they do not change state.
+             * For this collector, we only need an overall review of reference state when we're actually collecting.
              */
             if (phase().isCollecting()) {
 
@@ -503,6 +504,11 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
             default:
                 TeleError.unknownCase();
         }
+        return false;
+    }
+
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // This collector does not represent free space explicitly.
         return false;
     }
 

@@ -1103,7 +1103,7 @@ public abstract class VmWatchpoint extends AbstractVmHolder implements VMTrigger
                         }
                     };
                     try {
-                        vm().addGCPhaseListener(gcCompletedListener, HeapPhase.MUTATING);
+                        vm().addGCPhaseListener(HeapPhase.MUTATING, gcCompletedListener);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleWarning.message("update after watchpoint changes failed to set GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;

@@ -76,6 +76,11 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
         return false;
     }
 
+    public boolean isFreeSpaceOrigin(Address origin) throws TeleError {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     @Override
     public RemoteReference makeReference(Address origin) throws TeleError {
         // TODO Auto-generated method stub
