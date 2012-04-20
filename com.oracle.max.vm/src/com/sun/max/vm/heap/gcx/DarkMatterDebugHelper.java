@@ -39,7 +39,7 @@ public final class DarkMatterDebugHelper {
     // The DARK MATTER flag set all bits to zero (so it looks like an unlocked, un-hashed header), except for  the bits used for counting recursive lock requests,
     // namely, the highest 5 bits.
     // This is an unused pattern across all current locking implementation, which allow to unambiguously distinguish live objects from dark-matter.
-    private static final Word DARK_MATTER = Word.allOnes().asAddress().unsignedShiftedRight(5);
+    public static final Word DARK_MATTER = Word.allOnes().asAddress().unsignedShiftedRight(5);
 
     @INLINE
     private static void setDarkMatter(Pointer origin) {
