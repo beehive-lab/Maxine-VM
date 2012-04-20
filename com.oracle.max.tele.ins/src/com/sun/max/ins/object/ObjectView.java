@@ -306,13 +306,13 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
             }
         }
         setTitle();
-       if (status.isDead()) {
-           setStateColor(preference().style().deadObjectBackgroundColor());
-       } else if (teleObject.reference().isForwarded()) {
-           setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
-       } else {
-           setStateColor(null);
-       }
+        if (status.isDead()) {
+            setStateColor(preference().style().deadObjectBackgroundColor());
+        } else if (teleObject.reference().isForwarded()) {
+            setStateColor(preference().style().vmStoppedInGCBackgroundColor(false));
+        } else {
+            setStateColor(null);
+        }
     }
 
     /**
