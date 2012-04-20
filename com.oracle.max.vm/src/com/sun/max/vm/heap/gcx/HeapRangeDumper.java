@@ -119,7 +119,7 @@ public final class HeapRangeDumper implements Runnable {
 
     private boolean isValidHub(Pointer hubOrigin) {
         if (heapBounds.contains(hubOrigin)) {
-            Pointer hubhubPtr = hubOrigin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
+            Pointer hubhubPtr = hubOrigin.getReference(Layout.hubIndex()).toOrigin();
             return hubhubPtr.equals(dynamicHubHubPtr) ||  hubhubPtr.equals(staticHubHubPtr);
         }
         return false;
@@ -162,7 +162,7 @@ public final class HeapRangeDumper implements Runnable {
             Pointer p = start.asPointer();
             while (p.lessThan(end)) {
                 Pointer origin = Layout.cellToOrigin(p);
-                Pointer hubOrigin = origin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
+                Pointer hubOrigin = origin.getReference(Layout.hubIndex()).toOrigin();
                 if (hubOrigin.isZero() || hubOrigin.equals(zappedMarker)) {
                     handler.refineRange(this, origin);
                     return true;
@@ -211,7 +211,7 @@ public final class HeapRangeDumper implements Runnable {
         final boolean lockDisabledSafepoints = Log.lock();
         while (p.lessThan(end)) {
             Pointer origin = Layout.cellToOrigin(p);
-            Pointer hubOrigin = origin.getReference(PointerIndexAndHeaderVisitor.hubIndex()).toOrigin();
+            Pointer hubOrigin = origin.getReference(Layout.hubIndex()).toOrigin();
             if (hubOrigin.equals(zappedMarker)) {
                 // Skip zap markers.
                 p = skip(origin, ZAPPED_MARKER, "ZAPPED AREA");
@@ -290,7 +290,7 @@ public final class HeapRangeDumper implements Runnable {
         Log.println();
     }
 
-    PointerIndexAndHeaderVisitor dumpVisitor = new PointerIndexAndHeaderVisitor() {
+    PointerIndexVisitor dumpVisitor = new PointerIndexVisitor() {
         @Override
         public void visit(Pointer pointer, int wordIndex) {
             Log.print("        ");
@@ -298,7 +298,7 @@ public final class HeapRangeDumper implements Runnable {
         }
     };
 
-    PointerIndexAndHeaderVisitor checkUnparsableVisitor = new PointerIndexAndHeaderVisitor() {
+    PointerIndexVisitor checkUnparsableVisitor = new PointerIndexVisitor() {
         @Override
         public void visit(Pointer pointer, int wordIndex) {
             Pointer referencedOrigin = Layout.cellToOrigin(pointer.getWord(wordIndex).asPointer());
@@ -306,7 +306,7 @@ public final class HeapRangeDumper implements Runnable {
                 handler.refineRange(HeapRangeDumper.this, pointer.plusWords(wordIndex));
                 throw unparsableAddressException;
             }
-            Pointer hubOrigin = referencedOrigin.getWord(hubIndex()).asPointer();
+            Pointer hubOrigin = referencedOrigin.getWord(Layout.hubIndex()).asPointer();
             if (hubOrigin.isZero() || hubOrigin.equals(Pointer.fromLong(ZAPPED_MARKER)) || !isValidHub(hubOrigin)) {
                 handler.refineRange(HeapRangeDumper.this, pointer.plusWords(wordIndex));
                 throw unparsableAddressException;
@@ -314,9 +314,9 @@ public final class HeapRangeDumper implements Runnable {
         }
     };
 
-    private void visitReferenceArray(Pointer refArrayOrigin, PointerIndexAndHeaderVisitor visitor) {
+    private void visitReferenceArray(Pointer refArrayOrigin, PointerIndexVisitor visitor) {
         final int length = Layout.readArrayLength(refArrayOrigin);
-        final Address firstElementAddr = refArrayOrigin.plusWords(PointerIndexAndHeaderVisitor.firstElementIndex());
+        final Address firstElementAddr = refArrayOrigin.plusWords(Layout.firstElementIndex());
         final Address endOfArrayAddr = firstElementAddr.plusWords(length);
         final int firstIndex = firstElementAddr.lessEqual(start) ? start.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : 0;
         final int endIndex = endOfArrayAddr.greaterThan(end) ? end.minus(firstElementAddr).unsignedShiftedRight(Kind.REFERENCE.width.log2numberOfBytes).toInt() : length;

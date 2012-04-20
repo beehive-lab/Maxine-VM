@@ -27,6 +27,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -855,5 +856,26 @@ public final class Layout {
     @INLINE
     public static void setReference(Pointer array, int index, Reference value) {
         referenceArrayLayout().setReference(array, index, value);
+    }
+
+    /**
+     * Word index to a cell's hub from its origin.
+     */
+    @FOLD
+    public static int hubIndex() {
+        return generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() >> Word.widthValue().log2numberOfBytes;
+    }
+
+    /**
+     * Word index to the first element of a reference array from its origin.
+     */
+    @FOLD
+    static public int firstElementIndex() {
+        return referenceArrayLayout().getElementOffsetInCell(0).toInt() >> Kind.REFERENCE.width.log2numberOfBytes;
+    }
+
+    @INLINE
+    static public Hub getHub(Pointer origin) {
+        return UnsafeCast.asHub(origin.getReference(Layout.hubIndex()));
     }
 }

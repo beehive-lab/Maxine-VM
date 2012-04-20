@@ -94,6 +94,27 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    final class GenCollection extends GCOperation {
+        GenCollection() {
+            super("GenCollection");
+        }
+        private void verifyAfterEvacuation() {
+            // Verify that:
+            // 1. offset table is correctly setup
+            // 2. there are no pointer from old to young.
+            // 3. cards are all cleaned (except for those holding special references, which may have been dirtied during reference discovery)
+            oldSpace.visit(fotVerifier);
+            oldSpace.visit(noYoungReferencesVerifier);
+        }
+
+        @Override
+        protected void collect(int invocationCount) {
+            Size worstCaseEvac = youngSpace.totalSpace();
+            Size freeSpace = oldSpace.freeSpace();
+
+        }
+    }
+
     /**
      * Old generation, organized as a semi-space.
      */
@@ -221,6 +242,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             Address startOfOldSpace = youngSpace.space.end().alignUp(pageSize);
             oldSpace.initializeAlignment(pageSize);
             oldSpace.initialize(startOfOldSpace, heapResizingPolicy.maxOldGenSize(), heapResizingPolicy.initialOldGenSize());
+            youngSpaceEvacuator.initialize(2, oldSpace.freeSpace(), Size.fromInt(256));
             initializeCoverage(firstUnusedByteAddress, oldSpace.highestAddress().minus(firstUnusedByteAddress).asSize());
             cardTableRSet.initializeXirStartupConstants();
 
