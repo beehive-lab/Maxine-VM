@@ -30,8 +30,9 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 import static com.sun.max.vm.heap.gcx.rset.ctbl.CardState.*;
+import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
-public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
+public final class NoYoungReferenceVerifier extends PointerIndexVisitor implements HeapSpaceRangeVisitor, OverlappingCellVisitor {
     final CardTableRSet cardTableRSet;
     final HeapSpace youngSpace;
     /**
@@ -62,10 +63,10 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
 
     private Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        checkNotYoung(origin, hubIndex());
-        final Hub hub = getHub(origin);
-        if (isHeapFreeChunk(hub)) {
-            return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
+        checkNotYoung(origin, Layout.hubIndex());
+        final Hub hub = Layout.getHub(origin);
+        if (hub == heapFreeChunkHub()) {
+            return cell.plus(toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
@@ -78,8 +79,8 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = Layout.readArrayLength(origin) + firstElementIndex();
-            for (int index = firstElementIndex(); index < length; index++) {
+            final int length = Layout.readArrayLength(origin) + Layout.firstElementIndex();
+            for (int index = Layout.firstElementIndex(); index < length; index++) {
                 checkNotYoung(origin, index);
             }
         }
@@ -92,14 +93,14 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
             return visitCell(cell);
         }
         final Pointer origin = Layout.cellToOrigin(cell);
-        final Pointer hubPointer = origin.plusWords(hubIndex());
+        final Pointer hubPointer = origin.plusWords(Layout.hubIndex());
 
         if (hubPointer.greaterEqual(start) && hubPointer.lessThan(end)) {
-            checkNotYoung(origin, hubIndex());
+            checkNotYoung(origin, Layout.hubIndex());
         }
-        final Hub hub = getHub(origin);
-        if (isHeapFreeChunk(hub)) {
-            return cell.plus(HeapFreeChunk.toHeapFreeChunk(origin).size);
+        final Hub hub = Layout.getHub(origin);
+        if (hub == heapFreeChunkHub()) {
+            return cell.plus(toHeapFreeChunk(origin).size);
         }
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
@@ -115,9 +116,9 @@ public final class NoYoungReferenceVerifier extends PointerIndexAndHeaderVisitor
         if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this, start, end);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            int length = Layout.readArrayLength(origin) + firstElementIndex();
-            int firstWordIndex = firstElementIndex();
-            Pointer p = origin.plusWords(firstElementIndex());
+            int length = Layout.readArrayLength(origin) + Layout.firstElementIndex();
+            int firstWordIndex = Layout.firstElementIndex();
+            Pointer p = origin.plusWords(Layout.firstElementIndex());
             if (p.lessThan(start)) {
                 firstWordIndex += start.minus(p).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
             }

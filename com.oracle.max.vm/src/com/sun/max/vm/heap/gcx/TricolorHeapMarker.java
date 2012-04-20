@@ -1864,6 +1864,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         Size tailSpace = sweeper.endOfSweepingRegion().minus(tail).asSize();
         if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
+        } else if (MaxineVM.isDebug()) {
+            DarkMatterDebugHelper.setDarkMatter(tail, tailSpace);
         }
         return lastLiveMark;
     }
