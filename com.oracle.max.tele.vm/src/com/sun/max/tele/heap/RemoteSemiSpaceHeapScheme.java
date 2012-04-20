@@ -165,17 +165,6 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
 
     private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(2);
 
-    private final Object statsPrinter = new Object() {
-        @Override
-        public String toString() {
-            final StringBuilder msg = new StringBuilder();
-            msg.append("GC phase=").append(phase.label());
-            msg.append(" #starts=").append(gcStartedCount);
-            msg.append(", #complete=").append(gcCompletedCount);
-            return msg.toString();
-        }
-    };
-
     protected RemoteSemiSpaceHeapScheme(TeleVM vm) {
         super(vm);
         this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
@@ -408,7 +397,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 }
             }
             lastUpdateEpoch = epoch;
-            heapUpdateTracer.end(statsPrinter);
+            heapUpdateTracer.end(heapUpdateStatsPrinter);
         }
     }
 

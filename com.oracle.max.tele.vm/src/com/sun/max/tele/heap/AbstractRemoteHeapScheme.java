@@ -40,6 +40,19 @@ public abstract class AbstractRemoteHeapScheme extends AbstractVmHolder implemen
     protected HeapPhase phase = HeapPhase.MUTATING;
     protected long gcStartedCount = 0;
     protected long gcCompletedCount = 0;
+    /**
+     * A printer for statistics at the end of each update.
+     */
+    protected final Object heapUpdateStatsPrinter = new Object() {
+            @Override
+            public String toString() {
+                final StringBuilder msg = new StringBuilder();
+                msg.append("GC phase=").append(phase.label());
+                msg.append(" #starts=").append(gcStartedCount);
+                msg.append(", #complete=").append(gcCompletedCount);
+                return msg.toString();
+            }
+        };
 
     protected AbstractRemoteHeapScheme(TeleVM vm) {
         super(vm);

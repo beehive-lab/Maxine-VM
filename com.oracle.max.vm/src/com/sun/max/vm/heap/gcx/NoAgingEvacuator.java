@@ -82,9 +82,9 @@ public final class NoAgingEvacuator extends Evacuator {
     private final CardFirstObjectTable cfoTable;
 
     /**
-     * Amount of promoted bytes.
+     * Amount of evacuated bytes.
      */
-    private Size promotedBytes;
+    private Size evacuatedBytes;
 
    /**
      * Allocation hand to the evacuator's private promotion space.
@@ -182,6 +182,10 @@ public final class NoAgingEvacuator extends Evacuator {
         this.minRefillThreshold = minRefillThreshold;
     }
 
+    public Size evacuatedBytes() {
+        return evacuatedBytes;
+    }
+
     /**
      * Retire promotion buffer before a GC on the promotion space is performed.
      */
@@ -197,7 +201,7 @@ public final class NoAgingEvacuator extends Evacuator {
     @Override
     protected void doBeforeEvacuation() {
         fromSpace.doBeforeGC();
-        promotedBytes = Size.zero();
+        evacuatedBytes = Size.zero();
         lastOverflowAllocatedRangeStart = Pointer.zero();
         lastOverflowAllocatedRangeEnd = Pointer.zero();
 
@@ -235,7 +239,7 @@ public final class NoAgingEvacuator extends Evacuator {
     }
 
     private void recordRange(Address start, Address end) {
-        promotedBytes = promotedBytes.plus(end.minus(start));
+        evacuatedBytes = evacuatedBytes.plus(end.minus(start));
         survivorRanges.add(start, end);
     }
 

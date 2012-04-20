@@ -93,7 +93,6 @@ public class ContiguousAllocatingSpace<T extends BaseAtomicBumpPointerAllocator<
 
     @Override
     public void doBeforeGC() {
-        // FIXME: should this be when we flip the to and from space ?
         allocator.doBeforeGC();
     }
 
