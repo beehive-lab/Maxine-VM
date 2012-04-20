@@ -31,6 +31,7 @@ import java.text.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.InitializationListener;
@@ -48,7 +49,133 @@ import com.sun.max.vm.reference.*;
 /**
  * Inspection support specialized for the basic mark-sweep implementation of {@link HeapScheme}
  * in the VM.
+ * <p>
+ * This support will not function correctly unless the VM is built in DEBUG mode, in which the GC will
+ * {@linkplain Memory#ZAPPED_MARKER zap} all memory in free space, with the exception of the two word
+ * header used to describe each segment of free space as a pseudo-object instance of {@link HeapFreeChunk}.</p>
+ * <p>
+ * For the purpose of exposition, assume two collections of references, indexed by memory location, which we'll
+ * call <em>Maps</em>: one for <em>Objects</em> and one for <em>Free Space</em>.
+ * These maps contain no {@linkplain ObjectStatus#DEAD DEAD} references except during a
+ * GC {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase.
+ * <p>
+ * A reference encapsulates the <em>identity</em> of an object (whether legitimate or pseudo-), so there may be
+ * no more than one reference in the maps at any memory location.  This identity relation permits the distinction
+ * between object and reference to be overlooked for brevity in the following description.<p>
  *
+ * <b>Implementation note:</b> the division of the references into two maps is purely conceptual for the purpose
+ * of this description.  Since the reference {@linkplain MSRemoteReference.RefState states} are all distinct,
+ * they could be kept in a single map, two maps, or even a separate map for each reference state.
+ * <p>
+ *
+ * <b>{@link HeapPhase#MUTATING} Summary</b>
+ * <p>
+ * In this phase new objects are allocated by splitting (if needed) instances of the pseudo-object {@link HeapFreeChunk}.
+ * New objects appear, and instances of {@link HeapFreeChunk} both appear and disappear.</p>
+ * <ul>
+ * <li><b>Objects:</b>
+ * <ol>
+ * <li>The Object Map contains only object references that are {@linkplain ObjectStatus#LIVE LIVE}.</li>
+ * <li>New objects, assumed to be {@linkplain ObjectStatus#LIVE LIVE}, may be discovered and added to the Object Map.</li>
+ * <li> It is possible that a newly discovered object is actually <em>Dark Matter</em> being treated conservatively
+ * as an object.  This situation is stable, since <em>dark Matter</em> can be neither allocated nor consolidated
+ * during this phase. The mis-categorization will
+ * persist until the completion of the next GC cycle, at which time the reference will be categorized correctly
+ * and will be moved to the Free Space Map. </li>
+ * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#MUTATING MUTATING} phase.</li>
+ * </ol></li>
+ * <li><b>Free Space:</b>
+ * <ol>
+ * <li>The Free Space map contains only contain pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
+ * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
+ * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
+ * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
+ * <li>Few new instances of <em>Dark Matter</em> will be discovered. Unless they are larger than the
+ * maximum size threshold for <em>Dark Matter</em>, they cannot be be distinguished
+ * from {@linkplain ObjectStatus#LIVE LIVE} objects. They will be conservatively treated as
+ * {@linkplain ObjectStatus#LIVE LIVE} objects until the completion of the next GC cycle.</li>
+ * <li>Existing instances of {@link HeapFreeChunk} in the map may be discovered, by observing that their hub pointer has changed, to have
+ * been replaced by an object allocation; such references become {@linkplain ObjectStatus#DEAD DEAD} and are removed from the Free Space Map.</li>
+ * <li>Existing instances of {@link HeapFreeChunk} in the map will not change in size, on the assumption that allocation
+ * out of a {@link HeapFreeChunk} always happens at the beginning.</li>
+ * <li>No other changes to the Free Space Map take place during the {@linkplain HeapPhase#MUTATING MUTATING} phase.</li>
+ * </ol></li></ul>
+ * <p>
+ *
+ * <b>{@link HeapPhase#ANALYZING} Summary</b>
+ * <p>
+ * In this phase the only observable change is the transition of some heap locations from <em>unmarked</em> to
+ * <em>marked</em>.
+ * <ul>
+ * <li><b>Objects:</b>
+ * <ol>
+ * <li>The Object Map contains only object references that are either {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.</li>
+ * <li>Existing {@linkplain ObjectStatus#UNKNOWN UNKNOWN} objects in the map may be discovered, by checking their <em>marks</em>
+ * to be <em>reachable</em>; such references become {@linkplain ObjectStatus#LIVE LIVE}.</li>
+ * <li>New objects may be discovered and added to the Object Map; if they are <em>marked</em> then they are
+ * {@linkplain ObjectStatus#LIVE LIVE} and if not they are {@linkplain ObjectStatus#UNKNOWN UNKNOWN}.</li>
+ * <li>A newly discovered unmarked object, treated as {@linkplain ObjectStatus#UNKNOWN UNKNOWN}, could in fact be
+ * <em>Dark Matter</em>; this mis-characterization will be corrected by the end of the current GC cycle.</li>
+ * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
+ * </ol></li>
+ * <li><b>Free Space:</b>
+ * <ol>
+ * <li>The Free Space map contains only pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
+ * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
+ * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
+ * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
+ * <li>Few new instances of <em>Dark Matter</em> will be discovered. Unless they are larger than the
+ * maximum size threshold for <em>Dark Matter</em>, they cannot be be distinguished
+ * from {@linkplain ObjectStatus#UNKNOWN UNKNOWN} objects. They will be conservatively treated as
+ * {@linkplain ObjectStatus#UNKNOWN UNKNOWN} objects until the end of the current GC cycle.</li>
+ * <li>No other changes to the Free Space Map take place during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
+ * </ol></li></ul>
+ * <p>
+ *
+ * <b>{@link HeapPhase#RECLAIMING} Summary</b>
+ * <p>
+ * In this phase unreachable (<em>unmarked</em>) objects <em>larger</em> than maximum size threshold for <em>Dark Matter</em>
+ * are either converted to instances of {@link HeapFreeChunk} or consolidated with adjacent instances of {@link HeapFreeChunk}.
+ * Some objects disappear, and instances of {@link HeapFreeChunk} both appear and disappear.
+ * Unreachable (<em>unmarked</em>) objects <em>smaller</em> than maximum size threshold for <em>Dark Matter</em>
+ * are ignored and implicitly become <em>Dark Matter</em>.</p>
+ * <ul>
+ * <li><b>Objects:</b>
+ * <ol>
+ * <li>The Object Map contains only object references that are either {@linkplain ObjectStatus#LIVE LIVE} or
+ * {@linkplain ObjectStatus#DEAD DEAD}, the latter case occurring <em>only</em> when a previously {@linkplain ObjectStatus#LIVE LIVE}
+ * object was discovered to be unreachable during the previous {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
+ * <li>New objects may be discovered and added to the Object Map as {@linkplain ObjectStatus#LIVE LIVE}, but only
+ * if they are <em>marked</em>; an <em>unmarked</em> location cannot be considered an object.</li>
+ * <li>An existing {@linkplain ObjectStatus#DEAD DEAD} object in the map might be discovered, by observing zapped memory, to have disappeared
+ * through consolidation with another instance of {@link HeapFreeChunk}; such a reference is removed from the Object Map.</li>
+ * <li>An existing {@linkplain ObjectStatus#DEAD DEAD} object in the map might be discovered, by observing its hub pointer,
+ * to have been <em>converted</em> to an instance of {@link HeapFreeChunk}; such a reference is removed from the Object Map.</li>
+ * <li>At the end of the {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase, every {@linkplain ObjectStatus#DEAD DEAD}
+ * object in the map is presumed to be <em>Dark Space</em>.  Such a reference is removed from the Object Map and added to
+ * the Free Space Map.</li>
+ * <li>No other changes to the Object Map take place during the {@linkplain HeapPhase#RECLAIMING RECLAIMING} phase.</li>
+ * </ol></li>
+ * <li><b>Free Space:</b>
+ * <ol>
+ * <li>The Free Space map contains only pseudo-object references that are {@linkplain ObjectStatus#LIVE LIVE}.
+ * Some are pseudo-object instances of {@link HeapFreeChunk}; the rest are unreachable ordinary objects that
+ * are unmodified, but implicitly considered <em>Dark Matter</em> by the GC.</li>
+ * <li>New instances of {@link HeapFreeChunk} may be discovered and added to the Free Space Map.</li>
+ * <li>An existing instance of {@link HeapFreeChunk} in the map may be discovered to have changed in size through
+ * consolidation with following space.</li>
+ * <li>An existing instance of {@link HeapFreeChunk} in the map might be discovered, by observing zapped memory, to have disappeared
+ * through consolidation with another instance of {@link HeapFreeChunk}; such a reference is removed from the Free Space Map.</li>
+ * <li>No other changes to the Free Space Map take place during the {@linkplain HeapPhase#ANALYZING ANALYZING} phase.</li>
+ * <li><b>Note:</b>  it might be useful to force the <em>Dark Space</em> references to be kept, even if the WeakReference map
+ * might otherwise lose them; they contain information that cannot be reconstructed.</li>
+ * </ol></li></ul>
+ * <p>
+
+ * @see HeapFreeChunk
+ * @see Memory#ZAPPED_MARKER
+ * @see Sweeper#minReclaimableSpace()
  * @see MSHeapScheme
  */
 public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
@@ -228,7 +355,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                 if (!freeSpaceRef.isFreeSpace()) {
                     // The reference no longer points at a free space chunk
                     assert freeSpaceRefMap.remove(freeSpaceRef.origin()) != null;
-                    freeSpaceRef.makeDead();
+                    freeSpaceRef.die();
                 }
             }
             if (phase().isCollecting()) {
@@ -245,7 +372,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                     Trace.begin(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount());
                     assert lastAnalyzingPhaseCount == gcStartedCount() - 1;
                     for (MSRemoteReference objectRef : objectRefMap.values()) {
-                        objectRef.makeUnknown();
+                        objectRef.analyzingBegins();
                     }
                     Trace.end(TRACE_VALUE, tracePrefix() + "first halt in GC cycle=" + gcStartedCount() + ", UNKNOWN refs=" + objectRefMap.size());
                     lastAnalyzingPhaseCount = gcStartedCount();
@@ -266,7 +393,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                             case UNKNOWN:
                                 if (true) { // TODO (mlvdv) if object is marked in the MBM, not implemented yet
                                     // An object has been marked since the last time we looked, transition back to LIVE
-                                    objectRef.makeLive();
+                                    objectRef.discoveredReachable();
                                     markedLive++;
                                 }
                                 break;
@@ -300,7 +427,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                             case UNKNOWN:
                                 // The object is unreachable.
                                 assert objectRefMap.remove(objectRef.origin()) != null;
-                                objectRef.makeDead();
+                                objectRef.die();
                                 break;
                             case LIVE:
                                 // Do nothing; already live and in the objectMap
@@ -622,7 +749,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 // Transitions
                 @Override
-                void makeUnknown(MSRemoteReference ref) {
+                void analyzingBegins(MSRemoteReference ref) {
                     ref.refState = OBJ_UNKNOWN;
                 }
             },
@@ -644,17 +771,45 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 // Transitions
                 @Override
-                void makeLive(MSRemoteReference ref) {
+                void discoveredReachable(MSRemoteReference ref) {
                     ref.refState = OBJ_LIVE;
                 }
                 @Override
-                void makeDead(MSRemoteReference ref) {
+                void die(MSRemoteReference ref) {
                     ref.refState = OBJ_DEAD;
                 }
             },
 
             /**
-             * Reference to an object that has been determined unreachable;
+             * Reference to an object found unreachable, heap {@link #RECLAIMING}, modeling
+             * the state where the GC has not yet reclaimed the space.
+             */
+            OBJ_UNREACHABLE ("UNREACHABLE object (Reclaiming)") {
+
+                // Properties
+                @Override ObjectStatus status() {
+                    return DEAD;
+                }
+
+                @Override
+                boolean isFreeSpace() {
+                    return false;
+                }
+
+                // Transitions
+                @Override
+                void mutatingBegins(MSRemoteReference ref) {
+                    ref.refState = FREE_DARK;
+                }
+
+                @Override
+                void die(MSRemoteReference ref) {
+                    ref.refState = OBJ_DEAD;
+                }
+            },
+
+            /**
+             * Reference to an object that has been determined unreachable, and which should be forgotten;
              * no assumptions may be made about memory contents at the location.
              */
             OBJ_DEAD ("DEAD object") {
@@ -673,7 +828,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
             },
 
-            FREE_LIVE ("LIVE free chunk") {
+            FREE_CHUNK ("LIVE free chunk") {
 
                 // Properties;
                 @Override
@@ -683,17 +838,42 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 @Override
                 boolean isFreeSpace() {
-                    return false;
+                    return true;
                 }
 
                // Transitions
                 @Override
-                void makeDead(MSRemoteReference ref) {
+                void die(MSRemoteReference ref) {
                     ref.refState = FREE_DEAD;
                 }
             },
 
-            FREE_DEAD ("DEAD free chunk") {
+            FREE_DARK ("LIVE dark matter") {
+
+                // Properties;
+                @Override
+                ObjectStatus status() {
+                    return LIVE;
+                }
+
+                @Override
+                boolean isFreeSpace() {
+                    return true;
+                }
+
+                @Override
+                boolean isDarkMatter() {
+                    return true;
+                }
+
+               // Transitions
+                @Override
+                void die(MSRemoteReference ref) {
+                    ref.refState = FREE_DEAD;
+                }
+            },
+
+            FREE_DEAD ("DEAD free space") {
 
                 // Properties;
                 @Override
@@ -703,7 +883,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
                 @Override
                 boolean isFreeSpace() {
-                    return false;
+                    return true;
                 }
 
                 // Transitions (none: death is final)
@@ -738,26 +918,47 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
              */
             abstract boolean isFreeSpace();
 
+            /**
+             * @see MSRemoteReference#isDarkMatter()
+             */
+            boolean isDarkMatter() {
+                return false;
+            }
+
             // Transitions
 
             /**
-             * @see MSRemoteReference#analysisBegins()
+             * @see MSRemoteReference#analyzingBegins()
              */
-            void makeUnknown(MSRemoteReference ref) {
+            void analyzingBegins(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
             /**
              * @see MSRemoteReference#addFromOrigin()
              */
-            void makeLive(MSRemoteReference ref) {
+            void discoveredReachable(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
             /**
-             * @see MSRemoteReference#analysisEnds()
+             * @see MSRemoteReference#reclaimingBegins()
              */
-            void makeDead(MSRemoteReference ref) {
+            void reclaimingBegins(MSRemoteReference ref) {
+                TeleError.unexpected("Illegal state transition");
+            }
+
+            /**
+             * @see MSRemoteReference#mutatingBegins()
+             */
+            void mutatingBegins(MSRemoteReference ref) {
+                TeleError.unexpected("Illegal state transition");
+            }
+
+            /**
+             * @see MSRemoteReference#die()
+             */
+            void die(MSRemoteReference ref) {
                 TeleError.unexpected("Illegal state transition");
             }
 
@@ -792,7 +993,7 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
         public static MSRemoteReference createFree(RemoteMSHeapScheme remoteScheme, Address origin) {
             final MSRemoteReference ref = new MSRemoteReference(remoteScheme, origin);
-            ref.refState = RefState.FREE_LIVE;
+            ref.refState = RefState.FREE_CHUNK;
             return ref;
         }
 
@@ -846,17 +1047,43 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
             return refState.isFreeSpace();
         }
 
-        void makeUnknown() {
-            refState.makeUnknown(this);
+        public boolean isDarkMatter() {
+            return refState.isDarkMatter();
         }
 
-
-        void makeLive() {
-            refState.makeLive(this);
+        /**
+         * State transition on an ordinary live reference when an {@link #ANALYZING} phase is discovered to have begun.
+         */
+        void analyzingBegins() {
+            refState.analyzingBegins(this);
         }
 
-        void makeDead() {
-            refState.makeDead(this);
+        /**
+         * State transition on an ordinary live object reference during {@link #ANALYZING} when an object is found to be reachable.
+         */
+        void discoveredReachable() {
+            refState.discoveredReachable(this);
+        }
+
+        /**
+         * State transition on an object when {@link #RECLAIMING} starts.
+         */
+        void reclaimingBegins() {
+            refState.reclaimingBegins(this);
+        }
+
+        /**
+         * State transition on an object when {@link #MUTATING} begins.
+         */
+        void mutatingBegins() {
+            refState.mutatingBegins(this);
+        }
+
+        /**
+         * State transition on any kind of object when it has been determined to be unreachable and should be forgotten.
+         */
+        void die() {
+            refState.die(this);
         }
     }
 
