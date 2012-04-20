@@ -26,12 +26,15 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.TeleVM.InitializationListener;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Inspector support for working with VM sessions using the VM's simple
@@ -40,11 +43,17 @@ import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 * WORK IN PROGRESS.
 */
 public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implements RemoteObjectReferenceManager {
-
+    private static final int TRACE_VALUE = 1;
+    private TeleGenSSHeapScheme scheme;
     private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(5);
+    private final TimedTrace heapUpdateTracer;
+    private long lastUpdateEpoch = -1L;
+    private long lastAnalyzingPhaseCount = 0L;
+    private long lastReclaimingPhaseCount = 0L;
 
     public RemoteGenSSHeapScheme(TeleVM vm) {
         super(vm);
+        this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
     }
 
     @Override
@@ -54,7 +63,14 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
 
     @Override
     public void initialize(long epoch) {
-        // TODO Auto-generated method stub
+        vm().addInitializationListener(new InitializationListener() {
+            public void initialiationComplete(final long initializationEpoch) {
+                objects().registerTeleObjectType(GenSSHeapScheme.class, TeleGenSSHeapScheme.class);
+                // Get the VM object that represents the heap implementation; can't do this any sooner during startup.
+                scheme = (TeleGenSSHeapScheme) teleHeapScheme();
+                assert scheme != null;
+            }
+        });
 
     }
 
@@ -90,6 +106,13 @@ public final class RemoteGenSSHeapScheme extends AbstractRemoteHeapScheme implem
     @Override
     public void printObjectSessionStats(PrintStream printStream, int indent, boolean verbose) {
         // TODO Auto-generated method stub
+
+    }
+
+    public static class TeleGenSSHeapScheme extends TeleHeapScheme {
+        public TeleGenSSHeapScheme(TeleVM vm, Reference reference) {
+            super(vm, reference);
+        }
 
     }
 

@@ -268,19 +268,6 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         theHeapRegionManager().checkOutgoingReferences();
     }
 
-    @Override
-    public int reservedVirtualSpaceKB() {
-        // 2^30 Kb = 1 TB of reserved virtual space.
-        // This will be truncated as soon as we taxed what we need at initialization time.
-        return Size.G.toInt();
-    }
-
-    @Override
-    protected void releaseUnusedReservedVirtualSpace() {
-        // Do nothing. This heap scheme has its own way of doing this.
-        // See allocateHeapAndGCStorage
-    }
-
     final class GenCollection extends GCOperation {
         HeapRegionRangeIterable regionsRangeIterable;
         int fullCollectionCount = 0;

@@ -217,20 +217,6 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
 
     private final List<VmHeapRegion> heapRegions = new ArrayList<VmHeapRegion>(1);
 
-    /**
-     * A printer for statistics at the end of each update.
-     */
-    private final Object statsPrinter = new Object() {
-        @Override
-        public String toString() {
-            final StringBuilder msg = new StringBuilder();
-            msg.append("GC phase=").append(phase.label());
-            msg.append(" #starts=").append(gcStartedCount);
-            msg.append(", #complete=").append(gcCompletedCount);
-            return msg.toString();
-        }
-    };
-
     protected RemoteMSHeapScheme(TeleVM vm) {
         super(vm);
         this.heapUpdateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "updating");
@@ -440,22 +426,11 @@ public final class RemoteMSHeapScheme extends AbstractRemoteHeapScheme implement
                         }
                     }
                 }
-
-
-
-
                 lastUpdateEpoch = epoch;
-                heapUpdateTracer.end(statsPrinter);
+                heapUpdateTracer.end(heapUpdateStatsPrinter);
             }
         }
     }
-
-
-
-
-
-
-
 
     // TODO (mlvdv)  fix
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {

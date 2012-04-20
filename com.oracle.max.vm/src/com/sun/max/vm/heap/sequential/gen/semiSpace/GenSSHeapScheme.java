@@ -38,14 +38,15 @@ import com.sun.max.vm.heap.gcx.rset.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
+import static com.sun.max.vm.VMConfiguration.*;
 /**
  * A heap scheme implementing a two-generations heap, where each generation implements a semi-space collector.
  *
  *
  */
 public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements XirWriteBarrierSpecification, RSetCoverage {
-
     /**
      * Knob for the fixed ratio resizing policy.
      */
@@ -94,7 +95,17 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
         }
     }
 
+    /**
+     * Always start with a minor collection.
+     * If space left after the minor collection in the old generation is less than estimated space for survivors of the next minor collection,
+     * a full GC is performed immediately.
+     * It is possible for the minor collection to overflow the old generation because of under-estimated survivor space at the last minor collection.
+     * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
+     */
     final class GenCollection extends GCOperation {
+        private long minorCollectionCount;
+        private int minSurvivingPercent = 15; // arbitrary for now
+
         GenCollection() {
             super("GenCollection");
         }
@@ -106,12 +117,56 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             oldSpace.visit(fotVerifier);
             oldSpace.visit(noYoungReferencesVerifier);
         }
+        private void doOldGenCollection() {
+            FatalError.unimplemented();
+            youngSpaceEvacuator.doBeforeGC();
+            youngSpace.doBeforeGC();
+            oldSpace.doBeforeGC();
+            oldSpace.doAfterGC();
+            youngSpaceEvacuator.doAfterGC();
+        }
+
+        private Size estimatedNextEvac() {
+            Size min = youngSpace.totalSpace().dividedBy(100).times(minSurvivingPercent);
+            Size lastSurvivorCount = youngSpaceEvacuator.evacuatedBytes();
+            return lastSurvivorCount.greaterThan(min) ? lastSurvivorCount : min;
+        }
 
         @Override
         protected void collect(int invocationCount) {
-            Size worstCaseEvac = youngSpace.totalSpace();
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+            vmConfig().monitorScheme().beforeGarbageCollection();
+            if (Heap.verbose()) {
+                Log.println("--Begin nursery evacuation");
+            }
+            minorCollectionCount++;
+            youngSpaceEvacuator.evacuate();
+            if (Heap.verbose()) {
+                Log.println("--End nursery evacuation");
+            }
+            if (VerifyAfterGC) {
+                verifyAfterEvacuation();
+            }
+            Size estimatedEvac = estimatedNextEvac();
             Size freeSpace = oldSpace.freeSpace();
+            if (estimatedEvac.greaterThan(freeSpace)) {
+                if (Heap.verbose()) {
+                    Log.println("--Begin old geneneration collection");
+                }
+                doOldGenCollection();
+                if (Heap.verbose()) {
+                    Log.println("--End   old geneneration collection");
+                }
 
+                if (VerifyAfterGC) {
+                    verifyAfterEvacuation();
+                }
+                freeSpace = oldSpace.freeSpace();
+                if (estimatedEvac.greaterThan(freeSpace)) {
+                    FatalError.unimplemented();
+                }
+            }
+            HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
         }
     }
 
@@ -145,7 +200,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * Implementation of young space evacuation. Used by minor collection operations.
      */
     private final NoAgingEvacuator youngSpaceEvacuator;
-
 
     /**
      * Support for heap verification. All live objects are evacuated to the old space on minor collection.

@@ -69,6 +69,17 @@ public class ContiguousSemiSpace <T extends BaseAtomicBumpPointerAllocator<? ext
         ContiguousHeapSpace toSpace = fromSpace;
         fromSpace = space;
         space = toSpace;
-        allocator.refill(space.start(), space.committedSize());
+        // FIXME
+        // allocator.refill(space.start(), space.committedSize());
     }
+
+    @Override
+    public void doBeforeGC() {
+        allocator.doBeforeGC();
+    }
+
+    @Override
+    public void doAfterGC() {
+    }
+
 }
