@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
+
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -33,7 +35,7 @@ import com.sun.max.vm.layout.*;
  * References to the boot image aren't counted as escaping.
  * The tools is currently used to verify that no references escape the {@link HeapRegionManager}'s heap account.
  */
-class OutgoingReferenceChecker extends PointerIndexAndHeaderVisitor implements CellVisitor {
+class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
     private final Object accountOwner;
     private final RegionTable regionTable;
     private long outgoingReferenceCount = 0L;
@@ -70,12 +72,11 @@ class OutgoingReferenceChecker extends PointerIndexAndHeaderVisitor implements C
     @Override
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        final Hub hub = getHub(origin);
-        if (isHeapFreeChunk(hub)) {
-            Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
-            return cell.plus(chunkSize);
+        final Hub hub = Layout.getHub(origin);
+        if (hub == heapFreeChunkHub()) {
+            return cell.plus(toHeapFreeChunk(origin).size);
         }
-        checkReference(origin, hubIndex());
+        checkReference(origin, Layout.hubIndex());
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
@@ -83,8 +84,8 @@ class OutgoingReferenceChecker extends PointerIndexAndHeaderVisitor implements C
         } else if (specificLayout.isHybridLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, this);
         } else if (specificLayout.isReferenceArrayLayout()) {
-            final int length = firstElementIndex() + Layout.readArrayLength(origin);
-            for (int index = firstElementIndex(); index < length; index++) {
+            final int length = Layout.firstElementIndex() + Layout.readArrayLength(origin);
+            for (int index = Layout.firstElementIndex(); index < length; index++) {
                 checkReference(origin, index);
             }
         }
