@@ -59,7 +59,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private TeleObject teleObject;
 
-    private boolean followingTeleObject = true;
+    private boolean followingTeleObject = false; // true;
 
     /**
      * @return local surrogate for the object being inspected in the VM
