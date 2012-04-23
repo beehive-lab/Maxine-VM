@@ -27,10 +27,11 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
-//TODO (mlvdv) Deprecated
 /**
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
+ * @deprecated
  */
+@Deprecated
 public interface LegacyTeleHeapScheme extends TeleScheme {
 
     List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();

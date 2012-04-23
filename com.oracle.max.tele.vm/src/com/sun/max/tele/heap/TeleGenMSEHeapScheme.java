@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 
-
+@Deprecated
 public class TeleGenMSEHeapScheme extends TeleRegionBasedHeapScheme {
     private TeleCardTableRSet teleCardTableRSet;
     private Address nurseryEnd = Address.zero();
