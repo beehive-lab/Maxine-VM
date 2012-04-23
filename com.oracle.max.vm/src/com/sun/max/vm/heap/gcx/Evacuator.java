@@ -142,7 +142,6 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
         if (forwardRef.isZero()) {
             final Pointer toOrigin = evacuate(origin);
             forwardRef = Reference.fromOrigin(toOrigin);
-            HeapScheme.Inspect.notifyObjectRelocated(Layout.originToCell(origin), Layout.originToCell(toOrigin));
             Layout.writeForwardRef(origin, forwardRef);
         }
         return forwardRef;

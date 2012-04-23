@@ -494,22 +494,6 @@ public interface HeapScheme extends VMScheme {
         }
 
         /**
-         * Announces that an object has just been relocated.  It does almost nothing,
-         * but it must be called for certain Inspector services to work.
-         * <p>
-         * Should be called as late as possible, but before a forwarding pointer
-         * gets written; this is so that some implementations can set a watchpoint
-         * on the forwarding pointer location to trigger on a specific object relocation.
-         *
-         * @param oldCellLocation the former memory cell of the object
-         * @param newCellLocation the new memory cell of the object
-         */
-        public static void notifyObjectRelocated(Address oldCellLocation, Address newCellLocation) {
-            InspectableHeapInfo.notifyObjectRelocated(oldCellLocation,  newCellLocation);
-            inspectableObjectRelocated(oldCellLocation, newCellLocation);
-        }
-
-        /**
          * Announces that a request has been made to increase the size of the heap.
          * It does nothing, but it must be called for certain Inspector services to work.
          * <p>
