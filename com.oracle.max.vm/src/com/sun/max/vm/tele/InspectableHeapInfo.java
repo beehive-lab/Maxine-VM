@@ -25,7 +25,6 @@ package com.sun.max.vm.tele;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -66,11 +65,6 @@ public final class InspectableHeapInfo {
     private static MemoryRegion[] dynamicHeapMemoryRegions;
 
     /**
-     * Maximum number of roots that the Inspector can register for tracking relocations.
-     */
-    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
-
-    /**
      * The ordinal value of the enum describing the current heap phase.
      * This permits inspection of the phase at any time and, if needed,
      * detection of phase change by watchpoint.
@@ -94,18 +88,6 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     private static long gcCompletedCounter;
-
-    /**
-     * Old memory cell location of the object most recently relocated.
-     */
-    @INSPECTED
-    private static Address recentRelocationOldCell;
-
-    /**
-     * New memory cell location of the object most recently relocated.
-     */
-    @INSPECTED
-    private static Address recentRelocationNewCell;
 
     /**
      * Heap size most recently requested.
@@ -152,19 +134,6 @@ public final class InspectableHeapInfo {
             }
         }
     }
-
-    /**
-     * Records that an object has just been relocated.
-     *
-     * @param oldCellLocation the former memory cell of the object
-     * @param newCellLocation the new memory cell of the object
-     */
-    public static void notifyObjectRelocated(Address oldCellLocation,  Address newCellLocation) {
-        recentRelocationOldCell = oldCellLocation;
-        recentRelocationNewCell = newCellLocation;
-        inspectableObjectRelocated(oldCellLocation, newCellLocation);
-    }
-
 
     @INSPECTED
     @NEVER_INLINE

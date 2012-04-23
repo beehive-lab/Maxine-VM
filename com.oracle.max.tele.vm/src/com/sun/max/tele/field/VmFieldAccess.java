@@ -53,6 +53,7 @@ import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.heap.gcx.gen.mse.*;
 import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
+import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jni.DynamicLinker.LibInfo;
@@ -147,7 +148,10 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess Compilations_optimized = new TeleInstanceReferenceFieldAccess(Compilations.class, "optimized", TargetMethod.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
+    public final TeleInstanceReferenceFieldAccess ContiguousAllocatingSpace_allocator = new TeleInstanceReferenceFieldAccess(ContiguousAllocatingSpace.class, "allocator", BaseAtomicBumpPointerAllocator.class);
+    public final TeleInstanceReferenceFieldAccess ContiguousAllocatingSpace_space = new TeleInstanceReferenceFieldAccess(ContiguousAllocatingSpace.class, "space", ContiguousHeapSpace.class);
     public final TeleInstanceWordFieldAccess ContiguousHeapSpace_committedEnd = new TeleInstanceWordFieldAccess(ContiguousHeapSpace.class, "committedEnd");
+    public final TeleInstanceReferenceFieldAccess ContiguousSemiSpace_fromSpace = new TeleInstanceReferenceFieldAccess(ContiguousSemiSpace.class, "fromSpace", ContiguousHeapSpace.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess DynamicLinker_libInfoArray = new TeleStaticReferenceFieldAccess(DynamicLinker.class, "libInfoArray", LibInfo[].class);
     public final TeleStaticIntFieldAccess DynamicLinker_libInfoIndex = new TeleStaticIntFieldAccess(DynamicLinker.class, "libInfoIndex");
@@ -155,6 +159,9 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "cardTableRSet", CardTableRSet.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "cardTableRSet", CardTableRSet.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
+    public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess HeapFreeChunk_next = new TeleInstanceReferenceFieldAccess(HeapFreeChunk.class, "next", HeapFreeChunk.class);
@@ -182,8 +189,6 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcStartedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcStartedCounter");
     public final TeleStaticIntFieldAccess InspectableHeapInfo_heapPhaseOrdinal = new TeleStaticIntFieldAccess(InspectableHeapInfo.class, "heapPhaseOrdinal");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_recentHeapSizeRequest = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "recentHeapSizeRequest");
-    public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
-    public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_handle = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "handle");
     public final TeleInstanceWordFieldAccess DynamicLinker$LibInfo_pathAsCString = new TeleInstanceWordFieldAccess(DynamicLinker.LibInfo.class, "pathAsCString");

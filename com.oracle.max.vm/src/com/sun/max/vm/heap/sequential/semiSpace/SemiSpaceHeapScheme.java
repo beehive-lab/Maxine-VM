@@ -565,8 +565,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
             Memory.copyBytes(fromCell, toCell, size);
 
-            HeapScheme.Inspect.notifyObjectRelocated(fromCell, toCell);
-
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Reference toRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(fromOrigin, toRef);
