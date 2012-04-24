@@ -450,6 +450,7 @@ public class VMLoggerGenerator {
             count++;
         }
         out.println(";\n");
+        out.printf("%s@SuppressWarnings(\"hiding\")%n", INDENT12); // in case of static import of similar
         out.printf("%spublic static final Operation[] VALUES = values();%n%s}%n%n", INDENT12, INDENT8);
         return enumMap;
     }
@@ -457,7 +458,6 @@ public class VMLoggerGenerator {
     private static void outTraceMethod(PrintWriter out, ArrayList<String> caseBodies) {
         out.printf("%s@Override%n", INDENT8);
         out.printf("%sprotected void trace(Record r) {%n", INDENT8);
-//        out.printf("%sOperation op = Operation.VALUES[r.getOperation()];%n", INDENT12);
         out.printf("%sswitch (r.getOperation()) {%n", INDENT12);
         for (String caseBody : caseBodies) {
             out.print(caseBody);
@@ -484,7 +484,11 @@ public class VMLoggerGenerator {
     private static String wrapLogArg(Class sourceClass, Class argClass, String argName) {
         Class standardArgClass = isStandardArgMethod(argClass, true, sourceClass);
         if (standardArgClass == null) {
-            standardArgClass = Object.class;
+            if (argClass.isEnum()) {
+                standardArgClass = argClass;
+            } else {
+                standardArgClass = Object.class;
+            }
         }
         return wrapLogArg(logArgMethodName(standardArgClass), argName);
     }

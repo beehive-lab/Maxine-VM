@@ -1492,6 +1492,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             Forward, Skipped, VerifyObject,
             VisitCell;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -1560,6 +1561,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             VerifyingCodeObjects, VerifyingHeapObjects, VerifyingObjectSpaces, VerifyingRegion,
             VerifyingStackReferences, ZappingRegion;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -1631,7 +1633,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logVerifyingObjectSpaces(Interval interval, GCCallbackPhase when) {
-            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), objectArg(when));
+            log(Operation.VerifyingObjectSpaces.ordinal(), intervalArg(interval), gCCallbackPhaseArg(when));
         }
         protected abstract void traceVerifyingObjectSpaces(Interval interval, GCCallbackPhase when);
 
@@ -1649,7 +1651,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @INLINE
         public final void logZappingRegion(MemoryRegion region, GCCallbackPhase when) {
-            log(Operation.ZappingRegion.ordinal(), objectArg(region), objectArg(when));
+            log(Operation.ZappingRegion.ordinal(), objectArg(region), gCCallbackPhaseArg(when));
         }
         protected abstract void traceZappingRegion(MemoryRegion region, GCCallbackPhase when);
 
@@ -1729,6 +1731,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public enum Operation {
             PhaseTimes, StackReferenceMapPreparationTime;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
