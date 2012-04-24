@@ -229,6 +229,7 @@ public class InlinedMethodDependencyProcessor extends DependencyProcessor {
         public enum Operation {
             DoInlinedMethod;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 

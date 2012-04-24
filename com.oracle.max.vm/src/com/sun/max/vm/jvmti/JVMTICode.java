@@ -26,11 +26,17 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIThreadFunctions.*;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -74,6 +80,9 @@ public class JVMTICode {
     static void compileAndDeopt(ArrayList<TargetMethod> targetMethods) {
         // compile the methods first, in case of a method used by the compilation system (VM debugging)
         for (TargetMethod targetMethod : targetMethods) {
+            if (logger.enabled()) {
+                logger.logCompileForDeopt(targetMethod.classMethodActor);
+            }
             vm().compilationBroker.compileForDeopt(targetMethod.classMethodActor);
         }
         // Calling this multiple times for different threads is harmless as it takes care to
@@ -139,4 +148,53 @@ public class JVMTICode {
             suspendThreadNotify(jvmtiEnv, vmThread);
         }
     }
+
+    // Logging
+
+    @HOSTED_ONLY
+    @VMLoggerInterface(noTrace = true)
+    private static interface JVMTICodeLoggerInterface {
+        void compileForDeopt(@VMLogParam(name = "methodActor") MethodActor methodActor);
+    }
+
+    private static final JVMTICodeLogger logger = new JVMTICodeLogger();
+
+    private static class JVMTICodeLogger extends JVMTICodeLoggerAuto {
+        JVMTICodeLogger() {
+            super("JVMTICode", "log JVMTI compiled code operations");
+        }
+
+        @Override
+        protected void logArg(int argNum, Word argValue) {
+            Log.print(MethodID.toMethodActor(MethodID.fromWord(argValue)));
+        }
+    }
+
+// START GENERATED CODE
+    private static abstract class JVMTICodeLoggerAuto extends com.sun.max.vm.log.VMLogger {
+        public enum Operation {
+            CompileForDeopt;
+
+            @SuppressWarnings("hiding")
+            public static final Operation[] VALUES = values();
+        }
+
+        private static final int[] REFMAPS = null;
+
+        protected JVMTICodeLoggerAuto(String name, String optionDescription) {
+            super(name, Operation.VALUES.length, optionDescription, REFMAPS);
+        }
+
+        @Override
+        public String operationName(int opCode) {
+            return Operation.VALUES[opCode].name();
+        }
+
+        @INLINE
+        public final void logCompileForDeopt(MethodActor methodActor) {
+            log(Operation.CompileForDeopt.ordinal(), methodActorArg(methodActor));
+        }
+    }
+
+// END GENERATED CODE
 }

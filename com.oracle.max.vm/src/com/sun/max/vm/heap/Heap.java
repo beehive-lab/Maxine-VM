@@ -907,6 +907,7 @@ public final class Heap {
             Clone, CreateArray, CreateHybrid,
             CreateTuple, ExpandHybrid;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -985,6 +986,7 @@ public final class Heap {
         public enum Operation {
             ScanningBootHeap, VisitReferenceMapSlot;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
