@@ -594,6 +594,20 @@ public abstract class TargetMethod extends MemoryRegion {
             int dataIndex = 0;
             int currentScalarsPos = 0;
             int scalarsAlignment = 0;
+
+            // Data patches need to be sorted in decreasing order of their alignment requirements
+            for (DataPatch site : dataReferences) {
+                if (site.alignment != 0) {
+                    Collections.sort(dataReferences, new Comparator<DataPatch>() {
+                        @Override
+                        public int compare(DataPatch o1, DataPatch o2) {
+                            return o2.alignment - o1.alignment;
+                        }
+                    });
+                    break;
+                }
+            }
+
             for (DataPatch site : dataReferences) {
                 final CiConstant data = site.constant;
                 if (!data.kind.isObject()) {
@@ -611,12 +625,12 @@ public abstract class TargetMethod extends MemoryRegion {
                 try {
                     switch (data.kind) {
                         case Double:
-                            endianness.writeLong(scalarsBuffer, Double.doubleToLongBits(data.asDouble()));
+                            endianness.writeLong(scalarsBuffer, Double.doubleToRawLongBits(data.asDouble()));
                             currentScalarsPos += 8;
                             break;
 
                         case Float:
-                            endianness.writeInt(scalarsBuffer, Float.floatToIntBits(data.asFloat()));
+                            endianness.writeInt(scalarsBuffer, Float.floatToRawIntBits(data.asFloat()));
                             currentScalarsPos += 4;
                             break;
 
