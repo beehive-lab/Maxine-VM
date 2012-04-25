@@ -103,7 +103,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * This is caught by the refiller of the old generation allocator, which in this case allocate space directly in the second semi-space.
      */
     final class GenCollection extends GCOperation {
-        private long minorCollectionCount;
         private int minSurvivingPercent = 15; // arbitrary for now
 
         GenCollection() {
@@ -122,6 +121,8 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             youngSpaceEvacuator.doBeforeGC();
             youngSpace.doBeforeGC();
             oldSpace.doBeforeGC();
+            // NOTE: counter must be incremented before a heap phase change  RECLAIMING -> ANALYZING.
+            fullCollectionCount++;
             oldSpace.doAfterGC();
             youngSpaceEvacuator.doAfterGC();
         }
@@ -139,7 +140,6 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
             if (Heap.verbose()) {
                 Log.println("--Begin nursery evacuation");
             }
-            minorCollectionCount++;
             youngSpaceEvacuator.evacuate();
             if (Heap.verbose()) {
                 Log.println("--End nursery evacuation");
@@ -200,6 +200,9 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
      * Implementation of young space evacuation. Used by minor collection operations.
      */
     private final NoAgingEvacuator youngSpaceEvacuator;
+
+    @INSPECTED
+    private int fullCollectionCount;
 
     /**
      * Support for heap verification. All live objects are evacuated to the old space on minor collection.

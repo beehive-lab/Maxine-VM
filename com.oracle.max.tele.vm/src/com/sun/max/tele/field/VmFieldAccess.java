@@ -160,6 +160,7 @@ public class VmFieldAccess extends AbstractVmHolder {
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "oldSpace", FirstFitMarkSweepSpace.class);
     public final TeleInstanceReferenceFieldAccess GenMSEHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenMSEHeapScheme.class, "youngSpace", NoAgingNursery.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_cardTableRSet = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "cardTableRSet", CardTableRSet.class);
+    public final TeleInstanceIntFieldAccess GenSSHeapScheme_fullCollectionCount = new TeleInstanceIntFieldAccess(GenSSHeapScheme.class, "fullCollectionCount");
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_oldSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "oldSpace", ContiguousSemiSpace.class);
     public final TeleInstanceReferenceFieldAccess GenSSHeapScheme_youngSpace = new TeleInstanceReferenceFieldAccess(GenSSHeapScheme.class, "youngSpace", ContiguousAllocatingSpace.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);

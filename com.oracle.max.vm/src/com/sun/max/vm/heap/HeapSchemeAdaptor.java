@@ -177,7 +177,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     /**
      * Count of garbage collection performed.
      */
-    protected long collectionCount;
+    protected int collectionCount;
 
     /**
      * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
