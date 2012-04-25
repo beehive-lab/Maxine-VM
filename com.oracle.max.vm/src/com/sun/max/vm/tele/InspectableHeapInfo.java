@@ -108,6 +108,14 @@ public final class InspectableHeapInfo {
     }
 
     /**
+     * <strong>This is scheduled for retirement.</strong>
+     * <p> The new heap scheme support
+     * classes in the Inspector locate the memory regions for each heap scheme
+     * implementation directly from the implementation class.  This notification
+     * call is only in place to support legacy support for "attach" mode in the
+     * SemiSpace support, which will also cease to depend on this notification.
+     * (mlvdv 4/22/12).
+     * <p>
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <p>

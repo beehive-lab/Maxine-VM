@@ -106,6 +106,9 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             // Transitions
             @Override
             void analysisEnds(SemiSpaceRemoteReference ref) {
+                // For consistency, when dead leave the last real origin in toOrigin.
+                ref.toOrigin = ref.fromOrigin;
+                ref.fromOrigin = Address.zero();
                 ref.refState = REF_DEAD;
             }
             @Override
@@ -185,7 +188,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
             }
             @Override
             Address origin(SemiSpaceRemoteReference ref) {
-                return ref.fromOrigin;
+                return ref.toOrigin;
             }
             @Override
             Address forwardedFrom(SemiSpaceRemoteReference ref) {
@@ -335,16 +338,17 @@ public class SemiSpaceRemoteReference extends RemoteReference {
     }
 
     /**
-     * The origin of the object when it is in To-Space.
-     * It can be in both spaces when forwarded during an
-     * {@link #ANALYZING} heap phase.
+     * The origin of the object when it is in To-Space (or when it is {@link #DEAD}).
+     * It can only be zero during and {@link #ANALYZING} heap phase when it has not
+     * been discovered to have been forwarded, in which case the only known origin
+     * is in From-Space.
      */
     private Address toOrigin;
 
     /**
-     * The origin of the object when it is in From-Space.
-     * It can be in both spaces when forwarded during an
-     * {@link #ANALYZING} heap phase.
+     * The origin of the object when it is in From-Space.  It can only be non-zero
+     * during an {@link #ANALYZING} heap phase.  When it has been discovered to
+     * be forwarded during this phase, a copy of the object can also be in To-Space.
      */
     private Address fromOrigin;
 
