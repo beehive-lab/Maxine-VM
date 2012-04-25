@@ -161,7 +161,7 @@ public class C1X implements RuntimeCompiler {
             runtime.initialize();
 
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
-            C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
+            C1XOptions.OptIntrinsify = true;
             C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
