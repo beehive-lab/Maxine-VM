@@ -205,7 +205,8 @@ public abstract class Evacuator extends PointerIndexVisitor implements CellVisit
     }
     /**
      * Evacuate all objects of the evacuated area directly reachable from the remembered sets of the evacuated area. By default, this does nothing
-     * (i.e., there are no remembered sets). For instance, a pure semi-space flat heap doesn't have any remembered sets to evacuate from.
+     * (i.e., there are no remembered sets). For instance, a pure semi-space flat heap doesn't have any remembered sets to evacuate from, neither does
+     * a old semi-space old generation.
      */
     protected void evacuateFromRSets() {
     }

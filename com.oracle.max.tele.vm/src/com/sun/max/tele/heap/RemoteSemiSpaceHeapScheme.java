@@ -196,7 +196,7 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 assert scheme != null;
                 updateMemoryStatus(initializationEpoch);
                 /*
-                 * Add a heap phase listener that will will force the VM to stop any time the heap transitions from
+                 * Add a heap phase listener that will  force the VM to stop any time the heap transitions from
                  * analysis to the reclaiming phase of a GC. This is exactly the moment in a GC cycle when reference
                  * information must be updated. Unfortunately, the handler supplied with this listener will only be
                  * called after the VM state refresh cycle is complete. That would be too late since so many other parts
@@ -266,8 +266,12 @@ public class RemoteSemiSpaceHeapScheme extends AbstractRemoteHeapScheme implemen
                 }
             }
             Trace.end(TRACE_VALUE, tracePrefix() + "looking for heap regions, " + heapRegions.size() + " found");
+            if (heapRegions.size() < 2) {
+                // don't bother with the rest.
+                return;
+            }
         }
-        if (heapRegions.size() == 2 && epoch > lastUpdateEpoch) {
+        if (epoch > lastUpdateEpoch) {
 
             heapUpdateTracer.begin();
 
